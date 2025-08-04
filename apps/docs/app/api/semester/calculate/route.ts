@@ -120,12 +120,15 @@ async function calculateFromExcel(drive: any, fileId: string, targetMonth: numbe
     });
 
     // Excel 파일 바이너리 데이터 다운로드 (stream 방식)
-    const fileResponse = await drive.files.get({ 
-      fileId: fileId, 
-      alt: "media" 
-    }, { 
-      responseType: "stream" 
-    });
+    const fileResponse = await drive.files.get(
+      {
+        fileId: fileId,
+        alt: "media",
+      },
+      {
+        responseType: "stream",
+      }
+    );
 
     // Stream을 Buffer로 변환
     const buffer = await streamToBuffer(fileResponse.data);
@@ -144,13 +147,15 @@ async function calculateFromExcel(drive: any, fileId: string, targetMonth: numbe
 
     console.log("Using sheet:", targetSheetName);
     const worksheet = workbook.Sheets[targetSheetName];
-    
+    console.log("worksheet:", worksheet);
+
     if (!worksheet) {
       console.error(`Sheet '${targetSheetName}' not found`);
       return null;
     }
 
-    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, range: "B4:R" });
+    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, range: "B4:R204" });
+    console.log("jsonData:", jsonData);
 
     if (!jsonData || jsonData.length <= 1) {
       return null;
@@ -160,7 +165,7 @@ async function calculateFromExcel(drive: any, fileId: string, targetMonth: numbe
     let holidayWorkDays = 0;
     let vacationDays = 0;
     let totalUsed = 0;
-
+    console.log("👀");
     // 데이터 처리 (B4부터 시작하므로 인덱스 조정)
     for (let i = 1; i < jsonData.length; i++) {
       const row = jsonData[i] as any[];
@@ -177,7 +182,7 @@ async function calculateFromExcel(drive: any, fileId: string, targetMonth: numbe
         }
 
         // 휴일근무 계산
-        if (workType === "휴일") {
+        if (workType.includes("휴일")) {
           holidayWorkDays++;
         }
 
@@ -243,6 +248,7 @@ export async function GET(request: NextRequest) {
     for (const file of files) {
       if (file.mimeType === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" || file.mimeType === "application/vnd.ms-excel") {
         const result = await calculateFromExcel(drive, file.id, month);
+        console.log("result:", result);
         if (result) {
           return NextResponse.json({
             success: true,

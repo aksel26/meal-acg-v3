@@ -46,10 +46,8 @@ export function Combobox({
   // Filter options based on search value
   const filteredOptions = React.useMemo(() => {
     if (!searchValue) return options;
-    
-    return options.filter((option) =>
-      option.label.toLowerCase().includes(searchValue.toLowerCase())
-    );
+
+    return options.filter((option) => option.label.toLowerCase().includes(searchValue.toLowerCase()));
   }, [options, searchValue]);
 
   // Clear search when popover closes
@@ -67,14 +65,9 @@ export function Combobox({
           {loading ? <Loader2 className="ml-2 h-4 w-4 shrink-0 animate-spin opacity-50" /> : <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className={cn("w-full p-0", popoverContentClassName)}>
+      <PopoverContent className={cn("p-1", popoverContentClassName)}>
         <Command shouldFilter={false}>
-          <CommandInput 
-            placeholder={searchPlaceholder} 
-            className="h-9"
-            value={searchValue}
-            onValueChange={setSearchValue}
-          />
+          <CommandInput placeholder={searchPlaceholder} className="h-10" value={searchValue} onValueChange={setSearchValue} />
           <CommandList>
             <CommandEmpty>
               {loading ? (

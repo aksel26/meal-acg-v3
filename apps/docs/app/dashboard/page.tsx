@@ -347,12 +347,9 @@ export default function DashboardPage() {
 
         {/* 식사 기록 섹션 */}
         <div className="space-y-6">
-          <div className="border-t pt-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">📅 식대 기록</h2>
-            <Calendar21 onDateSelect={setSelectedDate} selectedDate={selectedDate} onMonthChange={handleMonthChange} mealData={mealData} />
-            <div className="mt-4">
-              <MealCards selectedDate={selectedDate} onAddMeal={handleAddMeal} onEditMeal={handleEditMeal} onHolidayEdit={handleHolidayAttendanceEdit} mealData={mealData} />
-            </div>
+          <Calendar21 onDateSelect={setSelectedDate} selectedDate={selectedDate} onMonthChange={handleMonthChange} mealData={mealData} />
+          <div className="mt-4">
+            <MealCards selectedDate={selectedDate} onAddMeal={handleAddMeal} onEditMeal={handleEditMeal} onHolidayEdit={handleHolidayAttendanceEdit} mealData={mealData} />
           </div>
         </div>
       </main>

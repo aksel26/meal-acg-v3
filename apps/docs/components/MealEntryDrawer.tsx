@@ -115,7 +115,7 @@ export default function MealEntryDrawer({ isOpen, onOpenChange, selectedMealType
           </DrawerDescription>
         </DrawerHeader>
 
-        <form onSubmit={onFormSubmit} className="px-4 pb-4 space-y-6">
+        <form onSubmit={onFormSubmit} className="px-6 pb-4 space-y-6">
           {/* 식사 타입 선택 */}
           <div className="space-y-2">
             <Label>식사 타입</Label>
@@ -152,7 +152,7 @@ export default function MealEntryDrawer({ isOpen, onOpenChange, selectedMealType
               searchPlaceholder="이름으로 검색..."
               emptyText="결제자를 찾을 수 없습니다."
               loading={usersLoading}
-              popoverContentClassName="w-full"
+              // popoverContentClassName="w-[400px]"
             />
           </div>
 

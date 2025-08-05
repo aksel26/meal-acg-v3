@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    return NextResponse.redirect(new URL("/drive", request.url));
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   } catch (error) {
     console.error("OAuth error:", error);
     return NextResponse.redirect(new URL("/?error=oauth_failed", request.url));

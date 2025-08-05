@@ -1,13 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { Alert, AlertTitle } from "@repo/ui/src/alert";
 import { Button } from "@repo/ui/src/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/src/card";
 import Calendar21 from "@repo/ui/src/calendar-21";
-import { Plus } from "@repo/ui/icons";
+import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/src/card";
+import { ChartPieDonut } from "@repo/ui/src/chart-pie-donut";
 import { toast } from "@repo/ui/src/sonner";
+import { useRouter } from "next/navigation";
+import { Suspense, lazy, useEffect, useState } from "react";
+import { MealCards } from "../../components/MealCards";
+
+// Lazy load the MealEntryDrawer component
+const MealEntryDrawer = lazy(() => import("../../components/MealEntryDrawer"));
 
 interface CalculationData {
   fileName: string;
@@ -20,7 +24,7 @@ interface CalculationData {
   balance: number;
 }
 
-function CalculationResult({ userName }: { userName: string }) {
+function CalculationResult({ userName, onDataChange }: { userName: string; onDataChange?: (data: CalculationData | null) => void }) {
   const [data, setData] = useState<CalculationData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,22 +33,21 @@ function CalculationResult({ userName }: { userName: string }) {
   useEffect(() => {
     const fetchCalculation = async () => {
       if (!userName) return;
-      
+
       setLoading(true);
       setError(null);
-      
+
       try {
-        const response = await fetch(
-          `/api/semester/calculate?month=${selectedMonth}&name=${encodeURIComponent(userName)}`
-        );
-        
+        const response = await fetch(`/api/semester/calculate?month=${selectedMonth}&name=${encodeURIComponent(userName)}`);
+
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || "계산 실패");
         }
-        
+
         const result = await response.json();
         setData(result.data);
+        onDataChange?.(result.data);
       } catch (err) {
         console.error("Calculation error:", err);
         setError(err instanceof Error ? err.message : "알 수 없는 오류");
@@ -69,11 +72,7 @@ function CalculationResult({ userName }: { userName: string }) {
     return (
       <div className="text-center py-8">
         <p className="text-red-600 mb-4">{error}</p>
-        <Button 
-          onClick={() => setSelectedMonth(selectedMonth)}
-          variant="outline"
-          size="sm"
-        >
+        <Button onClick={() => setSelectedMonth(selectedMonth)} variant="outline" size="sm">
           다시 시도
         </Button>
       </div>
@@ -89,76 +88,83 @@ function CalculationResult({ userName }: { userName: string }) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="font-semibold">{data.month}월 근무 현황</h3>
-          <p className="text-sm text-muted-foreground">{data.fileName}</p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <select
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-            className="px-3 py-1 border rounded-md text-sm"
-          >
-            {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
-              <option key={month} value={month}>
-                {month}월
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div className="space-y-4">
+      {/* <div className="bg-green-50 p-4 rounded-lg">
+        <div className="text-xl font-bold text-green-600">{data.availableAmount.toLocaleString()}</div>
+        <div className="text-sm text-green-700">사용가능 금액</div>
+      </div> */}
+      <div className="grid grid-cols-3 md:grid-cols-4 gap-4">
         <div className="bg-blue-50 p-4 rounded-lg">
-          <div className="text-2xl font-bold text-blue-600">{data.workDays}</div>
+          <div className="text-xl font-bold text-blue-600">{data.workDays}</div>
           <div className="text-sm text-blue-700">근무일</div>
         </div>
+
         <div className="bg-orange-50 p-4 rounded-lg">
-          <div className="text-2xl font-bold text-orange-600">{data.holidayWorkDays}</div>
+          <div className="text-xl font-bold text-orange-600">{data.holidayWorkDays}</div>
           <div className="text-sm text-orange-700">휴일근무</div>
         </div>
         <div className="bg-red-50 p-4 rounded-lg">
-          <div className="text-2xl font-bold text-red-600">{data.vacationDays}</div>
+          <div className="text-xl font-bold text-red-600">{data.vacationDays}</div>
           <div className="text-sm text-red-700">휴가일</div>
-        </div>
-        <div className="bg-green-50 p-4 rounded-lg">
-          <div className="text-2xl font-bold text-green-600">
-            {data.availableAmount.toLocaleString()}
-          </div>
-          <div className="text-sm text-green-700">사용가능 금액</div>
         </div>
       </div>
 
-      <div className="border-t pt-4">
+      {/* <div className="border-t pt-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="text-center">
             <div className="text-lg font-semibold">총 사용 금액</div>
-            <div className="text-2xl font-bold text-red-600">
-              {data.totalUsed.toLocaleString()}원
-            </div>
+            <div className="text-2xl font-bold text-red-600">{data.totalUsed.toLocaleString()}원</div>
           </div>
           <div className="text-center">
             <div className="text-lg font-semibold">잔액</div>
-            <div className={`text-2xl font-bold ${data.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {data.balance.toLocaleString()}원
-            </div>
+            <div className={`text-2xl font-bold ${data.balance >= 0 ? "text-green-600" : "text-red-600"}`}>{data.balance.toLocaleString()}원</div>
           </div>
           <div className="text-center">
             <div className="text-lg font-semibold">계산 공식</div>
-            <div className="text-sm text-muted-foreground">
-              (근무일 + 휴일근무) × 10,000 - 휴가일 × 10,000
-            </div>
+            <div className="text-sm text-muted-foreground">(근무일 + 휴일근무) × 10,000 - 휴가일 × 10,000</div>
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }
 
+interface MealData {
+  date: string;
+  attendance: string;
+  lunch?: {
+    store: string;
+    amount: number;
+    payer: string;
+  };
+  dinner?: {
+    store: string;
+    amount: number;
+    payer: string;
+  };
+  breakfast?: {
+    store: string;
+    amount: number;
+    payer: string;
+  };
+}
+
 export default function DashboardPage() {
   const [userName, setUserName] = useState<string>("");
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [mealData, setMealData] = useState<MealData[]>([]);
+  const [currentMonth, setCurrentMonth] = useState<number>(new Date().getMonth() + 1);
+  const [currentYear, setCurrentYear] = useState<number>(new Date().getFullYear());
+  const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
+  const [selectedMealType, setSelectedMealType] = useState<"breakfast" | "lunch" | "dinner">("lunch");
+  const [isEditMode, setIsEditMode] = useState<boolean>(false);
+  const [calculationData, setCalculationData] = useState<CalculationData | null>(null);
+  const [formData, setFormData] = useState({
+    payer: "",
+    store: "",
+    amount: "",
+    attendance: "",
+  });
   const router = useRouter();
 
   useEffect(() => {
@@ -171,10 +177,124 @@ export default function DashboardPage() {
     setUserName(name);
   }, [router]);
 
+  const getCacheKey = (month: number, year: number, userName: string) => {
+    return `meal_data_${userName}_${month}_${year}`;
+  };
+
+  const fetchMealData = async (month: number, year: number) => {
+    if (!userName) return;
+
+    const cacheKey = getCacheKey(month, year, userName);
+
+    // Try to get from sessionStorage first
+    try {
+      const cachedData = sessionStorage.getItem(cacheKey);
+      if (cachedData) {
+        const parsedData = JSON.parse(cachedData);
+        setMealData(parsedData);
+        return;
+      }
+    } catch (error) {
+      console.error("Error reading from sessionStorage:", error);
+    }
+
+    // Fetch from API if not in cache
+    try {
+      const response = await fetch(`/api/calendar/meals?month=${month}&name=${encodeURIComponent(userName)}`);
+      if (response.ok) {
+        const result = await response.json();
+        const mealDataResult = result.data || [];
+        setMealData(mealDataResult);
+
+        // Save to sessionStorage
+        try {
+          sessionStorage.setItem(cacheKey, JSON.stringify(mealDataResult));
+        } catch (error) {
+          console.error("Error saving to sessionStorage:", error);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch meal data:", error);
+    }
+  };
+
+  // Initial fetch when userName is set
+  useEffect(() => {
+    if (userName) {
+      fetchMealData(currentMonth, currentYear);
+    }
+  }, [userName, currentMonth, currentYear]);
+
+  const handleMonthChange = (month: number, year: number) => {
+    setCurrentMonth(month);
+    setCurrentYear(year);
+    fetchMealData(month, year);
+  };
+
   const handleLogout = () => {
     toast.success("로그아웃 해");
     // localStorage.removeItem("name");
     // router.push("/");
+  };
+
+  const handleAddMeal = (mealType: "breakfast" | "lunch" | "dinner") => {
+    setSelectedMealType(mealType);
+    setIsEditMode(false);
+    setFormData({ payer: "", store: "", amount: "", attendance: "" });
+    setIsDrawerOpen(true);
+  };
+
+  const handleEditMeal = (mealType: "breakfast" | "lunch" | "dinner", mealInfo: MealData) => {
+    setSelectedMealType(mealType);
+    setIsEditMode(true);
+
+    // 해당 식사 타입의 데이터로 폼 초기화
+    const mealTypeData = mealInfo[mealType];
+    setFormData({
+      payer: mealTypeData?.payer || "",
+      store: mealTypeData?.store || "",
+      amount: mealTypeData?.amount?.toString() || "",
+      attendance: mealInfo.attendance || "",
+    });
+
+    setIsDrawerOpen(true);
+  };
+
+  const handleHolidayAttendanceEdit = (mealInfo: MealData) => {
+    setSelectedMealType("lunch"); // 기본값으로 중식 설정
+    setIsEditMode(true);
+
+    // 근태만 수정할 수 있도록 폼 초기화 (식사 정보는 비워둠)
+    setFormData({
+      payer: "",
+      store: "",
+      amount: "",
+      attendance: mealInfo.attendance || "",
+    });
+
+    setIsDrawerOpen(true);
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // TODO: API 호출로 데이터 저장/수정
+    console.log(`Form ${isEditMode ? "updated" : "submitted"}:`, {
+      mealType: selectedMealType,
+      date: selectedDate,
+      isEditMode,
+      ...formData,
+    });
+
+    const mealTypeKorean = selectedMealType === "breakfast" ? "조식" : selectedMealType === "lunch" ? "중식" : "석식";
+    toast.success(`${mealTypeKorean} 기록이 ${isEditMode ? "수정" : "저장"}되었습니다.`);
+
+    setIsDrawerOpen(false);
+    setIsEditMode(false);
+    setFormData({ payer: "", store: "", amount: "", attendance: "" });
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   if (!userName) {
@@ -201,155 +321,62 @@ export default function DashboardPage() {
       </header>
 
       {/* 메인 콘텐츠 */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* 반기별 엑셀 파일 읽기 카드 */}
-          {/* <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="flex items-center space-x-2">
-                <span className="text-2xl">📊</span>
-                <CardTitle className="text-lg">반기별 엑셀 파일 읽기</CardTitle>
-              </div>
-              <CardDescription>현재 날짜 기준으로 반기 폴더를 찾아 특정 셀 값을 읽습니다</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild className="w-full">
-                <Link href="/semester">시작하기</Link>
-              </Button>
-            </CardContent>
-          </Card> */}
-
-          {/* Google Drive 파일 조회 카드 */}
-          {/* <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="flex items-center space-x-2">
-                <span className="text-2xl">🗂️</span>
-                <CardTitle className="text-lg">Google Drive 파일 조회</CardTitle>
-              </div>
-              <CardDescription>서비스 계정으로 Google Drive 파일 목록을 조회합니다</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild className="w-full" variant="outline">
-                <Link href="/drive">파일 조회</Link>
-              </Button>
-            </CardContent>
-          </Card> */}
-
-          {/* API 테스트 카드 */}
-          {/* <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="flex items-center space-x-2">
-                <span className="text-2xl">🧪</span>
-                <CardTitle className="text-lg">API 테스트</CardTitle>
-              </div>
-              <CardDescription>다양한 Google Drive API 기능을 테스트할 수 있습니다</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild className="w-full" variant="ghost">
-                <Link href="/test">테스트 시작</Link>
-              </Button>
-            </CardContent>
-          </Card> */}
-
-          {/* 금액 계산 결과 */}
-          <Card className="col-span-full">
-            <CardHeader>
-              <CardTitle className="text-xl">💰 금액 계산 결과</CardTitle>
-              <CardDescription>선택한 월의 근무 현황 및 금액 정보</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <CalculationResult userName={userName} />
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="mt-12">
-          <Calendar21 />
-          <div className="flex flex-col gap-y-3 mt-4">
-            <div className="flex w-full items-center justify-between px-1">
-              <div className="text-sm font-medium">2025-08-01</div>
-              <Button variant="ghost" size="icon" className="size-6" title="Add Event">
-                <Plus />
-                <span className="sr-only">Add Event</span>
-              </Button>
+      <main className="container mx-auto px-4 py-6 bg-gray-100">
+        {/* 금액 계산 결과 */}
+        <Card className="mb-8 border-none shadow-none">
+          <CardHeader className="mb-4">
+            <CardTitle className="text-3xl font-semibold mb-6">
+              8<span className="text-lg">월 5일</span>
+            </CardTitle>
+            <Alert className="bg-blue-50 border-none">
+              <AlertTitle className="text-md font-light">현재까지 200,000원 남으셨네요!</AlertTitle>
+            </Alert>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+              <ChartPieDonut
+                availableAmount={calculationData?.availableAmount || 0}
+                totalUsed={calculationData?.totalUsed || 0}
+                month={calculationData?.month || new Date().getMonth() + 1}
+                className="relative"
+              />
+              <CalculationResult userName={userName} onDataChange={setCalculationData} />
             </div>
-            <div className="flex w-full flex-col gap-2">
-              {[{ title: "asdfadf" }, { title: "asdfadf" }, { title: "asdfadf" }].map((event, index) => (
-                <Card key={index} className="bg-gray-50 p-2 pl-6 text-sm shadow-none rounded-md border-0 hover:bg-gray-200/60 cursor-pointer">
-                  <div className="font-medium">{event.title}</div>
-                  <div className="text-muted-foreground text-xs">
-                    {/* {formatDateRange(new Date(event.from), new Date(event.to))} */}
-                    2025-08-01
-                  </div>
-                </Card>
-              ))}
+          </CardContent>
+        </Card>
+
+        {/* 식사 기록 섹션 */}
+        <div className="space-y-6">
+          <div className="border-t pt-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">📅 식대 기록</h2>
+            <Calendar21 onDateSelect={setSelectedDate} selectedDate={selectedDate} onMonthChange={handleMonthChange} mealData={mealData} />
+            <div className="mt-4">
+              <MealCards selectedDate={selectedDate} onAddMeal={handleAddMeal} onEditMeal={handleEditMeal} onHolidayEdit={handleHolidayAttendanceEdit} mealData={mealData} />
             </div>
           </div>
         </div>
-
-        {/* 사용자 정보 섹션 */}
-        <div className="mt-12">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xl">사용자 정보</CardTitle>
-              <CardDescription>현재 로그인된 사용자의 정보입니다</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="font-medium text-foreground">사용자명:</span>
-                  <span className="text-muted-foreground">{userName}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="font-medium text-foreground">로그인 시간:</span>
-                  <span className="text-muted-foreground">{new Date().toLocaleString("ko-KR")}</span>
-                </div>
-                <div className="flex justify-between items-center py-2">
-                  <span className="font-medium text-foreground">세션 상태:</span>
-                  <span className="text-green-600 font-medium">활성화</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* 최근 활동 섹션 */}
-        <div className="mt-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xl">빠른 시작 가이드</CardTitle>
-              <CardDescription>주요 기능을 빠르게 시작하는 방법입니다</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-start space-x-3 p-3 rounded-lg bg-muted/50">
-                  <span className="text-lg">1️⃣</span>
-                  <div>
-                    <h4 className="font-medium text-foreground">반기 폴더 확인</h4>
-                    <p className="text-sm text-muted-foreground">Google Drive에서 현재 반기에 해당하는 폴더가 있는지 확인하세요</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-3 p-3 rounded-lg bg-muted/50">
-                  <span className="text-lg">2️⃣</span>
-                  <div>
-                    <h4 className="font-medium text-foreground">파일 공유 설정</h4>
-                    <p className="text-sm text-muted-foreground">서비스 계정(hr-tech@meal-acg.iam.gserviceaccount.com)과 파일을 공유하세요</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-3 p-3 rounded-lg bg-muted/50">
-                  <span className="text-lg">3️⃣</span>
-                  <div>
-                    <h4 className="font-medium text-foreground">엑셀 파일 읽기</h4>
-                    <p className="text-sm text-muted-foreground">반기별 엑셀 파일 읽기 기능을 사용하여 특정 셀 값을 조회하세요</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </main>
+
+      {/* Lazy-loaded Meal Entry Drawer */}
+      <Suspense
+        fallback={
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+          </div>
+        }
+      >
+        <MealEntryDrawer
+          isOpen={isDrawerOpen}
+          onOpenChange={setIsDrawerOpen}
+          selectedMealType={selectedMealType}
+          setSelectedMealType={setSelectedMealType}
+          isEditMode={isEditMode}
+          formData={formData}
+          selectedDate={selectedDate}
+          onFormSubmit={handleFormSubmit}
+          onInputChange={handleInputChange}
+        />
+      </Suspense>
     </div>
   );
 }

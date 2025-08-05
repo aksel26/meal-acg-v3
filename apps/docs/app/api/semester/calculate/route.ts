@@ -32,8 +32,6 @@ async function findSemesterFolder(drive: any, targetMonth: number) {
   const semester = targetMonth <= 6 ? "상반기" : "하반기";
   const folderName = `${currentYear}년 ${semester}`;
 
-  console.log(`Searching for folder: ${folderName}`);
-
   try {
     // 개인 드라이브에서 검색
     const personalResponse = await drive.files.list({
@@ -90,12 +88,8 @@ async function findExcelFiles(drive: any, folderId: string, userName: string) {
       const normalizedFileName = fileNameWithoutExt.normalize("NFC");
       const normalizedUserName = userName.normalize("NFC");
 
-      console.log("fileNameWithoutExt:", normalizedFileName);
-      console.log("userName:", normalizedUserName);
-
       return normalizedFileName === normalizedUserName;
     });
-    console.log("matchedFiles:", matchedFiles);
 
     return matchedFiles;
   } catch (error) {
@@ -105,18 +99,11 @@ async function findExcelFiles(drive: any, folderId: string, userName: string) {
 }
 
 async function calculateFromExcel(drive: any, fileId: string, targetMonth: number) {
-  console.log("fileId:", fileId);
   try {
     // 파일 정보 가져오기
     const fileInfo = await drive.files.get({
       fileId: fileId,
       fields: "id, name, parents, webViewLink",
-    });
-    console.log("File info:", {
-      name: fileInfo.data.name,
-      id: fileInfo.data.id,
-      parents: fileInfo.data.parents,
-      webViewLink: fileInfo.data.webViewLink,
     });
 
     // Excel 파일 바이너리 데이터 다운로드 (stream 방식)
@@ -132,10 +119,8 @@ async function calculateFromExcel(drive: any, fileId: string, targetMonth: numbe
 
     // Stream을 Buffer로 변환
     const buffer = await streamToBuffer(fileResponse.data);
-    console.log("File download buffer length:", buffer.length);
 
     const workbook = XLSX.read(buffer, { type: "buffer" });
-    console.log("Available sheets:", workbook.SheetNames);
 
     // 시트 선택 ('내역' 시트가 있으면 사용, 없으면 첫 번째 시트)
     const targetSheetName = workbook.SheetNames.includes("내역") ? "내역" : workbook.SheetNames[0];
@@ -145,17 +130,14 @@ async function calculateFromExcel(drive: any, fileId: string, targetMonth: numbe
       return null;
     }
 
-    console.log("Using sheet:", targetSheetName);
     const worksheet = workbook.Sheets[targetSheetName];
-    console.log("worksheet:", worksheet);
 
     if (!worksheet) {
       console.error(`Sheet '${targetSheetName}' not found`);
       return null;
     }
 
-    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, range: "B4:R204" });
-    console.log("jsonData:", jsonData);
+    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, range: "B3:R204" });
 
     if (!jsonData || jsonData.length <= 1) {
       return null;
@@ -165,11 +147,11 @@ async function calculateFromExcel(drive: any, fileId: string, targetMonth: numbe
     let holidayWorkDays = 0;
     let vacationDays = 0;
     let totalUsed = 0;
-    console.log("👀");
     // 데이터 처리 (B4부터 시작하므로 인덱스 조정)
     for (let i = 1; i < jsonData.length; i++) {
       const row = jsonData[i] as any[];
       const month = parseInt(row[1]) || 0; // C열 (월) - B4 기준으로 인덱스 1
+      const day = parseInt(row[2]) || 0; // C열 (월) - B4 기준으로 인덱스 1
 
       if (month === targetMonth) {
         const workType = row[4] || ""; // F열 (업무일) - B4 기준으로 인덱스 4
@@ -177,12 +159,14 @@ async function calculateFromExcel(drive: any, fileId: string, targetMonth: numbe
         const amount = parseFloat(row[8]) || 0; // J열 (사용금액) - B4 기준으로 인덱스 8
 
         // 근무일 계산
-        if (attendance === "근무") {
+        if (workType.includes("업무일")) {
           workDays++;
+        }
+        if (month === 7) {
         }
 
         // 휴일근무 계산
-        if (workType.includes("휴일")) {
+        if (workType.includes("휴일") && attendance.includes("근무")) {
           holidayWorkDays++;
         }
 
@@ -223,8 +207,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Name parameter is required" }, { status: 400 });
     }
 
-    console.log(`Calculating for month: ${month}, name: ${name}`);
-
     const authResult = await getAuthClient();
     if (authResult instanceof NextResponse) {
       return authResult;
@@ -248,7 +230,6 @@ export async function GET(request: NextRequest) {
     for (const file of files) {
       if (file.mimeType === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" || file.mimeType === "application/vnd.ms-excel") {
         const result = await calculateFromExcel(drive, file.id, month);
-        console.log("result:", result);
         if (result) {
           return NextResponse.json({
             success: true,

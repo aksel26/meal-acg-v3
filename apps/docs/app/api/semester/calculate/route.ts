@@ -151,7 +151,6 @@ async function calculateFromExcel(drive: any, fileId: string, targetMonth: numbe
     for (let i = 1; i < jsonData.length; i++) {
       const row = jsonData[i] as any[];
       const month = parseInt(row[1]) || 0; // C열 (월) - B4 기준으로 인덱스 1
-      const day = parseInt(row[2]) || 0; // C열 (월) - B4 기준으로 인덱스 1
 
       if (month === targetMonth) {
         const workType = row[4] || ""; // F열 (업무일) - B4 기준으로 인덱스 4
@@ -161,8 +160,6 @@ async function calculateFromExcel(drive: any, fileId: string, targetMonth: numbe
         // 근무일 계산
         if (workType.includes("업무일")) {
           workDays++;
-        }
-        if (month === 7) {
         }
 
         // 휴일근무 계산

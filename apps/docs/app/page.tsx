@@ -31,7 +31,7 @@ export default function HomePage() {
     setError(null);
 
     try {
-      const authUrl = process.env.NEXT_PUBLIC_AUTH_URL;
+      const authUrl = `${process.env.NEXT_PUBLIC_AUTH_URL}/login`;
       if (!authUrl) {
         throw new Error("AUTH_URL이 설정되지 않았습니다.");
       }
@@ -48,7 +48,6 @@ export default function HomePage() {
       });
 
       const data = await response.json();
-      console.log("data:", data);
 
       if (!response.ok) {
         throw new Error(data.message || "로그인에 실패했습니다.");
@@ -56,6 +55,7 @@ export default function HomePage() {
 
       // 로그인 성공 시 checkAuth페이지로 이동
       if (data.data.userName) {
+        localStorage.setItem("token", data.data.accessToken);
         localStorage.setItem("name", data.data.userName);
         router.push("/checkAuth");
         // setLoginData(data.data);

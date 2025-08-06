@@ -6,15 +6,10 @@ import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { Button } from "./button";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "./command";
-
-export interface ComboboxOption {
-  value: string;
-  label: string;
-}
+import { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "./command";
 
 interface ComboboxProps {
-  options: ComboboxOption[];
+  options: string[];
   value?: string;
   onValueChange?: (value: string) => void;
   placeholder?: string;
@@ -27,7 +22,7 @@ interface ComboboxProps {
 }
 
 export function Combobox({
-  options = [],
+  options = [""],
   value = "",
   onValueChange,
   placeholder = "Select option...",
@@ -41,13 +36,13 @@ export function Combobox({
   const [open, setOpen] = React.useState(false);
   const [searchValue, setSearchValue] = React.useState("");
 
-  const selectedOption = options.find((option) => option.value === value);
+  const selectedOption = options.find((option) => option === value);
 
   // Filter options based on search value
   const filteredOptions = React.useMemo(() => {
     if (!searchValue) return options;
 
-    return options.filter((option) => option.label.toLowerCase().includes(searchValue.toLowerCase()));
+    return options.filter((option: string) => option.toLowerCase().includes(searchValue.toLowerCase()));
   }, [options, searchValue]);
 
   // Clear search when popover closes
@@ -61,7 +56,7 @@ export function Combobox({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="outline" role="combobox" aria-expanded={open} disabled={disabled} className={cn("w-full justify-between", className)}>
-          <span className={cn("truncate", !selectedOption && "text-muted-foreground")}>{selectedOption ? selectedOption.label : placeholder}</span>
+          <span className={cn("truncate", !selectedOption && "text-muted-foreground")}>{selectedOption ? selectedOption : placeholder}</span>
           {loading ? <Loader2 className="ml-2 h-4 w-4 shrink-0 animate-spin opacity-50" /> : <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />}
         </Button>
       </PopoverTrigger>
@@ -80,10 +75,10 @@ export function Combobox({
               )}
             </CommandEmpty>
             <CommandGroup>
-              {filteredOptions.map((option) => (
+              {filteredOptions.map((option, index) => (
                 <CommandItem
-                  key={option.value}
-                  value={option.value}
+                  key={index}
+                  value={option}
                   onSelect={(currentValue) => {
                     const newValue = currentValue === value ? "" : currentValue;
                     onValueChange?.(newValue);
@@ -91,8 +86,8 @@ export function Combobox({
                     setOpen(false);
                   }}
                 >
-                  {option.label}
-                  <Check className={cn("ml-auto h-4 w-4", value === option.value ? "opacity-100" : "opacity-0")} />
+                  {option}
+                  <Check className={cn("ml-auto h-4 w-4", value === option ? "opacity-100" : "opacity-0")} />
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -104,41 +99,3 @@ export function Combobox({
 }
 
 // Keep the demo for backward compatibility
-const frameworks = [
-  {
-    value: "next.js",
-    label: "Next.js",
-  },
-  {
-    value: "sveltekit",
-    label: "SvelteKit",
-  },
-  {
-    value: "nuxt.js",
-    label: "Nuxt.js",
-  },
-  {
-    value: "remix",
-    label: "Remix",
-  },
-  {
-    value: "astro",
-    label: "Astro",
-  },
-];
-
-export function ComboboxDemo() {
-  const [value, setValue] = React.useState("");
-
-  return (
-    <Combobox
-      options={frameworks}
-      value={value}
-      onValueChange={setValue}
-      placeholder="Select framework..."
-      searchPlaceholder="Search framework..."
-      emptyText="No framework found."
-      className="w-[200px]"
-    />
-  );
-}

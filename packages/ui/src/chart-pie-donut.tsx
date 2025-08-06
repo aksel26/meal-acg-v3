@@ -11,7 +11,6 @@ export const description = "A donut chart showing budget usage";
 interface ChartPieDonutProps {
   availableAmount?: number;
   totalUsed?: number;
-  month?: number;
   className?: string;
 }
 
@@ -29,7 +28,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function ChartPieDonut({ availableAmount = 0, totalUsed = 0, month = new Date().getMonth() + 1, className }: ChartPieDonutProps) {
+export function ChartPieDonut({ availableAmount = 0, totalUsed = 0, className }: ChartPieDonutProps) {
   const balance = availableAmount - totalUsed;
   const usagePercentage = availableAmount > 0 ? (totalUsed / availableAmount) * 100 : 0;
 

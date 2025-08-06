@@ -103,7 +103,7 @@ export default function Calendar21({ onDateSelect, selectedDate, onMonthChange, 
       onNextClick={handleNextClick}
       onPrevClick={handlePrevClick}
       captionLayout="dropdown"
-      className="rounded-lg [--cell-size:--spacing(11)] md:[--cell-size:--spacing(13)] w-full"
+      className="rounded-lg [--cell-size:--spacing(11)] md:[--cell-size:--spacing(13)] w-full p-6"
       formatters={{
         formatMonthDropdown: (date) => {
           return date.toLocaleString("default", { month: "long" });

@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
     // Get token from request headers
     const token = request.headers.get("authorization");
-    
+
     if (!token) {
       return NextResponse.json({ error: "Authorization token is required" }, { status: 401 });
     }
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": token, // Use the token from client
+        Authorization: token, // Use the token from client
       },
     });
 
@@ -60,10 +60,9 @@ export async function GET(request: NextRequest) {
       formattedUsers = usersData.map((user) => {
         // If user is an object, prioritize userName and userIdx
         if (typeof user === "object" && user !== null) {
-          return {
-            value: user.userIdx?.toString() || user.id || user.userId || user.value || user.toString(),
-            label: user.userName || user.name || user.username || user.label || user.toString(),
-          };
+          return user.userName;
+          // value: user.userIdx?.toString() || user.id || user.userId || user.value || user.toString(),
+          // label: user.userName || user.name || user.username || user.label || user.toString(),
         }
         // If user is just a string
         else if (typeof user === "string") {
@@ -83,10 +82,11 @@ export async function GET(request: NextRequest) {
     } else {
       // If response is not an array, try to extract users from a property
       const users = usersData.users || usersData.data || [];
-      formattedUsers = users.map((user: UserRecord) => ({
-        value: user?.userIdx?.toString() || user?.id || user?.userId || user?.value || user?.toString() || "",
-        label: user?.userName || user?.name || user?.username || user?.label || user?.toString() || "",
-      }));
+      formattedUsers = users.map(
+        (user: UserRecord) => user?.userName
+        // value: user?.userIdx?.toString() || user?.id || user?.userId || user?.value || user?.toString() || "",
+        // label: user?.userName || user?.name || user?.username || user?.label || user?.toString() || "",
+      );
     }
 
     return NextResponse.json({

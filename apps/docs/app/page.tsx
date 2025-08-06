@@ -57,7 +57,8 @@ export default function HomePage() {
       if (data.data.userName) {
         localStorage.setItem("token", data.data.accessToken);
         localStorage.setItem("name", data.data.userName);
-        router.push("/checkAuth");
+        // router.push("/checkAuth");
+        router.push("/dashboard");
         // setLoginData(data.data);
         // setShowSuccessModal(true);
       } else {

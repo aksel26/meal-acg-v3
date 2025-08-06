@@ -2,6 +2,8 @@ import { Sonner } from "@repo/ui/src/sonner";
 import "./globals.css";
 import "@repo/ui/styles.css";
 import type { Metadata } from "next";
+import QueryProvider from "./providers/QueryProvider"; // 위에서 생성한 Provider 임포트
+
 // import { Geist } from "next/font/google";
 import localFont from "next/font/local";
 
@@ -18,8 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ko">
       <body className={myFont.className}>
-        {children}
-
+        <QueryProvider>{children}</QueryProvider>
         <Sonner />
       </body>
     </html>

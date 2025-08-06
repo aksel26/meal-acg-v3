@@ -12,12 +12,15 @@
   },
   "dependencies": {
     "@repo/ui": "workspace:*",
+    "@tanstack/react-query": "^5.84.1",
+    "@tanstack/react-query-devtools": "^5.84.1",
+    "firebase-admin": "^13.4.0",
     "googleapis": "^154.1.0",
     "next": "^15.4.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "xlsx": "^0.18.5",
-    "utils": "workspace:*"
+    "utils": "workspace:*",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "^15.4.2",

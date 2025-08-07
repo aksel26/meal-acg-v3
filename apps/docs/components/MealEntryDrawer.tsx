@@ -146,22 +146,14 @@ export default function MealEntryDrawer({
     <Drawer open={isOpen} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[90vh] max-w-md mx-auto bg-gradient-to-br from-white to-gray-50">
         <DrawerHeader className="text-center border-b border-gray-100 pb-6">
-          <div className="flex items-center justify-center gap-3 mb-2">
-            <div className="text-3xl">{currentMealOption?.emoji}</div>
-            <DrawerTitle className="text-lg font-bold text-gray-800">{currentMealOption?.label} 기록</DrawerTitle>
-            <div className={`px-3 py-1 rounded-full text-xs font-medium ${isEditMode ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"}`}>{isEditMode ? "수정" : "추가"}</div>
-          </div>
-          <DrawerDescription className="text-gray-600">
-            <span className="font-medium">
-              {selectedDate?.toLocaleDateString("ko-KR", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-                weekday: "short",
-              })}
-            </span>{" "}
-            식사 정보를 {isEditMode ? "수정" : "입력"}해주세요.
-          </DrawerDescription>
+          <DrawerTitle className="text-base font-bold text-gray-800">
+            {selectedDate?.toLocaleDateString("ko-KR", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+              weekday: "short",
+            })}
+          </DrawerTitle>
         </DrawerHeader>
 
         <form
@@ -182,18 +174,17 @@ export default function MealEntryDrawer({
             </Label>
             <div className="grid grid-cols-3 gap-2">
               {mealTypeOptions.map((meal) => (
-                <button
+                <Button
                   key={meal.value}
                   type="button"
                   onClick={() => setSelectedMealType(meal.value as "breakfast" | "lunch" | "dinner")}
                   className={`
-                    flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all duration-200 
+                    flex items-center justify-center border-2 transition-all duration-200 bg-white text-gray-800
                     ${selectedMealType === meal.value ? `${meal.color} border-current shadow-md scale-105` : `border-gray-200 ${meal.hoverColor} hover:border-gray-300 hover:shadow-sm`}
                   `}
                 >
-                  <span className="text-2xl mb-1">{meal.emoji}</span>
                   <span className="text-xs font-medium">{meal.label}</span>
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -233,7 +224,7 @@ export default function MealEntryDrawer({
               placeholder="식당명을 입력해주세요"
               value={formData.store}
               onChange={(e) => onInputChange("store", e.target.value)}
-              className="rounded-xl border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
+              className="rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 text-sm"
             />
           </div>
 
@@ -250,8 +241,7 @@ export default function MealEntryDrawer({
                 value={formData.amount}
                 onChange={(e) => onInputChange("amount", e.target.value)}
                 min="0"
-                step="100"
-                className="rounded-xl border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 pl-8"
+                className="rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 pl-8 text-sm"
               />
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₩</span>
             </div>
@@ -263,7 +253,7 @@ export default function MealEntryDrawer({
               <span>📋</span> 근태
             </Label>
             <Select value={formData.attendance} onValueChange={(value) => onInputChange("attendance", value)}>
-              <SelectTrigger className="w-full rounded-xl border-gray-300 focus:border-blue-500 focus:ring-blue-500/20">
+              <SelectTrigger className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500/20">
                 <SelectValue placeholder="근태를 선택해주세요" />
               </SelectTrigger>
               <SelectContent className="rounded-xl">
@@ -280,50 +270,52 @@ export default function MealEntryDrawer({
           </div>
         </form>
 
-        <DrawerFooter className="px-6 py-4 border-t border-gray-100 bg-white/50 space-y-3">
-          {/* 저장/수정 버튼 */}
-          <Button
-            type="submit"
-            onClick={async (e) => {
-              setIsSubmitting(true);
-              try {
-                await onFormSubmit(e);
-              } finally {
-                setIsSubmitting(false);
-              }
-            }}
-            className="w-full rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all duration-200 h-12"
-            disabled={isSubmitting || isDeleting}
-          >
-            {isSubmitting ? (
-              <div className="flex items-center gap-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                {isEditMode ? "수정 중..." : "저장 중..."}
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <span>{isEditMode ? "✏️" : "💾"}</span>
-                {isEditMode ? "수정하기" : "저장하기"}
-              </div>
-            )}
-          </Button>
+        <DrawerFooter className="px-6 pt-4 pb-8! border-t border-gray-100 bg-white/50 space-y-3">
+          <div className="flex gap-x-6">
+            <DrawerClose asChild>
+              <Button variant="outline" className="flex-1/2 rounded-md border-gray-300 hover:bg-gray-50 transition-all duration-200" disabled={isSubmitting || isDeleting}>
+                닫기
+              </Button>
+            </DrawerClose>
+            {/* 저장/수정 버튼 */}
+            <Button
+              type="submit"
+              onClick={async (e) => {
+                setIsSubmitting(true);
+                try {
+                  await onFormSubmit(e);
+                } finally {
+                  setIsSubmitting(false);
+                }
+              }}
+              className="flex-1/2 rounded-md bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all duration-200"
+              disabled={isSubmitting || isDeleting}
+            >
+              {isSubmitting ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                  {isEditMode ? "수정 중..." : "저장 중..."}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span>{isEditMode ? "✏️" : "💾"}</span>
+                  {isEditMode ? "수정하기" : "저장하기"}
+                </div>
+              )}
+            </Button>
+          </div>
 
           {/* 삭제 버튼 (편집 모드에서만) */}
           {isEditMode && onDeleteMeal && (
             <Suspense
               fallback={
-                <Button variant="destructive" className="w-full rounded-xl h-12" disabled>
+                <Button variant="destructive" className="w-full rounded-lg" disabled>
                   🗑️ 이 날짜 내역 삭제
                 </Button>
               }
             >
               <DeleteConfirmDialog selectedDate={selectedDate} isDeleting={isDeleting} onConfirm={handleDeleteMeal}>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  className="w-full rounded-xl hover:bg-red-700 shadow-lg hover:shadow-xl transition-all duration-200 h-12"
-                  disabled={isSubmitting || isDeleting}
-                >
+                <Button type="button" variant="destructive" className="w-full rounded-lg hover:bg-red-700 shadow-lg hover:shadow-xl transition-all duration-200" disabled={isSubmitting || isDeleting}>
                   {isDeleting ? (
                     <div className="flex items-center gap-2">
                       <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
@@ -340,14 +332,6 @@ export default function MealEntryDrawer({
           )}
 
           {/* 취소 버튼 */}
-          <DrawerClose asChild>
-            <Button variant="outline" className="w-full rounded-lg border-gray-300 hover:bg-gray-50 h-12 transition-all duration-200" disabled={isSubmitting || isDeleting}>
-              <div className="flex items-center gap-2">
-                <span>❌</span>
-                취소
-              </div>
-            </Button>
-          </DrawerClose>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>

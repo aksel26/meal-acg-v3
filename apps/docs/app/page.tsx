@@ -5,9 +5,10 @@ import { Button } from "@repo/ui/src/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/src/card";
 import { Input } from "@repo/ui/src/input";
 import { Label } from "@repo/ui/src/label";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-
+import LOGO from "../public/images/ACG_LOGO_GRAY.png";
 export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -74,6 +75,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <Image src={LOGO} alt="CI" width={0} height={0} style={{ width: "60px", height: "20px" }} />
       <div className="w-full max-w-md space-y-6">
         {/* 로그인 카드 */}
         <Card>

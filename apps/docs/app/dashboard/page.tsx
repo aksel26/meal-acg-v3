@@ -8,14 +8,19 @@ import Calendar21 from "@repo/ui/src/calendar-21";
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/src/card";
 import { ChartPieDonut } from "@repo/ui/src/chart-pie-donut";
 import { useRouter } from "next/navigation";
-import { Suspense, lazy, useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState, useRef } from "react";
 import { MealCards } from "../../components/MealCards";
+import { BottomNavigation } from "../../components/BottomNavigation";
 import { useCalculationData } from "../../hooks/use-calculation-data";
 import { useMealData } from "../../hooks/use-meal-data";
 import { useFileValidation } from "../../hooks/use-file-validation";
 import { useMealSubmit } from "../../hooks/use-meal-submit";
 import { useMealDelete } from "../../hooks/use-meal-delete";
-
+import Image from "next/image";
+import LOGO from "../../public/images/ACG_LOGO_GRAY.png";
+import { formatDateKorean } from "utils";
+import { Copy } from "@repo/ui/icons";
+import { toast } from "@repo/ui/src/sonner";
 // Lazy load the MealEntryDrawer component
 const MealEntryDrawer = lazy(() => import("../../components/MealEntryDrawer"));
 
@@ -30,12 +35,7 @@ interface CalculationData {
   balance: number;
 }
 
-function CalculationResult({ userName, month, year, onDataChange }: { 
-  userName: string; 
-  month: number;
-  year: number;
-  onDataChange?: (data: CalculationData | null) => void 
-}) {
+function CalculationResult({ userName, month, year, onDataChange }: { userName: string; month: number; year: number; onDataChange?: (data: CalculationData | null) => void }) {
   const { data, isLoading, error, refetch } = useCalculationData(userName, month, year);
 
   // 데이터 변경 시 부모 컴포넌트에 전달
@@ -121,6 +121,9 @@ export default function DashboardPage() {
   const [selectedMealType, setSelectedMealType] = useState<"breakfast" | "lunch" | "dinner">("lunch");
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [calculationData, setCalculationData] = useState<CalculationData | null>(null);
+  const [isHeaderVisible, setIsHeaderVisible] = useState<boolean>(true);
+  const [activeNavTab, setActiveNavTab] = useState<string>("lunch");
+  console.log("isHeaderVisible:", isHeaderVisible);
   const [formData, setFormData] = useState({
     payer: "",
     store: "",
@@ -128,14 +131,12 @@ export default function DashboardPage() {
     attendance: "",
   });
   const router = useRouter();
+  const lastScrollY = useRef<number>(0);
+  const scrollDirectionRef = useRef<"up" | "down" | null>(null);
 
   // TanStack Query hooks 사용
   const { data: mealData = [] } = useMealData(userName, currentMonth, currentYear);
-  const { 
-    data: fileValidationData, 
-    isLoading: fileValidationLoading, 
-    error: fileValidationError 
-  } = useFileValidation(userName, currentMonth, currentYear);
+  const { data: fileValidationData, isLoading: fileValidationLoading, error: fileValidationError } = useFileValidation(userName, currentMonth, currentYear);
   const mealSubmitMutation = useMealSubmit();
   const mealDeleteMutation = useMealDelete();
 
@@ -163,6 +164,37 @@ export default function DashboardPage() {
     setUserName(name);
   }, [router]);
 
+  // 스크롤 효과를 위한 useEffect
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      console.log("Current scroll Y:", currentScrollY);
+
+      // 스크롤이 100px 이상일 때 헤더 숨김
+      if (currentScrollY > 100) {
+        const scrollDifference = currentScrollY - lastScrollY.current;
+
+        if (scrollDifference > 5) {
+          // 아래로 스크롤 - 헤더 숨김
+          console.log("Hiding header");
+          setIsHeaderVisible(false);
+        } else if (scrollDifference < -5) {
+          // 위로 스크롤 - 헤더 표시
+          console.log("Showing header");
+          setIsHeaderVisible(true);
+        }
+      } else {
+        // 상단 100px 이내에서는 항상 헤더 표시
+        setIsHeaderVisible(true);
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const handleMonthChange = (month: number, year: number) => {
     setCurrentMonth(month);
     setCurrentYear(year);
@@ -171,6 +203,19 @@ export default function DashboardPage() {
   const handleLogout = () => {
     localStorage.removeItem("name");
     router.push("/");
+  };
+
+  const copyAccound = () => {
+    const accountNumber = "123-456-7890"; // 여기에 실제 계좌번호를 넣으세요
+    navigator.clipboard
+      .writeText(accountNumber)
+      .then(() => {
+        toast.success("계좌번호가 복사되었습니다.");
+      })
+      .catch((err) => {
+        console.error("계좌번호 복사 실패:", err);
+        toast.error("계좌번호 복사에 실패했습니다.");
+      });
   };
 
   const handleAddMeal = (mealType: "breakfast" | "lunch" | "dinner") => {
@@ -211,7 +256,7 @@ export default function DashboardPage() {
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedDate) {
       return;
     }
@@ -232,7 +277,7 @@ export default function DashboardPage() {
 
     try {
       await mealSubmitMutation.mutateAsync(requestData);
-      
+
       // 성공 시 폼 닫기 및 초기화
       setIsDrawerOpen(false);
       setIsEditMode(false);
@@ -279,56 +324,36 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-background max-w-md mx-auto">
       {/* 헤더 */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">대시보드</h1>
-            <p className="text-sm text-muted-foreground">안녕하세요, {userName}님</p>
-            {fileValidationStatus && (
-              <div className="mt-2">
-                {fileValidationStatus === "checking" && (
-                  <p className="text-xs text-blue-600">{fileValidationMessage}</p>
-                )}
-                {fileValidationStatus === "valid" && (
-                  <p className="text-xs text-green-600">{fileValidationMessage}</p>
-                )}
-                {fileValidationStatus === "invalid" && (
-                  <p className="text-xs text-red-600">{fileValidationMessage}</p>
-                )}
-              </div>
-            )}
-          </div>
-          <Button onClick={handleLogout} variant="outline">
-            로그아웃
-          </Button>
+      <header className={`border-b bg-card sticky top-0 z-50 transition-transform duration-300 ease-in-out ${isHeaderVisible ? "translate-y-0" : "-translate-y-full"}`}>
+        <div className="container mx-auto px-4 py-5 flex justify-center items-center">
+          <Image src={LOGO} alt="CI" width={0} height={0} style={{ width: "60px", height: "20px" }} />
         </div>
       </header>
 
       {/* 메인 콘텐츠 */}
-      <main className="container mx-auto px-4 py-6 bg-gray-100">
+      <main className="container mx-auto px-4 py-6 pb-[120px]! bg-gray-100">
         {/* 금액 계산 결과 */}
         <Card className="mb-8 border-none shadow-none">
           <CardHeader className="mb-4">
-            <CardTitle className="text-3xl font-semibold mb-6">
-              {currentMonth}<span className="text-lg">월</span>
+            <CardTitle>
+              <p className="text-lg text-foreground mb-2">안녕하세요, {userName}님 👋</p>
+              <p className="text-base font-light text-gray-400">오늘은 {formatDateKorean()} 입니다</p>
             </CardTitle>
-            <Alert className="bg-blue-50 border-none">
-              <AlertTitle className="text-md font-light">현재까지 200,000원 남으셨네요!</AlertTitle>
-            </Alert>
           </CardHeader>
           <CardContent>
+            <div className="flex justify-between items-center mb-4">
+              <p className="text-xl font-bold ">{currentMonth}월 요약</p>
+              <Button variant={"ghost"} onClick={copyAccound}>
+                <Copy />
+                계좌번호 복사
+              </Button>
+            </div>
+            <Alert className="bg-blue-50 border-none mb-4">
+              <AlertTitle className="text-md font-light">{userName}님의 총 잔액은 200,000원이에요. </AlertTitle>
+            </Alert>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-              <ChartPieDonut
-                availableAmount={calculationData?.availableAmount || 0}
-                totalUsed={calculationData?.totalUsed || 0}
-                className="relative"
-              />
-              <CalculationResult 
-                userName={userName} 
-                month={currentMonth}
-                year={currentYear}
-                onDataChange={setCalculationData} 
-              />
+              <ChartPieDonut availableAmount={calculationData?.availableAmount || 0} totalUsed={calculationData?.totalUsed || 0} className="relative" />
+              <CalculationResult userName={userName} month={currentMonth} year={currentYear} onDataChange={setCalculationData} />
             </div>
           </CardContent>
         </Card>
@@ -363,6 +388,9 @@ export default function DashboardPage() {
           onDeleteMeal={handleDeleteMeal}
         />
       </Suspense>
+
+      {/* Bottom Navigation */}
+      <BottomNavigation activeTab={activeNavTab} onTabChange={setActiveNavTab} />
     </div>
   );
 }

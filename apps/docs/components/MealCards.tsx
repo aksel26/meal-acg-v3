@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Button } from "@repo/ui/src/button";
 import { Plus } from "@repo/ui/icons";
+import { Card } from "@repo/ui/src/card";
 
 interface MealData {
   date: string;
@@ -105,7 +106,7 @@ export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, 
   };
 
   return (
-    <div className="space-y-4">
+    <Card className="space-y-4 bg-white p-5 border-none shadow-none">
       {/* Header */}
       <div className="flex items-center justify-between px-1">
         <h3 className="text-lg font-semibold text-gray-900">{formatDate(selectedDate)}</h3>
@@ -183,6 +184,6 @@ export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, 
           ))}
         </div>
       )}
-    </div>
+    </Card>
   );
 }

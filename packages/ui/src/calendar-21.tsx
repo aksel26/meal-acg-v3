@@ -117,15 +117,23 @@ export default function Calendar21({ onDateSelect, selectedDate, onMonthChange, 
           return <div className="p-2 text-sm">{Number(value ?? new Date().getMonth()) + 1}월</div>;
         },
         DayButton: ({ children, modifiers, day, ...props }) => {
+          if (modifiers.outside) {
+            return (
+              <CalendarDayButton day={day} modifiers={modifiers} {...props} onClick={undefined} disabled>
+                <div className="flex flex-col items-center opacity-0 pointer-events-none">{children}</div>
+              </CalendarDayButton>
+            );
+          }
+
           const attendance = getAttendanceForDate(day.date);
-          const { icon, color } = getAttendanceIcon(attendance);
+          const { icon } = getAttendanceIcon(attendance);
 
           return (
             <CalendarDayButton day={day} modifiers={modifiers} {...props}>
-              <div className="flex flex-col items-center">
+              <div className="flex flex-col items-center relative">
                 {children}
-                {!modifiers.outside && icon && (
-                  <span className="text-sm mt-0.5" title={attendance}>
+                {icon && (
+                  <span className="text-sm mt-0.5 absolute top-4 " title={attendance}>
                     {icon}
                   </span>
                 )}

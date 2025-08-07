@@ -36,13 +36,13 @@ export function ChartPieDonut({ availableAmount = 0, totalUsed = 0, className }:
     {
       category: "used",
       amount: totalUsed,
-      fill: "red",
+      fill: "#0a2165",
       label: "사용금액",
     },
     {
       category: "available",
       amount: Math.max(0, balance),
-      fill: "gray",
+      fill: "#f3f4f6",
       label: "잔여금액",
     },
   ].filter((item) => item.amount > 0); // Only show segments with positive amounts

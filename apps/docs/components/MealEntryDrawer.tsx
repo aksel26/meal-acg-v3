@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, lazy, Suspense } from "react";
+import { useUsers } from "@/hooks/useUsers";
 import { Button } from "@repo/ui/src/button";
 import { Input } from "@repo/ui/src/input";
 import { Label } from "@repo/ui/src/label";
@@ -76,9 +77,7 @@ export default function MealEntryDrawer({
   onInputChange,
   onDeleteMeal,
 }: MealEntryDrawerProps) {
-  const [users, setUsers] = useState<string[]>([]);
-  const [usersLoading, setUsersLoading] = useState(false);
-  const [usersError, setUsersError] = useState<string | null>(null);
+  const { users, isLoading: usersLoading, error: usersError, fetchUsers } = useUsers();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -87,46 +86,7 @@ export default function MealEntryDrawer({
     if (isOpen && users.length === 0) {
       fetchUsers();
     }
-  }, [isOpen]);
-
-  const fetchUsers = async () => {
-    setUsersLoading(true);
-    setUsersError(null);
-
-    try {
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        throw new Error("No authentication token found");
-      }
-
-      const response = await fetch("/api/users/ids", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch users: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-
-      if (result.success && Array.isArray(result.data)) {
-        setUsers(result.data);
-      } else {
-        throw new Error("Invalid response format");
-      }
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      setUsersError(error instanceof Error ? error.message : "Failed to load users");
-      setUsers([""]);
-    } finally {
-      setUsersLoading(false);
-    }
-  };
+  }, [isOpen, users.length, fetchUsers]);
 
   const handleDeleteMeal = async () => {
     if (!selectedDate || !onDeleteMeal) return;

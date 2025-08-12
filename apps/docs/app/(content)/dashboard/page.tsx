@@ -8,21 +8,20 @@ import Calendar21 from "@repo/ui/src/calendar-21";
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/src/card";
 import { ChartPieDonut } from "@repo/ui/src/chart-pie-donut";
 import { useRouter } from "next/navigation";
-import { Suspense, lazy, useEffect, useState, useRef } from "react";
-import { MealCards } from "../../components/MealCards";
-import { BottomNavigation } from "../../components/BottomNavigation";
-import { useCalculationData } from "../../hooks/use-calculation-data";
-import { useMealData } from "../../hooks/use-meal-data";
-import { useFileValidation } from "../../hooks/use-file-validation";
-import { useMealSubmit } from "../../hooks/use-meal-submit";
-import { useMealDelete } from "../../hooks/use-meal-delete";
-import Image from "next/image";
-import LOGO from "../../public/images/ACG_LOGO_GRAY.png";
+import React, { Suspense, lazy, useEffect, useState, useRef } from "react";
+import { MealCards } from "../../../components/MealCards";
+import { BottomNavigation } from "../../../components/BottomNavigation";
+import { useCalculationData } from "../../../hooks/use-calculation-data";
+import { useMealData } from "../../../hooks/use-meal-data";
+import { useFileValidation } from "../../../hooks/use-file-validation";
+import { useMealSubmit } from "../../../hooks/use-meal-submit";
+import { useMealDelete } from "../../../hooks/use-meal-delete";
 import { formatDateKorean } from "utils";
 import { Copy } from "@repo/ui/icons";
 import { toast } from "@repo/ui/src/sonner";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@repo/ui/src/dialog";
 // Lazy load the MealEntryDrawer component
-const MealEntryDrawer = lazy(() => import("../../components/MealEntryDrawer"));
+const MealEntryDrawer = lazy(() => import("../../../components/MealEntryDrawer"));
 
 interface CalculationData {
   fileName: string;
@@ -122,8 +121,6 @@ export default function DashboardPage() {
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [calculationData, setCalculationData] = useState<CalculationData | null>(null);
   const [isHeaderVisible, setIsHeaderVisible] = useState<boolean>(true);
-  const [activeNavTab, setActiveNavTab] = useState<string>("lunch");
-  console.log("isHeaderVisible:", isHeaderVisible);
   const [formData, setFormData] = useState({
     payer: "",
     store: "",
@@ -132,7 +129,6 @@ export default function DashboardPage() {
   });
   const router = useRouter();
   const lastScrollY = useRef<number>(0);
-  const scrollDirectionRef = useRef<"up" | "down" | null>(null);
 
   // TanStack Query hooks 사용
   const { data: mealData = [] } = useMealData(userName, currentMonth, currentYear);
@@ -322,50 +318,43 @@ export default function DashboardPage() {
   const fileValidationMessage = getFileValidationMessage();
 
   return (
-    <div className="min-h-screen bg-background max-w-md mx-auto">
-      {/* 헤더 */}
-      <header className={`border-b bg-card sticky top-0 z-50 transition-transform duration-300 ease-in-out ${isHeaderVisible ? "translate-y-0" : "-translate-y-full"}`}>
-        <div className="container mx-auto px-4 py-5 flex justify-center items-center">
-          <Image src={LOGO} alt="CI" width={0} height={0} style={{ width: "60px", height: "20px" }} />
-        </div>
-      </header>
+    <React.Fragment>
+      {/* 금액 계산 결과 */}
+      <Card className="mb-8 border-none shadow-none">
+        <CardHeader className="mb-4">
+          <CardTitle>
+            <p className="text-lg text-foreground mb-2">안녕하세요, {userName}님 👋</p>
+            <p className="text-base font-light text-gray-400">오늘은 {formatDateKorean()} 입니다</p>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-between items-center mb-4">
+            <p className="text-xl font-bold ">{currentMonth}월 요약</p>
 
-      {/* 메인 콘텐츠 */}
-      <main className="container mx-auto px-4 py-6 pb-[120px]! bg-gray-100">
-        {/* 금액 계산 결과 */}
-        <Card className="mb-8 border-none shadow-none">
-          <CardHeader className="mb-4">
-            <CardTitle>
-              <p className="text-lg text-foreground mb-2">안녕하세요, {userName}님 👋</p>
-              <p className="text-base font-light text-gray-400">오늘은 {formatDateKorean()} 입니다</p>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex justify-between items-center mb-4">
-              <p className="text-xl font-bold ">{currentMonth}월 요약</p>
-              <Button variant={"ghost"} onClick={copyAccound}>
-                <Copy />
-                계좌번호 복사
-              </Button>
-            </div>
-            <Alert className="bg-blue-50 border-none mb-4">
-              <AlertTitle className="text-md font-light">{userName}님의 총 잔액은 200,000원이에요. </AlertTitle>
-            </Alert>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-              <ChartPieDonut availableAmount={calculationData?.availableAmount || 0} totalUsed={calculationData?.totalUsed || 0} className="relative" />
-              <CalculationResult userName={userName} month={currentMonth} year={currentYear} onDataChange={setCalculationData} />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 식사 기록 섹션 */}
-        <div className="space-y-6">
-          <Calendar21 onDateSelect={setSelectedDate} selectedDate={selectedDate} onMonthChange={handleMonthChange} mealData={mealData} />
-          <div className="mt-4">
-            <MealCards selectedDate={selectedDate} onAddMeal={handleAddMeal} onEditMeal={handleEditMeal} onHolidayEdit={handleHolidayAttendanceEdit} mealData={mealData} />
+            <Button variant={"ghost"} onClick={copyAccound}>
+              <Copy />
+              계좌번호 복사
+            </Button>
           </div>
+          <Alert className="bg-blue-50 border-none mb-4">
+            <AlertTitle className="text-md font-light text-blue-600">
+              {userName}님의 총 잔액은 <span className="font-bold">200,000원</span> 이에요.
+            </AlertTitle>
+          </Alert>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <ChartPieDonut availableAmount={calculationData?.availableAmount || 0} totalUsed={calculationData?.totalUsed || 0} className="relative" />
+            <CalculationResult userName={userName} month={currentMonth} year={currentYear} onDataChange={setCalculationData} />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 식사 기록 섹션 */}
+      <div className="space-y-6">
+        <Calendar21 onDateSelect={setSelectedDate} selectedDate={selectedDate} onMonthChange={handleMonthChange} mealData={mealData} />
+        <div className="mt-4">
+          <MealCards selectedDate={selectedDate} onAddMeal={handleAddMeal} onEditMeal={handleEditMeal} onHolidayEdit={handleHolidayAttendanceEdit} mealData={mealData} />
         </div>
-      </main>
+      </div>
 
       {/* Lazy-loaded Meal Entry Drawer */}
       <Suspense
@@ -390,7 +379,7 @@ export default function DashboardPage() {
       </Suspense>
 
       {/* Bottom Navigation */}
-      <BottomNavigation activeTab={activeNavTab} onTabChange={setActiveNavTab} />
-    </div>
+      <BottomNavigation />
+    </React.Fragment>
   );
 }

@@ -74,19 +74,22 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Image src={LOGO} alt="CI" width={0} height={0} style={{ width: "60px", height: "20px" }} />
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative">
+      <Image src={LOGO} alt="CI" width={0} height={0} style={{ width: "60px", height: "20px", position: "absolute", top: 20 }} />
       <div className="w-full max-w-md space-y-6">
         {/* 로그인 카드 */}
-        <Card>
+        <Card className="border">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">로그인</CardTitle>
-            <CardDescription className="text-center">반기별 엑셀 파일 읽기 서비스에 로그인하세요</CardDescription>
+            <CardTitle className="text-lg font-bold text-center">맛점 하셨나요?🍙</CardTitle>
+            <CardDescription className="text-center">
+              <p>맛있고 알뜰한 식사관리,</p>
+              <p>간편하게 시작하세요!</p>{" "}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="id">사용자명</Label>
+                <Label htmlFor="id">아이디</Label>
                 <Input id="id" name="id" type="text" value={formData.id} onChange={handleInputChange} placeholder="사용자명을 입력하세요" required />
               </div>
 

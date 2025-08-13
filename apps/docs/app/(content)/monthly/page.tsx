@@ -7,7 +7,7 @@ import React, { useEffect, useState } from "react";
 import { useMonthlyData } from "@/hooks/useMonthlyData";
 import { useAssignDrink } from "@/hooks/useAssignDrink";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@repo/ui/src/dialog";
-import { AllHistoryDialog } from "./AllHistoryDialog";
+import { AllHistoryDialog } from "../../../components/monthly/AllHistoryDialog";
 
 const DRINKS = ["HOT 아메리카노", "ICE 아메리카노", "HOT 디카페인 아메리카노", "ICE 디카페인 아메리카노", "바닐라크림 콜드브루", "ICE 자몽허니블랙티", "선택안함"];
 

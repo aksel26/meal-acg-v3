@@ -31,6 +31,12 @@ export const queryKeys = {
     all: ["users"] as const,
     ids: ["users", "ids"] as const,
   },
+
+  // 점심조 관련 쿼리
+  lunchGroup: {
+    all: ["lunchGroup"] as const,
+    current: ["lunchGroup", "current"] as const,
+  },
 } as const;
 
 // 타입 유틸리티 함수들

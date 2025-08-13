@@ -81,10 +81,10 @@ export default function HomePage() {
         <Card className="border">
           <CardHeader className="space-y-1">
             <CardTitle className="text-lg font-bold text-center">맛점 하셨나요?🍙</CardTitle>
-            <CardDescription className="text-center">
+            <div className="text-center">
               <p>맛있고 알뜰한 식사관리,</p>
-              <p>간편하게 시작하세요!</p>{" "}
-            </CardDescription>
+              <p>간편하게 시작하세요!</p>
+            </div>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">

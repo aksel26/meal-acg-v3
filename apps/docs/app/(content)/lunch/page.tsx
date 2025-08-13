@@ -98,7 +98,7 @@ const Lunch = () => {
             </div>
           </CardContent>
         </Card>
-        <Button className="fixed bottom-24 w-[calc(100%-32px)] text-green-800 mx-auto  mb-4 py-6 bg-gradient-to-r from-teal-200 to-lime-200">점심조 뽑기</Button>
+        <Button className="w-full text-green-800 mx-auto  mb-4 py-6 bg-gradient-to-r from-teal-200 to-lime-200">점심조 뽑기</Button>
         {/* 조 편성 목록 */}
         <div className="space-y-4">
           {teamData.map((team) => {
@@ -132,7 +132,7 @@ const Lunch = () => {
                           >
                             {member.charAt(0)}
                           </div>
-                          <span className={`font-medium ${isMe ? "text-blue-700 font-semibold" : isMyTeamHighlight ? "text-blue-700" : "text-gray-700"}`}>
+                          <span className={` font-medium ${isMe ? "text-blue-700 font-semibold" : isMyTeamHighlight ? "text-blue-700" : "text-gray-700"}`}>
                             {member}
                             {isMe && <span className="ml-1 text-xs text-blue-600">(나)</span>}
                           </span>

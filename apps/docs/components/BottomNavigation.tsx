@@ -1,24 +1,33 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import React from "react";
+import HomeIcon from "@/public/icons/home.png";
+import LunchIcon from "@/public/icons/lunch.png";
+import MonthlyIcon from "@/public/icons/monthly.png";
 
 export function BottomNavigation() {
+  // 디버깅을 위한 로그
+  // console.log("HomeIcon:", HomeIcon);
+  // console.log("LunchIcon:", LunchIcon);
+  // console.log("MonthlyIcon:", MonthlyIcon);
+
   const navItems = [
     {
       id: "dashboard",
       label: "홈",
-      icon: "🏠",
+      icon: <Image src={HomeIcon} alt="home" height={30} />,
     },
     {
       id: "lunch",
       label: "점심조",
-      icon: "🍙",
+      icon: <Image src={LunchIcon} alt="lunch" height={30} />,
     },
     {
       id: "monthly",
       label: "먼쓸리",
-      icon: "📅",
+      icon: <Image src={MonthlyIcon} alt="monthly" height={30} />,
     },
   ];
 
@@ -30,17 +39,19 @@ export function BottomNavigation() {
       <div className="flex justify-around items-center py-3">
         {navItems.map((item) => {
           const isActive = pathname === `/${item.id}`;
+          // const IconComponent = item.icon;
+
           return (
             <button
               key={item.id}
               onClick={() => {
                 router.push(`/${item.id}`);
               }}
-              className={`flex flex-col items-center justify-center py-2 px-4 rounded-lg transition-all duration-200 ${
+              className={`flex flex-col items-center justify-center py-1 px-8 rounded-lg transition-all duration-200 ${
                 isActive ? "text-blue-600 bg-blue-50" : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
               }`}
             >
-              <span className="text-2xl mb-1">{item.icon}</span>
+              <span className="mb-1">{item.icon}</span>
               <span className="text-xs font-medium">{item.label}</span>
             </button>
           );

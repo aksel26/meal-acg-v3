@@ -49,27 +49,27 @@ export function ChartPieDonut({ availableAmount = 0, totalUsed = 0, className }:
 
   return (
     <div className={className}>
-      <CardContent className="flex p-0 justify-between items-center ">
+      <CardContent className="flex flex-col p-0 justify-between items-center ">
         <div className="relative">
-          <ChartContainer config={chartConfig} className="aspect-square w-[113px]">
-            <PieChart width={113} height={113}>
+          <ChartContainer config={chartConfig} className="aspect-square w-[180px]">
+            <PieChart width={180} height={180}>
               <ChartTooltip
                 cursor={false}
                 content={<ChartTooltipContent hideLabel formatter={(value, name) => [`${Number(value).toLocaleString()}원`, name === "used" ? "사용금액" : "잔여금액"]} />}
               />
-              <Pie data={chartData} dataKey="amount" nameKey="category" innerRadius={40} outerRadius={55} cornerRadius={8} width={113} height={113} />
+              <Pie data={chartData} dataKey="amount" nameKey="category" innerRadius={50} outerRadius={65} cornerRadius={8} width={113} height={113} />
             </PieChart>
           </ChartContainer>
 
           {/* Center text showing usage percentage */}
-          <div className="absolute left-1/2 top-9 -translate-x-1/2  flex items-center justify-center pointer-events-none">
+          <div className="absolute left-1/2 top-16 -translate-x-1/2  flex items-center justify-center pointer-events-none">
             <div className="text-center">
-              <div className="text-base font-bold text-gray-900">{usagePercentage.toFixed(1)}%</div>
-              <div className="text-xs text-gray-500">사용률</div>
+              <div className="text-lg font-bold text-gray-900">{usagePercentage.toFixed(1)}%</div>
+              <div className="text-sm text-gray-500">사용률</div>
             </div>
           </div>
         </div>
-        <div className="flex flex-col gap-y-2">
+        <div className="flex flex-col justify-between w-full space-y-2">
           <div className="flex items-center justify-between ">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-[hsl(var(--chart-1))]"></div>
@@ -92,7 +92,7 @@ export function ChartPieDonut({ availableAmount = 0, totalUsed = 0, className }:
             </div>
             <span className="font-medium text-sm">{Math.max(0, balance).toLocaleString()}원</span>
           </div>
-          <div className="flex items-center gap-2 leading-none font-medium text-xs pt-2">
+          <div className="flex items-center gap-2 leading-none font-medium text-xs pt-2 justify-end">
             {balance >= 0 ? (
               <>
                 <TrendingUp className="h-3 w-3 text-green-600" />

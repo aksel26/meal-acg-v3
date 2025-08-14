@@ -1,5 +1,4 @@
 import * as React from "react";
-import { DateRange } from "react-day-picker";
 
 import { Calendar, CalendarDayButton } from "../src/calendar";
 
@@ -103,7 +102,7 @@ export default function Calendar21({ onDateSelect, selectedDate, onMonthChange, 
       onNextClick={handleNextClick}
       onPrevClick={handlePrevClick}
       captionLayout="dropdown"
-      className="rounded-lg [--cell-size:--spacing(11)] md:[--cell-size:--spacing(13)] w-full p-6"
+      className="rounded-lg [--cell-size:--spacing(8)] md:[--cell-size:--spacing(16)] w-full p-4 py-10"
       formatters={{
         formatMonthDropdown: (date) => {
           return date.toLocaleString("default", { month: "long" });
@@ -128,15 +127,27 @@ export default function Calendar21({ onDateSelect, selectedDate, onMonthChange, 
           const attendance = getAttendanceForDate(day.date);
           const { icon } = getAttendanceIcon(attendance);
 
+          const isSelected = modifiers.selected;
+          const isToday = modifiers.today;
+
           return (
-            <CalendarDayButton day={day} modifiers={modifiers} {...props}>
-              <div className="flex flex-col items-center relative">
-                {children}
-                {icon && (
-                  <span className="text-sm mt-0.5 absolute top-4 " title={attendance}>
-                    {icon}
-                  </span>
-                )}
+            <CalendarDayButton
+              day={day}
+              modifiers={modifiers}
+              {...props}
+              className="!bg-transparent hover:!bg-transparent !text-inherit data-[selected-single=true]:!bg-transparent data-[selected-single=true]:!text-inherit"
+            >
+              <div className={`flex flex-col items-center relative p-1`}>
+                <span className={`text-xs sm:text-sm ${isToday ? "bg-[#0a2165] text-gray-50 px-1.5 py-0.5 rounded-sm" : isSelected ? "text-gray-900" : ""}`}>{children}</span>
+
+                {/* icon wrapper */}
+                <div className={`w-8 h-8 sm:w-10 sm:h-10 bg-gray-100/80 rounded-lg flex items-center justify-center ${isSelected ? "border-gray-300 border-2" : ""}`}>
+                  {icon && (
+                    <span className="text-xl" title={attendance}>
+                      {icon}
+                    </span>
+                  )}
+                </div>
               </div>
             </CalendarDayButton>
           );

@@ -2,26 +2,24 @@
 
 export const dynamic = "force-dynamic";
 
-import { Alert, AlertTitle } from "@repo/ui/src/alert";
+import { BottomNavigation } from "@/components/BottomNavigation";
+import { MealCards } from "@/components/MealCards";
+import { useCalculationData } from "@/hooks/use-calculation-data";
+import { useFileValidation } from "@/hooks/use-file-validation";
+import { useMealData } from "@/hooks/use-meal-data";
+import { useMealDelete } from "@/hooks/use-meal-delete";
+import { useMealSubmit } from "@/hooks/use-meal-submit";
+import { Copy } from "@repo/ui/icons";
 import { Button } from "@repo/ui/src/button";
 import Calendar21 from "@repo/ui/src/calendar-21";
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/src/card";
 import { ChartPieDonut } from "@repo/ui/src/chart-pie-donut";
-import { useRouter } from "next/navigation";
-import React, { Suspense, lazy, useEffect, useState, useRef } from "react";
-import { MealCards } from "../../../components/MealCards";
-import { BottomNavigation } from "../../../components/BottomNavigation";
-import { useCalculationData } from "../../../hooks/use-calculation-data";
-import { useMealData } from "../../../hooks/use-meal-data";
-import { useFileValidation } from "../../../hooks/use-file-validation";
-import { useMealSubmit } from "../../../hooks/use-meal-submit";
-import { useMealDelete } from "../../../hooks/use-meal-delete";
-import { formatDateKorean } from "utils";
-import { Copy } from "@repo/ui/icons";
 import { toast } from "@repo/ui/src/sonner";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@repo/ui/src/dialog";
+import { useRouter } from "next/navigation";
+import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
+import { formatDateKorean } from "utils";
 // Lazy load the MealEntryDrawer component
-const MealEntryDrawer = lazy(() => import("../../../components/MealEntryDrawer"));
+const MealEntryDrawer = lazy(() => import("@/components/MealEntryDrawer"));
 
 interface CalculationData {
   fileName: string;
@@ -44,9 +42,29 @@ function CalculationResult({ userName, month, year, onDataChange }: { userName: 
 
   if (isLoading) {
     return (
-      <div className="text-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-        <p className="mt-2 text-sm text-muted-foreground">계산 중...</p>
+      <div className="space-y-4">
+        <div className="grid grid-cols-3 md:grid-cols-4 gap-4">
+          {/* 근무일 skeleton */}
+          <div className="bg-blue-50 p-4 rounded-lg animate-pulse">
+            <div className="h-7 bg-blue-200 rounded mb-1"></div>
+            <div className="h-4 bg-blue-100 rounded w-12"></div>
+          </div>
+
+          {/* 휴일근무 skeleton */}
+          <div className="bg-orange-50 p-4 rounded-lg animate-pulse">
+            <div className="h-7 bg-orange-200 rounded mb-1"></div>
+            <div className="h-4 bg-orange-100 rounded w-16"></div>
+          </div>
+
+          {/* 휴가일 skeleton */}
+          <div className="bg-red-50 p-4 rounded-lg animate-pulse">
+            <div className="h-7 bg-red-200 rounded mb-1"></div>
+            <div className="h-4 bg-red-100 rounded w-12"></div>
+          </div>
+        </div>
+        <div className="text-center">
+          <p className="text-sm text-muted-foreground">계산 중...</p>
+        </div>
       </div>
     );
   }
@@ -305,6 +323,16 @@ export default function DashboardPage() {
       console.error("Meal delete error:", error);
     }
   };
+  const balance = useMemo(() => {
+    if (calculationData?.availableAmount && calculationData?.totalUsed !== undefined) {
+      const result = calculationData.availableAmount - calculationData.totalUsed;
+      return {
+        value: result.toLocaleString("ko-KR"),
+        isNegative: result < 0,
+      };
+    }
+    return null;
+  }, [calculationData]);
 
   if (!userName) {
     return (
@@ -324,32 +352,42 @@ export default function DashboardPage() {
         <CardHeader className="mb-4">
           <CardTitle>
             <p className="text-lg text-foreground mb-2">안녕하세요, {userName}님 👋</p>
-            <p className="text-base font-light text-gray-400">오늘은 {formatDateKorean()} 입니다</p>
+            <p className="text-sm font-light text-gray-400">
+              오늘은 <span className="text-gray-900">{formatDateKorean()}</span> 입니다
+            </p>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex justify-between items-center mb-4">
-            <p className="text-xl font-bold ">{currentMonth}월 요약</p>
-
-            <Button variant={"ghost"} onClick={copyAccound}>
-              <Copy />
+          <div className="flex justify-between items-end mb-4">
+            <div className="flex flex-col space-y-1">
+              <p className="text-sm font-medium ">{currentMonth}월 잔액</p>
+              <p className={`text-2xl font-black ${balance?.isNegative ? "text-red-600" : ""}`}>{balance ? `${balance.value}원` : "계산 중..."}</p>
+            </div>
+            <Button variant={"ghost"} onClick={copyAccound} className="text-xs">
+              <Copy fontSize={15} />
               계좌번호 복사
             </Button>
           </div>
-          <Alert className="bg-blue-50 border-none mb-4">
+          {/* <Alert className="bg-blue-50 border-none mb-4">
             <AlertTitle className="text-md font-light text-blue-600">
               {userName}님의 총 잔액은 <span className="font-bold">200,000원</span> 이에요.
             </AlertTitle>
-          </Alert>
+          </Alert> */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            <ChartPieDonut availableAmount={calculationData?.availableAmount || 0} totalUsed={calculationData?.totalUsed || 0} className="relative" />
+            {calculationData ? (
+              <ChartPieDonut availableAmount={calculationData.availableAmount || 0} totalUsed={calculationData.totalUsed || 0} className="relative" />
+            ) : (
+              <div className="relative h-64 bg-gray-50 rounded-lg animate-pulse flex items-center justify-center">
+                <div className="w-32 h-32 bg-gray-200 rounded-full"></div>
+              </div>
+            )}
             <CalculationResult userName={userName} month={currentMonth} year={currentYear} onDataChange={setCalculationData} />
           </div>
         </CardContent>
       </Card>
 
       {/* 식사 기록 섹션 */}
-      <div className="space-y-6">
+      <div className="space-y-8">
         <Calendar21 onDateSelect={setSelectedDate} selectedDate={selectedDate} onMonthChange={handleMonthChange} mealData={mealData} />
         <div className="mt-4">
           <MealCards selectedDate={selectedDate} onAddMeal={handleAddMeal} onEditMeal={handleEditMeal} onHolidayEdit={handleHolidayAttendanceEdit} mealData={mealData} />

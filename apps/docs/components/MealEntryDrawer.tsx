@@ -8,6 +8,10 @@ import { Label } from "@repo/ui/src/label";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from "@repo/ui/src/drawer";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/src/select";
 import { Combobox } from "@repo/ui/src/combobox";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@repo/ui/src/dialog";
+import { Search } from "@repo/ui/icons";
+import { ChartTooltip } from "@repo/ui/src/chart";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui/src/tooltip";
 
 // Lazy load DeleteConfirmDialog
 const DeleteConfirmDialog = lazy(() => import("./DeleteConfirmDialog").then((module) => ({ default: module.DeleteConfirmDialog })));
@@ -65,6 +69,18 @@ const attendanceOptions = [
   { value: "재택근무", label: "재택근무", emoji: "🏠", color: "text-purple-700" },
 ];
 
+// 사업자번호 목록 (예시 데이터)
+const businessNumbers = [
+  { businessNumber: "123-45-67890", name: "맛있는 한식당" },
+  { businessNumber: "987-65-43210", name: "이탈리아 피자하우스" },
+  { businessNumber: "555-66-77888", name: "중국집 용궁" },
+  { businessNumber: "111-22-33444", name: "일본식 돈카츠" },
+  { businessNumber: "999-88-77666", name: "프랑스 베이커리" },
+  { businessNumber: "222-33-44555", name: "스시 전문점" },
+  { businessNumber: "777-88-99000", name: "태국 음식점" },
+  { businessNumber: "444-55-66777", name: "인도 커리하우스" },
+];
+
 export default function MealEntryDrawer({
   isOpen,
   onOpenChange,
@@ -80,6 +96,8 @@ export default function MealEntryDrawer({
   const { users, isLoading: usersLoading, error: usersError, fetchUsers } = useUsers();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isBusinessDialogOpen, setIsBusinessDialogOpen] = useState(false);
+  const [businessSearchTerm, setBusinessSearchTerm] = useState("");
 
   // Fetch users when drawer opens
   useEffect(() => {
@@ -100,11 +118,20 @@ export default function MealEntryDrawer({
     }
   };
 
+  const handleBusinessSelect = (business: { businessNumber: string; name: string }) => {
+    onInputChange("store", `${business.name}(${business.businessNumber})`);
+    setIsBusinessDialogOpen(false);
+    setBusinessSearchTerm(""); // 검색어 초기화
+  };
+
+  // 검색 필터링된 사업자 목록
+  const filteredBusinessNumbers = businessNumbers.filter((business) => business.name.toLowerCase().includes(businessSearchTerm.toLowerCase()) || business.businessNumber.includes(businessSearchTerm));
+
   const currentMealOption = mealTypeOptions.find((option) => option.value === selectedMealType);
 
   return (
     <Drawer open={isOpen} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[90vh] max-w-md mx-auto bg-gradient-to-br from-white to-gray-50">
+      <DrawerContent className="max-h-[90vh] max-w-lg mx-auto bg-gradient-to-br from-white to-gray-50">
         <DrawerHeader className="text-center border-b border-gray-100 pb-6">
           <DrawerTitle className="text-base font-bold text-gray-800">
             {selectedDate?.toLocaleDateString("ko-KR", {
@@ -174,18 +201,40 @@ export default function MealEntryDrawer({
           </div>
 
           {/* 사용처 */}
-          <div className="space-y-3">
+          <div className="space-y-2">
             <Label htmlFor="store" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
               <span>🏪</span> 사용처
             </Label>
-            <Input
-              id="store"
-              type="text"
-              placeholder="식당명을 입력해주세요"
-              value={formData.store}
-              onChange={(e) => onInputChange("store", e.target.value)}
-              className="rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 text-sm"
-            />
+
+            <div className="flex flex-nowrap gap-x-2 items-center">
+              <Input
+                id="store"
+                type="text"
+                placeholder="식당명을 입력해주세요"
+                value={formData.store}
+                onChange={(e) => onInputChange("store", e.target.value)}
+                className="rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 text-sm"
+              />
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size={"icon"}
+                    variant={"secondary"}
+                    type="button"
+                    onClick={() => {
+                      setIsBusinessDialogOpen(true);
+                      setBusinessSearchTerm(""); // Dialog 열 때 검색어 초기화
+                    }}
+                  >
+                    <Search />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>사업자번호 찾기</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
           </div>
 
           {/* 금액 */}
@@ -257,10 +306,7 @@ export default function MealEntryDrawer({
                   {isEditMode ? "수정 중..." : "저장 중..."}
                 </div>
               ) : (
-                <div className="flex items-center gap-2">
-                  <span>{isEditMode ? "✏️" : "💾"}</span>
-                  {isEditMode ? "수정하기" : "저장하기"}
-                </div>
+                <div className="flex items-center gap-2">{isEditMode ? "수정하기" : "저장하기"}</div>
               )}
             </Button>
           </div>
@@ -294,6 +340,59 @@ export default function MealEntryDrawer({
           {/* 취소 버튼 */}
         </DrawerFooter>
       </DrawerContent>
+
+      {/* 사업자번호 찾기 Dialog */}
+      <Dialog open={isBusinessDialogOpen} onOpenChange={setIsBusinessDialogOpen}>
+        <DialogContent className="max-w-xs">
+          <DialogHeader>
+            <DialogTitle className="text-md font-semibold flex items-center gap-2">
+              <Search className="w-5 h-5" />
+              사업자번호 찾기
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* 검색 Input */}
+            <div className="relative">
+              {/* <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" /> */}
+              <Input
+                type="text"
+                placeholder="상호명 입력..."
+                value={businessSearchTerm}
+                onChange={(e) => setBusinessSearchTerm(e.target.value)}
+                className="pl-10 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
+              />
+            </div>
+
+            {/* 결과 목록 */}
+            <div className="max-h-80 overflow-y-auto space-y-2">
+              {filteredBusinessNumbers.length > 0 ? (
+                filteredBusinessNumbers.map((business, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleBusinessSelect(business)}
+                    className="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200"
+                  >
+                    <div className="flex flex-col gap-1">
+                      <span className="text-sm font-medium text-gray-900">{business.name}</span>
+                      <span className="text-xs text-gray-500">사업자번호: {business.businessNumber}</span>
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Search className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                  <p>검색 결과가 없습니다.</p>
+                </div>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button className="w-full" variant={"outline"}>
+              닫기
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Drawer>
   );
 }

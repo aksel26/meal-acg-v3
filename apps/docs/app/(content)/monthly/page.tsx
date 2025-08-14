@@ -7,7 +7,7 @@ import React, { useEffect, useState } from "react";
 import { useMonthlyData } from "@/hooks/useMonthlyData";
 import { useAssignDrink } from "@/hooks/useAssignDrink";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@repo/ui/src/dialog";
-import { AllHistoryDialog } from "../../../components/monthly/AllHistoryDialog";
+import { AllHistoryDialog } from "@/components/monthly/AllHistoryDialog";
 
 const DRINKS = ["HOT 아메리카노", "ICE 아메리카노", "HOT 디카페인 아메리카노", "ICE 디카페인 아메리카노", "바닐라크림 콜드브루", "ICE 자몽허니블랙티", "선택안함"];
 
@@ -82,26 +82,43 @@ const MonthlyDrink = () => {
           <CardTitle className="text-lg font-bold">Monthly 음료 선택하기</CardTitle>
           <div className="flex flex-col text-gray-500 text-sm">
             <p>픽업인원</p>
-            <p className="text-gray-900">
-              {pickupPersons.length > 0
-                ? pickupPersons.map((person, index) => {
-                    const isCurrentUser = currentUserName && person.name.includes(currentUserName);
-                    return (
-                      <span key={index} className={isCurrentUser ? "bg-blue-100 text-blue-800 px-1 rounded" : ""}>
-                        {person.name}
-                        {index < pickupPersons.length - 1 ? ", " : ""}
-                      </span>
-                    );
-                  })
-                : ""}
-            </p>
+            <div className="text-gray-900">
+              {isLoading ? (
+                <div className="w-32 h-4 bg-gray-200 rounded animate-pulse"></div>
+              ) : pickupPersons.length > 0 ? (
+                pickupPersons.map((person, index) => {
+                  const isCurrentUser = currentUserName && person.name.includes(currentUserName);
+                  return (
+                    <span key={index} className={isCurrentUser ? "bg-blue-100 text-blue-800 px-1 rounded" : ""}>
+                      {person.name}
+                      {index < pickupPersons.length - 1 ? ", " : ""}
+                    </span>
+                  );
+                })
+              ) : (
+                ""
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
           {/* 내가 선택한 음료 또는 미신청 상태 */}
           {currentUserName && (
             <>
-              {myDrink ? (
+              {isLoading ? (
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-3 animate-pulse">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+                      <div>
+                        <div className="w-24 h-4 bg-gray-200 rounded mb-2"></div>
+                        <div className="w-32 h-5 bg-gray-200 rounded"></div>
+                      </div>
+                    </div>
+                    <div className="w-5 h-5 bg-gray-200 rounded"></div>
+                  </div>
+                </div>
+              ) : myDrink ? (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
@@ -136,50 +153,65 @@ const MonthlyDrink = () => {
             전체 신청 내역 조회
           </Button>
           <div className="grid grid-cols-2 gap-3">
-            {displayDrinks.map((drink, index) => {
-              const isSelected = selectedDrink === drink;
-              const isIce = drink.includes("ICE");
-              const isHot = drink.includes("HOT");
-              const isSpecial = drink.includes("바닐라") || drink.includes("자몽");
-              const isNoSelection = drink === "선택안함";
-
-              return (
-                <button
-                  key={index}
-                  onClick={() => {
-                    setSelectedDrink(drink);
-                    setIsDialogOpen(true);
-                  }}
-                  className={`relative ${isNoSelection ? "aspect-[4/1] col-span-2" : "aspect-square"} p-4 border rounded-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-md flex flex-col items-center justify-center text-center space-y-2 ${
-                    isSelected ? "border-blue-500 bg-blue-50 shadow-lg" : "border-gray-200 bg-white hover:border-gray-300"
-                  }`}
-                >
-                  {/* 음료 아이콘 */}
-                  <span className="text-2xl">{drink === "선택안함" ? "❌" : isSpecial ? "🥤" : isIce ? "🧊" : isHot ? "☕" : "☕"}</span>
-
-                  {/* 음료 이름 */}
-                  <div className={`font-medium text-sm leading-tight transition-colors duration-200 ${isSelected ? "text-blue-700" : "text-gray-800"}`}>{drink}</div>
-
-                  {/* 음료 태그 */}
-                  <div className="flex flex-wrap gap-1 justify-center">
-                    {drink !== "선택안함" && (
-                      <span className={`px-1.5 py-0.5 text-xs rounded-full ${isIce ? "bg-blue-100 text-blue-700" : isHot ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-700"}`}>
-                        {isIce ? "ICE" : isHot ? "HOT" : "COLD"}
-                      </span>
-                    )}
+            {isLoading
+              ? // Skeleton UI for loading state
+                Array.from({ length: 8 }).map((_, index) => (
+                  <div
+                    key={index}
+                    className={`${index === 7 ? "aspect-[4/1] col-span-2" : "aspect-square"} p-4 border border-gray-200 rounded-xl animate-pulse bg-gray-50 flex flex-col items-center justify-center space-y-2`}
+                  >
+                    {/* Skeleton icon */}
+                    <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+                    {/* Skeleton text */}
+                    <div className="w-16 h-4 bg-gray-200 rounded"></div>
+                    {/* Skeleton tag */}
+                    <div className="w-10 h-3 bg-gray-200 rounded-full"></div>
                   </div>
+                ))
+              : displayDrinks.map((drink, index) => {
+                  const isSelected = selectedDrink === drink;
+                  const isIce = drink.includes("ICE");
+                  const isHot = drink.includes("HOT");
+                  const isSpecial = drink.includes("바닐라") || drink.includes("자몽");
+                  const isNoSelection = drink === "선택안함";
 
-                  {/* 선택 체크 아이콘 */}
-                  {isSelected && (
-                    <div className="absolute top-2 right-2 text-blue-500">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                  )}
-                </button>
-              );
-            })}
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        setSelectedDrink(drink);
+                        setIsDialogOpen(true);
+                      }}
+                      className={`relative ${isNoSelection ? "aspect-[4/1] col-span-2" : "aspect-square"} p-4 border rounded-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-md flex flex-col items-center justify-center text-center space-y-2 ${
+                        isSelected ? "border-blue-500 bg-blue-50 shadow-lg" : "border-gray-200 bg-white hover:border-gray-300"
+                      }`}
+                    >
+                      {/* 음료 아이콘 */}
+                      <span className="text-2xl">{drink === "선택안함" ? "❌" : isSpecial ? "🥤" : isIce ? "🧊" : isHot ? "☕" : "☕"}</span>
+
+                      {/* 음료 이름 */}
+                      <div className={`font-medium text-sm leading-tight transition-colors duration-200 ${isSelected ? "text-blue-700" : "text-gray-800"}`}>{drink}</div>
+
+                      {/* 음료 태그 */}
+                      <div className="flex flex-wrap gap-1 justify-center">
+                        {drink !== "선택안함" && (
+                          <span className={`px-1.5 py-0.5 text-xs rounded-full ${isIce ? "bg-blue-100 text-blue-700" : isHot ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-700"}`}>
+                            {isIce ? "ICE" : isHot ? "HOT" : "COLD"}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* 선택 체크 아이콘 */}
+                      {isSelected && (
+                        <div className="absolute top-2 right-2 text-blue-500">
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
           </div>
         </CardContent>
       </Card>

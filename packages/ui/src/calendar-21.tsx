@@ -10,9 +10,10 @@ interface Calendar21Props {
     date: string;
     attendance: string;
   }>;
+  isLoading?: boolean;
 }
 
-export default function Calendar21({ onDateSelect, selectedDate, onMonthChange, mealData = [] }: Calendar21Props) {
+export default function Calendar21({ onDateSelect, selectedDate, onMonthChange, mealData = [], isLoading = false }: Calendar21Props) {
   const [date, setDate] = React.useState<Date | undefined>(selectedDate || new Date());
   const [currentMonth, setCurrentMonth] = React.useState<number>((selectedDate || new Date()).getMonth() + 1);
   const [currentYear, setCurrentYear] = React.useState<number>((selectedDate || new Date()).getFullYear());
@@ -142,11 +143,13 @@ export default function Calendar21({ onDateSelect, selectedDate, onMonthChange, 
 
                 {/* icon wrapper */}
                 <div className={`w-8 h-8 sm:w-10 sm:h-10 bg-gray-100/80 rounded-lg flex items-center justify-center ${isSelected ? "border-gray-300 border-2" : ""}`}>
-                  {icon && (
+                  {isLoading ? (
+                    <div className="w-4 h-4 bg-gray-200 rounded animate-pulse"></div>
+                  ) : icon ? (
                     <span className="text-xl" title={attendance}>
                       {icon}
                     </span>
-                  )}
+                  ) : null}
                 </div>
               </div>
             </CalendarDayButton>

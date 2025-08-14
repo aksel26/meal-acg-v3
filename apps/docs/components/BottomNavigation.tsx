@@ -35,7 +35,7 @@ export function BottomNavigation() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 z-50 shadow-lg">
+    <nav className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-lg bg-white border-t border-gray-200 z-50 shadow-lg">
       <div className="flex justify-around items-center py-3">
         {navItems.map((item) => {
           const isActive = pathname === `/${item.id}`;

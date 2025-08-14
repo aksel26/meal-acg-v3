@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Button } from "@repo/ui/src/button";
 import { Plus } from "@repo/ui/icons";
-import { Card } from "@repo/ui/src/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@repo/ui/src/card";
 
 interface MealData {
   date: string;
@@ -56,28 +56,31 @@ export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, 
 
   if (!hasMealData) {
     return (
-      <div className="space-y-4">
-        <div className="flex w-full items-center justify-between px-2">
-          <div className="text-lg font-semibold text-gray-800">{formatDate(selectedDate)}</div>
-          <Button variant="ghost" size="icon" className="size-8 hover:bg-blue-50" title="Add Event" onClick={() => onAddMeal?.("lunch")}>
-            <Plus className="w-4 h-4 text-blue-600" />
-            <span className="sr-only">Add Event</span>
-          </Button>
-        </div>
-        <div className="flex justify-center py-12">
-          <div className="text-center space-y-4">
-            <div className="space-y-2">
-              <p className="text-gray-500 text-sm">이 날짜에 등록된 식대 기록이 없습니다</p>
-              <Button
-                onClick={() => onAddMeal?.("lunch")}
-                className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 rounded-lg px-6 py-2"
-              >
-                식대 기록 추가하기
+      <Card className="border-none shadow-none">
+        <CardHeader>
+          <CardTitle>
+            <div className="flex w-full items-center justify-between px-2">
+              <div className="text-md font-semibold text-gray-800">{formatDate(selectedDate)}</div>
+              <Button variant="ghost" size="icon" className="size-8 hover:bg-blue-50" title="Add Event" onClick={() => onAddMeal?.("lunch")}>
+                <Plus className="w-4 h-4 text-blue-600" />
+                <span className="sr-only">Add Event</span>
               </Button>
             </div>
-          </div>
-        </div>
-      </div>
+          </CardTitle>
+        </CardHeader>
+
+        <CardContent>
+          <p className="text-gray-500 text-sm text-center">이 날짜에 등록된 식대 기록이 없습니다</p>
+        </CardContent>
+        <CardFooter>
+          <Button
+            onClick={() => onAddMeal?.("lunch")}
+            className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 rounded-lg py-5.5"
+          >
+            식대 기록 추가하기
+          </Button>
+        </CardFooter>
+      </Card>
     );
   }
 
@@ -106,83 +109,100 @@ export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, 
   };
 
   return (
-    <Card className="space-y-4 bg-white p-5 border-none shadow-none">
+    <Card className="space-y-4 bg-white border-none shadow-none">
       {/* Header */}
-      <div className="flex items-center justify-between px-1">
-        <h3 className="text-lg font-semibold text-gray-900">{formatDate(selectedDate)}</h3>
-        <Button variant="ghost" size="icon" className="size-8 hover:bg-gray-100 rounded-lg" onClick={() => onAddMeal?.("lunch")}>
-          <Plus className="w-4 h-4 text-gray-600" />
-        </Button>
-      </div>
+      <CardHeader className="mb-0">
+        <CardTitle>
+          <div className="flex w-full items-center justify-between px-2">
+            <div className="text-md font-semibold text-gray-800">{formatDate(selectedDate)}</div>
+            <Button variant="ghost" size="icon" className="size-8 hover:bg-blue-50" title="Add Event" onClick={() => onAddMeal?.("lunch")}>
+              <Plus className="w-4 h-4 text-blue-600" />
+              <span className="sr-only">Add Event</span>
+            </Button>
+          </div>
+        </CardTitle>
+      </CardHeader>
 
       {currentMealData && isHoliday(currentMealData.attendance) ? (
-        /* Holiday State - No meals provided */
-        <div className="flex flex-col items-center justify-center py-16 px-6">
-          <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mb-4">
-            <span className="text-2xl">🏖️</span>
-          </div>
-          <p className="text-orange-600 text-base font-medium mb-2 text-center">휴무일</p>
-          <p className="text-gray-500 text-sm mb-6 text-center">휴무일에는 식대가 제공되지 않습니다</p>
-          <Button
-            onClick={() => {
-              if (currentMealData && onHolidayEdit) {
-                onHolidayEdit(currentMealData);
-              }
-            }}
-            variant="outline"
-            className="border-orange-200 text-orange-600 hover:bg-orange-50 rounded-xl px-6 py-3 font-medium"
-          >
-            근태 상태 수정하기
-          </Button>
-        </div>
-      ) : !hasMealData ? (
-        /* Empty State - Toss Style */
-        <div className="flex flex-col items-center justify-center py-16 px-6">
-          <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
-            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-          </div>
-          <p className="text-gray-500 text-sm mb-6 text-center">아직 식사 기록이 없어요</p>
-          <Button onClick={() => onAddMeal?.("lunch")} className="bg-blue-500 hover:bg-blue-600 text-white rounded-xl px-6 py-3 font-medium">
-            식사 기록하기
-          </Button>
-        </div>
-      ) : (
-        /* Meal List - Toss Style */
-        <div className="space-y-2">
-          {visibleMeals.map((meal, index) => (
-            <div
-              key={index}
+        <>
+          <CardContent className="flex flex-col justify-center items-center text-center">
+            <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mb-4">
+              <span className="text-2xl">🏖️</span>
+            </div>
+            <p className="text-orange-600 text-base font-medium mb-2 text-center">휴무일</p>
+            <p className="text-gray-500 text-sm text-center">휴무일에는 식대가 제공되지 않습니다</p>
+          </CardContent>
+          <CardFooter>
+            <Button
               onClick={() => {
-                if (currentMealData && onEditMeal) {
-                  onEditMeal(meal.type, currentMealData);
-                } else {
-                  onAddMeal?.(meal.type);
+                if (currentMealData && onHolidayEdit) {
+                  onHolidayEdit(currentMealData);
                 }
               }}
-              className="bg-white border border-gray-100 rounded-2xl p-4 hover:bg-gray-50 cursor-pointer transition-colors duration-200"
+              variant="outline"
+              className="border-orange-200 text-orange-600 hover:bg-orange-50 rounded-lg py-5.5 font-medium w-full"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-medium text-gray-900 text-sm">{meal.title}</span>
-                    <span className="font-bold text-gray-900 text-base">{meal.data?.amount ? `-${meal.data.amount.toLocaleString()}원` : "0원"}</span>
-                  </div>
-
+              근태 상태 수정하기
+            </Button>
+          </CardFooter>
+        </>
+      ) : !hasMealData ? (
+        <>
+          <CardContent>
+            <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
+              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+            </div>
+            <p className="text-gray-500 text-sm text-center">아직 식사 기록이 없어요</p>
+          </CardContent>
+          <CardFooter>
+            <Button onClick={() => onAddMeal?.("lunch")} className="bg-blue-500 hover:bg-blue-600 text-white rounded-xl px-6 py-3 font-medium">
+              식사 기록하기
+            </Button>
+          </CardFooter>
+        </>
+      ) : (
+        <>
+          <CardContent>
+            <div className="space-y-2">
+              {visibleMeals.map((meal, index) => (
+                <div
+                  key={index}
+                  onClick={() => {
+                    if (currentMealData && onEditMeal) {
+                      onEditMeal(meal.type, currentMealData);
+                    } else {
+                      onAddMeal?.(meal.type);
+                    }
+                  }}
+                  className="bg-[#0a2165]/85  border border-gray-100 rounded-xl p-4 hover:bg-gray-50 cursor-pointer transition-colors duration-200 "
+                >
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-500 text-xs">{meal.data?.store || "식당 정보 없음"}</span>
-                    {meal.data?.payer && <span className="text-gray-400 text-xs">{meal.data.payer}</span>}
+                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mr-3">
+                      <span className="text-2xl">🍙</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-medium text-gray-200 text-sm">{meal.title}</span>
+                        <span className="font-bold text-white text-base">{meal.data?.amount ? `-${meal.data.amount.toLocaleString()}원` : "0원"}</span>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-200 text-xs">{meal.data?.store || "식당 정보 없음"}</span>
+                        {meal.data?.payer && <span className="text-gray-200 text-xs">{meal.data.payer}</span>}
+                      </div>
+                    </div>
+
+                    <svg className="w-5 h-5 text-gray-300 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
                   </div>
                 </div>
-
-                <svg className="w-5 h-5 text-gray-300 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </CardContent>
+        </>
       )}
     </Card>
   );

@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
+import { useLunchGroupAssign } from "@/hooks/useLunchGroupAssign";
 
 interface Card {
   id: number;
@@ -14,8 +15,17 @@ const Lottery = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [cards, setCards] = useState<Card[]>([]);
   const [isShuffling, setIsShuffling] = useState(false);
-  const [selectedCard, setSelectedCard] = useState<Card | null>(null);
+  const [assignmentResult, setAssignmentResult] = useState<string | null>(null);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const shuffleTimelineRef = useRef<gsap.core.Timeline | null>(null);
+
+  // Lunch group assignment mutation
+  const assignMutation = useLunchGroupAssign();
+
+  // 사용자 이름 가져오기
+  const getUserName = () => {
+    return localStorage.getItem("name") || "익명";
+  };
 
   // 초기 카드 생성
   useEffect(() => {
@@ -24,7 +34,7 @@ const Lottery = () => {
 
     const initialCards: Card[] = Array.from({ length: 30 }, (_, index) => ({
       id: index,
-      emoji: emojis[index % emojis.length],
+      emoji: emojis[index % emojis.length] || "🍎", // fallback emoji
       number: index + 1,
       isSelected: false,
       isFlipped: false,
@@ -53,11 +63,15 @@ const Lottery = () => {
   }, [cards]);
 
   // 카드 섞기 애니메이션
-  const shuffleCards = () => {
+  const shuffleCards = async () => {
     if (!containerRef.current || isShuffling) return;
 
     setIsShuffling(true);
-    setSelectedCard(null);
+    setAssignmentResult(null);
+    setShowSuccessMessage(false);
+
+    // 카드 섞기 시작과 동시에 API 호출
+    const assignmentPromise = handleLunchGroupAssignment();
 
     const container = containerRef.current;
     const cardElements = container.querySelectorAll(".card");
@@ -116,15 +130,39 @@ const Lottery = () => {
     // 연속 셔플 애니메이션 시작
     shuffleTimelineRef.current = createContinuousShuffleAnimation();
 
-    // 3초 후 랜덤 카드 선택
-    setTimeout(() => {
-      selectRandomCard();
+    // 3초 후 배정된 그룹 번호에 해당하는 카드 선택 (API 응답 대기)
+    setTimeout(async () => {
+      const groupNumber = await assignmentPromise; // API 응답 완료까지 대기
+      selectCardByGroupNumber(groupNumber);
     }, 3000);
   };
 
-  // 랜덤 카드 선택 및 중앙 이동
-  const selectRandomCard = () => {
-    if (!containerRef.current) return;
+  // 점심조 배정 처리 (카드 섞기 시작 시 호출)
+  const handleLunchGroupAssignment = async () => {
+    const userName = getUserName();
+    try {
+      const result = await assignMutation.mutateAsync({ userName });
+      // 성공 메시지는 카드가 뒤집힌 후에 표시하므로 여기서는 저장만
+      setAssignmentResult(`${result.data.groupNumber}조에 배정되었습니다!`);
+      return result.data.groupNumber;
+    } catch (error) {
+      // 배정 실패 시 셔플 중지
+      setIsShuffling(false);
+      if (shuffleTimelineRef.current) {
+        shuffleTimelineRef.current.kill();
+        shuffleTimelineRef.current = null;
+      }
+
+      const errorMessage = error instanceof Error ? error.message : "배정에 실패했습니다.";
+      console.log("errorMessage:", errorMessage);
+      setAssignmentResult(errorMessage);
+      return null;
+    }
+  };
+
+  // 배정된 그룹 번호에 해당하는 카드 선택 및 중앙 이동
+  const selectCardByGroupNumber = (groupNumber: number | null) => {
+    if (!containerRef.current || !groupNumber) return;
 
     // 연속 셔플 애니메이션 중지
     if (shuffleTimelineRef.current) {
@@ -132,15 +170,12 @@ const Lottery = () => {
       shuffleTimelineRef.current = null;
     }
 
-    const randomIndex = Math.floor(Math.random() * cards.length);
-    const selectedCardData = cards[randomIndex];
-
-    if (selectedCardData) {
-      setSelectedCard(selectedCardData);
-    }
+    // 그룹 번호와 일치하는 카드 찾기 (카드 번호 = 조 번호)
+    const targetCardIndex = cards.findIndex((card) => card.number === groupNumber);
+    if (targetCardIndex === -1) return;
 
     const container = containerRef.current;
-    const selectedElement = container.querySelector(`[data-card-id="${randomIndex}"]`) as HTMLElement;
+    const selectedElement = container.querySelector(`[data-card-id="${targetCardIndex}"]`) as HTMLElement;
 
     if (selectedElement) {
       const centerX = container.offsetWidth / 2 - 40;
@@ -165,10 +200,12 @@ const Lottery = () => {
         })
         .call(() => {
           setIsShuffling(false);
+          // 카드가 뒤집힌 후 성공 메시지 표시
+          setShowSuccessMessage(true);
         });
 
       // 다른 카드들은 흐리게 처리
-      const otherElements = container.querySelectorAll(`[data-card-id]:not([data-card-id="${randomIndex}"])`);
+      const otherElements = container.querySelectorAll(`[data-card-id]:not([data-card-id="${targetCardIndex}"])`);
       gsap.to(otherElements, {
         opacity: 0.3,
         scale: 0.8,
@@ -189,19 +226,24 @@ const Lottery = () => {
               <div className="absolute w-full h-full bg-white rounded-lg shadow-lg flex items-center justify-center text-2xl" style={{ backfaceVisibility: "hidden" }}>
                 {card.emoji}
               </div>
-              {/* 카드 뒷면 (번호) */}
+              {/* 카드 뒷면 (조 번호) */}
               <div
-                className="absolute w-full h-full bg-gradient-to-r from-teal-200 to-lime-200 rounded-lg shadow-lg  flex items-center justify-center text-teal-600 font-bold text-xl"
+                className="absolute w-full h-full bg-gradient-to-r from-teal-200 to-lime-200 rounded-lg shadow-lg flex flex-col items-center justify-center text-teal-600 font-bold"
                 style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
               >
-                {card.number}
+                <div className="text-2xl">{card.number}조</div>
               </div>
             </div>
           </div>
         ))}
       </div>
-      <p className="text-center">{selectedCard?.number}조에 배정 되었습니다.</p>
-      <p className="text-center text-orange-500">이미 점심조 배정이 완료되었습니다.</p>
+      {/* 상태 메시지 */}
+      {isShuffling && !assignmentResult?.includes("실패") && <p className="text-center text-gray-600 text-sm">카드를 섞고 있습니다...</p>}
+      {/* 실패 메시지는 즉시 표시 */}
+      {assignmentResult?.includes("이미") && <p className="text-center text-md font-medium text-red-400">{assignmentResult}</p>}
+      {/* 성공 메시지는 카드가 뒤집힌 후에만 표시 */}
+      {showSuccessMessage && assignmentResult && !assignmentResult.includes("실패") && <p className="text-center text-lg font-medium text-green-600">{assignmentResult}</p>}
+      {assignMutation.isPending && !assignmentResult && <p className="text-center text-blue-500 text-sm">점심조 배정 중...</p>}
     </div>
   );
 };

@@ -2,7 +2,7 @@ import React from "react";
 import Header from "./page";
 const layout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="min-h-screen bg-gray-100 max-w-md mx-auto">
+    <div className="min-h-screen bg-gray-100 max-w-lg mx-auto">
       {/* 헤더 */}
       <Header />
 

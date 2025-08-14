@@ -2,7 +2,7 @@
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/src/card";
 import { Badge } from "@repo/ui/src/badge";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Button } from "@repo/ui/src/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@repo/ui/src/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/src/popover";
@@ -17,49 +17,44 @@ const Lunch = () => {
 
   const { data: lunchGroupData, isLoading, error } = useLunchGroup();
   const { users: allUsers, isLoading: usersLoading, fetchUsers } = useUsers();
-  console.log("lunchGroupData:", lunchGroupData);
 
   useEffect(() => {
     const name = localStorage.getItem("name");
+    fetchUsers();
     if (name) {
       setUserName(name);
     }
-  }, []);
+  }, [fetchUsers]);
 
-  // 유효한 그룹 수 계산
-  const getValidGroupCount = () => {
+  // 유효한 그룹 수 계산 (memoized)
+  const validGroupCount = useMemo(() => {
     if (!lunchGroupData?.groups) return 0;
     return lunchGroupData.groups.filter((group) => {
-      // 조 번호가 있거나 멤버가 있으면 유효한 그룹으로 간주
       const hasValidGroupNumber = group.groupNumber && group.groupNumber.trim().length > 0;
       const hasAnyMember = group.person && group.person.length > 0;
       return hasValidGroupNumber || hasAnyMember;
     }).length;
-  };
+  }, [lunchGroupData?.groups]);
 
-  // 미추첨 인원 계산
-  const getUnassignedMembers = () => {
+  // 미추첨 인원 계산 (memoized)
+  const unassignedMembers = useMemo(() => {
     if (!allUsers || allUsers.length === 0 || !lunchGroupData?.groups) return [];
-    
+
     // 모든 점심조에 배정된 멤버들 수집
     const assignedMembers = new Set<string>();
-    lunchGroupData.groups.forEach(group => {
+    lunchGroupData.groups.forEach((group) => {
       if (group.person) {
-        group.person.forEach(member => {
-          if (member && typeof member === 'string' && member.trim()) {
+        group.person.forEach((member) => {
+          if (member && typeof member === "string" && member.trim()) {
             assignedMembers.add(member.trim().toLowerCase());
           }
         });
       }
     });
-    
-    // 전체 사용자에서 배정된 멤버들 제외
-    return allUsers.filter(user => 
-      user && user.trim() && !assignedMembers.has(user.trim().toLowerCase())
-    );
-  };
 
-  const unassignedMembers = getUnassignedMembers();
+    // 전체 사용자에서 배정된 멤버들 제외
+    return allUsers.filter((user) => user && user.trim() && !assignedMembers.has(user.trim().toLowerCase()));
+  }, [allUsers, lunchGroupData?.groups]);
 
   return (
     <React.Fragment>
@@ -67,18 +62,65 @@ const Lunch = () => {
         {/* 헤더 */}
         <Card className="bg-white border-none shadow-none mb-4">
           <CardHeader>
-            <CardTitle className="text-lg font-bold text-gray-800">점심조 편성</CardTitle>
-            <CardDescription>
-              {isLoading ? (
-                <span className="text-sm text-gray-500">데이터 로딩 중...</span>
-              ) : error ? (
-                <span className="text-sm text-red-500">데이터 로딩 실패</span>
-              ) : (
-                <span className="text-sm text-gray-500">
-                  총 {getValidGroupCount()}개 조 • {lunchGroupData?.totalMembers || "0"}명
-                </span>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg font-bold text-gray-800">점심조 편성</CardTitle>
+                <CardDescription>
+                  {isLoading ? (
+                    <span className="text-sm text-gray-500">데이터 로딩 중...</span>
+                  ) : error ? (
+                    <span className="text-sm text-red-500">데이터 로딩 실패</span>
+                  ) : (
+                    <span className="text-sm text-gray-500">
+                      총 {validGroupCount}개 조 • {lunchGroupData?.totalMembers || "0"}명
+                    </span>
+                  )}
+                </CardDescription>
+              </div>
+
+              {/* 미추첨 인원 Popover */}
+              {!isLoading && !error && unassignedMembers.length > 0 && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="text-orange-600 border-orange-300 hover:bg-orange-50 hover:border-orange-400">
+                      <span className="mr-2">⚠️</span>
+                      미추첨 {unassignedMembers.length}명
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80" align="end">
+                    <div className="space-y-3">
+                      <div>
+                        <h4 className="font-medium text-sm text-gray-900 mb-1">미추첨 인원</h4>
+                        <p className="text-xs text-gray-500">아직 점심조에 배정되지 않은 인원입니다</p>
+                      </div>
+
+                      {usersLoading ? (
+                        <div className="flex items-center justify-center py-4">
+                          <div className="text-sm text-gray-500">로딩 중...</div>
+                        </div>
+                      ) : unassignedMembers.length === 0 ? (
+                        <div className="text-sm text-gray-500 text-center py-4">모든 인원이 배정되었습니다</div>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+                          {unassignedMembers.map((member, index) => (
+                            <div key={`unassigned-${index}`} className="flex items-center space-x-2 p-2 bg-orange-50 rounded-lg border border-orange-100">
+                              <div className="w-6 h-6 rounded-full bg-orange-200 flex items-center justify-center text-xs font-medium text-orange-700">{member.charAt(0).toUpperCase()}</div>
+                              <span className="text-sm text-gray-700 truncate">{member}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {unassignedMembers.length > 0 && (
+                        <div className="pt-2 border-t border-gray-100">
+                          <div className="text-xs text-gray-400 text-center">총 {unassignedMembers.length}명이 미배정 상태입니다</div>
+                        </div>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
               )}
-            </CardDescription>
+            </div>
           </CardHeader>
 
           <CardContent>

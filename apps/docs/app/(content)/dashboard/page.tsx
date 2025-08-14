@@ -43,7 +43,7 @@ function CalculationResult({ userName, month, year, onDataChange }: { userName: 
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <div className="grid grid-cols-3 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-3  gap-4">
           {/* 근무일 skeleton */}
           <div className="bg-blue-50 p-4 rounded-lg animate-pulse">
             <div className="h-7 bg-blue-200 rounded mb-1"></div>
@@ -90,7 +90,7 @@ function CalculationResult({ userName, month, year, onDataChange }: { userName: 
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-3 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <div className="bg-blue-50 p-4 rounded-lg">
           <div className="text-xl font-bold text-blue-600">{data.workDays}</div>
           <div className="text-sm text-blue-700">근무일</div>
@@ -373,7 +373,7 @@ export default function DashboardPage() {
               {userName}님의 총 잔액은 <span className="font-bold">200,000원</span> 이에요.
             </AlertTitle>
           </Alert> */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <div className="grid grid-cols-1 gap-12">
             {calculationData ? (
               <ChartPieDonut availableAmount={calculationData.availableAmount || 0} totalUsed={calculationData.totalUsed || 0} className="relative" />
             ) : (

@@ -214,7 +214,14 @@ const MonthlyDrink = () => {
             <Button onClick={handleDrinkAssign} disabled={isAssigning} className="w-full bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50">
               {isAssigning ? "저장 중..." : "선택 완료"}
             </Button>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="w-full">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsDialogOpen(false);
+                setSelectedDrink("");
+              }}
+              className="w-full"
+            >
               취소
             </Button>
           </DialogFooter>

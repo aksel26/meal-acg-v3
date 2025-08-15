@@ -67,10 +67,22 @@ interface MealEntryDrawerProps {
   setSelectedMealType: (type: "breakfast" | "lunch" | "dinner") => void;
   isEditMode: boolean;
   formData: {
-    payer: string;
-    store: string;
-    amount: string;
-    attendance: string;
+    breakfast: {
+      payer: string;
+      store: string;
+      amount: string;
+    };
+    lunch: {
+      payer: string;
+      store: string;
+      amount: string;
+      attendance: string;
+    };
+    dinner: {
+      payer: string;
+      store: string;
+      amount: string;
+    };
   };
   selectedDate?: Date;
   onFormSubmit: (e: React.FormEvent) => Promise<void>;
@@ -83,8 +95,8 @@ const mealTypeOptions = [
     value: "breakfast",
     label: "조식",
     emoji: "🌅",
-    color: "bg-amber-50 border-amber-200 text-amber-800",
-    hoverColor: "hover:bg-blue-100",
+    color: "bg-orange-50 border-orange-200 text-orange-800",
+    hoverColor: "hover:bg-orange-100",
   },
   {
     value: "lunch",
@@ -97,8 +109,8 @@ const mealTypeOptions = [
     value: "dinner",
     label: "석식",
     emoji: "🌙",
-    color: "bg-purple-50 border-purple-200 text-purple-800",
-    hoverColor: "hover:bg-purple-100",
+    color: "bg-indigo-50 border-indigo-200 text-indigo-800",
+    hoverColor: "hover:bg-indigo-100",
   },
 ];
 
@@ -210,18 +222,48 @@ export default function MealEntryDrawer({
     (option) => option.value === selectedMealType
   );
 
+  // 현재 선택된 식사 타입의 form 데이터 가져오기
+  const currentFormData = formData[selectedMealType];
+
   return (
     <Drawer open={isOpen} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[90vh] max-w-lg mx-auto bg-gradient-to-br from-white to-gray-50">
-        <DrawerHeader className="text-center border-b border-gray-100 pb-6">
-          <DrawerTitle className="text-base font-bold text-gray-800">
-            {selectedDate?.toLocaleDateString("ko-KR", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-              weekday: "short",
-            })}
-          </DrawerTitle>
+        <DrawerHeader className="border-b border-gray-100 pb-6">
+          <div className="relative">
+            <DrawerTitle className="text-base font-bold text-gray-800 text-center">
+              {selectedDate?.toLocaleDateString("ko-KR", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+                weekday: "short",
+              })}
+            </DrawerTitle>
+              <div className="absolute right-0 -top-1">
+            {/* 삭제 버튼 (편집 모드에서만) */}
+            {isEditMode && onDeleteMeal && (
+              <Suspense fallback={null}>
+                <DeleteConfirmDialog
+                  selectedDate={selectedDate}
+                  isDeleting={isDeleting}
+                  onConfirm={handleDeleteMeal}
+                >
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="text-red-500 bg-red-50 hover:text-red-600 hover:bg-red-100 text-xs px-4 py-1"
+                    disabled={isSubmitting || isDeleting}
+                  >
+                    {isDeleting ? (
+                      <div className="animate-spin rounded-full h-3 w-3 border border-red-500 border-t-transparent"></div>
+                    ) : (
+                      "내역 삭제"
+                    )}
+                  </Button>
+                </DeleteConfirmDialog>
+              </Suspense>
+            )}
+            </div>
+          </div>
         </DrawerHeader>
 
         <form
@@ -284,7 +326,7 @@ export default function MealEntryDrawer({
             <div className="relative">
               <Combobox
                 options={users}
-                value={formData.payer}
+                value={currentFormData.payer}
                 onValueChange={(value) => onInputChange("payer", value)}
                 placeholder="결제자를 선택해주세요"
                 searchPlaceholder="이름으로 검색..."
@@ -308,7 +350,7 @@ export default function MealEntryDrawer({
                 id="store"
                 type="text"
                 placeholder="식당명을 입력해주세요"
-                value={formData.store}
+                value={currentFormData.store}
                 onChange={(e) => onInputChange("store", e.target.value)}
                 className="rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 text-sm"
               />
@@ -350,7 +392,7 @@ export default function MealEntryDrawer({
                 id="amount"
                 type="number"
                 placeholder="금액을 입력해주세요"
-                value={formData.amount}
+                value={currentFormData.amount}
                 onChange={(e) => onInputChange("amount", e.target.value)}
                 min="0"
                 className="rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 pl-8 text-sm"
@@ -368,7 +410,7 @@ export default function MealEntryDrawer({
                 <span>📋</span> 근태
               </Label>
               <Select
-                value={formData.attendance}
+                value={"attendance" in currentFormData ? (currentFormData as { attendance: string }).attendance : ""}
                 onValueChange={(value) => onInputChange("attendance", value)}
               >
                 <SelectTrigger className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500/20">
@@ -406,7 +448,7 @@ export default function MealEntryDrawer({
                   setIsSubmitting(false);
                 }
               }}
-              className="flex-1 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all duration-200 c font-semibold"
+              className="flex-1 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg py-2.5 hover:shadow-xl transition-all duration-200 c font-semibold"
               disabled={isSubmitting || isDeleting}
             >
               {isSubmitting ? (
@@ -431,46 +473,6 @@ export default function MealEntryDrawer({
             </DrawerClose>
           </div>
 
-          {/* 삭제 버튼 (편집 모드에서만) */}
-          {isEditMode && onDeleteMeal && (
-            <Suspense
-              fallback={
-                <Button
-                  variant="destructive"
-                  className="w-full rounded-lg"
-                  disabled
-                >
-                  🗑️ 이 날짜 내역 삭제
-                </Button>
-              }
-            >
-              <DeleteConfirmDialog
-                selectedDate={selectedDate}
-                isDeleting={isDeleting}
-                onConfirm={handleDeleteMeal}
-              >
-                <Button
-                  type="button"
-                  variant="destructive"
-                  className="w-full rounded-xl hover:bg-red-700 shadow-lg hover:shadow-xl transition-all duration-200 h-12 font-semibold"
-                  disabled={isSubmitting || isDeleting}
-                >
-                  {isDeleting ? (
-                    <div className="flex items-center gap-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                      삭제 중...
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <span>🗑️</span>이 날짜 내역 삭제
-                    </div>
-                  )}
-                </Button>
-              </DeleteConfirmDialog>
-            </Suspense>
-          )}
-
-          {/* 취소 버튼 */}
         </DrawerFooter>
       </DrawerContent>
 

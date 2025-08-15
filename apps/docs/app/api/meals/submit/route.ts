@@ -5,15 +5,15 @@ import { updateExcelMealData, MealSubmitData } from "@/lib/excel-processor";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { userName, date, mealType, attendance, store, amount, payer } = body;
+    const { userName, date, breakfast, lunch, dinner } = body;
 
     // 필수 파라미터 검증
-    if (!userName || !date || !mealType) {
+    if (!userName || !date) {
       return NextResponse.json(
         {
           error: "필수 파라미터가 누락되었습니다.",
-          required: ["userName", "date", "mealType"],
-          received: { userName, date, mealType },
+          required: ["userName", "date"],
+          received: { userName, date },
         },
         { status: 400 }
       );
@@ -29,8 +29,10 @@ export async function POST(request: NextRequest) {
     const targetYear = targetDate.getFullYear();
 
     console.log(`=== Meal Submit API ===`);
-    console.log(`User: ${userName}, Date: ${date}, MealType: ${mealType}`);
-    console.log(`Data: attendance=${attendance}, store=${store}, amount=${amount}, payer=${payer}`);
+    console.log(`User: ${userName}, Date: ${date}`);
+    console.log(`Breakfast:`, breakfast);
+    console.log(`Lunch:`, lunch);
+    console.log(`Dinner:`, dinner);
 
     // 1. 해당 학기 폴더 찾기
     const folderPath = await findSemesterFolder(targetMonth, targetYear);
@@ -66,11 +68,22 @@ export async function POST(request: NextRequest) {
     // 4. 식사 데이터 준비
     const mealData: MealSubmitData = {
       date: targetDate,
-      mealType: mealType as "breakfast" | "lunch" | "dinner",
-      attendance: attendance || "",
-      store: store || "",
-      amount: parseInt(amount) || 0,
-      payer: payer || "",
+      breakfast: {
+        store: breakfast?.store || "",
+        amount: parseInt(breakfast?.amount) || 0,
+        payer: breakfast?.payer || "",
+      },
+      lunch: {
+        store: lunch?.store || "",
+        amount: parseInt(lunch?.amount) || 0,
+        payer: lunch?.payer || "",
+        attendance: lunch?.attendance || "",
+      },
+      dinner: {
+        store: dinner?.store || "",
+        amount: parseInt(dinner?.amount) || 0,
+        payer: dinner?.payer || "",
+      },
     };
 
     // 5. Excel 파일 업데이트
@@ -87,7 +100,6 @@ export async function POST(request: NextRequest) {
       data: {
         fileName: targetFile.name,
         date: date,
-        mealType: mealType,
         updatedData: mealData,
       },
     });

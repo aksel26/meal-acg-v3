@@ -272,11 +272,22 @@ export async function readCellFromBuffer(
 
 export interface MealSubmitData {
   date: Date;
-  mealType: "breakfast" | "lunch" | "dinner";
-  attendance: string;
-  store: string;
-  amount: number;
-  payer: string;
+  breakfast: {
+    store: string;
+    amount: number;
+    payer: string;
+  };
+  lunch: {
+    store: string;
+    amount: number;
+    payer: string;
+    attendance: string;
+  };
+  dinner: {
+    store: string;
+    amount: number;
+    payer: string;
+  };
 }
 
 export async function updateExcelMealData(
@@ -331,50 +342,52 @@ export async function updateExcelMealData(
     `Found target row: ${rowIndex} for date ${targetYear}-${targetMonth}-${targetDay}`
   );
 
-  // 근태 정보는 항상 H열에 입력 (중식, 석식, 조식 공통)
+  // 근태 정보는 H열에 입력 (lunch 데이터에서 가져옴)
   const attendanceCell = worksheet.getCell(`H${rowIndex}`);
-  attendanceCell.value = mealData.attendance;
+  attendanceCell.value = mealData.lunch.attendance;
 
-  // 식사 유형별 열 매핑
-  let storeCell: string;
-  let amountCell: string;
-  let payerCell: string;
+  // 조식 데이터 입력 (P, Q, R열)
+  if (mealData.breakfast.store || mealData.breakfast.amount || mealData.breakfast.payer) {
+    const breakfastStoreCellObj = worksheet.getCell(`P${rowIndex}`);
+    breakfastStoreCellObj.value = mealData.breakfast.store;
 
-  switch (mealData.mealType) {
-    case "lunch":
-      storeCell = `I${rowIndex}`; // I열 - 상호명
-      amountCell = `J${rowIndex}`; // J열 - 금액
-      payerCell = `L${rowIndex}`; // L열 - 비고(결제자)
-      break;
-    case "dinner":
-      storeCell = `M${rowIndex}`; // M열 - 상호명
-      amountCell = `N${rowIndex}`; // N열 - 금액
-      payerCell = `O${rowIndex}`; // O열 - 비고(결제자)
-      break;
-    case "breakfast":
-      storeCell = `P${rowIndex}`; // P열 - 상호명
-      amountCell = `Q${rowIndex}`; // Q열 - 금액
-      payerCell = `R${rowIndex}`; // R열 - 비고(결제자)
-      break;
-    default:
-      throw new Error(`지원하지 않는 식사 유형: ${mealData.mealType}`);
+    const breakfastAmountCellObj = worksheet.getCell(`Q${rowIndex}`);
+    breakfastAmountCellObj.value = mealData.breakfast.amount > 0 ? mealData.breakfast.amount : "";
+
+    const breakfastPayerCellObj = worksheet.getCell(`R${rowIndex}`);
+    breakfastPayerCellObj.value = mealData.breakfast.payer;
   }
 
-  // 각 셀에 데이터 입력 (빈 문자열도 그대로 입력) - 스타일 유지
-  // 상호명 셀
-  const storeCellObj = worksheet.getCell(storeCell);
-  storeCellObj.value = mealData.store;
+  // 중식 데이터 입력 (I, J, L열)
+  if (mealData.lunch.store || mealData.lunch.amount || mealData.lunch.payer) {
+    const lunchStoreCellObj = worksheet.getCell(`I${rowIndex}`);
+    lunchStoreCellObj.value = mealData.lunch.store;
 
-  // 금액 셀
-  const amountCellObj = worksheet.getCell(amountCell);
-  amountCellObj.value = mealData.amount > 0 ? mealData.amount : "";
+    const lunchAmountCellObj = worksheet.getCell(`J${rowIndex}`);
+    lunchAmountCellObj.value = mealData.lunch.amount > 0 ? mealData.lunch.amount : "";
 
-  // 결제자 셀
-  const payerCellObj = worksheet.getCell(payerCell);
-  payerCellObj.value = mealData.payer;
+    const lunchPayerCellObj = worksheet.getCell(`L${rowIndex}`);
+    lunchPayerCellObj.value = mealData.lunch.payer;
+  }
+
+  // 석식 데이터 입력 (M, N, O열)
+  if (mealData.dinner.store || mealData.dinner.amount || mealData.dinner.payer) {
+    const dinnerStoreCellObj = worksheet.getCell(`M${rowIndex}`);
+    dinnerStoreCellObj.value = mealData.dinner.store;
+
+    const dinnerAmountCellObj = worksheet.getCell(`N${rowIndex}`);
+    dinnerAmountCellObj.value = mealData.dinner.amount > 0 ? mealData.dinner.amount : "";
+
+    const dinnerPayerCellObj = worksheet.getCell(`O${rowIndex}`);
+    dinnerPayerCellObj.value = mealData.dinner.payer;
+  }
 
   console.log(
-    `Updated cells: H${rowIndex}=${mealData.attendance}, ${storeCell}=${mealData.store}, ${amountCell}=${mealData.amount}, ${payerCell}=${mealData.payer}`
+    `Updated cells for ${targetYear}-${targetMonth}-${targetDay}:`,
+    `H${rowIndex}=${mealData.lunch.attendance}`,
+    `Breakfast: P${rowIndex}=${mealData.breakfast.store}, Q${rowIndex}=${mealData.breakfast.amount}, R${rowIndex}=${mealData.breakfast.payer}`,
+    `Lunch: I${rowIndex}=${mealData.lunch.store}, J${rowIndex}=${mealData.lunch.amount}, L${rowIndex}=${mealData.lunch.payer}`,
+    `Dinner: M${rowIndex}=${mealData.dinner.store}, N${rowIndex}=${mealData.dinner.amount}, O${rowIndex}=${mealData.dinner.payer}`
   );
 
   // 업데이트된 워크북을 Buffer로 변환

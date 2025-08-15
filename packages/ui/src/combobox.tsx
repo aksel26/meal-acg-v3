@@ -60,7 +60,7 @@ export function Combobox({
           {loading ? <Loader2 className="ml-2 h-4 w-4 shrink-0 animate-spin opacity-50" /> : <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className={cn("p-1", popoverContentClassName)}>
+      <PopoverContent className={cn("p-1 w-full max-h-[300px] overflow-hidden", popoverContentClassName)}>
         <Command shouldFilter={false}>
           <CommandInput placeholder={searchPlaceholder} className="h-10" value={searchValue} onValueChange={setSearchValue} />
           <CommandList>

@@ -89,20 +89,42 @@ export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, 
       title: "조식",
       data: currentMealData.breakfast,
       type: "breakfast" as const,
+      emoji: "🌅",
+      bgColor: "bg-orange-50",
+      textColor: "text-orange-600",
+      hoverColor: "hover:bg-orange-100",
     },
     {
       title: "중식",
       data: currentMealData.lunch,
       type: "lunch" as const,
+      emoji: "🍙",
+      bgColor: "bg-blue-50",
+      textColor: "text-blue-600",
+      hoverColor: "hover:bg-blue-100",
     },
     {
       title: "석식",
       data: currentMealData.dinner,
       type: "dinner" as const,
+      emoji: "🌙",
+      bgColor: "bg-indigo-50",
+      textColor: "text-indigo-600",
+      hoverColor: "hover:bg-indigo-100",
     },
   ];
 
-  const visibleMeals = meals.filter((meal) => meal.data);
+  const visibleMeals = meals.filter((meal) => {
+    // 일반적으로는 데이터가 있는 식사만 표시
+    if (meal.data) return true;
+    
+    // 하지만 attendance가 '근무'이고 중식인 경우는 데이터가 없어도 표시
+    if (meal.type === "lunch" && currentMealData?.attendance === "근무") {
+      return true;
+    }
+    
+    return false;
+  });
 
   const isHoliday = (attendance: string): boolean => {
     return Boolean(attendance && attendance.includes("휴무"));
@@ -176,21 +198,23 @@ export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, 
                       onAddMeal?.(meal.type);
                     }
                   }}
-                  className="bg-[#0a2165]/85  border border-gray-100 rounded-xl p-4 hover:bg-gray-50 cursor-pointer transition-colors duration-200 "
+                  className={`${meal.bgColor} rounded-xl p-4 ${meal.hoverColor} hover:scale-101 transition-all duration-300 cursor-pointer transition-colors duration-200`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mr-3">
-                      <span className="text-2xl">🍙</span>
+                      <span className="text-2xl">{meal.emoji}</span>
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="font-medium text-gray-200 text-sm">{meal.title}</span>
-                        <span className="font-bold text-white text-base">{meal.data?.amount ? `-${meal.data.amount.toLocaleString()}원` : "0원"}</span>
+                        <span className={`font-medium ${meal.textColor} text-sm`}>{meal.title}</span>
+                        <span className={`font-bold ${meal.textColor} text-base`}>{meal.data?.amount ? `-${meal.data.amount.toLocaleString()}원` : "0원"}</span>
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <span className="text-gray-200 text-xs">{meal.data?.store || "식당 정보 없음"}</span>
-                        {meal.data?.payer && <span className="text-gray-200 text-xs">{meal.data.payer}</span>}
+                        <span className="text-gray-500 text-xs">
+                          {meal.data?.store || (meal.type === "lunch" && !meal.data ? "입력 내용이 없습니다" : "식당 정보 없음")}
+                        </span>
+                        {meal.data?.payer && <span className="text-gray-500 text-xs">{meal.data.payer}</span>}
                       </div>
                     </div>
 

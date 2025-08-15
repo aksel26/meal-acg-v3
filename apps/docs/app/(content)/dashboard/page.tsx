@@ -18,6 +18,7 @@ import { toast } from "@repo/ui/src/sonner";
 import { useRouter } from "next/navigation";
 import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
 import { formatDateKorean } from "utils";
+
 // Lazy load the MealEntryDrawer component
 const MealEntryDrawer = lazy(() => import("@/components/MealEntryDrawer"));
 
@@ -91,18 +92,19 @@ function CalculationResult({ userName, month, year, onDataChange }: { userName: 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-blue-50 p-4 rounded-lg">
-          <div className="text-xl font-bold text-blue-600">{data.workDays}</div>
-          <div className="text-sm text-blue-700">근무일</div>
+        <div className="p-4 rounded-lg bg-white">
+          
+          <div className="text-xl font-bold">{data.workDays}</div>
+          <div className="text-sm">근무일</div>
         </div>
 
-        <div className="bg-orange-50 p-4 rounded-lg">
-          <div className="text-xl font-bold text-orange-600">{data.holidayWorkDays}</div>
-          <div className="text-sm text-orange-700">휴일근무</div>
+        <div className="p-4 rounded-lg bg-white">
+          <div className="text-xl font-bold">{data.holidayWorkDays}</div>
+          <div className="text-sm">휴일근무</div>
         </div>
-        <div className="bg-red-50 p-4 rounded-lg">
-          <div className="text-xl font-bold text-red-600">{data.vacationDays}</div>
-          <div className="text-sm text-red-700">휴가일</div>
+        <div className="p-4 rounded-lg bg-white relative overflow-hidden" >
+          <div className="text-xl font-bold">{data.vacationDays}</div>
+          <div className="text-sm">휴가일</div>
         </div>
       </div>
     </div>
@@ -140,10 +142,22 @@ export default function DashboardPage() {
   const [calculationData, setCalculationData] = useState<CalculationData | null>(null);
   const [isHeaderVisible, setIsHeaderVisible] = useState<boolean>(true);
   const [formData, setFormData] = useState({
-    payer: "",
-    store: "",
-    amount: "",
-    attendance: "",
+    breakfast: {
+      payer: "",
+      store: "",
+      amount: "",
+    },
+    lunch: {
+      payer: "",
+      store: "",
+      amount: "",
+      attendance: "",
+    },
+    dinner: {
+      payer: "",
+      store: "",
+      amount: "",
+    },
   });
   const router = useRouter();
   const lastScrollY = useRef<number>(0);
@@ -235,7 +249,7 @@ export default function DashboardPage() {
   const handleAddMeal = (mealType: "breakfast" | "lunch" | "dinner") => {
     setSelectedMealType(mealType);
     setIsEditMode(false);
-    setFormData({ payer: "", store: "", amount: "", attendance: "" });
+    // 각 식사 타입별로 독립적인 form 초기화는 하지 않음 (기존 데이터 유지)
     setIsDrawerOpen(true);
   };
 
@@ -244,12 +258,15 @@ export default function DashboardPage() {
     setIsEditMode(true);
 
     const mealTypeData = mealInfo[mealType];
-    setFormData({
-      payer: mealTypeData?.payer || "",
-      store: mealTypeData?.store || "",
-      amount: mealTypeData?.amount?.toString() || "",
-      attendance: mealInfo.attendance || "",
-    });
+    setFormData(prev => ({
+      ...prev,
+      [mealType]: {
+        payer: mealTypeData?.payer || "",
+        store: mealTypeData?.store || "",
+        amount: mealTypeData?.amount?.toString() || "",
+        ...(mealType === "lunch" && { attendance: mealInfo.attendance || "" }),
+      },
+    }));
 
     setIsDrawerOpen(true);
   };
@@ -258,12 +275,15 @@ export default function DashboardPage() {
     setSelectedMealType("lunch");
     setIsEditMode(true);
 
-    setFormData({
-      payer: "",
-      store: "",
-      amount: "",
-      attendance: mealInfo.attendance || "",
-    });
+    setFormData(prev => ({
+      ...prev,
+      lunch: {
+        payer: "",
+        store: "",
+        amount: "",
+        attendance: mealInfo.attendance || "",
+      },
+    }));
 
     setIsDrawerOpen(true);
   };
@@ -279,23 +299,53 @@ export default function DashboardPage() {
       return;
     }
 
+    // 3개 독립된 form 데이터를 한번에 전송
     const requestData = {
       userName: userName,
       date: selectedDate.toISOString(),
-      mealType: selectedMealType,
-      attendance: formData.attendance || "",
-      store: formData.store || "",
-      amount: formData.amount || "0",
-      payer: formData.payer || "",
+      breakfast: {
+        store: formData.breakfast.store || "",
+        amount: formData.breakfast.amount || "0",
+        payer: formData.breakfast.payer || "",
+      },
+      lunch: {
+        store: formData.lunch.store || "",
+        amount: formData.lunch.amount || "0", 
+        payer: formData.lunch.payer || "",
+        attendance: formData.lunch.attendance || "",
+      },
+      dinner: {
+        store: formData.dinner.store || "",
+        amount: formData.dinner.amount || "0",
+        payer: formData.dinner.payer || "",
+      },
     };
+    console.log('requestData: ', requestData);
 
     try {
       await mealSubmitMutation.mutateAsync(requestData);
 
-      // 성공 시 폼 닫기 및 초기화
+      // 성공 시 폼 닫기 및 모든 form 초기화
       setIsDrawerOpen(false);
       setIsEditMode(false);
-      setFormData({ payer: "", store: "", amount: "", attendance: "" });
+      setFormData({
+        breakfast: {
+          payer: "",
+          store: "",
+          amount: "",
+        },
+        lunch: {
+          payer: "",
+          store: "",
+          amount: "",
+          attendance: "",
+        },
+        dinner: {
+          payer: "",
+          store: "",
+          amount: "",
+        },
+      });
     } catch (error) {
       // 에러는 mutation에서 이미 처리됨
       console.error("Form submit error:", error);
@@ -303,7 +353,13 @@ export default function DashboardPage() {
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [selectedMealType]: {
+        ...prev[selectedMealType],
+        [field]: value,
+      },
+    }));
   };
 
   const handleDeleteMeal = async (date: string) => {
@@ -321,6 +377,33 @@ export default function DashboardPage() {
     } catch (error) {
       // 에러는 mutation에서 이미 처리됨
       console.error("Meal delete error:", error);
+    }
+  };
+
+  const handleDrawerOpenChange = (open: boolean) => {
+    setIsDrawerOpen(open);
+    
+    // Dialog가 닫힐 때 모든 form 초기화
+    if (!open) {
+      setFormData({
+        breakfast: {
+          payer: "",
+          store: "",
+          amount: "",
+        },
+        lunch: {
+          payer: "",
+          store: "",
+          amount: "",
+          attendance: "",
+        },
+        dinner: {
+          payer: "",
+          store: "",
+          amount: "",
+        },
+      });
+      setIsEditMode(false);
     }
   };
   const balance = useMemo(() => {
@@ -347,9 +430,9 @@ export default function DashboardPage() {
 
   return (
     <React.Fragment>
-      {/* 금액 계산 결과 */}
-      <Card className="mb-8 border-none shadow-none">
-        <CardHeader className="mb-4">
+      {/* 인사말 섹션 */}
+      <Card className="mb-4 border-none shadow-none">
+        <CardHeader>
           <CardTitle>
             <p className="text-lg text-foreground mb-2">안녕하세요, {userName}님 👋</p>
             <p className="text-sm font-light text-gray-400">
@@ -357,7 +440,11 @@ export default function DashboardPage() {
             </p>
           </CardTitle>
         </CardHeader>
-        <CardContent>
+      </Card>
+
+      {/* 잔액 및 차트 섹션 */}
+      <Card className="mb-4 border-none shadow-none">
+        <CardContent className="pt-6">
           <div className="flex justify-between items-end mb-4">
             <div className="flex flex-col space-y-1">
               <p className="text-sm font-medium ">{currentMonth}월 잔액</p>
@@ -368,22 +455,21 @@ export default function DashboardPage() {
               계좌번호 복사
             </Button>
           </div>
-          {/* <Alert className="bg-blue-50 border-none mb-4">
-            <AlertTitle className="text-md font-light text-blue-600">
-              {userName}님의 총 잔액은 <span className="font-bold">200,000원</span> 이에요.
-            </AlertTitle>
-          </Alert> */}
-          <div className="grid grid-cols-1 gap-12">
-            {calculationData ? (
-              <ChartPieDonut availableAmount={calculationData.availableAmount || 0} totalUsed={calculationData.totalUsed || 0} className="relative" />
-            ) : (
-              <div className="relative h-64 bg-gray-50 rounded-lg animate-pulse flex items-center justify-center">
-                <div className="w-32 h-32 bg-gray-200 rounded-full"></div>
-              </div>
-            )}
-            <CalculationResult userName={userName} month={currentMonth} year={currentYear} onDataChange={setCalculationData} />
-          </div>
+          {calculationData ? (
+            <ChartPieDonut availableAmount={calculationData.availableAmount || 0} totalUsed={calculationData.totalUsed || 0} className="relative" />
+          ) : (
+            <div className="relative h-64 bg-gray-50 rounded-lg animate-pulse flex items-center justify-center">
+              <div className="w-32 h-32 bg-gray-200 rounded-full"></div>
+            </div>
+          )}
         </CardContent>
+      </Card>
+
+      {/* 근무일/휴일근무/휴가일 통계 섹션 */}
+      <Card className="mb-8 p-0 border-none shadow-none bg-transparent">
+        {/* <CardContent className="pt-0"> */}
+          <CalculationResult userName={userName} month={currentMonth} year={currentYear} onDataChange={setCalculationData} />
+        {/* </CardContent> */}
       </Card>
 
       {/* 식사 기록 섹션 */}
@@ -404,7 +490,7 @@ export default function DashboardPage() {
       >
         <MealEntryDrawer
           isOpen={isDrawerOpen}
-          onOpenChange={setIsDrawerOpen}
+          onOpenChange={handleDrawerOpenChange}
           selectedMealType={selectedMealType}
           setSelectedMealType={setSelectedMealType}
           isEditMode={isEditMode}

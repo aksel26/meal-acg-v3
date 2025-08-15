@@ -6,7 +6,15 @@ import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { Button } from "./button";
-import { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "./command";
+import {
+  Command,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "./command";
 
 interface ComboboxProps {
   options: string[];
@@ -42,7 +50,9 @@ export function Combobox({
   const filteredOptions = React.useMemo(() => {
     if (!searchValue) return options;
 
-    return options.filter((option: string) => option.toLowerCase().includes(searchValue.toLowerCase()));
+    return options.filter((option: string) =>
+      option.toLowerCase().includes(searchValue.toLowerCase())
+    );
   }, [options, searchValue]);
 
   // Clear search when popover closes
@@ -53,16 +63,41 @@ export function Combobox({
   }, [open]);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal={true}>
       <PopoverTrigger asChild>
-        <Button variant="outline" role="combobox" aria-expanded={open} disabled={disabled} className={cn("w-full justify-between", className)}>
-          <span className={cn("truncate", !selectedOption && "text-muted-foreground")}>{selectedOption ? selectedOption : placeholder}</span>
-          {loading ? <Loader2 className="ml-2 h-4 w-4 shrink-0 animate-spin opacity-50" /> : <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />}
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          disabled={disabled}
+          className={cn("w-full justify-between", className)}
+        >
+          <span
+            className={cn(
+              "truncate",
+              !selectedOption && "text-muted-foreground"
+            )}
+          >
+            {selectedOption ? selectedOption : placeholder}
+          </span>
+          {loading ? (
+            <Loader2 className="ml-2 h-4 w-4 shrink-0 animate-spin opacity-50" />
+          ) : (
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className={cn("p-1 w-full max-h-[300px] overflow-hidden", popoverContentClassName)}>
+      <PopoverContent
+        align="start"
+        className={cn("p-1", popoverContentClassName)}
+      >
         <Command shouldFilter={false}>
-          <CommandInput placeholder={searchPlaceholder} className="h-10" value={searchValue} onValueChange={setSearchValue} />
+          <CommandInput
+            placeholder={searchPlaceholder}
+            className="h-10"
+            value={searchValue}
+            onValueChange={setSearchValue}
+          />
           <CommandList>
             <CommandEmpty>
               {loading ? (
@@ -87,7 +122,12 @@ export function Combobox({
                   }}
                 >
                   {option}
-                  <Check className={cn("ml-auto h-4 w-4", value === option ? "opacity-100" : "opacity-0")} />
+                  <Check
+                    className={cn(
+                      "ml-auto h-4 w-4",
+                      value === option ? "opacity-100" : "opacity-0"
+                    )}
+                  />
                 </CommandItem>
               ))}
             </CommandGroup>

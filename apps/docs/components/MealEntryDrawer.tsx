@@ -290,7 +290,6 @@ export default function MealEntryDrawer({
                 searchPlaceholder="이름으로 검색..."
                 emptyText="결제자를 찾을 수 없습니다."
                 loading={usersLoading}
-                popoverContentClassName="!w-auto !max-h-[200px]"
               />
             </div>
           </div>
@@ -328,7 +327,10 @@ export default function MealEntryDrawer({
                     <Search />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="top" className="bg-gray-900 text-white text-xs px-2 py-1">
+                <TooltipContent
+                  side="top"
+                  className="bg-gray-900 text-white text-xs px-2 py-1"
+                >
                   <p>사업자번호 찾기</p>
                 </TooltipContent>
               </Tooltip>

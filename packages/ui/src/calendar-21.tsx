@@ -111,10 +111,10 @@ export default function Calendar21({ onDateSelect, selectedDate, onMonthChange, 
       }}
       components={{
         YearsDropdown: ({ value }) => {
-          return <div className="p-2 text-sm">{value ?? new Date().getFullYear()}</div>;
+          return <div className="p-2 text-base">{value ?? new Date().getFullYear()}</div>;
         },
         MonthsDropdown: ({ value }) => {
-          return <div className="p-2 text-sm">{Number(value ?? new Date().getMonth()) + 1}월</div>;
+          return <div className="p-2 text-base">{Number(value ?? new Date().getMonth()) + 1}월</div>;
         },
         DayButton: ({ children, modifiers, day, ...props }) => {
           if (modifiers.outside) {
@@ -138,7 +138,7 @@ export default function Calendar21({ onDateSelect, selectedDate, onMonthChange, 
               {...props}
               className="!bg-transparent hover:!bg-transparent !text-inherit data-[selected-single=true]:!bg-transparent data-[selected-single=true]:!text-inherit"
             >
-              <div className={`flex flex-col items-center relative p-1`}>
+              <div className={`flex flex-col items-center relative p-1 hover:scale-115 transition duration-200`}>
                 <span className={`text-xs sm:text-sm ${isToday ? "bg-[#0a2165] text-gray-50 px-1.5 py-0.5 rounded-sm" : isSelected ? "text-gray-900" : ""}`}>{children}</span>
 
                 {/* icon wrapper */}

@@ -72,14 +72,12 @@ export function ChartPieDonut({ availableAmount = 0, totalUsed = 0, className }:
         <div className="flex flex-col justify-between w-full space-y-2">
           <div className="flex items-center justify-between ">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-[hsl(var(--chart-1))]"></div>
               <span className="text-sm w-20 text-gray-400">총 금액</span>
             </div>
             <span className="font-medium text-sm ">{availableAmount.toLocaleString()}원</span>
           </div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-[hsl(var(--chart-1))]"></div>
               <span className="text-sm w-20 text-gray-400">사용금액</span>
             </div>
             <span className="font-medium text-sm">{totalUsed.toLocaleString()}원</span>
@@ -87,7 +85,6 @@ export function ChartPieDonut({ availableAmount = 0, totalUsed = 0, className }:
           <hr />
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-[hsl(var(--chart-2))]"></div>
               <span className="text-sm w-20 text-gray-400">잔여금액</span>
             </div>
             <span className="font-medium text-sm">{Math.max(0, balance).toLocaleString()}원</span>

@@ -36,77 +36,91 @@ interface CalculationData {
 function CalculationResult({ userName, month, year, onDataChange }: { userName: string; month: number; year: number; onDataChange?: (data: CalculationData | null) => void }) {
   const { data, isLoading, error, refetch } = useCalculationData(userName, month, year);
 
-  // 데이터 변경 시 부모 컴포넌트에 전달
   useEffect(() => {
     onDataChange?.(data || null);
   }, [data, onDataChange]);
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-3  gap-4">
-          {/* 근무일 skeleton */}
-          <div className="bg-blue-50 p-4 rounded-lg animate-pulse">
-            <div className="h-7 bg-blue-200 rounded mb-1"></div>
-            <div className="h-4 bg-blue-100 rounded w-12"></div>
+      <div className="grid grid-cols-3 gap-3">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="bg-gray-50 rounded-xl p-4 animate-pulse">
+            <div className="h-6 bg-gray-200 rounded-md mb-2"></div>
+            <div className="h-4 bg-gray-100 rounded w-16"></div>
           </div>
-
-          {/* 휴일근무 skeleton */}
-          <div className="bg-orange-50 p-4 rounded-lg animate-pulse">
-            <div className="h-7 bg-orange-200 rounded mb-1"></div>
-            <div className="h-4 bg-orange-100 rounded w-16"></div>
-          </div>
-
-          {/* 휴가일 skeleton */}
-          <div className="bg-red-50 p-4 rounded-lg animate-pulse">
-            <div className="h-7 bg-red-200 rounded mb-1"></div>
-            <div className="h-4 bg-red-100 rounded w-12"></div>
-          </div>
-        </div>
-        <div className="text-center">
-          <p className="text-sm text-muted-foreground">계산 중...</p>
-        </div>
+        ))}
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-center py-8">
-        <p className="text-red-600 mb-4">{error.message}</p>
-        <Button onClick={() => refetch()} variant="outline" size="sm">
-          다시 시도
-        </Button>
+      <div className="flex flex-col items-center justify-center py-12 px-4">
+        <div className="text-center space-y-3">
+          <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto">
+            <div className="w-6 h-6 text-red-500">⚠️</div>
+          </div>
+          <p className="text-gray-600 text-sm">{error.message}</p>
+          <Button 
+            onClick={() => refetch()} 
+            variant="outline" 
+            size="sm"
+            className="text-xs rounded-full"
+          >
+            다시 시도
+          </Button>
+        </div>
       </div>
     );
   }
 
   if (!data) {
     return (
-      <div className="text-center py-8 text-muted-foreground">
-        <p>데이터를 불러오는 중...</p>
+      <div className="flex items-center justify-center py-12">
+        <div className="flex items-center space-x-2 text-gray-500">
+          <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+          <span className="text-sm">데이터를 불러오는 중...</span>
+        </div>
       </div>
     );
   }
 
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-3 gap-4">
-        <div className="p-4 rounded-lg bg-white">
-          
-          <div className="text-xl font-bold">{data.workDays}</div>
-          <div className="text-sm">근무일</div>
-        </div>
+  const stats = [
+    { 
+      label: "근무일", 
+      value: data.workDays,
+      bg:"bg-indigo-50/40",
+      text: "text-indigo-400"
+    },
+    { 
+      label: "휴일근무", 
+      value: data.holidayWorkDays,
+      bg:"bg-amber-50/40",
+      text: "text-amber-400"
+    },
+    { 
+      label: "휴가일", 
+      value: data.vacationDays,
+      bg:"bg-teal-50/40",
+      text: "text-teal-400"
+    }
+  ];
 
-        <div className="p-4 rounded-lg bg-white">
-          <div className="text-xl font-bold">{data.holidayWorkDays}</div>
-          <div className="text-sm">휴일근무</div>
+  return (
+    <div className="grid grid-cols-3 gap-3">
+      {stats.map((stat, index) => (
+        <div 
+          key={index}
+          className={`bg-white rounded-xl p-4  transition-all hover:shadow-lg backdrop-blur-lg`}
+        >
+          <div className={`text-gray-700 text-2xl font-bold mb-1`}>
+            {stat.value}
+          </div>
+          <div className="text-xs text-gray-500 font-medium">
+            {stat.label}
+          </div>
         </div>
-        <div className="p-4 rounded-lg bg-white relative overflow-hidden" >
-          <div className="text-xl font-bold">{data.vacationDays}</div>
-          <div className="text-sm">휴가일</div>
-        </div>
-      </div>
+      ))}
     </div>
   );
 }

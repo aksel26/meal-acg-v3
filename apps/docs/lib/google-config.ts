@@ -10,12 +10,11 @@ let sheets: any = null;
 if (GOOGLE_CLIENT_EMAIL) {
   const jwtClient = new JWT({
     email: GOOGLE_CLIENT_EMAIL.replace(/\\n/g, "\n"),
-    key: GOOGLE_PRIVATE_KEY,
+    key: GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
     scopes: SCOPES,
   });
 
   sheets = google.sheets({ version: "v4", auth: jwtClient });
-  console.log("sheets:", sheets);
 } else {
   throw new Error("Google 정보가 올바르지 않습니다.");
 }

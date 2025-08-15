@@ -1,7 +1,7 @@
 import { getSemesterInfo } from "@/lib/date-utils";
 import { downloadFileBuffer, findExcelFiles, findSemesterFolder, uploadFileBuffer } from "@/lib/firebase-storage";
 import { NextRequest, NextResponse } from "next/server";
-import * as XLSX from "xlsx";
+import * as ExcelJS from "exceljs";
 
 interface DeleteMealRequest {
   userName: string;
@@ -67,11 +67,12 @@ export async function DELETE(request: NextRequest) {
 
         // 파일 다운로드
         const buffer = await downloadFileBuffer(file.fullPath);
-        const workbook = XLSX.read(buffer, { type: "buffer" });
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(buffer);
 
-        // 두 번째 시트 '내역' 가져오기
-        const sheetName = workbook.SheetNames[1]; // 두 번째 시트
-        const worksheet = workbook.Sheets[sheetName];
+        // 두 번째 시트 '내역' 가져오기 
+        const worksheet = workbook.worksheets[1]; // 두 번째 시트
+        const sheetName = worksheet?.name;
 
         if (!worksheet) {
           console.log(`No worksheet found in ${file.name}`);
@@ -92,10 +93,17 @@ export async function DELETE(request: NextRequest) {
         // 1단계: 해당 월이 있는 행들을 먼저 찾기
         const monthMatchRows = [];
         for (let row = startRow; row <= endRow; row++) {
-          const monthCell = worksheet[`C${row}`];
-          if (monthCell && monthCell.v) {
-            let monthValue = monthCell.v;
-            if (typeof monthValue === "string") monthValue = parseInt(monthValue);
+          const monthCell = worksheet.getCell(`C${row}`);
+          if (monthCell && monthCell.value !== null && monthCell.value !== undefined) {
+            const rawValue = monthCell.value;
+            let monthValue: number;
+            if (typeof rawValue === "string") {
+              monthValue = parseInt(rawValue);
+            } else if (typeof rawValue === "number") {
+              monthValue = rawValue;
+            } else {
+              continue;
+            }
 
             if (!isNaN(monthValue) && monthValue === month) {
               monthMatchRows.push(row);
@@ -108,10 +116,17 @@ export async function DELETE(request: NextRequest) {
         // 2단계: 월이 일치하는 행들 중에서 일이 일치하는 행 찾기
         const dayMatchRows = [];
         for (const row of monthMatchRows) {
-          const dayCell = worksheet[`D${row}`];
-          if (dayCell && dayCell.v) {
-            let dayValue = dayCell.v;
-            if (typeof dayValue === "string") dayValue = parseInt(dayValue);
+          const dayCell = worksheet.getCell(`D${row}`);
+          if (dayCell && dayCell.value !== null && dayCell.value !== undefined) {
+            const rawValue = dayCell.value;
+            let dayValue: number;
+            if (typeof rawValue === "string") {
+              dayValue = parseInt(rawValue);
+            } else if (typeof rawValue === "number") {
+              dayValue = rawValue;
+            } else {
+              continue;
+            }
 
             if (!isNaN(dayValue) && dayValue === day) {
               dayMatchRows.push(row);
@@ -123,10 +138,17 @@ export async function DELETE(request: NextRequest) {
 
         // 3단계: 월과 일이 일치하는 행들 중에서 연도가 일치하는 행 찾기
         for (const row of dayMatchRows) {
-          const yearCell = worksheet[`B${row}`];
-          if (yearCell && yearCell.v) {
-            let yearValue = yearCell.v;
-            if (typeof yearValue === "string") yearValue = parseInt(yearValue);
+          const yearCell = worksheet.getCell(`B${row}`);
+          if (yearCell && yearCell.value !== null && yearCell.value !== undefined) {
+            const rawValue = yearCell.value;
+            let yearValue: number;
+            if (typeof rawValue === "string") {
+              yearValue = parseInt(rawValue);
+            } else if (typeof rawValue === "number") {
+              yearValue = rawValue;
+            } else {
+              continue;
+            }
 
             if (!isNaN(yearValue) && yearValue === year) {
               targetRow = row;
@@ -163,12 +185,14 @@ export async function DELETE(request: NextRequest) {
 
         columnsToDelete.forEach((col) => {
           const cellAddress = `${col}${targetRow}`;
-          delete worksheet[cellAddress];
+          // 셀이 존재하는 경우에만 값만 삭제하고 스타일은 유지
+          const cell = worksheet.getCell(cellAddress);
+          cell.value = "";
         });
 
         // 파일 저장
-        const newBuffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
-        await uploadFileBuffer(file.fullPath, newBuffer);
+        const newBuffer = await workbook.xlsx.writeBuffer();
+        await uploadFileBuffer(file.fullPath, Buffer.from(newBuffer));
 
         results.push({
           fileName: file.name,

@@ -1,6 +1,8 @@
-import * as XLSX from "xlsx";
+import * as ExcelJS from "exceljs";
 
-export async function streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
+export async function streamToBuffer(
+  stream: NodeJS.ReadableStream
+): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
     stream.on("data", (chunk: Buffer) => chunks.push(chunk));
@@ -39,27 +41,30 @@ export interface CalculationResult {
 }
 
 export async function processExcelBuffer(
-  buffer: Buffer, 
-  targetMonth: number, 
-  targetYear?: number, 
+  buffer: Buffer,
+  targetMonth: number,
+  targetYear?: number,
   targetDay?: number,
   operation: "calculation" | "meals" = "calculation"
 ): Promise<CalculationResult | MealData[]> {
-  const workbook = XLSX.read(buffer, { type: "buffer" });
-  
-  const targetSheetName = workbook.SheetNames.includes("내역") ? "내역" : workbook.SheetNames[0];
-  
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(buffer);
+
+  const targetSheetName =
+    workbook.worksheets.find((ws) => ws.name === "내역")?.name ||
+    workbook.worksheets[0]?.name;
+
   if (!targetSheetName) {
     throw new Error("시트를 찾을 수 없습니다.");
   }
 
-  const worksheet = workbook.Sheets[targetSheetName];
-  
+  const worksheet = workbook.getWorksheet(targetSheetName);
+
   if (!worksheet) {
     throw new Error(`시트 '${targetSheetName}'를 찾을 수 없습니다.`);
   }
 
-  const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, range: "B3:R204" });
+  const jsonData = extractDataFromWorksheet(worksheet, "B3:R204");
 
   if (!jsonData || jsonData.length <= 1) {
     if (operation === "calculation") {
@@ -79,42 +84,75 @@ export async function processExcelBuffer(
   if (operation === "calculation") {
     return calculateFromData(jsonData, targetMonth);
   } else {
-    return extractMealData(jsonData, targetYear || new Date().getFullYear(), targetMonth, targetDay);
+    return extractMealData(
+      jsonData,
+      targetYear || new Date().getFullYear(),
+      targetMonth,
+      targetDay
+    );
   }
 }
 
-function calculateFromData(jsonData: any[], targetMonth: number): CalculationResult {
+function calculateFromData(
+  jsonData: any[],
+  targetMonth: number
+): CalculationResult {
   let workDays = 0;
   let holidayWorkDays = 0;
   let vacationDays = 0;
   let totalUsed = 0;
 
+  console.log("=== DEBUG: calculateFromData ===");
+  console.log("Target month:", targetMonth);
+  console.log("Total rows:", jsonData.length);
+  console.log("First few rows:", jsonData.slice(0, 5));
+
   for (let i = 1; i < jsonData.length; i++) {
     const row = jsonData[i] as any[];
+    if (!row || row.length === 0) continue;
+
     const month = parseInt(row[1]) || 0;
 
     if (month === targetMonth) {
+      console.log(`=== Row ${i + 3} (month ${month}) ===`);
+      console.log("Full row:", row);
+      console.log("Row length:", row.length);
+
       const workType = row[4] || "";
       const attendance = row[6] || "";
       const amount = parseFloat(row[8]) || 0;
 
-      if (workType.includes("업무일")) {
+      console.log("workType (index 4):", workType);
+      console.log("attendance (index 6):", attendance);
+      console.log("amount (index 8):", amount);
+
+      // workType이 객체인 경우와 문자열인 경우 모두 처리
+      const workTypeText = typeof workType === 'object' && workType?.result 
+        ? workType.result 
+        : String(workType || '');
+
+      if (workTypeText.includes("업무일")) {
         workDays++;
+        console.log("→ 업무일 카운트:", workDays);
       }
 
-      if (workType.includes("휴일") && attendance.includes("근무")) {
+      if (workTypeText.includes("휴일") && attendance.includes("근무")) {
         holidayWorkDays++;
+        console.log("→ 휴일근무 카운트:", holidayWorkDays);
       }
 
       if (attendance.includes("휴무")) {
         vacationDays++;
+        console.log("→ 휴무 카운트:", vacationDays);
       }
 
       totalUsed += amount;
+      console.log("→ 누적 사용금액:", totalUsed);
     }
   }
 
-  const availableAmount = workDays * 10000 + holidayWorkDays * 10000 - vacationDays * 10000;
+  const availableAmount =
+    workDays * 10000 + holidayWorkDays * 10000 - vacationDays * 10000;
   const balance = availableAmount - totalUsed;
 
   return {
@@ -127,7 +165,12 @@ function calculateFromData(jsonData: any[], targetMonth: number): CalculationRes
   };
 }
 
-function extractMealData(jsonData: any[], targetYear: number, targetMonth: number, targetDay?: number): MealData[] {
+function extractMealData(
+  jsonData: any[],
+  targetYear: number,
+  targetMonth: number,
+  targetDay?: number
+): MealData[] {
   const mealData: MealData[] = [];
 
   for (let i = 1; i < jsonData.length; i++) {
@@ -136,7 +179,11 @@ function extractMealData(jsonData: any[], targetYear: number, targetMonth: numbe
     const month = parseInt(row[1]) || 0;
     const day = parseInt(row[2]) || 0;
 
-    if (year === targetYear && month === targetMonth && (targetDay === undefined || day === targetDay)) {
+    if (
+      year === targetYear &&
+      month === targetMonth &&
+      (targetDay === undefined || day === targetDay)
+    ) {
       const attendance = row[6] || "";
       const dateString = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
@@ -188,32 +235,38 @@ function extractMealData(jsonData: any[], targetYear: number, targetMonth: numbe
   return mealData;
 }
 
-export async function readCellFromBuffer(buffer: Buffer, cellAddress: string, sheetName?: string): Promise<any> {
-  const workbook = XLSX.read(buffer, { type: "buffer" });
-  
-  const targetSheetName = sheetName && workbook.SheetNames.includes(sheetName) ? sheetName : workbook.SheetNames[0];
+export async function readCellFromBuffer(
+  buffer: Buffer,
+  cellAddress: string,
+  sheetName?: string
+): Promise<any> {
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(buffer);
 
-  if (!targetSheetName) {
-    throw new Error("시트를 찾을 수 없습니다.");
+  const targetWorksheet = sheetName
+    ? workbook.getWorksheet(sheetName)
+    : workbook.worksheets[0];
+
+  if (!targetWorksheet) {
+    throw new Error(
+      sheetName
+        ? `시트 '${sheetName}'를 찾을 수 없습니다.`
+        : "시트를 찾을 수 없습니다."
+    );
   }
 
-  const worksheet = workbook.Sheets[targetSheetName];
-  if (!worksheet) {
-    throw new Error(`시트 '${targetSheetName}'를 찾을 수 없습니다.`);
-  }
-
-  const cell = worksheet[cellAddress];
-  const cellValue = cell ? cell.v : null;
-  const formattedValue = cell ? cell.w || cell.v : null;
+  const cell = targetWorksheet.getCell(cellAddress);
+  const cellValue = cell.value;
+  const formattedValue = cell.text || cell.value;
 
   return {
     cellAddress,
-    sheetName: targetSheetName,
-    availableSheets: workbook.SheetNames,
+    sheetName: targetWorksheet.name,
+    availableSheets: workbook.worksheets.map((ws) => ws.name),
     value: cellValue,
     rawValue: cellValue,
     formattedValue: formattedValue,
-    cellType: cell ? cell.t : null,
+    cellType: typeof cellValue,
   };
 }
 
@@ -226,29 +279,35 @@ export interface MealSubmitData {
   payer: string;
 }
 
-export async function updateExcelMealData(buffer: Buffer, mealData: MealSubmitData): Promise<Buffer> {
-  const workbook = XLSX.read(buffer, { type: "buffer" });
-  
-  const targetSheetName = workbook.SheetNames.includes("내역") ? "내역" : workbook.SheetNames[0];
-  
+export async function updateExcelMealData(
+  buffer: Buffer,
+  mealData: MealSubmitData
+): Promise<Buffer> {
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(buffer);
+
+  const targetSheetName =
+    workbook.worksheets.find((ws) => ws.name === "내역")?.name ||
+    workbook.worksheets[0]?.name;
+
   if (!targetSheetName) {
     throw new Error("시트를 찾을 수 없습니다.");
   }
 
-  const worksheet = workbook.Sheets[targetSheetName];
+  const worksheet = workbook.getWorksheet(targetSheetName);
   if (!worksheet) {
     throw new Error(`시트 '${targetSheetName}'를 찾을 수 없습니다.`);
   }
 
   // 데이터 범위 B3:R204에서 해당 날짜 찾기
-  const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, range: "B3:R204" });
-  
+  const jsonData = extractDataFromWorksheet(worksheet, "B3:R204");
+
   const targetYear = mealData.date.getFullYear();
   const targetMonth = mealData.date.getMonth() + 1;
   const targetDay = mealData.date.getDate();
 
   let rowIndex = -1;
-  
+
   // 해당 날짜의 행 찾기
   for (let i = 1; i < jsonData.length; i++) {
     const row = jsonData[i] as any[];
@@ -263,14 +322,18 @@ export async function updateExcelMealData(buffer: Buffer, mealData: MealSubmitDa
   }
 
   if (rowIndex === -1) {
-    throw new Error(`${targetYear}-${targetMonth}-${targetDay} 날짜의 행을 찾을 수 없습니다.`);
+    throw new Error(
+      `${targetYear}-${targetMonth}-${targetDay} 날짜의 행을 찾을 수 없습니다.`
+    );
   }
 
-  console.log(`Found target row: ${rowIndex} for date ${targetYear}-${targetMonth}-${targetDay}`);
+  console.log(
+    `Found target row: ${rowIndex} for date ${targetYear}-${targetMonth}-${targetDay}`
+  );
 
   // 근태 정보는 항상 H열에 입력 (중식, 석식, 조식 공통)
-  const attendanceCell = `H${rowIndex}`;
-  worksheet[attendanceCell] = { v: mealData.attendance, t: "s" };
+  const attendanceCell = worksheet.getCell(`H${rowIndex}`);
+  attendanceCell.value = mealData.attendance;
 
   // 식사 유형별 열 매핑
   let storeCell: string;
@@ -297,15 +360,111 @@ export async function updateExcelMealData(buffer: Buffer, mealData: MealSubmitDa
       throw new Error(`지원하지 않는 식사 유형: ${mealData.mealType}`);
   }
 
-  // 각 셀에 데이터 입력 (빈 문자열도 그대로 입력)
-  worksheet[storeCell] = { v: mealData.store, t: "s" };
-  worksheet[amountCell] = mealData.amount > 0 ? { v: mealData.amount, t: "n" } : { v: "", t: "s" };
-  worksheet[payerCell] = { v: mealData.payer, t: "s" };
+  // 각 셀에 데이터 입력 (빈 문자열도 그대로 입력) - 스타일 유지
+  // 상호명 셀
+  const storeCellObj = worksheet.getCell(storeCell);
+  storeCellObj.value = mealData.store;
 
-  console.log(`Updated cells: ${attendanceCell}=${mealData.attendance}, ${storeCell}=${mealData.store}, ${amountCell}=${mealData.amount}, ${payerCell}=${mealData.payer}`);
+  // 금액 셀
+  const amountCellObj = worksheet.getCell(amountCell);
+  amountCellObj.value = mealData.amount > 0 ? mealData.amount : "";
+
+  // 결제자 셀
+  const payerCellObj = worksheet.getCell(payerCell);
+  payerCellObj.value = mealData.payer;
+
+  console.log(
+    `Updated cells: H${rowIndex}=${mealData.attendance}, ${storeCell}=${mealData.store}, ${amountCell}=${mealData.amount}, ${payerCell}=${mealData.payer}`
+  );
 
   // 업데이트된 워크북을 Buffer로 변환
-  const updatedBuffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
-  
+  const updatedBuffer = await workbook.xlsx.writeBuffer();
+
   return Buffer.from(updatedBuffer);
+}
+
+// Helper function to extract data from worksheet in the format expected by existing code
+function extractDataFromWorksheet(
+  worksheet: ExcelJS.Worksheet,
+  range: string
+): any[][] {
+  console.log("=== DEBUG: extractDataFromWorksheet ===");
+  console.log("Range:", range);
+  console.log("Worksheet name:", worksheet.name);
+
+  const result: any[][] = [];
+  const [startRange, endRange] = range.split(":");
+  if (!startRange || !endRange) {
+    throw new Error(`Invalid range format: ${range}`);
+  }
+
+  const startCol = startRange.match(/[A-Z]+/)?.[0] || "A";
+  const startRow = parseInt(startRange.match(/\d+/)?.[0] || "1");
+  const endCol = endRange.match(/[A-Z]+/)?.[0] || "Z";
+  const endRow = parseInt(endRange.match(/\d+/)?.[0] || "1");
+
+  console.log(`Extracting from ${startCol}${startRow} to ${endCol}${endRow}`);
+
+  const colStart = columnToIndex(startCol);
+  const colEnd = columnToIndex(endCol);
+
+  console.log(`Column indices: ${colStart} to ${colEnd}`);
+
+  for (
+    let rowNum = startRow;
+    rowNum <= Math.min(startRow + 10, endRow);
+    rowNum++
+  ) {
+    // 처음 10행만 디버깅
+    const row: any[] = [];
+    for (let colNum = colStart; colNum <= colEnd; colNum++) {
+      const col = indexToColumn(colNum);
+      const cell = worksheet.getCell(`${col}${rowNum}`);
+      row.push(cell.value || null);
+    }
+    result.push(row);
+
+    if (rowNum <= startRow + 3) {
+      // 처음 몇 행만 출력
+      console.log(`Row ${rowNum}:`, row.slice(0, 10), "..."); // 처음 10개 컬럼만 출력
+    }
+  }
+
+  // 나머지 행들은 로그 없이 처리
+  for (
+    let rowNum = Math.min(startRow + 11, endRow);
+    rowNum <= endRow;
+    rowNum++
+  ) {
+    const row: any[] = [];
+    for (let colNum = colStart; colNum <= colEnd; colNum++) {
+      const col = indexToColumn(colNum);
+      const cell = worksheet.getCell(`${col}${rowNum}`);
+      row.push(cell.value || null);
+    }
+    result.push(row);
+  }
+
+  console.log(`Total rows extracted: ${result.length}`);
+  return result;
+}
+
+// Helper functions for column conversion
+function columnToIndex(column: string): number {
+  let result = 0;
+  for (let i = 0; i < column.length; i++) {
+    result = result * 26 + (column.charCodeAt(i) - 64);
+  }
+  return result - 1;
+}
+
+function indexToColumn(index: number): string {
+  let result = "";
+  index++;
+  while (index > 0) {
+    index--;
+    result = String.fromCharCode(65 + (index % 26)) + result;
+    index = Math.floor(index / 26);
+  }
+  return result;
 }

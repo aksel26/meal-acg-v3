@@ -89,7 +89,7 @@ export default function HomePage() {
       
 
 
-        <div className="flex-1 items-center flex justify-end flex-col pb-12"><div className="w-[60%] ">
+        <div className="flex-1 items-center flex justify-end flex-col pb-12"><div className="w-[60%] sm:w-1/2 ">
           <Image src={Calendar} alt="loginCharacter" />
           </div>
           <p className="font-medium text-blue-800 text-lg">식대 기록 및 현황 확인</p>

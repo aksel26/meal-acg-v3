@@ -8,7 +8,10 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import CI from "../public/images/ACG_LOGO_GRAY.png";
-import LoginCharacter from "../public/images/login-character.png";
+import LoginCharacter from "../public/images/character.png";
+import BackgroundImage from "../public/images/bg.jpeg";
+import Calendar from "../public/images/Calendar.png";
+import ThinkBubble from "../public/images/thinkBubble.png";
 export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -74,13 +77,50 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative">
+    <div className="min-h-screen flex items-center justify-center p-4 relative max-w-md mx-auto flex-col">
+      <Image 
+        src={BackgroundImage} 
+        alt="Background" 
+        fill 
+        className="object-cover"
+        style={{ zIndex: -1 }}
+      />
       <Image src={CI} alt="CI" width={0} height={0} style={{ width: "60px", height: "20px", position: "absolute", top: 20 }} />
+      
 
-      <div className="fixed border-2 border-t-amber-700 bottom-0 inset-x-0 rounded-tr-3xl rounded-tl-3xl p-8 pb-12 px-6">
-        <div className="absolute right-8 -top-24 w-32 h-32">
+
+        <div className="flex-1 items-center flex justify-end flex-col pb-12"><div className="w-[60%] ">
+          <Image src={Calendar} alt="loginCharacter" />
+          </div>
+          <p className="font-medium text-blue-800 text-lg">식대 기록 및 현황 확인</p>
+          </div>
+{/* <div className="flex-1 items-center flex justify-center">
+          <div className="w-1/2">
+          
+          
           <Image src={LoginCharacter} alt="loginCharacter" />
         </div>
+        </div> */}
+      <div className="w-full mx-auto inset-x-0 rounded-4xl p-6 px-6 bg-white relative">
+        {/* <div className="absolute right-8 -top-24 w-32 h-32">
+          
+          <Image src={LoginCharacter} alt="loginCharacter" />
+        </div> */}
+
+
+        {/* <div className="absolute right-42 -top-12 w-5 h-5 bg-white opacity-75 rounded-full">
+
+
+        </div>
+        <div className="absolute right-48 -top-20 w-7 h-7 bg-white opacity-75 rounded-full">
+
+
+        </div>
+        <div className="absolute inset-x-6 -top-42 h-42 bg-white opacity-75 rounded-lg max-w-md">
+
+
+        </div> */}
+        
         <div className="mb-4">
           <p className="mb-3">맛점 하셨나요? 🍙</p>
           <div className="text-xs sm:text-md leading-5">

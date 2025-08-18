@@ -61,12 +61,7 @@ function CalculationResult({ userName, month, year, onDataChange }: { userName: 
             <div className="w-6 h-6 text-red-500">⚠️</div>
           </div>
           <p className="text-gray-600 text-sm">{error.message}</p>
-          <Button 
-            onClick={() => refetch()} 
-            variant="outline" 
-            size="sm"
-            className="text-xs rounded-full"
-          >
+          <Button onClick={() => refetch()} variant="outline" size="sm" className="text-xs rounded-full">
             다시 시도
           </Button>
         </div>
@@ -86,39 +81,32 @@ function CalculationResult({ userName, month, year, onDataChange }: { userName: 
   }
 
   const stats = [
-    { 
-      label: "근무일", 
+    {
+      label: "근무일",
       value: data.workDays,
-      bg:"bg-indigo-50/40",
-      text: "text-indigo-400"
+      bg: "bg-white",
+      text: "text-[#0a2165]",
     },
-    { 
-      label: "휴일근무", 
+    {
+      label: "휴일근무",
       value: data.holidayWorkDays,
-      bg:"bg-amber-50/40",
-      text: "text-amber-400"
+      bg: "bg-white",
+      text: "text-[#0a2165]",
     },
-    { 
-      label: "휴가일", 
+    {
+      label: "휴가일",
       value: data.vacationDays,
-      bg:"bg-teal-50/40",
-      text: "text-teal-400"
-    }
+      bg: "bg-orange-50",
+      text: "text-orange-400",
+    },
   ];
 
   return (
     <div className="grid grid-cols-3 gap-3">
       {stats.map((stat, index) => (
-        <div 
-          key={index}
-          className={`bg-white rounded-xl p-4  transition-all hover:shadow-lg backdrop-blur-lg`}
-        >
-          <div className={`text-gray-700 text-2xl font-bold mb-1`}>
-            {stat.value}
-          </div>
-          <div className="text-xs text-gray-500 font-medium">
-            {stat.label}
-          </div>
+        <div key={index} className={`${stat.bg} ${stat.text} rounded-xl p-4  transition-all hover:shadow-lg backdrop-blur-lg`}>
+          <div className={`text-2xl font-bold mb-1`}>{stat.value}</div>
+          <div className="text-xs font-medium">{stat.label}</div>
         </div>
       ))}
     </div>
@@ -272,7 +260,7 @@ export default function DashboardPage() {
     setIsEditMode(true);
 
     const mealTypeData = mealInfo[mealType];
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [mealType]: {
         payer: mealTypeData?.payer || "",
@@ -289,7 +277,7 @@ export default function DashboardPage() {
     setSelectedMealType("lunch");
     setIsEditMode(true);
 
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       lunch: {
         payer: "",
@@ -324,7 +312,7 @@ export default function DashboardPage() {
       },
       lunch: {
         store: formData.lunch.store || "",
-        amount: formData.lunch.amount || "0", 
+        amount: formData.lunch.amount || "0",
         payer: formData.lunch.payer || "",
         attendance: formData.lunch.attendance || "",
       },
@@ -334,7 +322,7 @@ export default function DashboardPage() {
         payer: formData.dinner.payer || "",
       },
     };
-    console.log('requestData: ', requestData);
+    console.log("requestData: ", requestData);
 
     try {
       await mealSubmitMutation.mutateAsync(requestData);
@@ -396,7 +384,7 @@ export default function DashboardPage() {
 
   const handleDrawerOpenChange = (open: boolean) => {
     setIsDrawerOpen(open);
-    
+
     // Dialog가 닫힐 때 모든 form 초기화
     if (!open) {
       setFormData({
@@ -482,7 +470,7 @@ export default function DashboardPage() {
       {/* 근무일/휴일근무/휴가일 통계 섹션 */}
       <Card className="mb-8 p-0 border-none shadow-none bg-transparent">
         {/* <CardContent className="pt-0"> */}
-          <CalculationResult userName={userName} month={currentMonth} year={currentYear} onDataChange={setCalculationData} />
+        <CalculationResult userName={userName} month={currentMonth} year={currentYear} onDataChange={setCalculationData} />
         {/* </CardContent> */}
       </Card>
 

@@ -2,13 +2,13 @@
 
 import { Alert, AlertDescription } from "@repo/ui/src/alert";
 import { Button } from "@repo/ui/src/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/src/card";
 import { Input } from "@repo/ui/src/input";
 import { Label } from "@repo/ui/src/label";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import LOGO from "../public/images/ACG_LOGO_GRAY.png";
+import CI from "../public/images/ACG_LOGO_GRAY.png";
+import LoginCharacter from "../public/images/login-character.png";
 export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -75,45 +75,45 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4 relative">
-      <Image src={LOGO} alt="CI" width={0} height={0} style={{ width: "60px", height: "20px", position: "absolute", top: 20 }} />
-      <div className="w-full max-w-md space-y-6">
-        {/* 로그인 카드 */}
-        <Card className="border">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-lg font-bold text-center">맛점 하셨나요?🍙</CardTitle>
-            <div className="text-center">
-              <p>맛있고 알뜰한 식사관리,</p>
-              <p>간편하게 시작하세요!</p>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="id">아이디</Label>
-                <Input id="id" name="id" type="text" value={formData.id} onChange={handleInputChange} placeholder="사용자명을 입력하세요" required />
-              </div>
+      <Image src={CI} alt="CI" width={0} height={0} style={{ width: "60px", height: "20px", position: "absolute", top: 20 }} />
 
-              <div className="space-y-2">
-                <Label htmlFor="password">비밀번호</Label>
-                <Input id="password" name="password" type="password" value={formData.password} onChange={handleInputChange} placeholder="비밀번호를 입력하세요" required />
-              </div>
+      <div className="fixed border-2 border-t-amber-700 bottom-0 inset-x-0 rounded-tr-3xl rounded-tl-3xl p-8 pb-12 px-6">
+        <div className="absolute right-8 -top-24 w-32 h-32">
+          <Image src={LoginCharacter} alt="loginCharacter" />
+        </div>
+        <div className="mb-4">
+          <p className="mb-3">맛점 하셨나요? 🍙</p>
+          <div className="text-xs sm:text-md leading-5">
+            <p>알뜰한 식사관리,</p>
+            <p>간편하게 시작하세요!</p>
+          </div>
+        </div>
 
-              {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
+        <form onSubmit={handleLogin} className="space-y-5">
+          <div className="space-y-2">
+            <Label className="text-xs sm:text-sm" htmlFor="id">
+              아이디
+            </Label>
+            <Input className="text-xs" id="id" name="id" type="text" value={formData.id} onChange={handleInputChange} placeholder="사용자명을 입력하세요" required />
+          </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "로그인 중..." : "로그인"}
-              </Button>
-            </form>
+          <div className="space-y-2">
+            <Label className="text-xs sm:text-sm" htmlFor="password">
+              비밀번호
+            </Label>
+            <Input className="text-xs" id="password" name="password" type="password" value={formData.password} onChange={handleInputChange} placeholder="비밀번호를 입력하세요" required />
+          </div>
 
-            <div className="mt-4 text-center">
-              <p className="text-xs text-muted-foreground">API Endpoint: {process.env.NEXT_PUBLIC_AUTH_URL}</p>
-            </div>
-          </CardContent>
-        </Card>
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "로그인 중..." : "로그인"}
+          </Button>
+        </form>
       </div>
     </div>
   );

@@ -2,16 +2,18 @@
 
 import { Alert, AlertDescription } from "@repo/ui/src/alert";
 import { Button } from "@repo/ui/src/button";
+import { Carousel, CarouselContent, CarouselDots, CarouselItem } from "@repo/ui/src/carousel";
 import { Input } from "@repo/ui/src/input";
 import { Label } from "@repo/ui/src/label";
+import { motion } from "motion/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import CI from "../public/images/ACG_LOGO_GRAY.png";
-import LoginCharacter from "../public/images/character.png";
-import BackgroundImage from "../public/images/bg.jpeg";
-import Calendar from "../public/images/Calendar.png";
-import ThinkBubble from "../public/images/thinkBubble.png";
+import CI from "@/public/images/ACG_LOGO_GRAY.png";
+import BackgroundImage from "@/public/images/bg.jpeg";
+import Calendar from "@/public/images/Calendar.png";
+import Coffee from "@/public/images/Coffee.png";
+import Lunch from "@/public/images/lunch.png";
 export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,49 +80,111 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative max-w-md mx-auto flex-col">
-      <Image 
-        src={BackgroundImage} 
-        alt="Background" 
-        fill 
-        className="object-cover"
-        style={{ zIndex: -1 }}
-      />
+      <Image src={BackgroundImage} alt="Background" fill className="object-cover" style={{ zIndex: -1 }} />
       <Image src={CI} alt="CI" width={0} height={0} style={{ width: "60px", height: "20px", position: "absolute", top: 20 }} />
-      
 
+      <div className="flex-1 items-center flex justify-end flex-col pb-12">
+        {/* Carousel 영역 시작 */}
+        <Carousel className="w-[60%] sm:w-1/2 max-w-xs">
+          <CarouselContent>
+            <CarouselItem>
+              <div className="flex items-center justify-center flex-col">
+                <motion.div
+                  animate={{
+                    y: [0, -10, 0],
+                    rotate: [0, 2, -2, 0],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                >
+                  <Image src={Calendar} alt="식대 기록 및 현황 확인" />
+                </motion.div>
 
-        <div className="flex-1 items-center flex justify-end flex-col pb-12"><div className="w-[60%] sm:w-1/2 ">
-          <Image src={Calendar} alt="loginCharacter" />
-          </div>
-          <p className="font-medium text-blue-800 text-lg">식대 기록 및 현황 확인</p>
-          </div>
-{/* <div className="flex-1 items-center flex justify-center">
-          <div className="w-1/2">
-          
-          
-          <Image src={LoginCharacter} alt="loginCharacter" />
-        </div>
-        </div> */}
+                <p className="font-medium text-blue-800 text-sm text-center mt-2">
+                  매일의 식비를 간편하게
+                  <br />
+                  기록하고 현황을 확인하세요
+                </p>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="flex items-center justify-center flex-col">
+                <motion.div
+                  animate={{
+                    y: [0, -8, 0],
+                    rotate: [0, -1, 1, 0],
+                  }}
+                  transition={{
+                    duration: 2.5,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                    delay: 0.5,
+                  }}
+                >
+                  <Image src={Calendar} alt="식대 기록 및 현황 확인" />
+                </motion.div>
+                <p className="font-medium text-blue-800 text-sm text-center mt-2">
+                  식비 내역을 쉽게
+                  <br />
+                  관리하고 분석해보세요
+                </p>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="flex items-center justify-center flex-col">
+                <motion.div
+                  animate={{
+                    y: [0, -12, 0],
+                    rotate: [0, 3, -3, 0],
+                  }}
+                  transition={{
+                    duration: 4,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                    delay: 1,
+                  }}
+                >
+                  <Image src={Lunch} alt="점심조" />
+                </motion.div>
+                <p className="font-medium text-blue-800 text-sm text-center mt-2">
+                  동료들과 함께
+                  <br />
+                  점심 시간을 즐겨보세요
+                </p>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="flex items-center justify-center flex-col">
+                <motion.div
+                  animate={{
+                    y: [0, -6, 0],
+                    rotate: [5, 8, 2, 5],
+                  }}
+                  transition={{
+                    duration: 3.5,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                    delay: 1.5,
+                  }}
+                >
+                  <Image src={Coffee} alt="Monthly Meeting 음료" />
+                </motion.div>
+                <p className="font-medium text-blue-800 text-sm text-center mt-2">
+                  Monthly Meeting
+                  <br />
+                  음료를 기록해보세요
+                </p>
+              </div>
+            </CarouselItem>
+          </CarouselContent>
+          <CarouselDots />
+        </Carousel>
+        {/* Carousel 영역 종료 */}
+      </div>
       <div className="w-full mx-auto inset-x-0 rounded-4xl p-6 px-6 bg-white relative">
-        {/* <div className="absolute right-8 -top-24 w-32 h-32">
-          
-          <Image src={LoginCharacter} alt="loginCharacter" />
-        </div> */}
-
-
-        {/* <div className="absolute right-42 -top-12 w-5 h-5 bg-white opacity-75 rounded-full">
-
-
-        </div>
-        <div className="absolute right-48 -top-20 w-7 h-7 bg-white opacity-75 rounded-full">
-
-
-        </div>
-        <div className="absolute inset-x-6 -top-42 h-42 bg-white opacity-75 rounded-lg max-w-md">
-
-
-        </div> */}
-        
         <div className="mb-4">
           <p className="mb-3">맛점 하셨나요? 🍙</p>
           <div className="text-xs sm:text-md leading-5">

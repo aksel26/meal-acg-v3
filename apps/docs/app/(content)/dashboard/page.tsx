@@ -9,12 +9,17 @@ import { useFileValidation } from "@/hooks/use-file-validation";
 import { useMealData } from "@/hooks/use-meal-data";
 import { useMealDelete } from "@/hooks/use-meal-delete";
 import { useMealSubmit } from "@/hooks/use-meal-submit";
-import { Copy } from "@repo/ui/icons";
+import Notice from "@/public/images/Notice.png";
+import { ChevronRightIcon, Copy } from "@repo/ui/icons";
 import { Button } from "@repo/ui/src/button";
-import Calendar21 from "@repo/ui/src/calendar-21";
+// import Calendar21 from "../../../../../packages/ui/dist/src/calendarComponent";
+import CalendarComponent from "@/components/Calendar";
+import { Alert, AlertTitle } from "@repo/ui/src/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/src/card";
 import { ChartPieDonut } from "@repo/ui/src/chart-pie-donut";
 import { toast } from "@repo/ui/src/sonner";
+import { motion } from "motion/react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
 import { formatDateKorean } from "utils";
@@ -184,6 +189,10 @@ export default function DashboardPage() {
     if (fileValidationData) return `✅ ${fileValidationData.semesterInfo.folderName}에서 ${fileValidationData.totalFiles}개 파일 발견`;
     return "";
   };
+
+  // useEffect(() => {
+  //   onHolidayFetch(8,2025)
+  // }, [])
 
   useEffect(() => {
     const name = localStorage.getItem("name");
@@ -382,6 +391,10 @@ export default function DashboardPage() {
     }
   };
 
+  const checkNotice = () => {
+    window.open("https://hammerhead-magician-201.notion.site/v1-3-da83491628ed4e708f4e0ce8b1cbb1ff", "_blank");
+  };
+
   const handleDrawerOpenChange = (open: boolean) => {
     setIsDrawerOpen(open);
 
@@ -444,6 +457,38 @@ export default function DashboardPage() {
         </CardHeader>
       </Card>
 
+      <Alert className="mb-4 border-none bg-blue-50  cursor-pointer shadow-lg shadow-cyan-500/10" onClick={checkNotice}>
+        <AlertTitle>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-5">
+              {/* Notice Icon */}
+              <div className="w-10 h-10 bg-white rounded-full relative">
+                <motion.div
+                  className="w-11 h-11 absolute left-0 -top-1"
+                  animate={{
+                    scale: [1, 1.15, 1],
+                    rotate: [0, -5, 5, 0],
+                  }}
+                  transition={{
+                    duration: 0.6,
+                    repeat: Infinity,
+                    repeatDelay: 0.4,
+                    ease: "easeInOut",
+                  }}
+                >
+                  <Image src={Notice} alt="notice" />
+                </motion.div>
+              </div>
+              <p className="text-sm text-blue-500">
+                [공지] <br />
+                식대앱이 업데이트 되었습니다! (v1.3)
+              </p>
+            </div>
+            <ChevronRightIcon color="blue" />
+          </div>
+        </AlertTitle>
+      </Alert>
+
       {/* 잔액 및 차트 섹션 */}
       <Card className="mb-4 border-none shadow-none">
         <CardContent className="pt-6">
@@ -476,7 +521,7 @@ export default function DashboardPage() {
 
       {/* 식사 기록 섹션 */}
       <div className="space-y-8">
-        <Calendar21 onDateSelect={setSelectedDate} selectedDate={selectedDate} onMonthChange={handleMonthChange} mealData={mealData} />
+        <CalendarComponent onDateSelect={setSelectedDate} selectedDate={selectedDate} onMonthChange={handleMonthChange} mealData={mealData} />
         <div className="mt-4">
           <MealCards selectedDate={selectedDate} onAddMeal={handleAddMeal} onEditMeal={handleEditMeal} onHolidayEdit={handleHolidayAttendanceEdit} mealData={mealData} />
         </div>

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import React from "react";
+import { motion } from "motion/react";
 import HomeIcon from "@/public/icons/home.png";
 import LunchIcon from "@/public/icons/lunch.png";
 import MonthlyIcon from "@/public/icons/monthly.png";
@@ -48,8 +49,10 @@ export function BottomNavigation() {
           // const IconComponent = item.icon;
 
           return (
-            <button
+            <motion.button
               key={item.id}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => {
                 if (item.id === "workDNA") {
                   window.open("https://workdna.netlify.app/", "_blank");
@@ -57,13 +60,28 @@ export function BottomNavigation() {
                   router.push(`/${item.id}`);
                 }
               }}
-              className={`flex flex-col items-center justify-center  py-1 w-1/4 rounded-lg transition-all duration-200 ${
-                isActive ? "text-blue-600 bg-blue-50" : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+              className={`flex flex-col items-center justify-center py-1 w-1/4 rounded-lg transition-all duration-200 relative ${
+                isActive ? "text-blue-600" : "text-gray-500 hover:text-gray-700"
               }`}
             >
-              <span className="mb-1">{item.icon}</span>
-              <span className="text-xs font-medium">{item.label}</span>
-            </button>
+              {/* Active indicator */}
+              {isActive && (
+                <motion.div
+                  layoutId="activeTab"
+                  className="absolute inset-0 bg-blue-50 rounded-lg"
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                />
+              )}
+              
+              <motion.span 
+                className="mb-1 relative z-10"
+                animate={isActive ? { scale: 1.1 } : { scale: 1 }}
+                transition={{ duration: 0.2 }}
+              >
+                {item.icon}
+              </motion.span>
+              <span className="text-xs font-medium relative z-10">{item.label}</span>
+            </motion.button>
           );
         })}
       </div>

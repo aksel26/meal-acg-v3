@@ -14,6 +14,7 @@ import { ChevronRightIcon, Copy } from "@repo/ui/icons";
 import { Button } from "@repo/ui/src/button";
 // import Calendar21 from "../../../../../packages/ui/dist/src/calendarComponent";
 import CalendarComponent from "@/components/Calendar";
+import { Footer } from "@/components/Footer";
 import { Alert, AlertTitle } from "@repo/ui/src/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/src/card";
 import { ChartPieDonut } from "@repo/ui/src/chart-pie-donut";
@@ -109,10 +110,24 @@ function CalculationResult({ userName, month, year, onDataChange }: { userName: 
   return (
     <div className="grid grid-cols-3 gap-3">
       {stats.map((stat, index) => (
-        <div key={index} className={`${stat.bg} ${stat.text} rounded-xl p-4  transition-all hover:shadow-lg backdrop-blur-lg`}>
-          <div className={`text-2xl font-bold mb-1`}>{stat.value}</div>
-          <div className="text-xs font-medium">{stat.label}</div>
-        </div>
+        <motion.div
+          key={index}
+          initial={{ opacity: 0, y: 20, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{
+            duration: 0.5,
+            delay: index * 0.1,
+            ease: [0.25, 0.46, 0.45, 0.94],
+          }}
+          className={`${stat.bg} ${stat.text} rounded-xl p-4 transition-all hover:shadow-lg backdrop-blur-lg`}
+        >
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: index * 0.1 + 0.2 }} className={`text-2xl font-bold mb-1`}>
+            {stat.value}
+          </motion.div>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: index * 0.1 + 0.3 }} className="text-xs font-medium">
+            {stat.label}
+          </motion.div>
+        </motion.div>
       ))}
     </div>
   );
@@ -446,86 +461,135 @@ export default function DashboardPage() {
   return (
     <React.Fragment>
       {/* 인사말 섹션 */}
-      <Card className="mb-4 border-none shadow-none">
-        <CardHeader>
-          <CardTitle>
-            <p className="text-lg text-foreground mb-2">안녕하세요, {userName}님 👋</p>
-            <p className="text-sm font-light text-gray-400">
-              오늘은 <span className="text-gray-900">{formatDateKorean()}</span> 입니다
-            </p>
-          </CardTitle>
-        </CardHeader>
-      </Card>
-
-      <Alert className="mb-4 border-none bg-blue-50  cursor-pointer shadow-lg shadow-cyan-500/10" onClick={checkNotice}>
-        <AlertTitle>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-5">
-              {/* Notice Icon */}
-              <div className="w-10 h-10 bg-white rounded-full relative">
-                <motion.div
-                  className="w-11 h-11 absolute left-0 -top-1"
-                  animate={{
-                    scale: [1, 1.15, 1],
-                    rotate: [0, -5, 5, 0],
-                  }}
-                  transition={{
-                    duration: 0.6,
-                    repeat: Infinity,
-                    repeatDelay: 0.4,
-                    ease: "easeInOut",
-                  }}
-                >
-                  <Image src={Notice} alt="notice" />
-                </motion.div>
-              </div>
-              <p className="text-sm text-blue-500">
-                [공지] <br />
-                식대앱이 업데이트 되었습니다! (v1.3)
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          duration: 0.6,
+          delay: 0.1,
+          ease: [0.25, 0.46, 0.45, 0.94],
+        }}
+      >
+        <Card className="mb-4 border-none shadow-none">
+          <CardHeader>
+            <CardTitle>
+              <p className="text-lg text-foreground mb-2">안녕하세요, {userName}님 👋</p>
+              <p className="text-sm font-light text-gray-400">
+                오늘은 <span className="text-gray-900">{formatDateKorean()}</span> 입니다
               </p>
+            </CardTitle>
+          </CardHeader>
+        </Card>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          duration: 0.6,
+          delay: 0.2,
+          ease: [0.25, 0.46, 0.45, 0.94],
+        }}
+      >
+        <Alert className="mb-4 border-none bg-blue-50 cursor-pointer transition-all duration-200 hover:shadow-lg hover:shadow-cyan-500/10 hover:scale-102" onClick={checkNotice}>
+          <AlertTitle>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-5">
+                {/* Notice Icon */}
+                <div className="w-10 h-10 bg-white rounded-full relative">
+                  <motion.div
+                    className="w-11 h-11 absolute left-0 -top-1"
+                    animate={{
+                      scale: [1, 1.15, 1],
+                      rotate: [0, -5, 5, 0],
+                    }}
+                    transition={{
+                      duration: 0.6,
+                      repeat: Infinity,
+                      repeatDelay: 0.4,
+                      ease: "easeInOut",
+                    }}
+                  >
+                    <Image src={Notice} alt="notice" />
+                  </motion.div>
+                </div>
+                <p className="text-sm text-blue-500">
+                  [공지] <br />
+                  식대앱이 업데이트 되었습니다! (v1.3)
+                </p>
+              </div>
+              <ChevronRightIcon color="#2c7fff" />
             </div>
-            <ChevronRightIcon color="blue" />
-          </div>
-        </AlertTitle>
-      </Alert>
+          </AlertTitle>
+        </Alert>
+      </motion.div>
 
       {/* 잔액 및 차트 섹션 */}
-      <Card className="mb-4 border-none shadow-none">
-        <CardContent className="pt-6">
-          <div className="flex justify-between items-end mb-4">
-            <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium ">{currentMonth}월 잔액</p>
-              <p className={`text-2xl font-black ${balance?.isNegative ? "text-red-600" : ""}`}>{balance ? `${balance.value}원` : "계산 중..."}</p>
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          duration: 0.6,
+          delay: 0.3,
+          ease: [0.25, 0.46, 0.45, 0.94],
+        }}
+      >
+        <Card className="mb-4 border-none shadow-none">
+          <CardContent className="pt-6">
+            <div className="flex justify-between items-end mb-4">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium ">{currentMonth}월 잔액</p>
+                <p className={`text-2xl font-black ${balance?.isNegative ? "text-red-600" : ""}`}>{balance ? `${balance.value}원` : "계산 중..."}</p>
+              </div>
+              <Button variant={"ghost"} onClick={copyAccound} className="text-xs">
+                <Copy fontSize={15} />
+                계좌번호 복사
+              </Button>
             </div>
-            <Button variant={"ghost"} onClick={copyAccound} className="text-xs">
-              <Copy fontSize={15} />
-              계좌번호 복사
-            </Button>
-          </div>
-          {calculationData ? (
-            <ChartPieDonut availableAmount={calculationData.availableAmount || 0} totalUsed={calculationData.totalUsed || 0} className="relative" />
-          ) : (
-            <div className="relative h-64 bg-gray-50 rounded-lg animate-pulse flex items-center justify-center">
-              <div className="w-32 h-32 bg-gray-200 rounded-full"></div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            {calculationData ? (
+              <ChartPieDonut availableAmount={calculationData.availableAmount || 0} totalUsed={calculationData.totalUsed || 0} className="relative" />
+            ) : (
+              <div className="relative h-64 bg-gray-50 rounded-lg animate-pulse flex items-center justify-center">
+                <div className="w-32 h-32 bg-gray-200 rounded-full"></div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* 근무일/휴일근무/휴가일 통계 섹션 */}
-      <Card className="mb-8 p-0 border-none shadow-none bg-transparent">
-        {/* <CardContent className="pt-0"> */}
-        <CalculationResult userName={userName} month={currentMonth} year={currentYear} onDataChange={setCalculationData} />
-        {/* </CardContent> */}
-      </Card>
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          duration: 0.6,
+          delay: 0.4,
+          ease: [0.25, 0.46, 0.45, 0.94],
+        }}
+      >
+        <Card className="mb-8 p-0 border-none shadow-none bg-transparent">
+          {/* <CardContent className="pt-0"> */}
+          <CalculationResult userName={userName} month={currentMonth} year={currentYear} onDataChange={setCalculationData} />
+          {/* </CardContent> */}
+        </Card>
+      </motion.div>
 
       {/* 식사 기록 섹션 */}
-      <div className="space-y-8">
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          duration: 0.6,
+          delay: 0.5,
+          ease: [0.25, 0.46, 0.45, 0.94],
+        }}
+        className="space-y-8"
+      >
         <CalendarComponent onDateSelect={setSelectedDate} selectedDate={selectedDate} onMonthChange={handleMonthChange} mealData={mealData} />
         <div className="mt-4">
           <MealCards selectedDate={selectedDate} onAddMeal={handleAddMeal} onEditMeal={handleEditMeal} onHolidayEdit={handleHolidayAttendanceEdit} mealData={mealData} />
         </div>
-      </div>
+      </motion.div>
 
       {/* Lazy-loaded Meal Entry Drawer */}
       <Suspense
@@ -550,6 +614,17 @@ export default function DashboardPage() {
       </Suspense>
 
       {/* Bottom Navigation */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          duration: 0.6,
+          delay: 0.6,
+          ease: [0.25, 0.46, 0.45, 0.94],
+        }}
+      >
+        <Footer />
+      </motion.div>
       <BottomNavigation />
     </React.Fragment>
   );

@@ -10,6 +10,7 @@ import Lottery from "@/components/lunch/Lottery";
 import LunchGroupList from "@/components/lunch/LunchGroupList";
 import { useLunchGroup } from "@/hooks/useLunchGroup";
 import { useUsers } from "@/hooks/useUsers";
+import { motion } from "motion/react";
 
 const Lunch = () => {
   const [userName, setUserName] = useState<string>("");
@@ -58,8 +59,16 @@ const Lunch = () => {
 
   return (
     <React.Fragment>
-      <div className="pb-14">
-        {/* 헤더 */}
+      {/* 헤더 */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          duration: 0.6,
+          delay: 0.1,
+          ease: [0.25, 0.46, 0.45, 0.94],
+        }}
+      >
         <Card className="bg-white border-none shadow-none mb-4">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -136,34 +145,66 @@ const Lunch = () => {
             </div>
           </CardContent>
         </Card>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          duration: 0.6,
+          delay: 0.2,
+          ease: [0.25, 0.46, 0.45, 0.94],
+        }}
+      >
         <Button className="w-full text-green-800 mx-auto mb-4 py-6 bg-gradient-to-r from-teal-200 to-lime-200" onClick={() => setIsLotteryOpen(true)}>
           점심조 뽑기
         </Button>
-        {/* 조 편성 목록 */}
+      </motion.div>
+      {/* 조 편성 목록 */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          duration: 0.6,
+          delay: 0.3,
+          ease: [0.25, 0.46, 0.45, 0.94],
+        }}
+      >
         {isLoading ? (
           // 로딩 스켈레톤
           <div className="space-y-4">
             {Array.from({ length: 5 }, (_, index) => (
-              <Card key={index} className="bg-white border-none shadow-none">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-6 bg-gray-200 rounded animate-pulse"></div>
-                      <div className="w-8 h-4 bg-gray-200 rounded animate-pulse"></div>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="grid grid-cols-2 gap-2">
-                    {Array.from({ length: 4 }, (_, memberIndex) => (
-                      <div key={memberIndex} className="flex items-center space-x-2 rounded-lg p-2 bg-gray-50">
-                        <div className="w-6 h-6 rounded-full bg-gray-200 animate-pulse"></div>
-                        <div className="w-16 h-4 bg-gray-200 rounded animate-pulse"></div>
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.4,
+                  delay: index * 0.1,
+                  ease: [0.25, 0.46, 0.45, 0.94],
+                }}
+              >
+                <Card className="bg-white border-none shadow-none">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-6 bg-gray-200 rounded animate-pulse"></div>
+                        <div className="w-8 h-4 bg-gray-200 rounded animate-pulse"></div>
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="grid grid-cols-2 gap-2">
+                      {Array.from({ length: 4 }, (_, memberIndex) => (
+                        <div key={memberIndex} className="flex items-center space-x-2 rounded-lg p-2 bg-gray-50">
+                          <div className="w-6 h-6 rounded-full bg-gray-200 animate-pulse"></div>
+                          <div className="w-16 h-4 bg-gray-200 rounded animate-pulse"></div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
             ))}
           </div>
         ) : error ? (
@@ -176,9 +217,9 @@ const Lunch = () => {
         ) : (
           <LunchGroupList groups={lunchGroupData?.groups || []} userName={userName} />
         )}
+      </motion.div>
 
-        <BottomNavigation />
-      </div>
+      <BottomNavigation />
 
       {/* 점심조 뽑기 다이얼로그 */}
       <Dialog open={isLotteryOpen} onOpenChange={setIsLotteryOpen}>

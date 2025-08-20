@@ -99,6 +99,7 @@ function calculateFromData(jsonData: any[], targetMonth: number): CalculationRes
   let workDays = 0;
   let holidayWorkDays = 0;
   let vacationDays = 0;
+  let individualCount = 0;
   let totalUsed = 0;
 
   console.log("=== DEBUG: calculateFromData ===");
@@ -127,20 +128,28 @@ function calculateFromData(jsonData: any[], targetMonth: number): CalculationRes
 
       // workType이 객체인 경우와 문자열인 경우 모두 처리
       const workTypeText = typeof workType === "object" && workType?.result ? workType.result : String(workType || "");
+      
+      // attendance도 객체인 경우와 문자열인 경우 모두 처리
+      const attendanceText = typeof attendance === "object" && attendance?.result ? attendance.result : String(attendance || "");
 
       if (workTypeText.includes("업무일")) {
         workDays++;
         console.log("→ 업무일 카운트:", workDays);
       }
 
-      if (workTypeText.includes("휴일") && attendance.includes("근무")) {
+      if (workTypeText.includes("휴일") && attendanceText.includes("근무")) {
         holidayWorkDays++;
         console.log("→ 휴일근무 카운트:", holidayWorkDays);
       }
 
-      if (attendance.includes("휴무")) {
+      if (attendanceText.includes("휴무")) {
         vacationDays++;
         console.log("→ 휴무 카운트:", vacationDays);
+      }
+
+      if (attendanceText.includes("개별")) {
+        individualCount++;
+        console.log("→ 개별 카운트:", individualCount);
       }
 
       totalUsed += amount;
@@ -148,7 +157,7 @@ function calculateFromData(jsonData: any[], targetMonth: number): CalculationRes
     }
   }
 
-  const availableAmount = workDays * 10000 + holidayWorkDays * 10000 - vacationDays * 10000;
+  const availableAmount = workDays * 10000 + holidayWorkDays * 10000 - vacationDays * 10000 - individualCount * 10000;
   const balance = availableAmount - totalUsed;
 
   return {

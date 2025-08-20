@@ -1,6 +1,15 @@
 import type { NextConfig } from "next";
+import withPWA from "@ducanh2912/next-pwa";
 
-const nextConfig: NextConfig = {
+const nextConfig = {
+  // PWA 설정을 활성화합니다.
+  reactStrictMode: true,
+};
+
+const withPWAConfig = withPWA({
+  dest: "public", // 서비스 워커 파일이 생성될 디렉토리
+  disable: process.env.NODE_ENV === "development", // 개발 환경에서는 PWA 비활성화
+  // 더 많은 설정 옵션을 추가할 수 있습니다. 예를 들어, `register`나 `skipWaiting` 같은 옵션입니다.
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -26,6 +35,6 @@ const nextConfig: NextConfig = {
       },
     },
   },
-};
+});
 
-export default nextConfig;
+export default withPWAConfig(nextConfig);

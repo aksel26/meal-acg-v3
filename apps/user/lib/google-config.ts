@@ -7,17 +7,22 @@ const GOOGLE_CLIENT_EMAIL = process.env.GOOGLE_CLIENT_EMAIL;
 
 let sheets: any = null;
 
-if (GOOGLE_CLIENT_EMAIL) {
-  const jwtClient = new JWT({
-    email: GOOGLE_CLIENT_EMAIL.replace(/\\n/g, "\n"),
-    key: GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-    scopes: SCOPES,
-  });
+const initializeGoogleSheets = () => {
+  if (GOOGLE_CLIENT_EMAIL && GOOGLE_PRIVATE_KEY) {
+    const jwtClient = new JWT({
+      email: GOOGLE_CLIENT_EMAIL.replace(/\\n/g, "\n"),
+      key: GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+      scopes: SCOPES,
+    });
 
-  sheets = google.sheets({ version: "v4", auth: jwtClient });
-} else {
-  throw new Error("Google 정보가 올바르지 않습니다.");
+    return google.sheets({ version: "v4", auth: jwtClient });
+  }
+  return null;
+};
+
+if (typeof window === 'undefined') {
+  sheets = initializeGoogleSheets();
 }
 
-export { sheets };
+export { sheets, initializeGoogleSheets };
 // JWT 클라이언트 생성

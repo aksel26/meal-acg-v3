@@ -3,7 +3,7 @@ import admin from "firebase-admin";
 
 // .env.local에서 서비스 계정 키를 가져옵니다.
 const getServiceAccount = () => {
-  const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+  const serviceAccountKey = process.env.NEXT_PUBLIC_FIREBASE_SERVICE_ACCOUNT_KEY;
   console.log("serviceAccountKey:", serviceAccountKey);
 
   if (!serviceAccountKey) {

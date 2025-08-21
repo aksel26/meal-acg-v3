@@ -28,16 +28,23 @@ const getServiceAccount = () => {
 };
 
 // 이미 초기화된 앱이 있는지 확인하여 중복 초기화를 방지합니다.
-if (!admin.apps.length) {
+let isInitialized = false;
+
+if (!admin.apps.length && typeof window === 'undefined') {
   const serviceAccount = getServiceAccount();
 
   if (serviceAccount) {
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-    });
+    try {
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+      });
+      isInitialized = true;
+    } catch (error) {
+      console.error("Firebase Admin initialization failed:", error);
+    }
   } else {
-    console.error("Cannot initialize Firebase Admin: Service account configuration is invalid");
+    console.warn("Skipping Firebase Admin initialization: Service account not available");
   }
 }
 

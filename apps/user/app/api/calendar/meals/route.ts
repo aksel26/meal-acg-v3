@@ -4,6 +4,15 @@ import { processExcelBuffer, MealData } from "@/lib/excel-processor";
 
 export async function GET(request: NextRequest) {
   try {
+    // Firebase 초기화 상태 확인
+    const { admin } = await import("@/firebase/adminConfig");
+    if (admin.apps.length === 0) {
+      console.error("Firebase Admin is not initialized");
+      return NextResponse.json({ 
+        error: "Service temporarily unavailable. Please check configuration." 
+      }, { status: 503 });
+    }
+
     const { searchParams } = new URL(request.url);
     const date = searchParams.get("date"); // YYYY-MM-DD format
     const month = searchParams.get("month"); // MM format for month view

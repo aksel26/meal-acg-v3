@@ -1,4 +1,4 @@
-import { adminStorage } from "@/firebase/adminConfig";
+import { getAdminStorage } from "@/firebase/adminConfig";
 import { getSemesterInfo } from "./date-utils";
 
 export interface FirebaseFile {
@@ -12,7 +12,7 @@ export interface FirebaseFile {
 export async function findSemesterFolder(month: number, year?: number): Promise<string | null> {
   try {
     const { folderName } = getSemesterInfo(month, year);
-    const bucket = adminStorage.bucket();
+    const bucket = getAdminStorage().bucket();
 
     console.log(`Looking for semester folder: ${folderName}`);
 
@@ -42,7 +42,7 @@ export async function findSemesterFolder(month: number, year?: number): Promise<
 
 export async function findExcelFiles(folderPath: string, userName: string): Promise<FirebaseFile[]> {
   try {
-    const bucket = adminStorage.bucket();
+    const bucket = getAdminStorage().bucket();
 
     console.log(`Searching for Excel files in folder: ${folderPath} for user: ${userName}`);
 
@@ -87,7 +87,7 @@ export async function findExcelFiles(folderPath: string, userName: string): Prom
 
 export async function downloadFileBuffer(filePath: string): Promise<Buffer> {
   try {
-    const bucket = adminStorage.bucket();
+    const bucket = getAdminStorage().bucket();
     const file = bucket.file(filePath);
 
     console.log(`Downloading file: ${filePath}`);
@@ -110,7 +110,7 @@ export async function downloadFileBuffer(filePath: string): Promise<Buffer> {
 
 export async function uploadFileBuffer(filePath: string, buffer: Buffer): Promise<void> {
   try {
-    const bucket = adminStorage.bucket();
+    const bucket = getAdminStorage().bucket();
     const file = bucket.file(filePath);
 
     console.log(`Uploading file: ${filePath} (${buffer.length} bytes)`);
@@ -131,7 +131,7 @@ export async function uploadFileBuffer(filePath: string, buffer: Buffer): Promis
 
 export async function getSignedUrl(filePath: string, expiresInHours: number = 1): Promise<string> {
   try {
-    const bucket = adminStorage.bucket();
+    const bucket = getAdminStorage().bucket();
     const file = bucket.file(filePath);
 
     const [exists] = await file.exists();

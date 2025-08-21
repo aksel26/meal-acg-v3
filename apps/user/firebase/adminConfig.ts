@@ -40,6 +40,23 @@ if (!admin.apps.length) {
   }
 }
 
-const adminStorage: admin.storage.Storage = admin.storage();
+// Storage 인스턴스를 안전하게 가져오는 함수
+const getAdminStorage = () => {
+  if (admin.apps.length === 0) {
+    throw new Error('Firebase Admin is not initialized. Please check your service account configuration.');
+  }
+  return admin.storage();
+};
 
-export { admin, adminStorage };
+// adminStorage를 함수로 export하거나, 초기화 확인 후 export
+let adminStorage: admin.storage.Storage | null = null;
+
+try {
+  if (admin.apps.length > 0) {
+    adminStorage = admin.storage();
+  }
+} catch (error) {
+  console.error('Failed to initialize admin storage:', error);
+}
+
+export { admin, adminStorage, getAdminStorage };

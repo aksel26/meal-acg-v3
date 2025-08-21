@@ -1,7 +1,7 @@
 import { Sonner } from "@repo/ui/src/sonner";
 import "./globals.css";
 import "@repo/ui/styles.css";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import QueryProvider from "./providers/QueryProvider"; // 위에서 생성한 Provider 임포트
 
 // import { Geist } from "next/font/google";

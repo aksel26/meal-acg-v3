@@ -211,7 +211,7 @@ const Lunch = () => {
           <Card className="bg-white border-none shadow-none">
             <CardContent className="text-center py-8">
               <p className="text-red-500 mb-2">데이터를 불러오는데 실패했습니다.</p>
-              <p className="text-sm text-gray-500">{error}</p>
+              <p className="text-sm text-gray-500">{error?.message || "알 수 없는 오류가 발생했습니다."}</p>
             </CardContent>
           </Card>
         ) : (

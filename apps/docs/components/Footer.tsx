@@ -1,9 +1,10 @@
-"use client";
+// "use client";
 
+// import { AtSign } from "@repo/ui/icons";
 import Image from "next/image";
 import React from "react";
-import GithubIcon from "@/public/icons/github.svg";
-import { AtSign } from "@repo/ui/icons";
+// import { AtSign } from "@repo/ui/icons";
+// import GithubIconSvg from "@/public/icons/github.svg";
 interface FooterProps {
   className?: string;
 }
@@ -27,13 +28,13 @@ export function Footer({ className = "" }: FooterProps) {
         <div className="flex justify-center flex-col items-center space-y-1 text-xs">
           <button onClick={() => window.open("https://github.com/aksel26", "_blank")} className="text-gray-600 hover:text-gray-800 transition-colors p-1" aria-label="GitHub">
             <div className="flex space-x-1">
-              <GithubIcon width={15} height={15} />
+              {/* <GithubIconSvg /> */}
               <span>aksel26</span>
             </div>
           </button>
           <button onClick={handleEmailClick} className="text-gray-600 hover:text-gray-800 transition-colors p-1" aria-label="GitHub">
             <div className="flex space-x-1">
-              <AtSign width={15} height={15} />
+              {/* <AtSign size={15} /> */}
               <span>hmkim@acghr.co.kr</span>
             </div>
           </button>

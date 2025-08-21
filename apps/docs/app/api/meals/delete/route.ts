@@ -68,7 +68,8 @@ export async function DELETE(request: NextRequest) {
         // 파일 다운로드
         const buffer = await downloadFileBuffer(file.fullPath);
         const workbook = new ExcelJS.Workbook();
-        await workbook.xlsx.load(buffer);
+        // @ts-ignore: Buffer type incompatibility with Firebase storage buffer
+        await workbook.xlsx.load(buffer as any);
 
         // 두 번째 시트 '내역' 가져오기 
         const worksheet = workbook.worksheets[1]; // 두 번째 시트

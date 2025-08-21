@@ -19,7 +19,7 @@ export async function readCellFromBuffer(
   sheetName?: string
 ): Promise<any> {
   const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.load(buffer);
+  await workbook.xlsx.load(buffer as any);
 
   const targetWorksheet = sheetName
     ? workbook.getWorksheet(sheetName)
@@ -136,7 +136,7 @@ export async function getWorksheet(
   sheetName?: string
 ): Promise<{ workbook: ExcelJS.Workbook; worksheet: ExcelJS.Worksheet }> {
   const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.load(buffer);
+  await workbook.xlsx.load(buffer as any);
 
   const targetSheetName =
     sheetName ||

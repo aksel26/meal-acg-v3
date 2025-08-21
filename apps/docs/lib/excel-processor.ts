@@ -57,7 +57,7 @@ export async function processExcelBuffer(
   operation: "calculation" | "meals" = "calculation"
 ): Promise<CalculationResult | MealData[]> {
   const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.load(buffer);
+  await workbook.xlsx.load(buffer as any);
 
   const targetSheetName = workbook.worksheets.find((ws) => ws.name === "내역")?.name || workbook.worksheets[0]?.name;
 
@@ -233,7 +233,7 @@ function extractMealData(jsonData: any[], targetYear: number, targetMonth: numbe
 
 export async function readCellFromBuffer(buffer: Buffer, cellAddress: string, sheetName?: string): Promise<any> {
   const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.load(buffer);
+  await workbook.xlsx.load(buffer as any);
 
   const targetWorksheet = sheetName ? workbook.getWorksheet(sheetName) : workbook.worksheets[0];
 
@@ -278,7 +278,7 @@ export interface MealSubmitData {
 
 export async function updateExcelMealData(buffer: Buffer, mealData: MealSubmitData): Promise<Buffer> {
   const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.load(buffer);
+  await workbook.xlsx.load(buffer as any);
 
   const targetSheetName = workbook.worksheets.find((ws) => ws.name === "내역")?.name || workbook.worksheets[0]?.name;
 
@@ -447,7 +447,7 @@ function indexToColumn(index: number): string {
 // 엑셀에서 현재 월의 공휴일 정보 추출 (F열='휴일', G열에 값이 있는 경우)
 export async function getHolidaysFromExcel(buffer: Buffer, targetMonth: number, targetYear?: number): Promise<ExcelHolidayInfo[]> {
   const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.load(buffer);
+  await workbook.xlsx.load(buffer as any);
 
   const targetSheetName = workbook.worksheets.find((ws) => ws.name === "내역")?.name || workbook.worksheets[0]?.name;
 
@@ -496,7 +496,7 @@ export async function getHolidaysFromExcel(buffer: Buffer, targetMonth: number, 
 // 구글 캘린더 공휴일과 엑셀 공휴일 비교 후 업데이트
 export async function updateExcelHolidays(buffer: Buffer, googleHolidays: HolidayData[], targetMonth: number, targetYear?: number): Promise<Buffer> {
   const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.load(buffer);
+  await workbook.xlsx.load(buffer as any);
 
   const targetSheetName = workbook.worksheets.find((ws) => ws.name === "내역")?.name || workbook.worksheets[0]?.name;
 

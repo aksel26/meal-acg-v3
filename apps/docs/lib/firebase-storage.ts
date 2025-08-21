@@ -101,7 +101,7 @@ export async function downloadFileBuffer(filePath: string): Promise<Buffer> {
 
     console.log(`Downloaded ${buffer.length} bytes from ${filePath}`);
 
-    return buffer;
+    return Buffer.from(buffer);
   } catch (error) {
     console.error("Error downloading file buffer:", error);
     throw error;

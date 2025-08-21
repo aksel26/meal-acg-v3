@@ -10,7 +10,7 @@ import { useMealData } from "@/hooks/use-meal-data";
 import { useMealDelete } from "@/hooks/use-meal-delete";
 import { useMealSubmit } from "@/hooks/use-meal-submit";
 import Notice from "@/public/images/Notice.png";
-import { ChevronRightIcon, Copy } from "@repo/ui/icons";
+import { ChevronRight as ChevronRightIcon, Copy } from "@repo/ui/icons";
 import { Button } from "@repo/ui/src/button";
 // import Calendar21 from "../../../../../packages/ui/dist/src/calendarComponent";
 import CalendarComponent from "@/components/Calendar";
@@ -26,7 +26,7 @@ import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from "rea
 import { formatDateKorean } from "utils";
 
 // Lazy load the MealEntryDrawer component
-const MealEntryDrawer = lazy(() => import("@/components/MealEntryDrawer"));
+const MealEntryDrawer = lazy(() => import("@/components/MealEntryDrawer").then(module => ({ default: module.default })));
 
 interface CalculationData {
   fileName: string;

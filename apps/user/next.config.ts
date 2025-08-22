@@ -59,16 +59,17 @@ const nextConfig = {
     });
     return config;
   },
-
-  experimental: {
-    turbo: {
-      rules: {
-        "*.svg": {
-          loaders: ["@svgr/webpack"],
-          as: "*.js",
-        },
+  turbopack: {
+    rules: {
+      "*.svg": {
+        loaders: ["@svgr/webpack"],
+        as: "*.js",
       },
     },
+  },
+  // Route groups 빌드 이슈 해결을 위한 설정
+  generateBuildId: async () => {
+    return 'build-' + new Date().getTime()
   },
 };
 

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import Header from "./page";
+import Header from "../components/Header";
 import { motion, AnimatePresence } from "motion/react";
 import { usePathname } from "next/navigation";
 

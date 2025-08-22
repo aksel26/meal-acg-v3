@@ -1,17 +1,22 @@
 "use client";
-import Image from "next/image";
-import React from "react";
-import LOGO from "@/public/images/ACG_LOGO_GRAY.png";
-import { useHeaderVisibility } from "@/hooks/useHeaderVisibility";
-const Header = () => {
-  const { isHeaderVisible } = useHeaderVisibility({ threshold: 50, scrollDifference: 5 });
-  return (
-    <header className={`border-b bg-card sticky top-0 z-50 transition-transform duration-300 ease-in-out ${isHeaderVisible ? "translate-y-0" : "-translate-y-full"}`}>
-      <div className="container mx-auto px-4 py-5 flex justify-center items-center">
-        <Image src={LOGO} alt="CI" width={0} height={0} style={{ width: "60px", height: "20px" }} />
-      </div>
-    </header>
-  );
-};
 
-export default Header;
+import React from "react";
+import { useRouter } from "next/navigation";
+
+export default function ContentHomePage() {
+  const router = useRouter();
+
+  React.useEffect(() => {
+    // Redirect to dashboard as the default content page
+    router.push("/dashboard");
+  }, [router]);
+
+  return (
+    <div className="flex items-center justify-center min-h-[50vh]">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold text-gray-900">환영합니다!</h1>
+        <p className="text-gray-600 mt-2">잠시만 기다려주세요...</p>
+      </div>
+    </div>
+  );
+}

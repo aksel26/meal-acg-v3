@@ -26,7 +26,7 @@ import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from "rea
 import { formatDateKorean } from "utils";
 
 // Lazy load the MealEntryDrawer component
-const MealEntryDrawer = lazy(() => import("@/components/MealEntryDrawer").then(module => ({ default: module.default })));
+const MealEntryDrawer = lazy(() => import("@/components/MealEntryDrawer").then((module) => ({ default: module.default })));
 
 interface CalculationData {
   fileName: string;
@@ -407,7 +407,7 @@ export default function DashboardPage() {
   };
 
   const checkNotice = () => {
-    window.open("https://hammerhead-magician-201.notion.site/v1-3-da83491628ed4e708f4e0ce8b1cbb1ff", "_blank");
+    window.open("https://hammerhead-magician-201.notion.site/v1-3-257643bd2c6b80798c8bcc2d44103ed7?source=copy_link", "_blank");
   };
 
   const handleDrawerOpenChange = (open: boolean) => {
@@ -583,7 +583,7 @@ export default function DashboardPage() {
           delay: 0.5,
           ease: [0.25, 0.46, 0.45, 0.94],
         }}
-        className="space-y-8"
+        className="space-y-8 flex flex-col items-center justify-center"
       >
         <CalendarComponent onDateSelect={setSelectedDate} selectedDate={selectedDate} onMonthChange={handleMonthChange} mealData={mealData} />
         <div className="mt-4">

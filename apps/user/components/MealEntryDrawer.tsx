@@ -39,7 +39,6 @@ const DeleteConfirmDialog = lazy(() =>
   }))
 );
 
-
 interface MealEntryDrawerProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -187,7 +186,14 @@ export default function MealEntryDrawer({
         onInputChange("amount", "10000");
       }
     }
-  }, [selectedMealType, selectedMealType === "lunch" && "attendance" in currentFormData ? (currentFormData as { attendance: string }).attendance : "", currentFormData.amount, onInputChange]);
+  }, [
+    selectedMealType,
+    selectedMealType === "lunch" && "attendance" in currentFormData
+      ? (currentFormData as { attendance: string }).attendance
+      : "",
+    currentFormData.amount,
+    onInputChange,
+  ]);
 
   const handleDeleteMeal = async () => {
     if (!selectedDate || !onDeleteMeal) return;
@@ -218,8 +224,8 @@ export default function MealEntryDrawer({
   );
 
   return (
-    <Drawer open={isOpen} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-w-lg mx-auto bg-gradient-to-br from-white to-gray-50">
+    <Drawer open={isOpen} onOpenChange={onOpenChange} repositionInputs={false}>
+      <DrawerContent className="max-h-[82vh] max-w-lg mx-auto bg-gradient-to-br from-white to-gray-50">
         <DrawerHeader className="border-b border-gray-100 pb-4">
           <div className="relative">
             <DrawerTitle className="text-sm sm:text-base font-semibold text-gray-800 text-center">
@@ -434,7 +440,7 @@ export default function MealEntryDrawer({
           )}
         </form>
 
-        <DrawerFooter className="px-6 py-4 border-t border-gray-100 bg-white/50 bg-slate-300 flex gap-x-3">
+        <DrawerFooter className="px-6 py-4 border-t border-gray-100 bg-white/50 flex gap-x-3">
           <DrawerClose asChild>
             <Button
               variant="outline"

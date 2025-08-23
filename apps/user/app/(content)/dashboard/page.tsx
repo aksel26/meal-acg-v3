@@ -550,7 +550,7 @@ export default function DashboardPage() {
         <Card className="mb-4 border-none shadow-none">
           <CardHeader>
             <CardTitle>
-              <p className="text-lg text-foreground mb-2">
+              <p className="text-base sm:text-lg text-foreground mb-2 font-medium">
                 안녕하세요, {userName}님 👋
               </p>
               <p className="text-sm font-light text-gray-400">
@@ -674,17 +674,6 @@ export default function DashboardPage() {
           {/* </CardContent> */}
         </Card>
       </motion.div>
-
-      <Sheet>
-        <SheetTrigger asChild>
-          <Button
-            onClick={() => setIsSheetOpen(true)}
-            className="mb-4 bg-green-500 hover:bg-green-600"
-          >
-            테스트 Sheet 열기
-          </Button>
-        </SheetTrigger>
-      </Sheet>
 
       {/* 식사 기록 섹션 */}
       <motion.div

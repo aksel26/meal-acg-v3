@@ -2,7 +2,12 @@
 
 import { Alert, AlertDescription } from "@repo/ui/src/alert";
 import { Button } from "@repo/ui/src/button";
-import { Carousel, CarouselContent, CarouselDots, CarouselItem } from "@repo/ui/src/carousel";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselDots,
+  CarouselItem,
+} from "@repo/ui/src/carousel";
 import { Input } from "@repo/ui/src/input";
 import { Label } from "@repo/ui/src/label";
 import { motion } from "motion/react";
@@ -72,18 +77,32 @@ export default function HomePage() {
       }
     } catch (err) {
       console.error("로그인 오류:", err);
-      setError(err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.");
+      setError(
+        err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다."
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative max-w-md mx-auto flex-col">
-      <Image src={BackgroundImage} alt="Background" fill className="object-cover" style={{ zIndex: -1 }} />
-      <Image src={CI} alt="CI" width={0} height={0} style={{ width: "60px", height: "20px", position: "absolute", top: 20 }} />
+    <div className="h-dvh flex items-center justify-center p-4 relative max-w-md mx-auto flex-col">
+      <Image
+        src={BackgroundImage}
+        alt="Background"
+        fill
+        className="object-cover"
+        style={{ zIndex: -1 }}
+      />
+      <Image
+        src={CI}
+        alt="CI"
+        width={0}
+        height={0}
+        style={{ width: "60px", height: "20px", position: "absolute", top: 20 }}
+      />
 
-      <div className="flex-1 items-center flex justify-end flex-col pb-12">
+      <div className="flex-1 items-center flex justify-end flex-col pb-4">
         {/* Carousel 영역 시작 */}
         <Carousel className="w-[60%] sm:w-1/2 max-w-xs">
           <CarouselContent>
@@ -186,7 +205,7 @@ export default function HomePage() {
       </div>
       <div className="w-full mx-auto inset-x-0 rounded-4xl p-6 px-6 bg-white relative">
         <div className="mb-4">
-          <p className="mb-3">맛점 하셨나요? 🍙</p>
+          <p className="mb-3 text-sm sm:text-base">맛점 하셨나요? 🍙</p>
           <div className="text-xs sm:text-md leading-5">
             <p>알뜰한 식사관리,</p>
             <p>간편하게 시작하세요!</p>
@@ -198,14 +217,32 @@ export default function HomePage() {
             <Label className="text-xs sm:text-sm" htmlFor="id">
               아이디
             </Label>
-            <Input className="text-xs" id="id" name="id" type="text" value={formData.id} onChange={handleInputChange} placeholder="사용자명을 입력하세요" required />
+            <Input
+              className="text-xs"
+              id="id"
+              name="id"
+              type="text"
+              value={formData.id}
+              onChange={handleInputChange}
+              placeholder="사용자명을 입력하세요"
+              required
+            />
           </div>
 
           <div className="space-y-2">
             <Label className="text-xs sm:text-sm" htmlFor="password">
               비밀번호
             </Label>
-            <Input className="text-xs" id="password" name="password" type="password" value={formData.password} onChange={handleInputChange} placeholder="비밀번호를 입력하세요" required />
+            <Input
+              className="text-xs"
+              id="password"
+              name="password"
+              type="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              placeholder="비밀번호를 입력하세요"
+              required
+            />
           </div>
 
           {error && (
@@ -214,7 +251,11 @@ export default function HomePage() {
             </Alert>
           )}
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button
+            type="submit"
+            className="w-full text-xs sm:text-sm"
+            disabled={loading}
+          >
             {loading ? "로그인 중..." : "로그인"}
           </Button>
         </form>

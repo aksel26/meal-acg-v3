@@ -14,13 +14,14 @@ const initializeGoogleSheets = () => {
       key: GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
       scopes: SCOPES,
     });
+    console.log("jwtClient: ", jwtClient);
 
     return google.sheets({ version: "v4", auth: jwtClient });
   }
   return null;
 };
 
-if (typeof window === 'undefined') {
+if (typeof window === "undefined") {
   sheets = initializeGoogleSheets();
 }
 

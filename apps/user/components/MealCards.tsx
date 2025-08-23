@@ -1,7 +1,13 @@
 import * as React from "react";
 import { Button } from "@repo/ui/src/button";
 import { Plus } from "@repo/ui/icons";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@repo/ui/src/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/src/card";
 
 interface MealData {
   date: string;
@@ -26,13 +32,24 @@ interface MealData {
 interface MealCardsProps {
   selectedDate?: Date;
   onAddMeal?: (mealType: "breakfast" | "lunch" | "dinner") => void;
-  onEditMeal?: (mealType: "breakfast" | "lunch" | "dinner", mealInfo: MealData) => void;
+  onEditMeal?: (
+    mealType: "breakfast" | "lunch" | "dinner",
+    mealInfo: MealData
+  ) => void;
   onHolidayEdit?: (mealInfo: MealData) => void;
   mealData?: MealData[];
 }
 
-export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, mealData = [] }: MealCardsProps) {
-  const [currentMealData, setCurrentMealData] = React.useState<MealData | null>(null);
+export function MealCards({
+  selectedDate,
+  onAddMeal,
+  onEditMeal,
+  onHolidayEdit,
+  mealData = [],
+}: MealCardsProps) {
+  const [currentMealData, setCurrentMealData] = React.useState<MealData | null>(
+    null
+  );
 
   React.useEffect(() => {
     if (selectedDate && mealData.length > 0) {
@@ -45,23 +62,40 @@ export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, 
   }, [selectedDate, mealData]);
 
   if (!selectedDate) {
-    return <div className="text-center py-4 text-muted-foreground">날짜를 선택해주세요</div>;
+    return (
+      <div className="text-center py-4 text-muted-foreground">
+        날짜를 선택해주세요
+      </div>
+    );
   }
 
   const formatDate = (date: Date) => {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
   };
 
-  const hasMealData = currentMealData && (currentMealData.breakfast || currentMealData.lunch || currentMealData.dinner || currentMealData.attendance);
+  const hasMealData =
+    currentMealData &&
+    (currentMealData.breakfast ||
+      currentMealData.lunch ||
+      currentMealData.dinner ||
+      currentMealData.attendance);
 
   if (!hasMealData) {
     return (
-      <Card className="border-none shadow-none">
+      <Card className="border-none shadow-none mt-8">
         <CardHeader>
           <CardTitle>
             <div className="flex w-full items-center justify-between px-2">
-              <div className="text-sm sm:text-md font-semibold text-gray-800">{formatDate(selectedDate)}</div>
-              <Button variant="ghost" size="icon" className="size-8 hover:bg-blue-50" title="Add Event" onClick={() => onAddMeal?.("lunch")}>
+              <div className="text-sm sm:text-md font-semibold text-gray-800">
+                {formatDate(selectedDate)}
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8 hover:bg-blue-50"
+                title="Add Event"
+                onClick={() => onAddMeal?.("lunch")}
+              >
                 <Plus className="w-4 h-4 text-blue-600" />
                 <span className="sr-only">Add Event</span>
               </Button>
@@ -70,7 +104,9 @@ export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, 
         </CardHeader>
 
         <CardContent>
-          <p className="text-gray-500 text-xs sm:text-sm text-center">이 날짜에 등록된 식대 기록이 없습니다</p>
+          <p className="text-gray-500 text-xs sm:text-sm text-center">
+            이 날짜에 등록된 식대 기록이 없습니다
+          </p>
         </CardContent>
         <CardFooter>
           <Button
@@ -117,12 +153,12 @@ export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, 
   const visibleMeals = meals.filter((meal) => {
     // 일반적으로는 데이터가 있는 식사만 표시
     if (meal.data) return true;
-    
+
     // 하지만 attendance가 '근무'이고 중식인 경우는 데이터가 없어도 표시
     if (meal.type === "lunch" && currentMealData?.attendance === "근무") {
       return true;
     }
-    
+
     return false;
   });
 
@@ -131,13 +167,21 @@ export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, 
   };
 
   return (
-    <Card className="space-y-4 bg-white border-none shadow-none">
+    <Card className="space-y-4 bg-white border-none shadow-none mt-8">
       {/* Header */}
       <CardHeader className="mb-0">
         <CardTitle>
           <div className="flex w-full items-center justify-between px-2">
-            <div className="text-md font-semibold text-gray-800">{formatDate(selectedDate)}</div>
-            <Button variant="ghost" size="icon" className="size-8 hover:bg-blue-50" title="Add Event" onClick={() => onAddMeal?.("lunch")}>
+            <div className="text-md font-semibold text-gray-800">
+              {formatDate(selectedDate)}
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8 hover:bg-blue-50"
+              title="Add Event"
+              onClick={() => onAddMeal?.("lunch")}
+            >
               <Plus className="w-4 h-4 text-blue-600" />
               <span className="sr-only">Add Event</span>
             </Button>
@@ -151,8 +195,12 @@ export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, 
             <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mb-4">
               <span className="text-2xl">🏖️</span>
             </div>
-            <p className="text-orange-600 text-base font-medium mb-2 text-center">휴무일</p>
-            <p className="text-gray-500 text-sm text-center">휴무일에는 식대가 제공되지 않습니다</p>
+            <p className="text-orange-600 text-base font-medium mb-2 text-center">
+              휴무일
+            </p>
+            <p className="text-gray-500 text-sm text-center">
+              휴무일에는 식대가 제공되지 않습니다
+            </p>
           </CardContent>
           <CardFooter>
             <Button
@@ -172,14 +220,29 @@ export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, 
         <>
           <CardContent>
             <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
-              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              <svg
+                className="w-8 h-8 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                />
               </svg>
             </div>
-            <p className="text-gray-500 text-sm text-center">아직 식사 기록이 없어요</p>
+            <p className="text-gray-500 text-sm text-center">
+              아직 식사 기록이 없어요
+            </p>
           </CardContent>
           <CardFooter>
-            <Button onClick={() => onAddMeal?.("lunch")} className="bg-blue-500 hover:bg-blue-600 text-white rounded-xl px-6 py-3 font-medium">
+            <Button
+              onClick={() => onAddMeal?.("lunch")}
+              className="bg-blue-500 hover:bg-blue-600 text-white rounded-xl px-6 py-3 font-medium"
+            >
               식사 기록하기
             </Button>
           </CardFooter>
@@ -206,20 +269,47 @@ export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, 
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
-                        <span className={`font-medium ${meal.textColor} text-sm`}>{meal.title}</span>
-                        <span className={`font-bold ${meal.textColor} text-base`}>{meal.data?.amount ? `-${meal.data.amount.toLocaleString()}원` : "0원"}</span>
+                        <span
+                          className={`font-medium ${meal.textColor} text-sm`}
+                        >
+                          {meal.title}
+                        </span>
+                        <span
+                          className={`font-bold ${meal.textColor} text-base`}
+                        >
+                          {meal.data?.amount
+                            ? `-${meal.data.amount.toLocaleString()}원`
+                            : "0원"}
+                        </span>
                       </div>
 
                       <div className="flex items-center justify-between">
                         <span className="text-gray-500 text-xs">
-                          {meal.data?.store || (meal.type === "lunch" && !meal.data ? "입력 내용이 없습니다" : "식당 정보 없음")}
+                          {meal.data?.store ||
+                            (meal.type === "lunch" && !meal.data
+                              ? "입력 내용이 없습니다"
+                              : "식당 정보 없음")}
                         </span>
-                        {meal.data?.payer && <span className="text-gray-500 text-xs">{meal.data.payer}</span>}
+                        {meal.data?.payer && (
+                          <span className="text-gray-500 text-xs">
+                            {meal.data.payer}
+                          </span>
+                        )}
                       </div>
                     </div>
 
-                    <svg className="w-5 h-5 text-gray-300 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    <svg
+                      className="w-5 h-5 text-gray-300 ml-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
                     </svg>
                   </div>
                 </div>

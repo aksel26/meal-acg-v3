@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import CI from "@/public/images/ACG_LOGO_GRAY.png";
 import BackgroundImage from "@/public/images/bg.jpeg";
+import Character from "@/public/images/login-character.png";
 import Calendar from "@/public/images/Calendar.png";
 import Coffee from "@/public/images/Coffee.png";
 import Lunch from "@/public/images/lunch.png";
@@ -109,17 +110,23 @@ export default function HomePage() {
             <CarouselItem>
               <div className="flex items-center justify-center flex-col">
                 <motion.div
-                  animate={{
-                    y: [0, -10, 0],
-                    rotate: [0, 2, -2, 0],
-                  }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
+                // animate={{
+                //   y: [0, -10, 0],
+                //   rotate: [0, 2, -2, 0],
+                // }}
+                // transition={{
+                //   duration: 3,
+                //   repeat: Infinity,
+                //   ease: "easeInOut",
+                // }}
                 >
-                  <Image src={Calendar} alt="식대 기록 및 현황 확인" />
+                  <Image
+                    src={Character}
+                    alt="식대 기록 및 현황 확인"
+                    height={180}
+                    width={130}
+                    className="scale-120"
+                  />
                 </motion.div>
 
                 <p className="font-medium text-blue-800 text-sm text-center mt-2">

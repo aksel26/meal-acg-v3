@@ -272,7 +272,7 @@ export default function MealEntryDrawer({
               setIsSubmitting(false);
             }
           }}
-          className="px-6 py-2 sm:space-y-6 space-y-4 overflow-y-auto flex-1"
+          className="px-6 py-4 sm:space-y-6 space-y-6 overflow-y-auto flex-1"
         >
           {/* 식사 타입 선택 */}
           <div className="sm:space-y-3 space-y-1">
@@ -290,7 +290,7 @@ export default function MealEntryDrawer({
                     )
                   }
                   className={`
-                     border transition-all duration-200 h-8 sm:h-10 text-[10.5px] rounded-md hover:bg-blue-50 hover:scale-102 hover:border-blue-300
+                     border transition-all duration-200 h-8 sm:h-10 text-[10.5px] sm:text-xs rounded-md hover:bg-blue-50 hover:scale-102 hover:border-blue-300
                     ${selectedMealType === meal.value ? `${meal.color} shadow-lg scale-105` : `bg-white text-gray-700 ${meal.hoverColor}  hover:bg-blue-100 hover:scale-102`}
                   `}
                 >
@@ -350,7 +350,7 @@ export default function MealEntryDrawer({
                 className=" text-xs sm:text-sm"
               />
 
-              <Tooltip>
+              <Tooltip defaultOpen>
                 <TooltipTrigger asChild>
                   <Button
                     size={"icon"}
@@ -440,7 +440,7 @@ export default function MealEntryDrawer({
           )}
         </form>
 
-        <DrawerFooter className="px-6 py-4 border-t border-gray-100 bg-white/50 flex gap-x-3">
+        <DrawerFooter className="px-6 pb-8 pt-4 border-t border-gray-100 bg-white/50 flex gap-x-3">
           <DrawerClose asChild>
             <Button
               variant="outline"

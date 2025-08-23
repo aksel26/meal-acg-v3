@@ -19,7 +19,7 @@ const Header = () => {
           alt="CI"
           width={0}
           height={0}
-          style={{ width: "40px", height: "15px" }}
+          style={{ width: "50px", height: "18px" }}
         />
       </div>
     </header>

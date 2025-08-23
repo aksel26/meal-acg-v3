@@ -327,7 +327,7 @@ export default function DashboardPage() {
   };
 
   const copyAccound = () => {
-    const accountNumber = "123-456-7890"; // 여기에 실제 계좌번호를 넣으세요
+    const accountNumber = "국민 005701-04-142344 ㈜에이시지알"; // 여기에 실제 계좌번호를 넣으세요
     navigator.clipboard
       .writeText(accountNumber)
       .then(() => {
@@ -684,7 +684,6 @@ export default function DashboardPage() {
           delay: 0.5,
           ease: [0.25, 0.46, 0.45, 0.94],
         }}
-        className="space-y-8 flex flex-col items-center justify-center"
       >
         <CalendarComponent
           onDateSelect={setSelectedDate}
@@ -692,15 +691,13 @@ export default function DashboardPage() {
           onMonthChange={handleMonthChange}
           mealData={mealData}
         />
-        <div className="mt-4 w-full">
-          <MealCards
-            selectedDate={selectedDate}
-            onAddMeal={handleAddMeal}
-            onEditMeal={handleEditMeal}
-            onHolidayEdit={handleHolidayAttendanceEdit}
-            mealData={mealData}
-          />
-        </div>
+        <MealCards
+          selectedDate={selectedDate}
+          onAddMeal={handleAddMeal}
+          onEditMeal={handleEditMeal}
+          onHolidayEdit={handleHolidayAttendanceEdit}
+          mealData={mealData}
+        />
       </motion.div>
 
       {/* Lazy-loaded Meal Entry Drawer */}

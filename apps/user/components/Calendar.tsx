@@ -1,6 +1,7 @@
 import { HolidayData, useHolidays } from "@/hooks/useHolidays";
 import * as React from "react";
 import { Calendar, CalendarDayButton } from "@repo/ui/src/calendar";
+import Image from "next/image";
 // import { Calendar, CalendarDayButton } from "./calendar";
 // import { useHolidays, type HolidayData } from "./hooks/useHolidays";
 
@@ -69,22 +70,43 @@ export default function CalendarComponent({
   const getAttendanceIcon = (
     attendance: string,
     holiday: string
-  ): { icon: string; color: string } => {
-    // 공휴일이 있으면 우선적으로 공휴일 아이콘 표시
+  ): { icon: string; color: string; isImage: boolean } => {
+    // 공휴일이 있으면 공휴일 이름을 텍스트로 표시
     if (holiday) {
-      return { icon: holiday, color: "text-red-600" };
+      return {
+        icon: holiday,
+        color: "text-red-600",
+        isImage: false,
+      };
     }
 
     const lowerAttendance = attendance.toLowerCase();
 
     // 근무 관련
     if (lowerAttendance.includes("근무") || lowerAttendance.includes("출근")) {
-      return { icon: "🍙", color: "text-green-600" };
+      return {
+        icon: "/icons/onigiri.png",
+        color: "text-green-600",
+        isImage: true,
+      };
+    }
+
+    // 반차 관련
+    if (lowerAttendance.includes("반차")) {
+      return {
+        icon: "/icons/clock.png",
+        color: "text-yellow-600",
+        isImage: true,
+      };
     }
 
     // 휴가/휴무 관련
     if (lowerAttendance.includes("휴무") || lowerAttendance.includes("쉼")) {
-      return { icon: "🏖️", color: "text-gray-600" };
+      return {
+        icon: "/icons/holiday.png",
+        color: "text-gray-600",
+        isImage: true,
+      };
     }
 
     // 재택근무 관련
@@ -92,20 +114,23 @@ export default function CalendarComponent({
       lowerAttendance.includes("재택") ||
       lowerAttendance.includes("홈오피스")
     ) {
-      return { icon: "🏠", color: "text-orange-600" };
-    }
-
-    // 반차 관련
-    if (lowerAttendance.includes("반차")) {
-      return { icon: "🕐", color: "text-yellow-600" };
+      return {
+        icon: "/icons/homeOffice.png",
+        color: "text-orange-600",
+        isImage: true,
+      };
     }
 
     // 기타 - 텍스트가 있으면 기본 업무 아이콘
     if (attendance) {
-      return { icon: "📋", color: "text-gray-600" };
+      return {
+        icon: "/icons/onigiri.png",
+        color: "text-gray-600",
+        isImage: true,
+      };
     }
 
-    return { icon: "", color: "" };
+    return { icon: "", color: "", isImage: false };
   };
 
   const handleDateSelect = (newDate: Date | undefined) => {
@@ -169,7 +194,7 @@ export default function CalendarComponent({
       onNextClick={handleNextClick}
       onPrevClick={handlePrevClick}
       captionLayout="dropdown"
-      className="bg-red-300 bg-white rounded-lg [--cell-size:--spacing(8)] md:[--cell-size:--spacing(10)] w-full"
+      className=" bg-white rounded-lg w-full"
       formatters={{
         formatMonthDropdown: (date) => {
           return date.toLocaleString("default", { month: "long" });
@@ -209,7 +234,7 @@ export default function CalendarComponent({
 
           const attendance = getAttendanceForDate(day.date);
           const holiday = getHolidayForDate(day.date);
-          const { icon } = getAttendanceIcon(attendance, holiday);
+          const { icon, isImage } = getAttendanceIcon(attendance, holiday);
 
           const isSelected = modifiers.selected;
           const isToday = modifiers.today;
@@ -219,20 +244,20 @@ export default function CalendarComponent({
               day={day}
               modifiers={modifiers}
               {...props}
-              className="!bg-transparent hover:!bg-transparent !text-inherit data-[selected-single=true]:!bg-transparent data-[selected-single=true]:!text-inherit flex-1"
+              className={`${isSelected ? `bg-blue-50!` : ""} hover:bg-blue-50/40! hover:text-blue-800! `}
             >
               <div
-                className={`flex flex-col space-y-1 items-center relative p-2 hover:scale-115 transition duration-200`}
+                className={`rounded-md flex flex-col  space-y-1 items-center relative p-2 transition duration-200`}
               >
                 <span
-                  className={`text-[11px] sm:text-sm ${isToday ? "bg-[#0a2165] text-gray-50 px-1.5 py-0.5 rounded-sm" : isSelected ? "text-gray-900" : ""}`}
+                  className={`text-[11px] sm:text-sm ${isToday ? "bg-[#0a2165] text-gray-50 px-1.5 py-0.5 rounded-sm" : isSelected ? "text-blue-600" : ""}`}
                 >
                   {children}
                 </span>
 
                 {/* icon wrapper */}
                 <div
-                  className={`w-8 h-8 sm:w-10 sm:h-10 bg-gray-100/60 rounded-lg flex items-center justify-center ${isSelected ? "border-gray-300 border-2" : ""}`}
+                  className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center ${isSelected ? "bg-blue-100" : ""}`}
                 >
                   {isLoading || holidayLoading ? (
                     <div className="w-4 h-4 bg-gray-200 rounded animate-pulse"></div>
@@ -244,12 +269,23 @@ export default function CalendarComponent({
                       ⚠️
                     </span>
                   ) : icon ? (
-                    <span
-                      className={`${holiday !== "" ? "text-[9px] text-red-400 truncate" : "text-lg"}`}
-                      title={holiday || attendance}
-                    >
-                      {icon}
-                    </span>
+                    isImage ? (
+                      <Image
+                        src={icon}
+                        alt={holiday || attendance}
+                        // className="w-4 h-4 sm:w-5 sm:h-5"
+                        width={25}
+                        height={25}
+                        title={holiday || attendance}
+                      />
+                    ) : (
+                      <span
+                        className={`${holiday !== "" ? "text-[8px] sm:text-[9px] text-red-600 truncate font-medium text-center leading-tight" : "text-lg"}`}
+                        title={holiday || attendance}
+                      >
+                        {icon}
+                      </span>
+                    )
                   ) : null}
                 </div>
               </div>

@@ -43,7 +43,7 @@ export function BottomNavigation() {
 
   return (
     <nav className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-lg bg-white border-t border-gray-200 z-50 shadow-lg px-4 justify-between">
-      <div className="flex justify-around items-center pb-3 pt-1.5">
+      <div className="flex justify-around items-center pb-8 pt-1.5">
         {navItems.map((item) => {
           const isActive = pathname === `/${item.id}`;
           // const IconComponent = item.icon;

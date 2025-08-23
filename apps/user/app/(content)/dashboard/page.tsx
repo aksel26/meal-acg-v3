@@ -18,15 +18,34 @@ import { Footer } from "@/components/Footer";
 import { Alert, AlertTitle } from "@repo/ui/src/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/src/card";
 import { ChartPieDonut } from "@repo/ui/src/chart-pie-donut";
+import { Sheet, SheetTrigger } from "@repo/ui/src/sheet";
 import { toast } from "@repo/ui/src/sonner";
 import { motion } from "motion/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  Suspense,
+  lazy,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { formatDateKorean } from "utils";
 
 // Lazy load the MealEntryDrawer component
-const MealEntryDrawer = lazy(() => import("@/components/MealEntryDrawer").then((module) => ({ default: module.default })));
+const MealEntryDrawer = lazy(() =>
+  import("@/components/MealEntryDrawer").then((module) => ({
+    default: module.default,
+  }))
+);
+
+// Lazy load the MealEntrySheet component for testing
+const MealEntrySheet = lazy(() =>
+  import("@/components/MealEntrySheet").then((module) => ({
+    default: module.default,
+  }))
+);
 
 interface CalculationData {
   fileName: string;
@@ -39,8 +58,22 @@ interface CalculationData {
   balance: number;
 }
 
-function CalculationResult({ userName, month, year, onDataChange }: { userName: string; month: number; year: number; onDataChange?: (data: CalculationData | null) => void }) {
-  const { data, isLoading, error, refetch } = useCalculationData(userName, month, year);
+function CalculationResult({
+  userName,
+  month,
+  year,
+  onDataChange,
+}: {
+  userName: string;
+  month: number;
+  year: number;
+  onDataChange?: (data: CalculationData | null) => void;
+}) {
+  const { data, isLoading, error, refetch } = useCalculationData(
+    userName,
+    month,
+    year
+  );
 
   useEffect(() => {
     onDataChange?.(data || null);
@@ -67,7 +100,12 @@ function CalculationResult({ userName, month, year, onDataChange }: { userName: 
             <div className="w-6 h-6 text-red-500">⚠️</div>
           </div>
           <p className="text-gray-600 text-sm">{error.message}</p>
-          <Button onClick={() => refetch()} variant="outline" size="sm" className="text-xs rounded-full">
+          <Button
+            onClick={() => refetch()}
+            variant="outline"
+            size="sm"
+            className="text-xs rounded-full"
+          >
             다시 시도
           </Button>
         </div>
@@ -121,10 +159,20 @@ function CalculationResult({ userName, month, year, onDataChange }: { userName: 
           }}
           className={`${stat.bg} ${stat.text} rounded-xl p-4 transition-all hover:shadow-lg backdrop-blur-lg`}
         >
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: index * 0.1 + 0.2 }} className={`text-2xl font-bold mb-1`}>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: index * 0.1 + 0.2 }}
+            className={`text-2xl font-bold mb-1`}
+          >
             {stat.value}
           </motion.div>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: index * 0.1 + 0.3 }} className="text-xs font-medium">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: index * 0.1 + 0.3 }}
+            className="text-xs font-medium"
+          >
             {stat.label}
           </motion.div>
         </motion.div>
@@ -155,13 +203,23 @@ interface MealData {
 
 export default function DashboardPage() {
   const [userName, setUserName] = useState<string>("");
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [currentMonth, setCurrentMonth] = useState<number>(new Date().getMonth() + 1);
-  const [currentYear, setCurrentYear] = useState<number>(new Date().getFullYear());
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+    new Date()
+  );
+  const [currentMonth, setCurrentMonth] = useState<number>(
+    new Date().getMonth() + 1
+  );
+  const [currentYear, setCurrentYear] = useState<number>(
+    new Date().getFullYear()
+  );
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
-  const [selectedMealType, setSelectedMealType] = useState<"breakfast" | "lunch" | "dinner">("lunch");
+  const [isSheetOpen, setIsSheetOpen] = useState<boolean>(false);
+  const [selectedMealType, setSelectedMealType] = useState<
+    "breakfast" | "lunch" | "dinner"
+  >("lunch");
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
-  const [calculationData, setCalculationData] = useState<CalculationData | null>(null);
+  const [calculationData, setCalculationData] =
+    useState<CalculationData | null>(null);
   const [isHeaderVisible, setIsHeaderVisible] = useState<boolean>(true);
   const [formData, setFormData] = useState({
     breakfast: {
@@ -185,8 +243,16 @@ export default function DashboardPage() {
   const lastScrollY = useRef<number>(0);
 
   // TanStack Query hooks 사용
-  const { data: mealData = [] } = useMealData(userName, currentMonth, currentYear);
-  const { data: fileValidationData, isLoading: fileValidationLoading, error: fileValidationError } = useFileValidation(userName, currentMonth, currentYear);
+  const { data: mealData = [] } = useMealData(
+    userName,
+    currentMonth,
+    currentYear
+  );
+  const {
+    data: fileValidationData,
+    isLoading: fileValidationLoading,
+    error: fileValidationError,
+  } = useFileValidation(userName, currentMonth, currentYear);
   const mealSubmitMutation = useMealSubmit();
   const mealDeleteMutation = useMealDelete();
 
@@ -201,7 +267,8 @@ export default function DashboardPage() {
   const getFileValidationMessage = () => {
     if (fileValidationLoading) return "📁 파일 확인 중...";
     if (fileValidationError) return `⚠️ ${fileValidationError.message}`;
-    if (fileValidationData) return `✅ ${fileValidationData.semesterInfo.folderName}에서 ${fileValidationData.totalFiles}개 파일 발견`;
+    if (fileValidationData)
+      return `✅ ${fileValidationData.semesterInfo.folderName}에서 ${fileValidationData.totalFiles}개 파일 발견`;
     return "";
   };
 
@@ -279,7 +346,10 @@ export default function DashboardPage() {
     setIsDrawerOpen(true);
   };
 
-  const handleEditMeal = (mealType: "breakfast" | "lunch" | "dinner", mealInfo: MealData) => {
+  const handleEditMeal = (
+    mealType: "breakfast" | "lunch" | "dinner",
+    mealInfo: MealData
+  ) => {
     setSelectedMealType(mealType);
     setIsEditMode(true);
 
@@ -407,7 +477,10 @@ export default function DashboardPage() {
   };
 
   const checkNotice = () => {
-    window.open("https://hammerhead-magician-201.notion.site/v1-3-257643bd2c6b80798c8bcc2d44103ed7?source=copy_link", "_blank");
+    window.open(
+      "https://hammerhead-magician-201.notion.site/v1-3-257643bd2c6b80798c8bcc2d44103ed7?source=copy_link",
+      "_blank"
+    );
   };
 
   const handleDrawerOpenChange = (open: boolean) => {
@@ -437,8 +510,12 @@ export default function DashboardPage() {
     }
   };
   const balance = useMemo(() => {
-    if (calculationData?.availableAmount && calculationData?.totalUsed !== undefined) {
-      const result = calculationData.availableAmount - calculationData.totalUsed;
+    if (
+      calculationData?.availableAmount &&
+      calculationData?.totalUsed !== undefined
+    ) {
+      const result =
+        calculationData.availableAmount - calculationData.totalUsed;
       return {
         value: result.toLocaleString("ko-KR"),
         isNegative: result < 0,
@@ -473,9 +550,13 @@ export default function DashboardPage() {
         <Card className="mb-4 border-none shadow-none">
           <CardHeader>
             <CardTitle>
-              <p className="text-lg text-foreground mb-2">안녕하세요, {userName}님 👋</p>
+              <p className="text-lg text-foreground mb-2">
+                안녕하세요, {userName}님 👋
+              </p>
               <p className="text-sm font-light text-gray-400">
-                오늘은 <span className="text-gray-900">{formatDateKorean()}</span> 입니다
+                오늘은{" "}
+                <span className="text-gray-900">{formatDateKorean()}</span>{" "}
+                입니다
               </p>
             </CardTitle>
           </CardHeader>
@@ -491,7 +572,10 @@ export default function DashboardPage() {
           ease: [0.25, 0.46, 0.45, 0.94],
         }}
       >
-        <Alert className="mb-4 border-none bg-blue-50 cursor-pointer transition-all duration-200 hover:shadow-lg hover:shadow-cyan-500/10 hover:scale-102" onClick={checkNotice}>
+        <Alert
+          className="mb-4 border-none bg-blue-50 cursor-pointer transition-all duration-200 hover:shadow-lg hover:shadow-cyan-500/10 hover:scale-102"
+          onClick={checkNotice}
+        >
           <AlertTitle>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-5">
@@ -539,15 +623,27 @@ export default function DashboardPage() {
             <div className="flex justify-between items-end mb-4">
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium ">{currentMonth}월 잔액</p>
-                <p className={`text-2xl font-black ${balance?.isNegative ? "text-red-600" : ""}`}>{balance ? `${balance.value}원` : "계산 중..."}</p>
+                <p
+                  className={`text-2xl font-black ${balance?.isNegative ? "text-red-600" : ""}`}
+                >
+                  {balance ? `${balance.value}원` : "계산 중..."}
+                </p>
               </div>
-              <Button variant={"ghost"} onClick={copyAccound} className="text-xs">
+              <Button
+                variant={"ghost"}
+                onClick={copyAccound}
+                className="text-xs"
+              >
                 <Copy fontSize={15} />
                 계좌번호 복사
               </Button>
             </div>
             {calculationData ? (
-              <ChartPieDonut availableAmount={calculationData.availableAmount || 0} totalUsed={calculationData.totalUsed || 0} className="relative" />
+              <ChartPieDonut
+                availableAmount={calculationData.availableAmount || 0}
+                totalUsed={calculationData.totalUsed || 0}
+                className="relative"
+              />
             ) : (
               <div className="relative h-64 bg-gray-50 rounded-lg animate-pulse flex items-center justify-center">
                 <div className="w-32 h-32 bg-gray-200 rounded-full"></div>
@@ -569,10 +665,26 @@ export default function DashboardPage() {
       >
         <Card className="mb-8 p-0 border-none shadow-none bg-transparent">
           {/* <CardContent className="pt-0"> */}
-          <CalculationResult userName={userName} month={currentMonth} year={currentYear} onDataChange={setCalculationData} />
+          <CalculationResult
+            userName={userName}
+            month={currentMonth}
+            year={currentYear}
+            onDataChange={setCalculationData}
+          />
           {/* </CardContent> */}
         </Card>
       </motion.div>
+
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button
+            onClick={() => setIsSheetOpen(true)}
+            className="mb-4 bg-green-500 hover:bg-green-600"
+          >
+            테스트 Sheet 열기
+          </Button>
+        </SheetTrigger>
+      </Sheet>
 
       {/* 식사 기록 섹션 */}
       <motion.div
@@ -585,9 +697,20 @@ export default function DashboardPage() {
         }}
         className="space-y-8 flex flex-col items-center justify-center"
       >
-        <CalendarComponent onDateSelect={setSelectedDate} selectedDate={selectedDate} onMonthChange={handleMonthChange} mealData={mealData} />
-        <div className="mt-4">
-          <MealCards selectedDate={selectedDate} onAddMeal={handleAddMeal} onEditMeal={handleEditMeal} onHolidayEdit={handleHolidayAttendanceEdit} mealData={mealData} />
+        <CalendarComponent
+          onDateSelect={setSelectedDate}
+          selectedDate={selectedDate}
+          onMonthChange={handleMonthChange}
+          mealData={mealData}
+        />
+        <div className="mt-4 w-full">
+          <MealCards
+            selectedDate={selectedDate}
+            onAddMeal={handleAddMeal}
+            onEditMeal={handleEditMeal}
+            onHolidayEdit={handleHolidayAttendanceEdit}
+            mealData={mealData}
+          />
         </div>
       </motion.div>
 
@@ -602,6 +725,28 @@ export default function DashboardPage() {
         <MealEntryDrawer
           isOpen={isDrawerOpen}
           onOpenChange={handleDrawerOpenChange}
+          selectedMealType={selectedMealType}
+          setSelectedMealType={setSelectedMealType}
+          isEditMode={isEditMode}
+          formData={formData}
+          selectedDate={selectedDate}
+          onFormSubmit={handleFormSubmit}
+          onInputChange={handleInputChange}
+          onDeleteMeal={handleDeleteMeal}
+        />
+      </Suspense>
+
+      {/* Lazy-loaded Meal Entry Sheet for Testing */}
+      <Suspense
+        fallback={
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+          </div>
+        }
+      >
+        <MealEntrySheet
+          isOpen={isSheetOpen}
+          onOpenChange={setIsSheetOpen}
           selectedMealType={selectedMealType}
           setSelectedMealType={setSelectedMealType}
           isEditMode={isEditMode}

@@ -7,13 +7,13 @@ import { Input } from "@repo/ui/src/input";
 import { Label } from "@repo/ui/src/label";
 
 import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerFooter,
-  DrawerClose,
-} from "@repo/ui/src/drawer";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+  SheetClose,
+} from "@repo/ui/src/sheet";
 import {
   Select,
   SelectContent,
@@ -39,8 +39,7 @@ const DeleteConfirmDialog = lazy(() =>
   }))
 );
 
-
-interface MealEntryDrawerProps {
+interface MealEntrySheetProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   selectedMealType: "breakfast" | "lunch" | "dinner";
@@ -140,7 +139,7 @@ const businessNumbers = [
   { businessNumber: "444-55-66777", name: "인도 커리하우스" },
 ];
 
-export default function MealEntryDrawer({
+export default function MealEntrySheet({
   isOpen,
   onOpenChange,
   selectedMealType,
@@ -151,7 +150,7 @@ export default function MealEntryDrawer({
   onFormSubmit,
   onInputChange,
   onDeleteMeal,
-}: MealEntryDrawerProps) {
+}: MealEntrySheetProps) {
   const {
     users,
     isLoading: usersLoading,
@@ -166,7 +165,7 @@ export default function MealEntryDrawer({
   // 현재 선택된 식사 타입의 form 데이터 가져오기
   const currentFormData = formData[selectedMealType];
 
-  // Fetch users when drawer opens
+  // Fetch users when sheet opens
   useEffect(() => {
     if (isOpen && users.length === 0) {
       fetchUsers();
@@ -187,7 +186,7 @@ export default function MealEntryDrawer({
         onInputChange("amount", "10000");
       }
     }
-  }, [selectedMealType, selectedMealType === "lunch" && "attendance" in currentFormData ? (currentFormData as { attendance: string }).attendance : "", currentFormData.amount, onInputChange]);
+  }, [selectedMealType, currentFormData.attendance, currentFormData.amount, onInputChange]);
 
   const handleDeleteMeal = async () => {
     if (!selectedDate || !onDeleteMeal) return;
@@ -207,7 +206,7 @@ export default function MealEntryDrawer({
   }) => {
     onInputChange("store", `${business.name}(${business.businessNumber})`);
     setIsBusinessDialogOpen(false);
-    setBusinessSearchTerm(""); // 검색어 초기화
+    setBusinessSearchTerm("");
   };
 
   // 검색 필터링된 사업자 목록
@@ -218,18 +217,21 @@ export default function MealEntryDrawer({
   );
 
   return (
-    <Drawer open={isOpen} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-w-lg mx-auto bg-gradient-to-br from-white to-gray-50">
-        <DrawerHeader className="border-b border-gray-100 pb-4">
+    <Sheet open={isOpen} onOpenChange={onOpenChange}>
+      <SheetContent 
+        side="bottom" 
+        className="max-h-[90vh] max-w-lg mx-auto bg-gradient-to-br from-white to-gray-50 rounded-t-xl"
+      >
+        <SheetHeader className="border-b border-gray-100 pb-4">
           <div className="relative">
-            <DrawerTitle className="text-sm sm:text-base font-semibold text-gray-800 text-center">
+            <SheetTitle className="text-sm sm:text-base font-semibold text-gray-800 text-center">
               {selectedDate?.toLocaleDateString("ko-KR", {
                 year: "numeric",
                 month: "long",
                 day: "numeric",
                 weekday: "short",
               })}
-            </DrawerTitle>
+            </SheetTitle>
             <div className="absolute right-0 -top-1">
               {isEditMode && onDeleteMeal && (
                 <Suspense fallback={null}>
@@ -255,7 +257,7 @@ export default function MealEntryDrawer({
               )}
             </div>
           </div>
-        </DrawerHeader>
+        </SheetHeader>
 
         <form
           onSubmit={async (e) => {
@@ -313,7 +315,7 @@ export default function MealEntryDrawer({
             <div className="relative">
               <AutoCompleteInput
                 suggestions={users}
-                value={[currentFormData.payer]}
+                value={currentFormData.payer}
                 onValueChange={(value) => onInputChange("payer", value)}
                 placeholder="결제자를 입력하거나 선택해주세요"
                 allowFreeText={true}
@@ -352,7 +354,7 @@ export default function MealEntryDrawer({
                     type="button"
                     onClick={() => {
                       setIsBusinessDialogOpen(true);
-                      setBusinessSearchTerm(""); // Dialog 열 때 검색어 초기화
+                      setBusinessSearchTerm("");
                     }}
                   >
                     <Search />
@@ -434,8 +436,8 @@ export default function MealEntryDrawer({
           )}
         </form>
 
-        <DrawerFooter className="px-6 py-4 border-t border-gray-100 bg-white/50 bg-slate-300 flex gap-x-3">
-          <DrawerClose asChild>
+        <SheetFooter className="px-6 py-4 border-t border-gray-100 bg-white/50 bg-slate-300 flex gap-x-3">
+          <SheetClose asChild>
             <Button
               variant="outline"
               className="flex-1 rounded-sm border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 text-xs sm:text-sm  font-medium"
@@ -443,7 +445,7 @@ export default function MealEntryDrawer({
             >
               닫기
             </Button>
-          </DrawerClose>
+          </SheetClose>
           <Button
             type="submit"
             onClick={async (e) => {
@@ -468,8 +470,8 @@ export default function MealEntryDrawer({
               </div>
             )}
           </Button>
-        </DrawerFooter>
-      </DrawerContent>
+        </SheetFooter>
+      </SheetContent>
 
       {/* 사업자번호 찾기 Dialog */}
       <Dialog
@@ -486,7 +488,6 @@ export default function MealEntryDrawer({
           <div className="space-y-4">
             {/* 검색 Input */}
             <div className="relative">
-              {/* <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" /> */}
               <Input
                 type="text"
                 placeholder="상호명 입력..."
@@ -534,6 +535,6 @@ export default function MealEntryDrawer({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </Drawer>
+    </Sheet>
   );
 }

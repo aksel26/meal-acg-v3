@@ -60,7 +60,7 @@ export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, 
         <CardHeader>
           <CardTitle>
             <div className="flex w-full items-center justify-between px-2">
-              <div className="text-md font-semibold text-gray-800">{formatDate(selectedDate)}</div>
+              <div className="text-sm sm:text-md font-semibold text-gray-800">{formatDate(selectedDate)}</div>
               <Button variant="ghost" size="icon" className="size-8 hover:bg-blue-50" title="Add Event" onClick={() => onAddMeal?.("lunch")}>
                 <Plus className="w-4 h-4 text-blue-600" />
                 <span className="sr-only">Add Event</span>
@@ -70,12 +70,12 @@ export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, 
         </CardHeader>
 
         <CardContent>
-          <p className="text-gray-500 text-sm text-center">이 날짜에 등록된 식대 기록이 없습니다</p>
+          <p className="text-gray-500 text-xs sm:text-sm text-center">이 날짜에 등록된 식대 기록이 없습니다</p>
         </CardContent>
         <CardFooter>
           <Button
             onClick={() => onAddMeal?.("lunch")}
-            className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 rounded-lg py-5.5"
+            className="w-full text-xs sm:text-sm bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 rounded-md sm:py-5.5 py-3 font-normal"
           >
             식대 기록 추가하기
           </Button>

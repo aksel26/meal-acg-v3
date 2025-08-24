@@ -9,12 +9,13 @@ export interface FirebaseFile {
   updated: string;
 }
 
-export async function findSemesterFolder(month: number, year?: number): Promise<string | null> {
+export async function findSemesterFolder(
+  month: number,
+  year?: number
+): Promise<string | null> {
   try {
     const { folderName } = getSemesterInfo(month, year);
     const bucket = getAdminStorage().bucket();
-
-    console.log(`Looking for semester folder: ${folderName}`);
 
     // 정확한 폴더명 매칭
     const folderPath = `${folderName}/`;
@@ -25,14 +26,14 @@ export async function findSemesterFolder(month: number, year?: number): Promise<
     });
 
     const folders = (apiResponse as any)?.prefixes || [];
-    const matchedFolder = folders.find((folder: string) => folder === folderPath);
+    const matchedFolder = folders.find(
+      (folder: string) => folder === folderPath
+    );
 
     if (matchedFolder) {
-      console.log(`Found semester folder: ${matchedFolder}`);
       return matchedFolder;
     }
 
-    console.log(`Semester folder '${folderName}' not found`);
     return null;
   } catch (error) {
     console.error("Error finding semester folder:", error);
@@ -40,11 +41,12 @@ export async function findSemesterFolder(month: number, year?: number): Promise<
   }
 }
 
-export async function findExcelFiles(folderPath: string, userName: string): Promise<FirebaseFile[]> {
+export async function findExcelFiles(
+  folderPath: string,
+  userName: string
+): Promise<FirebaseFile[]> {
   try {
     const bucket = getAdminStorage().bucket();
-
-    console.log(`Searching for Excel files in folder: ${folderPath} for user: ${userName}`);
 
     const [files] = await bucket.getFiles({
       prefix: folderPath,
@@ -73,11 +75,6 @@ export async function findExcelFiles(folderPath: string, userName: string): Prom
       updated: file.metadata.updated || "",
     }));
 
-    console.log(
-      `Found ${result.length} matching Excel files:`,
-      result.map((f) => f.name)
-    );
-
     return result;
   } catch (error) {
     console.error("Error finding Excel files:", error);
@@ -90,16 +87,12 @@ export async function downloadFileBuffer(filePath: string): Promise<Buffer> {
     const bucket = getAdminStorage().bucket();
     const file = bucket.file(filePath);
 
-    console.log(`Downloading file: ${filePath}`);
-
     const [exists] = await file.exists();
     if (!exists) {
       throw new Error(`파일을 찾을 수 없습니다: ${filePath}`);
     }
 
     const [buffer] = await file.download();
-
-    console.log(`Downloaded ${buffer.length} bytes from ${filePath}`);
 
     return Buffer.from(buffer);
   } catch (error) {
@@ -108,28 +101,31 @@ export async function downloadFileBuffer(filePath: string): Promise<Buffer> {
   }
 }
 
-export async function uploadFileBuffer(filePath: string, buffer: Buffer): Promise<void> {
+export async function uploadFileBuffer(
+  filePath: string,
+  buffer: Buffer
+): Promise<void> {
   try {
     const bucket = getAdminStorage().bucket();
     const file = bucket.file(filePath);
 
-    console.log(`Uploading file: ${filePath} (${buffer.length} bytes)`);
-
     await file.save(buffer, {
       metadata: {
-        contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        contentType:
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         cacheControl: "no-cache",
       },
     });
-
-    console.log(`Successfully uploaded file: ${filePath}`);
   } catch (error) {
     console.error("Error uploading file buffer:", error);
     throw error;
   }
 }
 
-export async function getSignedUrl(filePath: string, expiresInHours: number = 1): Promise<string> {
+export async function getSignedUrl(
+  filePath: string,
+  expiresInHours: number = 1
+): Promise<string> {
   try {
     const bucket = getAdminStorage().bucket();
     const file = bucket.file(filePath);

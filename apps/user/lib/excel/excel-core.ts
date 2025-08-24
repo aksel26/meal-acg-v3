@@ -53,10 +53,6 @@ export function extractDataFromWorksheet(
   worksheet: ExcelJS.Worksheet,
   range: string
 ): any[][] {
-  console.log("=== DEBUG: extractDataFromWorksheet ===");
-  console.log("Range:", range);
-  console.log("Worksheet name:", worksheet.name);
-
   const result: any[][] = [];
   const [startRange, endRange] = range.split(":");
   if (!startRange || !endRange) {

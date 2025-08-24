@@ -7,10 +7,12 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const month = Number(searchParams.get("month"));
-    
+
     if (!month || month < 1 || month > 12) {
       return new Response(
-        JSON.stringify({ error: "Invalid month parameter. Must be between 1-12." }),
+        JSON.stringify({
+          error: "Invalid month parameter. Must be between 1-12.",
+        }),
         {
           status: 400,
           headers: { "Content-Type": "application/json" },
@@ -19,7 +21,8 @@ export async function GET(request: NextRequest) {
     }
 
     // 공휴일 캘린더 ID (환경 변수 또는 기본값 사용)
-    const calendarId = "ko.south_korea.official#holiday@group.v.calendar.google.com";
+    const calendarId =
+      "ko.south_korea.official#holiday@group.v.calendar.google.com";
     const apiKey = process.env.GOOGLE_CALENDAR_API_KEY;
 
     if (!apiKey) {
@@ -36,9 +39,6 @@ export async function GET(request: NextRequest) {
     const currentYear = new Date().getFullYear();
     const startDate = new Date(currentYear, month - 1, 1).toISOString();
     const endDate = new Date(currentYear, month - 1 + 1, 0).toISOString(); // 해당 월의 마지막 날
-
-    console.log(`Fetching holidays for ${currentYear}-${month}`);
-    console.log(`Date range: ${startDate} to ${endDate}`);
 
     // Google Calendar API를 사용해 이벤트(공휴일) 가져오기
     const response = await calendar.events.list({
@@ -57,8 +57,6 @@ export async function GET(request: NextRequest) {
         date: event.start?.date,
       })) || [];
 
-    console.log(`Found ${holidays.length} holidays:`, holidays);
-
     return new Response(JSON.stringify(holidays), {
       status: 200,
       headers: { "Content-Type": "application/json" },
@@ -66,9 +64,9 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     console.error("Google Calendar API Error:", error);
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: error.message,
-        details: "Failed to fetch holidays from Google Calendar API"
+        details: "Failed to fetch holidays from Google Calendar API",
       }),
       {
         status: 500,

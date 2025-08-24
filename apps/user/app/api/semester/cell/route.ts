@@ -1,10 +1,15 @@
 import { NextResponse, NextRequest } from "next/server";
-import { findSemesterFolder, findExcelFiles, downloadFileBuffer } from "@/lib/firebase-storage";
+import {
+  findSemesterFolder,
+  findExcelFiles,
+  downloadFileBuffer,
+} from "@/lib/firebase-storage";
 import { readCellFromBuffer } from "@/lib/excel-processor";
 
 export async function POST(request: NextRequest) {
   try {
-    const { fileName, cellAddress, sheetName, userName, month, year } = await request.json();
+    const { fileName, cellAddress, sheetName, userName, month, year } =
+      await request.json();
 
     if (!fileName && !userName) {
       return NextResponse.json(
@@ -35,17 +40,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`=== Semester Cell API ===`);
-    console.log(`FileName: ${fileName}, UserName: ${userName}`);
-    console.log(`CellAddress: ${cellAddress}, SheetName: ${sheetName}`);
-
     const targetMonth = month || new Date().getMonth() + 1;
     const targetYear = year || new Date().getFullYear();
 
     // 1. 폴더 찾기 (Firebase Storage)
     const folderPath = await findSemesterFolder(targetMonth, targetYear);
     if (!folderPath) {
-      return NextResponse.json({ error: "Semester folder not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Semester folder not found" },
+        { status: 404 }
+      );
     }
 
     let targetFile = null;
@@ -54,37 +58,44 @@ export async function POST(request: NextRequest) {
       // fileName이 제공된 경우 직접 파일 경로 사용
       const fileNameWithoutExt = fileName.replace(/\.(xlsx|xls)$/i, "");
       const files = await findExcelFiles(folderPath, fileNameWithoutExt);
-      
+
       if (files.length === 0) {
-        return NextResponse.json({ 
-          error: "Excel file not found", 
-          details: `${fileName} 파일을 찾을 수 없습니다.` 
-        }, { status: 404 });
+        return NextResponse.json(
+          {
+            error: "Excel file not found",
+            details: `${fileName} 파일을 찾을 수 없습니다.`,
+          },
+          { status: 404 }
+        );
       }
-      
+
       targetFile = files[0];
     } else if (userName) {
       // userName으로 파일 검색
       const files = await findExcelFiles(folderPath, userName);
-      
+
       if (files.length === 0) {
-        return NextResponse.json({ 
-          error: "Excel file not found", 
-          details: `${userName}.xlsx 또는 ${userName}.xls 파일을 찾을 수 없습니다.` 
-        }, { status: 404 });
+        return NextResponse.json(
+          {
+            error: "Excel file not found",
+            details: `${userName}.xlsx 또는 ${userName}.xls 파일을 찾을 수 없습니다.`,
+          },
+          { status: 404 }
+        );
       }
-      
+
       targetFile = files[0];
     }
 
     if (!targetFile) {
-      return NextResponse.json({ 
-        error: "No file found", 
-        details: "fileName 또는 userName이 필요합니다." 
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: "No file found",
+          details: "fileName 또는 userName이 필요합니다.",
+        },
+        { status: 400 }
+      );
     }
-
-    console.log(`Found target file: ${targetFile.name}`);
 
     // 2. 파일 다운로드 및 셀 값 읽기
     try {
@@ -106,21 +117,23 @@ export async function POST(request: NextRequest) {
         },
         timestamp: new Date().toISOString(),
       });
-
     } catch (fileError) {
       console.error(`Error processing file ${targetFile.name}:`, fileError);
       return NextResponse.json(
         {
           error: "파일 처리 중 오류가 발생했습니다.",
-          details: fileError instanceof Error ? fileError.message : "Unknown file error",
+          details:
+            fileError instanceof Error
+              ? fileError.message
+              : "Unknown file error",
         },
         { status: 500 }
       );
     }
-
   } catch (error: unknown) {
     console.error("Error reading cell value:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
 
     return NextResponse.json(
       {

@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { findSemesterFolder, findExcelFiles, downloadFileBuffer } from "@/lib/firebase-storage";
+import {
+  findSemesterFolder,
+  findExcelFiles,
+  downloadFileBuffer,
+} from "@/lib/firebase-storage";
 import { processExcelBuffer, CalculationResult } from "@/lib/excel-processor";
 
 export async function GET(request: NextRequest) {
@@ -9,43 +13,52 @@ export async function GET(request: NextRequest) {
     const name = searchParams.get("name");
 
     if (!name) {
-      return NextResponse.json({ error: "Name parameter is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Name parameter is required" },
+        { status: 400 }
+      );
     }
 
     if (!month || month < 1 || month > 12) {
-      return NextResponse.json({ error: "Valid month parameter (1-12) is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Valid month parameter (1-12) is required" },
+        { status: 400 }
+      );
     }
-
-    console.log(`=== Semester Calculate API ===`);
-    console.log(`User: ${name}, Month: ${month}`);
 
     // 1. 폴더 찾기 (Firebase Storage)
     const folderPath = await findSemesterFolder(month);
     if (!folderPath) {
-      return NextResponse.json({ error: "Semester folder not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Semester folder not found" },
+        { status: 404 }
+      );
     }
 
     // 2. Excel 파일 찾기
     const files = await findExcelFiles(folderPath, name);
     if (files.length === 0) {
-      return NextResponse.json({ error: "Excel file not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Excel file not found" },
+        { status: 404 }
+      );
     }
-
-    console.log(`Found ${files.length} files for user ${name}`);
 
     // 3. 계산 수행
     for (const file of files) {
       try {
-        console.log(`Processing file: ${file.name}`);
-        
         // Firebase Storage에서 파일 다운로드
         const buffer = await downloadFileBuffer(file.fullPath);
-        
+
         // Excel 파일 처리 및 계산
-        const result = await processExcelBuffer(buffer, month, undefined, undefined, "calculation") as CalculationResult;
-        
-        console.log(`Calculation result:`, result);
-        
+        const result = (await processExcelBuffer(
+          buffer,
+          month,
+          undefined,
+          undefined,
+          "calculation"
+        )) as CalculationResult;
+
         return NextResponse.json({
           success: true,
           data: {
@@ -60,12 +73,18 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ error: "Could not calculate from files" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Could not calculate from files" },
+      { status: 404 }
+    );
   } catch (error) {
     console.error("Calculate API error:", error);
-    return NextResponse.json({ 
-      error: "Failed to calculate", 
-      details: error instanceof Error ? error.message : "Unknown error" 
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: "Failed to calculate",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 }
+    );
   }
 }

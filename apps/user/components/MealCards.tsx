@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@repo/ui/src/card";
+import dayjs from "dayjs";
 
 interface MealData {
   date: string;
@@ -50,10 +51,11 @@ export function MealCards({
   const [currentMealData, setCurrentMealData] = React.useState<MealData | null>(
     null
   );
+  console.log("currentMealData: ", currentMealData);
 
   React.useEffect(() => {
     if (selectedDate && mealData.length > 0) {
-      const dateString = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`;
+      const dateString = dayjs(selectedDate).format('YYYY-MM-DD');
       const dayData = mealData.find((meal) => meal.date === dateString) || null;
       setCurrentMealData(dayData);
     } else {
@@ -70,7 +72,7 @@ export function MealCards({
   }
 
   const formatDate = (date: Date) => {
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    return dayjs(date).format('YYYY-MM-DD');
   };
 
   const hasMealData =
@@ -83,7 +85,7 @@ export function MealCards({
   if (!hasMealData) {
     return (
       <Card className="border-none shadow-none mt-8">
-        <CardHeader>
+        <CardHeader className="pb-4!">
           <CardTitle>
             <div className="flex w-full items-center justify-between px-2">
               <div className="text-sm sm:text-md font-semibold text-gray-800">
@@ -154,8 +156,12 @@ export function MealCards({
     // 일반적으로는 데이터가 있는 식사만 표시
     if (meal.data) return true;
 
-    // 하지만 attendance가 '근무'이고 중식인 경우는 데이터가 없어도 표시
-    if (meal.type === "lunch" && currentMealData?.attendance === "근무") {
+    // 하지만 attendance가 '근무' 또는 '개별식사'를 포함하고 중식인 경우는 데이터가 없어도 표시
+    if (
+      meal.type === "lunch" &&
+      (currentMealData?.attendance === "근무" ||
+        currentMealData?.attendance?.includes("개별식사"))
+    ) {
       return true;
     }
 
@@ -167,12 +173,12 @@ export function MealCards({
   };
 
   return (
-    <Card className="space-y-4 bg-white border-none shadow-none mt-8">
+    <Card className="space-y-4 bg-white border-none rounded-lg shadow-none mt-8">
       {/* Header */}
-      <CardHeader className="mb-0">
+      <CardHeader className="mb-0 pb-4!">
         <CardTitle>
           <div className="flex w-full items-center justify-between px-2">
-            <div className="text-md font-semibold text-gray-800">
+            <div className="text-sm font-semibold text-gray-800">
               {formatDate(selectedDate)}
             </div>
             <Button
@@ -261,10 +267,10 @@ export function MealCards({
                       onAddMeal?.(meal.type);
                     }
                   }}
-                  className={`${meal.bgColor} rounded-xl p-4 ${meal.hoverColor} hover:scale-101 transition-all duration-300 cursor-pointer transition-colors duration-200`}
+                  className={`${meal.bgColor} rounded-lg p-4 ${meal.hoverColor} hover:scale-101 transition-all duration-300 cursor-pointer transition-colors duration-200`}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mr-3">
+                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mr-3 relative">
                       <span className="text-2xl">{meal.emoji}</span>
                     </div>
                     <div className="flex-1">
@@ -275,11 +281,22 @@ export function MealCards({
                           {meal.title}
                         </span>
                         <span
-                          className={`font-bold ${meal.textColor} text-base`}
+                          className={`font-bold ${meal.textColor} ${
+                            meal.type === "lunch" &&
+                            currentMealData?.attendance?.includes("개별식사") &&
+                            !meal.data?.amount
+                              ? "text-sm font-normal "
+                              : "text-base"
+                          }`}
                         >
                           {meal.data?.amount
                             ? `-${meal.data.amount.toLocaleString()}원`
-                            : "0원"}
+                            : meal.type === "lunch" &&
+                                currentMealData?.attendance?.includes(
+                                  "개별식사"
+                                )
+                              ? "개별식사"
+                              : "0원"}
                         </span>
                       </div>
 

@@ -282,7 +282,6 @@ export default function DashboardPage() {
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      console.log("Current scroll Y:", currentScrollY);
 
       // 스크롤이 100px 이상일 때 헤더 숨김
       if (currentScrollY > 100) {

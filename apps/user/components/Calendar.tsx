@@ -2,6 +2,7 @@ import { HolidayData, useHolidays } from "@/hooks/useHolidays";
 import * as React from "react";
 import { Calendar, CalendarDayButton } from "@repo/ui/src/calendar";
 import Image from "next/image";
+import dayjs from "dayjs";
 // import { Calendar, CalendarDayButton } from "./calendar";
 // import { useHolidays, type HolidayData } from "./hooks/useHolidays";
 
@@ -45,7 +46,6 @@ export default function CalendarComponent({
     isLoading: holidayLoading,
     error: holidayError,
   } = useHolidays(currentMonth, currentYear);
-  console.log("queryHolidayData:", queryHolidayData);
 
   // 외부에서 전달된 데이터가 있으면 그것을 사용하고, 없으면 React Query 데이터 사용
   const holidayData =
@@ -54,13 +54,13 @@ export default function CalendarComponent({
       : queryHolidayData || [];
 
   const getAttendanceForDate = (targetDate: Date): string => {
-    const dateString = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, "0")}-${String(targetDate.getDate()).padStart(2, "0")}`;
+    const dateString = dayjs(targetDate).format("YYYY-MM-DD");
     const dayData = mealData.find((meal) => meal.date === dateString);
     return dayData?.attendance || "";
   };
 
   const getHolidayForDate = (targetDate: Date): string => {
-    const dateString = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, "0")}-${String(targetDate.getDate()).padStart(2, "0")}`;
+    const dateString = dayjs(targetDate).format("YYYY-MM-DD");
     const holidayInfo = holidayData.find(
       (holiday) => holiday.date === dateString
     );
@@ -247,7 +247,7 @@ export default function CalendarComponent({
               className={`${isSelected ? `bg-blue-50!` : ""} hover:bg-blue-50/40! hover:text-blue-800! `}
             >
               <div
-                className={`rounded-md flex flex-col  space-y-1 items-center relative p-2 transition duration-200`}
+                className={`rounded-md flex flex-col  space-y-1 items-center relative py-1.5 transition duration-200`}
               >
                 <span
                   className={`text-[11px] sm:text-sm ${isToday ? "bg-[#0a2165] text-gray-50 px-1.5 py-0.5 rounded-sm" : isSelected ? "text-blue-600" : ""}`}
@@ -257,7 +257,7 @@ export default function CalendarComponent({
 
                 {/* icon wrapper */}
                 <div
-                  className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center ${isSelected ? "bg-blue-100" : ""}`}
+                  className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center relative ${isSelected ? "bg-blue-100" : ""}`}
                 >
                   {isLoading || holidayLoading ? (
                     <div className="w-4 h-4 bg-gray-200 rounded animate-pulse"></div>
@@ -270,17 +270,24 @@ export default function CalendarComponent({
                     </span>
                   ) : icon ? (
                     isImage ? (
-                      <Image
-                        src={icon}
-                        alt={holiday || attendance}
-                        // className="w-4 h-4 sm:w-5 sm:h-5"
-                        width={25}
-                        height={25}
-                        title={holiday || attendance}
-                      />
+                      <div>
+                        <Image
+                          src={icon}
+                          alt={holiday || attendance}
+                          // className="w-4 h-4 sm:w-5 sm:h-5"
+                          width={25}
+                          height={25}
+                          title={holiday || attendance}
+                        />
+                        {attendance?.includes("개별식사") && (
+                          <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 text-blue-400 text-[10px]!">
+                            개별
+                          </div>
+                        )}
+                      </div>
                     ) : (
                       <span
-                        className={`${holiday !== "" ? "text-[8px] sm:text-[9px] text-red-600 truncate font-medium text-center leading-tight" : "text-lg"}`}
+                        className={`${holiday !== "" ? "text-[10px] sm:text-[10px] text-red-600 truncate font-medium text-center leading-tight" : "text-lg"}`}
                         title={holiday || attendance}
                       >
                         {icon}

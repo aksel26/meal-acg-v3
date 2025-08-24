@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { findSemesterFolder, findExcelFiles, downloadFileBuffer, uploadFileBuffer } from "@/lib/firebase-storage";
-import { updateExcelMealData, MealSubmitData } from "@/lib/excel-processor";
+import { updateExcelMealData } from "@/lib/excel/meal-processor";
+import { MealSubmitData } from "@/lib/types/excel-types";
 
 export async function POST(request: NextRequest) {
   try {

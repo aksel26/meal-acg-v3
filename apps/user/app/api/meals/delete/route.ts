@@ -1,5 +1,10 @@
 import { getSemesterInfo } from "@/lib/date-utils";
-import { downloadFileBuffer, findExcelFiles, findSemesterFolder, uploadFileBuffer } from "@/lib/firebase-storage";
+import {
+  downloadFileBuffer,
+  findExcelFiles,
+  findSemesterFolder,
+  uploadFileBuffer,
+} from "@/lib/firebase-storage";
 import { NextRequest, NextResponse } from "next/server";
 import * as ExcelJS from "exceljs";
 
@@ -12,6 +17,7 @@ export async function DELETE(request: NextRequest) {
   try {
     const body: DeleteMealRequest = await request.json();
     const { userName, date } = body;
+    console.log("date: ", date);
 
     if (!userName || !date) {
       return NextResponse.json(
@@ -29,7 +35,9 @@ export async function DELETE(request: NextRequest) {
     const year = targetDate.getFullYear();
     const day = targetDate.getDate();
 
-    console.log(`Processing meal deletion for ${userName} on ${targetDate.toISOString().split("T")[0]}`);
+    console.log(
+      `Processing meal deletion for ${userName} on ${targetDate.toISOString().split("T")[0]}`
+    );
 
     // 1. 학기 폴더 찾기
     const semesterFolder = await findSemesterFolder(month, year);
@@ -71,7 +79,7 @@ export async function DELETE(request: NextRequest) {
         // @ts-ignore: Buffer type incompatibility with Firebase storage buffer
         await workbook.xlsx.load(buffer as any);
 
-        // 두 번째 시트 '내역' 가져오기 
+        // 두 번째 시트 '내역' 가져오기
         const worksheet = workbook.worksheets[1]; // 두 번째 시트
         const sheetName = worksheet?.name;
 
@@ -84,7 +92,9 @@ export async function DELETE(request: NextRequest) {
         let targetRow = -1;
 
         // 효율적인 날짜 탐색: 우선순위별 탐색 (월 → 일 → 연도)
-        console.log(`Searching for date: ${year}/${month}/${day} in ${file.name} sheet: ${sheetName}`);
+        console.log(
+          `Searching for date: ${year}/${month}/${day} in ${file.name} sheet: ${sheetName}`
+        );
 
         // B3부터 D200까지 범위에서 탐색
         const startRow = 3;
@@ -95,7 +105,11 @@ export async function DELETE(request: NextRequest) {
         const monthMatchRows = [];
         for (let row = startRow; row <= endRow; row++) {
           const monthCell = worksheet.getCell(`C${row}`);
-          if (monthCell && monthCell.value !== null && monthCell.value !== undefined) {
+          if (
+            monthCell &&
+            monthCell.value !== null &&
+            monthCell.value !== undefined
+          ) {
             const rawValue = monthCell.value;
             let monthValue: number;
             if (typeof rawValue === "string") {
@@ -118,7 +132,11 @@ export async function DELETE(request: NextRequest) {
         const dayMatchRows = [];
         for (const row of monthMatchRows) {
           const dayCell = worksheet.getCell(`D${row}`);
-          if (dayCell && dayCell.value !== null && dayCell.value !== undefined) {
+          if (
+            dayCell &&
+            dayCell.value !== null &&
+            dayCell.value !== undefined
+          ) {
             const rawValue = dayCell.value;
             let dayValue: number;
             if (typeof rawValue === "string") {
@@ -135,12 +153,18 @@ export async function DELETE(request: NextRequest) {
           }
         }
 
-        console.log(`Found ${dayMatchRows.length} rows with month ${month} and day ${day}`);
+        console.log(
+          `Found ${dayMatchRows.length} rows with month ${month} and day ${day}`
+        );
 
         // 3단계: 월과 일이 일치하는 행들 중에서 연도가 일치하는 행 찾기
         for (const row of dayMatchRows) {
           const yearCell = worksheet.getCell(`B${row}`);
-          if (yearCell && yearCell.value !== null && yearCell.value !== undefined) {
+          if (
+            yearCell &&
+            yearCell.value !== null &&
+            yearCell.value !== undefined
+          ) {
             const rawValue = yearCell.value;
             let yearValue: number;
             if (typeof rawValue === "string") {
@@ -153,7 +177,9 @@ export async function DELETE(request: NextRequest) {
 
             if (!isNaN(yearValue) && yearValue === year) {
               targetRow = row;
-              console.log(`Found exact match at row ${row}: ${year}/${month}/${day}`);
+              console.log(
+                `Found exact match at row ${row}: ${year}/${month}/${day}`
+              );
               break;
             }
           }
@@ -170,7 +196,7 @@ export async function DELETE(request: NextRequest) {
         const columnsToDelete = [
           // 조식 관련 (P, Q, R 열)
           "P",
-          "Q", 
+          "Q",
           "R",
           // 중식 관련 (I, J, L 열)
           "I",
@@ -204,12 +230,17 @@ export async function DELETE(request: NextRequest) {
           },
         });
 
-        console.log(`Successfully deleted meal data from ${file.name} at row ${targetRow}`);
+        console.log(
+          `Successfully deleted meal data from ${file.name} at row ${targetRow}`
+        );
       } catch (fileError) {
         console.error(`Error processing file ${file.name}:`, fileError);
         results.push({
           fileName: file.name,
-          error: fileError instanceof Error ? fileError.message : "파일 처리 중 오류 발생",
+          error:
+            fileError instanceof Error
+              ? fileError.message
+              : "파일 처리 중 오류 발생",
         });
       }
     }

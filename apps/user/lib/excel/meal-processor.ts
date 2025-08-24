@@ -1,5 +1,10 @@
-import { MealData, CalculationResult, MealSubmitData } from "../types/excel-types";
+import {
+  MealData,
+  CalculationResult,
+  MealSubmitData,
+} from "../types/excel-types";
 import { getWorksheet, extractDataFromWorksheet } from "./excel-core";
+import dayjs from "dayjs";
 
 // 데이터에서 계산 수행
 function calculateFromData(
@@ -11,10 +16,6 @@ function calculateFromData(
   let vacationDays = 0;
   let totalUsed = 0;
 
-  console.log("=== DEBUG: calculateFromData ===");
-  console.log("Target month:", targetMonth);
-  console.log("Total rows:", jsonData.length);
-
   for (let i = 1; i < jsonData.length; i++) {
     const row = jsonData[i] as any[];
     if (!row || row.length === 0) continue;
@@ -22,39 +23,29 @@ function calculateFromData(
     const month = parseInt(row[1]) || 0;
 
     if (month === targetMonth) {
-      console.log(`=== Row ${i + 3} (month ${month}) ===`);
-      console.log("Row length:", row.length);
-
       const workType = row[4] || "";
       const attendance = row[6] || "";
       const amount = parseFloat(row[8]) || 0;
 
-      console.log("workType (index 4):", workType);
-      console.log("attendance (index 6):", attendance);
-      console.log("amount (index 8):", amount);
-
       // workType이 객체인 경우와 문자열인 경우 모두 처리
-      const workTypeText = typeof workType === 'object' && workType?.result 
-        ? workType.result 
-        : String(workType || '');
+      const workTypeText =
+        typeof workType === "object" && workType?.result
+          ? workType.result
+          : String(workType || "");
 
       if (workTypeText.includes("업무일")) {
         workDays++;
-        console.log("→ 업무일 카운트:", workDays);
       }
 
       if (workTypeText.includes("휴일") && attendance.includes("근무")) {
         holidayWorkDays++;
-        console.log("→ 휴일근무 카운트:", holidayWorkDays);
       }
 
       if (attendance.includes("휴무")) {
         vacationDays++;
-        console.log("→ 휴무 카운트:", vacationDays);
       }
 
       totalUsed += amount;
-      console.log("→ 누적 사용금액:", totalUsed);
     }
   }
 
@@ -191,9 +182,10 @@ export async function updateExcelMealData(
   // 데이터 범위 B3:R204에서 해당 날짜 찾기
   const jsonData = extractDataFromWorksheet(worksheet, "B3:R204");
 
-  const targetYear = mealData.date.getFullYear();
-  const targetMonth = mealData.date.getMonth() + 1;
-  const targetDay = mealData.date.getDate();
+  const targetDate = dayjs(mealData.date);
+  const targetYear = targetDate.year();
+  const targetMonth = targetDate.month() + 1;
+  const targetDay = targetDate.date();
 
   let rowIndex = -1;
 
@@ -216,57 +208,42 @@ export async function updateExcelMealData(
     );
   }
 
-  console.log(
-    `Found target row: ${rowIndex} for date ${targetYear}-${targetMonth}-${targetDay}`
-  );
-
   // 근태 정보는 H열에 입력 (lunch 데이터에서 가져옴)
   const attendanceCell = worksheet.getCell(`H${rowIndex}`);
   attendanceCell.value = mealData.lunch.attendance;
 
-  // 조식 데이터 입력 (P, Q, R열)
-  if (mealData.breakfast.store || mealData.breakfast.amount || mealData.breakfast.payer) {
-    const breakfastStoreCellObj = worksheet.getCell(`P${rowIndex}`);
-    breakfastStoreCellObj.value = mealData.breakfast.store;
+  // 조식 데이터 입력 (P, Q, R열) - 항상 업데이트하여 빈 값도 반영
+  const breakfastStoreCellObj = worksheet.getCell(`P${rowIndex}`);
+  breakfastStoreCellObj.value = mealData.breakfast.store || "";
 
-    const breakfastAmountCellObj = worksheet.getCell(`Q${rowIndex}`);
-    breakfastAmountCellObj.value = mealData.breakfast.amount > 0 ? mealData.breakfast.amount : "";
+  const breakfastAmountCellObj = worksheet.getCell(`Q${rowIndex}`);
+  breakfastAmountCellObj.value =
+    mealData.breakfast.amount > 0 ? mealData.breakfast.amount : "";
 
-    const breakfastPayerCellObj = worksheet.getCell(`R${rowIndex}`);
-    breakfastPayerCellObj.value = mealData.breakfast.payer;
-  }
+  const breakfastPayerCellObj = worksheet.getCell(`R${rowIndex}`);
+  breakfastPayerCellObj.value = mealData.breakfast.payer || "";
 
-  // 중식 데이터 입력 (I, J, L열)
-  if (mealData.lunch.store || mealData.lunch.amount || mealData.lunch.payer) {
-    const lunchStoreCellObj = worksheet.getCell(`I${rowIndex}`);
-    lunchStoreCellObj.value = mealData.lunch.store;
+  // 중식 데이터 입력 (I, J, L열) - 항상 업데이트하여 빈 값도 반영
+  const lunchStoreCellObj = worksheet.getCell(`I${rowIndex}`);
+  lunchStoreCellObj.value = mealData.lunch.store || "";
 
-    const lunchAmountCellObj = worksheet.getCell(`J${rowIndex}`);
-    lunchAmountCellObj.value = mealData.lunch.amount > 0 ? mealData.lunch.amount : "";
+  const lunchAmountCellObj = worksheet.getCell(`J${rowIndex}`);
+  lunchAmountCellObj.value =
+    mealData.lunch.amount > 0 ? mealData.lunch.amount : "";
 
-    const lunchPayerCellObj = worksheet.getCell(`L${rowIndex}`);
-    lunchPayerCellObj.value = mealData.lunch.payer;
-  }
+  const lunchPayerCellObj = worksheet.getCell(`L${rowIndex}`);
+  lunchPayerCellObj.value = mealData.lunch.payer || "";
 
-  // 석식 데이터 입력 (M, N, O열)
-  if (mealData.dinner.store || mealData.dinner.amount || mealData.dinner.payer) {
-    const dinnerStoreCellObj = worksheet.getCell(`M${rowIndex}`);
-    dinnerStoreCellObj.value = mealData.dinner.store;
+  // 석식 데이터 입력 (M, N, O열) - 항상 업데이트하여 빈 값도 반영
+  const dinnerStoreCellObj = worksheet.getCell(`M${rowIndex}`);
+  dinnerStoreCellObj.value = mealData.dinner.store || "";
 
-    const dinnerAmountCellObj = worksheet.getCell(`N${rowIndex}`);
-    dinnerAmountCellObj.value = mealData.dinner.amount > 0 ? mealData.dinner.amount : "";
+  const dinnerAmountCellObj = worksheet.getCell(`N${rowIndex}`);
+  dinnerAmountCellObj.value =
+    mealData.dinner.amount > 0 ? mealData.dinner.amount : "";
 
-    const dinnerPayerCellObj = worksheet.getCell(`O${rowIndex}`);
-    dinnerPayerCellObj.value = mealData.dinner.payer;
-  }
-
-  console.log(
-    `Updated cells for ${targetYear}-${targetMonth}-${targetDay}:`,
-    `H${rowIndex}=${mealData.lunch.attendance}`,
-    `Breakfast: P${rowIndex}=${mealData.breakfast.store}, Q${rowIndex}=${mealData.breakfast.amount}, R${rowIndex}=${mealData.breakfast.payer}`,
-    `Lunch: I${rowIndex}=${mealData.lunch.store}, J${rowIndex}=${mealData.lunch.amount}, L${rowIndex}=${mealData.lunch.payer}`,
-    `Dinner: M${rowIndex}=${mealData.dinner.store}, N${rowIndex}=${mealData.dinner.amount}, O${rowIndex}=${mealData.dinner.payer}`
-  );
+  const dinnerPayerCellObj = worksheet.getCell(`O${rowIndex}`);
+  dinnerPayerCellObj.value = mealData.dinner.payer || "";
 
   // 업데이트된 워크북을 Buffer로 변환
   const updatedBuffer = await workbook.xlsx.writeBuffer();

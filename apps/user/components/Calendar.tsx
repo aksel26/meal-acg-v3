@@ -194,7 +194,7 @@ export default function CalendarComponent({
       onNextClick={handleNextClick}
       onPrevClick={handlePrevClick}
       captionLayout="dropdown"
-      className=" bg-white rounded-lg w-full"
+      className=" bg-white rounded-lg w-full min-h-[550px]"
       formatters={{
         formatMonthDropdown: (date) => {
           return date.toLocaleString("default", { month: "long" });

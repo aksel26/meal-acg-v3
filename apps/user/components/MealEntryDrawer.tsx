@@ -191,7 +191,6 @@ export default function MealEntryDrawer({
   const handleDeleteMeal = async () => {
     if (!selectedDate || !onDeleteMeal) return;
 
-    console.log("selectedDate: ", selectedDate);
     setIsDeleting(true);
     try {
       await onDeleteMeal(selectedDate.toISOString());

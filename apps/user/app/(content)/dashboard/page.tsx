@@ -18,7 +18,6 @@ import { Footer } from "@/components/Footer";
 import { Alert, AlertTitle } from "@repo/ui/src/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/src/card";
 import { ChartPieDonut } from "@repo/ui/src/chart-pie-donut";
-import { Sheet, SheetTrigger } from "@repo/ui/src/sheet";
 import { toast } from "@repo/ui/src/sonner";
 import { motion } from "motion/react";
 import Image from "next/image";
@@ -36,13 +35,6 @@ import { formatDateKorean } from "utils";
 // Lazy load the MealEntryDrawer component
 const MealEntryDrawer = lazy(() =>
   import("@/components/MealEntryDrawer").then((module) => ({
-    default: module.default,
-  }))
-);
-
-// Lazy load the MealEntrySheet component for testing
-const MealEntrySheet = lazy(() =>
-  import("@/components/MealEntrySheet").then((module) => ({
     default: module.default,
   }))
 );
@@ -206,6 +198,7 @@ export default function DashboardPage() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     new Date()
   );
+  console.log("selectedDate: ", selectedDate);
   const [currentMonth, setCurrentMonth] = useState<number>(
     new Date().getMonth() + 1
   );
@@ -467,6 +460,7 @@ export default function DashboardPage() {
       userName: userName,
       date: date,
     };
+    console.log("date: ", date);
 
     try {
       await mealDeleteMutation.mutateAsync(deleteData);
@@ -711,28 +705,6 @@ export default function DashboardPage() {
         <MealEntryDrawer
           isOpen={isDrawerOpen}
           onOpenChange={handleDrawerOpenChange}
-          selectedMealType={selectedMealType}
-          setSelectedMealType={setSelectedMealType}
-          isEditMode={isEditMode}
-          formData={formData}
-          selectedDate={selectedDate}
-          onFormSubmit={handleFormSubmit}
-          onInputChange={handleInputChange}
-          onDeleteMeal={handleDeleteMeal}
-        />
-      </Suspense>
-
-      {/* Lazy-loaded Meal Entry Sheet for Testing */}
-      <Suspense
-        fallback={
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-          </div>
-        }
-      >
-        <MealEntrySheet
-          isOpen={isSheetOpen}
-          onOpenChange={setIsSheetOpen}
           selectedMealType={selectedMealType}
           setSelectedMealType={setSelectedMealType}
           isEditMode={isEditMode}

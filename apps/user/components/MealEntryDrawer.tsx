@@ -181,23 +181,17 @@ export default function MealEntryDrawer({
           : "";
       if (
         currentAttendance === "근무(개별식사 / 식사안함)" &&
-        currentFormData.amount !== "10000"
+        currentFormData.amount !== ""
       ) {
-        onInputChange("amount", "10000");
+        onInputChange("amount", "");
       }
     }
-  }, [
-    selectedMealType,
-    selectedMealType === "lunch" && "attendance" in currentFormData
-      ? (currentFormData as { attendance: string }).attendance
-      : "",
-    currentFormData.amount,
-    onInputChange,
-  ]);
+  }, [selectedMealType, currentFormData, onInputChange]);
 
   const handleDeleteMeal = async () => {
     if (!selectedDate || !onDeleteMeal) return;
 
+    console.log("selectedDate: ", selectedDate);
     setIsDeleting(true);
     try {
       await onDeleteMeal(selectedDate.toISOString());
@@ -391,13 +385,21 @@ export default function MealEntryDrawer({
                 onChange={(e) => onInputChange("amount", e.target.value)}
                 min="0"
                 disabled={
-                  selectedMealType === "lunch" &&
-                  "attendance" in currentFormData &&
                   (currentFormData as { attendance: string }).attendance ===
-                    "근무(개별식사 / 식사안함)"
+                  "근무(개별식사 / 식사안함)"
+                    ? true
+                    : false
                 }
                 className="rounded-lg border-gray-300 pl-8 text-xs sm:text-sm disabled:bg-gray-100 disabled:text-gray-500"
               />
+              {selectedMealType === "lunch" &&
+                "attendance" in currentFormData &&
+                (currentFormData as { attendance: string }).attendance ===
+                  "근무(개별식사 / 식사안함)" && (
+                  <p className="text-[11px] text-orange-500 mt-1">
+                    총 금액에서 10,000원이 차감됩니다.
+                  </p>
+                )}
             </div>
           </div>
 

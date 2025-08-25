@@ -87,7 +87,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="h-dvh flex items-center justify-center relative max-w-md mx-auto flex-col">
+    <div className="h-dvh flex sm:max-w-md items-center justify-center relative mx-auto flex-col">
       <Image
         src={BackgroundImage}
         alt="Background"
@@ -105,7 +105,7 @@ export default function HomePage() {
 
       <div className="flex-1 items-center flex justify-end flex-col pb-4">
         {/* Carousel 영역 시작 */}
-        <Carousel className="w-[60%] sm:w-1/2 max-w-xs">
+        <Carousel className="w-[60%] sm:w-1/2 max-w-xs cursor-pointer">
           <CarouselContent>
             <CarouselItem>
               <div className="flex items-center justify-center flex-col">

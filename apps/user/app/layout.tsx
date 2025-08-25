@@ -96,7 +96,7 @@ export default function RootLayout({
           sizes="180x180"
           href="/apple-touch-icon.png"
         />
-        <link rel="apple-touch-icon" href="/ios/maskable-icon.png"></link>
+        <link rel="apple-touch-icon" href="/ios/AppIcon@2x.png"></link>
       </head>
       <body className={myFont.className}>
         <QueryProvider>{children}</QueryProvider>

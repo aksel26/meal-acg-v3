@@ -87,7 +87,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="h-dvh flex items-center justify-center p-4 relative max-w-md mx-auto flex-col">
+    <div className="h-dvh flex items-center justify-center relative max-w-md mx-auto flex-col">
       <Image
         src={BackgroundImage}
         alt="Background"

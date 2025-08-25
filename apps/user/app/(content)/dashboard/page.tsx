@@ -31,6 +31,12 @@ import React, {
   useState,
 } from "react";
 import { formatDateKorean } from "utils";
+import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 // Lazy load the MealEntryDrawer component
 const MealEntryDrawer = lazy(() =>
@@ -196,14 +202,14 @@ interface MealData {
 export default function DashboardPage() {
   const [userName, setUserName] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
-    new Date()
+    dayjs().tz("Asia/Seoul").toDate()
   );
   console.log("selectedDate: ", selectedDate);
   const [currentMonth, setCurrentMonth] = useState<number>(
-    new Date().getMonth() + 1
+    dayjs().tz("Asia/Seoul").month() + 1
   );
   const [currentYear, setCurrentYear] = useState<number>(
-    new Date().getFullYear()
+    dayjs().tz("Asia/Seoul").year()
   );
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
   const [isSheetOpen, setIsSheetOpen] = useState<boolean>(false);
@@ -390,7 +396,7 @@ export default function DashboardPage() {
     // 3개 독립된 form 데이터를 한번에 전송
     const requestData = {
       userName: userName,
-      date: selectedDate.toISOString(),
+      date: dayjs(selectedDate).tz("Asia/Seoul").format("YYYY-MM-DD"),
       breakfast: {
         store: formData.breakfast.store || "",
         amount: formData.breakfast.amount || "0",

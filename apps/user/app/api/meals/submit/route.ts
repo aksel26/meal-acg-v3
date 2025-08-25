@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { findSemesterFolder, findExcelFiles, downloadFileBuffer, uploadFileBuffer } from "@/lib/firebase-storage";
 import { updateExcelMealData } from "@/lib/excel/meal-processor";
 import { MealSubmitData } from "@/lib/types/excel-types";
+import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,14 +26,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 날짜 파싱
-    const targetDate = new Date(date);
-    if (isNaN(targetDate.getTime())) {
+    // 날짜 파싱 (한국 시간대로 처리)
+    const targetDateKST = dayjs(date).tz("Asia/Seoul");
+    if (!targetDateKST.isValid()) {
       return NextResponse.json({ error: "올바르지 않은 날짜 형식입니다." }, { status: 400 });
     }
 
-    const targetMonth = targetDate.getMonth() + 1;
-    const targetYear = targetDate.getFullYear();
+    const targetDate = targetDateKST.toDate();
+    const targetMonth = targetDateKST.month() + 1;
+    const targetYear = targetDateKST.year();
 
     console.log(`=== Meal Submit API ===`);
     console.log(`User: ${userName}, Date: ${date}`);

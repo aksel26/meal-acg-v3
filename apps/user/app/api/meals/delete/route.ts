@@ -7,6 +7,12 @@ import {
 } from "@/lib/firebase-storage";
 import { NextRequest, NextResponse } from "next/server";
 import * as ExcelJS from "exceljs";
+import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 interface DeleteMealRequest {
   userName: string;
@@ -30,13 +36,25 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const targetDate = new Date(date);
-    const month = targetDate.getMonth() + 1;
-    const year = targetDate.getFullYear();
-    const day = targetDate.getDate();
+    // 날짜 파싱 (한국 시간대로 처리)
+    const targetDateKST = dayjs(date).tz("Asia/Seoul");
+    if (!targetDateKST.isValid()) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "올바르지 않은 날짜 형식입니다.",
+        },
+        { status: 400 }
+      );
+    }
+    
+    const targetDate = targetDateKST.toDate();
+    const month = targetDateKST.month() + 1;
+    const year = targetDateKST.year();
+    const day = targetDateKST.date();
 
     console.log(
-      `Processing meal deletion for ${userName} on ${targetDate.toISOString().split("T")[0]}`
+      `Processing meal deletion for ${userName} on ${targetDateKST.format("YYYY-MM-DD")} (KST)`
     );
 
     // 1. 학기 폴더 찾기
@@ -223,7 +241,7 @@ export async function DELETE(request: NextRequest) {
 
         results.push({
           fileName: file.name,
-          date: targetDate.toISOString().split("T")[0],
+          date: targetDateKST.format("YYYY-MM-DD"),
           deletedData: {
             row: targetRow,
             deletedColumns: columnsToDelete,
@@ -250,7 +268,7 @@ export async function DELETE(request: NextRequest) {
       message: "식사 기록이 성공적으로 삭제되었습니다.",
       data: {
         userName,
-        date: targetDate.toISOString().split("T")[0],
+        date: targetDateKST.format("YYYY-MM-DD"),
         semesterInfo: getSemesterInfo(month, year),
         results,
       },

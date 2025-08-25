@@ -19,7 +19,7 @@
       "src": "/icons/ios/maskable-icon.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any"
     },
     {
       "src": "/icons/android/android-launchericon-144-144.png",

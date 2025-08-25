@@ -34,6 +34,7 @@ import { formatDateKorean } from "utils";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
+import { NumberTicker } from "@repo/ui/src/number-ticker";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -533,7 +534,7 @@ export default function DashboardPage() {
 
   const fileValidationStatus = getFileValidationStatus();
   const fileValidationMessage = getFileValidationMessage();
-
+  console.log("balance: ", balance);
   return (
     <React.Fragment>
       {/* 인사말 섹션 */}
@@ -622,11 +623,19 @@ export default function DashboardPage() {
             <div className="flex justify-between items-end mb-4">
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium ">{currentMonth}월 잔액</p>
-                <p
-                  className={`text-2xl font-black ${balance?.isNegative ? "text-red-600" : ""}`}
-                >
-                  {balance ? `${balance.value}원` : "계산 중..."}
-                </p>
+                {balance ? (
+                  <div className="flex space-x-1">
+                    <NumberTicker
+                      className={`text-2xl font-black ${balance.isNegative ? "text-red-600" : ""}`}
+                      value={Number(balance.value.replace(",", ""))}
+                    />
+                    <span className="text-2xl font-black">원</span>
+                  </div>
+                ) : (
+                  <div className="animate-pulse">
+                    <div className="h-8 bg-gray-200 rounded w-32"></div>
+                  </div>
+                )}
               </div>
               <Button
                 variant={"ghost"}
@@ -700,13 +709,7 @@ export default function DashboardPage() {
       </motion.div>
 
       {/* Lazy-loaded Meal Entry Drawer */}
-      <Suspense
-        fallback={
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-          </div>
-        }
-      >
+      <Suspense fallback={null}>
         <MealEntryDrawer
           isOpen={isDrawerOpen}
           onOpenChange={handleDrawerOpenChange}

@@ -4,7 +4,7 @@
 import Image from "next/image";
 import React from "react";
 // import { AtSign } from "@repo/ui/icons";
-import GithubIconSvg from "@/public/icons/github.svg";
+import GithubIconSvg from "@/public/icons/github.png";
 import { AtSign } from "@repo/ui/icons";
 interface FooterProps {
   className?: string;
@@ -29,7 +29,7 @@ export function Footer({ className = "" }: FooterProps) {
         <div className="flex justify-center flex-col items-center space-y-1 text-xs">
           <button onClick={() => window.open("https://github.com/aksel26", "_blank")} className="text-gray-600 hover:text-gray-800 transition-colors p-1" aria-label="GitHub">
             <div className="flex space-x-1 items-center">
-              <GithubIconSvg width={15} height={15} />
+              <Image src={GithubIconSvg} alt="GitHub" width={15} height={15} />
               <span>aksel26</span>
             </div>
           </button>

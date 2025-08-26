@@ -10,6 +10,16 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  experimental: {
+    turbo: {
+      rules: {
+        "*.svg": {
+          loaders: ["@svgr/webpack"],
+          as: "*.ts",
+        },
+      },
+    },
+  },
 };
 
 const withPWAConfig = withPWA({
@@ -17,25 +27,6 @@ const withPWAConfig = withPWA({
   // disable: process.env.NODE_ENV === "development", // 개발 환경에서는 PWA 비활성화
   disable: false, // 개발 환경에서는 PWA 비활성화
   // 더 많은 설정 옵션을 추가할 수 있습니다. 예를 들어, `register`나 `skipWaiting` 같은 옵션입니다.
-  webpack: (config: any) => {
-    config.module.rules.push({
-      test: /\.svg$/i,
-      issuer: /\.[jt]sx?$/,
-      use: ["@svgr/webpack"],
-    });
-    return config;
-  },
-
-  experimental: {
-    turbo: {
-      rules: {
-        "*.svg": {
-          loaders: ["@svgr/webpack"],
-          as: "*.js",
-        },
-      },
-    },
-  },
 });
 
 export default withPWAConfig(nextConfig);

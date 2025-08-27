@@ -5,6 +5,7 @@ import { useUsers } from "@/hooks/useUsers";
 import { Button } from "@repo/ui/src/button";
 import { Input } from "@repo/ui/src/input";
 import { Label } from "@repo/ui/src/label";
+import Image from "next/image";
 
 import {
   Drawer,
@@ -94,35 +95,35 @@ const mealTypeOptions = [
 ];
 
 const attendanceOptions = [
-  { value: "근무", label: "근무", emoji: "🍙", color: "text-green-700" },
+  { value: "근무", label: "근무", icon: "/icons/onigiri.png", color: "text-green-700" },
   {
     value: "근무(개별식사 / 식사안함)",
     label: "근무(개별식사 / 식사안함)",
-    emoji: "🍙",
+    icon: "/icons/onigiri.png",
     color: "text-green-700",
   },
   {
     value: "오전 반차/휴무",
     label: "오전 반차/휴무",
-    emoji: "🕐",
+    icon: "/icons/clock.png",
     color: "text-orange-700",
   },
   {
     value: "오후 반차/휴무",
     label: "오후 반차/휴무",
-    emoji: "🕐",
+    icon: "/icons/clock.png",
     color: "text-orange-700",
   },
   {
     value: "연차/휴무",
     label: "연차/휴무",
-    emoji: "🏖️",
+    icon: "/icons/holiday.png",
     color: "text-blue-700",
   },
   {
     value: "재택근무",
     label: "재택근무",
-    emoji: "🏠",
+    icon: "/icons/homeOffice.png",
     color: "text-purple-700",
   },
 ];
@@ -270,7 +271,14 @@ export default function MealEntryDrawer({
           {/* 식사 타입 선택 */}
           <div className="sm:space-y-3 space-y-1">
             <Label className="text-xs sm:text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <span>🍴</span> 식사 타입
+              <Image
+                src="/icons/mealType.png"
+                alt="식사 타입"
+                width={16}
+                height={16}
+                className="w-4 h-4 object-contain"
+              />
+              식사 타입
             </Label>
             <div className="grid grid-cols-3 gap-2">
               {mealTypeOptions.map((meal) => (
@@ -299,7 +307,14 @@ export default function MealEntryDrawer({
               htmlFor="payer"
               className="text-xs sm:text-sm font-semibold text-gray-700 flex items-center gap-2"
             >
-              <span>💳</span> 결제자
+              <Image
+                src="/icons/payer.png"
+                alt="결제자"
+                width={16}
+                height={16}
+                className="w-4 h-4 object-contain"
+              />
+              결제자
             </Label>
             {usersError && (
               <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
@@ -312,7 +327,7 @@ export default function MealEntryDrawer({
             <div className="relative">
               <AutoCompleteInput
                 suggestions={users}
-                value={[currentFormData.payer]}
+                value={currentFormData.payer}
                 onValueChange={(value) => onInputChange("payer", value)}
                 placeholder="결제자를 입력하거나 선택해주세요"
                 allowFreeText={true}
@@ -330,7 +345,14 @@ export default function MealEntryDrawer({
               htmlFor="store"
               className="text-xs sm:text-sm font-semibold text-gray-700 flex items-center gap-2"
             >
-              <span>🏪</span> 식당명
+              <Image
+                src="/icons/place.png"
+                alt="식당명"
+                width={16}
+                height={16}
+                className="w-4 h-4 object-contain"
+              />
+              식당명
             </Label>
 
             <div className="flex flex-nowrap gap-x-2 items-center">
@@ -373,7 +395,14 @@ export default function MealEntryDrawer({
               htmlFor="amount"
               className="text-xs sm:text-sm font-semibold text-gray-700 flex items-center gap-2"
             >
-              <span>💰</span> 금액
+              <Image
+                src="/icons/amount.png"
+                alt="금액"
+                width={16}
+                height={16}
+                className="w-4 h-4 object-contain"
+              />
+              금액
             </Label>
             <div className="relative">
               <Input
@@ -409,7 +438,14 @@ export default function MealEntryDrawer({
                 htmlFor="attendance"
                 className="text-xs sm:text-sm font-semibold text-gray-700 flex items-center gap-2"
               >
-                <span>📋</span> 근태
+                <Image
+                  src="/icons/attendance.png"
+                  alt="근태"
+                  width={16}
+                  height={16}
+                  className="w-4 h-4 object-contain"
+                />
+                근태
               </Label>
               <Select
                 value={
@@ -430,7 +466,13 @@ export default function MealEntryDrawer({
                       className="rounded-lg"
                     >
                       <div className="flex items-center gap-2 text-xs sm:text-sm">
-                        <span>{option.emoji}</span>
+                        <Image
+                          src={option.icon}
+                          alt={option.label}
+                          width={16}
+                          height={16}
+                          className="w-4 h-4 object-contain"
+                        />
                         <span className={option.color}>{option.label}</span>
                       </div>
                     </SelectItem>

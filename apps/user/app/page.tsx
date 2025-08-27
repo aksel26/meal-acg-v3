@@ -14,6 +14,7 @@ import { motion } from "motion/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import CI from "@/public/images/ACG_LOGO_GRAY.png";
 import BackgroundImage from "@/public/images/bg.jpeg";
 import Character from "@/public/images/login-character.png";
@@ -87,7 +88,9 @@ export default function HomePage() {
   };
 
   return (
-    <div className="h-dvh flex sm:max-w-md items-center justify-center relative mx-auto flex-col">
+    <>
+      <PWAInstallPrompt />
+      <div className="h-dvh flex sm:max-w-md items-center justify-center relative mx-auto flex-col">
       <Image
         src={BackgroundImage}
         alt="Background"
@@ -268,5 +271,6 @@ export default function HomePage() {
         </form>
       </div>
     </div>
+    </>
   );
 }

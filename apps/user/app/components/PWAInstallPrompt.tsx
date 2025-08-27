@@ -16,6 +16,7 @@ interface BeforeInstallPromptEvent extends Event {
 export default function PWAInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
 
@@ -56,11 +57,18 @@ export default function PWAInstallPrompt() {
         setShowPrompt(true);
       }
     }
-
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-    };
   }, []);
+
+  // showPrompt가 true가 되면 1초 후에 애니메이션 시작
+  useEffect(() => {
+    if (showPrompt) {
+      const timer = setTimeout(() => {
+        setIsVisible(true);
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showPrompt]);
 
   const handleInstallClick = async () => {
     if (deferredPrompt) {
@@ -84,29 +92,29 @@ export default function PWAInstallPrompt() {
   };
 
   // 이미 설치된 경우 또는 표시하지 않는 경우
-  if (!showPrompt || isStandalone) {
+  if (!showPrompt || isStandalone || !isVisible) {
     return null;
   }
 
   return (
-    <div className="fixed top-4 left-4 right-4 z-50 animate-in slide-in-from-top duration-300">
+    <div className="fixed top-4 left-4 right-4 z-50 animate-in fade-in-0 slide-in-from-top-8 duration-700 ease-out">
       <div className="max-w-md mx-auto">
         {/* 카드 컨테이너 */}
-        <div className="bg-white/95 backdrop-blur-md border border-gray-200/50 rounded-2xl shadow-xl overflow-hidden">
+        <div className="bg-white/95 backdrop-blur-md border border-gray-200/50 rounded-2xl shadow-xl overflow-hidden animate-in zoom-in-95 duration-700 delay-100 ease-out">
           {/* 카드 헤더 */}
-          <div className="bg-gradient-to-r from-slate-50 to-gray-50 border-b border-gray-100/80 px-4 py-3">
+          <div className="bg-gradient-to-r from-slate-50 to-gray-50 border-b border-gray-100/80 px-4 py-3 animate-in slide-in-from-left duration-700 delay-200 ease-out">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 {/* 앱 아이콘 */}
-                <div className="flex-shrink-0 w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center border border-blue-100/50">
+                <div className="flex-shrink-0 w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center border border-blue-100/50 animate-in zoom-in-0 duration-500 delay-400 ease-out">
                   <span className="text-lg">🍙</span>
                 </div>
 
                 {/* 앱 정보 */}
-                <div>
+                <div className="animate-in slide-in-from-left duration-600 delay-300 ease-out">
                   <div className="flex items-center gap-2">
                     <h3 className="text-sm font-semibold text-gray-800">ACG 식대관리</h3>
-                    <span className="px-2 py-0.5 text-xs font-medium bg-blue-50 text-blue-700 rounded-full border border-blue-100/50">앱</span>
+                    <span className="px-2 py-0.5 text-xs font-medium bg-blue-50 text-blue-700 rounded-full border border-blue-100/50 animate-in fade-in-0 duration-500 delay-500 ease-out">앱</span>
                   </div>
                   <p className="text-xs text-gray-500 mt-0.5">식대 관리를 더욱 편리하게</p>
                 </div>
@@ -115,7 +123,7 @@ export default function PWAInstallPrompt() {
               {/* 닫기 버튼 */}
               <button
                 onClick={handleDismiss}
-                className="flex-shrink-0 w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-lg transition-colors duration-200 text-gray-400 hover:text-gray-600"
+                className="flex-shrink-0 w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-lg transition-colors duration-200 text-gray-400 hover:text-gray-600 animate-in fade-in-0 duration-500 delay-600 ease-out"
                 aria-label="닫기"
               >
                 <X size={16} />
@@ -124,10 +132,10 @@ export default function PWAInstallPrompt() {
           </div>
 
           {/* 카드 내용 */}
-          <div className="px-4 py-2">
+          <div className="px-4 py-2 animate-in slide-in-from-bottom duration-700 delay-400 ease-out">
             <div className="flex items-start justify-between gap-4">
               {/* 설명 텍스트 */}
-              <div className="flex-1">
+              <div className="flex-1 animate-in fade-in-0 duration-600 delay-500 ease-out">
                 <p className="text-xs text-gray-600 leading-relaxed">
                   {isIOS ? "Safari에서 공유 버튼을 누르고 '홈 화면에 추가'를 선택하여 앱을 설치하세요" : "홈 화면에 추가하여 네이티브 앱처럼 빠르고 편리하게 이용하세요"}
                 </p>
@@ -138,7 +146,7 @@ export default function PWAInstallPrompt() {
                 <Button
                   onClick={handleInstallClick}
                   size="sm"
-                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-4 py-2 rounded-lg shadow-sm transition-all duration-200 hover:shadow-md whitespace-nowrap"
+                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-4 py-2 rounded-lg shadow-sm transition-all duration-200 hover:shadow-md whitespace-nowrap animate-in slide-in-from-right duration-600 delay-700 ease-out"
                 >
                   설치하기
                 </Button>
@@ -147,16 +155,16 @@ export default function PWAInstallPrompt() {
 
             {/* iOS 전용 안내 */}
             {isIOS && (
-              <div className="mt-3 pt-3 border-t border-gray-100">
+              <div className="mt-3 pt-3 border-t border-gray-100 animate-in slide-in-from-bottom duration-500 delay-800 ease-out">
                 <div className="flex items-center gap-2 text-xs text-gray-500">
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 animate-in fade-in-0 duration-400 delay-900 ease-out">
                     <span className="w-4 h-4 bg-blue-100 rounded flex items-center justify-center">
                       <span className="text-xs">📤</span>
                     </span>
                     <span>공유</span>
                   </div>
-                  <span>→</span>
-                  <div className="flex items-center gap-1">
+                  <span className="animate-in fade-in-0 duration-300 delay-1000 ease-out">→</span>
+                  <div className="flex items-center gap-1 animate-in fade-in-0 duration-400 delay-1100 ease-out">
                     <span className="w-4 h-4 bg-green-100 rounded flex items-center justify-center">
                       <span className="text-xs">➕</span>
                     </span>

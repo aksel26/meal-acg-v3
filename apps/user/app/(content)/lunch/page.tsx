@@ -1,29 +1,17 @@
 "use client";
 import { BottomNavigation } from "@/components/BottomNavigation";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@repo/ui/src/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/src/card";
 import { Badge } from "@repo/ui/src/badge";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Button } from "@repo/ui/src/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@repo/ui/src/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@repo/ui/src/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/src/popover";
 import Lottery from "@/components/lunch/Lottery";
 import LunchGroupList from "@/components/lunch/LunchGroupList";
 import { useLunchGroup } from "@/hooks/useLunchGroup";
 import { useUsers } from "@/hooks/useUsers";
 import { motion } from "motion/react";
+import Image from "next/image";
 
 const Lunch = () => {
   const [userName, setUserName] = useState<string>("");
@@ -44,8 +32,7 @@ const Lunch = () => {
   const validGroupCount = useMemo(() => {
     if (!lunchGroupData?.groups) return 0;
     return lunchGroupData.groups.filter((group) => {
-      const hasValidGroupNumber =
-        group.groupNumber && group.groupNumber.trim().length > 0;
+      const hasValidGroupNumber = group.groupNumber && group.groupNumber.trim().length > 0;
       const hasAnyMember = group.person && group.person.length > 0;
       return hasValidGroupNumber || hasAnyMember;
     }).length;
@@ -53,8 +40,7 @@ const Lunch = () => {
 
   // 미추첨 인원 계산 (memoized)
   const unassignedMembers = useMemo(() => {
-    if (!allUsers || allUsers.length === 0 || !lunchGroupData?.groups)
-      return [];
+    if (!allUsers || allUsers.length === 0 || !lunchGroupData?.groups) return [];
 
     // 모든 점심조에 배정된 멤버들 수집
     const assignedMembers = new Set<string>();
@@ -69,10 +55,7 @@ const Lunch = () => {
     });
 
     // 전체 사용자에서 배정된 멤버들 제외
-    return allUsers.filter(
-      (user) =>
-        user && user.trim() && !assignedMembers.has(user.trim().toLowerCase())
-    );
+    return allUsers.filter((user) => user && user.trim() && !assignedMembers.has(user.trim().toLowerCase()));
   }, [allUsers, lunchGroupData?.groups]);
 
   return (
@@ -91,22 +74,15 @@ const Lunch = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-lg sm:text-xl! font-semibold text-gray-800">
-                  점심조 편성
-                </p>
+                <p className="text-lg sm:text-xl! font-semibold text-gray-800">점심조 편성</p>
                 <CardDescription>
                   {isLoading ? (
-                    <span className="text-sm text-gray-500">
-                      데이터 로딩 중...
-                    </span>
+                    <span className="text-sm text-gray-500">데이터 로딩 중...</span>
                   ) : error ? (
-                    <span className="text-sm text-red-500">
-                      데이터 로딩 실패
-                    </span>
+                    <span className="text-sm text-red-500">데이터 로딩 실패</span>
                   ) : (
                     <span className="text-xs sm:text-sm text-gray-500">
-                      총 {validGroupCount}개 조 •{" "}
-                      {lunchGroupData?.totalMembers || "0"}명
+                      총 {validGroupCount}개 조 • {lunchGroupData?.totalMembers || "0"}명
                     </span>
                   )}
                 </CardDescription>
@@ -116,49 +92,32 @@ const Lunch = () => {
               {!isLoading && !error && unassignedMembers.length > 0 && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-xs sm:text-sm text-orange-600 border-orange-300 hover:bg-orange-50 hover:border-orange-400"
-                    >
-                      <span className="mr-2">⚠️</span>
+                    <Button variant="outline" size="sm" className="text-xs sm:text-sm text-orange-600 border-orange-300 hover:bg-orange-50 hover:border-orange-400">
+                      <span className="mr-2">
+                        <Image src={"/icons/warning.png"} alt={"warning"} width={32} height={32} className="w-5 h-5 object-contain" />
+                      </span>
                       미추첨 {unassignedMembers.length}명
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-80" align="end">
                     <div className="space-y-3">
                       <div>
-                        <h4 className="font-medium text-sm text-gray-900 mb-1">
-                          미추첨 인원
-                        </h4>
-                        <p className="text-xs text-gray-500">
-                          아직 점심조에 배정되지 않은 인원입니다
-                        </p>
+                        <h4 className="font-medium text-sm text-gray-900 mb-1">미추첨 인원</h4>
+                        <p className="text-xs text-gray-500">아직 점심조에 배정되지 않은 인원입니다</p>
                       </div>
 
                       {usersLoading ? (
                         <div className="flex items-center justify-center py-4">
-                          <div className="text-sm text-gray-500">
-                            로딩 중...
-                          </div>
+                          <div className="text-sm text-gray-500">로딩 중...</div>
                         </div>
                       ) : unassignedMembers.length === 0 ? (
-                        <div className="text-sm text-gray-500 text-center py-4">
-                          모든 인원이 배정되었습니다
-                        </div>
+                        <div className="text-sm text-gray-500 text-center py-4">모든 인원이 배정되었습니다</div>
                       ) : (
                         <div className="grid grid-cols-2 gap-2 max-h-52 overflow-y-auto">
                           {unassignedMembers.map((member, index) => (
-                            <div
-                              key={`unassigned-${index}`}
-                              className="flex items-center space-x-2 p-2 bg-orange-50 rounded-lg border border-orange-100"
-                            >
-                              <div className="w-6 h-6 rounded-full bg-orange-200 flex items-center justify-center text-xs font-medium text-orange-700">
-                                {member.charAt(0).toUpperCase()}
-                              </div>
-                              <span className="text-xs sm:text-sm text-gray-700 truncate">
-                                {member}
-                              </span>
+                            <div key={`unassigned-${index}`} className="flex items-center space-x-2 p-2 bg-orange-50 rounded-lg border border-orange-100">
+                              <div className="w-6 h-6 rounded-full bg-orange-200 flex items-center justify-center text-xs font-medium text-orange-700">{member.charAt(0).toUpperCase()}</div>
+                              <span className="text-xs sm:text-sm text-gray-700 truncate">{member}</span>
                             </div>
                           ))}
                         </div>
@@ -166,9 +125,7 @@ const Lunch = () => {
 
                       {unassignedMembers.length > 0 && (
                         <div className="pt-2 border-t border-gray-100">
-                          <div className="text-xs text-gray-400 text-center">
-                            총 {unassignedMembers.length}명이 미배정 상태입니다
-                          </div>
+                          <div className="text-xs text-gray-400 text-center">총 {unassignedMembers.length}명이 미배정 상태입니다</div>
                         </div>
                       )}
                     </div>
@@ -182,15 +139,11 @@ const Lunch = () => {
             <div className="flex space-x-6">
               <div className="">
                 <p className="text-xs text-gray-500">시작일</p>
-                <p className="text-xs font-medium text-gray-800">
-                  {lunchGroupData?.prevDate || "2025.01.06"}
-                </p>
+                <p className="text-xs font-medium text-gray-800">{lunchGroupData?.prevDate || "2025.01.06"}</p>
               </div>
               <div className="">
                 <p className="text-xs text-gray-500">다음 뽑기</p>
-                <p className="text-xs font-medium text-gray-800">
-                  {lunchGroupData?.nextDate || "2025.01.13"}
-                </p>
+                <p className="text-xs font-medium text-gray-800">{lunchGroupData?.nextDate || "2025.01.13"}</p>
               </div>
             </div>
           </CardContent>
@@ -206,10 +159,7 @@ const Lunch = () => {
           ease: [0.25, 0.46, 0.45, 0.94],
         }}
       >
-        <Button
-          className="w-full text-green-800 mx-auto mb-4 py-6 bg-gradient-to-r from-teal-200 to-lime-200"
-          onClick={() => setIsLotteryOpen(true)}
-        >
+        <Button className="w-full text-green-800 mx-auto mb-4 py-6 bg-gradient-to-r from-teal-200 to-lime-200" onClick={() => setIsLotteryOpen(true)}>
           점심조 뽑기
         </Button>
       </motion.div>
@@ -249,10 +199,7 @@ const Lunch = () => {
                   <CardContent className="pt-0">
                     <div className="grid grid-cols-2 gap-2">
                       {Array.from({ length: 4 }, (_, memberIndex) => (
-                        <div
-                          key={memberIndex}
-                          className="flex items-center space-x-2 rounded-lg p-2 bg-gray-50"
-                        >
+                        <div key={memberIndex} className="flex items-center space-x-2 rounded-lg p-2 bg-gray-50">
                           <div className="w-6 h-6 rounded-full bg-gray-200 animate-pulse"></div>
                           <div className="w-16 h-4 bg-gray-200 rounded animate-pulse"></div>
                         </div>
@@ -266,19 +213,12 @@ const Lunch = () => {
         ) : error ? (
           <Card className="bg-white border-none shadow-none">
             <CardContent className="text-center py-8">
-              <p className="text-red-500 mb-2">
-                데이터를 불러오는데 실패했습니다.
-              </p>
-              <p className="text-sm text-gray-500">
-                {error?.message || "알 수 없는 오류가 발생했습니다."}
-              </p>
+              <p className="text-red-500 mb-2">데이터를 불러오는데 실패했습니다.</p>
+              <p className="text-sm text-gray-500">{error?.message || "알 수 없는 오류가 발생했습니다."}</p>
             </CardContent>
           </Card>
         ) : (
-          <LunchGroupList
-            groups={lunchGroupData?.groups || []}
-            userName={userName}
-          />
+          <LunchGroupList groups={lunchGroupData?.groups || []} userName={userName} />
         )}
       </motion.div>
 
@@ -288,21 +228,13 @@ const Lunch = () => {
       <Dialog open={isLotteryOpen} onOpenChange={setIsLotteryOpen}>
         <DialogContent className="max-w-4xl w-[90vw] max-h-[90vh] p-6">
           <DialogHeader>
-            <DialogTitle className="text-base sm:text-xl! font-semibold text-center">
-              점심조 뽑기
-            </DialogTitle>
-            <DialogDescription className="text-center text-gray-600">
-              점심조 뽑기를 위해 카드를 클릭해 주세요.
-            </DialogDescription>
+            <DialogTitle className="text-base sm:text-xl! font-semibold text-center">점심조 뽑기</DialogTitle>
+            <DialogDescription className="text-center text-gray-600">점심조 뽑기를 위해 카드를 클릭해 주세요.</DialogDescription>
           </DialogHeader>
           <Lottery />
 
           <DialogFooter className="flex justify-center">
-            <Button
-              variant="outline"
-              onClick={() => setIsLotteryOpen(false)}
-              className="w-full py-5 text-xs sm:text-sm"
-            >
+            <Button variant="outline" onClick={() => setIsLotteryOpen(false)} className="w-full py-5 text-xs sm:text-sm">
               닫기
             </Button>
           </DialogFooter>

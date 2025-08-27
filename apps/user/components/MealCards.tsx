@@ -1,14 +1,9 @@
 import * as React from "react";
 import { Button } from "@repo/ui/src/button";
 import { Plus } from "@repo/ui/icons";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@repo/ui/src/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@repo/ui/src/card";
 import dayjs from "dayjs";
+import Image from "next/image";
 
 interface MealData {
   date: string;
@@ -33,29 +28,18 @@ interface MealData {
 interface MealCardsProps {
   selectedDate?: Date;
   onAddMeal?: (mealType: "breakfast" | "lunch" | "dinner") => void;
-  onEditMeal?: (
-    mealType: "breakfast" | "lunch" | "dinner",
-    mealInfo: MealData
-  ) => void;
+  onEditMeal?: (mealType: "breakfast" | "lunch" | "dinner", mealInfo: MealData) => void;
   onHolidayEdit?: (mealInfo: MealData) => void;
   mealData?: MealData[];
 }
 
-export function MealCards({
-  selectedDate,
-  onAddMeal,
-  onEditMeal,
-  onHolidayEdit,
-  mealData = [],
-}: MealCardsProps) {
-  const [currentMealData, setCurrentMealData] = React.useState<MealData | null>(
-    null
-  );
+export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, mealData = [] }: MealCardsProps) {
+  const [currentMealData, setCurrentMealData] = React.useState<MealData | null>(null);
   console.log("currentMealData: ", currentMealData);
 
   React.useEffect(() => {
     if (selectedDate && mealData.length > 0) {
-      const dateString = dayjs(selectedDate).format('YYYY-MM-DD');
+      const dateString = dayjs(selectedDate).format("YYYY-MM-DD");
       const dayData = mealData.find((meal) => meal.date === dateString) || null;
       setCurrentMealData(dayData);
     } else {
@@ -64,23 +48,14 @@ export function MealCards({
   }, [selectedDate, mealData]);
 
   if (!selectedDate) {
-    return (
-      <div className="text-center py-4 text-muted-foreground">
-        날짜를 선택해주세요
-      </div>
-    );
+    return <div className="text-center py-4 text-muted-foreground">날짜를 선택해주세요</div>;
   }
 
   const formatDate = (date: Date) => {
-    return dayjs(date).format('YYYY-MM-DD');
+    return dayjs(date).format("YYYY-MM-DD");
   };
 
-  const hasMealData =
-    currentMealData &&
-    (currentMealData.breakfast ||
-      currentMealData.lunch ||
-      currentMealData.dinner ||
-      currentMealData.attendance);
+  const hasMealData = currentMealData && (currentMealData.breakfast || currentMealData.lunch || currentMealData.dinner || currentMealData.attendance);
 
   if (!hasMealData) {
     return (
@@ -88,16 +63,8 @@ export function MealCards({
         <CardHeader className="pb-4!">
           <CardTitle>
             <div className="flex w-full items-center justify-between px-2">
-              <div className="text-sm sm:text-md font-semibold text-gray-800">
-                {formatDate(selectedDate)}
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-8 hover:bg-blue-50"
-                title="Add Event"
-                onClick={() => onAddMeal?.("lunch")}
-              >
+              <div className="text-sm sm:text-md font-semibold text-gray-800">{formatDate(selectedDate)}</div>
+              <Button variant="ghost" size="icon" className="size-8 hover:bg-blue-50" title="Add Event" onClick={() => onAddMeal?.("lunch")}>
                 <Plus className="w-4 h-4 text-blue-600" />
                 <span className="sr-only">Add Event</span>
               </Button>
@@ -106,9 +73,7 @@ export function MealCards({
         </CardHeader>
 
         <CardContent>
-          <p className="text-gray-500 text-xs sm:text-sm text-center">
-            이 날짜에 등록된 식대 기록이 없습니다
-          </p>
+          <p className="text-gray-500 text-xs sm:text-sm text-center">이 날짜에 등록된 식대 기록이 없습니다</p>
         </CardContent>
         <CardFooter>
           <Button
@@ -127,7 +92,7 @@ export function MealCards({
       title: "조식",
       data: currentMealData.breakfast,
       type: "breakfast" as const,
-      emoji: "🌅",
+      icon: "/icons/breakfast.png",
       bgColor: "bg-orange-50",
       textColor: "text-orange-600",
       hoverColor: "hover:bg-orange-100",
@@ -136,7 +101,7 @@ export function MealCards({
       title: "중식",
       data: currentMealData.lunch,
       type: "lunch" as const,
-      emoji: "🍙",
+      icon: "/icons/lunch.png",
       bgColor: "bg-blue-50",
       textColor: "text-blue-600",
       hoverColor: "hover:bg-blue-100",
@@ -145,7 +110,7 @@ export function MealCards({
       title: "석식",
       data: currentMealData.dinner,
       type: "dinner" as const,
-      emoji: "🌙",
+      icon: "/icons/dinner.png",
       bgColor: "bg-indigo-50",
       textColor: "text-indigo-600",
       hoverColor: "hover:bg-indigo-100",
@@ -157,11 +122,7 @@ export function MealCards({
     if (meal.data) return true;
 
     // 하지만 attendance가 '근무' 또는 '개별식사'를 포함하고 중식인 경우는 데이터가 없어도 표시
-    if (
-      meal.type === "lunch" &&
-      (currentMealData?.attendance === "근무" ||
-        currentMealData?.attendance?.includes("개별식사"))
-    ) {
+    if (meal.type === "lunch" && (currentMealData?.attendance === "근무" || currentMealData?.attendance?.includes("개별식사"))) {
       return true;
     }
 
@@ -178,16 +139,8 @@ export function MealCards({
       <CardHeader className="mb-0 pb-4!">
         <CardTitle>
           <div className="flex w-full items-center justify-between px-2">
-            <div className="text-sm font-semibold text-gray-800">
-              {formatDate(selectedDate)}
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-8 hover:bg-blue-50"
-              title="Add Event"
-              onClick={() => onAddMeal?.("lunch")}
-            >
+            <div className="text-sm font-semibold text-gray-800">{formatDate(selectedDate)}</div>
+            <Button variant="ghost" size="icon" className="size-8 hover:bg-blue-50" title="Add Event" onClick={() => onAddMeal?.("lunch")}>
               <Plus className="w-4 h-4 text-blue-600" />
               <span className="sr-only">Add Event</span>
             </Button>
@@ -199,14 +152,12 @@ export function MealCards({
         <>
           <CardContent className="flex flex-col justify-center items-center text-center">
             <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mb-4">
-              <span className="text-2xl">🏖️</span>
+              <span className="text-2xl">
+                <Image src={"/icons/holiday2.png"} alt={"warning"} width={40} height={40} className="w-9 h-9 object-contain" />
+              </span>
             </div>
-            <p className="text-orange-600 text-base font-medium mb-2 text-center">
-              휴무일
-            </p>
-            <p className="text-gray-500 text-sm text-center">
-              휴무일에는 식대가 제공되지 않습니다
-            </p>
+            <p className="text-orange-600 text-base font-medium mb-2 text-center">휴무일</p>
+            <p className="text-gray-500 text-sm text-center">휴무일에는 식대가 제공되지 않습니다</p>
           </CardContent>
           <CardFooter>
             <Button
@@ -226,29 +177,14 @@ export function MealCards({
         <>
           <CardContent>
             <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
-              <svg
-                className="w-8 h-8 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                />
+              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
             </div>
-            <p className="text-gray-500 text-sm text-center">
-              아직 식사 기록이 없어요
-            </p>
+            <p className="text-gray-500 text-sm text-center">아직 식사 기록이 없어요</p>
           </CardContent>
           <CardFooter>
-            <Button
-              onClick={() => onAddMeal?.("lunch")}
-              className="bg-blue-500 hover:bg-blue-600 text-white rounded-xl px-6 py-3 font-medium"
-            >
+            <Button onClick={() => onAddMeal?.("lunch")} className="bg-blue-500 hover:bg-blue-600 text-white rounded-xl px-6 py-3 font-medium">
               식사 기록하기
             </Button>
           </CardFooter>
@@ -271,62 +207,28 @@ export function MealCards({
                 >
                   <div className="flex items-center justify-between">
                     <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mr-3 relative">
-                      <span className="text-2xl">{meal.emoji}</span>
+                      <Image src={meal.icon} alt={meal.title} width={32} height={32} className="w-8 h-8 object-contain" />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
-                        <span
-                          className={`font-medium ${meal.textColor} text-sm`}
-                        >
-                          {meal.title}
-                        </span>
+                        <span className={`font-medium ${meal.textColor} text-sm`}>{meal.title}</span>
                         <span
                           className={`font-bold ${meal.textColor} ${
-                            meal.type === "lunch" &&
-                            currentMealData?.attendance?.includes("개별식사") &&
-                            !meal.data?.amount
-                              ? "text-sm font-normal "
-                              : "text-base"
+                            meal.type === "lunch" && currentMealData?.attendance?.includes("개별식사") && !meal.data?.amount ? "text-sm font-normal " : "text-base"
                           }`}
                         >
-                          {meal.data?.amount
-                            ? `-${meal.data.amount.toLocaleString()}원`
-                            : meal.type === "lunch" &&
-                                currentMealData?.attendance?.includes(
-                                  "개별식사"
-                                )
-                              ? "개별식사"
-                              : "0원"}
+                          {meal.data?.amount ? `-${meal.data.amount.toLocaleString()}원` : meal.type === "lunch" && currentMealData?.attendance?.includes("개별식사") ? "개별식사" : "0원"}
                         </span>
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <span className="text-gray-500 text-xs">
-                          {meal.data?.store ||
-                            (meal.type === "lunch" && !meal.data
-                              ? "입력 내용이 없습니다"
-                              : "식당 정보 없음")}
-                        </span>
-                        {meal.data?.payer && (
-                          <span className="text-gray-500 text-xs">
-                            {meal.data.payer}
-                          </span>
-                        )}
+                        <span className="text-gray-500 text-xs">{meal.data?.store || (meal.type === "lunch" && !meal.data ? "입력 내용이 없습니다" : "식당 정보 없음")}</span>
+                        {meal.data?.payer && <span className="text-gray-500 text-xs">{meal.data.payer}</span>}
                       </div>
                     </div>
 
-                    <svg
-                      className="w-5 h-5 text-gray-300 ml-3"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
+                    <svg className="w-5 h-5 text-gray-300 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
                 </div>

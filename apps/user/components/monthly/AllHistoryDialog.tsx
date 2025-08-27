@@ -3,6 +3,7 @@ import { Button } from "@repo/ui/src/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@repo/ui/src/dialog";
 import { useMonthlyData } from "@/hooks/useMonthlyData";
 import { useEffect } from "react";
+import Image from "next/image";
 
 interface AllHistoryDialogProps {
   isOpen: boolean;
@@ -10,11 +11,11 @@ interface AllHistoryDialogProps {
 }
 
 const getDrinkIcon = (drink: string) => {
-  if (drink === "선택안함") return "❌";
-  if (drink.includes("바닐라") || drink.includes("자몽")) return "🥤";
-  if (drink.includes("ICE")) return "🧊";
-  if (drink.includes("HOT")) return "☕";
-  return "💬";
+  if (drink === "선택안함") return "/icons/pending.png";
+  if (drink.includes("바닐라") || drink.includes("자몽")) return "/icons/etcDrink.png";
+  if (drink.includes("ICE")) return "/icons/ice.png";
+  if (drink.includes("HOT")) return "/icons/hot.png";
+  return "/icons/pending.png";
 };
 
 export const AllHistoryDialog = ({ isOpen, onClose }: AllHistoryDialogProps) => {
@@ -53,7 +54,15 @@ export const AllHistoryDialog = ({ isOpen, onClose }: AllHistoryDialogProps) => 
             applications.map((user, index) => (
               <div key={index} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                 <div className="flex items-center space-x-3">
-                  <span className="text-xl">{getDrinkIcon(user.drink)}</span>
+                  <div className="w-6 h-6 relative">
+                    <Image
+                      src={getDrinkIcon(user.drink)}
+                      alt={user.drink}
+                      width={24}
+                      height={24}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
                   <div>
                     <div className="text-sm font-medium text-gray-900">{user.name}</div>
                     {user.memo && <div className="text-sm text-gray-500">{user.memo}</div>}

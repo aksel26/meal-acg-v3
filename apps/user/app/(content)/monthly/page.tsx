@@ -3,7 +3,7 @@ import { BottomNavigation } from "@/components/BottomNavigation";
 import { Button } from "@repo/ui/src/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/src/card";
 import React, { useEffect, useState } from "react";
-// import LOGO from "../../public/images/ACG_LOGO_GRAY.png";
+import Image from "next/image";
 import { useMonthlyData } from "@/hooks/useMonthlyData";
 import { useAssignDrink } from "@/hooks/useAssignDrink";
 import {
@@ -69,11 +69,11 @@ const MonthlyDrink = () => {
 
   // 음료 아이콘 함수
   const getDrinkIcon = (drink: string) => {
-    if (drink === "선택안함") return "❌";
-    if (drink.includes("바닐라") || drink.includes("자몽")) return "🥤";
-    if (drink.includes("ICE")) return "🧊";
-    if (drink.includes("HOT")) return "☕";
-    return "☕";
+    if (drink === "선택안함") return "/icons/pending.png";
+    if (drink.includes("바닐라") || drink.includes("자몽")) return "/icons/etcDrink.png";
+    if (drink.includes("ICE")) return "/icons/ice.png";
+    if (drink.includes("HOT")) return "/icons/hot.png";
+    return "/icons/pending.png";
   };
 
   // 음료 선택 완료 처리
@@ -173,9 +173,15 @@ const MonthlyDrink = () => {
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
-                        <span className="text-2xl">
-                          {getDrinkIcon(myDrink)}
-                        </span>
+                        <div className="w-8 h-8 relative">
+                          <Image
+                            src={getDrinkIcon(myDrink)}
+                            alt={myDrink}
+                            width={32}
+                            height={32}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
                         <div>
                           <p className="text-xs sm:text-sm text-blue-600 font-medium">
                             내가 선택한 음료
@@ -203,7 +209,15 @@ const MonthlyDrink = () => {
                 ) : (
                   <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-3">
                     <div className="flex items-center space-x-5">
-                      <span className="text-2xl">💬</span>
+                      <div className="w-8 h-8 relative">
+                        <Image
+                          src="/icons/pending.png"
+                          alt="미신청"
+                          width={32}
+                          height={32}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
                       <div>
                         <p className="text-sm text-gray-600 font-medium mb-1">
                           음료 신청 상태
@@ -298,17 +312,15 @@ const MonthlyDrink = () => {
                         }`}
                       >
                         {/* 음료 아이콘 */}
-                        <span className="text-2xl">
-                          {drink === "선택안함"
-                            ? "❌"
-                            : isSpecial
-                              ? "🥤"
-                              : isIce
-                                ? "🧊"
-                                : isHot
-                                  ? "☕"
-                                  : "☕"}
-                        </span>
+                        <div className="w-8 h-8 relative">
+                          <Image
+                            src={getDrinkIcon(drink)}
+                            alt={drink}
+                            width={32}
+                            height={32}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
 
                         {/* 음료 이름 */}
                         <div
@@ -362,18 +374,15 @@ const MonthlyDrink = () => {
             <DialogTitle className="text-center">음료 선택 확인</DialogTitle>
           </DialogHeader>
           <div className="flex flex-col items-center space-y-3">
-            <span className="text-4xl">
-              {selectedDrink === "선택안함"
-                ? "❌"
-                : selectedDrink.includes("바닐라") ||
-                    selectedDrink.includes("자몽")
-                  ? "🥤"
-                  : selectedDrink.includes("ICE")
-                    ? "🧊"
-                    : selectedDrink.includes("HOT")
-                      ? "☕"
-                      : "☕"}
-            </span>
+            <div className="w-16 h-16 relative">
+              <Image
+                src={getDrinkIcon(selectedDrink)}
+                alt={selectedDrink}
+                width={64}
+                height={64}
+                className="w-full h-full object-contain"
+              />
+            </div>
             <span className="text-md font-semibold text-gray-800">
               {selectedDrink}
             </span>

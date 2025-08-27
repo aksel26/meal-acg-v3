@@ -22,14 +22,7 @@ import { toast } from "@repo/ui/src/sonner";
 import { motion } from "motion/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import React, {
-  Suspense,
-  lazy,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
 import { formatDateKorean } from "utils";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
@@ -57,22 +50,8 @@ interface CalculationData {
   balance: number;
 }
 
-function CalculationResult({
-  userName,
-  month,
-  year,
-  onDataChange,
-}: {
-  userName: string;
-  month: number;
-  year: number;
-  onDataChange?: (data: CalculationData | null) => void;
-}) {
-  const { data, isLoading, error, refetch } = useCalculationData(
-    userName,
-    month,
-    year
-  );
+function CalculationResult({ userName, month, year, onDataChange }: { userName: string; month: number; year: number; onDataChange?: (data: CalculationData | null) => void }) {
+  const { data, isLoading, error, refetch } = useCalculationData(userName, month, year);
 
   useEffect(() => {
     onDataChange?.(data || null);
@@ -99,12 +78,7 @@ function CalculationResult({
             <div className="w-6 h-6 text-red-500">⚠️</div>
           </div>
           <p className="text-gray-600 text-sm">{error.message}</p>
-          <Button
-            onClick={() => refetch()}
-            variant="outline"
-            size="sm"
-            className="text-xs rounded-full"
-          >
+          <Button onClick={() => refetch()} variant="outline" size="sm" className="text-xs rounded-full">
             다시 시도
           </Button>
         </div>
@@ -158,20 +132,10 @@ function CalculationResult({
           }}
           className={`${stat.bg} ${stat.text} rounded-xl p-4 transition-all hover:shadow-lg backdrop-blur-lg`}
         >
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: index * 0.1 + 0.2 }}
-            className={`text-2xl font-bold mb-1`}
-          >
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: index * 0.1 + 0.2 }} className={`text-2xl font-bold mb-1`}>
             {stat.value}
           </motion.div>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: index * 0.1 + 0.3 }}
-            className="text-xs font-medium"
-          >
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: index * 0.1 + 0.3 }} className="text-xs font-medium">
             {stat.label}
           </motion.div>
         </motion.div>
@@ -202,24 +166,15 @@ interface MealData {
 
 export default function DashboardPage() {
   const [userName, setUserName] = useState<string>("");
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
-    dayjs().tz("Asia/Seoul").toDate()
-  );
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(dayjs().tz("Asia/Seoul").toDate());
   console.log("selectedDate: ", selectedDate);
-  const [currentMonth, setCurrentMonth] = useState<number>(
-    dayjs().tz("Asia/Seoul").month() + 1
-  );
-  const [currentYear, setCurrentYear] = useState<number>(
-    dayjs().tz("Asia/Seoul").year()
-  );
+  const [currentMonth, setCurrentMonth] = useState<number>(dayjs().tz("Asia/Seoul").month() + 1);
+  const [currentYear, setCurrentYear] = useState<number>(dayjs().tz("Asia/Seoul").year());
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
   const [isSheetOpen, setIsSheetOpen] = useState<boolean>(false);
-  const [selectedMealType, setSelectedMealType] = useState<
-    "breakfast" | "lunch" | "dinner"
-  >("lunch");
+  const [selectedMealType, setSelectedMealType] = useState<"breakfast" | "lunch" | "dinner">("lunch");
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
-  const [calculationData, setCalculationData] =
-    useState<CalculationData | null>(null);
+  const [calculationData, setCalculationData] = useState<CalculationData | null>(null);
   const [isHeaderVisible, setIsHeaderVisible] = useState<boolean>(true);
   const [formData, setFormData] = useState({
     breakfast: {
@@ -243,16 +198,8 @@ export default function DashboardPage() {
   const lastScrollY = useRef<number>(0);
 
   // TanStack Query hooks 사용
-  const { data: mealData = [] } = useMealData(
-    userName,
-    currentMonth,
-    currentYear
-  );
-  const {
-    data: fileValidationData,
-    isLoading: fileValidationLoading,
-    error: fileValidationError,
-  } = useFileValidation(userName, currentMonth, currentYear);
+  const { data: mealData = [] } = useMealData(userName, currentMonth, currentYear);
+  const { data: fileValidationData, isLoading: fileValidationLoading, error: fileValidationError } = useFileValidation(userName, currentMonth, currentYear);
   const mealSubmitMutation = useMealSubmit();
   const mealDeleteMutation = useMealDelete();
 
@@ -267,8 +214,7 @@ export default function DashboardPage() {
   const getFileValidationMessage = () => {
     if (fileValidationLoading) return "📁 파일 확인 중...";
     if (fileValidationError) return `⚠️ ${fileValidationError.message}`;
-    if (fileValidationData)
-      return `✅ ${fileValidationData.semesterInfo.folderName}에서 ${fileValidationData.totalFiles}개 파일 발견`;
+    if (fileValidationData) return `✅ ${fileValidationData.semesterInfo.folderName}에서 ${fileValidationData.totalFiles}개 파일 발견`;
     return "";
   };
 
@@ -345,10 +291,7 @@ export default function DashboardPage() {
     setIsDrawerOpen(true);
   };
 
-  const handleEditMeal = (
-    mealType: "breakfast" | "lunch" | "dinner",
-    mealInfo: MealData
-  ) => {
+  const handleEditMeal = (mealType: "breakfast" | "lunch" | "dinner", mealInfo: MealData) => {
     setSelectedMealType(mealType);
     setIsEditMode(true);
 
@@ -477,10 +420,7 @@ export default function DashboardPage() {
   };
 
   const checkNotice = () => {
-    window.open(
-      "https://hammerhead-magician-201.notion.site/v1-3-257643bd2c6b80798c8bcc2d44103ed7?source=copy_link",
-      "_blank"
-    );
+    window.open("https://hammerhead-magician-201.notion.site/v1-3-257643bd2c6b80798c8bcc2d44103ed7?source=copy_link", "_blank");
   };
 
   const handleDrawerOpenChange = (open: boolean) => {
@@ -510,12 +450,8 @@ export default function DashboardPage() {
     }
   };
   const balance = useMemo(() => {
-    if (
-      calculationData?.availableAmount &&
-      calculationData?.totalUsed !== undefined
-    ) {
-      const result =
-        calculationData.availableAmount - calculationData.totalUsed;
+    if (calculationData?.availableAmount && calculationData?.totalUsed !== undefined) {
+      const result = calculationData.availableAmount - calculationData.totalUsed;
       return {
         value: result.toLocaleString("ko-KR"),
         isNegative: result < 0,
@@ -550,13 +486,12 @@ export default function DashboardPage() {
         <Card className="mb-4 border-none shadow-none">
           <CardHeader>
             <CardTitle>
-              <p className="text-base sm:text-lg text-foreground mb-2 font-medium">
-                안녕하세요, {userName}님 👋
-              </p>
+              <div className="flex space-x-2 items-center mb-2 ">
+                <p className="text-base sm:text-lg text-foreground font-medium">안녕하세요, {userName}님 </p>
+                <Image src={"/icons/greeting.png"} alt={"greeting"} width={32} height={32} className="w-8 h-8 object-contain" />
+              </div>
               <p className="text-sm font-light text-gray-400">
-                오늘은{" "}
-                <span className="text-gray-900">{formatDateKorean()}</span>{" "}
-                입니다
+                오늘은 <span className="text-gray-900">{formatDateKorean()}</span> 입니다
               </p>
             </CardTitle>
           </CardHeader>
@@ -572,10 +507,7 @@ export default function DashboardPage() {
           ease: [0.25, 0.46, 0.45, 0.94],
         }}
       >
-        <Alert
-          className="mb-4 border-none bg-blue-50 cursor-pointer transition-all duration-200 hover:shadow-lg hover:shadow-cyan-500/10 hover:scale-102"
-          onClick={checkNotice}
-        >
+        <Alert className="mb-4 border-none bg-blue-50 cursor-pointer transition-all duration-200 hover:shadow-lg hover:shadow-cyan-500/10 hover:scale-102" onClick={checkNotice}>
           <AlertTitle>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-5">
@@ -625,10 +557,7 @@ export default function DashboardPage() {
                 <p className="text-sm font-medium ">{currentMonth}월 잔액</p>
                 {balance ? (
                   <div className="flex space-x-1">
-                    <NumberTicker
-                      className={`text-2xl font-black ${balance.isNegative ? "text-red-600" : ""}`}
-                      value={Number(balance.value.replace(",", ""))}
-                    />
+                    <NumberTicker className={`text-2xl font-black ${balance.isNegative ? "text-red-600" : ""}`} value={Number(balance.value.replace(",", ""))} />
                     <span className="text-2xl font-black">원</span>
                   </div>
                 ) : (
@@ -637,21 +566,13 @@ export default function DashboardPage() {
                   </div>
                 )}
               </div>
-              <Button
-                variant={"ghost"}
-                onClick={copyAccound}
-                className="text-xs"
-              >
+              <Button variant={"ghost"} onClick={copyAccound} className="text-xs">
                 <Copy fontSize={15} />
                 계좌번호 복사
               </Button>
             </div>
             {calculationData ? (
-              <ChartPieDonut
-                availableAmount={calculationData.availableAmount || 0}
-                totalUsed={calculationData.totalUsed || 0}
-                className="relative"
-              />
+              <ChartPieDonut availableAmount={calculationData.availableAmount || 0} totalUsed={calculationData.totalUsed || 0} className="relative" />
             ) : (
               <div className="relative h-64 bg-gray-50 rounded-lg animate-pulse flex items-center justify-center">
                 <div className="w-32 h-32 bg-gray-200 rounded-full"></div>
@@ -673,12 +594,7 @@ export default function DashboardPage() {
       >
         <Card className="mb-8 p-0 border-none shadow-none bg-transparent">
           {/* <CardContent className="pt-0"> */}
-          <CalculationResult
-            userName={userName}
-            month={currentMonth}
-            year={currentYear}
-            onDataChange={setCalculationData}
-          />
+          <CalculationResult userName={userName} month={currentMonth} year={currentYear} onDataChange={setCalculationData} />
           {/* </CardContent> */}
         </Card>
       </motion.div>
@@ -693,19 +609,8 @@ export default function DashboardPage() {
           ease: [0.25, 0.46, 0.45, 0.94],
         }}
       >
-        <CalendarComponent
-          onDateSelect={setSelectedDate}
-          selectedDate={selectedDate}
-          onMonthChange={handleMonthChange}
-          mealData={mealData}
-        />
-        <MealCards
-          selectedDate={selectedDate}
-          onAddMeal={handleAddMeal}
-          onEditMeal={handleEditMeal}
-          onHolidayEdit={handleHolidayAttendanceEdit}
-          mealData={mealData}
-        />
+        <CalendarComponent onDateSelect={setSelectedDate} selectedDate={selectedDate} onMonthChange={handleMonthChange} mealData={mealData} />
+        <MealCards selectedDate={selectedDate} onAddMeal={handleAddMeal} onEditMeal={handleEditMeal} onHolidayEdit={handleHolidayAttendanceEdit} mealData={mealData} />
       </motion.div>
 
       {/* Lazy-loaded Meal Entry Drawer */}

@@ -7,29 +7,10 @@ import { Input } from "@repo/ui/src/input";
 import { Label } from "@repo/ui/src/label";
 import Image from "next/image";
 
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerFooter,
-  DrawerClose,
-} from "@repo/ui/src/drawer";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@repo/ui/src/select";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter, DrawerClose } from "@repo/ui/src/drawer";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/src/select";
 import { AutoCompleteInput } from "@repo/ui/src/autocomplete-input";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@repo/ui/src/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@repo/ui/src/dialog";
 import { Search } from "@repo/ui/icons";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui/src/tooltip";
 
@@ -130,14 +111,14 @@ const attendanceOptions = [
 
 // 사업자번호 목록 (예시 데이터)
 const businessNumbers = [
-  { businessNumber: "123-45-67890", name: "맛있는 한식당" },
-  { businessNumber: "987-65-43210", name: "이탈리아 피자하우스" },
-  { businessNumber: "555-66-77888", name: "중국집 용궁" },
-  { businessNumber: "111-22-33444", name: "일본식 돈카츠" },
-  { businessNumber: "999-88-77666", name: "프랑스 베이커리" },
-  { businessNumber: "222-33-44555", name: "스시 전문점" },
-  { businessNumber: "777-88-99000", name: "태국 음식점" },
-  { businessNumber: "444-55-66777", name: "인도 커리하우스" },
+  { name: "남도분식", businessNumber: "122-85-56344(일반)" },
+  { name: "홍수계", businessNumber: "156-85-01352(일반)" },
+  { name: "꿈꾸는메밀", businessNumber: "680-88-02909(일반)" },
+  { name: "퍼부어", businessNumber: "120-81-85957(일반)" },
+  { name: "우미학", businessNumber: "120-81-85957(일반)" },
+  { name: "니뽕내뽕", businessNumber: "488-81-01718(일반)" },
+  { name: "서래함박", businessNumber: "120-81-85957(일반)" },
+  { name: "신성식당", businessNumber: "627-87-02105(폐업자)" },
 ];
 
 export default function MealEntryDrawer({
@@ -152,12 +133,7 @@ export default function MealEntryDrawer({
   onInputChange,
   onDeleteMeal,
 }: MealEntryDrawerProps) {
-  const {
-    users,
-    isLoading: usersLoading,
-    error: usersError,
-    fetchUsers,
-  } = useUsers();
+  const { users, isLoading: usersLoading, error: usersError, fetchUsers } = useUsers();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isBusinessDialogOpen, setIsBusinessDialogOpen] = useState(false);
@@ -176,14 +152,8 @@ export default function MealEntryDrawer({
   // Handle automatic amount setting for 근무(개별식사 / 식사안함)
   useEffect(() => {
     if (selectedMealType === "lunch") {
-      const currentAttendance =
-        "attendance" in currentFormData
-          ? (currentFormData as { attendance: string }).attendance
-          : "";
-      if (
-        currentAttendance === "근무(개별식사 / 식사안함)" &&
-        currentFormData.amount !== ""
-      ) {
+      const currentAttendance = "attendance" in currentFormData ? (currentFormData as { attendance: string }).attendance : "";
+      if (currentAttendance === "근무(개별식사 / 식사안함)" && currentFormData.amount !== "") {
         onInputChange("amount", "");
       }
     }
@@ -201,21 +171,14 @@ export default function MealEntryDrawer({
     }
   };
 
-  const handleBusinessSelect = (business: {
-    businessNumber: string;
-    name: string;
-  }) => {
+  const handleBusinessSelect = (business: { businessNumber: string; name: string }) => {
     onInputChange("store", `${business.name}(${business.businessNumber})`);
     setIsBusinessDialogOpen(false);
     setBusinessSearchTerm(""); // 검색어 초기화
   };
 
   // 검색 필터링된 사업자 목록
-  const filteredBusinessNumbers = businessNumbers.filter(
-    (business) =>
-      business.name.toLowerCase().includes(businessSearchTerm.toLowerCase()) ||
-      business.businessNumber.includes(businessSearchTerm)
-  );
+  const filteredBusinessNumbers = businessNumbers.filter((business) => business.name.toLowerCase().includes(businessSearchTerm.toLowerCase()) || business.businessNumber.includes(businessSearchTerm));
 
   return (
     <Drawer open={isOpen} onOpenChange={onOpenChange} repositionInputs={false}>
@@ -233,22 +196,9 @@ export default function MealEntryDrawer({
             <div className="absolute right-0 -top-1">
               {isEditMode && onDeleteMeal && (
                 <Suspense fallback={null}>
-                  <DeleteConfirmDialog
-                    selectedDate={selectedDate}
-                    isDeleting={isDeleting}
-                    onConfirm={handleDeleteMeal}
-                  >
-                    <Button
-                      type="button"
-                      size="sm"
-                      className="text-red-500 bg-red-50 hover:text-red-600 hover:bg-red-100 text-xs px-4 py-1"
-                      disabled={isSubmitting || isDeleting}
-                    >
-                      {isDeleting ? (
-                        <div className="animate-spin rounded-full h-3 w-3 border border-red-500 border-t-transparent"></div>
-                      ) : (
-                        "내역 삭제"
-                      )}
+                  <DeleteConfirmDialog selectedDate={selectedDate} isDeleting={isDeleting} onConfirm={handleDeleteMeal}>
+                    <Button type="button" size="sm" className="text-red-500 bg-red-50 hover:text-red-600 hover:bg-red-100 text-xs px-4 py-1" disabled={isSubmitting || isDeleting}>
+                      {isDeleting ? <div className="animate-spin rounded-full h-3 w-3 border border-red-500 border-t-transparent"></div> : "내역 삭제"}
                     </Button>
                   </DeleteConfirmDialog>
                 </Suspense>
@@ -271,13 +221,7 @@ export default function MealEntryDrawer({
           {/* 식사 타입 선택 */}
           <div className="sm:space-y-3 space-y-1">
             <Label className="text-xs sm:text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <Image
-                src="/icons/mealType.png"
-                alt="식사 타입"
-                width={16}
-                height={16}
-                className="w-4 h-4 object-contain"
-              />
+              <Image src="/icons/mealType.png" alt="식사 타입" width={16} height={16} className="w-4 h-4 object-contain" />
               식사 타입
             </Label>
             <div className="grid grid-cols-3 gap-2">
@@ -285,11 +229,7 @@ export default function MealEntryDrawer({
                 <Button
                   key={meal.value}
                   type="button"
-                  onClick={() =>
-                    setSelectedMealType(
-                      meal.value as "breakfast" | "lunch" | "dinner"
-                    )
-                  }
+                  onClick={() => setSelectedMealType(meal.value as "breakfast" | "lunch" | "dinner")}
                   className={`
                      border transition-all duration-200 h-8 sm:h-10 text-[10.5px] sm:text-xs rounded-md hover:bg-blue-50 hover:scale-102 hover:border-blue-300
                     ${selectedMealType === meal.value ? `${meal.color} shadow-lg scale-105` : `bg-white text-gray-700 ${meal.hoverColor}  hover:bg-blue-100 hover:scale-102`}
@@ -303,25 +243,14 @@ export default function MealEntryDrawer({
 
           {/* 결제자 */}
           <div className="sm:space-y-3 space-y-1">
-            <Label
-              htmlFor="payer"
-              className="text-xs sm:text-sm font-semibold text-gray-700 flex items-center gap-2"
-            >
-              <Image
-                src="/icons/payer.png"
-                alt="결제자"
-                width={16}
-                height={16}
-                className="w-4 h-4 object-contain"
-              />
+            <Label htmlFor="payer" className="text-xs sm:text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <Image src="/icons/payer.png" alt="결제자" width={16} height={16} className="w-4 h-4 object-contain" />
               결제자
             </Label>
             {usersError && (
               <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
                 <p className="text-sm text-orange-800">{usersError}</p>
-                <p className="text-xs text-orange-600 mt-1">
-                  기본 목록을 사용합니다
-                </p>
+                <p className="text-xs text-orange-600 mt-1">기본 목록을 사용합니다</p>
               </div>
             )}
             <div className="relative">
@@ -341,17 +270,8 @@ export default function MealEntryDrawer({
 
           {/* 사용처 */}
           <div className="space-y-2">
-            <Label
-              htmlFor="store"
-              className="text-xs sm:text-sm font-semibold text-gray-700 flex items-center gap-2"
-            >
-              <Image
-                src="/icons/place.png"
-                alt="식당명"
-                width={16}
-                height={16}
-                className="w-4 h-4 object-contain"
-              />
+            <Label htmlFor="store" className="text-xs sm:text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <Image src="/icons/place.png" alt="식당명" width={16} height={16} className="w-4 h-4 object-contain" />
               식당명
             </Label>
 
@@ -379,10 +299,7 @@ export default function MealEntryDrawer({
                     <Search />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent
-                  side="top"
-                  className="bg-gray-900 text-white text-[10px] px-2 py-1"
-                >
+                <TooltipContent side="top" className="bg-gray-900 text-white text-[10px] px-2 py-1">
                   <p>사업자번호 찾기</p>
                 </TooltipContent>
               </Tooltip>
@@ -391,17 +308,8 @@ export default function MealEntryDrawer({
 
           {/* 금액 */}
           <div className="sm:space-y-3 space-y-1">
-            <Label
-              htmlFor="amount"
-              className="text-xs sm:text-sm font-semibold text-gray-700 flex items-center gap-2"
-            >
-              <Image
-                src="/icons/amount.png"
-                alt="금액"
-                width={16}
-                height={16}
-                className="w-4 h-4 object-contain"
-              />
+            <Label htmlFor="amount" className="text-xs sm:text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <Image src="/icons/amount.png" alt="금액" width={16} height={16} className="w-4 h-4 object-contain" />
               금액
             </Label>
             <div className="relative">
@@ -412,67 +320,31 @@ export default function MealEntryDrawer({
                 value={currentFormData.amount}
                 onChange={(e) => onInputChange("amount", e.target.value)}
                 min="0"
-                disabled={
-                  (currentFormData as { attendance: string }).attendance ===
-                  "근무(개별식사 / 식사안함)"
-                    ? true
-                    : false
-                }
+                disabled={(currentFormData as { attendance: string }).attendance === "근무(개별식사 / 식사안함)" ? true : false}
                 className="rounded-lg border-gray-300 pl-8 text-xs sm:text-sm disabled:bg-gray-100 disabled:text-gray-500"
               />
-              {selectedMealType === "lunch" &&
-                "attendance" in currentFormData &&
-                (currentFormData as { attendance: string }).attendance ===
-                  "근무(개별식사 / 식사안함)" && (
-                  <p className="text-[11px] text-orange-500 mt-1">
-                    총 금액에서 10,000원이 차감됩니다.
-                  </p>
-                )}
+              {selectedMealType === "lunch" && "attendance" in currentFormData && (currentFormData as { attendance: string }).attendance === "근무(개별식사 / 식사안함)" && (
+                <p className="text-[11px] text-orange-500 mt-1">총 금액에서 10,000원이 차감됩니다.</p>
+              )}
             </div>
           </div>
 
           {/* 근태 - 중식일 때만 표시 */}
           {selectedMealType === "lunch" && (
             <div className="sm:space-y-3 space-y-1">
-              <Label
-                htmlFor="attendance"
-                className="text-xs sm:text-sm font-semibold text-gray-700 flex items-center gap-2"
-              >
-                <Image
-                  src="/icons/attendance.png"
-                  alt="근태"
-                  width={16}
-                  height={16}
-                  className="w-4 h-4 object-contain"
-                />
+              <Label htmlFor="attendance" className="text-xs sm:text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <Image src="/icons/attendance.png" alt="근태" width={16} height={16} className="w-4 h-4 object-contain" />
                 근태
               </Label>
-              <Select
-                value={
-                  "attendance" in currentFormData
-                    ? (currentFormData as { attendance: string }).attendance
-                    : ""
-                }
-                onValueChange={(value) => onInputChange("attendance", value)}
-              >
+              <Select value={"attendance" in currentFormData ? (currentFormData as { attendance: string }).attendance : ""} onValueChange={(value) => onInputChange("attendance", value)}>
                 <SelectTrigger className="w-full rounded-lg border-gray-300 text-xs">
                   <SelectValue placeholder="근태를 선택해주세요" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
                   {attendanceOptions.map((option) => (
-                    <SelectItem
-                      key={option.value}
-                      value={option.value}
-                      className="rounded-lg"
-                    >
+                    <SelectItem key={option.value} value={option.value} className="rounded-lg">
                       <div className="flex items-center gap-2 text-xs sm:text-sm">
-                        <Image
-                          src={option.icon}
-                          alt={option.label}
-                          width={16}
-                          height={16}
-                          className="w-4 h-4 object-contain"
-                        />
+                        <Image src={option.icon} alt={option.label} width={16} height={16} className="w-4 h-4 object-contain" />
                         <span className={option.color}>{option.label}</span>
                       </div>
                     </SelectItem>
@@ -512,19 +384,14 @@ export default function MealEntryDrawer({
                 {isEditMode ? "수정 중..." : "저장 중..."}
               </div>
             ) : (
-              <div className="flex items-center gap-2 font-medium">
-                {isEditMode ? "수정하기" : "저장하기"}
-              </div>
+              <div className="flex items-center gap-2 font-medium">{isEditMode ? "수정하기" : "저장하기"}</div>
             )}
           </Button>
         </DrawerFooter>
       </DrawerContent>
 
       {/* 사업자번호 찾기 Dialog */}
-      <Dialog
-        open={isBusinessDialogOpen}
-        onOpenChange={setIsBusinessDialogOpen}
-      >
+      <Dialog open={isBusinessDialogOpen} onOpenChange={setIsBusinessDialogOpen}>
         <DialogContent className="max-w-xs">
           <DialogHeader>
             <DialogTitle className="sm:text-md text-sm font-semibold flex items-center gap-2">
@@ -555,12 +422,8 @@ export default function MealEntryDrawer({
                     className="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200"
                   >
                     <div className="flex flex-col gap-1">
-                      <span className="text-xs sm:text-sm font-medium text-gray-900">
-                        {business.name}
-                      </span>
-                      <span className="text-[11px] text-gray-500">
-                        사업자번호: {business.businessNumber}
-                      </span>
+                      <span className="text-xs sm:text-sm font-medium text-gray-900">{business.name}</span>
+                      <span className="text-[11px] text-gray-500">사업자번호: {business.businessNumber}</span>
                     </div>
                   </button>
                 ))
@@ -573,11 +436,7 @@ export default function MealEntryDrawer({
             </div>
           </div>
           <DialogFooter>
-            <Button
-              className="w-full text-xs"
-              variant={"outline"}
-              onClick={() => setIsBusinessDialogOpen(false)}
-            >
+            <Button className="w-full text-xs" variant={"outline"} onClick={() => setIsBusinessDialogOpen(false)}>
               닫기
             </Button>
           </DialogFooter>

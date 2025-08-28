@@ -420,7 +420,7 @@ export default function DashboardPage() {
   };
 
   const checkNotice = () => {
-    window.open("https://hammerhead-magician-201.notion.site/v1-3-257643bd2c6b80798c8bcc2d44103ed7?source=copy_link", "_blank");
+    window.open("https://aksel26.notion.site/v1-3-25dc8e16fda88016a7b0cf0d12bcbc80?pvs=74", "_blank");
   };
 
   const handleDrawerOpenChange = (open: boolean) => {

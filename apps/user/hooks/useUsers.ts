@@ -19,7 +19,6 @@ export const useUsers = (): UseUsersResult => {
 
     try {
       const token = localStorage.getItem("token");
-      console.log("token:", token);
 
       if (!token) {
         throw new Error("No authentication token found");
@@ -32,7 +31,6 @@ export const useUsers = (): UseUsersResult => {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log("response:", response);
 
       if (!response.ok) {
         throw new Error(`Failed to fetch users: ${response.statusText}`);

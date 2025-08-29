@@ -1,17 +1,33 @@
 "use client";
 import { BottomNavigation } from "@/components/BottomNavigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/src/card";
-import { Badge } from "@repo/ui/src/badge";
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Button } from "@repo/ui/src/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@repo/ui/src/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/src/popover";
 import Lottery from "@/components/lunch/Lottery";
 import LunchGroupList from "@/components/lunch/LunchGroupList";
 import { useLunchGroup } from "@/hooks/useLunchGroup";
 import { useUsers } from "@/hooks/useUsers";
+import { Button } from "@repo/ui/src/button";
+import { Card, CardContent, CardDescription, CardHeader } from "@repo/ui/src/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@repo/ui/src/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/src/popover";
 import { motion } from "motion/react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
+import React, { useEffect, useMemo, useState } from "react";
+
+const WeeklySchedule = dynamic(() => import("@/components/lunch/WeeklySchedule"), {
+  ssr: false,
+  loading: () => (
+    <div className="grid grid-cols-2 gap-6">
+      <div className="bg-blue-50 rounded-lg p-3">
+        <div className="w-12 h-3 bg-blue-200 rounded animate-pulse mb-2"></div>
+        <div className="w-16 h-3 bg-gray-200 rounded animate-pulse"></div>
+      </div>
+      <div className="bg-green-50 rounded-lg p-3">
+        <div className="w-12 h-3 bg-green-200 rounded animate-pulse mb-2"></div>
+        <div className="w-16 h-3 bg-gray-200 rounded animate-pulse"></div>
+      </div>
+    </div>
+  ),
+});
 
 const Lunch = () => {
   const [userName, setUserName] = useState<string>("");
@@ -145,6 +161,11 @@ const Lunch = () => {
                 <p className="text-xs text-gray-500">다음 뽑기</p>
                 <p className="text-xs font-medium text-gray-800">{lunchGroupData?.nextDate || "2025.01.13"}</p>
               </div>
+            </div>
+
+            {/* 주간 식사 정보 */}
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <WeeklySchedule mondayMember={lunchGroupData?.mondayMember} fridayMember={lunchGroupData?.fridayMember} isLoading={isLoading} />
             </div>
           </CardContent>
         </Card>

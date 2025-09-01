@@ -7,6 +7,7 @@ import { motion } from "motion/react";
 import HomeIcon from "@/public/icons/home.png";
 import LunchIcon from "@/public/icons/lunch.png";
 import MonthlyIcon from "@/public/icons/monthly.png";
+import PointsIcon from "@/public/icons/payer.png";
 import DNAIon from "@/public/icons/dna.png";
 
 export function BottomNavigation() {
@@ -20,6 +21,11 @@ export function BottomNavigation() {
       id: "dashboard",
       label: "홈",
       icon: <Image src={HomeIcon} alt="home" height={20} />,
+    },
+    {
+      id: "points",
+      label: "복지포인트",
+      icon: <Image src={PointsIcon} alt="lunch" height={20} />,
     },
     {
       id: "lunch",
@@ -60,29 +66,15 @@ export function BottomNavigation() {
                   router.push(`/${item.id}`);
                 }
               }}
-              className={`flex flex-col items-center justify-center py-1 w-1/4 rounded-lg transition-all duration-200 relative ${
-                isActive ? "text-blue-600" : "text-gray-500 hover:text-gray-700"
-              }`}
+              className={`flex flex-col items-center justify-center py-1 w-1/4 rounded-lg transition-all duration-200 relative ${isActive ? "text-blue-600" : "text-gray-500 hover:text-gray-700"}`}
             >
               {/* Active indicator */}
-              {isActive && (
-                <motion.div
-                  layoutId="activeTab"
-                  className="absolute inset-0 bg-blue-50 rounded-lg"
-                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                />
-              )}
+              {isActive && <motion.div layoutId="activeTab" className="absolute inset-0 bg-blue-50 rounded-lg" transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} />}
 
-              <motion.span
-                className="mb-1 relative z-10"
-                animate={isActive ? { scale: 1.1 } : { scale: 1 }}
-                transition={{ duration: 0.2 }}
-              >
+              <motion.span className="mb-1 relative z-10" animate={isActive ? { scale: 1.1 } : { scale: 1 }} transition={{ duration: 0.2 }}>
                 {item.icon}
               </motion.span>
-              <span className="text-[10px] font-medium relative z-10">
-                {item.label}
-              </span>
+              <span className="text-[10px] font-medium relative z-10">{item.label}</span>
             </motion.button>
           );
         })}

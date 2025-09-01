@@ -12,6 +12,7 @@ interface ChartPieDonutProps {
   availableAmount?: number;
   totalUsed?: number;
   className?: string;
+  chartType?: "welfare" | "activity";
 }
 
 const chartConfig = {
@@ -28,7 +29,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function ChartPieDonut({ availableAmount = 0, totalUsed = 0, className }: ChartPieDonutProps) {
+export function ChartPieDonut({ availableAmount = 0, totalUsed = 0, className, chartType }: ChartPieDonutProps) {
   const balance = availableAmount - totalUsed;
   const usagePercentage = availableAmount > 0 ? (totalUsed / availableAmount) * 100 : 0;
 
@@ -69,6 +70,12 @@ export function ChartPieDonut({ availableAmount = 0, totalUsed = 0, className }:
             </div>
           </div>
         </div>
+
+        {chartType && (
+          <div className="w-full mb-3">
+            <h3 className="text-sm font-semibold text-gray-700">{chartType === "welfare" ? "복지포인트" : "활동비"}</h3>
+          </div>
+        )}
         <div className="flex flex-col justify-between w-full space-y-2">
           <div className="flex items-center justify-between ">
             <div className="flex items-center gap-2">

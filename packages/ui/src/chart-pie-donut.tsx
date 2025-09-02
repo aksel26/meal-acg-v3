@@ -10,6 +10,7 @@ export const description = "A donut chart showing budget usage";
 
 interface ChartPieDonutProps {
   availableAmount?: number;
+  remainingAmount?: number;
   totalUsed?: number;
   className?: string;
   chartType?: "welfare" | "activity";
@@ -29,8 +30,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function ChartPieDonut({ availableAmount = 0, totalUsed = 0, className, chartType }: ChartPieDonutProps) {
-  const balance = availableAmount - totalUsed;
+export function ChartPieDonut({ availableAmount = 0, totalUsed = 0, remainingAmount = 0, className, chartType }: ChartPieDonutProps) {
   const usagePercentage = availableAmount > 0 ? (totalUsed / availableAmount) * 100 : 0;
 
   const chartData = [
@@ -42,7 +42,7 @@ export function ChartPieDonut({ availableAmount = 0, totalUsed = 0, className, c
     },
     {
       category: "available",
-      amount: Math.max(0, balance),
+      amount: Math.max(0, remainingAmount),
       fill: "#f3f4f6",
       label: "잔여금액",
     },
@@ -94,10 +94,10 @@ export function ChartPieDonut({ availableAmount = 0, totalUsed = 0, className, c
             <div className="flex items-center gap-2">
               <span className="text-sm w-20 text-gray-400">잔여금액</span>
             </div>
-            <span className="font-medium text-sm">{Math.max(0, balance).toLocaleString()}원</span>
+            <span className="font-medium text-sm">{remainingAmount.toLocaleString()}원</span>
           </div>
           <div className="flex items-center gap-2 leading-none font-medium text-xs pt-2 justify-end">
-            {balance >= 0 ? (
+            {remainingAmount >= 0 ? (
               <>
                 <TrendingUp className="h-3 w-3 text-green-600" />
                 <span className="text-green-600">예산 내 사용 중</span>
@@ -105,7 +105,7 @@ export function ChartPieDonut({ availableAmount = 0, totalUsed = 0, className, c
             ) : (
               <>
                 <TrendingDown className="h-3 w-3 text-red-600" />
-                <span className="text-red-600">예산 초과 {Math.abs(balance).toLocaleString()}원</span>
+                <span className="text-red-600">예산 초과 {Math.abs(remainingAmount).toLocaleString()}원</span>
               </>
             )}
           </div>

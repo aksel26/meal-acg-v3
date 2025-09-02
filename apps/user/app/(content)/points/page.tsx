@@ -8,11 +8,13 @@ import { NumberTicker } from "@repo/ui/src/number-ticker";
 import { ChartPieDonut } from "@repo/ui/src/chart-pie-donut";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@repo/ui/src/tabs";
 import { Check, Plus, X } from "@repo/ui/icons";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import NoDataIcon from "@/public/icons/noData.png";
 import Image from "next/image";
 import { EditPointDrawer } from "@/components/points/EditPointDrawer";
 import { ActivityViewDialog } from "../../../components/points/ActivityViewDialog";
+import { useWelfarePointsMonthly } from "@/hooks/use-welfare-points-monthly";
+import dayjs from "dayjs";
 // import { Button } from "@meal/ui/button";
 // import { Card, CardContent, CardHeader, CardTitle } from "@meal/ui/card";
 // import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@meal/ui/dialog";
@@ -30,98 +32,76 @@ interface WelfarePoint {
 }
 
 export default function Points() {
-  const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().slice(0, 7));
+  const [selectedMonth, setSelectedMonth] = useState<string>(dayjs().format("YYYY-MM"));
   const [editingPoint, setEditingPoint] = useState<WelfarePoint | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isNewPoint, setIsNewPoint] = useState(false);
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest" | "amount-high" | "amount-low">("newest");
-  const [points, setPoints] = useState<WelfarePoint[]>([
-    {
-      id: "1",
-      date: "2025-09-01",
-      type: "welfare",
-      vendor: "월 복지포인트 지급",
-      amount: 100000,
-      used: false,
-      confirmed: true,
-    },
-    {
-      id: "2",
-      date: "2025-09-15",
-      type: "activity",
-      vendor: "스타벅스 강남점",
-      amount: 8500,
-      used: true,
-      confirmed: true,
-      notes: "팀 회의용 커피",
-    },
-    {
-      id: "3",
-      date: "2025-09-22",
-      type: "welfare",
-      vendor: "CGV 영등포점",
-      amount: 15000,
-      used: true,
-      confirmed: false,
-      notes: "영화 관람",
-    },
-    {
-      id: "4",
-      date: "2025-09-28",
-      type: "activity",
-      vendor: "교보문고 광화문점",
-      amount: 25000,
-      used: true,
-      confirmed: true,
-    },
-  ]);
+  const [userName, setUserName] = useState<string>("");
+  const [selectedTab, setSelectedTab] = useState<"welfare" | "activity">("welfare");
+  const [displayRemainingAmount, setDisplayRemainingAmount] = useState(0);
+  const [displayTabName, setDisplayTabName] = useState("복지포인트");
 
-  // 현재 날짜를 기준으로 하반기/상반기 구분
-  const currentDate = new Date();
-  const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth() + 1; // 1-12
+  // localStorage에서 사용자명 가져오기
+  useEffect(() => {
+    const storedName = localStorage.getItem("name");
+    if (storedName) {
+      setUserName(storedName);
+    }
+  }, []);
+
+  // dayjs로 날짜 처리
+  const selectedDate = dayjs(selectedMonth);
+  const selectedYear = selectedDate.year();
+  const selectedMonthNum = selectedDate.month() + 1;
+
+  // 새로운 복지포인트 월별 API 사용
+  const { data: welfareMonthlyResponse, isLoading: isWelfareLoading, error: welfareError } = useWelfarePointsMonthly(userName, selectedYear, selectedMonthNum, !!userName);
+  console.log("welfareMonthlyResponse:", welfareMonthlyResponse);
+
+  const welfareData = welfareMonthlyResponse?.data;
+  const welfareHistory = welfareMonthlyResponse?.data.history;
+
+  // API 데이터를 WelfarePoint 형식으로 변환
+
+  // dayjs를 사용한 하반기/상반기 구분
+  const currentDate = dayjs();
+  const currentYear = currentDate.year();
+  const currentMonth = currentDate.month() + 1; // dayjs는 0부터 시작하므로 +1
 
   const isSecondHalf = currentMonth >= 7; // 7월 이상이면 하반기
 
   const months = Array.from({ length: 6 }, (_, i) => {
     const monthNum = isSecondHalf ? i + 7 : i + 1; // 하반기: 7-12월, 상반기: 1-6월
-    const date = new Date(currentYear, monthNum - 1, 1);
+    const date = dayjs()
+      .year(currentYear)
+      .month(monthNum - 1)
+      .date(1);
     return {
-      value: date.toISOString().slice(0, 7),
+      value: date.format("YYYY-MM"),
       label: `${monthNum}월`,
     };
   });
 
-  const filteredAndSortedPoints = points
-    .filter((point) => point.date.startsWith(selectedMonth))
-    .sort((a, b) => {
-      switch (sortOrder) {
-        case "newest":
-          return new Date(b.date).getTime() - new Date(a.date).getTime();
-        case "oldest":
-          return new Date(a.date).getTime() - new Date(b.date).getTime();
-        case "amount-high":
-          return b.amount - a.amount;
-        case "amount-low":
-          return a.amount - b.amount;
-        default:
-          return new Date(b.date).getTime() - new Date(a.date).getTime();
-      }
-    });
+  // API 데이터와 로컬에서 추가된 데이터를 합치기
 
-  const totalAmount = filteredAndSortedPoints.reduce((sum, point) => sum + point.amount, 0);
-  const usedAmount = filteredAndSortedPoints.filter((point) => point.used).reduce((sum, point) => sum + point.amount, 0);
-  const remainingAmount = totalAmount - usedAmount;
+  // API에서 제공되는 데이터 사용 (문자열을 숫자로 변환)
+  const welfareTotalAmount = parseInt((welfareData?.welfareStats?.totalAmount || "0").toString().replace(/,/g, "")) || 0;
+  const welfareUsedAmount = parseInt((welfareData?.welfareStats?.usedAmount || "0").toString().replace(/,/g, "")) || 0;
+  const welfareRemainingAmount = parseInt((welfareData?.welfareStats?.remainingAmount || "0").toString().replace(/,/g, "")) || 0;
 
-  // Separate welfare and activity points data
-  const welfarePoints = filteredAndSortedPoints.filter((point) => point.type === "welfare");
-  const activityPoints = filteredAndSortedPoints.filter((point) => point.type === "activity");
+  const activityTotalAmount = parseInt((welfareData?.activityStats?.totalAmount || "0").toString().replace(/,/g, "")) || 0;
+  const activityUsedAmount = parseInt((welfareData?.activityStats?.usedAmount || "0").toString().replace(/,/g, "")) || 0;
+  const activityRemainingAmount = parseInt((welfareData?.activityStats?.remainingAmount || "0").toString().replace(/,/g, "")) || 0;
 
-  const welfareTotalAmount = welfarePoints.reduce((sum, point) => sum + point.amount, 0);
-  const welfareUsedAmount = welfarePoints.filter((point) => point.used).reduce((sum, point) => sum + point.amount, 0);
+  // 탭이나 API 데이터가 변경될 때 표시 금액 업데이트
+  useEffect(() => {
+    const newDisplayRemainingAmount = selectedTab === "welfare" ? welfareRemainingAmount : activityRemainingAmount;
+    const newDisplayTabName = selectedTab === "welfare" ? "복지포인트" : "활동비";
 
-  const activityTotalAmount = activityPoints.reduce((sum, point) => sum + point.amount, 0);
-  const activityUsedAmount = activityPoints.filter((point) => point.used).reduce((sum, point) => sum + point.amount, 0);
+    setDisplayRemainingAmount(newDisplayRemainingAmount);
+    setDisplayTabName(newDisplayTabName);
+  }, [selectedTab, welfareRemainingAmount, activityRemainingAmount]);
 
   const handleEditPoint = (point: WelfarePoint) => {
     setEditingPoint(point);
@@ -131,14 +111,14 @@ export default function Points() {
 
   const handleSavePoint = () => {
     if (editingPoint) {
-      if (editingPoint.id && points.find((p) => p.id === editingPoint.id)) {
-        // 기존 포인트 수정
-        setPoints(points.map((p) => (p.id === editingPoint.id ? editingPoint : p)));
-      } else {
-        // 새 포인트 추가
-        const newPoint = { ...editingPoint, id: Date.now().toString() };
-        setPoints([newPoint, ...points]);
-      }
+      // if (editingPoint.id && localPoints.find((p) => p.id === editingPoint.id)) {
+      //   // 기존 로컬 포인트 수정
+      //   setLocalPoints(localPoints.map((p) => (p.id === editingPoint.id ? editingPoint : p)));
+      // } else {
+      //   // 새 포인트 추가 (로컬에만 추가)
+      //   const newPoint = { ...editingPoint, id: Date.now().toString() };
+      //   setLocalPoints([newPoint, ...localPoints]);
+      // }
       setEditingPoint(null);
     }
   };
@@ -146,7 +126,7 @@ export default function Points() {
   const handleAddNewPoint = () => {
     const newPoint: WelfarePoint = {
       id: "",
-      date: new Date().toISOString().slice(0, 10),
+      date: dayjs().format("YYYY-MM-DD"),
       type: "welfare",
       vendor: "",
       amount: 0,
@@ -158,6 +138,8 @@ export default function Points() {
     setIsNewPoint(true);
     setIsEditDialogOpen(true);
   };
+
+  const filteredAndSortedPoints: any = [];
 
   return (
     <React.Fragment>
@@ -171,21 +153,27 @@ export default function Points() {
         {/* Balance Summary */}
         <div className="flex justify-between items-end mb-8">
           <div className="flex flex-col space-y-2">
-            <p className="text-sm font-medium text-gray-600">{selectedMonth.split("-")[0]}년 하반기 남은 금액</p>
+            <p className="text-sm font-medium text-gray-600">
+              {selectedMonth.split("-")[0]}년 {displayTabName} 남은 금액
+            </p>
             <div className="flex space-x-1">
-              <NumberTicker className={`text-2xl font-black ${remainingAmount < 0 ? "text-red-600" : "text-gray-900"}`} value={remainingAmount} />
+              {isWelfareLoading ? (
+                <div className="animate-pulse bg-gray-200 rounded h-8 w-32"></div>
+              ) : (
+                <NumberTicker className={`text-2xl font-black ${displayRemainingAmount < 0 ? "text-red-600" : "text-gray-900"}`} value={displayRemainingAmount} />
+              )}
               <span className="text-2xl font-black text-gray-900">원</span>
             </div>
-            <p className="text-xs text-gray-400">복지포인트 + 활동비 잔액</p>
+            {welfareError && <p className="text-xs text-red-500">데이터 로딩 중 오류가 발생했습니다.</p>}
           </div>
           <div>
-            <ActivityViewDialog selectedMonth={selectedMonth} />
+            <ActivityViewDialog />
           </div>
         </div>
 
         {/* Chart Section */}
         <div className="mb-4">
-          <Tabs defaultValue="welfare" className="w-full">
+          <Tabs defaultValue="welfare" className="w-full" onValueChange={(value) => setSelectedTab(value as "welfare" | "activity")}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="welfare" className="text-xs">
                 복지포인트
@@ -252,34 +240,50 @@ export default function Points() {
             </CardContent>
           </Card>
 
-          {filteredAndSortedPoints.length === 0 ? (
+          {isWelfareLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="border-0 shadow-none bg-white">
+                  <CardContent className="p-5">
+                    <div className="animate-pulse space-y-3">
+                      <div className="flex justify-between items-start">
+                        <div className="bg-gray-200 rounded h-4 w-32"></div>
+                        <div className="bg-gray-200 rounded h-4 w-20"></div>
+                      </div>
+                      <div className="bg-gray-200 rounded h-5 w-48"></div>
+                      <div className="flex justify-between items-center pt-2">
+                        <div className="bg-gray-200 rounded h-5 w-16"></div>
+                        <div className="bg-gray-200 rounded h-4 w-12"></div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : welfareHistory?.length === 0 ? (
             <Card className="border-0 shadow-none bg-white">
               <CardContent className="p-8 text-center">
                 <Image src={NoDataIcon} alt="No Data" width={40} height={40} className="mx-auto mb-4" />
-                <p className="text-gray-500 text-sm">선택한 월에 포인트 내역이 없습니다.</p>
+                <p className="text-gray-500 text-sm">{welfareError ? "포인트 내역을 불러올 수 없습니다." : "선택한 월에 포인트 내역이 없습니다."}</p>
               </CardContent>
             </Card>
           ) : (
-            filteredAndSortedPoints.map((point) => {
-              const pointDate = new Date(point.date);
-              const dayOfWeek = pointDate.toLocaleDateString("ko-KR", { weekday: "short" });
+            welfareHistory?.map((point: any, index: number) => {
+              const { year, month, day, dayOfWeek } = point;
 
               return (
-                <Card key={point.id} className="border-0 shadow-none bg-white hover:shadow-md transition-shadow duration-200 cursor-pointer" onClick={() => handleEditPoint(point)}>
+                <Card key={index} className="border-0 shadow-none bg-white hover:shadow-md transition-shadow duration-200 cursor-pointer" onClick={() => handleEditPoint(point)}>
                   <CardContent className="p-5">
                     <div className="space-y-3">
                       {/* Header Row */}
                       <div className="flex justify-between items-start">
                         <div>
-                          <span className="text-sm font-medium text-gray-400">
-                            {pointDate.getFullYear()}년 {pointDate.getMonth() + 1}월 {pointDate.getDate()}일 ({dayOfWeek})
+                          <span className="text-sm font-light text-gray-400">
+                            {year}년 {month}월 {day}일 ({dayOfWeek})
                           </span>
                         </div>
                         <div className="text-right">
-                          <p className={`text-base font-semibold ${point.used ? "text-gray-900" : "text-blue-600"}`}>
-                            {point.used ? "-" : "+"}
-                            {point.amount.toLocaleString()}원
-                          </p>
+                          <p className={`text-base font-semibold`}>{point.amount} 원</p>
                         </div>
                       </div>
 
@@ -303,7 +307,7 @@ export default function Points() {
                           ) : (
                             <>
                               <X className="w-3 h-3 text-gray-400" />
-                              <span className="text-xs text-gray-400">미확인</span>
+                              <span className="text-xs text-gray-400">P&C 확인 전</span>
                             </>
                           )}
                         </div>

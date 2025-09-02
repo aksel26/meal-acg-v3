@@ -37,6 +37,26 @@ export const queryKeys = {
     all: ["lunchGroup"] as const,
     current: ["lunchGroup", "current"] as const,
   },
+
+  // 활동비 관련 쿼리
+  activityPoints: {
+    all: ["activityPoints"] as const,
+    byMonth: (month: string) => ["activityPoints", month] as const,
+    usage: (employeeId: string, month: string) => ["activityPoints", "usage", employeeId, month] as const,
+  },
+
+  // 포인트 내역 관련 쿼리
+  pointsHistory: {
+    all: ["pointsHistory"] as const,
+    byNameAndMonth: (name: string, year: number, month: number) => ["pointsHistory", name, year, month] as const,
+  },
+
+  // 복지포인트 관련 쿼리
+  welfarePoints: {
+    all: ["welfarePoints"] as const,
+    byNameAndYear: (name: string, year: number) => ["welfarePoints", name, year] as const,
+    byNameAndMonth: (name: string, year: number, month: number) => ["welfarePoints", name, year, month] as const,
+  },
 } as const;
 
 // 타입 유틸리티 함수들

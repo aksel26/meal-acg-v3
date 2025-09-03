@@ -7,18 +7,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { NumberTicker } from "@repo/ui/src/number-ticker";
 import { ChartPieDonut } from "@repo/ui/src/chart-pie-donut";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@repo/ui/src/tabs";
-import { Check, Plus, X } from "@repo/ui/icons";
+import { Check, Plus, SquircleDashed } from "@repo/ui/icons";
 import React, { useState, useEffect } from "react";
 import NoDataIcon from "@/public/icons/noData.png";
 import Image from "next/image";
 import { EditPointDrawer } from "@/components/points/EditPointDrawer";
 import { ActivityViewDialog } from "../../../components/points/ActivityViewDialog";
 import { useWelfarePointsMonthly } from "@/hooks/use-welfare-points-monthly";
+import { useAddWelfarePoint, useUpdateWelfarePoint, useDeleteWelfarePoint } from "@/hooks/use-welfare-points-mutations";
 import dayjs from "dayjs";
-// import { Button } from "@meal/ui/button";
-// import { Card, CardContent, CardHeader, CardTitle } from "@meal/ui/card";
-// import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@meal/ui/dialog";
-// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@meal/ui/select";
 
 interface WelfarePoint {
   id: string;
@@ -38,15 +35,22 @@ export default function Points() {
   const [isNewPoint, setIsNewPoint] = useState(false);
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest" | "amount-high" | "amount-low">("newest");
   const [userName, setUserName] = useState<string>("");
+  const [gradeName, setGradeName] = useState<string>("");
   const [selectedTab, setSelectedTab] = useState<"welfare" | "activity">("welfare");
   const [displayRemainingAmount, setDisplayRemainingAmount] = useState(0);
   const [displayTabName, setDisplayTabName] = useState("복지포인트");
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  // localStorage에서 사용자명 가져오기
+  // localStorage에서 사용자명과 등급명 가져오기
   useEffect(() => {
     const storedName = localStorage.getItem("name");
+    const storedGradeName = localStorage.getItem("grade");
+
     if (storedName) {
       setUserName(storedName);
+    }
+    if (storedGradeName) {
+      setGradeName(storedGradeName);
     }
   }, []);
 
@@ -58,6 +62,11 @@ export default function Points() {
   // 새로운 복지포인트 월별 API 사용
   const { data: welfareMonthlyResponse, isLoading: isWelfareLoading, error: welfareError } = useWelfarePointsMonthly(userName, selectedYear, selectedMonthNum, !!userName);
   console.log("welfareMonthlyResponse:", welfareMonthlyResponse);
+
+  // Mutation hooks
+  const addWelfarePointMutation = useAddWelfarePoint();
+  const updateWelfarePointMutation = useUpdateWelfarePoint();
+  const deleteWelfarePointMutation = useDeleteWelfarePoint();
 
   const welfareData = welfareMonthlyResponse?.data;
   const welfareHistory = welfareMonthlyResponse?.data.history;
@@ -94,32 +103,119 @@ export default function Points() {
   const activityUsedAmount = parseInt((welfareData?.activityStats?.usedAmount || "0").toString().replace(/,/g, "")) || 0;
   const activityRemainingAmount = parseInt((welfareData?.activityStats?.remainingAmount || "0").toString().replace(/,/g, "")) || 0;
 
+  // 팀장, 본부장만 탭과 활동비 볼 수 있음
+  const isManager = gradeName === "팀장" || gradeName === "본부장";
+
   // 탭이나 API 데이터가 변경될 때 표시 금액 업데이트
   useEffect(() => {
+    // 팀장/본부장이 아니면 항상 복지포인트만 표시
+    if (!isManager) {
+      setDisplayRemainingAmount(welfareRemainingAmount);
+      setDisplayTabName("복지포인트");
+      setSelectedTab("welfare");
+      return;
+    }
+
     const newDisplayRemainingAmount = selectedTab === "welfare" ? welfareRemainingAmount : activityRemainingAmount;
     const newDisplayTabName = selectedTab === "welfare" ? "복지포인트" : "활동비";
 
     setDisplayRemainingAmount(newDisplayRemainingAmount);
     setDisplayTabName(newDisplayTabName);
-  }, [selectedTab, welfareRemainingAmount, activityRemainingAmount]);
+  }, [selectedTab, welfareRemainingAmount, activityRemainingAmount, isManager]);
 
-  const handleEditPoint = (point: WelfarePoint) => {
-    setEditingPoint(point);
+  const handleEditPoint = (apiPoint: any) => {
+    // API 데이터를 EditPointDrawer 형식으로 변환
+    const editablePoint: WelfarePoint = {
+      id: apiPoint.no?.toString() || "",
+      date: `${apiPoint.year}-${String(apiPoint.month).padStart(2, "0")}-${String(apiPoint.day).padStart(2, "0")}`,
+      type: apiPoint.type?.includes("복지") ? "welfare" : "activity",
+      vendor: apiPoint.vendor || "",
+      amount: apiPoint.amount || 0,
+      used: true, // API 데이터는 이미 사용된 것으로 간주
+      confirmed: apiPoint.confirmed || false,
+      notes: apiPoint.notes || "",
+    };
+
+    setEditingPoint(editablePoint);
     setIsNewPoint(false);
     setIsEditDialogOpen(true);
   };
 
-  const handleSavePoint = () => {
-    if (editingPoint) {
-      // if (editingPoint.id && localPoints.find((p) => p.id === editingPoint.id)) {
-      //   // 기존 로컬 포인트 수정
-      //   setLocalPoints(localPoints.map((p) => (p.id === editingPoint.id ? editingPoint : p)));
-      // } else {
-      //   // 새 포인트 추가 (로컬에만 추가)
-      //   const newPoint = { ...editingPoint, id: Date.now().toString() };
-      //   setLocalPoints([newPoint, ...localPoints]);
-      // }
+  const handleSavePoint = async () => {
+    if (!editingPoint || !userName) return;
+    try {
+      // date를 year, month, day로 분할
+      const selectedDate = dayjs(editingPoint.date);
+      const year = selectedDate.year();
+      const month = selectedDate.month() + 1;
+      const day = selectedDate.date();
+      const dayOfWeek = selectedDate.format("dd"); // 월, 화, 수, 목, 금, 토, 일
+
+      // type을 API 형식으로 변환
+      const typeText = editingPoint.type === "welfare" ? "복지포인트" : "활동비";
+
+      const apiData = {
+        name: userName,
+        year,
+        month,
+        day,
+        dayOfWeek,
+        type: typeText,
+        vendor: editingPoint.vendor,
+        amount: editingPoint.amount,
+        notes: editingPoint.notes || "",
+      };
+      if (isNewPoint) {
+        // 새로운 포인트 추가
+        await addWelfarePointMutation.mutateAsync(apiData);
+      } else {
+        // 기존 포인트 수정 (editingPoint.id에서 no를 가져옴)
+        const no = parseInt(editingPoint.id);
+        if (no) {
+          await updateWelfarePointMutation.mutateAsync({
+            no,
+            ...apiData,
+          });
+        }
+      }
+
       setEditingPoint(null);
+      setIsEditDialogOpen(false);
+    } catch (error) {
+      console.error("포인트 저장 오류:", error);
+      // TODO: 오류 메시지 표시
+    }
+  };
+
+  const handleDeletePoint = async (point: WelfarePoint) => {
+    console.log("point:", point);
+    if (!point.id || !userName) return;
+
+    setIsDeleting(true);
+    try {
+      const no = parseInt(point.id);
+      console.log("no:", no);
+      if (no) {
+        // date에서 year, month 추출
+        const selectedDate = dayjs(point.date);
+        const year = selectedDate.year();
+        const month = selectedDate.month() + 1;
+
+        await deleteWelfarePointMutation.mutateAsync({
+          no,
+          name: userName,
+          year,
+          month,
+        });
+
+        setEditingPoint(null);
+        setIsEditDialogOpen(false);
+      }
+    } catch (error) {
+      console.error("포인트 삭제 오류:", error);
+      // TODO: 오류 메시지 표시
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -146,7 +242,7 @@ export default function Points() {
       {/* Header */}
       <Card className="border-0 shadow-none bg-white p-5 py-8 mb-8 space-y-8">
         <div>
-          <h1 className="text-lg sm:text-xl! font-semibold text-gray-900 mb-1">복지포인트/활동비</h1>
+          <h1 className="text-lg sm:text-xl! font-semibold text-gray-900 mb-1">복지포인트 · 활동비</h1>
           <p className="text-sm text-gray-500">월별 포인트 현황을 확인하세요</p>
         </div>
 
@@ -173,22 +269,29 @@ export default function Points() {
 
         {/* Chart Section */}
         <div className="mb-4">
-          <Tabs defaultValue="welfare" className="w-full" onValueChange={(value) => setSelectedTab(value as "welfare" | "activity")}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="welfare" className="text-xs">
-                복지포인트
-              </TabsTrigger>
-              <TabsTrigger value="activity" className="text-xs">
-                활동비
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="welfare" className="mt-4">
+          {isManager ? (
+            <Tabs defaultValue="welfare" className="w-full" onValueChange={(value) => setSelectedTab(value as "welfare" | "activity")}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="welfare" className="text-xs">
+                  복지포인트
+                </TabsTrigger>
+                <TabsTrigger value="activity" className="text-xs">
+                  활동비
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="welfare" className="mt-4">
+                <ChartPieDonut availableAmount={welfareTotalAmount} remainingAmount={welfareRemainingAmount} totalUsed={welfareUsedAmount} className="relative" chartType="welfare" />
+              </TabsContent>
+              <TabsContent value="activity" className="mt-4">
+                <ChartPieDonut availableAmount={activityTotalAmount} remainingAmount={activityRemainingAmount} totalUsed={activityUsedAmount} className="relative" chartType="activity" />
+              </TabsContent>
+            </Tabs>
+          ) : (
+            // 팀장/본부장이 아닌 경우 복지포인트만 표시
+            <div className="mt-4">
               <ChartPieDonut availableAmount={welfareTotalAmount} totalUsed={welfareUsedAmount} className="relative" chartType="welfare" />
-            </TabsContent>
-            <TabsContent value="activity" className="mt-4">
-              <ChartPieDonut availableAmount={activityTotalAmount} totalUsed={activityUsedAmount} className="relative" chartType="activity" />
-            </TabsContent>
-          </Tabs>
+            </div>
+          )}
         </div>
       </Card>
 
@@ -268,60 +371,85 @@ export default function Points() {
               </CardContent>
             </Card>
           ) : (
-            welfareHistory?.map((point: any, index: number) => {
-              const { year, month, day, dayOfWeek } = point;
+            welfareHistory
+              ?.sort((a: any, b: any) => {
+                switch (sortOrder) {
+                  case "newest":
+                    return new Date(b.year, b.month - 1, b.day).getTime() - new Date(a.year, a.month - 1, a.day).getTime();
+                  case "oldest":
+                    return new Date(a.year, a.month - 1, a.day).getTime() - new Date(b.year, b.month - 1, b.day).getTime();
+                  case "amount-high":
+                    return b.amount - a.amount;
+                  case "amount-low":
+                    return a.amount - b.amount;
+                  default:
+                    return 0;
+                }
+              })
+              ?.map((point: any, index: number) => {
+                const { year, month, day, dayOfWeek } = point;
+                console.log("point:", point);
 
-              return (
-                <Card key={index} className="border-0 shadow-none bg-white hover:shadow-md transition-shadow duration-200 cursor-pointer" onClick={() => handleEditPoint(point)}>
-                  <CardContent className="p-5">
-                    <div className="space-y-3">
-                      {/* Header Row */}
-                      <div className="flex justify-between items-start">
+                return (
+                  <Card key={index} className="border-0 shadow-none bg-white hover:shadow-md transition-shadow duration-200 cursor-pointer" onClick={() => handleEditPoint(point)}>
+                    <CardContent className="p-5">
+                      <div className="space-y-3">
+                        {/* Header Row */}
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <span className="text-sm font-light text-gray-400">
+                              {year}년 {month}월 {day}일 ({dayOfWeek})
+                            </span>
+                          </div>
+                          <div className="text-right">
+                            <p className={`text-base font-semibold`}>{point.amount.toLocaleString()} 원</p>
+                          </div>
+                        </div>
+
+                        {/* Vendor */}
                         <div>
-                          <span className="text-sm font-light text-gray-400">
-                            {year}년 {month}월 {day}일 ({dayOfWeek})
-                          </span>
+                          <p className="font-medium text-gray-900">{point.vendor}</p>
+                          {point.notes && <p className="text-gray-500 text-sm mt-1">{point.notes}</p>}
                         </div>
-                        <div className="text-right">
-                          <p className={`text-base font-semibold`}>{point.amount} 원</p>
-                        </div>
-                      </div>
 
-                      {/* Vendor */}
-                      <div>
-                        <p className="font-medium text-gray-900">{point.vendor}</p>
-                        {point.notes && <p className="text-gray-500 text-sm mt-1">{point.notes}</p>}
-                      </div>
-
-                      {/* Bottom Info */}
-                      <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                        <Badge variant={point.type === "activity" ? "secondary" : "outline"} className="text-xs">
-                          {point.type === "activity" ? "활동비" : "복지포인트"}
-                        </Badge>
-                        <div className="flex items-center space-x-1">
-                          {point.confirmed ? (
-                            <>
-                              <Check className="w-3 h-3 text-blue-600" />
-                              <span className="text-xs text-blue-600">확인됨</span>
-                            </>
-                          ) : (
-                            <>
-                              <X className="w-3 h-3 text-gray-400" />
-                              <span className="text-xs text-gray-400">P&C 확인 전</span>
-                            </>
-                          )}
+                        {/* Bottom Info */}
+                        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                          <Badge variant={point.type === "활동비" ? "secondary" : "outline"} className="text-xs">
+                            {point.type}
+                          </Badge>
+                          <div className="flex items-center space-x-1">
+                            {point.confirmed ? (
+                              <Badge className="bg-lime-50 flex items-center space-x-1">
+                                <Check className="w-3 h-3 text-lime-500" />
+                                <span className="text-xs text-lime-500">P&C 확인</span>
+                              </Badge>
+                            ) : (
+                              <>
+                                <SquircleDashed className="w-4 h-4 text-gray-400" />
+                                <span className="text-xs font-light text-gray-400">P&C 확인 전</span>
+                              </>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })
+                    </CardContent>
+                  </Card>
+                );
+              })
           )}
         </div>
       </div>
       {/* Edit Drawer */}
-      <EditPointDrawer isOpen={isEditDialogOpen} onOpenChange={setIsEditDialogOpen} editingPoint={editingPoint} onSave={handleSavePoint} onPointChange={setEditingPoint} isNewPoint={isNewPoint} />
+      <EditPointDrawer
+        isOpen={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        editingPoint={editingPoint}
+        onSave={handleSavePoint}
+        onDelete={handleDeletePoint}
+        onPointChange={setEditingPoint}
+        isNewPoint={isNewPoint}
+        isDeleting={isDeleting}
+      />
 
       {/* Bottom Navigation */}
       <BottomNavigation />

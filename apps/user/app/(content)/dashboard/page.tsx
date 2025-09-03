@@ -28,6 +28,7 @@ import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import { NumberTicker } from "@repo/ui/src/number-ticker";
+import { UpdateNotificationDialog } from "@/components/UpdateNotificationDialog";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -176,6 +177,7 @@ export default function DashboardPage() {
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [calculationData, setCalculationData] = useState<CalculationData | null>(null);
   const [isHeaderVisible, setIsHeaderVisible] = useState<boolean>(true);
+  const [showUpdateDialog, setShowUpdateDialog] = useState<boolean>(false);
   const [formData, setFormData] = useState({
     breakfast: {
       payer: "",
@@ -229,6 +231,16 @@ export default function DashboardPage() {
       return;
     }
     setUserName(name);
+
+    // 업데이트 알림 Dialog 표시 로직
+    const hideUpdateNotification = localStorage.getItem("hideUpdateNotification");
+    if (!hideUpdateNotification) {
+      const timer = setTimeout(() => {
+        setShowUpdateDialog(true);
+      }, 500); // 0.5초 후 표시
+
+      return () => clearTimeout(timer);
+    }
   }, [router]);
 
   // 스크롤 효과를 위한 useEffect
@@ -642,6 +654,12 @@ export default function DashboardPage() {
         <Footer />
       </motion.div>
       <BottomNavigation />
+
+      {/* 업데이트 알림 Dialog */}
+      <UpdateNotificationDialog 
+        isOpen={showUpdateDialog} 
+        onClose={() => setShowUpdateDialog(false)} 
+      />
     </React.Fragment>
   );
 }

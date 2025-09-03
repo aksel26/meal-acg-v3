@@ -17,6 +17,7 @@ import {
   AlertDialogTrigger,
 } from "@repo/ui/src/alert-dialog";
 import React, { useState } from "react";
+import { PopoverCalendar } from "../PopoverCalendar";
 
 interface WelfarePoint {
   id: string;
@@ -70,7 +71,11 @@ export function EditPointDrawer({ isOpen, onOpenChange, editingPoint, onSave, on
 
   const handleDateSelect = (selectedDate: Date | undefined) => {
     if (selectedDate) {
-      const formattedDate = selectedDate.toISOString().slice(0, 10);
+      // 시간대 문제를 해결하기 위해 로컬 날짜로 변환
+      const year = selectedDate.getFullYear();
+      const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
+      const day = String(selectedDate.getDate()).padStart(2, "0");
+      const formattedDate = `${year}-${month}-${day}`;
       updatePoint({ date: formattedDate });
       setDatePickerOpen(false);
     }
@@ -82,7 +87,7 @@ export function EditPointDrawer({ isOpen, onOpenChange, editingPoint, onSave, on
     <Drawer open={isOpen} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[90vh] max-w-lg mx-auto bg-gradient-to-br from-white to-gray-50">
         <DrawerHeader className="border-b border-gray-100 pb-4 relative">
-          <DrawerTitle className="text-md font-semibold text-gray-800">{isNewPoint ? "복지 포인트 내역 추가" : "포인트 수정"}</DrawerTitle>
+          <DrawerTitle className="text-md font-medium text-gray-800">{isNewPoint ? "복지 포인트 내역 추가" : "포인트 수정"}</DrawerTitle>
           <p className="text-xs text-gray-500">{isNewPoint ? "새로운 포인트 내역을 등록하세요" : "기존 포인트 내역을 수정하세요"}</p>
           {!isNewPoint && onDelete && (
             <div className="absolute right-4 bottom-4">
@@ -138,12 +143,22 @@ export function EditPointDrawer({ isOpen, onOpenChange, editingPoint, onSave, on
                 <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="w-full justify-between font-normal text-xs border-gray-300 h-[38px] px-3 py-2">
-                      {selectedDate ? selectedDate.toLocaleDateString("ko-KR") : "날짜 선택"}
+                      {selectedDate ? `${selectedDate.getFullYear()}.${String(selectedDate.getMonth() + 1).padStart(2, "0")}.${String(selectedDate.getDate()).padStart(2, "0")}` : "날짜 선택"}
                       <ChevronDownIcon className="w-4 h-4" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto overflow-hidden p-0" align="start">
-                    <Calendar mode="single" selected={selectedDate} captionLayout="dropdown" onSelect={handleDateSelect} />
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      captionLayout="dropdown"
+                      onSelect={handleDateSelect}
+                      showOutsideDays={false}
+                      classNames={{
+                        day_selected: "bg-blue-500! text-white! hover:bg-blue-600 focus:bg-blue-600",
+                        day_today: "bg-orange-100 text-orange-900 font-semibold",
+                      }}
+                    />
                   </PopoverContent>
                 </Popover>
               </div>

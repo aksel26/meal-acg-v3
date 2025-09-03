@@ -66,6 +66,7 @@ export default function HomePage() {
         console.log("data:", data);
         localStorage.setItem("token", data.data.accessToken);
         localStorage.setItem("name", data.data.userName);
+        localStorage.setItem("grade", data.data.gradeName);
         // router.push("/checkAuth");
         router.push("/dashboard");
         // setLoginData(data.data);

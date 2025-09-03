@@ -5,6 +5,17 @@ import { Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerHeader, DrawerT
 import { Input } from "@repo/ui/src/input";
 import { Label } from "@repo/ui/src/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/src/popover";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@repo/ui/src/alert-dialog";
 import React, { useState } from "react";
 
 interface WelfarePoint {
@@ -23,22 +34,26 @@ interface EditPointDrawerProps {
   onOpenChange: (open: boolean) => void;
   editingPoint: WelfarePoint | null;
   onSave: () => void;
+  onDelete?: (point: WelfarePoint) => void;
   onPointChange: (point: WelfarePoint) => void;
   isNewPoint: boolean;
+  isDeleting?: boolean;
 }
 
-export function EditPointDrawer({ isOpen, onOpenChange, editingPoint, onSave, onPointChange, isNewPoint }: EditPointDrawerProps) {
-  if (!editingPoint) return null;
-
+export function EditPointDrawer({ isOpen, onOpenChange, editingPoint, onSave, onDelete, onPointChange, isNewPoint, isDeleting = false }: EditPointDrawerProps) {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
+
+  if (!editingPoint) return null;
 
   const handleSave = () => {
     onSave();
     onOpenChange(false);
   };
 
-  const handleCancel = () => {
-    onOpenChange(false);
+  const handleDelete = () => {
+    if (onDelete && editingPoint) {
+      onDelete(editingPoint);
+    }
   };
 
   const updatePoint = (updates: Partial<WelfarePoint>) => {
@@ -66,9 +81,47 @@ export function EditPointDrawer({ isOpen, onOpenChange, editingPoint, onSave, on
   return (
     <Drawer open={isOpen} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[90vh] max-w-lg mx-auto bg-gradient-to-br from-white to-gray-50">
-        <DrawerHeader className="border-b border-gray-100 pb-4">
+        <DrawerHeader className="border-b border-gray-100 pb-4 relative">
           <DrawerTitle className="text-md font-semibold text-gray-800">{isNewPoint ? "복지 포인트 내역 추가" : "포인트 수정"}</DrawerTitle>
           <p className="text-xs text-gray-500">{isNewPoint ? "새로운 포인트 내역을 등록하세요" : "기존 포인트 내역을 수정하세요"}</p>
+          {!isNewPoint && onDelete && (
+            <div className="absolute right-4 bottom-4">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button type="button" size="sm" variant="outline" className="text-red-500 border-red-200 bg-red-50 hover:text-red-600 hover:bg-red-100 text-xs px-4 py-1" disabled={isDeleting}>
+                    {isDeleting ? <div className="animate-spin rounded-full h-3 w-3 border border-red-500 border-t-transparent"></div> : "내역 삭제"}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>내역을 삭제하시겠습니까?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      이 작업은 되돌릴 수 없습니다. <br />
+                      선택한 내역이 영구적으로 삭제됩니다.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <div className="w-[90%] text-sm mx-auto text-left bg-gray-50 p-3 rounded-md  flex flex-col space-y-2">
+                    <strong>삭제할 내역</strong>
+                    <div className="flex flex-col items-start space-y-1">
+                      <div className="text-gray-400">사용처</div> <div>{editingPoint.vendor}</div>
+                    </div>
+                    <div className="flex flex-col items-start space-y-1">
+                      <div className="text-gray-400">금액</div> <div>{editingPoint.amount.toLocaleString()}원</div>
+                    </div>
+                    <div className="flex flex-col items-start space-y-1">
+                      <div className="text-gray-400">날짜</div> <div>{new Date(editingPoint.date).toLocaleDateString("ko-KR")}</div>
+                    </div>
+                  </div>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>취소</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} className="bg-red-50 hover:bg-red-700 border border-red-300 text-red-500">
+                      내역 삭제하기
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          )}
         </DrawerHeader>
 
         <form className="px-6 py-4 space-y-6 overflow-y-auto flex-1">
@@ -180,9 +233,11 @@ export function EditPointDrawer({ isOpen, onOpenChange, editingPoint, onSave, on
           </DrawerClose>
           <Button
             onClick={handleSave}
-            className={`flex-1 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-xs font-semibold ${
-              isNewPoint ? "bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700" : "bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700"
-            } text-white`}
+            className={`flex-1 rounded-lg hover:shadow-sm transition-all duration-200 text-xs font-semibold ${
+              isNewPoint
+                ? "bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white"
+                : "bg-gradient-to-r text-white from-orange-300 to-orange-400 hover:from-orange-100 hover:to-orange-200 hover:text-orange-400"
+            } `}
           >
             {isNewPoint ? "추가하기" : "수정하기"}
           </Button>

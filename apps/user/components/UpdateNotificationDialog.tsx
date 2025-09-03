@@ -54,7 +54,7 @@ export function UpdateNotificationDialog({ isOpen, onClose }: UpdateNotification
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md mx-auto">
+      <DialogContent className="max-w-sm! mx-auto">
         <DialogHeader className="text-center">
           <div className="flex items-center justify-center mb-2">
             <div className="w-32 h-18 bg-gradient-to-r from-blue-100 to-purple-200 rounded-full flex items-center justify-center mb-8 pt-4">
@@ -62,7 +62,7 @@ export function UpdateNotificationDialog({ isOpen, onClose }: UpdateNotification
               {/* <Onigiri className="w-6 h-6 text-white" /> */}
             </div>
           </div>
-          <DialogTitle className="sm:text-lg text-md text-center font-bold text-gray-900">새로운 기능이 추가되었습니다! 🎉</DialogTitle>
+          <DialogTitle className="sm:text-lg text-md text-center font-medium text-gray-900">새로운 기능이 추가되었습니다! 🎉</DialogTitle>
         </DialogHeader>
 
         <div className="py-4 space-y-4 max-h-80 overflow-y-auto">
@@ -70,8 +70,8 @@ export function UpdateNotificationDialog({ isOpen, onClose }: UpdateNotification
             <div key={index} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
               <div className="flex-1">
                 <div className="flex items-center space-x-2 mb-1">
-                  <h4 className="text-sm font-semibold text-gray-900">{item.title}</h4>
-                  {item.isNew && <Badge className="bg-green-100 text-green-700 text-xs px-2 py-0.5">NEW</Badge>}
+                  <h4 className="text-sm font-medium text-gray-900">{item.title}</h4>
+                  {item.isNew && <Badge className="bg-green-100 text-green-700 text-[10px] px-2 py-0.5">NEW</Badge>}
                 </div>
                 <p className="text-xs text-gray-600">{item.description}</p>
               </div>
@@ -81,13 +81,13 @@ export function UpdateNotificationDialog({ isOpen, onClose }: UpdateNotification
 
         <div className="flex items-center space-x-2 py-3 border-t">
           <Checkbox id="dontShowAgain" checked={dontShowAgain} onCheckedChange={(checked) => setDontShowAgain(checked as boolean)} />
-          <label htmlFor="dontShowAgain" className="text-sm text-gray-600 cursor-pointer">
+          <label htmlFor="dontShowAgain" className="text-xs text-gray-600 cursor-pointer">
             다시 보지 않기
           </label>
         </div>
 
         <DialogFooter>
-          <Button onClick={handleClose} className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white">
+          <Button onClick={handleClose} className="w-full text-sm bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white">
             확인했습니다
           </Button>
         </DialogFooter>

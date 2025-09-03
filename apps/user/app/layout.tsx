@@ -6,11 +6,14 @@ import QueryProvider from "./providers/QueryProvider"; // 위에서 생성한 Pr
 import { Analytics } from "@vercel/analytics/next";
 // import { Geist } from "next/font/google";
 import localFont from "next/font/local";
+import dayjs from "dayjs";
 
 const APP_NAME = "🍙 ACG 식대";
 const APP_DEFAULT_TITLE = "🍙 ACG 식대관리 서비스";
 const APP_TITLE_TEMPLATE = "%s - PWA App";
 const APP_DESCRIPTION = "ACG 직원을 위한 식대관리 서비스입니다.";
+import "dayjs/locale/ko";
+dayjs.locale("ko");
 
 export const metadata: Metadata = {
   applicationName: APP_NAME,

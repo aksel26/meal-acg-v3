@@ -157,6 +157,15 @@ export function EditPointDrawer({ isOpen, onOpenChange, editingPoint, onSave, on
                       classNames={{
                         day_selected: "bg-blue-500! text-white! hover:bg-blue-600 focus:bg-blue-600",
                         day_today: "bg-orange-100 text-orange-900 font-semibold",
+                        today: "border border-gray-500 rounded-lg",
+                      }}
+                      components={{
+                        YearsDropdown: ({ value }) => {
+                          return <div className="p-2 text-sm sm:text-md">{value ?? new Date().getFullYear()}</div>;
+                        },
+                        MonthsDropdown: ({ value }) => {
+                          return <div className="p-2 text-sm sm:text-md">{Number(value ?? new Date().getMonth()) + 1}월</div>;
+                        },
                       }}
                     />
                   </PopoverContent>

@@ -13,6 +13,7 @@ import NoDataIcon from "@/public/icons/noData.png";
 import Image from "next/image";
 import { EditPointDrawer } from "@/components/points/EditPointDrawer";
 import { ActivityViewDialog } from "../../../components/points/ActivityViewDialog";
+import { PointsGuideDialog } from "@/components/points/PointsGuideDialog";
 import { useWelfarePointsMonthly } from "@/hooks/use-welfare-points-monthly";
 import { useAddWelfarePoint, useUpdateWelfarePoint, useDeleteWelfarePoint } from "@/hooks/use-welfare-points-mutations";
 import dayjs from "dayjs";
@@ -241,9 +242,14 @@ export default function Points() {
     <React.Fragment>
       {/* Header */}
       <Card className="border-0 shadow-none bg-white p-5 py-8 mb-8 space-y-8">
-        <div>
-          <h1 className="text-lg sm:text-xl! font-semibold text-gray-900 mb-1">복지포인트 · 활동비</h1>
-          <p className="text-sm text-gray-500">월별 포인트 현황을 확인하세요</p>
+        <div className="flex items-center justify-between flex-1">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1 justify-between">
+              <h1 className="text-lg sm:text-xl! font-semibold text-gray-900">복지포인트 · 활동비</h1>
+              <PointsGuideDialog />
+            </div>
+            <p className="text-sm text-gray-500">월별 포인트 현황을 확인하세요</p>
+          </div>
         </div>
 
         {/* Balance Summary */}

@@ -72,7 +72,7 @@ function Calendar({
         range_start: cn("rounded-l-md bg-accent", defaultClassNames.range_start),
         range_middle: cn("rounded-none", defaultClassNames.range_middle),
         range_end: cn("rounded-r-md bg-accent", defaultClassNames.range_end),
-        today: cn("text-accent-foreground border border-gray-300 rounded-lg data-[selected=true]:rounded-lg data-[selected=true]:border-2", defaultClassNames.today),
+        today: cn("text-accent-foreground  rounded-lg data-[selected=true]:rounded-lg data-[selected=true]:border-none", defaultClassNames.today),
         outside: cn("text-muted-foreground aria-selected:text-muted-foreground", defaultClassNames.outside),
         disabled: cn("text-muted-foreground opacity-50", defaultClassNames.disabled),
         hidden: cn("invisible", defaultClassNames.hidden),

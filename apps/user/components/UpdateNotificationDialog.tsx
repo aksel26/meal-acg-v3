@@ -17,10 +17,10 @@ export function UpdateNotificationDialog({ isOpen, onClose }: UpdateNotification
   const [dontShowAgain, setDontShowAgain] = useState(false);
 
   const handleClose = () => {
-    if (dontShowAgain) {
-      // localStorage에 다시 보지 않기 플래그 저장
-      localStorage.setItem("hideUpdateNotification", "true");
-    }
+    // if (dontShowAgain) {
+    // localStorage에 다시 보지 않기 플래그 저장
+    localStorage.setItem("hideUpdateNotification", "true");
+    // }
     onClose();
   };
 
@@ -79,12 +79,12 @@ export function UpdateNotificationDialog({ isOpen, onClose }: UpdateNotification
           ))}
         </div>
 
-        <div className="flex items-center space-x-2 py-3 border-t">
+        {/* <div className="flex items-center space-x-2 py-3 border-t">
           <Checkbox id="dontShowAgain" checked={dontShowAgain} onCheckedChange={(checked) => setDontShowAgain(checked as boolean)} />
           <label htmlFor="dontShowAgain" className="text-xs text-gray-600 cursor-pointer">
             다시 보지 않기
           </label>
-        </div>
+        </div> */}
 
         <DialogFooter>
           <Button onClick={handleClose} className="w-full text-sm bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white">

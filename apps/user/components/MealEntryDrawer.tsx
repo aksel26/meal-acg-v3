@@ -116,6 +116,7 @@ const businessNumbers = [
   { name: "꿈꾸는메밀", businessNumber: "680-88-02909(일반)" },
   { name: "퍼부어", businessNumber: "120-81-85957(일반)" },
   { name: "우미학", businessNumber: "120-81-85957(일반)" },
+  { name: "아울", businessNumber: "581-85-01150(일반)" },
   { name: "니뽕내뽕", businessNumber: "488-81-01718(일반)" },
   { name: "서래함박", businessNumber: "120-81-85957(일반)" },
   { name: "신성식당", businessNumber: "627-87-02105(폐업자)" },

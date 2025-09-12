@@ -2,6 +2,7 @@
 
 import { useState, useEffect, lazy, Suspense } from "react";
 import { useUsers } from "@/hooks/useUsers";
+import { useMealDrawerStore } from "@/stores/mealDrawerStore";
 import { Button } from "@repo/ui/src/button";
 import { Input } from "@repo/ui/src/input";
 import { Label } from "@repo/ui/src/label";
@@ -13,6 +14,7 @@ import { AutoCompleteInput } from "@repo/ui/src/autocomplete-input";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@repo/ui/src/dialog";
 import { Search } from "@repo/ui/icons";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui/src/tooltip";
+import { attendanceOptions, businessNumbers, mealTypeOptions } from "@/lib/const/const";
 
 // Lazy load DeleteConfirmDialog
 const DeleteConfirmDialog = lazy(() =>
@@ -22,118 +24,14 @@ const DeleteConfirmDialog = lazy(() =>
 );
 
 interface MealEntryDrawerProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  selectedMealType: "breakfast" | "lunch" | "dinner";
-  setSelectedMealType: (type: "breakfast" | "lunch" | "dinner") => void;
-  isEditMode: boolean;
-  formData: {
-    breakfast: {
-      payer: string;
-      store: string;
-      amount: string;
-    };
-    lunch: {
-      payer: string;
-      store: string;
-      amount: string;
-      attendance: string;
-    };
-    dinner: {
-      payer: string;
-      store: string;
-      amount: string;
-    };
-  };
-  selectedDate?: Date;
   onFormSubmit: (e: React.FormEvent) => Promise<void>;
-  onInputChange: (field: string, value: string) => void;
   onDeleteMeal?: (date: string) => Promise<void>;
 }
 
-const mealTypeOptions = [
-  {
-    value: "breakfast",
-    label: "조식",
-    emoji: "🌅",
-    color: "bg-orange-50 border-orange-200 text-orange-800",
-    hoverColor: "hover:bg-orange-100",
-  },
-  {
-    value: "lunch",
-    label: "중식",
-    emoji: "🍽️",
-    color: "bg-blue-50 border-blue-200 text-blue-800",
-    hoverColor: "hover:bg-blue-100",
-  },
-  {
-    value: "dinner",
-    label: "석식",
-    emoji: "🌙",
-    color: "bg-indigo-50 border-indigo-200 text-indigo-800",
-    hoverColor: "hover:bg-indigo-100",
-  },
-];
+export default function MealEntryDrawer({ onFormSubmit, onDeleteMeal }: MealEntryDrawerProps) {
+  // Zustand store 사용
+  const { isOpen, isEditMode, selectedMealType, selectedDate, formData, closeDrawer, setSelectedMealType, updateFormField } = useMealDrawerStore();
 
-const attendanceOptions = [
-  { value: "근무", label: "근무", icon: "/icons/onigiri.png", color: "text-green-700" },
-  {
-    value: "근무(개별식사 / 식사안함)",
-    label: "근무(개별식사 / 식사안함)",
-    icon: "/icons/onigiri.png",
-    color: "text-green-700",
-  },
-  {
-    value: "오전 반차/휴무",
-    label: "오전 반차/휴무",
-    icon: "/icons/clock.png",
-    color: "text-orange-700",
-  },
-  {
-    value: "오후 반차/휴무",
-    label: "오후 반차/휴무",
-    icon: "/icons/clock.png",
-    color: "text-orange-700",
-  },
-  {
-    value: "연차/휴무",
-    label: "연차/휴무",
-    icon: "/icons/holiday.png",
-    color: "text-blue-700",
-  },
-  {
-    value: "재택근무",
-    label: "재택근무",
-    icon: "/icons/homeOffice.png",
-    color: "text-purple-700",
-  },
-];
-
-// 사업자번호 목록 (예시 데이터)
-const businessNumbers = [
-  { name: "남도분식", businessNumber: "122-85-56344(일반)" },
-  { name: "홍수계", businessNumber: "156-85-01352(일반)" },
-  { name: "꿈꾸는메밀", businessNumber: "680-88-02909(일반)" },
-  { name: "퍼부어", businessNumber: "120-81-85957(일반)" },
-  { name: "우미학", businessNumber: "120-81-85957(일반)" },
-  { name: "아울", businessNumber: "581-85-01150(일반)" },
-  { name: "니뽕내뽕", businessNumber: "488-81-01718(일반)" },
-  { name: "서래함박", businessNumber: "120-81-85957(일반)" },
-  { name: "신성식당", businessNumber: "627-87-02105(폐업자)" },
-];
-
-export default function MealEntryDrawer({
-  isOpen,
-  onOpenChange,
-  selectedMealType,
-  setSelectedMealType,
-  isEditMode,
-  formData,
-  selectedDate,
-  onFormSubmit,
-  onInputChange,
-  onDeleteMeal,
-}: MealEntryDrawerProps) {
   const { users, isLoading: usersLoading, error: usersError, fetchUsers } = useUsers();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -150,15 +48,22 @@ export default function MealEntryDrawer({
     }
   }, [isOpen, users.length, fetchUsers]);
 
-  // Handle automatic amount setting for 근무(개별식사 / 식사안함)
+  // Handle automatic amount setting for 근무(개별식사 / 식사안함) and set default attendance
   useEffect(() => {
-    if (selectedMealType === "lunch") {
-      const currentAttendance = "attendance" in currentFormData ? (currentFormData as { attendance: string }).attendance : "";
-      if (currentAttendance === "근무(개별식사 / 식사안함)" && currentFormData.amount !== "") {
-        onInputChange("amount", "");
+    if (isOpen && selectedMealType === "lunch") {
+      const lunchFormData = formData.lunch;
+      const currentAttendance = lunchFormData.attendance || "";
+
+      // Set default attendance to "근무" if empty
+      if (!currentAttendance) {
+        updateFormField("attendance", "근무");
+      }
+
+      if (currentAttendance === "근무(개별식사 / 식사안함)" && lunchFormData.amount !== "") {
+        updateFormField("amount", "");
       }
     }
-  }, [selectedMealType, currentFormData, onInputChange]);
+  }, [isOpen, selectedMealType, updateFormField, formData.lunch.attendance, formData.lunch.amount]);
 
   const handleDeleteMeal = async () => {
     if (!selectedDate || !onDeleteMeal) return;
@@ -166,14 +71,14 @@ export default function MealEntryDrawer({
     setIsDeleting(true);
     try {
       await onDeleteMeal(selectedDate.toISOString());
-      onOpenChange(false);
+      closeDrawer();
     } finally {
       setIsDeleting(false);
     }
   };
 
   const handleBusinessSelect = (business: { businessNumber: string; name: string }) => {
-    onInputChange("store", `${business.name}(${business.businessNumber})`);
+    updateFormField("store", `${business.name}(${business.businessNumber})`);
     setIsBusinessDialogOpen(false);
     setBusinessSearchTerm(""); // 검색어 초기화
   };
@@ -182,7 +87,7 @@ export default function MealEntryDrawer({
   const filteredBusinessNumbers = businessNumbers.filter((business) => business.name.toLowerCase().includes(businessSearchTerm.toLowerCase()) || business.businessNumber.includes(businessSearchTerm));
 
   return (
-    <Drawer open={isOpen} onOpenChange={onOpenChange} repositionInputs={false}>
+    <Drawer open={isOpen} onOpenChange={closeDrawer} repositionInputs={false}>
       <DrawerContent className="max-h-[82vh] max-w-lg mx-auto bg-gradient-to-br from-white to-gray-50">
         <DrawerHeader className="border-b border-gray-100 pb-4">
           <div className="relative">
@@ -213,6 +118,7 @@ export default function MealEntryDrawer({
             setIsSubmitting(true);
             try {
               await onFormSubmit(e);
+              // 폼 제출 성공 후 drawer 닫기는 onFormSubmit에서 처리됨
             } finally {
               setIsSubmitting(false);
             }
@@ -258,13 +164,13 @@ export default function MealEntryDrawer({
               <AutoCompleteInput
                 suggestions={users}
                 value={currentFormData.payer}
-                onValueChange={(value) => onInputChange("payer", value)}
+                onValueChange={(value) => updateFormField("payer", value)}
                 placeholder="결제자를 입력하거나 선택해주세요"
                 allowFreeText={true}
                 maxSuggestions={users.length}
                 emptyText="결제자를 찾을 수 없습니다."
                 disabled={usersLoading}
-                className="rounded-lg border-gray-300 text-xs"
+                className="rounded-lg border-gray-300 text-sm"
               />
             </div>
           </div>
@@ -277,14 +183,7 @@ export default function MealEntryDrawer({
             </Label>
 
             <div className="flex flex-nowrap gap-x-2 items-center">
-              <Input
-                id="store"
-                type="text"
-                placeholder="식당명을 입력해주세요"
-                value={currentFormData.store}
-                onChange={(e) => onInputChange("store", e.target.value)}
-                className=" text-xs sm:text-sm"
-              />
+              <Input id="store" type="text" placeholder="식당명을 입력해주세요" value={currentFormData.store} onChange={(e) => updateFormField("store", e.target.value)} className="text-sm" />
 
               <Tooltip defaultOpen>
                 <TooltipTrigger asChild>
@@ -319,10 +218,10 @@ export default function MealEntryDrawer({
                 type="number"
                 placeholder="금액을 입력해주세요"
                 value={currentFormData.amount}
-                onChange={(e) => onInputChange("amount", e.target.value)}
+                onChange={(e) => updateFormField("amount", e.target.value)}
                 min="0"
                 disabled={(currentFormData as { attendance: string }).attendance === "근무(개별식사 / 식사안함)" ? true : false}
-                className="rounded-lg border-gray-300 pl-8 text-xs sm:text-sm disabled:bg-gray-100 disabled:text-gray-500"
+                className="rounded-lg border-gray-300 pl-8 text-sm disabled:bg-gray-100 disabled:text-gray-500"
               />
               {selectedMealType === "lunch" && "attendance" in currentFormData && (currentFormData as { attendance: string }).attendance === "근무(개별식사 / 식사안함)" && (
                 <p className="text-[11px] text-orange-500 mt-1">총 금액에서 10,000원이 차감됩니다.</p>
@@ -337,14 +236,14 @@ export default function MealEntryDrawer({
                 <Image src="/icons/attendance.png" alt="근태" width={16} height={16} className="w-4 h-4 object-contain" />
                 근태
               </Label>
-              <Select value={"attendance" in currentFormData ? (currentFormData as { attendance: string }).attendance : ""} onValueChange={(value) => onInputChange("attendance", value)}>
-                <SelectTrigger className="w-full rounded-lg border-gray-300 text-xs">
+              <Select value={"attendance" in currentFormData ? (currentFormData as { attendance: string }).attendance || "" : ""} onValueChange={(value) => updateFormField("attendance", value)}>
+                <SelectTrigger className="w-full rounded-lg border-gray-300 text-sm">
                   <SelectValue placeholder="근태를 선택해주세요" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
-                  {attendanceOptions.map((option) => (
+                  {attendanceOptions?.map((option) => (
                     <SelectItem key={option.value} value={option.value} className="rounded-lg">
-                      <div className="flex items-center gap-2 text-xs sm:text-sm">
+                      <div className="flex items-center gap-2 text-sm sm:text-sm">
                         <Image src={option.icon} alt={option.label} width={16} height={16} className="w-4 h-4 object-contain" />
                         <span className={option.color}>{option.label}</span>
                       </div>
@@ -372,6 +271,7 @@ export default function MealEntryDrawer({
               setIsSubmitting(true);
               try {
                 await onFormSubmit(e);
+                // 폼 제출 성공 후 drawer 닫기는 onFormSubmit에서 처리됨
               } finally {
                 setIsSubmitting(false);
               }

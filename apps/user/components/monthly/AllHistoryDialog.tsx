@@ -20,7 +20,6 @@ const getDrinkIcon = (drink: string) => {
 
 export const AllHistoryDialog = ({ isOpen, onClose }: AllHistoryDialogProps) => {
   const { data, isLoading, error, fetchData } = useMonthlyData();
-  console.log("data:", data);
 
   useEffect(() => {
     if (isOpen && !data) {
@@ -55,13 +54,7 @@ export const AllHistoryDialog = ({ isOpen, onClose }: AllHistoryDialogProps) => 
               <div key={index} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                 <div className="flex items-center space-x-3">
                   <div className="w-6 h-6 relative">
-                    <Image
-                      src={getDrinkIcon(user.drink)}
-                      alt={user.drink}
-                      width={24}
-                      height={24}
-                      className="w-full h-full object-contain"
-                    />
+                    <Image src={getDrinkIcon(user.drink)} alt={user.drink} width={24} height={24} className="w-full h-full object-contain" />
                   </div>
                   <div>
                     <div className="text-sm font-medium text-gray-900">{user.name}</div>

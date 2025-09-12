@@ -35,7 +35,6 @@ interface MealCardsProps {
 
 export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, mealData = [] }: MealCardsProps) {
   const [currentMealData, setCurrentMealData] = React.useState<MealData | null>(null);
-  console.log("currentMealData: ", currentMealData);
 
   React.useEffect(() => {
     if (selectedDate && mealData.length > 0) {
@@ -203,7 +202,7 @@ export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, 
                       onAddMeal?.(meal.type);
                     }
                   }}
-                  className={`${meal.bgColor} rounded-lg p-4 ${meal.hoverColor} hover:scale-101 transition-all duration-300 cursor-pointer transition-colors duration-200`}
+                  className={`${meal.bgColor} rounded-lg p-4 ${meal.hoverColor} hover:scale-101 cursor-pointer transition-colors duration-200`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mr-3 relative">

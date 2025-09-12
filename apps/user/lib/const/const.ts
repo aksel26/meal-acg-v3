@@ -67,3 +67,5 @@ export const businessNumbers = [
   { name: "서래함박", businessNumber: "120-81-85957(일반)" },
   { name: "신성식당", businessNumber: "627-87-02105(폐업자)" },
 ];
+
+export const DRINKS = ["HOT 아메리카노", "ICE 아메리카노", "HOT 디카페인 아메리카노", "ICE 디카페인 아메리카노", "바닐라크림 콜드브루", "ICE 자몽허니블랙티", "선택안함"];

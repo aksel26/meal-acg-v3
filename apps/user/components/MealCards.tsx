@@ -1,6 +1,5 @@
 import * as React from "react";
 import { Button } from "@repo/ui/src/button";
-import { Plus } from "@repo/ui/icons";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@repo/ui/src/card";
 import dayjs from "dayjs";
 import Image from "next/image";
@@ -35,7 +34,6 @@ interface MealCardsProps {
 
 export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, mealData = [] }: MealCardsProps) {
   const [currentMealData, setCurrentMealData] = React.useState<MealData | null>(null);
-  console.log("currentMealData: ", currentMealData);
 
   React.useEffect(() => {
     if (selectedDate && mealData.length > 0) {
@@ -64,10 +62,6 @@ export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, 
           <CardTitle>
             <div className="flex w-full items-center justify-between px-2">
               <div className="text-sm sm:text-md font-semibold text-gray-800">{formatDate(selectedDate)}</div>
-              <Button variant="ghost" size="icon" className="size-8 hover:bg-blue-50" title="Add Event" onClick={() => onAddMeal?.("lunch")}>
-                <Plus className="w-4 h-4 text-blue-600" />
-                <span className="sr-only">Add Event</span>
-              </Button>
             </div>
           </CardTitle>
         </CardHeader>
@@ -140,10 +134,6 @@ export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, 
         <CardTitle>
           <div className="flex w-full items-center justify-between px-2">
             <div className="text-sm font-semibold text-gray-800">{formatDate(selectedDate)}</div>
-            <Button variant="ghost" size="icon" className="size-8 hover:bg-blue-50" title="Add Event" onClick={() => onAddMeal?.("lunch")}>
-              <Plus className="w-4 h-4 text-blue-600" />
-              <span className="sr-only">Add Event</span>
-            </Button>
           </div>
         </CardTitle>
       </CardHeader>
@@ -203,7 +193,7 @@ export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, 
                       onAddMeal?.(meal.type);
                     }
                   }}
-                  className={`${meal.bgColor} rounded-lg p-4 ${meal.hoverColor} hover:scale-101 transition-all duration-300 cursor-pointer transition-colors duration-200`}
+                  className={`${meal.bgColor} rounded-lg p-4 ${meal.hoverColor} hover:scale-101 cursor-pointer transition-colors duration-200`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mr-3 relative">

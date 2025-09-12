@@ -58,6 +58,9 @@ const Lunch = () => {
   const unassignedMembers = useMemo(() => {
     if (!allUsers || allUsers.length === 0 || !lunchGroupData?.groups) return [];
 
+    // 제외할 인원 목록
+    const excludedMembers = new Set(['정진우', '장문경', '이서현']);
+
     // 모든 점심조에 배정된 멤버들 수집
     const assignedMembers = new Set<string>();
     lunchGroupData.groups.forEach((group) => {
@@ -70,8 +73,13 @@ const Lunch = () => {
       }
     });
 
-    // 전체 사용자에서 배정된 멤버들 제외
-    return allUsers.filter((user) => user && user.trim() && !assignedMembers.has(user.trim().toLowerCase()));
+    // 전체 사용자에서 배정된 멤버들과 제외 대상자들 제외
+    return allUsers.filter((user) => 
+      user && 
+      user.trim() && 
+      !assignedMembers.has(user.trim().toLowerCase()) &&
+      !excludedMembers.has(user.trim())
+    );
   }, [allUsers, lunchGroupData?.groups]);
 
   return (

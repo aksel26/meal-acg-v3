@@ -38,7 +38,7 @@ export async function GET() {
       });
     }
 
-    const ranges = ["B7:D", "E4:E", "H4:H"];
+    const ranges = ["Monthly 음료취합!B7:D", "Monthly 음료취합!E4:E", "Monthly 음료취합!H4:H"];
     const response = await sheets.spreadsheets.values.batchGet({
       spreadsheetId: SHEET_ID,
       ranges,

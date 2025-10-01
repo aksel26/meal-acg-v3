@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     // 기존 데이터 가져오기 (B7:D 범위)
     const getResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
-      range: "B7:D",
+      range: "Monthly 음료취합!B7:D",
     });
 
     const existingData = getResponse.data.values || [];
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 데이터 업데이트 (D열에 음료 저장)
-    const updateRange = `B${targetRow}:C${targetRow}`;
+    const updateRange = `Monthly 음료취합!B${targetRow}:C${targetRow}`;
     const values = [
       [
         name, // B열: 이름

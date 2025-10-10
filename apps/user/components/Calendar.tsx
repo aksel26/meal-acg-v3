@@ -19,39 +19,17 @@ interface Calendar21Props {
   // react-query를 사용하므로 onHolidayFetch는 더 이상 필요하지 않음
 }
 
-export default function CalendarComponent({
-  onDateSelect,
-  selectedDate,
-  onMonthChange,
-  mealData = [],
-  holidayData: externalHolidayData = [],
-  isLoading = false,
-}: Calendar21Props) {
-  const [date, setDate] = React.useState<Date | undefined>(
-    selectedDate || new Date()
-  );
-  const [currentMonth, setCurrentMonth] = React.useState<number>(
-    (selectedDate || new Date()).getMonth() + 1
-  );
-  const [currentYear, setCurrentYear] = React.useState<number>(
-    (selectedDate || new Date()).getFullYear()
-  );
-  const [displayDate, setDisplayDate] = React.useState<Date>(
-    selectedDate || new Date()
-  );
+export default function CalendarComponent({ onDateSelect, selectedDate, onMonthChange, mealData = [], holidayData: externalHolidayData = [], isLoading = false }: Calendar21Props) {
+  const [date, setDate] = React.useState<Date | undefined>(selectedDate || new Date());
+  const [currentMonth, setCurrentMonth] = React.useState<number>((selectedDate || new Date()).getMonth() + 1);
+  const [currentYear, setCurrentYear] = React.useState<number>((selectedDate || new Date()).getFullYear());
+  const [displayDate, setDisplayDate] = React.useState<Date>(selectedDate || new Date());
 
   // React Query로 공휴일 데이터 가져오기
-  const {
-    data: queryHolidayData,
-    isLoading: holidayLoading,
-    error: holidayError,
-  } = useHolidays(currentMonth, currentYear);
+  const { data: queryHolidayData, isLoading: holidayLoading, error: holidayError } = useHolidays(currentMonth, currentYear);
 
   // 외부에서 전달된 데이터가 있으면 그것을 사용하고, 없으면 React Query 데이터 사용
-  const holidayData =
-    externalHolidayData.length > 0
-      ? externalHolidayData
-      : queryHolidayData || [];
+  const holidayData = externalHolidayData.length > 0 ? externalHolidayData : queryHolidayData || [];
 
   const getAttendanceForDate = (targetDate: Date): string => {
     const dateString = dayjs(targetDate).format("YYYY-MM-DD");
@@ -61,16 +39,11 @@ export default function CalendarComponent({
 
   const getHolidayForDate = (targetDate: Date): string => {
     const dateString = dayjs(targetDate).format("YYYY-MM-DD");
-    const holidayInfo = holidayData.find(
-      (holiday) => holiday.date === dateString
-    );
+    const holidayInfo = holidayData.find((holiday) => holiday.date === dateString);
     return holidayInfo?.name || "";
   };
 
-  const getAttendanceIcon = (
-    attendance: string,
-    holiday: string
-  ): { icon: string; color: string; isImage: boolean } => {
+  const getAttendanceIcon = (attendance: string, holiday: string): { icon: string; color: string; isImage: boolean } => {
     // 공휴일이 있으면 공휴일 이름을 텍스트로 표시
     if (holiday) {
       return {
@@ -83,7 +56,7 @@ export default function CalendarComponent({
     const lowerAttendance = attendance.toLowerCase();
 
     // 근무 관련
-    if (lowerAttendance.includes("근무") || lowerAttendance.includes("출근")) {
+    if (lowerAttendance === "근무" || lowerAttendance.includes("출근")) {
       return {
         icon: "/icons/onigiri.png",
         color: "text-green-600",
@@ -110,10 +83,7 @@ export default function CalendarComponent({
     }
 
     // 재택근무 관련
-    if (
-      lowerAttendance.includes("재택") ||
-      lowerAttendance.includes("홈오피스")
-    ) {
+    if (lowerAttendance.includes("재택") || lowerAttendance.includes("홈오피스")) {
       return {
         icon: "/icons/homeOffice.png",
         color: "text-orange-600",
@@ -150,11 +120,7 @@ export default function CalendarComponent({
   };
 
   const handleNextClick = () => {
-    const nextMonth = new Date(
-      displayDate.getFullYear(),
-      displayDate.getMonth() + 1,
-      1
-    );
+    const nextMonth = new Date(displayDate.getFullYear(), displayDate.getMonth() + 1, 1);
     setDisplayDate(nextMonth);
     const month = nextMonth.getMonth() + 1;
     const year = nextMonth.getFullYear();
@@ -164,11 +130,7 @@ export default function CalendarComponent({
   };
 
   const handlePrevClick = () => {
-    const prevMonth = new Date(
-      displayDate.getFullYear(),
-      displayDate.getMonth() - 1,
-      1
-    );
+    const prevMonth = new Date(displayDate.getFullYear(), displayDate.getMonth() - 1, 1);
     setDisplayDate(prevMonth);
     const month = prevMonth.getMonth() + 1;
     const year = prevMonth.getFullYear();
@@ -202,32 +164,16 @@ export default function CalendarComponent({
       }}
       components={{
         YearsDropdown: ({ value }) => {
-          return (
-            <div className="p-2 text-sm sm:text-base">
-              {value ?? new Date().getFullYear()}
-            </div>
-          );
+          return <div className="p-2 text-sm sm:text-base">{value ?? new Date().getFullYear()}</div>;
         },
         MonthsDropdown: ({ value }) => {
-          return (
-            <div className="p-2 text-sm sm:text-base">
-              {Number(value ?? new Date().getMonth()) + 1}월
-            </div>
-          );
+          return <div className="p-2 text-sm sm:text-base">{Number(value ?? new Date().getMonth()) + 1}월</div>;
         },
         DayButton: ({ children, modifiers, day, ...props }) => {
           if (modifiers.outside) {
             return (
-              <CalendarDayButton
-                day={day}
-                modifiers={modifiers}
-                {...props}
-                onClick={undefined}
-                disabled
-              >
-                <div className="flex flex-col items-center opacity-0 pointer-events-none">
-                  {children}
-                </div>
+              <CalendarDayButton day={day} modifiers={modifiers} {...props} onClick={undefined} disabled>
+                <div className="flex flex-col items-center opacity-0 pointer-events-none">{children}</div>
               </CalendarDayButton>
             );
           }
@@ -240,32 +186,16 @@ export default function CalendarComponent({
           const isToday = modifiers.today;
 
           return (
-            <CalendarDayButton
-              day={day}
-              modifiers={modifiers}
-              {...props}
-              className={`${isSelected ? `bg-blue-50!` : ""} hover:bg-blue-50/40! hover:text-blue-800! `}
-            >
-              <div
-                className={`rounded-md flex flex-col  space-y-1 items-center relative py-1.5 transition duration-200`}
-              >
-                <span
-                  className={`text-[11px] sm:text-sm ${isToday ? "bg-[#0a2165] text-gray-50 px-1.5 py-0.5 rounded-sm" : isSelected ? "text-blue-600" : ""}`}
-                >
-                  {children}
-                </span>
+            <CalendarDayButton day={day} modifiers={modifiers} {...props} className={`${isSelected ? `bg-blue-50!` : ""} hover:bg-blue-50/40! hover:text-blue-800! `}>
+              <div className={`rounded-md flex flex-col  space-y-1 items-center relative py-1.5 transition duration-200`}>
+                <span className={`text-[11px] sm:text-sm ${isToday ? "bg-[#0a2165] text-gray-50 px-1.5 py-0.5 rounded-sm" : isSelected ? "text-blue-600" : ""}`}>{children}</span>
 
                 {/* icon wrapper */}
-                <div
-                  className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center relative ${isSelected ? "bg-blue-100" : ""}`}
-                >
+                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center relative ${isSelected ? "bg-blue-100" : ""}`}>
                   {isLoading || holidayLoading ? (
                     <div className="w-4 h-4 bg-gray-200 rounded animate-pulse"></div>
                   ) : holidayError ? (
-                    <span
-                      className="text-xs text-red-500"
-                      title="공휴일 정보를 불러올 수 없습니다"
-                    >
+                    <span className="text-xs text-red-500" title="공휴일 정보를 불러올 수 없습니다">
                       ⚠️
                     </span>
                   ) : icon ? (
@@ -279,17 +209,10 @@ export default function CalendarComponent({
                           height={25}
                           title={holiday || attendance}
                         />
-                        {attendance?.includes("개별식사") && (
-                          <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 text-blue-400 text-[10px]!">
-                            개별
-                          </div>
-                        )}
+                        {attendance?.includes("개별식사") && <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 text-blue-400 text-[10px]!">개별</div>}
                       </div>
                     ) : (
-                      <span
-                        className={`${holiday !== "" ? "text-[10px] sm:text-[10px] text-red-600 truncate font-medium text-center leading-tight" : "text-lg"}`}
-                        title={holiday || attendance}
-                      >
+                      <span className={`${holiday !== "" ? "text-[10px] sm:text-[10px] text-red-600 truncate font-medium text-center leading-tight" : "text-lg"}`} title={holiday || attendance}>
                         {icon}
                       </span>
                     )

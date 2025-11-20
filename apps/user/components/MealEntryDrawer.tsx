@@ -37,6 +37,7 @@ export default function MealEntryDrawer({ onFormSubmit, onDeleteMeal }: MealEntr
   const [isDeleting, setIsDeleting] = useState(false);
   const [isBusinessDialogOpen, setIsBusinessDialogOpen] = useState(false);
   const [businessSearchTerm, setBusinessSearchTerm] = useState("");
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   // 현재 선택된 식사 타입의 form 데이터 가져오기
   const currentFormData = formData[selectedMealType];
@@ -115,6 +116,17 @@ export default function MealEntryDrawer({ onFormSubmit, onDeleteMeal }: MealEntr
 
         <form
           onSubmit={async (e) => {
+            e.preventDefault();
+            // Validation logic
+            if (selectedMealType === "lunch") {
+              const lunchData = currentFormData as { attendance: string };
+              if (!lunchData.attendance) {
+                setValidationError("근태를 선택해주세요.");
+                return;
+              }
+            }
+            setValidationError(null);
+
             setIsSubmitting(true);
             try {
               await onFormSubmit(e);
@@ -136,7 +148,10 @@ export default function MealEntryDrawer({ onFormSubmit, onDeleteMeal }: MealEntr
                 <Button
                   key={meal.value}
                   type="button"
-                  onClick={() => setSelectedMealType(meal.value as "breakfast" | "lunch" | "dinner")}
+                  onClick={() => {
+                    setSelectedMealType(meal.value as "breakfast" | "lunch" | "dinner");
+                    setValidationError(null); // Clear validation error on type change
+                  }}
                   className={`
                      border transition-all duration-200 h-8 sm:h-10 text-[10.5px] sm:text-xs rounded-md hover:bg-blue-50 hover:scale-102 hover:border-blue-300
                     ${selectedMealType === meal.value ? `${meal.color} shadow-lg scale-105` : `bg-white text-gray-700 ${meal.hoverColor}  hover:bg-blue-100 hover:scale-102`}
@@ -236,8 +251,14 @@ export default function MealEntryDrawer({ onFormSubmit, onDeleteMeal }: MealEntr
                 <Image src="/icons/attendance.png" alt="근태" width={16} height={16} className="w-4 h-4 object-contain" />
                 근태
               </Label>
-              <Select value={"attendance" in currentFormData ? (currentFormData as { attendance: string }).attendance || "" : ""} onValueChange={(value) => updateFormField("attendance", value)}>
-                <SelectTrigger className="w-full rounded-lg border-gray-300 text-sm">
+              <Select
+                value={"attendance" in currentFormData ? (currentFormData as { attendance: string }).attendance || "" : ""}
+                onValueChange={(value) => {
+                  updateFormField("attendance", value);
+                  setValidationError(null);
+                }}
+              >
+                <SelectTrigger className={`w-full rounded-lg border-gray-300 text-sm ${validationError ? "border-red-500 ring-1 ring-red-500" : ""}`}>
                   <SelectValue placeholder="근태를 선택해주세요" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
@@ -251,6 +272,7 @@ export default function MealEntryDrawer({ onFormSubmit, onDeleteMeal }: MealEntr
                   ))}
                 </SelectContent>
               </Select>
+              {validationError && <p className="text-xs text-red-500 mt-1 ml-1">{validationError}</p>}
             </div>
           )}
         </form>
@@ -268,6 +290,16 @@ export default function MealEntryDrawer({ onFormSubmit, onDeleteMeal }: MealEntr
           <Button
             type="submit"
             onClick={async (e) => {
+              // Validation logic
+              if (selectedMealType === "lunch") {
+                const lunchData = currentFormData as { attendance: string };
+                if (!lunchData.attendance) {
+                  setValidationError("근태를 선택해주세요.");
+                  return;
+                }
+              }
+              setValidationError(null);
+
               setIsSubmitting(true);
               try {
                 await onFormSubmit(e);

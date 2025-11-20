@@ -55,9 +55,9 @@ export default function MealEntryDrawer({ onFormSubmit, onDeleteMeal }: MealEntr
       const currentAttendance = lunchFormData.attendance || "";
 
       // Set default attendance to "근무" if empty
-      if (!currentAttendance) {
-        updateFormField("attendance", "근무");
-      }
+      // if (!currentAttendance) {
+      //   updateFormField("attendance", "근무");
+      // }
 
       if (currentAttendance === "근무(개별식사 / 식사안함)" && lunchFormData.amount !== "") {
         updateFormField("amount", "");

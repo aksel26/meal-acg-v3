@@ -13,6 +13,8 @@ interface Calendar21Props {
   mealData?: Array<{
     date: string;
     attendance: string;
+    breakfast?: any;
+    dinner?: any;
   }>;
   holidayData?: HolidayData[];
   isLoading?: boolean;
@@ -31,10 +33,9 @@ export default function CalendarComponent({ onDateSelect, selectedDate, onMonthC
   // 외부에서 전달된 데이터가 있으면 그것을 사용하고, 없으면 React Query 데이터 사용
   const holidayData = externalHolidayData.length > 0 ? externalHolidayData : queryHolidayData || [];
 
-  const getAttendanceForDate = (targetDate: Date): string => {
+  const getMealDataForDate = (targetDate: Date) => {
     const dateString = dayjs(targetDate).format("YYYY-MM-DD");
-    const dayData = mealData.find((meal) => meal.date === dateString);
-    return dayData?.attendance || "";
+    return mealData.find((meal) => meal.date === dateString);
   };
 
   const getHolidayForDate = (targetDate: Date): string => {
@@ -43,22 +44,23 @@ export default function CalendarComponent({ onDateSelect, selectedDate, onMonthC
     return holidayInfo?.name || "";
   };
 
-  const getAttendanceIcon = (attendance: string, holiday: string): { icon: string; color: string; isImage: boolean } => {
+  const getAttendanceIcon = (meal: any, holiday: string): { icons: string[]; color: string; isImage: boolean } => {
     // 공휴일이 있으면 공휴일 이름을 텍스트로 표시
     if (holiday) {
       return {
-        icon: holiday,
+        icons: [holiday],
         color: "text-red-600",
         isImage: false,
       };
     }
 
+    const attendance = meal?.attendance || "";
     const lowerAttendance = attendance.toLowerCase();
 
     // 근무 관련
     if (lowerAttendance === "근무" || lowerAttendance.includes("출근")) {
       return {
-        icon: "/icons/onigiri.png",
+        icons: ["/icons/onigiri.png"],
         color: "text-green-600",
         isImage: true,
       };
@@ -67,7 +69,7 @@ export default function CalendarComponent({ onDateSelect, selectedDate, onMonthC
     // 반차 관련
     if (lowerAttendance.includes("반차")) {
       return {
-        icon: "/icons/clock.png",
+        icons: ["/icons/clock.png"],
         color: "text-yellow-600",
         isImage: true,
       };
@@ -76,7 +78,7 @@ export default function CalendarComponent({ onDateSelect, selectedDate, onMonthC
     // 휴가/휴무 관련
     if (lowerAttendance.includes("휴무") || lowerAttendance.includes("쉼")) {
       return {
-        icon: "/icons/holiday.png",
+        icons: ["/icons/holiday.png"],
         color: "text-gray-600",
         isImage: true,
       };
@@ -85,22 +87,43 @@ export default function CalendarComponent({ onDateSelect, selectedDate, onMonthC
     // 재택근무 관련
     if (lowerAttendance.includes("재택") || lowerAttendance.includes("홈오피스")) {
       return {
-        icon: "/icons/homeOffice.png",
+        icons: ["/icons/homeOffice.png"],
         color: "text-orange-600",
         isImage: true,
       };
     }
 
+    // attendance가 비어있을 때 breakfast/dinner 체크
+    if (!attendance) {
+      const icons: string[] = [];
+      // dinner가 존재하면 추가
+      if (meal?.dinner) {
+        icons.push("/icons/dinner.png");
+      }
+      // breakfast가 존재하면 추가
+      if (meal?.breakfast) {
+        icons.push("/icons/breakfast.png");
+      }
+
+      if (icons.length > 0) {
+        return {
+          icons,
+          color: "",
+          isImage: true,
+        };
+      }
+    }
+
     // 기타 - 텍스트가 있으면 기본 업무 아이콘
     if (attendance) {
       return {
-        icon: "/icons/onigiri.png",
+        icons: ["/icons/onigiri.png"],
         color: "text-gray-600",
         isImage: true,
       };
     }
 
-    return { icon: "", color: "", isImage: false };
+    return { icons: [], color: "", isImage: false };
   };
 
   const handleDateSelect = (newDate: Date | undefined) => {
@@ -178,9 +201,9 @@ export default function CalendarComponent({ onDateSelect, selectedDate, onMonthC
             );
           }
 
-          const attendance = getAttendanceForDate(day.date);
+          const meal = getMealDataForDate(day.date);
           const holiday = getHolidayForDate(day.date);
-          const { icon, isImage } = getAttendanceIcon(attendance, holiday);
+          const { icons, isImage } = getAttendanceIcon(meal, holiday);
 
           const isSelected = modifiers.selected;
           const isToday = modifiers.today;
@@ -198,22 +221,34 @@ export default function CalendarComponent({ onDateSelect, selectedDate, onMonthC
                     <span className="text-xs text-red-500" title="공휴일 정보를 불러올 수 없습니다">
                       ⚠️
                     </span>
-                  ) : icon ? (
+                  ) : icons.length > 0 ? (
                     isImage ? (
-                      <div>
-                        <Image
-                          src={icon}
-                          alt={holiday || attendance}
-                          // className="w-4 h-4 sm:w-5 sm:h-5"
-                          width={25}
-                          height={25}
-                          title={holiday || attendance}
-                        />
-                        {attendance?.includes("개별식사") && <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 text-blue-400 text-[10px]!">개별</div>}
+                      <div className="relative w-full h-full flex items-center justify-center">
+                        {icons.map((icon, index) => (
+                          <div
+                            key={index}
+                            className={`absolute transition-all duration-300 ${
+                              icons.length > 1
+                                ? index === 0
+                                  ? "-translate-x-1 -translate-y-1 z-10" // 첫 번째 아이콘 (위/왼쪽)
+                                  : "translate-x-1 translate-y-1 z-0 opacity-80" // 두 번째 아이콘 (아래/오른쪽)
+                                : ""
+                            }`}
+                          >
+                            <Image
+                              src={icon}
+                              alt={holiday || meal?.attendance || "icon"}
+                              width={25}
+                              height={25}
+                              title={holiday || meal?.attendance}
+                            />
+                          </div>
+                        ))}
+                        {meal?.attendance?.includes("개별식사") && <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 text-blue-400 text-[10px]!">개별</div>}
                       </div>
                     ) : (
-                      <span className={`${holiday !== "" ? "text-[10px] sm:text-[10px] text-red-600 truncate font-medium text-center leading-tight" : "text-lg"}`} title={holiday || attendance}>
-                        {icon}
+                      <span className={`${holiday !== "" ? "text-[10px] sm:text-[10px] text-red-600 truncate font-medium text-center leading-tight" : "text-lg"}`} title={holiday || meal?.attendance}>
+                        {icons[0]}
                       </span>
                     )
                   ) : null}

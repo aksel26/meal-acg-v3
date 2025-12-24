@@ -68,6 +68,9 @@ importers:
       react-dom:
         specifier: ^19.1.0
         version: 19.1.0(react@19.1.0)
+      react-snowfall:
+        specifier: ^2.4.0
+        version: 2.4.0(react-dom@19.1.0)(react@19.1.0)
       utils:
         specifier: workspace:*
         version: link:../../packages/utils
@@ -7417,6 +7420,10 @@ packages:
       scheduler: 0.26.0
     dev: false
 
+  /react-fast-compare@3.2.2:
+    resolution: {integrity: sha512-nsO+KSNgo1SbJqJEYRE9ERzo7YtYbou/OqjSQKxV7jcKox7+usiUVZOAC+XnDOABXggQTno0Y1CpVnuWEc1boQ==}
+    dev: false
+
   /react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
 
@@ -7470,6 +7477,17 @@ packages:
       react: 19.0.0
       react-dom: 19.1.0(react@19.0.0)
       react-transition-group: 4.4.5(react-dom@19.1.0)(react@19.0.0)
+    dev: false
+
+  /react-snowfall@2.4.0(react-dom@19.1.0)(react@19.1.0):
+    resolution: {integrity: sha512-KAPMiGnxt11PEgC2pTVrTQsvk5jt1kLUtG+ZamiKLphTZ7GiYT1Aa5kX6jp4jKWq1kqJHchnGT9CDm4g86A5Gg==}
+    peerDependencies:
+      react: "^16.8 ||\_17.x || 18.x || 19.x"
+      react-dom: ^16.8 || 17.x || 18.x || 19.x
+    dependencies:
+      react: 19.1.0
+      react-dom: 19.1.0(react@19.1.0)
+      react-fast-compare: 3.2.2
     dev: false
 
   /react-style-singleton@2.2.3(@types/react@19.1.0)(react@19.0.0):

@@ -1,15 +1,15 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Header from "../components/Header";
 import { motion, AnimatePresence } from "motion/react";
 import { usePathname } from "next/navigation";
 import Snowfall from "react-snowfall";
 
 const layout = ({ children }: { children: React.ReactNode }) => {
-  const [images, setImages] = React.useState<HTMLImageElement[]>([]);
+  const [images, setImages] = useState<HTMLImageElement[]>([]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const snowflake1 = document.createElement("img");
     snowflake1.onload = () => {
       setImages([snowflake1]);
@@ -33,11 +33,8 @@ const layout = ({ children }: { children: React.ReactNode }) => {
         <Snowfall
           snowflakeCount={100}
           speed={[0.5, 2]}
-          // wind={[-0.5, 0.5]}
           radius={[5, 15]}
           images={images}
-          // opacity={[0.2, 0.3]}
-          // rotationSpeed={[-2, 2]}
           style={{
             position: "fixed",
             width: "100vw",

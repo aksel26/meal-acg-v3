@@ -31,7 +31,7 @@ const layout = ({ children }: { children: React.ReactNode }) => {
 
       <main className="container mx-auto px-4 py-6">
         <Snowfall
-          snowflakeCount={100}
+          snowflakeCount={50}
           speed={[0.5, 2]}
           radius={[5, 15]}
           images={images}

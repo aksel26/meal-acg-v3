@@ -22,7 +22,8 @@ async function fetchCalculationData(userName: string, month: number, year?: numb
     throw new Error("User name is required");
   }
 
-  const response = await fetch(`/api/semester/calculate?month=${month}&name=${encodeURIComponent(userName)}`);
+  const yearParam = year || new Date().getFullYear();
+  const response = await fetch(`/api/semester/calculate?month=${month}&year=${yearParam}&name=${encodeURIComponent(userName)}`);
 
   if (!response.ok) {
     const errorData = await response.json();

@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const month = Number(searchParams.get("month"));
+    const year = searchParams.get("year");
 
     if (!month || month < 1 || month > 12) {
       return new Response(
@@ -35,10 +36,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 시작 및 종료 날짜 (현재 연도 기준)
-    const currentYear = new Date().getFullYear();
-    const startDate = new Date(currentYear, month - 1, 1).toISOString();
-    const endDate = new Date(currentYear, month - 1 + 1, 0).toISOString(); // 해당 월의 마지막 날
+    // 시작 및 종료 날짜 (전달받은 연도 또는 현재 연도 기준)
+    const targetYear = year ? parseInt(year) : new Date().getFullYear();
+    const startDate = new Date(targetYear, month - 1, 1).toISOString();
+    const endDate = new Date(targetYear, month - 1 + 1, 0).toISOString(); // 해당 월의 마지막 날
 
     // Google Calendar API를 사용해 이벤트(공휴일) 가져오기
     const response = await calendar.events.list({

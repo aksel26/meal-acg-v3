@@ -37,7 +37,10 @@ importers:
         version: 5.84.1(@tanstack/react-query@5.84.1)(react@19.1.0)
       '@vercel/analytics':
         specifier: ^1.5.0
-        version: 1.5.0(next@15.4.2)(react@19.1.0)
+        version: 1.5.0(next@15.4.10)(react@19.1.0)
+      date-fns:
+        specifier: ^4.1.0
+        version: 4.1.0
       dayjs:
         specifier: ^1.11.13
         version: 1.11.13

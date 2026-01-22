@@ -19,7 +19,10 @@ import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import { NumberTicker } from "@repo/ui/src/number-ticker";
-
+import React, { lazy, Suspense, useEffect, useState } from "react";
+import { UpdateNotificationDialog } from "@/components/UpdateNotificationDialog";
+import { useRouter } from "next/navigation";
+import { motion } from "motion/react";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -37,24 +40,8 @@ export default function DashboardPage() {
   const [currentYear, setCurrentYear] = useState<number>(dayjs().tz("Asia/Seoul").year());
   const [calculationData, setCalculationData] = useState<CalculationData | null>(null);
   const [isHeaderVisible, setIsHeaderVisible] = useState<boolean>(true);
-  const [formData, setFormData] = useState({
-    breakfast: {
-      payer: "",
-      store: "",
-      amount: "",
-    },
-    lunch: {
-      payer: "",
-      store: "",
-      amount: "",
-      attendance: "",
-    },
-    dinner: {
-      payer: "",
-      store: "",
-      amount: "",
-    },
-  });
+  const [showUpdateDialog, setShowUpdateDialog] = useState<boolean>(true);
+  
   const router = useRouter();
 
   // Zustand store
@@ -193,7 +180,7 @@ export default function DashboardPage() {
       <BottomNavigation />
 
       {/* 업데이트 알림 Dialog */}
-      <UpdateNotificationDialog 
+      <UpdateNotificationDialog
         isOpen={showUpdateDialog} 
         onClose={() => setShowUpdateDialog(false)} 
       />

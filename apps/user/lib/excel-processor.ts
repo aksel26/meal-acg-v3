@@ -11,9 +11,7 @@ export interface ExcelHolidayInfo {
   name: string;
 }
 
-export async function streamToBuffer(
-  stream: NodeJS.ReadableStream
-): Promise<Buffer> {
+export async function streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
     stream.on("data", (chunk: Buffer) => chunks.push(chunk));
@@ -61,9 +59,7 @@ export async function processExcelBuffer(
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(buffer as any);
 
-  const targetSheetName =
-    workbook.worksheets.find((ws) => ws.name === "내역")?.name ||
-    workbook.worksheets[0]?.name;
+  const targetSheetName = workbook.worksheets.find((ws) => ws.name === "내역")?.name || workbook.worksheets[0]?.name;
 
   if (!targetSheetName) {
     throw new Error("시트를 찾을 수 없습니다.");
@@ -95,19 +91,11 @@ export async function processExcelBuffer(
   if (operation === "calculation") {
     return calculateFromData(jsonData, targetMonth);
   } else {
-    return extractMealData(
-      jsonData,
-      targetYear || new Date().getFullYear(),
-      targetMonth,
-      targetDay
-    );
+    return extractMealData(jsonData, targetYear || new Date().getFullYear(), targetMonth, targetDay);
   }
 }
 
-function calculateFromData(
-  jsonData: any[],
-  targetMonth: number
-): CalculationResult {
+function calculateFromData(jsonData: any[], targetMonth: number): CalculationResult {
   let workDays = 0;
   let holidayWorkDays = 0;
   let vacationDays = 0;
@@ -126,16 +114,10 @@ function calculateFromData(
       const amount = parseFloat(row[8]) || 0;
 
       // workType이 객체인 경우와 문자열인 경우 모두 처리
-      const workTypeText =
-        typeof workType === "object" && workType?.result
-          ? workType.result
-          : String(workType || "");
+      const workTypeText = typeof workType === "object" && workType?.result ? workType.result : String(workType || "");
 
       // attendance도 객체인 경우와 문자열인 경우 모두 처리
-      const attendanceText =
-        typeof attendance === "object" && attendance?.result
-          ? attendance.result
-          : String(attendance || "");
+      const attendanceText = typeof attendance === "object" && attendance?.result ? attendance.result : String(attendance || "");
 
       if (workTypeText.includes("업무일")) {
         workDays++;
@@ -145,7 +127,7 @@ function calculateFromData(
         holidayWorkDays++;
       }
 
-      if (attendanceText.includes("휴무")) {
+      if (attendanceText.includes("휴무") || attendanceText.includes("재택")) {
         vacationDays++;
       }
 
@@ -157,11 +139,7 @@ function calculateFromData(
     }
   }
 
-  const availableAmount =
-    workDays * 10000 +
-    holidayWorkDays * 10000 -
-    vacationDays * 10000 -
-    individualCount * 10000;
+  const availableAmount = workDays * 10000 + holidayWorkDays * 10000 - vacationDays * 10000 - individualCount * 10000;
   const balance = availableAmount - totalUsed;
 
   return {
@@ -174,12 +152,7 @@ function calculateFromData(
   };
 }
 
-function extractMealData(
-  jsonData: any[],
-  targetYear: number,
-  targetMonth: number,
-  targetDay?: number
-): MealData[] {
+function extractMealData(jsonData: any[], targetYear: number, targetMonth: number, targetDay?: number): MealData[] {
   const mealData: MealData[] = [];
 
   for (let i = 1; i < jsonData.length; i++) {
@@ -188,11 +161,7 @@ function extractMealData(
     const month = parseInt(row[1]) || 0;
     const day = parseInt(row[2]) || 0;
 
-    if (
-      year === targetYear &&
-      month === targetMonth &&
-      (targetDay === undefined || day === targetDay)
-    ) {
+    if (year === targetYear && month === targetMonth && (targetDay === undefined || day === targetDay)) {
       const attendance = row[6] || "";
       const dateString = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
@@ -244,24 +213,14 @@ function extractMealData(
   return mealData;
 }
 
-export async function readCellFromBuffer(
-  buffer: Buffer,
-  cellAddress: string,
-  sheetName?: string
-): Promise<any> {
+export async function readCellFromBuffer(buffer: Buffer, cellAddress: string, sheetName?: string): Promise<any> {
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(buffer as any);
 
-  const targetWorksheet = sheetName
-    ? workbook.getWorksheet(sheetName)
-    : workbook.worksheets[0];
+  const targetWorksheet = sheetName ? workbook.getWorksheet(sheetName) : workbook.worksheets[0];
 
   if (!targetWorksheet) {
-    throw new Error(
-      sheetName
-        ? `시트 '${sheetName}'를 찾을 수 없습니다.`
-        : "시트를 찾을 수 없습니다."
-    );
+    throw new Error(sheetName ? `시트 '${sheetName}'를 찾을 수 없습니다.` : "시트를 찾을 수 없습니다.");
   }
 
   const cell = targetWorksheet.getCell(cellAddress);
@@ -299,16 +258,11 @@ export interface MealSubmitData {
   };
 }
 
-export async function updateExcelMealData(
-  buffer: Buffer,
-  mealData: MealSubmitData
-): Promise<Buffer> {
+export async function updateExcelMealData(buffer: Buffer, mealData: MealSubmitData): Promise<Buffer> {
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(buffer as any);
 
-  const targetSheetName =
-    workbook.worksheets.find((ws) => ws.name === "내역")?.name ||
-    workbook.worksheets[0]?.name;
+  const targetSheetName = workbook.worksheets.find((ws) => ws.name === "내역")?.name || workbook.worksheets[0]?.name;
 
   if (!targetSheetName) {
     throw new Error("시트를 찾을 수 없습니다.");
@@ -342,31 +296,22 @@ export async function updateExcelMealData(
   }
 
   if (rowIndex === -1) {
-    throw new Error(
-      `${targetYear}-${targetMonth}-${targetDay} 날짜의 행을 찾을 수 없습니다.`
-    );
+    throw new Error(`${targetYear}-${targetMonth}-${targetDay} 날짜의 행을 찾을 수 없습니다.`);
   }
 
-  console.log(
-    `Found target row: ${rowIndex} for date ${targetYear}-${targetMonth}-${targetDay}`
-  );
+  console.log(`Found target row: ${rowIndex} for date ${targetYear}-${targetMonth}-${targetDay}`);
 
   // 근태 정보는 H열에 입력 (lunch 데이터에서 가져옴)
   const attendanceCell = worksheet.getCell(`H${rowIndex}`);
   attendanceCell.value = mealData.lunch.attendance;
 
   // 조식 데이터 입력 (P, Q, R열)
-  if (
-    mealData.breakfast.store ||
-    mealData.breakfast.amount ||
-    mealData.breakfast.payer
-  ) {
+  if (mealData.breakfast.store || mealData.breakfast.amount || mealData.breakfast.payer) {
     const breakfastStoreCellObj = worksheet.getCell(`P${rowIndex}`);
     breakfastStoreCellObj.value = mealData.breakfast.store;
 
     const breakfastAmountCellObj = worksheet.getCell(`Q${rowIndex}`);
-    breakfastAmountCellObj.value =
-      mealData.breakfast.amount > 0 ? mealData.breakfast.amount : "";
+    breakfastAmountCellObj.value = mealData.breakfast.amount > 0 ? mealData.breakfast.amount : "";
 
     const breakfastPayerCellObj = worksheet.getCell(`R${rowIndex}`);
     breakfastPayerCellObj.value = mealData.breakfast.payer;
@@ -378,25 +323,19 @@ export async function updateExcelMealData(
     lunchStoreCellObj.value = mealData.lunch.store;
 
     const lunchAmountCellObj = worksheet.getCell(`J${rowIndex}`);
-    lunchAmountCellObj.value =
-      mealData.lunch.amount > 0 ? mealData.lunch.amount : "";
+    lunchAmountCellObj.value = mealData.lunch.amount > 0 ? mealData.lunch.amount : "";
 
     const lunchPayerCellObj = worksheet.getCell(`L${rowIndex}`);
     lunchPayerCellObj.value = mealData.lunch.payer;
   }
 
   // 석식 데이터 입력 (M, N, O열)
-  if (
-    mealData.dinner.store ||
-    mealData.dinner.amount ||
-    mealData.dinner.payer
-  ) {
+  if (mealData.dinner.store || mealData.dinner.amount || mealData.dinner.payer) {
     const dinnerStoreCellObj = worksheet.getCell(`M${rowIndex}`);
     dinnerStoreCellObj.value = mealData.dinner.store;
 
     const dinnerAmountCellObj = worksheet.getCell(`N${rowIndex}`);
-    dinnerAmountCellObj.value =
-      mealData.dinner.amount > 0 ? mealData.dinner.amount : "";
+    dinnerAmountCellObj.value = mealData.dinner.amount > 0 ? mealData.dinner.amount : "";
 
     const dinnerPayerCellObj = worksheet.getCell(`O${rowIndex}`);
     dinnerPayerCellObj.value = mealData.dinner.payer;
@@ -417,10 +356,7 @@ export async function updateExcelMealData(
 }
 
 // Helper function to extract data from worksheet in the format expected by existing code
-function extractDataFromWorksheet(
-  worksheet: ExcelJS.Worksheet,
-  range: string
-): any[][] {
+function extractDataFromWorksheet(worksheet: ExcelJS.Worksheet, range: string): any[][] {
   const result: any[][] = [];
   const [startRange, endRange] = range.split(":");
   if (!startRange || !endRange) {
@@ -435,11 +371,7 @@ function extractDataFromWorksheet(
   const colStart = columnToIndex(startCol);
   const colEnd = columnToIndex(endCol);
 
-  for (
-    let rowNum = startRow;
-    rowNum <= Math.min(startRow + 10, endRow);
-    rowNum++
-  ) {
+  for (let rowNum = startRow; rowNum <= Math.min(startRow + 10, endRow); rowNum++) {
     // 처음 10행만 디버깅
     const row: any[] = [];
     for (let colNum = colStart; colNum <= colEnd; colNum++) {
@@ -456,11 +388,7 @@ function extractDataFromWorksheet(
   }
 
   // 나머지 행들은 로그 없이 처리
-  for (
-    let rowNum = Math.min(startRow + 11, endRow);
-    rowNum <= endRow;
-    rowNum++
-  ) {
+  for (let rowNum = Math.min(startRow + 11, endRow); rowNum <= endRow; rowNum++) {
     const row: any[] = [];
     for (let colNum = colStart; colNum <= colEnd; colNum++) {
       const col = indexToColumn(colNum);
@@ -495,17 +423,11 @@ function indexToColumn(index: number): string {
 }
 
 // 엑셀에서 현재 월의 공휴일 정보 추출 (F열='휴일', G열에 값이 있는 경우)
-export async function getHolidaysFromExcel(
-  buffer: Buffer,
-  targetMonth: number,
-  targetYear?: number
-): Promise<ExcelHolidayInfo[]> {
+export async function getHolidaysFromExcel(buffer: Buffer, targetMonth: number, targetYear?: number): Promise<ExcelHolidayInfo[]> {
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(buffer as any);
 
-  const targetSheetName =
-    workbook.worksheets.find((ws) => ws.name === "내역")?.name ||
-    workbook.worksheets[0]?.name;
+  const targetSheetName = workbook.worksheets.find((ws) => ws.name === "내역")?.name || workbook.worksheets[0]?.name;
 
   if (!targetSheetName) {
     throw new Error("시트를 찾을 수 없습니다.");
@@ -533,12 +455,7 @@ export async function getHolidaysFromExcel(
     const holidayName = row[5] || ""; // G열 (공휴일명)
 
     // 해당 년도와 월에 해당하고, F열이 '휴일'이며, G열에 값이 있는 경우
-    if (
-      year === currentYear &&
-      month === targetMonth &&
-      String(workType).includes("휴일") &&
-      holidayName
-    ) {
+    if (year === currentYear && month === targetMonth && String(workType).includes("휴일") && holidayName) {
       const dateString = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
       holidays.push({
         rowIndex: i + 3, // B3부터 시작하므로 +3
@@ -546,9 +463,7 @@ export async function getHolidaysFromExcel(
         name: String(holidayName),
       });
 
-      console.log(
-        `Found holiday: ${dateString} - ${holidayName} (row ${i + 3})`
-      );
+      console.log(`Found holiday: ${dateString} - ${holidayName} (row ${i + 3})`);
     }
   }
 
@@ -557,18 +472,11 @@ export async function getHolidaysFromExcel(
 }
 
 // 구글 캘린더 공휴일과 엑셀 공휴일 비교 후 업데이트
-export async function updateExcelHolidays(
-  buffer: Buffer,
-  googleHolidays: HolidayData[],
-  targetMonth: number,
-  targetYear?: number
-): Promise<Buffer> {
+export async function updateExcelHolidays(buffer: Buffer, googleHolidays: HolidayData[], targetMonth: number, targetYear?: number): Promise<Buffer> {
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(buffer as any);
 
-  const targetSheetName =
-    workbook.worksheets.find((ws) => ws.name === "내역")?.name ||
-    workbook.worksheets[0]?.name;
+  const targetSheetName = workbook.worksheets.find((ws) => ws.name === "내역")?.name || workbook.worksheets[0]?.name;
 
   if (!targetSheetName) {
     throw new Error("시트를 찾을 수 없습니다.");
@@ -580,11 +488,7 @@ export async function updateExcelHolidays(
   }
 
   // 현재 엑셀의 공휴일 정보 가져오기
-  const excelHolidays = await getHolidaysFromExcel(
-    buffer,
-    targetMonth,
-    targetYear
-  );
+  const excelHolidays = await getHolidaysFromExcel(buffer, targetMonth, targetYear);
 
   console.log(`=== Holiday Comparison ===`);
   console.log(`Google Calendar holidays: ${googleHolidays.length}`);
@@ -605,9 +509,7 @@ export async function updateExcelHolidays(
       const day = holidayDate.getDate();
 
       // 해당 날짜가 이미 엑셀에 공휴일로 등록되어 있는지 확인
-      const existingHoliday = excelHolidays.find(
-        (h) => h.date === googleHoliday.date
-      );
+      const existingHoliday = excelHolidays.find((h) => h.date === googleHoliday.date);
 
       if (!existingHoliday && year === currentYear && month === targetMonth) {
         // 해당 날짜의 행 찾기
@@ -625,9 +527,7 @@ export async function updateExcelHolidays(
         }
 
         if (rowIndex !== -1) {
-          console.log(
-            `Updating row ${rowIndex} for ${googleHoliday.date} - ${googleHoliday.name}`
-          );
+          console.log(`Updating row ${rowIndex} for ${googleHoliday.date} - ${googleHoliday.name}`);
 
           // F열에 '휴일' 설정 (빨간색 배경)
           const workTypeCell = worksheet.getCell(`F${rowIndex}`);
@@ -645,9 +545,7 @@ export async function updateExcelHolidays(
             color: { argb: "FFFF0000" }, // 빨간색 텍스트
           };
 
-          console.log(
-            `Updated: F${rowIndex}='휴일', G${rowIndex}='${googleHoliday.name}'`
-          );
+          console.log(`Updated: F${rowIndex}='휴일', G${rowIndex}='${googleHoliday.name}'`);
         } else {
           console.log(`Row not found for date: ${googleHoliday.date}`);
         }
@@ -663,13 +561,9 @@ export async function updateExcelHolidays(
 }
 
 // 구글 캘린더 API에서 공휴일 데이터 가져오기
-export async function fetchGoogleHolidays(
-  month: number
-): Promise<HolidayData[]> {
+export async function fetchGoogleHolidays(month: number): Promise<HolidayData[]> {
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/holidays?month=${month}`
-    );
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/holidays?month=${month}`);
     console.log("response:", response);
 
     if (!response.ok) {

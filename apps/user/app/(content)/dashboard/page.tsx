@@ -18,14 +18,7 @@ import { useMealDrawerStore } from "@/stores/mealDrawerStore";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
-<<<<<<< HEAD
 import { NumberTicker } from "@repo/ui/src/number-ticker";
-import { UpdateNotificationDialog } from "@/components/UpdateNotificationDialog";
-=======
-import { motion } from "motion/react";
-import { useRouter } from "next/navigation";
-import React, { Suspense, lazy, useEffect, useState } from "react";
->>>>>>> 5238df0dcab2478260c070b70a3f4b9141f58c26
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -43,9 +36,7 @@ export default function DashboardPage() {
   const [currentMonth, setCurrentMonth] = useState<number>(dayjs().tz("Asia/Seoul").month() + 1);
   const [currentYear, setCurrentYear] = useState<number>(dayjs().tz("Asia/Seoul").year());
   const [calculationData, setCalculationData] = useState<CalculationData | null>(null);
-<<<<<<< HEAD
   const [isHeaderVisible, setIsHeaderVisible] = useState<boolean>(true);
-  const [showUpdateDialog, setShowUpdateDialog] = useState<boolean>(false);
   const [formData, setFormData] = useState({
     breakfast: {
       payer: "",
@@ -64,8 +55,6 @@ export default function DashboardPage() {
       amount: "",
     },
   });
-=======
->>>>>>> 5238df0dcab2478260c070b70a3f4b9141f58c26
   const router = useRouter();
 
   // Zustand store

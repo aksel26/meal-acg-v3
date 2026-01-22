@@ -1,11 +1,27 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Header from "../components/Header";
 import { motion, AnimatePresence } from "motion/react";
 import { usePathname } from "next/navigation";
+import Snowfall from "react-snowfall";
 
 const layout = ({ children }: { children: React.ReactNode }) => {
+  const [images, setImages] = useState<HTMLImageElement[]>([]);
+
+  useEffect(() => {
+    const snowflake1 = document.createElement("img");
+    snowflake1.onload = () => {
+      setImages([snowflake1]);
+    };
+    snowflake1.onerror = () => {
+      console.error(
+        "이미지 로드 실패: /images/snowflake.png 경로를 확인해주세요."
+      );
+    };
+    snowflake1.src = "/images/snowflake.png";
+  }, []);
+
   const pathname = usePathname();
 
   return (
@@ -14,6 +30,17 @@ const layout = ({ children }: { children: React.ReactNode }) => {
       <Header />
 
       <main className="container mx-auto px-4 py-6">
+        <Snowfall
+          snowflakeCount={30}
+          speed={[0.5, 2]}
+          radius={[5, 15]}
+          images={images}
+          style={{
+            position: "fixed",
+            width: "100vw",
+            height: "100vh",
+          }}
+        />
         <AnimatePresence mode="wait">
           <motion.div
             key={pathname}

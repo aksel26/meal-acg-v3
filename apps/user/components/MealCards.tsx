@@ -127,6 +127,10 @@ export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, 
     return Boolean(attendance && attendance.includes("휴무"));
   };
 
+  const isRemoteWork = (attendance: string): boolean => {
+    return Boolean(attendance && attendance.includes("재택근무"));
+  };
+
   return (
     <Card className="space-y-4 bg-white border-none rounded-lg shadow-none mt-8">
       {/* Header */}
@@ -158,6 +162,31 @@ export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, 
               }}
               variant="outline"
               className="border-orange-200 text-orange-600 hover:bg-orange-50 rounded-lg py-5.5 font-medium w-full"
+            >
+              근태 상태 수정하기
+            </Button>
+          </CardFooter>
+        </>
+      ) : currentMealData && isRemoteWork(currentMealData.attendance) ? (
+        <>
+          <CardContent className="flex flex-col justify-center items-center text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mb-4">
+              <span className="text-2xl">
+                <Image src={"/icons/homeOffice.png"} alt={"warning"} width={40} height={40} className="w-9 h-9 object-contain" />
+              </span>
+            </div>
+            <p className="text-green-600 text-base font-medium mb-2 text-center">재택근무</p>
+            <p className="text-gray-500 text-sm text-center">재택근무일에는 식대가 제공되지 않습니다</p>
+          </CardContent>
+          <CardFooter>
+            <Button
+              onClick={() => {
+                if (currentMealData && onHolidayEdit) {
+                  onHolidayEdit(currentMealData);
+                }
+              }}
+              variant="outline"
+              className="border-green-200 text-green-600 hover:bg-green-50 rounded-lg py-5.5 font-medium w-full"
             >
               근태 상태 수정하기
             </Button>

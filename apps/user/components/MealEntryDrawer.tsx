@@ -28,11 +28,30 @@ interface MealEntryDrawerProps {
   onDeleteMeal?: (date: string) => Promise<void>;
 }
 
-export default function MealEntryDrawer({ onFormSubmit, onDeleteMeal }: MealEntryDrawerProps) {
-  // Zustand store 사용
-  const { isOpen, isEditMode, selectedMealType, selectedDate, formData, closeDrawer, setSelectedMealType, updateFormField } = useMealDrawerStore();
+const mealTypeOptions = [
+  {
+    value: "breakfast",
+    label: "조식",
+    emoji: "🌅",
+    color: "bg-orange-50 border-orange-200 text-orange-800",
+    hoverColor: "hover:bg-orange-100",
+  },
+  {
+    value: "lunch",
+    label: "중식",
+    emoji: "🍽️",
+    color: "bg-blue-50 border-blue-200 text-blue-800",
+    hoverColor: "hover:bg-blue-100",
+  },
+  {
+    value: "dinner",
+    label: "석식",
+    emoji: "🌙",
+    color: "bg-indigo-50 border-indigo-200 text-indigo-800",
+    hoverColor: "hover:bg-indigo-100",
+  },
+];
 
-<<<<<<< HEAD
 const attendanceOptions = [
   { value: "근무", label: "근무", icon: "/icons/onigiri.png", color: "text-green-700" },
   {
@@ -74,7 +93,6 @@ const businessNumbers = [
   { name: "꿈꾸는메밀", businessNumber: "680-88-02909(일반)" },
   { name: "퍼부어", businessNumber: "120-81-85957(일반)" },
   { name: "우미학", businessNumber: "120-81-85957(일반)" },
-  { name: "아울", businessNumber: "581-85-01150(일반)" },
   { name: "니뽕내뽕", businessNumber: "488-81-01718(일반)" },
   { name: "서래함박", businessNumber: "120-81-85957(일반)" },
   { name: "신성식당", businessNumber: "627-87-02105(폐업자)" },
@@ -92,13 +110,12 @@ export default function MealEntryDrawer({
   onInputChange,
   onDeleteMeal,
 }: MealEntryDrawerProps) {
-=======
->>>>>>> 5238df0dcab2478260c070b70a3f4b9141f58c26
   const { users, isLoading: usersLoading, error: usersError, fetchUsers } = useUsers();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isBusinessDialogOpen, setIsBusinessDialogOpen] = useState(false);
   const [businessSearchTerm, setBusinessSearchTerm] = useState("");
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   // 현재 선택된 식사 타입의 form 데이터 가져오기
   const currentFormData = formData[selectedMealType];
@@ -112,17 +129,10 @@ export default function MealEntryDrawer({
 
   // Handle automatic amount setting for 근무(개별식사 / 식사안함) and set default attendance
   useEffect(() => {
-    if (isOpen && selectedMealType === "lunch") {
-      const lunchFormData = formData.lunch;
-      const currentAttendance = lunchFormData.attendance || "";
-
-      // Set default attendance to "근무" if empty
-      if (!currentAttendance) {
-        updateFormField("attendance", "근무");
-      }
-
-      if (currentAttendance === "근무(개별식사 / 식사안함)" && lunchFormData.amount !== "") {
-        updateFormField("amount", "");
+    if (selectedMealType === "lunch") {
+      const currentAttendance = "attendance" in currentFormData ? (currentFormData as { attendance: string }).attendance : "";
+      if (currentAttendance === "근무(개별식사 / 식사안함)" && currentFormData.amount !== "") {
+        onInputChange("amount", "");
       }
     }
   }, [isOpen, selectedMealType, updateFormField, formData.lunch.attendance, formData.lunch.amount]);
@@ -177,6 +187,17 @@ export default function MealEntryDrawer({
 
         <form
           onSubmit={async (e) => {
+            e.preventDefault();
+            // Validation logic
+            if (selectedMealType === "lunch") {
+              const lunchData = currentFormData as { attendance: string };
+              if (!lunchData.attendance) {
+                setValidationError("근태를 선택해주세요.");
+                return;
+              }
+            }
+            setValidationError(null);
+
             setIsSubmitting(true);
             try {
               await onFormSubmit(e);
@@ -198,7 +219,10 @@ export default function MealEntryDrawer({
                 <Button
                   key={meal.value}
                   type="button"
-                  onClick={() => setSelectedMealType(meal.value as "breakfast" | "lunch" | "dinner")}
+                  onClick={() => {
+                    setSelectedMealType(meal.value as "breakfast" | "lunch" | "dinner");
+                    setValidationError(null); // Clear validation error on type change
+                  }}
                   className={`
                      border transition-all duration-200 h-8 sm:h-10 text-[10.5px] sm:text-xs rounded-md hover:bg-blue-50 hover:scale-102 hover:border-blue-300
                     ${selectedMealType === meal.value ? `${meal.color} shadow-lg scale-105` : `bg-white text-gray-700 ${meal.hoverColor}  hover:bg-blue-100 hover:scale-102`}
@@ -298,8 +322,8 @@ export default function MealEntryDrawer({
                 <Image src="/icons/attendance.png" alt="근태" width={16} height={16} className="w-4 h-4 object-contain" />
                 근태
               </Label>
-              <Select value={"attendance" in currentFormData ? (currentFormData as { attendance: string }).attendance || "" : ""} onValueChange={(value) => updateFormField("attendance", value)}>
-                <SelectTrigger className="w-full rounded-lg border-gray-300 text-sm">
+              <Select value={"attendance" in currentFormData ? (currentFormData as { attendance: string }).attendance : ""} onValueChange={(value) => onInputChange("attendance", value)}>
+                <SelectTrigger className="w-full rounded-lg border-gray-300 text-xs">
                   <SelectValue placeholder="근태를 선택해주세요" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
@@ -313,6 +337,7 @@ export default function MealEntryDrawer({
                   ))}
                 </SelectContent>
               </Select>
+              {validationError && <p className="text-xs text-red-500 mt-1 ml-1">{validationError}</p>}
             </div>
           )}
         </form>
@@ -330,6 +355,16 @@ export default function MealEntryDrawer({
           <Button
             type="submit"
             onClick={async (e) => {
+              // Validation logic
+              if (selectedMealType === "lunch") {
+                const lunchData = currentFormData as { attendance: string };
+                if (!lunchData.attendance) {
+                  setValidationError("근태를 선택해주세요.");
+                  return;
+                }
+              }
+              setValidationError(null);
+
               setIsSubmitting(true);
               try {
                 await onFormSubmit(e);

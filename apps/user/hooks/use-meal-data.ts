@@ -31,7 +31,7 @@ async function fetchMealData(userName: string, month: number, year: number): Pro
     throw new Error("User name is required");
   }
 
-  const response = await fetch(`/api/calendar/meals?month=${month}&name=${encodeURIComponent(userName)}`);
+  const response = await fetch(`/api/calendar/meals?month=${month}&year=${year}&name=${encodeURIComponent(userName)}`);
 
   if (!response.ok) {
     const errorData = await response.json();

@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const date = searchParams.get("date"); // YYYY-MM-DD format
     const month = searchParams.get("month"); // MM format for month view
+    const year = searchParams.get("year"); // YYYY format for year
     const name = searchParams.get("name");
 
     if (!name) {
@@ -27,19 +28,19 @@ export async function GET(request: NextRequest) {
     }
 
     console.log(`=== Calendar Meals API ===`);
-    console.log(`Name: ${name}, Date: ${date}, Month: ${month}`);
+    console.log(`Name: ${name}, Date: ${date}, Month: ${month}, Year: ${year}`);
 
     let targetYear: number;
     let targetMonth: number;
     let targetDay: number | undefined;
 
     if (date) {
-      const [year, monthStr, dayStr] = date.split("-");
-      targetYear = parseInt(year || "");
+      const [yearStr, monthStr, dayStr] = date.split("-");
+      targetYear = parseInt(yearStr || "");
       targetMonth = parseInt(monthStr || "");
       targetDay = parseInt(dayStr || "");
     } else if (month) {
-      targetYear = new Date().getFullYear();
+      targetYear = year ? parseInt(year) : new Date().getFullYear();
       targetMonth = parseInt(month);
     } else {
       return NextResponse.json({ error: "Invalid date parameters" }, { status: 400 });

@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const month = parseInt(searchParams.get("month") || "1");
+    const year = searchParams.get("year");
     const name = searchParams.get("name");
 
     if (!name) {
@@ -26,8 +27,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const targetYear = year ? parseInt(year) : new Date().getFullYear();
+
     // 1. 폴더 찾기 (Firebase Storage)
-    const folderPath = await findSemesterFolder(month);
+    const folderPath = await findSemesterFolder(month, targetYear);
     if (!folderPath) {
       return NextResponse.json(
         { error: "Semester folder not found" },
@@ -54,7 +57,7 @@ export async function GET(request: NextRequest) {
         const result = (await processExcelBuffer(
           buffer,
           month,
-          undefined,
+          targetYear,
           undefined,
           "calculation"
         )) as CalculationResult;

@@ -4,11 +4,18 @@
  */
 
 export const queryKeys = {
-  // 계산 관련 쿼리
+  // 계산 관련 쿼리 (레거시 호환용)
   calculation: {
     all: ["calculation"] as const,
     byUser: (userName: string) => ["calculation", userName] as const,
     byUserAndMonth: (userName: string, month: number, year?: number) => ["calculation", userName, month, year || new Date().getFullYear()] as const,
+  },
+
+  // 식대 통계 쿼리 (신규)
+  mealStats: {
+    all: ["mealStats"] as const,
+    byUser: (userId: string) => ["mealStats", userId] as const,
+    byUserAndMonth: (userId: string, month: number, year?: number) => ["mealStats", userId, month, year || new Date().getFullYear()] as const,
   },
 
   // 식사 데이터 관련 쿼리

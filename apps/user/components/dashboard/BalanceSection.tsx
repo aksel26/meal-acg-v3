@@ -30,8 +30,8 @@ export default function BalanceSection({ currentMonth, calculationData }: Balanc
   };
 
   const balance = useMemo(() => {
-    if (calculationData?.availableAmount && calculationData?.totalUsed !== undefined) {
-      const result = calculationData.availableAmount - calculationData.totalUsed;
+    if (calculationData?.allowanceAmount !== undefined && calculationData?.totalUsed !== undefined) {
+      const result = calculationData.allowanceAmount - calculationData.totalUsed;
       return {
         value: result.toLocaleString("ko-KR"),
         isNegative: result < 0,
@@ -72,7 +72,7 @@ export default function BalanceSection({ currentMonth, calculationData }: Balanc
             </Button>
           </div>
           {calculationData ? (
-            <ChartPieDonut availableAmount={calculationData.availableAmount || 0} totalUsed={calculationData.totalUsed || 0} className="relative" />
+            <ChartPieDonut availableAmount={calculationData.allowanceAmount || 0} totalUsed={calculationData.totalUsed || 0} className="relative" />
           ) : (
             <div className="relative h-64 bg-gray-50 rounded-lg animate-pulse flex items-center justify-center">
               <div className="w-32 h-32 bg-gray-200 rounded-full"></div>

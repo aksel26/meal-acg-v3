@@ -8,14 +8,14 @@ import { useCalculationData } from "@/hooks/use-calculation-data";
 import { CalculationData } from "./types";
 
 interface StatsSectionProps {
-  userName: string;
+  userId: string;
   month: number;
   year: number;
   onDataChange?: (data: CalculationData | null) => void;
 }
 
-function CalculationResult({ userName, month, year, onDataChange }: StatsSectionProps) {
-  const { data, isLoading, error, refetch } = useCalculationData(userName, month, year);
+function CalculationResult({ userId, month, year, onDataChange }: StatsSectionProps) {
+  const { data, isLoading, error, refetch } = useCalculationData(userId, month, year);
 
   useEffect(() => {
     onDataChange?.(data || null);
@@ -61,24 +61,28 @@ function CalculationResult({ userName, month, year, onDataChange }: StatsSection
     );
   }
 
+  const formatCurrency = (amount: number) => {
+    return amount.toLocaleString() + "원";
+  };
+
   const stats = [
     {
-      label: "근무일",
-      value: data.workDays,
+      label: "사용가능액",
+      value: formatCurrency(data.allowanceAmount),
       bg: "bg-white",
       text: "text-[#0a2165]",
     },
     {
-      label: "휴일근무",
-      value: data.holidayWorkDays,
+      label: "사용금액",
+      value: formatCurrency(data.totalUsed),
       bg: "bg-white",
       text: "text-[#0a2165]",
     },
     {
-      label: "휴가일",
-      value: data.vacationDays,
-      bg: "bg-orange-50",
-      text: "text-orange-400",
+      label: "잔액",
+      value: formatCurrency(data.balance),
+      bg: data.balance >= 0 ? "bg-green-50" : "bg-red-50",
+      text: data.balance >= 0 ? "text-green-600" : "text-red-500",
     },
   ];
 
@@ -108,7 +112,7 @@ function CalculationResult({ userName, month, year, onDataChange }: StatsSection
   );
 }
 
-export default function StatsSection({ userName, month, year, onDataChange }: StatsSectionProps) {
+export default function StatsSection({ userId, month, year, onDataChange }: StatsSectionProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
@@ -120,7 +124,7 @@ export default function StatsSection({ userName, month, year, onDataChange }: St
       }}
     >
       <Card className="mb-8 p-0 border-none shadow-none bg-transparent">
-        <CalculationResult userName={userName} month={month} year={year} onDataChange={onDataChange} />
+        <CalculationResult userId={userId} month={month} year={year} onDataChange={onDataChange} />
       </Card>
     </motion.div>
   );

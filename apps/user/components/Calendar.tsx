@@ -93,16 +93,18 @@ export default function CalendarComponent({ onDateSelect, selectedDate, onMonthC
       };
     }
 
-    // attendance가 비어있을 때 breakfast/dinner 체크
+    // attendance가 비어있을 때 breakfast/lunch/dinner 체크
     if (!attendance) {
       const icons: string[] = [];
-      // dinner가 존재하면 추가
-      if (meal?.dinner) {
-        icons.push("/icons/dinner.png");
-      }
-      // breakfast가 존재하면 추가
-      if (meal?.breakfast) {
-        icons.push("/icons/breakfast.png");
+
+      // 실제 데이터가 있는지 확인 (amount > 0 또는 store가 있는 경우)
+      const hasBreakfast = meal?.breakfast && (meal.breakfast.amount > 0 || meal.breakfast.store);
+      const hasLunch = meal?.lunch && (meal.lunch.amount > 0 || meal.lunch.store);
+      const hasDinner = meal?.dinner && (meal.dinner.amount > 0 || meal.dinner.store);
+
+      // 식대 기록이 있으면 onigiri 아이콘 표시
+      if (hasBreakfast || hasLunch || hasDinner) {
+        icons.push("/icons/onigiri.png");
       }
 
       if (icons.length > 0) {

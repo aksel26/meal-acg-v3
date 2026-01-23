@@ -1,12 +1,8 @@
 export interface CalculationData {
-  fileName: string;
-  month: number;
-  workDays: number;
-  holidayWorkDays: number;
-  vacationDays: number;
-  availableAmount: number;
+  allowanceAmount: number;
   totalUsed: number;
   balance: number;
+  mealCount: number;
 }
 
 export interface MealData {

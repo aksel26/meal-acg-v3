@@ -16,6 +16,8 @@ import Character from "@/public/images/login-character.png";
 import Calendar from "@/public/images/Calendar.png";
 import Coffee from "@/public/images/Coffee.png";
 import Lunch from "@/public/images/lunch.png";
+import { useUserStore } from "@/stores/userStore";
+
 export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,6 +26,7 @@ export default function HomePage() {
     password: "",
   });
   const router = useRouter();
+  const login = useUserStore((state) => state.login);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -39,38 +42,27 @@ export default function HomePage() {
     setError(null);
 
     try {
-      const authUrl = `${process.env.NEXT_PUBLIC_AUTH_URL}/login`;
-      if (!authUrl) {
-        throw new Error("AUTH_URL이 설정되지 않았습니다.");
-      }
-
-      const response = await fetch(authUrl, {
+      const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          id: formData.id,
+          login_id: formData.id,
           password: formData.password,
         }),
       });
 
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.message || "로그인에 실패했습니다.");
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "로그인에 실패했습니다.");
       }
 
-      // 로그인 성공 시 checkAuth페이지로 이동
-      if (data.data.userName) {
-        console.log("data:", data);
-        localStorage.setItem("token", data.data.accessToken);
-        localStorage.setItem("name", data.data.userName);
-        localStorage.setItem("grade", data.data.gradeName);
-        // router.push("/checkAuth");
+      // 로그인 성공 시 Zustand 스토어에 저장 후 대시보드로 이동
+      if (data.data.full_name) {
+        login(data.data.user_id, data.data.full_name, data.data.role);
         router.push("/dashboard");
-        // setLoginData(data.data);
-        // setShowSuccessModal(true);
       } else {
         throw new Error("사용자 이름을 받아올 수 없습니다.");
       }

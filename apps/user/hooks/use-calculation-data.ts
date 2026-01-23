@@ -1,45 +1,55 @@
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 
-interface CalculationData {
-  fileName: string;
-  month: number;
-  workDays: number;
-  holidayWorkDays: number;
-  vacationDays: number;
-  availableAmount: number;
+interface MealStatsData {
+  allowanceAmount: number;
   totalUsed: number;
   balance: number;
+  mealCount: number;
 }
 
-interface CalculationResponse {
+interface MealStatsResponse {
   success: boolean;
-  data: CalculationData;
+  data: MealStatsData;
+  error?: string;
 }
 
-async function fetchCalculationData(userName: string, month: number, year?: number): Promise<CalculationData> {
-  if (!userName) {
-    throw new Error("User name is required");
+async function fetchMealStats(
+  userId: string,
+  month: number,
+  year?: number
+): Promise<MealStatsData> {
+  if (!userId) {
+    throw new Error("User ID is required");
   }
 
   const yearParam = year || new Date().getFullYear();
-  const response = await fetch(`/api/semester/calculate?month=${month}&year=${yearParam}&name=${encodeURIComponent(userName)}`);
+  const response = await fetch(
+    `/api/meals/stats?month=${month}&year=${yearParam}&user_id=${encodeURIComponent(userId)}`
+  );
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.error || "계산 실패");
+    throw new Error(errorData.error || "통계 조회 실패");
   }
 
-  const result: CalculationResponse = await response.json();
+  const result: MealStatsResponse = await response.json();
+  if (!result.success) {
+    throw new Error(result.error || "통계 조회 실패");
+  }
   return result.data;
 }
 
-export function useCalculationData(userName: string, month: number, year?: number) {
+export function useCalculationData(
+  userId: string,
+  month: number,
+  year?: number
+) {
   return useQuery({
-    queryKey: queryKeys.calculation.byUserAndMonth(userName, month, year),
-    queryFn: () => fetchCalculationData(userName, month, year),
-    enabled: !!userName, // userName이 있을 때만 쿼리 실행
-    staleTime: 5 * 60 * 1000, // 5분간 fresh 상태 유지
-    gcTime: 10 * 60 * 1000, // 10분간 캐시 유지 (구 cacheTime)
+    queryKey: queryKeys.mealStats.byUserAndMonth(userId, month, year),
+    queryFn: () => fetchMealStats(userId, month, year),
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 }

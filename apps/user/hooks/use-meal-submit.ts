@@ -4,6 +4,7 @@ import { toast } from "@repo/ui/src/sonner";
 
 interface MealSubmitData {
   userName: string;
+  userId?: string;
   date: string;
   breakfast: {
     store: string;

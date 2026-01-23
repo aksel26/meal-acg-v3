@@ -22,7 +22,10 @@
         "GOOGLE_SHEET_ID_WELFARE_POINTS",
         "GOOGLE_CLIENT_EMAIL",
         "GOOGLE_CALENDAR_API_KEY",
-        "GEMINI_API_KEY"
+        "GEMINI_API_KEY",
+        "NEXT_PUBLIC_SUPABASE_URL",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        "SUPABASE_SERVICE_ROLE_KEY"
       ]
     },
     "lint": {

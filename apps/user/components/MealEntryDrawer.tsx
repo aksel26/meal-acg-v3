@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect, lazy, Suspense, useCallback } from "react";
 import { useUsers } from "@/hooks/useUsers";
 import { useMealDrawerStore } from "@/stores/mealDrawerStore";
 import { Button } from "@repo/ui/src/button";
@@ -15,6 +15,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Search } from "@repo/ui/icons";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui/src/tooltip";
 import { attendanceOptions, businessNumbers, mealTypeOptions } from "@/lib/const/const";
+import { ReceiptScanner } from "./ReceiptScanner";
+import { ReceiptScanResult } from "@/lib/types/receipt-types";
 
 // Lazy load DeleteConfirmDialog
 const DeleteConfirmDialog = lazy(() =>
@@ -86,6 +88,19 @@ export default function MealEntryDrawer({ onFormSubmit, onDeleteMeal }: MealEntr
 
   // 검색 필터링된 사업자 목록
   const filteredBusinessNumbers = businessNumbers.filter((business) => business.name.toLowerCase().includes(businessSearchTerm.toLowerCase()) || business.businessNumber.includes(businessSearchTerm));
+
+  // 영수증 스캔 완료 핸들러
+  const handleScanComplete = useCallback(
+    (result: ReceiptScanResult) => {
+      if (result.storeName) {
+        updateFormField("store", result.storeName);
+      }
+      if (result.totalAmount > 0) {
+        updateFormField("amount", result.totalAmount.toString());
+      }
+    },
+    [updateFormField]
+  );
 
   return (
     <Drawer open={isOpen} onOpenChange={closeDrawer} repositionInputs={false}>
@@ -188,6 +203,15 @@ export default function MealEntryDrawer({ onFormSubmit, onDeleteMeal }: MealEntr
                 className="rounded-lg border-gray-300 text-sm"
               />
             </div>
+          </div>
+
+          {/* 영수증 스캔 */}
+          <div className="space-y-2">
+            <Label className="text-xs sm:text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <Image src="/icons/place.png" alt="영수증 스캔" width={16} height={16} className="w-4 h-4 object-contain" />
+              영수증 스캔
+            </Label>
+            <ReceiptScanner onScanComplete={handleScanComplete} />
           </div>
 
           {/* 사용처 */}

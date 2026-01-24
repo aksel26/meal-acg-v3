@@ -37,7 +37,11 @@ import {
   X,
 } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
-import type { Member, LunchGroupSettings, LunchGroupWithMembers } from "@/lib/supabase/types";
+import type {
+  Member,
+  LunchGroupSettings,
+  LunchGroupWithMembers,
+} from "@/lib/supabase/types";
 
 // 월요일 기준으로 주 시작일 계산
 const getWeekStartDate = (date: dayjs.Dayjs) => {
@@ -62,10 +66,11 @@ function DraggableMemberInList({
   isSelected: boolean;
   onToggleSelect: () => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: member.id,
-    data: { member, isAssigned: false },
-  });
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useDraggable({
+      id: member.id,
+      data: { member, isAssigned: false },
+    });
 
   const style = transform
     ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
@@ -116,10 +121,11 @@ function DraggableMemberInGroup({
   member: Member;
   onRemove: () => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: member.id,
-    data: { member, isAssigned: true },
-  });
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useDraggable({
+      id: member.id,
+      data: { member, isAssigned: true },
+    });
 
   const style = transform
     ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
@@ -208,7 +214,9 @@ function DroppableGroup({
             </span>
           )}
         </div>
-        <span className={`text-xs ${isFull ? "text-emerald-500 font-medium" : "text-gray-400"}`}>
+        <span
+          className={`text-xs ${isFull ? "text-emerald-500 font-medium" : "text-gray-400"}`}
+        >
           {memberCount}/{maxSlots}명
         </span>
       </div>
@@ -238,8 +246,12 @@ function DroppableUnassigned({ children }: { children: React.ReactNode }) {
 export default function LunchGroupsPage() {
   const queryClient = useQueryClient();
   const [currentWeek, setCurrentWeek] = useState(dayjs());
-  const [excludedMemberIds, setExcludedMemberIds] = useState<Set<string>>(new Set());
-  const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set());
+  const [excludedMemberIds, setExcludedMemberIds] = useState<Set<string>>(
+    new Set(),
+  );
+  const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(
+    new Set(),
+  );
   const [groups, setGroups] = useState<GroupState[]>([]);
   const [maxPerGroup, setMaxPerGroup] = useState(4);
   const [isTableCreated, setIsTableCreated] = useState(false);
@@ -271,7 +283,9 @@ export default function LunchGroupsPage() {
   const { data: existingGroups } = useQuery<LunchGroupWithMembers[]>({
     queryKey: queryKeys.lunchGroups.byWeek(weekStartDate),
     queryFn: async () => {
-      const response = await fetch(`/api/lunch-groups?weekStartDate=${weekStartDate}`);
+      const response = await fetch(
+        `/api/lunch-groups?weekStartDate=${weekStartDate}`,
+      );
       if (!response.ok) throw new Error("Failed to fetch groups");
       return response.json();
     },
@@ -302,7 +316,10 @@ export default function LunchGroupsPage() {
 
   // 저장 mutation
   const saveMutation = useMutation({
-    mutationFn: async (data: { weekStartDate: string; groups: GroupState[] }) => {
+    mutationFn: async (data: {
+      weekStartDate: string;
+      groups: GroupState[];
+    }) => {
       const response = await fetch("/api/lunch-groups", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -347,7 +364,10 @@ export default function LunchGroupsPage() {
     }
 
     // 나머지 인원을 받을 조를 랜덤하게 선택
-    const groupNumbers: number[] = Array.from({ length: totalGroups }, (_, i) => i + 1);
+    const groupNumbers: number[] = Array.from(
+      { length: totalGroups },
+      (_, i) => i + 1,
+    );
     // Fisher-Yates shuffle
     for (let i = groupNumbers.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -357,17 +377,22 @@ export default function LunchGroupsPage() {
     }
     const groupsWithExtra = new Set(groupNumbers.slice(0, remainder));
 
-    const newGroups: GroupState[] = Array.from({ length: totalGroups }, (_, i) => ({
-      groupNumber: i + 1,
-      memberIds: [],
-      maxSlots: groupsWithExtra.has(i + 1) ? maxPerGroup + 1 : maxPerGroup,
-    }));
+    const newGroups: GroupState[] = Array.from(
+      { length: totalGroups },
+      (_, i) => ({
+        groupNumber: i + 1,
+        memberIds: [],
+        maxSlots: groupsWithExtra.has(i + 1) ? maxPerGroup + 1 : maxPerGroup,
+      }),
+    );
 
     setGroups(newGroups);
     setIsTableCreated(true);
 
     if (remainder > 0) {
-      toast.success(`${totalGroups}개 조 생성 (${remainder}개 조는 ${maxPerGroup + 1}명)`);
+      toast.success(
+        `${totalGroups}개 조 생성 (${remainder}개 조는 ${maxPerGroup + 1}명)`,
+      );
     } else {
       toast.success(`${totalGroups}개 조 테이블이 생성되었습니다.`);
     }
@@ -455,7 +480,7 @@ export default function LunchGroupsPage() {
           prev.map((g) => ({
             ...g,
             memberIds: g.memberIds.filter((id) => id !== memberId),
-          }))
+          })),
         );
         return;
       }
@@ -482,30 +507,36 @@ export default function LunchGroupsPage() {
             if (g.groupNumber === groupNumber) {
               return {
                 ...g,
-                memberIds: [...g.memberIds.filter((id) => id !== memberId), memberId],
+                memberIds: [
+                  ...g.memberIds.filter((id) => id !== memberId),
+                  memberId,
+                ],
               };
             }
             return {
               ...g,
               memberIds: g.memberIds.filter((id) => id !== memberId),
             };
-          })
+          }),
         );
       }
     },
-    [groups]
+    [groups],
   );
 
   // 조에서 멤버 제거
-  const handleRemoveFromGroup = useCallback((groupNumber: number, memberId: string) => {
-    setGroups((prev) =>
-      prev.map((g) =>
-        g.groupNumber === groupNumber
-          ? { ...g, memberIds: g.memberIds.filter((id) => id !== memberId) }
-          : g
-      )
-    );
-  }, []);
+  const handleRemoveFromGroup = useCallback(
+    (groupNumber: number, memberId: string) => {
+      setGroups((prev) =>
+        prev.map((g) =>
+          g.groupNumber === groupNumber
+            ? { ...g, memberIds: g.memberIds.filter((id) => id !== memberId) }
+            : g,
+        ),
+      );
+    },
+    [],
+  );
 
   // 저장
   const handleSave = () => {
@@ -513,10 +544,13 @@ export default function LunchGroupsPage() {
   };
 
   // 드래그 중인 멤버
-  const activeMember = activeDragId ? members.find((m) => m.id === activeDragId) : null;
+  const activeMember = activeDragId
+    ? members.find((m) => m.id === activeDragId)
+    : null;
 
   // 주 변경
-  const handlePrevWeek = () => setCurrentWeek((prev) => prev.subtract(1, "week"));
+  const handlePrevWeek = () =>
+    setCurrentWeek((prev) => prev.subtract(1, "week"));
   const handleNextWeek = () => setCurrentWeek((prev) => prev.add(1, "week"));
 
   // 버튼 활성화 여부
@@ -531,12 +565,6 @@ export default function LunchGroupsPage() {
       <div className="space-y-6">
         {/* 헤더 */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">점심조 관리</h1>
-            <p className="text-gray-500 text-sm mt-1">
-              조 테이블을 생성하고, 인원을 드래그하여 조에 배정할 수 있습니다.
-            </p>
-          </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="icon" onClick={handlePrevWeek}>
               <ChevronLeft className="h-4 w-4" />
@@ -551,220 +579,244 @@ export default function LunchGroupsPage() {
         </div>
 
         <div className="grid grid-cols-12 gap-6">
-        {/* 왼쪽: 설정 & 인원 목록 */}
-        <div className="col-span-5 space-y-4">
-          {/* 설정 카드 */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Settings className="w-4 h-4" />
-                배정 설정
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-xs">조당 최대 인원</Label>
-                  <Input
-                    type="number"
-                    min={2}
-                    max={10}
-                    value={maxPerGroup}
-                    onChange={(e) => setMaxPerGroup(parseInt(e.target.value) || 4)}
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs">총 조 개수 (자동 계산)</Label>
-                  <div className="mt-1 h-10 flex items-center px-3 bg-gray-100 rounded-md text-sm font-medium">
-                    {totalGroups}개
-                  </div>
-                </div>
-              </div>
-              <div className="text-xs text-gray-500">
-                {availableMembers.length}명 ÷ {maxPerGroup}명 = {totalGroups}조
-                {remainder > 0 && ` (나머지 ${remainder}명 → ${remainder}개 조에 +1)`}
-              </div>
-              <Button onClick={handleCreateTable} className="w-full" disabled={totalGroups === 0}>
-                <Table className="w-4 h-4 mr-2" />
-                조 테이블 생성
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* 인원 목록 카드 */}
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Users className="w-4 h-4" />
-                  참여 인원
-                </CardTitle>
-                <span className="text-xs text-gray-500">
-                  {unassignedMembers.length}명 미배정 / {availableMembers.length}명
-                </span>
-              </div>
-              <CardDescription>
-                {isTableCreated
-                  ? "인원을 드래그하여 조에 배정하세요."
-                  : "먼저 조 테이블을 생성하세요."}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {/* 액션 버튼 */}
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleExcludeMembers}
-                  disabled={!hasSelectedMembers}
-                  className="flex-1"
-                >
-                  <UserMinus className="w-4 h-4 mr-1" />
-                  인원 제외하기
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={handleSendLotteryRequest}
-                  disabled={!hasSelectedMembers}
-                  className="flex-1"
-                >
-                  <Send className="w-4 h-4 mr-1" />
-                  뽑기 요청하기
-                </Button>
-              </div>
-
-              {/* 전체 선택 */}
-              <div className="flex items-center gap-2 py-2 border-b">
-                <Checkbox
-                  checked={selectedMemberIds.size === unassignedMembers.length && unassignedMembers.length > 0}
-                  onCheckedChange={toggleSelectAll}
-                />
-                <span className="text-sm font-medium">전체 선택 (미배정)</span>
-              </div>
-
-              {/* 인원 목록 - 드래그 가능 */}
-              <DroppableUnassigned>
-                {unassignedMembers.length === 0 ? (
-                  <div className="text-center py-8 text-gray-400 text-sm">
-                    {isTableCreated ? "모든 인원이 배정되었습니다." : "조 테이블을 먼저 생성하세요."}
-                  </div>
-                ) : (
-                  unassignedMembers.map((member) => (
-                    <div key={member.id} className="mb-1">
-                      <DraggableMemberInList
-                        member={member}
-                        isSelected={selectedMemberIds.has(member.id)}
-                        onToggleSelect={() => toggleSelectMember(member.id)}
-                      />
-                    </div>
-                  ))
-                )}
-              </DroppableUnassigned>
-            </CardContent>
-          </Card>
-
-          {/* 제외된 인원 */}
-          {excludedMemberIds.size > 0 && (
+          {/* 왼쪽: 설정 & 인원 목록 */}
+          <div className="col-span-5 space-y-4">
+            {/* 설정 카드 */}
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-base text-gray-500">
-                  제외된 인원 ({excludedMemberIds.size}명)
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Settings className="w-4 h-4" />
+                  배정 설정
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {members
-                    .filter((m) => excludedMemberIds.has(m.id))
-                    .map((member) => (
-                      <div
-                        key={member.id}
-                        className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded text-sm text-gray-500"
-                      >
-                        <span>{member.full_name}</span>
-                        <button
-                          onClick={() => handleRestoreMember(member.id)}
-                          className="ml-1 text-gray-400 hover:text-gray-600"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-
-        {/* 오른쪽: 조 테이블 */}
-        <div className="col-span-7">
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base">조 테이블</CardTitle>
-                {isTableCreated && (
-                  <Button onClick={handleSave} disabled={saveMutation.isPending}>
-                    <Save className="w-4 h-4 mr-2" />
-                    {saveMutation.isPending ? "저장 중..." : "저장"}
-                  </Button>
-                )}
-              </div>
-              <CardDescription>
-                유저들이 뽑기를 하면 해당 조에 자동으로 배정됩니다.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {!isTableCreated ? (
-                <div className="flex items-center justify-center h-64 text-gray-400">
-                  <div className="text-center">
-                    <Table className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                    <p>조 테이블 생성 버튼을 눌러 테이블을 만드세요</p>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs">조당 최대 인원</Label>
+                    <Input
+                      type="number"
+                      min={2}
+                      max={10}
+                      value={maxPerGroup}
+                      onChange={(e) =>
+                        setMaxPerGroup(parseInt(e.target.value) || 4)
+                      }
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">총 조 개수 (자동 계산)</Label>
+                    <div className="mt-1 h-10 flex items-center px-3 bg-gray-100 rounded-md text-sm font-medium">
+                      {totalGroups}개
+                    </div>
                   </div>
                 </div>
-              ) : (
-                <div className="grid grid-cols-3 gap-4">
-                  {groups.map((group) => {
-                    const assignedMembers = group.memberIds
-                      .map((id) => members.find((m) => m.id === id))
-                      .filter((m): m is Member => m !== undefined);
-                    const emptySlots = group.maxSlots - assignedMembers.length;
-                    const isExtraGroup = group.maxSlots > maxPerGroup;
-
-                    return (
-                      <DroppableGroup
-                        key={group.groupNumber}
-                        groupNumber={group.groupNumber}
-                        maxSlots={group.maxSlots}
-                        memberCount={assignedMembers.length}
-                        isExtraGroup={isExtraGroup}
-                      >
-                        {/* 멤버 슬롯 */}
-                        <div className="space-y-2">
-                          {assignedMembers.map((member) => (
-                            <DraggableMemberInGroup
-                              key={member.id}
-                              member={member}
-                              onRemove={() => handleRemoveFromGroup(group.groupNumber, member.id)}
-                            />
-                          ))}
-                          {/* 빈 슬롯 */}
-                          {Array.from({ length: emptySlots }).map((_, i) => (
-                            <div
-                              key={`empty-${i}`}
-                              className="px-3 py-2 border-2 border-dashed border-gray-200 rounded-lg text-sm text-gray-400 text-center"
-                            >
-                              드래그하여 배정
-                            </div>
-                          ))}
-                        </div>
-                      </DroppableGroup>
-                    );
-                  })}
+                <div className="text-xs text-gray-500">
+                  {availableMembers.length}명 ÷ {maxPerGroup}명 = {totalGroups}
+                  조
+                  {remainder > 0 &&
+                    ` (나머지 ${remainder}명 → ${remainder}개 조에 +1)`}
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                <Button
+                  onClick={handleCreateTable}
+                  className="w-full"
+                  disabled={totalGroups === 0}
+                >
+                  <Table className="w-4 h-4 mr-2" />조 테이블 생성
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* 인원 목록 카드 */}
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    참여 인원
+                  </CardTitle>
+                  <span className="text-xs text-gray-500">
+                    {unassignedMembers.length}명 미배정 /{" "}
+                    {availableMembers.length}명
+                  </span>
+                </div>
+                <CardDescription>
+                  {isTableCreated
+                    ? "인원을 드래그하여 조에 배정하세요."
+                    : "먼저 조 테이블을 생성하세요."}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {/* 액션 버튼 */}
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExcludeMembers}
+                    disabled={!hasSelectedMembers}
+                    className="flex-1"
+                  >
+                    <UserMinus className="w-4 h-4 mr-1" />
+                    인원 제외하기
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleSendLotteryRequest}
+                    disabled={!hasSelectedMembers}
+                    className="flex-1"
+                  >
+                    <Send className="w-4 h-4 mr-1" />
+                    뽑기 요청하기
+                  </Button>
+                </div>
+
+                {/* 전체 선택 */}
+                <div className="flex items-center gap-2 py-2 border-b">
+                  <Checkbox
+                    checked={
+                      selectedMemberIds.size === unassignedMembers.length &&
+                      unassignedMembers.length > 0
+                    }
+                    onCheckedChange={toggleSelectAll}
+                  />
+                  <span className="text-sm font-medium">
+                    전체 선택 (미배정)
+                  </span>
+                </div>
+
+                {/* 인원 목록 - 드래그 가능 */}
+                <DroppableUnassigned>
+                  {unassignedMembers.length === 0 ? (
+                    <div className="text-center py-8 text-gray-400 text-sm">
+                      {isTableCreated
+                        ? "모든 인원이 배정되었습니다."
+                        : "조 테이블을 먼저 생성하세요."}
+                    </div>
+                  ) : (
+                    unassignedMembers.map((member) => (
+                      <div key={member.id} className="mb-1">
+                        <DraggableMemberInList
+                          member={member}
+                          isSelected={selectedMemberIds.has(member.id)}
+                          onToggleSelect={() => toggleSelectMember(member.id)}
+                        />
+                      </div>
+                    ))
+                  )}
+                </DroppableUnassigned>
+              </CardContent>
+            </Card>
+
+            {/* 제외된 인원 */}
+            {excludedMemberIds.size > 0 && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base text-gray-500">
+                    제외된 인원 ({excludedMemberIds.size}명)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {members
+                      .filter((m) => excludedMemberIds.has(m.id))
+                      .map((member) => (
+                        <div
+                          key={member.id}
+                          className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded text-sm text-gray-500"
+                        >
+                          <span>{member.full_name}</span>
+                          <button
+                            onClick={() => handleRestoreMember(member.id)}
+                            className="ml-1 text-gray-400 hover:text-gray-600"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* 오른쪽: 조 테이블 */}
+          <div className="col-span-7">
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base">조 테이블</CardTitle>
+                  {isTableCreated && (
+                    <Button
+                      onClick={handleSave}
+                      disabled={saveMutation.isPending}
+                    >
+                      <Save className="w-4 h-4 mr-2" />
+                      {saveMutation.isPending ? "저장 중..." : "저장"}
+                    </Button>
+                  )}
+                </div>
+                <CardDescription>
+                  유저들이 뽑기를 하면 해당 조에 자동으로 배정됩니다.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {!isTableCreated ? (
+                  <div className="flex items-center justify-center h-64 text-gray-400">
+                    <div className="text-center">
+                      <Table className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                      <p>조 테이블 생성 버튼을 눌러 테이블을 만드세요</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-3 gap-4">
+                    {groups.map((group) => {
+                      const assignedMembers = group.memberIds
+                        .map((id) => members.find((m) => m.id === id))
+                        .filter((m): m is Member => m !== undefined);
+                      const emptySlots =
+                        group.maxSlots - assignedMembers.length;
+                      const isExtraGroup = group.maxSlots > maxPerGroup;
+
+                      return (
+                        <DroppableGroup
+                          key={group.groupNumber}
+                          groupNumber={group.groupNumber}
+                          maxSlots={group.maxSlots}
+                          memberCount={assignedMembers.length}
+                          isExtraGroup={isExtraGroup}
+                        >
+                          {/* 멤버 슬롯 */}
+                          <div className="space-y-2">
+                            {assignedMembers.map((member) => (
+                              <DraggableMemberInGroup
+                                key={member.id}
+                                member={member}
+                                onRemove={() =>
+                                  handleRemoveFromGroup(
+                                    group.groupNumber,
+                                    member.id,
+                                  )
+                                }
+                              />
+                            ))}
+                            {/* 빈 슬롯 */}
+                            {Array.from({ length: emptySlots }).map((_, i) => (
+                              <div
+                                key={`empty-${i}`}
+                                className="px-3 py-2 border-2 border-dashed border-gray-200 rounded-lg text-sm text-gray-400 text-center"
+                              >
+                                드래그하여 배정
+                              </div>
+                            ))}
+                          </div>
+                        </DroppableGroup>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
 
@@ -773,7 +825,9 @@ export default function LunchGroupsPage() {
         {activeMember && (
           <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-blue-400 bg-blue-50 shadow-xl">
             <GripVertical className="w-3 h-3 text-blue-400 flex-shrink-0" />
-            <span className="text-sm font-medium text-blue-700">{activeMember.full_name}</span>
+            <span className="text-sm font-medium text-blue-700">
+              {activeMember.full_name}
+            </span>
           </div>
         )}
       </DragOverlay>

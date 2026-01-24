@@ -22,125 +22,158 @@ function CalculationResult({ userId, month, year, onDataChange }: StatsSectionPr
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-3 gap-3">
-        {[...Array(3)].map((_, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-            className="stat-card"
-          >
-            <div className="skeleton h-7 w-20 mb-2 rounded-md" />
-            <div className="skeleton h-4 w-12 rounded" />
-          </motion.div>
-        ))}
+      <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <div className="skeleton h-4 w-16 rounded" />
+            <div className="skeleton h-6 w-24 rounded" />
+          </div>
+          <div className="skeleton h-2 w-full rounded-full" />
+          <div className="flex justify-between">
+            <div className="skeleton h-4 w-20 rounded" />
+            <div className="skeleton h-4 w-20 rounded" />
+          </div>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="card-premium p-8 text-center"
-      >
-        <div className="w-14 h-14 bg-[oklch(0.95_0.06_25)] rounded-2xl flex items-center justify-center mx-auto mb-4">
-          <span className="text-2xl">⚠️</span>
-        </div>
-        <p className="text-sm text-[oklch(0.45_0.01_250)] mb-4">{error.message}</p>
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm text-center">
+        <p className="text-sm text-gray-500 mb-3">{error.message}</p>
         <Button
           onClick={() => refetch()}
           variant="outline"
           size="sm"
-          className="text-xs rounded-xl px-4 hover:bg-[oklch(0.97_0.02_250)]"
+          className="text-xs rounded-lg px-4"
         >
           다시 시도
         </Button>
-      </motion.div>
+      </div>
     );
   }
 
   if (!data) {
     return (
-      <div className="flex items-center justify-center py-10">
-        <div className="flex items-center gap-3 text-[oklch(0.50_0.01_250)]">
-          <div className="w-5 h-5 border-2 border-[oklch(0.80_0.02_250)] border-t-[oklch(0.50_0.10_250)] rounded-full animate-spin" />
-          <span className="text-sm">데이터를 불러오는 중...</span>
+      <div className="flex items-center justify-center py-8">
+        <div className="flex items-center gap-2 text-gray-400">
+          <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-500 rounded-full animate-spin" />
+          <span className="text-sm">불러오는 중...</span>
         </div>
       </div>
     );
   }
 
   const formatCurrency = (amount: number) => {
-    return amount.toLocaleString() + "원";
+    return Math.abs(amount).toLocaleString();
   };
 
-  const stats = [
-    {
-      label: "사용가능액",
-      value: formatCurrency(data.allowanceAmount),
-      gradient: "from-[oklch(0.55_0.18_250)] to-[oklch(0.48_0.20_270)]",
-      textColor: "text-white",
-      shadowColor: "shadow-[oklch(0.55_0.18_250/0.25)]",
-    },
-    {
-      label: "사용금액",
-      value: formatCurrency(data.totalUsed),
-      gradient: "from-[oklch(0.72_0.14_55)] to-[oklch(0.65_0.16_45)]",
-      textColor: "text-white",
-      shadowColor: "shadow-[oklch(0.72_0.14_55/0.25)]",
-    },
-    {
-      label: "잔액",
-      value: formatCurrency(data.balance),
-      gradient: data.balance >= 0
-        ? "from-[oklch(0.68_0.16_155)] to-[oklch(0.60_0.18_165)]"
-        : "from-[oklch(0.62_0.18_25)] to-[oklch(0.55_0.20_15)]",
-      textColor: "text-white",
-      shadowColor: data.balance >= 0
-        ? "shadow-[oklch(0.68_0.16_155/0.25)]"
-        : "shadow-[oklch(0.62_0.18_25/0.25)]",
-    },
-  ];
+  // 사용 비율 계산 (0~100)
+  const usagePercent = data.allowanceAmount > 0
+    ? Math.min(100, Math.round((data.totalUsed / data.allowanceAmount) * 100))
+    : 0;
+
+  // 잔액 상태 판단
+  const isOverBudget = data.balance < 0;
+  const isLowBalance = data.balance >= 0 && data.balance < data.allowanceAmount * 0.2;
 
   return (
-    <div className="grid grid-cols-3 gap-3">
-      {stats.map((stat, index) => (
-        <motion.div
-          key={index}
-          initial={{ opacity: 0, y: 20, scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{
-            duration: 0.5,
-            delay: index * 0.1,
-            ease: [0.16, 1, 0.3, 1],
-          }}
-          whileHover={{ y: -2, scale: 1.02 }}
-          className={`rounded-2xl p-4 bg-gradient-to-br ${stat.gradient} ${stat.shadowColor} shadow-lg relative overflow-hidden`}
-        >
-          {/* Decorative overlay */}
-          <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      {/* 메인 잔액 표시 */}
+      <div className="px-5 pt-5 pb-4">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <p className="text-xs text-gray-500 mb-1">이번 달 잔액</p>
+            <div className="flex items-baseline gap-1">
+              {isOverBudget && <span className="text-2xl font-bold text-red-500">-</span>}
+              <span className={`text-2xl font-bold tracking-tight ${
+                isOverBudget
+                  ? "text-red-500"
+                  : isLowBalance
+                    ? "text-amber-600"
+                    : "text-gray-900"
+              }`}>
+                {formatCurrency(data.balance)}
+              </span>
+              <span className={`text-sm font-medium ${
+                isOverBudget
+                  ? "text-red-400"
+                  : isLowBalance
+                    ? "text-amber-500"
+                    : "text-gray-400"
+              }`}>
+                원
+              </span>
+            </div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: index * 0.1 + 0.2 }}
-            className={`relative text-xl sm:text-2xl font-bold mb-1.5 ${stat.textColor}`}
-          >
-            {stat.value}
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: index * 0.1 + 0.3 }}
-            className={`relative text-xs font-medium ${stat.textColor} opacity-90`}
-          >
-            {stat.label}
-          </motion.div>
-        </motion.div>
-      ))}
+          {/* 상태 뱃지 */}
+          <div className={`px-2.5 py-1 rounded-full text-[11px] font-medium ${
+            isOverBudget
+              ? "bg-red-50 text-red-600"
+              : isLowBalance
+                ? "bg-amber-50 text-amber-600"
+                : "bg-emerald-50 text-emerald-600"
+          }`}>
+            {isOverBudget ? "초과" : isLowBalance ? "주의" : "양호"}
+          </div>
+        </div>
+
+        {/* 사용량 프로그레스 바 */}
+        <div className="space-y-2">
+          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${Math.min(usagePercent, 100)}%` }}
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+              className={`h-full rounded-full ${
+                isOverBudget
+                  ? "bg-red-400"
+                  : isLowBalance
+                    ? "bg-amber-400"
+                    : "bg-gray-700"
+              }`}
+            />
+          </div>
+          <div className="flex justify-between text-[11px] text-gray-400">
+            <span>{usagePercent}% 사용</span>
+            <span>{formatCurrency(data.allowanceAmount)}원 중</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 상세 내역 */}
+      <div className="grid grid-cols-2 border-t border-gray-50">
+        <div className="px-5 py-4 border-r border-gray-50">
+          <p className="text-[11px] text-gray-400 mb-1">사용가능액</p>
+          <p className="text-base font-semibold text-gray-700">
+            {formatCurrency(data.allowanceAmount)}
+            <span className="text-xs font-normal text-gray-400 ml-0.5">원</span>
+          </p>
+        </div>
+        <div className="px-5 py-4">
+          <p className="text-[11px] text-gray-400 mb-1">사용금액</p>
+          <p className="text-base font-semibold text-gray-700">
+            {formatCurrency(data.totalUsed)}
+            <span className="text-xs font-normal text-gray-400 ml-0.5">원</span>
+          </p>
+        </div>
+      </div>
+
+      {/* 개별식사 차감 정보 (있을 경우) */}
+      {data.individualMealCount && data.individualMealCount > 0 && (
+        <div className="px-5 py-3 bg-gray-50 border-t border-gray-100">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-gray-500">
+              개별식사 {data.individualMealCount}회 차감
+            </span>
+            <span className="font-medium text-gray-600">
+              -{formatCurrency(data.individualMealDeduction || 0)}원
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -148,14 +181,10 @@ function CalculationResult({ userId, month, year, onDataChange }: StatsSectionPr
 export default function StatsSection({ userId, month, year, onDataChange }: StatsSectionProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{
-        duration: 0.6,
-        delay: 0.4,
-        ease: [0.16, 1, 0.3, 1],
-      }}
-      className="mb-8"
+      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      className="mb-6"
     >
       <CalculationResult userId={userId} month={month} year={year} onDataChange={onDataChange} />
     </motion.div>

@@ -114,7 +114,7 @@ export default function DashboardPage() {
         (stats?.totalBalance || 0) >= 0
           ? `${(100 - usageRate).toFixed(1)}% 남음`
           : "초과 사용",
-      changeType: ((stats?.totalBalance || 0) >= 0 ? "positive" : "negative") as const,
+      changeType: (stats?.totalBalance || 0) >= 0 ? ("positive" as const) : ("negative" as const),
       isCurrency: true,
     },
   ];

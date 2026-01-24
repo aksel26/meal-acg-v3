@@ -15,6 +15,23 @@ interface MonthlyAllowancesJson {
 
 const INDIVIDUAL_MEAL_ATTENDANCE = "근무(개별식사 / 식사안함)";
 
+// 식대 미지급 근태 유형 판별 함수
+function isNoMealAttendance(attendance: string | null): boolean {
+  if (!attendance) return false;
+  return (
+    attendance.includes("연차") ||
+    attendance.includes("반차") ||
+    attendance.includes("재택근무") ||
+    attendance.includes("휴무")
+  );
+}
+
+// 반차는 절반만 차감
+function isHalfDayOff(attendance: string | null): boolean {
+  if (!attendance) return false;
+  return attendance.includes("반차");
+}
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -86,11 +103,30 @@ export async function GET(request: NextRequest) {
       (log) => log.attendance === INDIVIDUAL_MEAL_ATTENDANCE
     ).length ?? 0;
 
+    // 연차/재택/휴무 수 계산 (반차 제외)
+    const noMealFullDayCount = mealLogs?.filter(
+      (log) => isNoMealAttendance(log.attendance) && !isHalfDayOff(log.attendance)
+    ).length ?? 0;
+
+    // 반차 수 계산
+    const halfDayOffCount = mealLogs?.filter(
+      (log) => isHalfDayOff(log.attendance)
+    ).length ?? 0;
+
     // 개별식사 차감액 계산 (개별식사 수 × 일일 지원금)
     const individualMealDeduction = individualMealCount * dailyAllowance;
 
-    // 실제 사용가능 금액 = 월별 지원금 - 개별식사 차감액
-    const effectiveAllowance = allowanceAmount - individualMealDeduction;
+    // 연차/재택/휴무 차감액 (연차/재택/휴무 수 × 일일 지원금)
+    const noMealDeduction = noMealFullDayCount * dailyAllowance;
+
+    // 반차 차감액 (반차 수 × 일일 지원금)
+    const halfDayDeduction = halfDayOffCount * dailyAllowance;
+
+    // 총 차감액
+    const totalDeduction = individualMealDeduction + noMealDeduction + halfDayDeduction;
+
+    // 실제 사용가능 금액 = 월별 지원금 - 총 차감액
+    const effectiveAllowance = allowanceAmount - totalDeduction;
 
     // 잔액 = 실제 사용가능 금액 - 총 사용액
     const balance = effectiveAllowance - totalUsed;
@@ -105,6 +141,11 @@ export async function GET(request: NextRequest) {
         mealCount,
         individualMealCount,
         individualMealDeduction,
+        noMealFullDayCount, // 연차/재택/휴무 일수
+        noMealDeduction, // 연차/재택/휴무 차감액
+        halfDayOffCount, // 반차 일수
+        halfDayDeduction, // 반차 차감액
+        totalDeduction, // 총 차감액
         dailyAllowance,
       },
     });

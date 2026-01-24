@@ -13,8 +13,17 @@ interface StatsSectionProps {
   onDataChange?: (data: CalculationData | null) => void;
 }
 
-function CalculationResult({ userId, month, year, onDataChange }: StatsSectionProps) {
-  const { data, isLoading, error, refetch } = useCalculationData(userId, month, year);
+function CalculationResult({
+  userId,
+  month,
+  year,
+  onDataChange,
+}: StatsSectionProps) {
+  const { data, isLoading, error, refetch } = useCalculationData(
+    userId,
+    month,
+    year,
+  );
 
   useEffect(() => {
     onDataChange?.(data || null);
@@ -22,8 +31,9 @@ function CalculationResult({ userId, month, year, onDataChange }: StatsSectionPr
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-        <div className="space-y-4">
+      <div className="card-premium p-5 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-[oklch(0.92_0.06_200/0.25)] rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
+        <div className="space-y-4 relative">
           <div className="flex justify-between items-center">
             <div className="skeleton h-4 w-16 rounded" />
             <div className="skeleton h-6 w-24 rounded" />
@@ -40,7 +50,7 @@ function CalculationResult({ userId, month, year, onDataChange }: StatsSectionPr
 
   if (error) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm text-center">
+      <div className="card-premium p-6 text-center relative overflow-hidden">
         <p className="text-sm text-gray-500 mb-3">{error.message}</p>
         <Button
           onClick={() => refetch()}
@@ -70,52 +80,66 @@ function CalculationResult({ userId, month, year, onDataChange }: StatsSectionPr
   };
 
   // 사용 비율 계산 (0~100)
-  const usagePercent = data.allowanceAmount > 0
-    ? Math.min(100, Math.round((data.totalUsed / data.allowanceAmount) * 100))
-    : 0;
+  const usagePercent =
+    data.allowanceAmount > 0
+      ? Math.min(100, Math.round((data.totalUsed / data.allowanceAmount) * 100))
+      : 0;
 
   // 잔액 상태 판단
   const isOverBudget = data.balance < 0;
-  const isLowBalance = data.balance >= 0 && data.balance < data.allowanceAmount * 0.2;
+  const isLowBalance =
+    data.balance >= 0 && data.balance < data.allowanceAmount * 0.2;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className="card-premium relative overflow-hidden">
+      {/* Decorative Elements */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-[oklch(0.92_0.06_200/0.25)] rounded-full blur-2xl -translate-y-1/2 translate-x-1/4" />
+      <div className="absolute bottom-0 left-0 w-24 h-24 bg-[oklch(0.90_0.08_250/0.2)] rounded-full blur-2xl translate-y-1/2 -translate-x-1/4" />
+
       {/* 메인 잔액 표시 */}
-      <div className="px-5 pt-5 pb-4">
+      <div className="relative px-5 pt-5 pb-4">
         <div className="flex items-start justify-between mb-4">
           <div>
             <p className="text-xs text-gray-500 mb-1">이번 달 잔액</p>
             <div className="flex items-baseline gap-1">
-              {isOverBudget && <span className="text-2xl font-bold text-red-500">-</span>}
-              <span className={`text-2xl font-bold tracking-tight ${
-                isOverBudget
-                  ? "text-red-500"
-                  : isLowBalance
-                    ? "text-amber-600"
-                    : "text-gray-900"
-              }`}>
+              {isOverBudget && (
+                <span className="text-2xl font-bold text-red-500">-</span>
+              )}
+              <span
+                className={`text-2xl font-bold tracking-tight ${
+                  isOverBudget
+                    ? "text-red-500"
+                    : isLowBalance
+                      ? "text-amber-600"
+                      : "text-gray-900"
+                }`}
+              >
                 {formatCurrency(data.balance)}
               </span>
-              <span className={`text-sm font-medium ${
-                isOverBudget
-                  ? "text-red-400"
-                  : isLowBalance
-                    ? "text-amber-500"
-                    : "text-gray-400"
-              }`}>
+              <span
+                className={`text-sm font-medium ${
+                  isOverBudget
+                    ? "text-red-400"
+                    : isLowBalance
+                      ? "text-amber-500"
+                      : "text-gray-400"
+                }`}
+              >
                 원
               </span>
             </div>
           </div>
 
           {/* 상태 뱃지 */}
-          <div className={`px-2.5 py-1 rounded-full text-[11px] font-medium ${
-            isOverBudget
-              ? "bg-red-50 text-red-600"
-              : isLowBalance
-                ? "bg-amber-50 text-amber-600"
-                : "bg-emerald-50 text-emerald-600"
-          }`}>
+          <div
+            className={`px-2.5 py-1 rounded-full text-[11px] font-medium ${
+              isOverBudget
+                ? "bg-red-50 text-red-600"
+                : isLowBalance
+                  ? "bg-amber-50 text-amber-600"
+                  : "bg-emerald-50 text-emerald-600"
+            }`}
+          >
             {isOverBudget ? "초과" : isLowBalance ? "주의" : "양호"}
           </div>
         </div>
@@ -144,8 +168,8 @@ function CalculationResult({ userId, month, year, onDataChange }: StatsSectionPr
       </div>
 
       {/* 상세 내역 */}
-      <div className="grid grid-cols-2 border-t border-gray-50">
-        <div className="px-5 py-4 border-r border-gray-50">
+      <div className="relative grid grid-cols-2 border-t border-white/40">
+        <div className="px-5 py-4 border-r border-white/40">
           <p className="text-[11px] text-gray-400 mb-1">사용가능액</p>
           <p className="text-base font-semibold text-gray-700">
             {formatCurrency(data.allowanceAmount)}
@@ -161,24 +185,54 @@ function CalculationResult({ userId, month, year, onDataChange }: StatsSectionPr
         </div>
       </div>
 
-      {/* 개별식사 차감 정보 (있을 경우) */}
-      {data.individualMealCount && data.individualMealCount > 0 && (
-        <div className="px-5 py-3 bg-gray-50 border-t border-gray-100">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-gray-500">
-              개별식사 {data.individualMealCount}회 차감
-            </span>
-            <span className="font-medium text-gray-600">
-              -{formatCurrency(data.individualMealDeduction || 0)}원
-            </span>
-          </div>
+      {/* 차감 정보 (있을 경우) */}
+      {(data.totalDeduction ?? 0) > 0 && (
+        <div className="relative px-5 py-3 bg-white/30 border-t border-white/40 space-y-1.5">
+          {/* 개별식사 차감 */}
+          {(data.individualMealCount ?? 0) > 0 && (
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-500">
+                개별식사 {data.individualMealCount}회
+              </span>
+              <span className="font-medium text-gray-600">
+                -{formatCurrency(data.individualMealDeduction || 0)}원
+              </span>
+            </div>
+          )}
+          {/* 연차/재택/휴무 차감 */}
+          {(data.noMealFullDayCount ?? 0) > 0 && (
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-500">
+                연차/재택/휴무 {data.noMealFullDayCount}일
+              </span>
+              <span className="font-medium text-gray-600">
+                -{formatCurrency(data.noMealDeduction || 0)}원
+              </span>
+            </div>
+          )}
+          {/* 반차 차감 */}
+          {(data.halfDayOffCount ?? 0) > 0 && (
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-500">
+                반차 {data.halfDayOffCount}일
+              </span>
+              <span className="font-medium text-gray-600">
+                -{formatCurrency(data.halfDayDeduction || 0)}원
+              </span>
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-export default function StatsSection({ userId, month, year, onDataChange }: StatsSectionProps) {
+export default function StatsSection({
+  userId,
+  month,
+  year,
+  onDataChange,
+}: StatsSectionProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -186,7 +240,12 @@ export default function StatsSection({ userId, month, year, onDataChange }: Stat
       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       className="mb-6"
     >
-      <CalculationResult userId={userId} month={month} year={year} onDataChange={onDataChange} />
+      <CalculationResult
+        userId={userId}
+        month={month}
+        year={year}
+        onDataChange={onDataChange}
+      />
     </motion.div>
   );
 }

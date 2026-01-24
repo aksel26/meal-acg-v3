@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
+import { getChoseong } from "es-hangul";
 import {
   Card,
   CardContent,
@@ -10,13 +11,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@repo/ui/src/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@repo/ui/src/select";
 import { Button } from "@repo/ui/src/button";
 import { Input } from "@repo/ui/src/input";
 import { Label } from "@repo/ui/src/label";
@@ -30,7 +24,7 @@ import {
 } from "@repo/ui/src/dialog";
 import { Skeleton } from "@repo/ui/src/skeleton";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Plus, Pencil, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Trash2, Search, X, Check } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
 import type { MealLog, Member } from "@/lib/supabase/types";
 
@@ -73,6 +67,11 @@ export default function CalendarPage() {
   const [editingLog, setEditingLog] = useState<MealLog | null>(null);
   const [formData, setFormData] = useState<MealFormData>(initialFormData);
 
+  // 사용자 검색 관련 state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
   // Fetch members
   const { data: members } = useQuery<Member[]>({
     queryKey: queryKeys.members.all,
@@ -82,6 +81,41 @@ export default function CalendarPage() {
       return response.json();
     },
   });
+
+  // 검색어로 멤버 필터링 (일반 검색 + 초성 검색)
+  const filteredMembers = useMemo(() => {
+    if (!members) return [];
+    if (!searchQuery.trim()) return members;
+
+    const query = searchQuery.trim();
+    return members.filter((member) => {
+      const name = member.full_name || "";
+      // 일반 검색 (대소문자 무시)
+      if (name.toLowerCase().includes(query.toLowerCase())) return true;
+      // 초성 검색: 이름의 초성이 검색어로 시작하는지 확인
+      const nameChoseong = getChoseong(name);
+      if (nameChoseong.includes(query)) return true;
+      return false;
+    });
+  }, [members, searchQuery]);
+
+  // 선택된 사용자 이름
+  const selectedUserName = useMemo(() => {
+    if (!selectedUserId || !members) return "";
+    const member = members.find((m) => m.id === selectedUserId);
+    return member?.full_name || "";
+  }, [selectedUserId, members]);
+
+  // 드롭다운 외부 클릭 시 닫기
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Fetch meal logs for selected user and month
   const { data: mealLogs, isLoading: isLoadingLogs } = useQuery<MealLog[]>({
@@ -242,21 +276,74 @@ export default function CalendarPage() {
 
   return (
     <div className="space-y-6">
-      {/* User Selection */}
+      {/* User Selection with Search */}
       <div className="flex items-center gap-4">
         <Label>사용자 선택</Label>
-        <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="사용자 선택..." />
-          </SelectTrigger>
-          <SelectContent>
-            {members?.map((member) => (
-              <SelectItem key={member.id} value={member.id}>
-                {member.full_name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="relative" ref={dropdownRef}>
+          {/* 선택된 사용자 표시 또는 검색 입력 */}
+          <div
+            className="flex items-center w-64 h-10 px-3 border rounded-lg bg-white cursor-pointer hover:border-blue-400 transition-colors"
+            onClick={() => setIsDropdownOpen(true)}
+          >
+            <Search className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
+            {isDropdownOpen ? (
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="이름 또는 초성 검색..."
+                className="flex-1 outline-none text-sm bg-transparent"
+                autoFocus
+              />
+            ) : (
+              <span className={`flex-1 text-sm truncate ${selectedUserName ? "text-gray-900" : "text-gray-400"}`}>
+                {selectedUserName || "사용자 선택..."}
+              </span>
+            )}
+            {selectedUserId && !isDropdownOpen && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedUserId("");
+                  setSearchQuery("");
+                }}
+                className="p-1 hover:bg-gray-100 rounded"
+              >
+                <X className="w-3.5 h-3.5 text-gray-400" />
+              </button>
+            )}
+          </div>
+
+          {/* 드롭다운 목록 */}
+          {isDropdownOpen && (
+            <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+              {filteredMembers.length === 0 ? (
+                <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                  검색 결과가 없습니다
+                </div>
+              ) : (
+                filteredMembers.map((member) => (
+                  <div
+                    key={member.id}
+                    onClick={() => {
+                      setSelectedUserId(member.id);
+                      setSearchQuery("");
+                      setIsDropdownOpen(false);
+                    }}
+                    className={`flex items-center justify-between px-3 py-2.5 cursor-pointer hover:bg-blue-50 transition-colors ${
+                      selectedUserId === member.id ? "bg-blue-50" : ""
+                    }`}
+                  >
+                    <span className="text-sm">{member.full_name}</span>
+                    {selectedUserId === member.id && (
+                      <Check className="w-4 h-4 text-blue-500" />
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Calendar */}
@@ -306,32 +393,85 @@ export default function CalendarPage() {
               const dayOfWeek = currentDate.date(day).day();
               const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
+              // 근태별 배경색
+              const getAttendanceBg = (attendance: string | null | undefined) => {
+                if (!attendance) return { bg: "bg-gray-100", text: "text-gray-600" };
+                const lower = attendance.toLowerCase();
+                if (lower.includes("출근") || lower.includes("근무")) {
+                  return { bg: "bg-emerald-100", text: "text-emerald-700" };
+                }
+                if (lower.includes("재택") || lower.includes("홈")) {
+                  return { bg: "bg-amber-100", text: "text-amber-700" };
+                }
+                if (lower.includes("휴가") || lower.includes("연차")) {
+                  return { bg: "bg-sky-100", text: "text-sky-700" };
+                }
+                if (lower.includes("반차")) {
+                  return { bg: "bg-violet-100", text: "text-violet-700" };
+                }
+                return { bg: "bg-gray-100", text: "text-gray-600" };
+              };
+
+              const hasBreakfast = mealLog?.breakfast_amount && mealLog.breakfast_amount > 0;
+              const hasLunch = mealLog?.lunch_amount && mealLog.lunch_amount > 0;
+              const hasDinner = mealLog?.dinner_amount && mealLog.dinner_amount > 0;
+
+              // 금액 포맷
+              const formatAmount = (amount: number) => {
+                if (amount >= 10000) return `${(amount / 10000).toFixed(1)}만`;
+                return amount.toLocaleString();
+              };
+
               return (
                 <div
                   key={day}
                   onClick={() => handleDateClick(dateStr)}
-                  className={`h-24 border rounded-lg p-2 cursor-pointer transition-colors ${
-                    isWeekend ? "bg-gray-50" : "bg-white"
-                  } hover:border-blue-400 ${
-                    mealLog ? "border-green-300 bg-green-50" : "border-gray-200"
+                  className={`h-[104px] border rounded-xl p-2 cursor-pointer transition-all duration-200 ${
+                    isWeekend ? "bg-slate-50/50" : "bg-white"
+                  } hover:border-blue-400 hover:shadow-sm ${
+                    mealLog ? "border-emerald-200" : "border-gray-100"
                   }`}
                 >
+                  {/* 날짜 */}
                   <div
-                    className={`text-sm font-medium ${
+                    className={`text-sm font-semibold mb-1 ${
                       dayOfWeek === 0
-                        ? "text-red-500"
+                        ? "text-rose-500"
                         : dayOfWeek === 6
                         ? "text-blue-500"
-                        : ""
+                        : "text-gray-700"
                     }`}
                   >
                     {day}
                   </div>
+
                   {isLoadingLogs && selectedUserId ? (
-                    <Skeleton className="h-3 w-full mt-1" />
+                    <div className="space-y-1">
+                      <Skeleton className="h-4 w-12 rounded-full" />
+                      <Skeleton className="h-3 w-full" />
+                    </div>
                   ) : mealLog ? (
-                    <div className="mt-1 text-xs text-gray-600 truncate">
-                      {mealLog.total_amount?.toLocaleString()}원
+                    <div className="space-y-1">
+                      {/* 근태 배지 - 원본 텍스트 그대로 */}
+                      {mealLog.attendance && (
+                        <span className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-medium ${getAttendanceBg(mealLog.attendance).bg} ${getAttendanceBg(mealLog.attendance).text}`}>
+                          {mealLog.attendance}
+                        </span>
+                      )}
+
+                      {/* 총 금액 */}
+                      {mealLog.total_amount && mealLog.total_amount > 0 && (
+                        <div className="text-xs font-bold text-emerald-600">
+                          {formatAmount(mealLog.total_amount)}원
+                        </div>
+                      )}
+
+                      {/* 식사별 문구 */}
+                      <div className="flex flex-wrap gap-x-1.5 text-[9px] text-gray-500">
+                        {hasBreakfast && <span>조식</span>}
+                        {hasLunch && <span>중식</span>}
+                        {hasDinner && <span>석식</span>}
+                      </div>
                     </div>
                   ) : null}
                 </div>

@@ -222,7 +222,7 @@ const GachaMachine = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [balls, setBalls] = useState<Ball[]>([]);
   const selectedBallIndexRef = useRef<number>(0);
-  const selectedBallColorRef = useRef<string>(BALL_COLORS[0]);
+  const selectedBallColorRef = useRef<string>(BALL_COLORS[0] || "#FFB3BA");
 
   const assignMutation = useLunchGroupAssign();
 
@@ -246,7 +246,7 @@ const GachaMachine = () => {
             id: id++,
             x: row.xStart + i * row.xGap + (Math.random() - 0.5) * 4,
             y: row.y + (Math.random() - 0.5) * 3,
-            color: BALL_COLORS[id % BALL_COLORS.length],
+            color: BALL_COLORS[id % BALL_COLORS.length] || "#FFB3BA",
             size: 32 + Math.random() * 6,
           });
         }
@@ -378,7 +378,7 @@ const GachaMachine = () => {
       // 랜덤 공 선택
       const randomIndex = Math.floor(Math.random() * balls.length);
       selectedBallIndexRef.current = randomIndex;
-      selectedBallColorRef.current = balls[randomIndex]?.color || BALL_COLORS[0];
+      selectedBallColorRef.current = balls[randomIndex]?.color || BALL_COLORS[0] || "#FFB3BA";
 
       // 흔들기 시작
       startShaking();
@@ -471,7 +471,7 @@ const GachaMachine = () => {
               <button
                 onClick={handlePull}
                 disabled={assignMutation.isPending}
-                className="w-full py-3.5 rounded-2xl text-base font-bold text-white bg-gradient-to-b from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 active:scale-[0.98] transition-all shadow-lg border-2 border-amber-300 disabled:from-stone-400 disabled:to-stone-500 disabled:cursor-not-allowed"
+                className="w-full py-3.5 rounded-2xl text-base font-bold text-white bg-gradient-to-r from-[oklch(0.65_0.20_250)] via-[oklch(0.60_0.22_280)] to-[oklch(0.65_0.18_310)] hover:from-[oklch(0.70_0.18_250)] hover:via-[oklch(0.65_0.20_280)] hover:to-[oklch(0.70_0.16_310)] active:scale-[0.98] transition-all shadow-lg disabled:from-stone-400 disabled:to-stone-500 disabled:cursor-not-allowed"
               >
                 {assignMutation.isPending ? "처리 중..." : "뽑기!"}
               </button>

@@ -19,13 +19,19 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@repo/ui/src/dialog";
 import { Skeleton } from "@repo/ui/src/skeleton";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Trash2, Search, X, Check } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Trash2,
+  Search,
+  X,
+  Check,
+} from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
 import type { MealLog, Member } from "@/lib/supabase/types";
 
@@ -70,7 +76,9 @@ export default function CalendarPage() {
 
   const [currentDate, setCurrentDate] = useState(() => {
     if (initialYear && initialMonth) {
-      return dayjs().year(parseInt(initialYear)).month(parseInt(initialMonth) - 1);
+      return dayjs()
+        .year(parseInt(initialYear))
+        .month(parseInt(initialMonth) - 1);
     }
     return dayjs();
   });
@@ -95,7 +103,11 @@ export default function CalendarPage() {
       setSelectedUserId(userId);
     }
     if (year && month) {
-      setCurrentDate(dayjs().year(parseInt(year)).month(parseInt(month) - 1));
+      setCurrentDate(
+        dayjs()
+          .year(parseInt(year))
+          .month(parseInt(month) - 1),
+      );
     }
   }, [searchParams]);
 
@@ -136,7 +148,10 @@ export default function CalendarPage() {
   // 드롭다운 외부 클릭 시 닫기
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsDropdownOpen(false);
       }
     };
@@ -149,12 +164,12 @@ export default function CalendarPage() {
     queryKey: queryKeys.mealLogs.byUserAndMonth(
       selectedUserId,
       currentDate.year(),
-      currentDate.month() + 1
+      currentDate.month() + 1,
     ),
     queryFn: async () => {
       if (!selectedUserId) return [];
       const response = await fetch(
-        `/api/meal-logs?userId=${selectedUserId}&year=${currentDate.year()}&month=${currentDate.month() + 1}`
+        `/api/meal-logs?userId=${selectedUserId}&year=${currentDate.year()}&month=${currentDate.month() + 1}`,
       );
       if (!response.ok) throw new Error("Failed to fetch meal logs");
       return response.json();
@@ -165,7 +180,9 @@ export default function CalendarPage() {
   // Create/Update meal log mutation
   const saveMutation = useMutation({
     mutationFn: async (data: MealFormData) => {
-      const url = editingLog ? `/api/meal-logs/${editingLog.id}` : "/api/meal-logs";
+      const url = editingLog
+        ? `/api/meal-logs/${editingLog.id}`
+        : "/api/meal-logs";
       const method = editingLog ? "PUT" : "POST";
 
       const response = await fetch(url, {
@@ -195,10 +212,14 @@ export default function CalendarPage() {
         queryKey: queryKeys.mealLogs.byUserAndMonth(
           selectedUserId,
           currentDate.year(),
-          currentDate.month() + 1
+          currentDate.month() + 1,
         ),
       });
-      toast.success(editingLog ? "식대 정보가 수정되었습니다." : "식대 정보가 저장되었습니다.");
+      toast.success(
+        editingLog
+          ? "식대 정보가 수정되었습니다."
+          : "식대 정보가 저장되었습니다.",
+      );
       handleCloseDialog();
     },
     onError: () => {
@@ -219,7 +240,7 @@ export default function CalendarPage() {
         queryKey: queryKeys.mealLogs.byUserAndMonth(
           selectedUserId,
           currentDate.year(),
-          currentDate.month() + 1
+          currentDate.month() + 1,
         ),
       });
       toast.success("식대 정보가 삭제되었습니다.");
@@ -229,7 +250,8 @@ export default function CalendarPage() {
     },
   });
 
-  const handlePrevMonth = () => setCurrentDate(currentDate.subtract(1, "month"));
+  const handlePrevMonth = () =>
+    setCurrentDate(currentDate.subtract(1, "month"));
   const handleNextMonth = () => setCurrentDate(currentDate.add(1, "month"));
 
   const handleDateClick = (date: string) => {
@@ -323,7 +345,9 @@ export default function CalendarPage() {
                 autoFocus
               />
             ) : (
-              <span className={`flex-1 text-sm truncate ${selectedUserName ? "text-gray-900" : "text-gray-400"}`}>
+              <span
+                className={`flex-1 text-sm truncate ${selectedUserName ? "text-gray-900" : "text-gray-400"}`}
+              >
                 {selectedUserName || "사용자 선택..."}
               </span>
             )}
@@ -421,8 +445,11 @@ export default function CalendarPage() {
               const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
               // 근태별 배경색
-              const getAttendanceBg = (attendance: string | null | undefined) => {
-                if (!attendance) return { bg: "bg-gray-100", text: "text-gray-600" };
+              const getAttendanceBg = (
+                attendance: string | null | undefined,
+              ) => {
+                if (!attendance)
+                  return { bg: "bg-gray-100", text: "text-gray-600" };
                 const lower = attendance.toLowerCase();
                 if (lower.includes("출근") || lower.includes("근무")) {
                   return { bg: "bg-emerald-100", text: "text-emerald-700" };
@@ -439,9 +466,12 @@ export default function CalendarPage() {
                 return { bg: "bg-gray-100", text: "text-gray-600" };
               };
 
-              const hasBreakfast = mealLog?.breakfast_amount && mealLog.breakfast_amount > 0;
-              const hasLunch = mealLog?.lunch_amount && mealLog.lunch_amount > 0;
-              const hasDinner = mealLog?.dinner_amount && mealLog.dinner_amount > 0;
+              const hasBreakfast =
+                mealLog?.breakfast_amount && mealLog.breakfast_amount > 0;
+              const hasLunch =
+                mealLog?.lunch_amount && mealLog.lunch_amount > 0;
+              const hasDinner =
+                mealLog?.dinner_amount && mealLog.dinner_amount > 0;
 
               // 금액 포맷
               const formatAmount = (amount: number) => {
@@ -465,8 +495,8 @@ export default function CalendarPage() {
                       dayOfWeek === 0
                         ? "text-rose-500"
                         : dayOfWeek === 6
-                        ? "text-blue-500"
-                        : "text-gray-700"
+                          ? "text-blue-500"
+                          : "text-gray-700"
                     }`}
                   >
                     {day}
@@ -481,24 +511,33 @@ export default function CalendarPage() {
                     <div className="space-y-1">
                       {/* 근태 배지 - 원본 텍스트 그대로 */}
                       {mealLog.attendance && (
-                        <span className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-medium ${getAttendanceBg(mealLog.attendance).bg} ${getAttendanceBg(mealLog.attendance).text}`}>
+                        <span
+                          className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-medium ${getAttendanceBg(mealLog.attendance).bg} ${getAttendanceBg(mealLog.attendance).text}`}
+                        >
                           {mealLog.attendance}
                         </span>
                       )}
 
-                      {/* 총 금액 */}
-                      {mealLog.total_amount && mealLog.total_amount > 0 && (
-                        <div className="text-xs font-bold text-emerald-600">
-                          {formatAmount(mealLog.total_amount)}원
-                        </div>
-                      )}
+                      {/* 연차, 휴무, 재택이 아닐 때만 금액/식사 정보 표시 */}
+                      {!["연차", "휴무", "재택", "휴가"].some(
+                        (type) => mealLog.attendance?.includes(type)
+                      ) && (
+                        <>
+                          {/* 총 금액 */}
+                          {mealLog.total_amount && mealLog.total_amount > 0 && (
+                            <div className="text-xs font-bold text-emerald-600">
+                              {formatAmount(mealLog.total_amount)}원
+                            </div>
+                          )}
 
-                      {/* 식사별 문구 */}
-                      <div className="flex flex-wrap gap-x-1.5 text-[9px] text-gray-500">
-                        {hasBreakfast && <span>조식</span>}
-                        {hasLunch && <span>중식</span>}
-                        {hasDinner && <span>석식</span>}
-                      </div>
+                          {/* 식사별 문구 */}
+                          <div className="flex flex-wrap gap-x-1.5 text-[9px] text-gray-500">
+                            {hasBreakfast && <span>조식</span>}
+                            {hasLunch && <span>중식</span>}
+                            {hasDinner && <span>석식</span>}
+                          </div>
+                        </>
+                      )}
                     </div>
                   ) : null}
                 </div>
@@ -508,47 +547,82 @@ export default function CalendarPage() {
         </CardContent>
       </Card>
 
-      {/* Meal Entry Dialog */}
+      {/* Meal Entry Dialog - Minimal Style */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingLog ? "식대 정보 수정" : "식대 정보 입력"}
+        <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden">
+          <DialogHeader className="px-6 py-4 border-b border-slate-100">
+            <DialogTitle className="text-base font-semibold text-slate-900">
+              {selectedDate ? dayjs(selectedDate).format("M월 D일 (ddd)") : ""}{" "}
+              식대
             </DialogTitle>
-            <DialogDescription>
-              {selectedDate} 식대 정보를 {editingLog ? "수정" : "입력"}합니다.
+            <DialogDescription className="text-sm text-slate-500 mt-0.5">
+              {editingLog ? "정보 수정" : "새로 입력"}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-6 py-4">
+          <div className="max-h-[calc(90vh-200px)] overflow-y-auto">
             {/* Attendance */}
-            <div className="space-y-2">
-              <Label>근태</Label>
-              <Input
-                value={formData.attendance}
-                onChange={(e) =>
-                  setFormData({ ...formData, attendance: e.target.value })
-                }
-                placeholder="근태 상태 (예: 출근, 휴가, 재택)"
-              />
+            <div className="px-6 py-4 border-b border-slate-100">
+              <Label className="text-xs font-medium text-slate-500 mb-2.5 block">
+                근태
+              </Label>
+              <div className="flex flex-wrap gap-1.5">
+                {["출근", "개별식사", "재택", "휴가", "반차", "주말근무"].map(
+                  (value) => {
+                    const isSelected = formData.attendance === value;
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() =>
+                          setFormData({
+                            ...formData,
+                            attendance: isSelected ? "" : value,
+                          })
+                        }
+                        className={`
+                        px-3 py-1.5 rounded-md text-sm transition-colors
+                        ${
+                          isSelected
+                            ? "bg-slate-900 text-white"
+                            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        }
+                      `}
+                      >
+                        {value}
+                      </button>
+                    );
+                  },
+                )}
+              </div>
             </div>
 
-            {/* Breakfast */}
-            <div className="space-y-2">
-              <Label className="text-base font-semibold">아침</Label>
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label className="text-xs">가게</Label>
+            {/* Meals */}
+            <div className="divide-y divide-slate-100">
+              {/* Breakfast */}
+              <div className="px-6 py-4">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-medium text-slate-700">
+                    아침
+                  </span>
+                  {formData.breakfastAmount > 0 && (
+                    <span className="text-sm font-semibold text-slate-900">
+                      {formData.breakfastAmount.toLocaleString()}원
+                    </span>
+                  )}
+                </div>
+                <div className="grid grid-cols-3 gap-2">
                   <Input
                     value={formData.breakfastStore}
                     onChange={(e) =>
-                      setFormData({ ...formData, breakfastStore: e.target.value })
+                      setFormData({
+                        ...formData,
+                        breakfastStore: e.target.value,
+                      })
                     }
-                    placeholder="가게명"
+                    placeholder="가게"
+                    className="h-9 text-sm"
                   />
-                </div>
-                <div>
-                  <Label className="text-xs">금액</Label>
                   <Input
                     type="number"
                     value={formData.breakfastAmount || ""}
@@ -558,38 +632,44 @@ export default function CalendarPage() {
                         breakfastAmount: parseInt(e.target.value) || 0,
                       })
                     }
-                    placeholder="0"
+                    placeholder="금액"
+                    className="h-9 text-sm"
                   />
-                </div>
-                <div>
-                  <Label className="text-xs">결제자</Label>
                   <Input
                     value={formData.breakfastPayer}
                     onChange={(e) =>
-                      setFormData({ ...formData, breakfastPayer: e.target.value })
+                      setFormData({
+                        ...formData,
+                        breakfastPayer: e.target.value,
+                      })
                     }
                     placeholder="결제자"
+                    className="h-9 text-sm"
                   />
                 </div>
               </div>
-            </div>
 
-            {/* Lunch */}
-            <div className="space-y-2">
-              <Label className="text-base font-semibold">점심</Label>
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label className="text-xs">가게</Label>
+              {/* Lunch */}
+              <div className="px-6 py-4">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-medium text-slate-700">
+                    점심
+                  </span>
+                  {formData.lunchAmount > 0 && (
+                    <span className="text-sm font-semibold text-slate-900">
+                      {formData.lunchAmount.toLocaleString()}원
+                    </span>
+                  )}
+                </div>
+                <div className="grid grid-cols-3 gap-2">
                   <Input
                     value={formData.lunchStore}
                     onChange={(e) =>
                       setFormData({ ...formData, lunchStore: e.target.value })
                     }
-                    placeholder="가게명"
+                    placeholder="가게"
+                    className="h-9 text-sm"
                   />
-                </div>
-                <div>
-                  <Label className="text-xs">금액</Label>
                   <Input
                     type="number"
                     value={formData.lunchAmount || ""}
@@ -599,38 +679,41 @@ export default function CalendarPage() {
                         lunchAmount: parseInt(e.target.value) || 0,
                       })
                     }
-                    placeholder="0"
+                    placeholder="금액"
+                    className="h-9 text-sm"
                   />
-                </div>
-                <div>
-                  <Label className="text-xs">결제자</Label>
                   <Input
                     value={formData.lunchPayer}
                     onChange={(e) =>
                       setFormData({ ...formData, lunchPayer: e.target.value })
                     }
                     placeholder="결제자"
+                    className="h-9 text-sm"
                   />
                 </div>
               </div>
-            </div>
 
-            {/* Dinner */}
-            <div className="space-y-2">
-              <Label className="text-base font-semibold">저녁</Label>
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label className="text-xs">가게</Label>
+              {/* Dinner */}
+              <div className="px-6 py-4">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-medium text-slate-700">
+                    저녁
+                  </span>
+                  {formData.dinnerAmount > 0 && (
+                    <span className="text-sm font-semibold text-slate-900">
+                      {formData.dinnerAmount.toLocaleString()}원
+                    </span>
+                  )}
+                </div>
+                <div className="grid grid-cols-3 gap-2">
                   <Input
                     value={formData.dinnerStore}
                     onChange={(e) =>
                       setFormData({ ...formData, dinnerStore: e.target.value })
                     }
-                    placeholder="가게명"
+                    placeholder="가게"
+                    className="h-9 text-sm"
                   />
-                </div>
-                <div>
-                  <Label className="text-xs">금액</Label>
                   <Input
                     type="number"
                     value={formData.dinnerAmount || ""}
@@ -640,58 +723,61 @@ export default function CalendarPage() {
                         dinnerAmount: parseInt(e.target.value) || 0,
                       })
                     }
-                    placeholder="0"
+                    placeholder="금액"
+                    className="h-9 text-sm"
                   />
-                </div>
-                <div>
-                  <Label className="text-xs">결제자</Label>
                   <Input
                     value={formData.dinnerPayer}
                     onChange={(e) =>
                       setFormData({ ...formData, dinnerPayer: e.target.value })
                     }
                     placeholder="결제자"
+                    className="h-9 text-sm"
                   />
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Total */}
-            <div className="pt-4 border-t">
-              <div className="flex justify-between text-lg font-semibold">
-                <span>총 금액</span>
-                <span>
-                  {(
-                    (formData.breakfastAmount || 0) +
-                    (formData.lunchAmount || 0) +
-                    (formData.dinnerAmount || 0)
-                  ).toLocaleString()}
-                  원
-                </span>
+          {/* Footer */}
+          <div className="border-t border-slate-100 bg-slate-50 px-6 py-4">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-sm text-slate-500">총 금액</span>
+              <span className="text-xl font-bold text-slate-900">
+                {(
+                  (formData.breakfastAmount || 0) +
+                  (formData.lunchAmount || 0) +
+                  (formData.dinnerAmount || 0)
+                ).toLocaleString()}
+                원
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              {editingLog && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDelete}
+                  disabled={deleteMutation.isPending}
+                  className="text-slate-500 hover:text-red-600 hover:bg-red-50"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+              <div className="flex gap-2 ml-auto">
+                <Button variant="outline" size="sm" onClick={handleCloseDialog}>
+                  취소
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleSave}
+                  disabled={saveMutation.isPending}
+                >
+                  {saveMutation.isPending ? "저장 중..." : "저장"}
+                </Button>
               </div>
             </div>
           </div>
-
-          <DialogFooter className="flex justify-between">
-            {editingLog && (
-              <Button
-                variant="destructive"
-                onClick={handleDelete}
-                disabled={deleteMutation.isPending}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                삭제
-              </Button>
-            )}
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handleCloseDialog}>
-                취소
-              </Button>
-              <Button onClick={handleSave} disabled={saveMutation.isPending}>
-                {saveMutation.isPending ? "저장 중..." : "저장"}
-              </Button>
-            </div>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

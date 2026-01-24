@@ -12,7 +12,6 @@ import {
   X,
   Loader2,
   Users,
-  TrendingUp,
   Wallet,
 } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
@@ -321,14 +320,9 @@ export default function UsersPage() {
                       <td className="px-4 py-4">
                         <button
                           onClick={() => handleUserClick(user.user_id)}
-                          className="flex items-center gap-3 group"
+                          className="font-medium text-amber-600 hover:text-amber-700 underline underline-offset-2 decoration-amber-300 hover:decoration-amber-500 transition-colors"
                         >
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-slate-200 to-slate-300 text-xs font-bold text-slate-600 group-hover:from-amber-200 group-hover:to-amber-300 transition-colors">
-                            {user.full_name?.charAt(0)}
-                          </div>
-                          <span className="font-medium text-slate-900 group-hover:text-amber-600 transition-colors">
-                            {user.full_name}
-                          </span>
+                          {user.full_name}
                         </button>
                       </td>
                       <td className="px-4 py-4 text-center text-sm text-slate-600">

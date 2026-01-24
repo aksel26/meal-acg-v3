@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import {
@@ -35,6 +36,7 @@ interface UserStats {
 }
 
 export default function UsersPage() {
+  const router = useRouter();
   const currentDate = dayjs();
   const [selectedYear, setSelectedYear] = useState(currentDate.year());
   const [selectedMonth, setSelectedMonth] = useState(currentDate.month() + 1);
@@ -42,6 +44,10 @@ export default function UsersPage() {
   const [isYearOpen, setIsYearOpen] = useState(false);
   const [isMonthOpen, setIsMonthOpen] = useState(false);
   const queryClient = useQueryClient();
+
+  const handleUserClick = (userId: string) => {
+    router.push(`/calendar?userId=${userId}&year=${selectedYear}&month=${selectedMonth}`);
+  };
 
   const { data: users, isLoading } = useQuery<UserStats[]>({
     queryKey: queryKeys.stats.monthly(selectedYear, selectedMonth),
@@ -313,14 +319,17 @@ export default function UsersPage() {
                         {index + 1}
                       </td>
                       <td className="px-4 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-slate-200 to-slate-300 text-xs font-bold text-slate-600">
+                        <button
+                          onClick={() => handleUserClick(user.user_id)}
+                          className="flex items-center gap-3 group"
+                        >
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-slate-200 to-slate-300 text-xs font-bold text-slate-600 group-hover:from-amber-200 group-hover:to-amber-300 transition-colors">
                             {user.full_name?.charAt(0)}
                           </div>
-                          <span className="font-medium text-slate-900">
+                          <span className="font-medium text-slate-900 group-hover:text-amber-600 transition-colors">
                             {user.full_name}
                           </span>
-                        </div>
+                        </button>
                       </td>
                       <td className="px-4 py-4 text-center text-sm text-slate-600">
                         {user.work_days ?? 0}일

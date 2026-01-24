@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { getChoseong } from "es-hangul";
@@ -60,9 +61,21 @@ const initialFormData: MealFormData = {
 
 export default function CalendarPage() {
   const queryClient = useQueryClient();
-  const [currentDate, setCurrentDate] = useState(dayjs());
+  const searchParams = useSearchParams();
+
+  // URL 파라미터에서 초기값 가져오기
+  const initialUserId = searchParams.get("userId") || "";
+  const initialYear = searchParams.get("year");
+  const initialMonth = searchParams.get("month");
+
+  const [currentDate, setCurrentDate] = useState(() => {
+    if (initialYear && initialMonth) {
+      return dayjs().year(parseInt(initialYear)).month(parseInt(initialMonth) - 1);
+    }
+    return dayjs();
+  });
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [selectedUserId, setSelectedUserId] = useState<string>(initialUserId);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingLog, setEditingLog] = useState<MealLog | null>(null);
   const [formData, setFormData] = useState<MealFormData>(initialFormData);
@@ -71,6 +84,20 @@ export default function CalendarPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // URL 파라미터가 변경되면 상태 업데이트
+  useEffect(() => {
+    const userId = searchParams.get("userId");
+    const year = searchParams.get("year");
+    const month = searchParams.get("month");
+
+    if (userId) {
+      setSelectedUserId(userId);
+    }
+    if (year && month) {
+      setCurrentDate(dayjs().year(parseInt(year)).month(parseInt(month) - 1));
+    }
+  }, [searchParams]);
 
   // Fetch members
   const { data: members } = useQuery<Member[]>({

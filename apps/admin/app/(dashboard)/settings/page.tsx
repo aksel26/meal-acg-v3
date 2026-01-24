@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Calendar } from "@repo/ui/src/calendar";
+import { ko } from "date-fns/locale";
 import { toast } from "sonner";
 import {
   Save,
@@ -269,6 +270,7 @@ export default function SettingsPage() {
           <div>
             <Calendar
               mode="single"
+              locale={ko}
               month={calendarDate}
               onMonthChange={(date) => {
                 setCurrentYear(date.getFullYear());

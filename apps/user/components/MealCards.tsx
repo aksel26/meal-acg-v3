@@ -1,8 +1,10 @@
 import * as React from "react";
 import { Button } from "@repo/ui/src/button";
 import dayjs from "dayjs";
-import Image from "next/image";
+import "dayjs/locale/ko";
 import { motion } from "motion/react";
+
+dayjs.locale("ko");
 
 interface MealData {
   date: string;
@@ -27,13 +29,24 @@ interface MealData {
 interface MealCardsProps {
   selectedDate?: Date;
   onAddMeal?: (mealType: "breakfast" | "lunch" | "dinner") => void;
-  onEditMeal?: (mealType: "breakfast" | "lunch" | "dinner", mealInfo: MealData) => void;
+  onEditMeal?: (
+    mealType: "breakfast" | "lunch" | "dinner",
+    mealInfo: MealData,
+  ) => void;
   onHolidayEdit?: (mealInfo: MealData) => void;
   mealData?: MealData[];
 }
 
-export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, mealData = [] }: MealCardsProps) {
-  const [currentMealData, setCurrentMealData] = React.useState<MealData | null>(null);
+export function MealCards({
+  selectedDate,
+  onAddMeal,
+  onEditMeal,
+  onHolidayEdit,
+  mealData = [],
+}: MealCardsProps) {
+  const [currentMealData, setCurrentMealData] = React.useState<MealData | null>(
+    null,
+  );
 
   React.useEffect(() => {
     if (selectedDate && mealData.length > 0) {
@@ -50,54 +63,66 @@ export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, 
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="card-premium p-8 text-center mt-6"
+        className="bg-white rounded-2xl border border-gray-100 p-6 text-center mt-4"
       >
-        <p className="text-sm text-[oklch(0.50_0.01_250)]">날짜를 선택해주세요</p>
+        <p className="text-sm text-gray-400">날짜를 선택해주세요</p>
       </motion.div>
     );
   }
 
   const formatDate = (date: Date) => {
-    return dayjs(date).format("YYYY-MM-DD");
+    return dayjs(date).format("M월 D일 (ddd)");
   };
 
-  const hasMealData = currentMealData && (currentMealData.breakfast || currentMealData.lunch || currentMealData.dinner || currentMealData.attendance);
+  const hasMealData =
+    currentMealData &&
+    (currentMealData.breakfast ||
+      currentMealData.lunch ||
+      currentMealData.dinner ||
+      currentMealData.attendance);
 
   const meals = [
     {
       title: "조식",
       data: currentMealData?.breakfast,
       type: "breakfast" as const,
-      icon: "/icons/breakfast.png",
-      gradientClass: "meal-card-breakfast",
-      accentColor: "oklch(0.55 0.15 55)",
-      textColor: "text-[oklch(0.45_0.12_55)]",
+      color: "bg-amber-50",
+      dotColor: "bg-amber-400",
     },
     {
       title: "중식",
       data: currentMealData?.lunch,
       type: "lunch" as const,
-      icon: "/icons/lunch.png",
-      gradientClass: "meal-card-lunch",
-      accentColor: "oklch(0.50 0.18 250)",
-      textColor: "text-[oklch(0.40_0.15_250)]",
+      color: "bg-blue-50",
+      dotColor: "bg-blue-400",
     },
     {
       title: "석식",
       data: currentMealData?.dinner,
       type: "dinner" as const,
-      icon: "/icons/dinner.png",
-      gradientClass: "meal-card-dinner",
-      accentColor: "oklch(0.48 0.18 280)",
-      textColor: "text-[oklch(0.40_0.15_280)]",
+      color: "bg-violet-50",
+      dotColor: "bg-violet-400",
     },
   ];
 
+  // 조식/중식: 금액이 0이고 식당 정보 없으면 제외
+  // 석식: 데이터가 있으면 표시
+  // 개별식사인 경우 중식은 표시
   const visibleMeals = meals.filter((meal) => {
-    if (meal.data) return true;
-    if (meal.type === "lunch" && (currentMealData?.attendance === "근무" || currentMealData?.attendance?.includes("개별식사"))) {
+    const hasAmount = meal.data?.amount && meal.data.amount > 0;
+    const hasStore = meal.data?.store && meal.data.store.trim().length > 0;
+
+    // 금액이 있거나 식당 정보가 있으면 표시
+    if (hasAmount || hasStore) return true;
+
+    // 중식이고 개별식사인 경우 표시
+    if (
+      meal.type === "lunch" &&
+      currentMealData?.attendance?.includes("개별식사")
+    ) {
       return true;
     }
+
     return false;
   });
 
@@ -113,31 +138,35 @@ export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, 
   if (!hasMealData) {
     return (
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-        className="card-premium p-6 mt-6"
+        transition={{ duration: 0.3 }}
+        className="bg-white rounded-2xl border border-gray-100 p-5 mt-4"
       >
-        <div className="flex items-center justify-between mb-6">
-          <span className="text-sm font-semibold text-[oklch(0.30_0.02_250)]">
-            {formatDate(selectedDate)}
-          </span>
-        </div>
-
-        <div className="flex flex-col items-center py-6">
-          <div className="w-16 h-16 rounded-2xl bg-[oklch(0.96_0.02_250)] flex items-center justify-center mb-4">
-            <svg className="w-8 h-8 text-[oklch(0.70_0.01_250)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        <div className="text-center py-6">
+          <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-3">
+            <svg
+              className="w-6 h-6 text-gray-300"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+              />
             </svg>
           </div>
-          <p className="text-sm text-[oklch(0.50_0.01_250)] mb-6">
-            이 날짜에 등록된 식대 기록이 없습니다
+          <p className="text-sm text-gray-400 mb-4">
+            {formatDate(selectedDate)} 기록 없음
           </p>
           <Button
             onClick={() => onAddMeal?.("lunch")}
-            className="btn-primary w-full h-12 text-sm font-medium"
+            className="h-9 px-4 text-sm font-medium bg-gray-900 hover:bg-gray-800 text-white rounded-lg"
           >
-            식대 기록 추가하기
+            기록 추가
           </Button>
         </div>
       </motion.div>
@@ -148,31 +177,26 @@ export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, 
   if (currentMealData && isHoliday(currentMealData.attendance)) {
     return (
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-        className="card-premium p-6 mt-6"
+        transition={{ duration: 0.3 }}
+        className="bg-white rounded-2xl border border-gray-100 p-5 mt-4"
       >
-        <div className="flex items-center justify-between mb-6">
-          <span className="text-sm font-semibold text-[oklch(0.30_0.02_250)]">
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-sm font-medium text-gray-900">
             {formatDate(selectedDate)}
           </span>
+          <span className="text-xs px-2 py-1 rounded-full bg-orange-50 text-orange-600 font-medium">
+            휴무
+          </span>
         </div>
-
-        <div className="flex flex-col items-center py-6">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[oklch(0.92_0.08_55)] to-[oklch(0.88_0.10_45)] flex items-center justify-center mb-4 shadow-lg shadow-[oklch(0.72_0.12_55/0.2)]">
-            <Image src="/icons/holiday2.png" alt="휴무" width={36} height={36} className="object-contain" />
-          </div>
-          <p className="text-base font-semibold text-[oklch(0.50_0.14_55)] mb-2">휴무일</p>
-          <p className="text-sm text-[oklch(0.55_0.01_250)] mb-6">휴무일에는 식대가 제공되지 않습니다</p>
-          <Button
-            onClick={() => currentMealData && onHolidayEdit?.(currentMealData)}
-            variant="outline"
-            className="w-full h-11 rounded-xl border-[oklch(0.85_0.08_55)] text-[oklch(0.50_0.12_55)] hover:bg-[oklch(0.96_0.04_55)]"
-          >
-            근태 상태 수정하기
-          </Button>
-        </div>
+        <p className="text-sm text-gray-400 text-center py-4">식대 미지급</p>
+        <button
+          onClick={() => currentMealData && onHolidayEdit?.(currentMealData)}
+          className="w-full text-sm text-gray-500 hover:text-gray-700 py-2"
+        >
+          근태 수정
+        </button>
       </motion.div>
     );
   }
@@ -181,58 +205,91 @@ export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, 
   if (currentMealData && isRemoteWork(currentMealData.attendance)) {
     return (
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-        className="card-premium p-6 mt-6"
+        transition={{ duration: 0.3 }}
+        className="bg-white rounded-2xl border border-gray-100 p-5 mt-4"
       >
-        <div className="flex items-center justify-between mb-6">
-          <span className="text-sm font-semibold text-[oklch(0.30_0.02_250)]">
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-sm font-medium text-gray-900">
             {formatDate(selectedDate)}
           </span>
+          <span className="text-xs px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 font-medium">
+            재택
+          </span>
         </div>
+        <p className="text-sm text-gray-400 text-center py-4">식대 미지급</p>
+        <button
+          onClick={() => currentMealData && onHolidayEdit?.(currentMealData)}
+          className="w-full text-sm text-gray-500 hover:text-gray-700 py-2"
+        >
+          근태 수정
+        </button>
+      </motion.div>
+    );
+  }
 
-        <div className="flex flex-col items-center py-6">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[oklch(0.90_0.08_155)] to-[oklch(0.85_0.10_165)] flex items-center justify-center mb-4 shadow-lg shadow-[oklch(0.68_0.14_155/0.2)]">
-            <Image src="/icons/homeOffice.png" alt="재택근무" width={36} height={36} className="object-contain" />
-          </div>
-          <p className="text-base font-semibold text-[oklch(0.45_0.14_155)] mb-2">재택근무</p>
-          <p className="text-sm text-[oklch(0.55_0.01_250)] mb-6">재택근무일에는 식대가 제공되지 않습니다</p>
-          <Button
-            onClick={() => currentMealData && onHolidayEdit?.(currentMealData)}
-            variant="outline"
-            className="w-full h-11 rounded-xl border-[oklch(0.80_0.10_155)] text-[oklch(0.45_0.14_155)] hover:bg-[oklch(0.95_0.04_155)]"
+  // No visible meals after filter
+  if (visibleMeals.length === 0) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="bg-white rounded-2xl border border-gray-100 p-5 mt-4"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-sm font-medium text-gray-900">
+            {formatDate(selectedDate)}
+          </span>
+          {currentMealData?.attendance && (
+            <span className="text-xs px-2 py-1 rounded-full bg-gray-50 text-gray-500 font-medium">
+              {currentMealData.attendance}
+            </span>
+          )}
+        </div>
+        <div className="text-center py-4">
+          <p className="text-sm text-gray-400 mb-3">식사 기록 없음</p>
+          <button
+            onClick={() => onAddMeal?.("lunch")}
+            className="text-sm text-gray-500 hover:text-gray-700"
           >
-            근태 상태 수정하기
-          </Button>
+            + 추가
+          </button>
         </div>
       </motion.div>
     );
   }
 
-  // Meal Cards Display
+  // Meal Cards Display - Minimal Style
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.1 }}
-      className="card-premium p-5 mt-6"
+      transition={{ duration: 0.3 }}
+      className="bg-white rounded-2xl border border-gray-100 p-4 mt-4"
     >
       {/* Header */}
-      <div className="flex items-center justify-between mb-5">
-        <span className="text-sm font-semibold text-[oklch(0.30_0.02_250)]">
+      <div className="flex items-center justify-between mb-3 px-1">
+        <span className="text-sm font-medium text-gray-900">
           {formatDate(selectedDate)}
         </span>
+        {currentMealData?.attendance &&
+          !currentMealData.attendance.includes("근무") && (
+            <span className="text-xs text-gray-400">
+              {currentMealData.attendance}
+            </span>
+          )}
       </div>
 
-      {/* Meal List */}
-      <div className="space-y-3">
+      {/* Meal List - Compact */}
+      <div className="space-y-2">
         {visibleMeals.map((meal, index) => (
           <motion.div
             key={meal.type}
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3, delay: index * 0.1 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2, delay: index * 0.05 }}
             onClick={() => {
               if (currentMealData && onEditMeal) {
                 onEditMeal(meal.type, currentMealData);
@@ -240,58 +297,59 @@ export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, 
                 onAddMeal?.(meal.type);
               }
             }}
-            className={`meal-card ${meal.gradientClass} group cursor-pointer`}
+            className="flex items-center justify-between p-3 rounded-xl bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors"
           >
-            <div className="flex items-center gap-4">
-              {/* Icon */}
-              <div className="w-12 h-12 bg-white/80 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-                <Image src={meal.icon} alt={meal.title} width={28} height={28} className="object-contain" />
-              </div>
-
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
-                  <span className={`text-sm font-semibold ${meal.textColor}`}>
-                    {meal.title}
-                  </span>
-                  <span className={`font-bold ${meal.textColor} ${
-                    meal.type === "lunch" && currentMealData?.attendance?.includes("개별식사") && !meal.data?.amount
-                      ? "text-sm font-normal"
-                      : "text-base"
-                  }`}>
-                    {meal.data?.amount
-                      ? `-${meal.data.amount.toLocaleString()}원`
-                      : meal.type === "lunch" && currentMealData?.attendance?.includes("개별식사")
-                      ? "개별식사"
-                      : "0원"}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-[oklch(0.50_0.01_250)] truncate pr-2">
-                    {meal.data?.store || (meal.type === "lunch" && !meal.data ? "입력 내용이 없습니다" : "식당 정보 없음")}
-                  </span>
-                  {meal.data?.payer && (
-                    <span className="text-xs text-[oklch(0.55_0.01_250)] flex-shrink-0">
-                      {meal.data.payer}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Arrow */}
-              <motion.div
-                className="text-[oklch(0.75_0.01_250)] group-hover:text-[oklch(0.55_0.01_250)] transition-colors"
-                whileHover={{ x: 3 }}
+            <div className="flex items-center gap-3">
+              <div className={`w-2 h-2 rounded-full ${meal.dotColor}`} />
+              <span className="text-sm font-medium text-gray-700">
+                {meal.title}
+              </span>
+              {meal.data?.store && (
+                <span className="text-sm text-gray-400 truncate max-w-[120px]">
+                  {meal.data.store}
+                </span>
+              )}
+              {meal.type === "lunch" &&
+                currentMealData?.attendance?.includes("개별식사") &&
+                !meal.data?.store && (
+                  <span className="text-sm text-gray-400">개별식사</span>
+                )}
+            </div>
+            <div className="flex items-center gap-2">
+              {meal.data?.amount && meal.data.amount > 0 ? (
+                <span className="text-sm font-semibold text-gray-900">
+                  {meal.data.amount.toLocaleString()}원
+                </span>
+              ) : (
+                <span className="text-sm text-gray-300">-</span>
+              )}
+              <svg
+                className="w-4 h-4 text-gray-300"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </motion.div>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
             </div>
           </motion.div>
         ))}
       </div>
+
+      {/* Add button if needed */}
+      {visibleMeals.length < 3 && (
+        <button
+          onClick={() => onAddMeal?.("dinner")}
+          className="w-full mt-2 py-2 text-sm text-gray-400 hover:text-gray-600 transition-colors"
+        >
+          + 식사 추가
+        </button>
+      )}
     </motion.div>
   );
 }

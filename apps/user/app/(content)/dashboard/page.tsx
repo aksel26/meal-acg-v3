@@ -3,7 +3,6 @@
 export const dynamic = "force-dynamic";
 
 import { BottomNavigation } from "@/components/BottomNavigation";
-import BalanceSection from "@/components/dashboard/BalanceSection";
 import GreetingSection from "@/components/dashboard/GreetingSection";
 import MealSection from "@/components/dashboard/MealSection";
 import NoticeSection from "@/components/dashboard/NoticeSection";
@@ -34,6 +33,7 @@ const MealEntryDrawer = lazy(() =>
 );
 
 export default function DashboardPage() {
+  const [mounted, setMounted] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(dayjs().tz("Asia/Seoul").toDate());
   const [currentMonth, setCurrentMonth] = useState<number>(dayjs().tz("Asia/Seoul").month() + 1);
   const [currentYear, setCurrentYear] = useState<number>(dayjs().tz("Asia/Seoul").year());
@@ -55,6 +55,7 @@ export default function DashboardPage() {
   useScrollHandler(() => {});
 
   useEffect(() => {
+    setMounted(true);
     // userStore hydrate (localStorage에서 상태 복원)
     hydrate();
   }, [hydrate]);
@@ -155,10 +156,10 @@ export default function DashboardPage() {
     }
   };
 
-  const displayUserName = userName || (typeof window !== "undefined" ? localStorage.getItem("name") : null) || "";
-  const currentUserId = userId || (typeof window !== "undefined" ? localStorage.getItem("user_id") : null) || "";
+  const displayUserName = userName || (mounted ? localStorage.getItem("name") : null) || "";
+  const currentUserId = userId || (mounted ? localStorage.getItem("user_id") : null) || "";
 
-  if (!displayUserName) {
+  if (!mounted || !displayUserName) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -170,7 +171,6 @@ export default function DashboardPage() {
     <React.Fragment>
       <GreetingSection userName={displayUserName} />
       <NoticeSection />
-      <BalanceSection currentMonth={currentMonth} calculationData={calculationData} />
       <StatsSection userId={currentUserId} month={currentMonth} year={currentYear} onDataChange={setCalculationData} />
       <MealSection selectedDate={selectedDate} setSelectedDate={setSelectedDate} handleMonthChange={handleMonthChange} mealData={mealData} />
 

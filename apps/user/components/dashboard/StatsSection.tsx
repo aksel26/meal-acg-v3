@@ -1,6 +1,5 @@
 "use client";
 
-import { Card } from "@repo/ui/src/card";
 import { Button } from "@repo/ui/src/button";
 import { motion } from "motion/react";
 import { useEffect } from "react";
@@ -25,10 +24,16 @@ function CalculationResult({ userId, month, year, onDataChange }: StatsSectionPr
     return (
       <div className="grid grid-cols-3 gap-3">
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="bg-gray-50 rounded-xl p-4 animate-pulse">
-            <div className="h-6 bg-gray-200 rounded-md mb-2"></div>
-            <div className="h-4 bg-gray-100 rounded w-16"></div>
-          </div>
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.1 }}
+            className="stat-card"
+          >
+            <div className="skeleton h-7 w-20 mb-2 rounded-md" />
+            <div className="skeleton h-4 w-12 rounded" />
+          </motion.div>
         ))}
       </div>
     );
@@ -36,25 +41,32 @@ function CalculationResult({ userId, month, year, onDataChange }: StatsSectionPr
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 px-4">
-        <div className="text-center space-y-3">
-          <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto">
-            <div className="w-6 h-6 text-red-500">⚠️</div>
-          </div>
-          <p className="text-gray-600 text-sm">{error.message}</p>
-          <Button onClick={() => refetch()} variant="outline" size="sm" className="text-xs rounded-full">
-            다시 시도
-          </Button>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="card-premium p-8 text-center"
+      >
+        <div className="w-14 h-14 bg-[oklch(0.95_0.06_25)] rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <span className="text-2xl">⚠️</span>
         </div>
-      </div>
+        <p className="text-sm text-[oklch(0.45_0.01_250)] mb-4">{error.message}</p>
+        <Button
+          onClick={() => refetch()}
+          variant="outline"
+          size="sm"
+          className="text-xs rounded-xl px-4 hover:bg-[oklch(0.97_0.02_250)]"
+        >
+          다시 시도
+        </Button>
+      </motion.div>
     );
   }
 
   if (!data) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="flex items-center space-x-2 text-gray-500">
-          <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+      <div className="flex items-center justify-center py-10">
+        <div className="flex items-center gap-3 text-[oklch(0.50_0.01_250)]">
+          <div className="w-5 h-5 border-2 border-[oklch(0.80_0.02_250)] border-t-[oklch(0.50_0.10_250)] rounded-full animate-spin" />
           <span className="text-sm">데이터를 불러오는 중...</span>
         </div>
       </div>
@@ -69,20 +81,27 @@ function CalculationResult({ userId, month, year, onDataChange }: StatsSectionPr
     {
       label: "사용가능액",
       value: formatCurrency(data.allowanceAmount),
-      bg: "bg-white",
-      text: "text-[#0a2165]",
+      gradient: "from-[oklch(0.55_0.18_250)] to-[oklch(0.48_0.20_270)]",
+      textColor: "text-white",
+      shadowColor: "shadow-[oklch(0.55_0.18_250/0.25)]",
     },
     {
       label: "사용금액",
       value: formatCurrency(data.totalUsed),
-      bg: "bg-white",
-      text: "text-[#0a2165]",
+      gradient: "from-[oklch(0.72_0.14_55)] to-[oklch(0.65_0.16_45)]",
+      textColor: "text-white",
+      shadowColor: "shadow-[oklch(0.72_0.14_55/0.25)]",
     },
     {
       label: "잔액",
       value: formatCurrency(data.balance),
-      bg: data.balance >= 0 ? "bg-green-50" : "bg-red-50",
-      text: data.balance >= 0 ? "text-green-600" : "text-red-500",
+      gradient: data.balance >= 0
+        ? "from-[oklch(0.68_0.16_155)] to-[oklch(0.60_0.18_165)]"
+        : "from-[oklch(0.62_0.18_25)] to-[oklch(0.55_0.20_15)]",
+      textColor: "text-white",
+      shadowColor: data.balance >= 0
+        ? "shadow-[oklch(0.68_0.16_155/0.25)]"
+        : "shadow-[oklch(0.62_0.18_25/0.25)]",
     },
   ];
 
@@ -96,14 +115,28 @@ function CalculationResult({ userId, month, year, onDataChange }: StatsSectionPr
           transition={{
             duration: 0.5,
             delay: index * 0.1,
-            ease: [0.25, 0.46, 0.45, 0.94],
+            ease: [0.16, 1, 0.3, 1],
           }}
-          className={`${stat.bg} ${stat.text} rounded-xl p-4 transition-all hover:shadow-lg backdrop-blur-lg`}
+          whileHover={{ y: -2, scale: 1.02 }}
+          className={`rounded-2xl p-4 bg-gradient-to-br ${stat.gradient} ${stat.shadowColor} shadow-lg relative overflow-hidden`}
         >
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: index * 0.1 + 0.2 }} className={`text-2xl font-bold mb-1`}>
+          {/* Decorative overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: index * 0.1 + 0.2 }}
+            className={`relative text-xl sm:text-2xl font-bold mb-1.5 ${stat.textColor}`}
+          >
             {stat.value}
           </motion.div>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: index * 0.1 + 0.3 }} className="text-xs font-medium">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: index * 0.1 + 0.3 }}
+            className={`relative text-xs font-medium ${stat.textColor} opacity-90`}
+          >
             {stat.label}
           </motion.div>
         </motion.div>
@@ -115,17 +148,16 @@ function CalculationResult({ userId, month, year, onDataChange }: StatsSectionPr
 export default function StatsSection({ userId, month, year, onDataChange }: StatsSectionProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
         duration: 0.6,
         delay: 0.4,
-        ease: [0.25, 0.46, 0.45, 0.94],
+        ease: [0.16, 1, 0.3, 1],
       }}
+      className="mb-8"
     >
-      <Card className="mb-8 p-0 border-none shadow-none bg-transparent">
-        <CalculationResult userId={userId} month={month} year={year} onDataChange={onDataChange} />
-      </Card>
+      <CalculationResult userId={userId} month={month} year={year} onDataChange={onDataChange} />
     </motion.div>
   );
 }

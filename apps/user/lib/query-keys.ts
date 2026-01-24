@@ -64,6 +64,11 @@ export const queryKeys = {
     byNameAndYear: (name: string, year: number) => ["welfarePoints", name, year] as const,
     byNameAndMonth: (name: string, year: number, month: number) => ["welfarePoints", name, year, month] as const,
   },
+
+  // 전역 설정 관련 쿼리
+  settings: {
+    all: ["settings"] as const,
+  },
 } as const;
 
 // 타입 유틸리티 함수들

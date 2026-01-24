@@ -1,11 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { saveMeal, MealData } from "@/lib/supabase/meals";
+import { createServiceClient } from "@/lib/supabase/client";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
+
+// 개별식사 기본 금액 조회
+async function getDailyAllowance(): Promise<number> {
+  const supabase = createServiceClient();
+  if (!supabase) return 10000;
+
+  const { data, error } = await supabase
+    .from("global_settings")
+    .select("daily_allowance")
+    .eq("id", 1)
+    .single();
+
+  if (error || !data) return 10000;
+  return data.daily_allowance ?? 10000;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,6 +55,16 @@ export async function POST(request: NextRequest) {
     console.log(`=== Meal Submit API ===`);
     console.log(`User: ${userIdentifier}, Date: ${date}`);
 
+    // 개별식사인 경우 기본 금액 조회
+    const isIndividualMeal = lunch?.attendance === "근무(개별식사 / 식사안함)";
+    let lunchAmount = parseInt(lunch?.amount) || 0;
+
+    if (isIndividualMeal) {
+      const dailyAllowance = await getDailyAllowance();
+      lunchAmount = dailyAllowance;
+      console.log(`Individual meal detected, applying daily allowance: ${dailyAllowance}원`);
+    }
+
     // 식사 데이터 준비
     const mealData: MealData = {
       date: targetDateKST.toDate(),
@@ -49,7 +75,7 @@ export async function POST(request: NextRequest) {
       },
       lunch: {
         store: lunch?.store || "",
-        amount: parseInt(lunch?.amount) || 0,
+        amount: lunchAmount,
         payer: lunch?.payer || "",
         attendance: lunch?.attendance || "",
       },

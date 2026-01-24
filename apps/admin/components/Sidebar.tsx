@@ -12,6 +12,7 @@ import {
   LogOut,
   ChevronRight,
   Utensils,
+  Shuffle,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,6 +21,7 @@ const navigation = [
   { name: "대시보드", href: "/", icon: LayoutDashboard, description: "전체 현황 요약" },
   { name: "사용자 현황", href: "/users", icon: Users, description: "정산 관리" },
   { name: "식대 입력", href: "/calendar", icon: Calendar, description: "일별 식대 기록" },
+  { name: "점심조 관리", href: "/lunch-groups", icon: Shuffle, description: "조 배정 관리" },
   { name: "공휴일 관리", href: "/holidays", icon: CalendarDays, description: "휴일 설정" },
   { name: "설정", href: "/settings", icon: Settings, description: "지원금 설정" },
   { name: "엑셀 내보내기", href: "/export", icon: FileSpreadsheet, description: "데이터 다운로드" },

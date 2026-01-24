@@ -11,6 +11,7 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
   "/": { title: "대시보드", subtitle: "식대 관리 현황을 한눈에 확인하세요" },
   "/users": { title: "사용자 현황", subtitle: "팀원별 식대 사용 현황 및 정산 관리" },
   "/calendar": { title: "식대 입력", subtitle: "일별 식대 기록을 관리합니다" },
+  "/lunch-groups": { title: "점심조 관리", subtitle: "점심조 구성 및 배정 관리" },
   "/holidays": { title: "공휴일 관리", subtitle: "공휴일 및 휴무일 설정" },
   "/settings": { title: "설정", subtitle: "월별 지원금 및 시스템 설정" },
   "/export": { title: "엑셀 내보내기", subtitle: "데이터 다운로드 및 보고서 생성" },
@@ -18,7 +19,7 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
 
 export default function Header() {
   const pathname = usePathname();
-  const pageInfo = pageTitles[pathname] || pageTitles["/"];
+  const pageInfo = pageTitles[pathname] ?? pageTitles["/"] ?? { title: "대시보드", subtitle: "" };
   const today = dayjs();
 
   return (

@@ -54,4 +54,13 @@ export const queryKeys = {
     summary: (year: number, month: number) =>
       ["dashboard", "summary", year, month] as const,
   },
+
+  // Lunch Groups
+  lunchGroups: {
+    all: ["lunchGroups"] as const,
+    byWeek: (weekStartDate: string) =>
+      ["lunchGroups", "week", weekStartDate] as const,
+    settings: ["lunchGroups", "settings"] as const,
+    fixedSchedules: ["lunchGroups", "fixedSchedules"] as const,
+  },
 };

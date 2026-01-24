@@ -4,34 +4,19 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@repo/ui/src/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@repo/ui/src/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@repo/ui/src/table";
-import { Skeleton } from "@repo/ui/src/skeleton";
-import { Input } from "@repo/ui/src/input";
-import { Badge } from "@repo/ui/src/badge";
-import { Button } from "@repo/ui/src/button";
-import { FileSpreadsheet, Check, X, Loader2 } from "lucide-react";
+  Search,
+  ChevronDown,
+  FileSpreadsheet,
+  Check,
+  X,
+  Loader2,
+  Users,
+  TrendingUp,
+  Wallet,
+} from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
 import { toast } from "sonner";
+import { cn } from "@repo/ui/lib/utils";
 
 interface UserStats {
   user_id: string;
@@ -54,6 +39,8 @@ export default function UsersPage() {
   const [selectedYear, setSelectedYear] = useState(currentDate.year());
   const [selectedMonth, setSelectedMonth] = useState(currentDate.month() + 1);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isYearOpen, setIsYearOpen] = useState(false);
+  const [isMonthOpen, setIsMonthOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: users, isLoading } = useQuery<UserStats[]>({
@@ -118,188 +105,326 @@ export default function UsersPage() {
   const years = Array.from({ length: 5 }, (_, i) => currentDate.year() - 2 + i);
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
 
+  // Summary stats
+  const totalUsers = filteredUsers?.length || 0;
+  const settledUsers = filteredUsers?.filter((u) => u.is_settled).length || 0;
+  const totalUsed = filteredUsers?.reduce((sum, u) => sum + (u.total_used || 0), 0) || 0;
+
   return (
     <div className="space-y-6">
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="flex items-center gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/60">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-slate-500 to-slate-600 shadow-lg">
+            <Users className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-slate-500">총 인원</p>
+            <p className="text-2xl font-bold text-slate-900">{totalUsers}명</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/60">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-lg">
+            <Check className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-slate-500">정산 완료</p>
+            <p className="text-2xl font-bold text-slate-900">
+              {settledUsers}
+              <span className="ml-1 text-lg font-medium text-slate-400">
+                / {totalUsers}
+              </span>
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/60">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 shadow-lg">
+            <Wallet className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-slate-500">총 사용액</p>
+            <p className="text-2xl font-bold text-slate-900">
+              {(totalUsed / 10000).toFixed(0)}
+              <span className="ml-1 text-lg font-medium text-slate-400">만원</span>
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-4">
-        <Select
-          value={selectedYear.toString()}
-          onValueChange={(value) => setSelectedYear(parseInt(value))}
-        >
-          <SelectTrigger className="w-32">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {years.map((year) => (
-              <SelectItem key={year} value={year.toString()}>
-                {year}년
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="flex flex-wrap items-center gap-3">
+        {/* Year Dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => {
+              setIsYearOpen(!isYearOpen);
+              setIsMonthOpen(false);
+            }}
+            className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-slate-200/60 transition-all hover:bg-slate-50"
+          >
+            {selectedYear}년
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 text-slate-400 transition-transform",
+                isYearOpen && "rotate-180"
+              )}
+            />
+          </button>
+          {isYearOpen && (
+            <div className="absolute left-0 top-full z-50 mt-2 w-32 rounded-xl bg-white p-1 shadow-lg ring-1 ring-slate-200/60">
+              {years.map((year) => (
+                <button
+                  key={year}
+                  onClick={() => {
+                    setSelectedYear(year);
+                    setIsYearOpen(false);
+                  }}
+                  className={cn(
+                    "flex w-full items-center rounded-lg px-3 py-2 text-sm transition-colors",
+                    year === selectedYear
+                      ? "bg-amber-50 font-medium text-amber-600"
+                      : "text-slate-600 hover:bg-slate-50"
+                  )}
+                >
+                  {year}년
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
-        <Select
-          value={selectedMonth.toString()}
-          onValueChange={(value) => setSelectedMonth(parseInt(value))}
-        >
-          <SelectTrigger className="w-24">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {months.map((month) => (
-              <SelectItem key={month} value={month.toString()}>
-                {month}월
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* Month Dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => {
+              setIsMonthOpen(!isMonthOpen);
+              setIsYearOpen(false);
+            }}
+            className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-slate-200/60 transition-all hover:bg-slate-50"
+          >
+            {selectedMonth}월
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 text-slate-400 transition-transform",
+                isMonthOpen && "rotate-180"
+              )}
+            />
+          </button>
+          {isMonthOpen && (
+            <div className="absolute left-0 top-full z-50 mt-2 grid w-48 grid-cols-4 gap-1 rounded-xl bg-white p-2 shadow-lg ring-1 ring-slate-200/60">
+              {months.map((month) => (
+                <button
+                  key={month}
+                  onClick={() => {
+                    setSelectedMonth(month);
+                    setIsMonthOpen(false);
+                  }}
+                  className={cn(
+                    "flex items-center justify-center rounded-lg py-2 text-sm transition-colors",
+                    month === selectedMonth
+                      ? "bg-amber-50 font-medium text-amber-600"
+                      : "text-slate-600 hover:bg-slate-50"
+                  )}
+                >
+                  {month}월
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
-        <Input
-          type="text"
-          placeholder="이름 검색..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-48"
-        />
+        {/* Search */}
+        <div className="relative ml-auto">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            placeholder="이름 검색..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-48 rounded-xl bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 shadow-sm ring-1 ring-slate-200/60 transition-all placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+          />
+        </div>
       </div>
 
       {/* Users Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>사용자별 정산 현황</CardTitle>
-          <CardDescription>
-            {selectedYear}년 {selectedMonth}월 기준 ({filteredUsers?.length || 0}명)
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12 text-center">No.</TableHead>
-                  <TableHead>성명</TableHead>
-                  <TableHead className="text-center">근무일</TableHead>
-                  <TableHead className="text-center">휴일</TableHead>
-                  <TableHead className="text-center">주말근무</TableHead>
-                  <TableHead className="text-center">개별식사</TableHead>
-                  <TableHead className="text-center">재택근무</TableHead>
-                  <TableHead className="text-right">총금액</TableHead>
-                  <TableHead className="text-right">사용금액</TableHead>
-                  <TableHead className="text-right">잔여금액</TableHead>
-                  <TableHead className="text-center">엑셀파일</TableHead>
-                  <TableHead className="text-center">정산여부</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  Array.from({ length: 10 }).map((_, index) => (
-                    <TableRow key={index}>
-                      {Array.from({ length: 12 }).map((_, cellIndex) => (
-                        <TableCell key={cellIndex}>
-                          <Skeleton className="h-4 w-full" />
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : filteredUsers && filteredUsers.length > 0 ? (
-                  filteredUsers.map((user, index) => {
-                    const balance = user.balance ?? 0;
-
-                    return (
-                      <TableRow key={user.user_id || index}>
-                        <TableCell className="text-center text-gray-500">
-                          {index + 1}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {user.full_name}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {user.work_days ?? 0}일
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {user.holiday_count ?? 0}일
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {user.weekend_work_days ?? 0}일
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {user.individual_meals ?? 0}회
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {user.remote_work_days ?? 0}일
-                        </TableCell>
-                        <TableCell className="text-right text-blue-600">
-                          {formatCurrency(user.total_allowance)}
-                        </TableCell>
-                        <TableCell className="text-right text-orange-600">
-                          {formatCurrency(user.total_used)}
-                        </TableCell>
-                        <TableCell
-                          className={`text-right font-medium ${
-                            balance >= 0 ? "text-green-600" : "text-red-600"
-                          }`}
-                        >
-                          {formatCurrency(balance)}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {user.has_excel_file ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                            >
-                              <FileSpreadsheet className="h-4 w-4 text-green-600" />
-                            </Button>
-                          ) : (
-                            <span className="text-gray-400">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <button
-                            onClick={() =>
-                              handleToggleSettlement(user.user_id, user.is_settled)
-                            }
-                            disabled={toggleSettlementMutation.isPending}
-                            className="cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            {toggleSettlementMutation.isPending &&
-                            toggleSettlementMutation.variables?.userId ===
-                              user.user_id ? (
-                              <Badge variant="outline">
-                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                처리중
-                              </Badge>
-                            ) : user.is_settled ? (
-                              <Badge variant="default" className="bg-green-600 hover:bg-green-700">
-                                <Check className="h-3 w-3 mr-1" />
-                                완료
-                              </Badge>
-                            ) : (
-                              <Badge variant="secondary" className="hover:bg-gray-300">
-                                <X className="h-3 w-3 mr-1" />
-                                미정산
-                              </Badge>
-                            )}
-                          </button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={12}
-                      className="text-center text-gray-500"
+      <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/60">
+        <div className="max-h-[calc(100vh-360px)] overflow-auto">
+          <table className="w-full">
+            <thead className="sticky top-0 z-10 bg-slate-50 shadow-[0_1px_0_0_rgb(241,245,249)]">
+              <tr>
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  No.
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  성명
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  근무
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  휴일
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  주말
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  개별
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  재택
+                </th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  지원금
+                </th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  사용액
+                </th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  잔액
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  파일
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  정산
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {isLoading ? (
+                Array.from({ length: 8 }).map((_, index) => (
+                  <tr key={index}>
+                    {Array.from({ length: 12 }).map((_, cellIndex) => (
+                      <td key={cellIndex} className="px-4 py-4">
+                        <div className="h-4 w-full animate-pulse rounded bg-slate-100" />
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : filteredUsers && filteredUsers.length > 0 ? (
+                filteredUsers.map((user, index) => {
+                  const balance = user.balance ?? 0;
+                  return (
+                    <tr
+                      key={user.user_id || index}
+                      className="table-row-interactive"
                     >
-                      데이터가 없습니다.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+                      <td className="px-4 py-4 text-center text-sm text-slate-400">
+                        {index + 1}
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-slate-200 to-slate-300 text-xs font-bold text-slate-600">
+                            {user.full_name?.charAt(0)}
+                          </div>
+                          <span className="font-medium text-slate-900">
+                            {user.full_name}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 text-center text-sm text-slate-600">
+                        {user.work_days ?? 0}일
+                      </td>
+                      <td className="px-4 py-4 text-center text-sm text-slate-600">
+                        {user.holiday_count ?? 0}일
+                      </td>
+                      <td className="px-4 py-4 text-center text-sm text-slate-600">
+                        {user.weekend_work_days ?? 0}일
+                      </td>
+                      <td className="px-4 py-4 text-center text-sm text-slate-600">
+                        {user.individual_meals ?? 0}회
+                      </td>
+                      <td className="px-4 py-4 text-center text-sm text-slate-600">
+                        {user.remote_work_days ?? 0}일
+                      </td>
+                      <td className="px-4 py-4 text-right text-sm font-medium text-sky-600">
+                        {formatCurrency(user.total_allowance)}
+                      </td>
+                      <td className="px-4 py-4 text-right text-sm font-medium text-amber-600">
+                        {formatCurrency(user.total_used)}
+                      </td>
+                      <td
+                        className={cn(
+                          "px-4 py-4 text-right text-sm font-bold",
+                          balance >= 0 ? "text-emerald-600" : "text-rose-600"
+                        )}
+                      >
+                        {formatCurrency(balance)}
+                      </td>
+                      <td className="px-4 py-4 text-center">
+                        {user.has_excel_file ? (
+                          <button className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-emerald-600 transition-colors hover:bg-emerald-50">
+                            <FileSpreadsheet className="h-4 w-4" />
+                          </button>
+                        ) : (
+                          <span className="text-slate-300">-</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-4 text-center">
+                        <button
+                          onClick={() =>
+                            handleToggleSettlement(user.user_id, user.is_settled)
+                          }
+                          disabled={toggleSettlementMutation.isPending}
+                          className={cn(
+                            "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all",
+                            toggleSettlementMutation.isPending &&
+                              toggleSettlementMutation.variables?.userId ===
+                                user.user_id
+                              ? "bg-slate-100 text-slate-500"
+                              : user.is_settled
+                              ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                          )}
+                        >
+                          {toggleSettlementMutation.isPending &&
+                          toggleSettlementMutation.variables?.userId ===
+                            user.user_id ? (
+                            <>
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                              처리중
+                            </>
+                          ) : user.is_settled ? (
+                            <>
+                              <Check className="h-3 w-3" />
+                              완료
+                            </>
+                          ) : (
+                            <>
+                              <X className="h-3 w-3" />
+                              미정산
+                            </>
+                          )}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td
+                    colSpan={12}
+                    className="px-4 py-12 text-center text-sm text-slate-500"
+                  >
+                    데이터가 없습니다.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Click outside to close dropdowns */}
+      {(isYearOpen || isMonthOpen) && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => {
+            setIsYearOpen(false);
+            setIsMonthOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }

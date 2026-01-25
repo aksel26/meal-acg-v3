@@ -139,12 +139,14 @@ export default function DashboardPage() {
 
   const handleDeleteMeal = async (date: string) => {
     const currentUserName = userName || localStorage.getItem("name");
+    const currentUserId = userId || localStorage.getItem("userId");
     if (!currentUserName) {
       return;
     }
 
     const deleteData = {
       userName: currentUserName,
+      userId: currentUserId || undefined,
       date: date,
     };
 

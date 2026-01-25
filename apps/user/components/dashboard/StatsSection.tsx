@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@repo/ui/src/button";
+import { NumberTicker } from "@repo/ui/src/number-ticker";
 import { motion } from "motion/react";
 import { useEffect } from "react";
 import { useCalculationData } from "@/hooks/use-calculation-data";
@@ -105,7 +106,8 @@ function CalculationResult({
               {isOverBudget && (
                 <span className="text-2xl font-bold text-red-500">-</span>
               )}
-              <span
+              <NumberTicker
+                value={Math.abs(data.balance)}
                 className={`text-2xl font-bold tracking-tight ${
                   isOverBudget
                     ? "text-red-500"
@@ -113,9 +115,7 @@ function CalculationResult({
                       ? "text-amber-600"
                       : "text-gray-900"
                 }`}
-              >
-                {formatCurrency(data.balance)}
-              </span>
+              />
               <span
                 className={`text-sm font-medium ${
                   isOverBudget
@@ -146,22 +146,39 @@ function CalculationResult({
 
         {/* 사용량 프로그레스 바 */}
         <div className="space-y-2">
-          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+          <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
             <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${Math.min(usagePercent, 100)}%` }}
-              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className={`h-full rounded-full ${
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: `${Math.min(usagePercent, 100)}%`, opacity: 1 }}
+              transition={{
+                width: { duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.2 },
+                opacity: { duration: 0.3 }
+              }}
+              className={`h-full rounded-full relative ${
                 isOverBudget
-                  ? "bg-red-400"
+                  ? "bg-gradient-to-r from-red-400 to-red-500"
                   : isLowBalance
-                    ? "bg-amber-400"
-                    : "bg-gray-700"
+                    ? "bg-gradient-to-r from-amber-400 to-amber-500"
+                    : "bg-gradient-to-r from-gray-600 to-gray-800"
               }`}
-            />
+            >
+              {/* 글로우 효과 */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-white/30 to-transparent"
+              />
+            </motion.div>
           </div>
           <div className="flex justify-between text-[11px] text-gray-400">
-            <span>{usagePercent}% 사용</span>
+            <motion.span
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
+              {usagePercent}% 사용
+            </motion.span>
             <span>{formatCurrency(data.allowanceAmount)}원 중</span>
           </div>
         </div>

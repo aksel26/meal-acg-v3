@@ -3,19 +3,17 @@
 import { useState, useEffect, lazy, Suspense, useCallback } from "react";
 import { useUsers } from "@/hooks/useUsers";
 import { useMealDrawerStore } from "@/stores/mealDrawerStore";
-import { Button } from "@repo/ui/src/button";
 import { Input } from "@repo/ui/src/input";
 import { Label } from "@repo/ui/src/label";
 import { motion, AnimatePresence } from "motion/react";
 
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter, DrawerClose } from "@repo/ui/src/drawer";
 import { AutoCompleteInput } from "@repo/ui/src/autocomplete-input";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@repo/ui/src/dialog";
-import { Search } from "@repo/ui/icons";
-import { attendanceOptions, businessNumbers, mealTypeOptions } from "@/lib/const/const";
+import { attendanceOptions, mealTypeOptions } from "@/lib/const/const";
 import { ReceiptScanner } from "./ReceiptScanner";
 import { ReceiptScanResult } from "@/lib/types/receipt-types";
 import { useIndividualMealAmount } from "@/hooks/useSettings";
+import { useRestaurantNames, useCreateRestaurant, parseRestaurantName } from "@/hooks/useRestaurants";
 
 // Lazy load DeleteConfirmDialog
 const DeleteConfirmDialog = lazy(() =>
@@ -63,15 +61,27 @@ const shortLabels: Record<string, string> = {
   "재택근무": "재택",
 };
 
+// 천 단위 콤마 포맷팅
+const formatNumberWithCommas = (value: string): string => {
+  const numericValue = value.replace(/[^0-9]/g, "");
+  if (!numericValue) return "";
+  return Number(numericValue).toLocaleString("ko-KR");
+};
+
+// 콤마 제거하여 숫자 문자열로 변환
+const parseFormattedNumber = (value: string): string => {
+  return value.replace(/[^0-9]/g, "");
+};
+
 export default function MealEntryDrawer({ onFormSubmit, onDeleteMeal }: MealEntryDrawerProps) {
   const { isOpen, isEditMode, selectedMealType, selectedDate, formData, closeDrawer, setSelectedMealType, updateFormField } = useMealDrawerStore();
 
   const { users, isLoading: usersLoading, error: usersError, fetchUsers } = useUsers();
   const { amount: individualMealAmount } = useIndividualMealAmount();
+  const { restaurantNames, isLoading: restaurantsLoading } = useRestaurantNames();
+  const createRestaurant = useCreateRestaurant();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isBusinessDialogOpen, setIsBusinessDialogOpen] = useState(false);
-  const [businessSearchTerm, setBusinessSearchTerm] = useState("");
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const currentFormData = formData[selectedMealType];
@@ -91,7 +101,7 @@ export default function MealEntryDrawer({ onFormSubmit, onDeleteMeal }: MealEntr
         updateFormField("amount", "");
       }
     }
-  }, [isOpen, selectedMealType, updateFormField, formData.lunch.attendance, formData.lunch.amount]);
+  }, [isOpen, selectedMealType, updateFormField, formData.lunch]);
 
   const handleDeleteMeal = async () => {
     if (!selectedDate || !onDeleteMeal) return;
@@ -105,14 +115,29 @@ export default function MealEntryDrawer({ onFormSubmit, onDeleteMeal }: MealEntr
     }
   };
 
-  const handleBusinessSelect = (business: { businessNumber: string; name: string }) => {
-    updateFormField("store", `${business.name}(${business.businessNumber})`);
-    setIsBusinessDialogOpen(false);
-    setBusinessSearchTerm("");
-  };
+  // 새 식당 저장 함수
+  const saveNewRestaurant = useCallback(
+    async (storeName: string) => {
+      if (!storeName || storeName.trim() === "") return;
 
-  const filteredBusinessNumbers = businessNumbers.filter((business) =>
-    business.name.toLowerCase().includes(businessSearchTerm.toLowerCase()) || business.businessNumber.includes(businessSearchTerm)
+      const { name, business_number } = parseRestaurantName(storeName);
+
+      // 이미 목록에 있는지 확인
+      if (restaurantNames.includes(storeName)) {
+        console.log("Restaurant already exists:", storeName);
+        return;
+      }
+
+      try {
+        console.log("Saving new restaurant:", { name, business_number });
+        await createRestaurant.mutateAsync({ name, business_number });
+        console.log("Restaurant saved successfully");
+      } catch (error) {
+        // 중복 등록 에러는 무시
+        console.error("Restaurant save error:", error);
+      }
+    },
+    [restaurantNames, createRestaurant]
   );
 
   const handleScanComplete = useCallback(
@@ -126,8 +151,6 @@ export default function MealEntryDrawer({ onFormSubmit, onDeleteMeal }: MealEntr
     },
     [updateFormField]
   );
-
-  const config = mealTypeConfig[selectedMealType];
 
   return (
     <Drawer open={isOpen} onOpenChange={closeDrawer} repositionInputs={false}>
@@ -184,6 +207,10 @@ export default function MealEntryDrawer({ onFormSubmit, onDeleteMeal }: MealEntr
 
             setIsSubmitting(true);
             try {
+              // 새 식당 저장 (폼 제출 전에 완료)
+              if (currentFormData.store) {
+                await saveNewRestaurant(currentFormData.store);
+              }
               await onFormSubmit(e);
             } finally {
               setIsSubmitting(false);
@@ -252,26 +279,18 @@ export default function MealEntryDrawer({ onFormSubmit, onDeleteMeal }: MealEntr
           {/* 식당명 */}
           <div className="space-y-2.5">
             <Label className="text-xs font-medium text-gray-600">식당명</Label>
-            <div className="flex gap-2">
-              <Input
-                id="store"
-                type="text"
-                placeholder="식당명 입력"
-                value={currentFormData.store}
-                onChange={(e) => updateFormField("store", e.target.value)}
-                className="h-11 text-sm rounded-xl border-gray-200 bg-white focus:border-gray-400 focus:ring-1 focus:ring-gray-400 transition-all"
-              />
-              <button
-                type="button"
-                className="h-11 w-11 shrink-0 rounded-xl border border-gray-200 bg-white flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:border-gray-300 transition-all"
-                onClick={() => {
-                  setIsBusinessDialogOpen(true);
-                  setBusinessSearchTerm("");
-                }}
-              >
-                <Search className="w-4 h-4" />
-              </button>
-            </div>
+            <AutoCompleteInput
+              id="store"
+              suggestions={restaurantNames}
+              value={currentFormData.store}
+              onValueChange={(value) => updateFormField("store", value)}
+              placeholder="식당명 입력"
+              allowFreeText={true}
+              maxSuggestions={10}
+              emptyText="저장된 식당이 없습니다"
+              disabled={restaurantsLoading}
+              className="h-11 text-sm rounded-xl border-gray-200 bg-white focus:border-gray-400 focus:ring-1 focus:ring-gray-400 transition-all"
+            />
           </div>
 
           {/* 금액 */}
@@ -280,11 +299,14 @@ export default function MealEntryDrawer({ onFormSubmit, onDeleteMeal }: MealEntr
             <div className="relative">
               <Input
                 id="amount"
-                type="number"
+                type="text"
+                inputMode="numeric"
                 placeholder="0"
-                value={currentFormData.amount}
-                onChange={(e) => updateFormField("amount", e.target.value)}
-                min="0"
+                value={formatNumberWithCommas(currentFormData.amount)}
+                onChange={(e) => {
+                  const rawValue = parseFormattedNumber(e.target.value);
+                  updateFormField("amount", rawValue);
+                }}
                 disabled={(currentFormData as { attendance: string }).attendance === "근무(개별식사 / 식사안함)"}
                 className="h-11 text-sm rounded-xl border-gray-200 bg-white focus:border-gray-400 focus:ring-1 focus:ring-gray-400 transition-all pr-10 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
               />
@@ -379,6 +401,10 @@ export default function MealEntryDrawer({ onFormSubmit, onDeleteMeal }: MealEntr
               setValidationError(null);
               setIsSubmitting(true);
               try {
+                // 새 식당 저장 (폼 제출 전에 완료)
+                if (currentFormData.store) {
+                  await saveNewRestaurant(currentFormData.store);
+                }
                 await onFormSubmit(e);
               } finally {
                 setIsSubmitting(false);
@@ -398,65 +424,6 @@ export default function MealEntryDrawer({ onFormSubmit, onDeleteMeal }: MealEntr
           </button>
         </DrawerFooter>
       </DrawerContent>
-
-      {/* 사업자번호 찾기 Dialog */}
-      <Dialog open={isBusinessDialogOpen} onOpenChange={setIsBusinessDialogOpen}>
-        <DialogContent className="max-w-sm p-0 gap-0 rounded-2xl bg-white border-0 shadow-xl overflow-hidden">
-          <DialogHeader className="px-5 py-4 border-b border-gray-100">
-            <DialogTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-              <span className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center">
-                <Search className="w-3.5 h-3.5 text-gray-600" />
-              </span>
-              사업자번호 검색
-            </DialogTitle>
-          </DialogHeader>
-          <div className="p-4 space-y-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input
-                type="text"
-                placeholder="상호명 검색..."
-                value={businessSearchTerm}
-                onChange={(e) => setBusinessSearchTerm(e.target.value)}
-                className="h-10 pl-10 text-sm rounded-lg border-gray-200 bg-gray-50 focus:border-gray-400 focus:ring-1 focus:ring-gray-400 transition-all"
-              />
-            </div>
-            <div className="h-64 overflow-y-auto space-y-1">
-              {filteredBusinessNumbers.length > 0 ? (
-                filteredBusinessNumbers.map((business, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleBusinessSelect(business)}
-                    className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-all"
-                  >
-                    <p className="text-sm font-medium text-gray-900">
-                      {business.name}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-0.5 font-mono">
-                      {business.businessNumber}
-                    </p>
-                  </button>
-                ))
-              ) : (
-                <div className="flex flex-col items-center justify-center py-10">
-                  <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center mb-2">
-                    <Search className="w-5 h-5 text-gray-400" />
-                  </div>
-                  <p className="text-sm text-gray-500">검색 결과가 없습니다</p>
-                </div>
-              )}
-            </div>
-          </div>
-          <DialogFooter className="px-4 py-3 border-t border-gray-100 bg-gray-50">
-            <button
-              className="w-full h-10 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 bg-white hover:bg-gray-50 transition-all"
-              onClick={() => setIsBusinessDialogOpen(false)}
-            >
-              닫기
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </Drawer>
   );
 }

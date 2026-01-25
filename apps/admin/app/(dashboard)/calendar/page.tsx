@@ -31,6 +31,7 @@ import {
   Search,
   X,
   Check,
+  ListPlus,
 } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
 import type { MealLog, Member } from "@/lib/supabase/types";
@@ -92,6 +93,14 @@ export default function CalendarPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // 일괄 입력 관련 state
+  const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
+  const [bulkExcludedIds, setBulkExcludedIds] = useState<string[]>([]);
+  const [bulkSearchQuery, setBulkSearchQuery] = useState("");
+  const [bulkDate, setBulkDate] = useState("");
+  const [bulkAmount, setBulkAmount] = useState<number>(0);
+  const [bulkAttendance, setBulkAttendance] = useState("출근");
 
   // URL 파라미터가 변경되면 상태 업데이트
   useEffect(() => {
@@ -250,6 +259,92 @@ export default function CalendarPage() {
     },
   });
 
+  // Bulk create meal logs mutation
+  const bulkMutation = useMutation({
+    mutationFn: async (data: {
+      excludedUserIds: string[];
+      entryDate: string;
+      attendance: string;
+      lunchAmount: number;
+    }) => {
+      const response = await fetch("/api/meal-logs/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error("Failed to create bulk meal logs");
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.mealLogs.byUserAndMonth(
+          selectedUserId,
+          currentDate.year(),
+          currentDate.month() + 1,
+        ),
+      });
+      toast.success(`${data.count}명의 식대 정보가 일괄 입력되었습니다.`);
+      handleCloseBulkDialog();
+    },
+    onError: () => {
+      toast.error("일괄 입력 중 오류가 발생했습니다.");
+    },
+  });
+
+  // 일괄 입력 다이얼로그 닫기
+  const handleCloseBulkDialog = () => {
+    setIsBulkDialogOpen(false);
+    setBulkExcludedIds([]);
+    setBulkSearchQuery("");
+    setBulkDate("");
+    setBulkAmount(0);
+    setBulkAttendance("출근");
+  };
+
+  // 일괄 입력 실행
+  const handleBulkSave = () => {
+    if (!bulkDate) {
+      toast.error("날짜를 선택해주세요.");
+      return;
+    }
+    bulkMutation.mutate({
+      excludedUserIds: bulkExcludedIds,
+      entryDate: bulkDate,
+      attendance: bulkAttendance,
+      lunchAmount: bulkAmount,
+    });
+  };
+
+  // 멤버 제외/포함 토글
+  const toggleExcludeMember = (memberId: string) => {
+    setBulkExcludedIds((prev) =>
+      prev.includes(memberId)
+        ? prev.filter((id) => id !== memberId)
+        : [...prev, memberId]
+    );
+  };
+
+  // 일괄 입력 다이얼로그 내 멤버 필터링
+  const bulkFilteredMembers = useMemo(() => {
+    if (!members) return [];
+    if (!bulkSearchQuery.trim()) return members;
+
+    const query = bulkSearchQuery.trim();
+    return members.filter((member) => {
+      const name = member.full_name || "";
+      if (name.toLowerCase().includes(query.toLowerCase())) return true;
+      const nameChoseong = getChoseong(name);
+      if (nameChoseong.includes(query)) return true;
+      return false;
+    });
+  }, [members, bulkSearchQuery]);
+
+  // 제외된 멤버 목록
+  const excludedMembers = useMemo(() => {
+    if (!members) return [];
+    return members.filter((m) => bulkExcludedIds.includes(m.id));
+  }, [members, bulkExcludedIds]);
+
   const handlePrevMonth = () =>
     setCurrentDate(currentDate.subtract(1, "month"));
   const handleNextMonth = () => setCurrentDate(currentDate.add(1, "month"));
@@ -403,6 +498,15 @@ export default function CalendarPage() {
           <div className="flex items-center justify-between">
             <CardTitle>{currentDate.format("YYYY년 M월")}</CardTitle>
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsBulkDialogOpen(true)}
+                className="gap-1.5"
+              >
+                <ListPlus className="h-4 w-4" />
+                일괄 입력
+              </Button>
               <Button variant="outline" size="icon" onClick={handlePrevMonth}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -546,6 +650,177 @@ export default function CalendarPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Bulk Entry Dialog */}
+      <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
+        <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden">
+          <DialogHeader className="px-6 py-4 border-b border-slate-100">
+            <DialogTitle className="text-base font-semibold text-slate-900">
+              식대 일괄 입력
+            </DialogTitle>
+            <DialogDescription className="text-sm text-slate-500 mt-0.5">
+              제외할 멤버를 선택하고 날짜와 금액을 입력하세요
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="max-h-[calc(90vh-200px)] overflow-y-auto">
+            {/* 날짜 및 금액 입력 */}
+            <div className="px-6 py-4 border-b border-slate-100">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs font-medium text-slate-500 mb-2 block">
+                    날짜
+                  </Label>
+                  <Input
+                    type="date"
+                    value={bulkDate}
+                    onChange={(e) => setBulkDate(e.target.value)}
+                    className="h-10"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs font-medium text-slate-500 mb-2 block">
+                    점심 금액
+                  </Label>
+                  <Input
+                    type="number"
+                    value={bulkAmount || ""}
+                    onChange={(e) => setBulkAmount(parseInt(e.target.value) || 0)}
+                    placeholder="0"
+                    className="h-10"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 근태 선택 */}
+            <div className="px-6 py-4 border-b border-slate-100">
+              <Label className="text-xs font-medium text-slate-500 mb-2.5 block">
+                근태
+              </Label>
+              <div className="flex flex-wrap gap-1.5">
+                {["출근", "개별식사", "재택", "휴가", "반차", "주말근무"].map(
+                  (value) => {
+                    const isSelected = bulkAttendance === value;
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setBulkAttendance(value)}
+                        className={`
+                          px-3 py-1.5 rounded-md text-sm transition-colors
+                          ${
+                            isSelected
+                              ? "bg-slate-900 text-white"
+                              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                          }
+                        `}
+                      >
+                        {value}
+                      </button>
+                    );
+                  }
+                )}
+              </div>
+            </div>
+
+            {/* 제외된 멤버 표시 */}
+            {excludedMembers.length > 0 && (
+              <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
+                <Label className="text-xs font-medium text-slate-500 mb-2.5 block">
+                  제외된 멤버 ({excludedMembers.length}명)
+                </Label>
+                <div className="flex flex-wrap gap-1.5">
+                  {excludedMembers.map((member) => (
+                    <button
+                      key={member.id}
+                      type="button"
+                      onClick={() => toggleExcludeMember(member.id)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+                    >
+                      {member.full_name}
+                      <X className="h-3 w-3" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 멤버 검색 및 선택 */}
+            <div className="px-6 py-4">
+              <Label className="text-xs font-medium text-slate-500 mb-2.5 block">
+                제외할 멤버 선택
+              </Label>
+              <div className="relative mb-3">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  value={bulkSearchQuery}
+                  onChange={(e) => setBulkSearchQuery(e.target.value)}
+                  placeholder="이름 또는 초성 검색..."
+                  className="pl-9 h-10"
+                />
+              </div>
+              <div className="max-h-48 overflow-y-auto border rounded-lg divide-y divide-slate-100">
+                {bulkFilteredMembers.map((member) => {
+                  const isExcluded = bulkExcludedIds.includes(member.id);
+                  return (
+                    <div
+                      key={member.id}
+                      onClick={() => toggleExcludeMember(member.id)}
+                      className={`flex items-center justify-between px-3 py-2.5 cursor-pointer transition-colors ${
+                        isExcluded
+                          ? "bg-red-50 hover:bg-red-100"
+                          : "hover:bg-slate-50"
+                      }`}
+                    >
+                      <span
+                        className={`text-sm ${isExcluded ? "text-red-700" : "text-slate-700"}`}
+                      >
+                        {member.full_name}
+                      </span>
+                      {isExcluded && (
+                        <span className="text-xs text-red-500 font-medium">
+                          제외됨
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="border-t border-slate-100 bg-slate-50 px-6 py-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm text-slate-500">
+                대상 인원: {(members?.length || 0) - bulkExcludedIds.length}명
+              </span>
+              {bulkAmount > 0 && (
+                <span className="text-sm font-semibold text-slate-900">
+                  {bulkAmount.toLocaleString()}원
+                </span>
+              )}
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCloseBulkDialog}
+              >
+                취소
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleBulkSave}
+                disabled={bulkMutation.isPending || !bulkDate}
+              >
+                {bulkMutation.isPending ? "저장 중..." : "일괄 저장"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Meal Entry Dialog - Minimal Style */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

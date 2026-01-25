@@ -69,6 +69,12 @@ export const queryKeys = {
   settings: {
     all: ["settings"] as const,
   },
+
+  // 식당 관련 쿼리
+  restaurants: {
+    all: ["restaurants"] as const,
+    list: ["restaurants", "list"] as const,
+  },
 } as const;
 
 // 타입 유틸리티 함수들

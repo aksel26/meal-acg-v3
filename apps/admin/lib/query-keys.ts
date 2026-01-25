@@ -63,4 +63,9 @@ export const queryKeys = {
     settings: ["lunchGroups", "settings"] as const,
     fixedSchedules: ["lunchGroups", "fixedSchedules"] as const,
   },
+
+  // Monthly Drinks
+  monthly: {
+    all: ["monthly"] as const,
+  },
 };

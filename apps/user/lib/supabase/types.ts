@@ -282,6 +282,65 @@ export type Database = {
         }
         Relationships: []
       }
+      restaurants: {
+        Row: {
+          id: string
+          name: string
+          business_number: string | null
+          address: string | null
+          created_by: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          business_number?: string | null
+          address?: string | null
+          created_by?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          business_number?: string | null
+          address?: string | null
+          created_by?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurants_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      holidays: {
+        Row: {
+          id: string
+          holiday_date: string
+          description: string
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          holiday_date: string
+          description: string
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          holiday_date?: string
+          description?: string
+          created_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -314,6 +373,9 @@ export type LunchGroupMember = Tables<"lunch_group_members">
 export type LunchGroupMemberInsert = InsertTables<"lunch_group_members">
 export type LunchFixedSchedule = Tables<"lunch_fixed_schedules">
 export type LunchGroupSettings = Tables<"lunch_group_settings">
+export type Restaurant = Tables<"restaurants">
+export type RestaurantInsert = InsertTables<"restaurants">
+export type Holiday = Tables<"holidays">
 
 // Extended types with relations
 export interface LunchGroupWithMembers extends LunchGroup {

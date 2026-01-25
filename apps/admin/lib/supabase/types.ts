@@ -358,6 +358,77 @@ export type Database = {
         }
         Relationships: []
       }
+      monthly_drink_settings: {
+        Row: {
+          id: string
+          year: number
+          month: number
+          drink_options: string[] | null
+          pickup_persons: string[] | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          year: number
+          month: number
+          drink_options?: string[] | null
+          pickup_persons?: string[] | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          year?: number
+          month?: number
+          drink_options?: string[] | null
+          pickup_persons?: string[] | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      monthly_drink_applications: {
+        Row: {
+          id: string
+          user_id: string
+          year: number
+          month: number
+          drink: string | null
+          memo: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          year: number
+          month: number
+          drink?: string | null
+          memo?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          year?: number
+          month?: number
+          drink?: string | null
+          memo?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monthly_drink_applications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       user_monthly_stats: {
@@ -444,6 +515,8 @@ export type LunchGroupMember = Tables<"lunch_group_members">
 export type LunchGroupMemberInsert = TablesInsert<"lunch_group_members">
 export type LunchFixedSchedule = Tables<"lunch_fixed_schedules">
 export type LunchGroupSettings = Tables<"lunch_group_settings">
+export type MonthlyDrinkSettings = Tables<"monthly_drink_settings">
+export type MonthlyDrinkApplication = Tables<"monthly_drink_applications">
 
 // Extended types with relations
 export interface LunchGroupWithMembers extends LunchGroup {

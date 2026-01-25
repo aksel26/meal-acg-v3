@@ -3,6 +3,47 @@
 import * as React from "react";
 import { cn } from "../lib/utils";
 
+// 한글 초성 배열
+const CHOSUNG = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+
+// 문자열에서 초성 추출
+function getChosung(str: string): string {
+  return str
+    .split('')
+    .map((char) => {
+      const code = char.charCodeAt(0);
+      // 한글 음절 범위 (가 ~ 힣)
+      if (code >= 0xAC00 && code <= 0xD7A3) {
+        const chosungIndex = Math.floor((code - 0xAC00) / 588);
+        return CHOSUNG[chosungIndex];
+      }
+      return char;
+    })
+    .join('');
+}
+
+// 초성 검색 매칭 확인
+function matchesChosung(text: string, query: string): boolean {
+  if (!query) return true;
+
+  const lowerText = text.toLowerCase();
+  const lowerQuery = query.toLowerCase();
+
+  // 일반 텍스트 매칭
+  if (lowerText.includes(lowerQuery)) return true;
+
+  // 초성 매칭: 검색어가 초성으로만 구성된 경우
+  const isChosungOnly = query.split('').every((char) => CHOSUNG.includes(char));
+  if (isChosungOnly) {
+    const textChosung = getChosung(text);
+    return textChosung.includes(query);
+  }
+
+  // 초성 + 일반 문자 혼합 매칭
+  const textChosung = getChosung(text);
+  return textChosung.toLowerCase().includes(lowerQuery);
+}
+
 export interface AutoCompleteInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   suggestions?: string[];
   onValueChange?: (value: string) => void;
@@ -17,14 +58,14 @@ const AutoCompleteInput = React.forwardRef<HTMLInputElement, AutoCompleteInputPr
     const [selectedIndex, setSelectedIndex] = React.useState(-1);
     const containerRef = React.useRef<HTMLDivElement>(null);
 
-    // Filter suggestions based on input value
+    // Filter suggestions based on input value (supports Korean consonant search)
     const filteredSuggestions = React.useMemo(() => {
       const inputValue = props.value;
       if (!inputValue || typeof inputValue !== "string") {
         return suggestions.slice(0, maxSuggestions);
       }
 
-      const filtered = suggestions.filter((suggestion) => suggestion.toLowerCase().includes(inputValue.toLowerCase()));
+      const filtered = suggestions.filter((suggestion) => matchesChosung(suggestion, inputValue));
 
       return filtered.slice(0, maxSuggestions);
     }, [suggestions, props.value, maxSuggestions]);

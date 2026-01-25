@@ -25,8 +25,8 @@ export function NumberTicker({
   const ref = useRef<HTMLSpanElement>(null);
   const motionValue = useMotionValue(direction === "down" ? value : startValue);
   const springValue = useSpring(motionValue, {
-    damping: 50,
-    stiffness: 160,
+    damping: 20,
+    stiffness: 120,
   });
   const isInView = useInView(ref, { once: true, margin: "0px" });
 
@@ -49,7 +49,7 @@ export function NumberTicker({
           }).format(Number(latest.toFixed(decimalPlaces)));
         }
       }),
-    [springValue, decimalPlaces]
+    [springValue, decimalPlaces],
   );
 
   return (
@@ -57,7 +57,7 @@ export function NumberTicker({
       ref={ref}
       className={cn(
         "inline-block tabular-nums tracking-wider text-black dark:text-white",
-        className
+        className,
       )}
       {...props}
     >

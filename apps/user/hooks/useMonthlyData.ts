@@ -19,6 +19,7 @@ export interface MonthlyData {
   applications: UserApplication[];
   drinkOptions: DrinkOption[];
   pickupPersons: PickupPerson[];
+  totalMembers: number;
 }
 
 interface UseMonthlyDataResult {
@@ -39,7 +40,7 @@ export const useMonthlyData = (): UseMonthlyDataResult => {
     setError(null);
 
     try {
-      const response = await fetch("/api/google-sheets/monthly", {
+      const response = await fetch("/api/monthly", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

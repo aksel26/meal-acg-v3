@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
+import { getChoseong } from "es-hangul";
 import {
   Search,
   ChevronDown,
@@ -13,10 +14,22 @@ import {
   Loader2,
   Users,
   Wallet,
+  Trash2,
+  Plus,
 } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
 import { toast } from "sonner";
 import { cn } from "@repo/ui/lib/utils";
+import { Button } from "@repo/ui/src/button";
+import { Input } from "@repo/ui/src/input";
+import { Label } from "@repo/ui/src/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@repo/ui/src/dialog";
 
 interface UserStats {
   user_id: string;
@@ -42,6 +55,13 @@ export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isYearOpen, setIsYearOpen] = useState(false);
   const [isMonthOpen, setIsMonthOpen] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [newUserForm, setNewUserForm] = useState({
+    fullName: "",
+    loginId: "",
+    password: "",
+  });
+  const [loginIdError, setLoginIdError] = useState("");
   const queryClient = useQueryClient();
 
   const handleUserClick = (userId: string) => {
@@ -98,9 +118,87 @@ export default function UsersPage() {
     });
   };
 
-  const filteredUsers = users?.filter((user) =>
-    user.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const response = await fetch(`/api/members/${userId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Failed to delete user");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.stats.monthly(selectedYear, selectedMonth),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.members.all,
+      });
+      toast.success("사용자가 삭제되었습니다.");
+    },
+    onError: () => {
+      toast.error("사용자 삭제에 실패했습니다.");
+    },
+  });
+
+  const handleDeleteUser = (userId: string, userName: string) => {
+    if (window.confirm(`"${userName}" 사용자를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) {
+      deleteUserMutation.mutate(userId);
+    }
+  };
+
+  const createUserMutation = useMutation({
+    mutationFn: async (data: { fullName: string; loginId: string; password: string }) => {
+      const response = await fetch("/api/members", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to create user");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.stats.monthly(selectedYear, selectedMonth),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.members.all,
+      });
+      toast.success("사용자가 추가되었습니다.");
+      setIsAddDialogOpen(false);
+      setNewUserForm({ fullName: "", loginId: "", password: "" });
+    },
+    onError: (error: Error) => {
+      if (error.message === "Login ID already exists") {
+        setLoginIdError("이미 존재하는 아이디입니다.");
+      } else {
+        toast.error("사용자 추가에 실패했습니다.");
+      }
+    },
+  });
+
+  const handleCreateUser = () => {
+    setLoginIdError("");
+    if (!newUserForm.fullName.trim() || !newUserForm.loginId.trim() || !newUserForm.password.trim()) {
+      toast.error("모든 필드를 입력해주세요.");
+      return;
+    }
+    createUserMutation.mutate(newUserForm);
+  };
+
+  const filteredUsers = users?.filter((user) => {
+    if (!searchTerm.trim()) return true;
+    const name = user.full_name || "";
+    const query = searchTerm.trim();
+    // 일반 검색
+    if (name.toLowerCase().includes(query.toLowerCase())) return true;
+    // 초성 검색
+    const nameChoseong = getChoseong(name);
+    if (nameChoseong.includes(query)) return true;
+    return false;
+  });
 
   const formatCurrency = (amount: number | null) => {
     if (amount === null || amount === undefined) return "-";
@@ -110,10 +208,10 @@ export default function UsersPage() {
   const years = Array.from({ length: 5 }, (_, i) => currentDate.year() - 2 + i);
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
 
-  // Summary stats
-  const totalUsers = filteredUsers?.length || 0;
-  const settledUsers = filteredUsers?.filter((u) => u.is_settled).length || 0;
-  const totalUsed = filteredUsers?.reduce((sum, u) => sum + (u.total_used || 0), 0) || 0;
+  // Summary stats (전체 기준, 검색 결과와 무관)
+  const totalUsers = users?.length || 0;
+  const settledUsers = users?.filter((u) => u.is_settled).length || 0;
+  const totalUsed = users?.reduce((sum, u) => sum + (u.total_used || 0), 0) || 0;
 
   return (
     <div className="space-y-6">
@@ -249,6 +347,16 @@ export default function UsersPage() {
             className="w-48 rounded-xl bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 shadow-sm ring-1 ring-slate-200/60 transition-all placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
           />
         </div>
+
+        {/* Add User Button */}
+        <Button
+          onClick={() => setIsAddDialogOpen(true)}
+          size="sm"
+          className="gap-1.5"
+        >
+          <Plus className="h-4 w-4" />
+          추가
+        </Button>
       </div>
 
       {/* Users Table */}
@@ -293,13 +401,16 @@ export default function UsersPage() {
                 <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                   정산
                 </th>
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  삭제
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {isLoading ? (
                 Array.from({ length: 8 }).map((_, index) => (
                   <tr key={index}>
-                    {Array.from({ length: 12 }).map((_, cellIndex) => (
+                    {Array.from({ length: 13 }).map((_, cellIndex) => (
                       <td key={cellIndex} className="px-4 py-4">
                         <div className="h-4 w-full animate-pulse rounded bg-slate-100" />
                       </td>
@@ -400,13 +511,27 @@ export default function UsersPage() {
                           )}
                         </button>
                       </td>
+                      <td className="px-4 py-4 text-center">
+                        <button
+                          onClick={() => handleDeleteUser(user.user_id, user.full_name)}
+                          disabled={deleteUserMutation.isPending}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                        >
+                          {deleteUserMutation.isPending &&
+                          deleteUserMutation.variables === user.user_id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </button>
+                      </td>
                     </tr>
                   );
                 })
               ) : (
                 <tr>
                   <td
-                    colSpan={12}
+                    colSpan={13}
                     className="px-4 py-12 text-center text-sm text-slate-500"
                   >
                     데이터가 없습니다.
@@ -428,6 +553,84 @@ export default function UsersPage() {
           }}
         />
       )}
+
+      {/* Add User Dialog */}
+      <Dialog
+        open={isAddDialogOpen}
+        onOpenChange={(open) => {
+          setIsAddDialogOpen(open);
+          if (!open) {
+            setNewUserForm({ fullName: "", loginId: "", password: "" });
+            setLoginIdError("");
+          }
+        }}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>사용자 추가</DialogTitle>
+            <DialogDescription>새 사용자 정보를 입력하세요.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="fullName">이름</Label>
+              <Input
+                id="fullName"
+                value={newUserForm.fullName}
+                onChange={(e) =>
+                  setNewUserForm({ ...newUserForm, fullName: e.target.value })
+                }
+                placeholder="홍길동"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="loginId">아이디</Label>
+              <Input
+                id="loginId"
+                value={newUserForm.loginId}
+                onChange={(e) => {
+                  setNewUserForm({ ...newUserForm, loginId: e.target.value });
+                  if (loginIdError) setLoginIdError("");
+                }}
+                placeholder="hong123"
+                className={loginIdError ? "border-red-500 focus-visible:ring-red-500" : ""}
+              />
+              {loginIdError && (
+                <p className="text-sm text-red-500">{loginIdError}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">비밀번호</Label>
+              <Input
+                id="password"
+                type="password"
+                value={newUserForm.password}
+                onChange={(e) =>
+                  setNewUserForm({ ...newUserForm, password: e.target.value })
+                }
+                placeholder="••••••••"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsAddDialogOpen(false);
+                setNewUserForm({ fullName: "", loginId: "", password: "" });
+                setLoginIdError("");
+              }}
+            >
+              취소
+            </Button>
+            <Button
+              onClick={handleCreateUser}
+              disabled={createUserMutation.isPending}
+            >
+              {createUserMutation.isPending ? "추가 중..." : "추가"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

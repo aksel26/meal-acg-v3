@@ -18,19 +18,7 @@ export const useUsers = (): UseUsersResult => {
     setError(null);
 
     try {
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        throw new Error("No authentication token found");
-      }
-
-      const response = await fetch("/api/users/ids", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch("/api/users/ids");
 
       if (!response.ok) {
         throw new Error(`Failed to fetch users: ${response.statusText}`);
@@ -46,7 +34,7 @@ export const useUsers = (): UseUsersResult => {
     } catch (error) {
       console.error("Error fetching users:", error);
       setError(error instanceof Error ? error.message : "Failed to load users");
-      setUsers([""]);
+      setUsers([]);
     } finally {
       setIsLoading(false);
     }

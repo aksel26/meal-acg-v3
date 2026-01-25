@@ -4,6 +4,7 @@ import { toast } from "@repo/ui/src/sonner";
 
 interface MealDeleteData {
   userName: string;
+  userId?: string;
   date: string;
 }
 
@@ -82,6 +83,13 @@ export function useMealDelete() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.calculation.byUserAndMonth(variables.userName, month, year)
       });
+
+      // 식대 통계 쿼리 무효화 (userId 기반)
+      if (variables.userId) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.mealStats.byUserAndMonth(variables.userId, month, year)
+        });
+      }
 
       console.log("Delete result:", data);
     },

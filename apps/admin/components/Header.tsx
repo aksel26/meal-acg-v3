@@ -11,6 +11,7 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
   "/": { title: "대시보드", subtitle: "식대 관리 현황을 한눈에 확인하세요" },
   "/users": { title: "사용자 현황", subtitle: "팀원별 식대 사용 현황 및 정산 관리" },
   "/calendar": { title: "식대 입력", subtitle: "일별 식대 기록을 관리합니다" },
+  "/monthly": { title: "Monthly 음료", subtitle: "월별 음료 신청 현황 관리" },
   "/lunch-groups": { title: "점심조 관리", subtitle: "점심조 구성 및 배정 관리" },
   "/holidays": { title: "공휴일 관리", subtitle: "공휴일 및 휴무일 설정" },
   "/settings": { title: "설정", subtitle: "월별 지원금 및 시스템 설정" },

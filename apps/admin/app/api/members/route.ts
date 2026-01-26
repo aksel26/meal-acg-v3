@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     const supabase = createServiceClient();
     const body = await request.json();
 
-    const { loginId, password, fullName, role = "user" } = body;
+    const { loginId, password, fullName, role = "user", email } = body;
 
     if (!loginId || !password || !fullName) {
       return NextResponse.json(
@@ -46,7 +46,13 @@ export async function POST(request: NextRequest) {
 
     const { data, error } = await supabase
       .from("members")
-      .insert({ login_id: loginId, password, full_name: fullName, role })
+      .insert({
+        login_id: loginId,
+        password,
+        full_name: fullName,
+        role,
+        email: email || null,
+      })
       .select()
       .single();
 

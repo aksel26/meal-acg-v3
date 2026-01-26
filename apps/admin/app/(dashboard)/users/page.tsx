@@ -16,6 +16,7 @@ import {
   Wallet,
   Trash2,
   Plus,
+  Send,
 } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
 import { toast } from "sonner";
@@ -30,11 +31,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@repo/ui/src/dialog";
+import { SlackNotifyDialog } from "@/components/SlackNotifyDialog";
 
 interface UserStats {
   user_id: string;
   full_name: string;
   login_id: string;
+  email: string | null;
   work_days: number;
   holiday_count: number;
   weekend_work_days: number;
@@ -56,6 +59,8 @@ export default function UsersPage() {
   const [isYearOpen, setIsYearOpen] = useState(false);
   const [isMonthOpen, setIsMonthOpen] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isSlackDialogOpen, setIsSlackDialogOpen] = useState(false);
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
   const [newUserForm, setNewUserForm] = useState({
     fullName: "",
     loginId: "",
@@ -199,6 +204,34 @@ export default function UsersPage() {
     if (nameChoseong.includes(query)) return true;
     return false;
   });
+
+  // Selection handlers
+  const handleSelectUser = (userId: string, checked: boolean) => {
+    setSelectedUserIds((prev) => {
+      const next = new Set(prev);
+      if (checked) {
+        next.add(userId);
+      } else {
+        next.delete(userId);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked && filteredUsers) {
+      setSelectedUserIds(new Set(filteredUsers.map((u) => u.user_id)));
+    } else {
+      setSelectedUserIds(new Set());
+    }
+  };
+
+  const isAllSelected =
+    filteredUsers &&
+    filteredUsers.length > 0 &&
+    filteredUsers.every((u) => selectedUserIds.has(u.user_id));
+
+  const selectedUsers = users?.filter((u) => selectedUserIds.has(u.user_id)) || [];
 
   const formatCurrency = (amount: number | null) => {
     if (amount === null || amount === undefined) return "-";
@@ -348,6 +381,21 @@ export default function UsersPage() {
           />
         </div>
 
+        {/* Slack Notify Button */}
+        <Button
+          onClick={() => setIsSlackDialogOpen(true)}
+          disabled={selectedUserIds.size === 0}
+          variant="outline"
+          size="sm"
+          className={cn(
+            "gap-1.5",
+            selectedUserIds.size > 0 && "border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100"
+          )}
+        >
+          <Send className="h-4 w-4" />
+          Slack 알림 {selectedUserIds.size > 0 && `(${selectedUserIds.size})`}
+        </Button>
+
         {/* Add User Button */}
         <Button
           onClick={() => setIsAddDialogOpen(true)}
@@ -365,6 +413,14 @@ export default function UsersPage() {
           <table className="w-full">
             <thead className="sticky top-0 z-10 bg-slate-50 shadow-[0_1px_0_0_rgb(241,245,249)]">
               <tr>
+                <th className="w-10 px-2 py-3 text-center">
+                  <input
+                    type="checkbox"
+                    checked={isAllSelected}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                    className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
+                  />
+                </th>
                 <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                   No.
                 </th>
@@ -410,7 +466,7 @@ export default function UsersPage() {
               {isLoading ? (
                 Array.from({ length: 8 }).map((_, index) => (
                   <tr key={index}>
-                    {Array.from({ length: 13 }).map((_, cellIndex) => (
+                    {Array.from({ length: 14 }).map((_, cellIndex) => (
                       <td key={cellIndex} className="px-4 py-4">
                         <div className="h-4 w-full animate-pulse rounded bg-slate-100" />
                       </td>
@@ -420,11 +476,25 @@ export default function UsersPage() {
               ) : filteredUsers && filteredUsers.length > 0 ? (
                 filteredUsers.map((user, index) => {
                   const balance = user.balance ?? 0;
+                  const isSelected = selectedUserIds.has(user.user_id);
                   return (
                     <tr
                       key={user.user_id || index}
-                      className="table-row-interactive"
+                      className={cn(
+                        "table-row-interactive",
+                        isSelected && "bg-amber-50/50"
+                      )}
                     >
+                      <td className="w-10 px-2 py-4 text-center">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) =>
+                            handleSelectUser(user.user_id, e.target.checked)
+                          }
+                          className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
+                        />
+                      </td>
                       <td className="px-4 py-4 text-center text-sm text-slate-400">
                         {index + 1}
                       </td>
@@ -531,7 +601,7 @@ export default function UsersPage() {
               ) : (
                 <tr>
                   <td
-                    colSpan={13}
+                    colSpan={14}
                     className="px-4 py-12 text-center text-sm text-slate-500"
                   >
                     데이터가 없습니다.
@@ -631,6 +701,19 @@ export default function UsersPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Slack Notify Dialog */}
+      <SlackNotifyDialog
+        open={isSlackDialogOpen}
+        onOpenChange={setIsSlackDialogOpen}
+        selectedUsers={selectedUsers.map((u) => ({
+          user_id: u.user_id,
+          full_name: u.full_name,
+          email: u.email,
+        }))}
+        year={selectedYear}
+        month={selectedMonth}
+      />
     </div>
   );
 }

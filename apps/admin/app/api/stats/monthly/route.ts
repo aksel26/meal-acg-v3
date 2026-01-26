@@ -25,6 +25,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Failed to fetch stats" }, { status: 500 });
     }
 
+    // Get members to fetch email addresses
+    const { data: membersData, error: membersError } = await supabase
+      .from("members")
+      .select("id, email");
+
+    if (membersError) {
+      console.error("Error fetching members:", membersError);
+    }
+
+    // Create email map
+    const emailMap = new Map<string, string | null>();
+    (membersData || []).forEach((m: { id: string; email: string | null }) => {
+      emailMap.set(m.id, m.email);
+    });
+
     // Get settlement status for this month
     const { data: settlementData, error: settlementError } = await supabase
       .from("settlement_status")
@@ -62,6 +77,8 @@ export async function GET(request: NextRequest) {
       has_excel_file: user.total_used > 0,
       // is_settled: get from settlement_status table (manual management by admin)
       is_settled: settlementMap.get(user.user_id) || false,
+      // email: from members table
+      email: emailMap.get(user.user_id) || null,
     }));
 
     return NextResponse.json(transformedData);

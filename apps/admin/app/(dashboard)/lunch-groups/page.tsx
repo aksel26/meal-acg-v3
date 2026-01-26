@@ -42,6 +42,7 @@ import type {
   LunchGroupSettings,
   LunchGroupWithMembers,
 } from "@/lib/supabase/types";
+import FixedScheduleSection from "./FixedScheduleSection";
 
 // 월요일 기준으로 주 시작일 계산
 const getWeekStartDate = (date: dayjs.Dayjs) => {
@@ -737,6 +738,9 @@ export default function LunchGroupsPage() {
                 </CardContent>
               </Card>
             )}
+
+            {/* 요일별 고정 스케줄 */}
+            <FixedScheduleSection members={members} />
           </div>
 
           {/* 오른쪽: 조 테이블 */}

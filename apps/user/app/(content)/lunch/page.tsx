@@ -209,13 +209,7 @@ const Lunch = () => {
           </div>
 
           {/* 주간 식사 정보 */}
-          <div className="pt-4 border-t border-gray-100">
-            <WeeklySchedule
-              mondayMember={lunchGroupData?.mondayMember}
-              fridayMember={lunchGroupData?.fridayMember}
-              isLoading={isLoading}
-            />
-          </div>
+          <WeeklySchedule isLoading={isLoading} />
         </div>
       </motion.div>
 

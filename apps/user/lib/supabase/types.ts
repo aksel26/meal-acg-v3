@@ -233,19 +233,22 @@ export type Database = {
         Row: {
           id: string
           day_of_week: number
-          user_id: string
+          user_id: string | null
+          label: string | null
           created_at: string | null
         }
         Insert: {
           id?: string
           day_of_week: number
-          user_id: string
+          user_id?: string | null
+          label?: string | null
           created_at?: string | null
         }
         Update: {
           id?: string
           day_of_week?: number
-          user_id?: string
+          user_id?: string | null
+          label?: string | null
           created_at?: string | null
         }
         Relationships: [
@@ -385,4 +388,8 @@ export interface LunchGroupWithMembers extends LunchGroup {
     assigned_at: string | null
     members?: Member
   }[]
+}
+
+export interface LunchFixedScheduleWithMember extends LunchFixedSchedule {
+  members?: Member
 }

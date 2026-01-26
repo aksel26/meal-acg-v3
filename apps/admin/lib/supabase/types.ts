@@ -138,6 +138,7 @@ export type Database = {
       members: {
         Row: {
           created_at: string | null
+          email: string | null
           full_name: string
           id: string
           login_id: string
@@ -147,6 +148,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          email?: string | null
           full_name: string
           id?: string
           login_id: string
@@ -156,6 +158,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          email?: string | null
           full_name?: string
           id?: string
           login_id?: string
@@ -309,19 +312,22 @@ export type Database = {
         Row: {
           id: string
           day_of_week: number
-          user_id: string
+          user_id: string | null
+          label: string | null
           created_at: string | null
         }
         Insert: {
           id?: string
           day_of_week: number
-          user_id: string
+          user_id?: string | null
+          label?: string | null
           created_at?: string | null
         }
         Update: {
           id?: string
           day_of_week?: number
-          user_id?: string
+          user_id?: string | null
+          label?: string | null
           created_at?: string | null
         }
         Relationships: [
@@ -521,6 +527,10 @@ export type MonthlyDrinkApplication = Tables<"monthly_drink_applications">
 // Extended types with relations
 export interface LunchGroupWithMembers extends LunchGroup {
   members: { user_id: string; member?: Member }[]
+}
+
+export interface LunchFixedScheduleWithMember extends LunchFixedSchedule {
+  member?: Member
 }
 
 // Auth session type

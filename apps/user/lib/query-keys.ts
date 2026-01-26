@@ -43,6 +43,7 @@ export const queryKeys = {
   lunchGroup: {
     all: ["lunchGroup"] as const,
     current: ["lunchGroup", "current"] as const,
+    fixedSchedules: ["lunchGroup", "fixedSchedules"] as const,
   },
 
   // 활동비 관련 쿼리

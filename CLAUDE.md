@@ -13,12 +13,14 @@ Meal ACG v3 - 기업용 식대 관리 애플리케이션 (Enterprise meal expens
 pnpm install
 
 # Development
-pnpm dev          # Start all dev servers
+pnpm dev          # Start all dev servers (user:3000, admin:3001)
 pnpm dev:user     # Start only user app (port 3000)
+pnpm dev:admin    # Start only admin app (port 3001)
 
 # Build
 pnpm build        # Build entire monorepo
 pnpm build:user   # Build only user app
+pnpm build:admin  # Build only admin app
 
 # Code Quality
 pnpm lint         # ESLint (max warnings = 0)
@@ -32,18 +34,12 @@ pnpm format       # Prettier formatting
 
 ```
 apps/
-  user/              # Main Next.js 15 application (App Router)
-    app/             # Pages and API routes
-      (content)/     # Route groups: lunch, dashboard, monthly, points
-      api/           # API routes (Firebase, Google APIs, Gemini AI)
-    components/      # React components
-    hooks/           # Custom hooks (22+ data fetching hooks)
-    lib/             # Utilities (date, excel, firebase, query-keys)
-    stores/          # Zustand stores
+  user/              # User-facing Next.js 15 app (port 3000)
+  admin/             # Admin dashboard Next.js 15 app (port 3001)
 
 packages/
   ui/                # Shared Radix UI components (@repo/ui)
-  utils/             # Shared utilities - dayjs, date functions (@repo/utils)
+  utils/             # Shared utilities - dayjs, KST date functions (@repo/utils)
   eslint-config/     # Shared ESLint config
   typescript-config/ # Shared TypeScript config
   tailwind-config/   # Shared Tailwind config
@@ -55,26 +51,43 @@ packages/
 - **Language:** TypeScript 5 (strict mode)
 - **Styling:** Tailwind CSS 4, Motion (animations), Radix UI
 - **State:** Zustand (client), TanStack React Query (server)
-- **Backend:** Firebase Admin SDK, Google APIs (Sheets, Calendar, Drive), Gemini AI
+- **Backend:**
+  - user app: Firebase Admin SDK, Google APIs (Sheets, Calendar, Drive), Gemini AI
+  - admin app: Supabase (SSR client with RLS, service client for admin ops)
 - **Build:** Turborepo, pnpm
 
 ## Key Patterns
 
-- **Query keys:** Centralized in `lib/query-keys.ts`
-- **Data fetching:** Custom hooks in `hooks/` using React Query
-- **Shared UI:** Import from `@repo/ui` (Radix-based components)
-- **Date utilities:** Import from `@repo/utils` (dayjs-based)
+### Query Keys (Factory Pattern)
+Centralized in each app's `lib/query-keys.ts`:
+```typescript
+queryKeys.meals.byUserAndMonth(userName, month, year)
+queryKeys.activityPoints.usage(employeeId, month)
+```
 
-## API Routes
+### Data Fetching Hooks
+Custom hooks in `hooks/` wrap React Query with proper typing:
+```typescript
+// Pattern: use-{resource}.ts or use-{resource}-{action}.ts
+useMealData(userName, month, year)
+useMealSubmit()  // mutation hook
+```
 
-Main endpoints in `apps/user/app/api/`:
-- `meals/` - Meal expense CRUD
-- `users/` - User management
-- `scan-receipt/` - Gemini AI receipt scanning
-- `google-sheets/` - Google Sheets integration
-- `activity-points/`, `welfare-points/`, `points/` - Points system
-- `lunch-group/` - Lunch group management
-- `calendar/`, `holidays/` - Calendar data
+### Zustand Stores
+Persist middleware for user session, located in `stores/`:
+```typescript
+useUserStore()    // Auth state with localStorage sync
+useMealDrawerStore()  // UI state
+```
+
+### Shared Packages
+- `@repo/ui`: Radix-based components (Button, Dialog, Drawer, etc.)
+- `@repo/utils`: KST timezone date utilities (formatDate, getToday, etc.)
+
+### Supabase (Admin App)
+- Browser client: `lib/supabase/client.ts` - createBrowserClient with typed Database
+- Server client: `lib/supabase/server.ts` - createServerClient with cookies
+- Service client: bypasses RLS for admin operations
 
 ## Code Standards
 

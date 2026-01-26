@@ -53,6 +53,14 @@ export const queryKeys = {
   dashboard: {
     summary: (year: number, month: number) =>
       ["dashboard", "summary", year, month] as const,
+    alerts: (year: number, month: number) =>
+      ["dashboard", "alerts", year, month] as const,
+    popularStores: (year: number, month: number) =>
+      ["dashboard", "popularStores", year, month] as const,
+    memberSpending: (year: number, month: number) =>
+      ["dashboard", "memberSpending", year, month] as const,
+    trends: (year: number, month: number) =>
+      ["dashboard", "trends", year, month] as const,
   },
 
   // Lunch Groups

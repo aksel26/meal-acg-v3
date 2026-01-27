@@ -1,21 +1,30 @@
 "use client";
 
-import { Card } from "@repo/ui/src/card";
 import { Button } from "@repo/ui/src/button";
+import { NumberTicker } from "@repo/ui/src/number-ticker";
 import { motion } from "motion/react";
 import { useEffect } from "react";
 import { useCalculationData } from "@/hooks/use-calculation-data";
 import { CalculationData } from "./types";
 
 interface StatsSectionProps {
-  userName: string;
+  userId: string;
   month: number;
   year: number;
   onDataChange?: (data: CalculationData | null) => void;
 }
 
-function CalculationResult({ userName, month, year, onDataChange }: StatsSectionProps) {
-  const { data, isLoading, error, refetch } = useCalculationData(userName, month, year);
+function CalculationResult({
+  userId,
+  month,
+  year,
+  onDataChange,
+}: StatsSectionProps) {
+  const { data, isLoading, error, refetch } = useCalculationData(
+    userId,
+    month,
+    year,
+  );
 
   useEffect(() => {
     onDataChange?.(data || null);
@@ -23,105 +32,237 @@ function CalculationResult({ userName, month, year, onDataChange }: StatsSection
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-3 gap-3">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="bg-gray-50 rounded-xl p-4 animate-pulse">
-            <div className="h-6 bg-gray-200 rounded-md mb-2"></div>
-            <div className="h-4 bg-gray-100 rounded w-16"></div>
+      <div className="card-premium p-5 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-[oklch(0.92_0.06_200/0.25)] rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
+        <div className="space-y-4 relative">
+          <div className="flex justify-between items-center">
+            <div className="skeleton h-4 w-16 rounded" />
+            <div className="skeleton h-6 w-24 rounded" />
           </div>
-        ))}
+          <div className="skeleton h-2 w-full rounded-full" />
+          <div className="flex justify-between">
+            <div className="skeleton h-4 w-20 rounded" />
+            <div className="skeleton h-4 w-20 rounded" />
+          </div>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 px-4">
-        <div className="text-center space-y-3">
-          <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto">
-            <div className="w-6 h-6 text-red-500">⚠️</div>
-          </div>
-          <p className="text-gray-600 text-sm">{error.message}</p>
-          <Button onClick={() => refetch()} variant="outline" size="sm" className="text-xs rounded-full">
-            다시 시도
-          </Button>
-        </div>
+      <div className="card-premium p-6 text-center relative overflow-hidden">
+        <p className="text-sm text-gray-500 mb-3">{error.message}</p>
+        <Button
+          onClick={() => refetch()}
+          variant="outline"
+          size="sm"
+          className="text-xs rounded-lg px-4"
+        >
+          다시 시도
+        </Button>
       </div>
     );
   }
 
   if (!data) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="flex items-center space-x-2 text-gray-500">
-          <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
-          <span className="text-sm">데이터를 불러오는 중...</span>
+      <div className="flex items-center justify-center py-8">
+        <div className="flex items-center gap-2 text-gray-400">
+          <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-500 rounded-full animate-spin" />
+          <span className="text-sm">불러오는 중...</span>
         </div>
       </div>
     );
   }
 
-  const stats = [
-    {
-      label: "근무일",
-      value: data.workDays,
-      bg: "bg-white",
-      text: "text-[#0a2165]",
-    },
-    {
-      label: "휴일근무",
-      value: data.holidayWorkDays,
-      bg: "bg-white",
-      text: "text-[#0a2165]",
-    },
-    {
-      label: "휴가일",
-      value: data.vacationDays,
-      bg: "bg-orange-50",
-      text: "text-orange-400",
-    },
-  ];
+  const formatCurrency = (amount: number) => {
+    return Math.abs(amount).toLocaleString();
+  };
+
+  // 사용 비율 계산 (0~100)
+  const usagePercent =
+    data.allowanceAmount > 0
+      ? Math.min(100, Math.round((data.totalUsed / data.allowanceAmount) * 100))
+      : 0;
+
+  // 잔액 상태 판단
+  const isOverBudget = data.balance < 0;
+  const isLowBalance =
+    data.balance >= 0 && data.balance < data.allowanceAmount * 0.2;
 
   return (
-    <div className="grid grid-cols-3 gap-3">
-      {stats.map((stat, index) => (
-        <motion.div
-          key={index}
-          initial={{ opacity: 0, y: 20, scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{
-            duration: 0.5,
-            delay: index * 0.1,
-            ease: [0.25, 0.46, 0.45, 0.94],
-          }}
-          className={`${stat.bg} ${stat.text} rounded-xl p-4 transition-all hover:shadow-lg backdrop-blur-lg`}
-        >
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: index * 0.1 + 0.2 }} className={`text-2xl font-bold mb-1`}>
-            {stat.value}
-          </motion.div>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: index * 0.1 + 0.3 }} className="text-xs font-medium">
-            {stat.label}
-          </motion.div>
-        </motion.div>
-      ))}
+    <div className="card-premium relative overflow-hidden">
+      {/* Decorative Elements */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-[oklch(0.92_0.06_200/0.25)] rounded-full blur-2xl -translate-y-1/2 translate-x-1/4" />
+      <div className="absolute bottom-0 left-0 w-24 h-24 bg-[oklch(0.90_0.08_250/0.2)] rounded-full blur-2xl translate-y-1/2 -translate-x-1/4" />
+
+      {/* 메인 잔액 표시 */}
+      <div className="relative px-5 pt-5 pb-4">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <p className="text-xs text-gray-500 mb-1">이번 달 잔액</p>
+            <div className="flex items-baseline gap-1">
+              {isOverBudget && (
+                <span className="text-2xl font-bold text-red-500">-</span>
+              )}
+              <NumberTicker
+                value={Math.abs(data.balance)}
+                className={`text-2xl font-bold tracking-tight ${
+                  isOverBudget
+                    ? "text-red-500"
+                    : isLowBalance
+                      ? "text-amber-600"
+                      : "text-gray-900"
+                }`}
+              />
+              <span
+                className={`text-sm font-medium ${
+                  isOverBudget
+                    ? "text-red-400"
+                    : isLowBalance
+                      ? "text-amber-500"
+                      : "text-gray-400"
+                }`}
+              >
+                원
+              </span>
+            </div>
+          </div>
+
+          {/* 상태 뱃지 */}
+          <div
+            className={`px-2.5 py-1 rounded-full text-[11px] font-medium ${
+              isOverBudget
+                ? "bg-red-50 text-red-600"
+                : isLowBalance
+                  ? "bg-amber-50 text-amber-600"
+                  : "bg-emerald-50 text-emerald-600"
+            }`}
+          >
+            {isOverBudget ? "초과" : isLowBalance ? "주의" : "양호"}
+          </div>
+        </div>
+
+        {/* 사용량 프로그레스 바 */}
+        <div className="space-y-2">
+          <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+            <motion.div
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: `${Math.min(usagePercent, 100)}%`, opacity: 1 }}
+              transition={{
+                width: { duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.2 },
+                opacity: { duration: 0.3 }
+              }}
+              className={`h-full rounded-full relative ${
+                isOverBudget
+                  ? "bg-gradient-to-r from-red-400 to-red-500"
+                  : isLowBalance
+                    ? "bg-gradient-to-r from-amber-400 to-amber-500"
+                    : "bg-gradient-to-r from-gray-600 to-gray-800"
+              }`}
+            >
+              {/* 글로우 효과 */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-white/30 to-transparent"
+              />
+            </motion.div>
+          </div>
+          <div className="flex justify-between text-[11px] text-gray-400">
+            <motion.span
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
+              {usagePercent}% 사용
+            </motion.span>
+            <span>{formatCurrency(data.allowanceAmount)}원 중</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 상세 내역 */}
+      <div className="relative grid grid-cols-2 border-t border-white/40">
+        <div className="px-5 py-4 border-r border-white/40">
+          <p className="text-[11px] text-gray-400 mb-1">사용가능액</p>
+          <p className="text-base font-semibold text-gray-700">
+            {formatCurrency(data.allowanceAmount)}
+            <span className="text-xs font-normal text-gray-400 ml-0.5">원</span>
+          </p>
+        </div>
+        <div className="px-5 py-4">
+          <p className="text-[11px] text-gray-400 mb-1">사용금액</p>
+          <p className="text-base font-semibold text-gray-700">
+            {formatCurrency(data.totalUsed)}
+            <span className="text-xs font-normal text-gray-400 ml-0.5">원</span>
+          </p>
+        </div>
+      </div>
+
+      {/* 차감 정보 (있을 경우) */}
+      {(data.totalDeduction ?? 0) > 0 && (
+        <div className="relative px-5 py-3 bg-white/30 border-t border-white/40 space-y-1.5">
+          {/* 개별식사 차감 */}
+          {(data.individualMealCount ?? 0) > 0 && (
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-500">
+                개별식사 {data.individualMealCount}회
+              </span>
+              <span className="font-medium text-gray-600">
+                -{formatCurrency(data.individualMealDeduction || 0)}원
+              </span>
+            </div>
+          )}
+          {/* 연차/재택/휴무 차감 */}
+          {(data.noMealFullDayCount ?? 0) > 0 && (
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-500">
+                연차/재택/휴무 {data.noMealFullDayCount}일
+              </span>
+              <span className="font-medium text-gray-600">
+                -{formatCurrency(data.noMealDeduction || 0)}원
+              </span>
+            </div>
+          )}
+          {/* 반차 차감 */}
+          {(data.halfDayOffCount ?? 0) > 0 && (
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-500">
+                반차 {data.halfDayOffCount}일
+              </span>
+              <span className="font-medium text-gray-600">
+                -{formatCurrency(data.halfDayDeduction || 0)}원
+              </span>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
-export default function StatsSection({ userName, month, year, onDataChange }: StatsSectionProps) {
+export default function StatsSection({
+  userId,
+  month,
+  year,
+  onDataChange,
+}: StatsSectionProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{
-        duration: 0.6,
-        delay: 0.4,
-        ease: [0.25, 0.46, 0.45, 0.94],
-      }}
+      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      className="mb-6"
     >
-      <Card className="mb-8 p-0 border-none shadow-none bg-transparent">
-        <CalculationResult userName={userName} month={month} year={year} onDataChange={onDataChange} />
-      </Card>
+      <CalculationResult
+        userId={userId}
+        month={month}
+        year={year}
+        onDataChange={onDataChange}
+      />
     </motion.div>
   );
 }

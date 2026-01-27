@@ -4,11 +4,18 @@
  */
 
 export const queryKeys = {
-  // 계산 관련 쿼리
+  // 계산 관련 쿼리 (레거시 호환용)
   calculation: {
     all: ["calculation"] as const,
     byUser: (userName: string) => ["calculation", userName] as const,
     byUserAndMonth: (userName: string, month: number, year?: number) => ["calculation", userName, month, year || new Date().getFullYear()] as const,
+  },
+
+  // 식대 통계 쿼리 (신규)
+  mealStats: {
+    all: ["mealStats"] as const,
+    byUser: (userId: string) => ["mealStats", userId] as const,
+    byUserAndMonth: (userId: string, month: number, year?: number) => ["mealStats", userId, month, year || new Date().getFullYear()] as const,
   },
 
   // 식사 데이터 관련 쿼리
@@ -36,6 +43,7 @@ export const queryKeys = {
   lunchGroup: {
     all: ["lunchGroup"] as const,
     current: ["lunchGroup", "current"] as const,
+    fixedSchedules: ["lunchGroup", "fixedSchedules"] as const,
   },
 
   // 활동비 관련 쿼리
@@ -56,6 +64,17 @@ export const queryKeys = {
     all: ["welfarePoints"] as const,
     byNameAndYear: (name: string, year: number) => ["welfarePoints", name, year] as const,
     byNameAndMonth: (name: string, year: number, month: number) => ["welfarePoints", name, year, month] as const,
+  },
+
+  // 전역 설정 관련 쿼리
+  settings: {
+    all: ["settings"] as const,
+  },
+
+  // 식당 관련 쿼리
+  restaurants: {
+    all: ["restaurants"] as const,
+    list: ["restaurants", "list"] as const,
   },
 } as const;
 

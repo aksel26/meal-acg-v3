@@ -8,8 +8,8 @@ interface HolidayData {
 }
 
 // 공휴일 API 호출 함수
-const fetchHolidays = async (month: number): Promise<HolidayData[]> => {
-  const response = await fetch(`/api/holidays?month=${month}`);
+const fetchHolidays = async (month: number, year: number): Promise<HolidayData[]> => {
+  const response = await fetch(`/api/holidays?month=${month}&year=${year}`);
 
   if (!response.ok) {
     throw new Error(`Failed to fetch holidays: ${response.statusText}`);
@@ -22,7 +22,7 @@ const fetchHolidays = async (month: number): Promise<HolidayData[]> => {
 export const useHolidays = (month: number, year: number) => {
   return useQuery({
     queryKey: ["holidays", month, year],
-    queryFn: () => fetchHolidays(month),
+    queryFn: () => fetchHolidays(month, year),
     staleTime: 1000 * 60 * 60 * 24, // 24시간 동안 fresh
     gcTime: 1000 * 60 * 60 * 24 * 7, // 7일 동안 캐시 유지
     enabled: !!month && month >= 1 && month <= 12, // month가 유효할 때만 실행

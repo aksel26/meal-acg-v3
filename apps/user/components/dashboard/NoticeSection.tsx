@@ -1,6 +1,5 @@
 "use client";
 
-import { Alert, AlertTitle } from "@repo/ui/src/alert";
 import { ChevronRight as ChevronRightIcon } from "@repo/ui/icons";
 import { motion } from "motion/react";
 import Image from "next/image";
@@ -13,44 +12,68 @@ export default function NoticeSection() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
         duration: 0.6,
         delay: 0.2,
-        ease: [0.25, 0.46, 0.45, 0.94],
+        ease: [0.16, 1, 0.3, 1],
       }}
+      className="mb-6"
     >
-      <Alert className="mb-4 border-none bg-blue-50 cursor-pointer transition-all duration-200 hover:shadow-lg hover:shadow-cyan-500/10 hover:scale-102" onClick={checkNotice}>
-        <AlertTitle>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-5">
-              <div className="w-10 h-10 bg-white rounded-full relative">
+      <motion.div
+        onClick={checkNotice}
+        className="notice-banner cursor-pointer relative overflow-hidden group"
+        whileHover={{ scale: 1.01 }}
+        whileTap={{ scale: 0.99 }}
+      >
+        {/* Animated shine effect */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
+
+        <div className="flex items-center justify-between relative">
+          <div className="flex items-center gap-4">
+            {/* Icon Container */}
+            <div className="relative">
+              <div className="w-11 h-11 bg-white/80 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-sm">
                 <motion.div
-                  className="w-11 h-11 absolute left-0 -top-1"
                   animate={{
-                    scale: [1, 1.15, 1],
+                    scale: [1, 1.1, 1],
                     rotate: [0, -5, 5, 0],
                   }}
                   transition={{
-                    duration: 0.6,
+                    duration: 0.8,
                     repeat: Infinity,
-                    repeatDelay: 0.4,
+                    repeatDelay: 1.5,
                     ease: "easeInOut",
                   }}
                 >
-                  <Image src={Notice} alt="notice" />
+                  <Image src={Notice} alt="notice" width={28} height={28} />
                 </motion.div>
               </div>
-              <p className="text-sm text-blue-500">
-                [공지] <br />
+              {/* Notification dot */}
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-[oklch(0.65_0.20_25)] rounded-full border-2 border-white shadow-sm" />
+            </div>
+
+            {/* Text Content */}
+            <div className="flex flex-col">
+              <span className="text-[10px] font-medium text-[oklch(0.55_0.15_250)] uppercase tracking-wider mb-0.5">
+                공지사항
+              </span>
+              <p className="text-sm font-medium text-[oklch(0.35_0.10_250)]">
                 식대앱이 업데이트 되었습니다! (v1.3)
               </p>
             </div>
-            <ChevronRightIcon color="#2c7fff" />
           </div>
-        </AlertTitle>
-      </Alert>
+
+          {/* Arrow */}
+          <motion.div
+            className="text-[oklch(0.55_0.12_250)]"
+            whileHover={{ x: 3 }}
+          >
+            <ChevronRightIcon size={20} />
+          </motion.div>
+        </div>
+      </motion.div>
     </motion.div>
   );
 }

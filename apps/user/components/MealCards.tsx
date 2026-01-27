@@ -1,8 +1,10 @@
 import * as React from "react";
 import { Button } from "@repo/ui/src/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@repo/ui/src/card";
 import dayjs from "dayjs";
-import Image from "next/image";
+import "dayjs/locale/ko";
+import { motion } from "motion/react";
+
+dayjs.locale("ko");
 
 interface MealData {
   date: string;
@@ -27,13 +29,24 @@ interface MealData {
 interface MealCardsProps {
   selectedDate?: Date;
   onAddMeal?: (mealType: "breakfast" | "lunch" | "dinner") => void;
-  onEditMeal?: (mealType: "breakfast" | "lunch" | "dinner", mealInfo: MealData) => void;
+  onEditMeal?: (
+    mealType: "breakfast" | "lunch" | "dinner",
+    mealInfo: MealData,
+  ) => void;
   onHolidayEdit?: (mealInfo: MealData) => void;
   mealData?: MealData[];
 }
 
-export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, mealData = [] }: MealCardsProps) {
-  const [currentMealData, setCurrentMealData] = React.useState<MealData | null>(null);
+export function MealCards({
+  selectedDate,
+  onAddMeal,
+  onEditMeal,
+  onHolidayEdit,
+  mealData = [],
+}: MealCardsProps) {
+  const [currentMealData, setCurrentMealData] = React.useState<MealData | null>(
+    null,
+  );
 
   React.useEffect(() => {
     if (selectedDate && mealData.length > 0) {
@@ -46,77 +59,67 @@ export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, 
   }, [selectedDate, mealData]);
 
   if (!selectedDate) {
-    return <div className="text-center py-4 text-muted-foreground">날짜를 선택해주세요</div>;
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="bg-white rounded-2xl border border-gray-100 p-6 text-center mt-4"
+      >
+        <p className="text-sm text-gray-400">날짜를 선택해주세요</p>
+      </motion.div>
+    );
   }
 
   const formatDate = (date: Date) => {
-    return dayjs(date).format("YYYY-MM-DD");
+    return dayjs(date).format("M월 D일 (ddd)");
   };
 
-  const hasMealData = currentMealData && (currentMealData.breakfast || currentMealData.lunch || currentMealData.dinner || currentMealData.attendance);
-
-  if (!hasMealData) {
-    return (
-      <Card className="border-none shadow-none mt-8">
-        <CardHeader className="pb-4!">
-          <CardTitle>
-            <div className="flex w-full items-center justify-between px-2">
-              <div className="text-sm sm:text-md font-semibold text-gray-800">{formatDate(selectedDate)}</div>
-            </div>
-          </CardTitle>
-        </CardHeader>
-
-        <CardContent>
-          <p className="text-gray-500 text-xs sm:text-sm text-center">이 날짜에 등록된 식대 기록이 없습니다</p>
-        </CardContent>
-        <CardFooter>
-          <Button
-            onClick={() => onAddMeal?.("lunch")}
-            className="w-full text-xs sm:text-sm bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 rounded-md sm:py-5.5 py-3 font-normal"
-          >
-            식대 기록 추가하기
-          </Button>
-        </CardFooter>
-      </Card>
-    );
-  }
+  const hasMealData =
+    currentMealData &&
+    (currentMealData.breakfast ||
+      currentMealData.lunch ||
+      currentMealData.dinner ||
+      currentMealData.attendance);
 
   const meals = [
     {
       title: "조식",
-      data: currentMealData.breakfast,
+      data: currentMealData?.breakfast,
       type: "breakfast" as const,
-      icon: "/icons/breakfast.png",
-      bgColor: "bg-orange-50",
-      textColor: "text-orange-600",
-      hoverColor: "hover:bg-orange-100",
+      color: "bg-amber-50",
+      dotColor: "bg-amber-400",
     },
     {
       title: "중식",
-      data: currentMealData.lunch,
+      data: currentMealData?.lunch,
       type: "lunch" as const,
-      icon: "/icons/lunch.png",
-      bgColor: "bg-blue-50",
-      textColor: "text-blue-600",
-      hoverColor: "hover:bg-blue-100",
+      color: "bg-blue-50",
+      dotColor: "bg-blue-400",
     },
     {
       title: "석식",
-      data: currentMealData.dinner,
+      data: currentMealData?.dinner,
       type: "dinner" as const,
-      icon: "/icons/dinner.png",
-      bgColor: "bg-indigo-50",
-      textColor: "text-indigo-600",
-      hoverColor: "hover:bg-indigo-100",
+      color: "bg-violet-50",
+      dotColor: "bg-violet-400",
     },
   ];
 
+  // 조식/중식: 금액이 0이고 식당 정보 없으면 제외
+  // 석식: 데이터가 있으면 표시
+  // 개별식사인 경우 중식은 표시
   const visibleMeals = meals.filter((meal) => {
-    // 일반적으로는 데이터가 있는 식사만 표시
-    if (meal.data) return true;
+    const hasAmount = meal.data?.amount && meal.data.amount > 0;
+    const hasStore = meal.data?.store && meal.data.store.trim().length > 0;
 
-    // 하지만 attendance가 '근무' 또는 '개별식사'를 포함하고 중식인 경우는 데이터가 없어도 표시
-    if (meal.type === "lunch" && (currentMealData?.attendance === "근무" || currentMealData?.attendance?.includes("개별식사"))) {
+    // 금액이 있거나 식당 정보가 있으면 표시
+    if (hasAmount || hasStore) return true;
+
+    // 중식이고 개별식사인 경우 표시
+    if (
+      meal.type === "lunch" &&
+      currentMealData?.attendance?.includes("개별식사")
+    ) {
       return true;
     }
 
@@ -127,106 +130,226 @@ export function MealCards({ selectedDate, onAddMeal, onEditMeal, onHolidayEdit, 
     return Boolean(attendance && attendance.includes("휴무"));
   };
 
-  return (
-    <Card className="space-y-4 bg-white border-none rounded-lg shadow-none mt-8">
-      {/* Header */}
-      <CardHeader className="mb-0 pb-4!">
-        <CardTitle>
-          <div className="flex w-full items-center justify-between px-2">
-            <div className="text-sm font-semibold text-gray-800">{formatDate(selectedDate)}</div>
-          </div>
-        </CardTitle>
-      </CardHeader>
+  const isRemoteWork = (attendance: string): boolean => {
+    return Boolean(attendance && attendance.includes("재택근무"));
+  };
 
-      {currentMealData && isHoliday(currentMealData.attendance) ? (
-        <>
-          <CardContent className="flex flex-col justify-center items-center text-center">
-            <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mb-4">
-              <span className="text-2xl">
-                <Image src={"/icons/holiday2.png"} alt={"warning"} width={40} height={40} className="w-9 h-9 object-contain" />
-              </span>
-            </div>
-            <p className="text-orange-600 text-base font-medium mb-2 text-center">휴무일</p>
-            <p className="text-gray-500 text-sm text-center">휴무일에는 식대가 제공되지 않습니다</p>
-          </CardContent>
-          <CardFooter>
-            <Button
-              onClick={() => {
-                if (currentMealData && onHolidayEdit) {
-                  onHolidayEdit(currentMealData);
-                }
-              }}
-              variant="outline"
-              className="border-orange-200 text-orange-600 hover:bg-orange-50 rounded-lg py-5.5 font-medium w-full"
+  // Empty State
+  if (!hasMealData) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="bg-white rounded-2xl border border-gray-100 p-5 mt-4"
+      >
+        <div className="text-center py-6">
+          <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-3">
+            <svg
+              className="w-6 h-6 text-gray-300"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              근태 상태 수정하기
-            </Button>
-          </CardFooter>
-        </>
-      ) : !hasMealData ? (
-        <>
-          <CardContent>
-            <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
-              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+              />
+            </svg>
+          </div>
+          <p className="text-sm text-gray-400 mb-4">
+            {formatDate(selectedDate)} 기록 없음
+          </p>
+          <Button
+            onClick={() => onAddMeal?.("lunch")}
+            className="h-9 px-4 text-sm font-medium bg-gray-900 hover:bg-gray-800 text-white rounded-lg"
+          >
+            기록 추가
+          </Button>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Holiday State
+  if (currentMealData && isHoliday(currentMealData.attendance)) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="bg-white rounded-2xl border border-gray-100 p-5 mt-4"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-sm font-medium text-gray-900">
+            {formatDate(selectedDate)}
+          </span>
+          <span className="text-xs px-2 py-1 rounded-full bg-orange-50 text-orange-600 font-medium">
+            휴무
+          </span>
+        </div>
+        <p className="text-sm text-gray-400 text-center py-4">식대 미지급</p>
+        <button
+          onClick={() => currentMealData && onHolidayEdit?.(currentMealData)}
+          className="w-full text-sm text-gray-500 hover:text-gray-700 py-2"
+        >
+          근태 수정
+        </button>
+      </motion.div>
+    );
+  }
+
+  // Remote Work State
+  if (currentMealData && isRemoteWork(currentMealData.attendance)) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="bg-white rounded-2xl border border-gray-100 p-5 mt-4"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-sm font-medium text-gray-900">
+            {formatDate(selectedDate)}
+          </span>
+          <span className="text-xs px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 font-medium">
+            재택
+          </span>
+        </div>
+        <p className="text-sm text-gray-400 text-center py-4">식대 미지급</p>
+        <button
+          onClick={() => currentMealData && onHolidayEdit?.(currentMealData)}
+          className="w-full text-sm text-gray-500 hover:text-gray-700 py-2"
+        >
+          근태 수정
+        </button>
+      </motion.div>
+    );
+  }
+
+  // No visible meals after filter
+  if (visibleMeals.length === 0) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="bg-white rounded-2xl border border-gray-100 p-5 mt-4"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-sm font-medium text-gray-900">
+            {formatDate(selectedDate)}
+          </span>
+          {currentMealData?.attendance && (
+            <span className="text-xs px-2 py-1 rounded-full bg-gray-50 text-gray-500 font-medium">
+              {currentMealData.attendance}
+            </span>
+          )}
+        </div>
+        <div className="text-center py-4">
+          <p className="text-sm text-gray-400 mb-3">식사 기록 없음</p>
+          <button
+            onClick={() => onAddMeal?.("lunch")}
+            className="text-sm text-gray-500 hover:text-gray-700"
+          >
+            + 추가
+          </button>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Meal Cards Display - Minimal Style
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="bg-white rounded-2xl border border-gray-100 p-4 mt-4"
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3 px-1">
+        <span className="text-sm font-medium text-gray-900">
+          {formatDate(selectedDate)}
+        </span>
+        {currentMealData?.attendance &&
+          !currentMealData.attendance.includes("근무") && (
+            <span className="text-xs text-gray-400">
+              {currentMealData.attendance}
+            </span>
+          )}
+      </div>
+
+      {/* Meal List - Compact */}
+      <div className="space-y-2">
+        {visibleMeals.map((meal, index) => (
+          <motion.div
+            key={meal.type}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2, delay: index * 0.05 }}
+            onClick={() => {
+              if (currentMealData && onEditMeal) {
+                onEditMeal(meal.type, currentMealData);
+              } else {
+                onAddMeal?.(meal.type);
+              }
+            }}
+            className="flex items-center justify-between p-3 rounded-xl bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className={`w-2 h-2 rounded-full ${meal.dotColor}`} />
+              <span className="text-sm font-medium text-gray-700">
+                {meal.title}
+              </span>
+              {meal.data?.store && (
+                <span className="text-sm text-gray-400 truncate max-w-[120px]">
+                  {meal.data.store}
+                </span>
+              )}
+              {meal.type === "lunch" &&
+                currentMealData?.attendance?.includes("개별식사") &&
+                !meal.data?.store && (
+                  <span className="text-sm text-gray-400">개별식사</span>
+                )}
+            </div>
+            <div className="flex items-center gap-2">
+              {meal.data?.amount && meal.data.amount > 0 ? (
+                <span className="text-sm font-semibold text-gray-900">
+                  {meal.data.amount.toLocaleString()}원
+                </span>
+              ) : (
+                <span className="text-sm text-gray-300">-</span>
+              )}
+              <svg
+                className="w-4 h-4 text-gray-300"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
               </svg>
             </div>
-            <p className="text-gray-500 text-sm text-center">아직 식사 기록이 없어요</p>
-          </CardContent>
-          <CardFooter>
-            <Button onClick={() => onAddMeal?.("lunch")} className="bg-blue-500 hover:bg-blue-600 text-white rounded-xl px-6 py-3 font-medium">
-              식사 기록하기
-            </Button>
-          </CardFooter>
-        </>
-      ) : (
-        <>
-          <CardContent>
-            <div className="space-y-2">
-              {visibleMeals.map((meal, index) => (
-                <div
-                  key={index}
-                  onClick={() => {
-                    if (currentMealData && onEditMeal) {
-                      onEditMeal(meal.type, currentMealData);
-                    } else {
-                      onAddMeal?.(meal.type);
-                    }
-                  }}
-                  className={`${meal.bgColor} rounded-lg p-4 ${meal.hoverColor} hover:scale-101 cursor-pointer transition-colors duration-200`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mr-3 relative">
-                      <Image src={meal.icon} alt={meal.title} width={32} height={32} className="w-8 h-8 object-contain" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className={`font-medium ${meal.textColor} text-sm`}>{meal.title}</span>
-                        <span
-                          className={`font-bold ${meal.textColor} ${
-                            meal.type === "lunch" && currentMealData?.attendance?.includes("개별식사") && !meal.data?.amount ? "text-sm font-normal " : "text-base"
-                          }`}
-                        >
-                          {meal.data?.amount ? `-${meal.data.amount.toLocaleString()}원` : meal.type === "lunch" && currentMealData?.attendance?.includes("개별식사") ? "개별식사" : "0원"}
-                        </span>
-                      </div>
+          </motion.div>
+        ))}
+      </div>
 
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-500 text-xs">{meal.data?.store || (meal.type === "lunch" && !meal.data ? "입력 내용이 없습니다" : "식당 정보 없음")}</span>
-                        {meal.data?.payer && <span className="text-gray-500 text-xs">{meal.data.payer}</span>}
-                      </div>
-                    </div>
-
-                    <svg className="w-5 h-5 text-gray-300 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </>
+      {/* Add button if needed */}
+      {visibleMeals.length < 3 && (
+        <button
+          onClick={() => onAddMeal?.("dinner")}
+          className="w-full mt-2 py-2 text-sm text-gray-400 hover:text-gray-600 transition-colors"
+        >
+          + 식사 추가
+        </button>
       )}
-    </Card>
+    </motion.div>
   );
 }

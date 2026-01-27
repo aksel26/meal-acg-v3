@@ -1,8 +1,7 @@
 "use client";
 import React, { useMemo, useCallback } from "react";
-import { Card, CardContent, CardHeader } from "@repo/ui/src/card";
-import { Badge } from "@repo/ui/src/badge";
 import { LunchGroup } from "@/hooks/useLunchGroup";
+import { motion } from "motion/react";
 
 interface LunchGroupListProps {
   groups: LunchGroup[];
@@ -129,27 +128,29 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
   // 빈 데이터 처리
   if (processedTeams.length === 0) {
     return (
-      <Card className="bg-white border-none shadow-none">
-        <CardContent className="text-center py-8">
-          <p className="text-gray-500 mb-2">등록된 점심조가 없습니다.</p>
-          <p className="text-sm text-gray-400">관리자에게 문의해주세요.</p>
-        </CardContent>
-      </Card>
+      <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
+        <p className="text-sm text-gray-500 mb-1">등록된 점심조가 없습니다.</p>
+        <p className="text-xs text-gray-400">관리자에게 문의해주세요.</p>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {sortedTeams.map((team) => {
+    <div className="space-y-3">
+      {sortedTeams.map((team, index) => {
         const isMyTeamHighlight = isMyTeam(team.members);
+        const validMemberCount = team.members.filter((m) => !m.isEmpty).length;
 
         return (
-          <Card
+          <motion.div
             key={`${team.rawGroupNumber}-${team.id}`}
-            className={`transition-all duration-200 hover:shadow-md ${
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
+            className={`bg-white rounded-2xl border overflow-hidden transition-all duration-200 ${
               isMyTeamHighlight
-                ? "bg-blue-50 border border-blue-300 shadow-none"
-                : "bg-white border-none shadow-none"
+                ? "border-gray-300 shadow-sm"
+                : "border-gray-100 hover:border-gray-200"
             } ${onTeamClick ? "cursor-pointer" : ""}`}
             onClick={() =>
               onTeamClick?.(
@@ -158,31 +159,33 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
               )
             }
           >
-            <CardHeader className="pb-3">
+            {/* 헤더 */}
+            <div className={`px-4 py-3 border-b ${isMyTeamHighlight ? "bg-gray-50 border-gray-100" : "border-gray-50"}`}>
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <Badge
-                    className={`px-3 py-1 ${isMyTeamHighlight ? "bg-blue-600 text-white" : "bg-gray-800 text-white"}`}
-                  >
+                <div className="flex items-center gap-2">
+                  <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
+                    isMyTeamHighlight
+                      ? "bg-gray-800 text-white"
+                      : "bg-gray-100 text-gray-700"
+                  }`}>
                     {team.name}
-                  </Badge>
-                  <span
-                    className={`text-sm ${isMyTeamHighlight ? "text-blue-600 font-medium" : "text-gray-500"}`}
-                  >
-                    {team.members.filter((m) => !m.isEmpty).length}/
-                    {team.members.length}명
                   </span>
-                  {isMyTeamHighlight && (
-                    <Badge className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5">
-                      내 조
-                    </Badge>
-                  )}
+                  <span className="text-xs text-gray-400">
+                    {validMemberCount}명
+                  </span>
                 </div>
+                {isMyTeamHighlight && (
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-600">
+                    내 조
+                  </span>
+                )}
               </div>
-            </CardHeader>
-            <CardContent className="pt-0">
+            </div>
+
+            {/* 멤버 목록 */}
+            <div className="p-3">
               <div className="grid grid-cols-2 gap-2">
-                {team.members.map(({ member, isEmpty }, index) => {
+                {team.members.map(({ member, isEmpty }, memberIndex) => {
                   const isMe =
                     userName &&
                     !isEmpty &&
@@ -193,23 +196,13 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
                     // 빈 슬롯 UI
                     return (
                       <div
-                        key={`empty-${index}`}
-                        className={`flex items-center space-x-2 rounded-lg p-2 text-xs sm:text-sm border border-dashed ${isMyTeamHighlight ? "border-blue-200 bg-blue-25" : "border-gray-300 bg-gray-25"}`}
+                        key={`empty-${memberIndex}`}
+                        className="flex items-center gap-2 p-2 rounded-lg border border-dashed border-gray-200 bg-gray-50/50"
                       >
-                        <div
-                          className={`w-6 h-6 rounded-full border border-dashed flex items-center justify-center text-xs font-medium ${
-                            isMyTeamHighlight
-                              ? "border-blue-300 text-blue-400"
-                              : "border-gray-400 text-gray-400"
-                          }`}
-                        >
-                          ?
+                        <div className="w-6 h-6 rounded-full border border-dashed border-gray-300 flex items-center justify-center">
+                          <span className="text-[10px] text-gray-400">?</span>
                         </div>
-                        <span
-                          className={`font-medium text-xs italic ${isMyTeamHighlight ? "text-blue-400" : "text-gray-400"}`}
-                        >
-                          빈 자리
-                        </span>
+                        <span className="text-xs text-gray-400 italic">빈 자리</span>
                       </div>
                     );
                   }
@@ -217,36 +210,38 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
                   // 일반 멤버 UI
                   return (
                     <div
-                      key={`${member}-${index}`}
-                      className={`flex items-center space-x-2 rounded-lg p-2  text-xs sm:text-sm ${isMe ? "bg-blue-100 border border-blue-200" : isMyTeamHighlight ? "bg-white/70" : "bg-gray-50"}`}
+                      key={`${member}-${memberIndex}`}
+                      className={`flex items-center gap-2 p-2 rounded-lg ${
+                        isMe
+                          ? "bg-gray-100 border border-gray-200"
+                          : "bg-gray-50"
+                      }`}
                     >
                       <div
                         className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
                           isMe
-                            ? "bg-blue-500 text-white"
-                            : isMyTeamHighlight
-                              ? "bg-blue-100 text-blue-800"
-                              : "bg-gray-200 text-gray-600"
+                            ? "bg-gray-700 text-white"
+                            : "bg-gray-200 text-gray-600"
                         }`}
                       >
-                        {member.charAt(0).toUpperCase()}
+                        {member.charAt(0)}
                       </div>
                       <span
-                        className={`font-medium ${isMe ? "text-blue-700 font-semibold" : isMyTeamHighlight ? "text-blue-700" : "text-gray-700"}`}
+                        className={`text-xs truncate ${
+                          isMe ? "text-gray-800 font-semibold" : "text-gray-700"
+                        }`}
                       >
                         {member}
                         {isMe && (
-                          <span className="ml-1 text-xs text-blue-600">
-                            (나)
-                          </span>
+                          <span className="ml-1 text-[10px] text-gray-500">(나)</span>
                         )}
                       </span>
                     </div>
                   );
                 })}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </motion.div>
         );
       })}
     </div>

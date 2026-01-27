@@ -3,7 +3,6 @@
 export const dynamic = "force-dynamic";
 
 import { BottomNavigation } from "@/components/BottomNavigation";
-import BalanceSection from "@/components/dashboard/BalanceSection";
 import GreetingSection from "@/components/dashboard/GreetingSection";
 import MealSection from "@/components/dashboard/MealSection";
 import NoticeSection from "@/components/dashboard/NoticeSection";
@@ -11,18 +10,18 @@ import StatsSection from "@/components/dashboard/StatsSection";
 import { CalculationData } from "@/components/dashboard/types";
 import { useScrollHandler } from "@/components/dashboard/useScrollHandler";
 import { Footer } from "@/components/Footer";
-import { UpdateNotificationDialog } from "@/components/UpdateNotificationDialog";
 import { useMealData } from "@/hooks/use-meal-data";
 import { useMealDelete } from "@/hooks/use-meal-delete";
 import { useMealSubmit } from "@/hooks/use-meal-submit";
 import { useMealDrawerStore } from "@/stores/mealDrawerStore";
+import { useUserStore } from "@/stores/userStore";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
-import { motion } from "motion/react";
+import React, { lazy, Suspense, useEffect, useState } from "react";
+import { UpdateNotificationDialog } from "@/components/UpdateNotificationDialog";
 import { useRouter } from "next/navigation";
-import React, { Suspense, lazy, useEffect, useState } from "react";
-
+import { motion } from "motion/react";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -34,19 +33,21 @@ const MealEntryDrawer = lazy(() =>
 );
 
 export default function DashboardPage() {
-  const [userName, setUserName] = useState<string>("");
+  const [mounted, setMounted] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(dayjs().tz("Asia/Seoul").toDate());
   const [currentMonth, setCurrentMonth] = useState<number>(dayjs().tz("Asia/Seoul").month() + 1);
   const [currentYear, setCurrentYear] = useState<number>(dayjs().tz("Asia/Seoul").year());
   const [calculationData, setCalculationData] = useState<CalculationData | null>(null);
-  const [showUpdateDialog, setShowUpdateDialog] = useState<boolean>(false);
+  const [showUpdateDialog, setShowUpdateDialog] = useState<boolean>(true);
+
   const router = useRouter();
 
-  // Zustand store
+  // Zustand stores
   const { formData, selectedDate: drawerSelectedDate, closeDrawer, resetForm } = useMealDrawerStore();
+  const { userId, userName, isLoggedIn, hydrate } = useUserStore();
 
   // TanStack Query hooks 사용
-  const { data: mealData = [] } = useMealData(userName, currentMonth, currentYear);
+  const { data: mealData = [] } = useMealData(userName || "", currentMonth, currentYear);
   const mealSubmitMutation = useMealSubmit();
   const mealDeleteMutation = useMealDelete();
 
@@ -54,23 +55,31 @@ export default function DashboardPage() {
   useScrollHandler(() => {});
 
   useEffect(() => {
+    setMounted(true);
+    // userStore hydrate (localStorage에서 상태 복원)
+    hydrate();
+  }, [hydrate]);
+
+  useEffect(() => {
+    // 로그인 상태 확인 (hydrate 후)
     const name = localStorage.getItem("name");
-    if (!name) {
+    const storedUserId = localStorage.getItem("user_id");
+
+    if (!name && !isLoggedIn) {
       router.push("/");
       return;
     }
-    setUserName(name);
 
     // 업데이트 알림 Dialog 표시 로직
     const hideUpdateNotification = localStorage.getItem("hideUpdateNotification");
     if (!hideUpdateNotification) {
       const timer = setTimeout(() => {
         setShowUpdateDialog(true);
-      }, 500); // 0.5초 후 표시
+      }, 500);
 
       return () => clearTimeout(timer);
     }
-  }, [router]);
+  }, [router, isLoggedIn]);
 
   const handleMonthChange = (month: number, year: number) => {
     setCurrentMonth(month);
@@ -85,14 +94,18 @@ export default function DashboardPage() {
       return;
     }
 
-    if (!userName) {
-      console.log("No userName available");
+    const currentUserName = userName || (typeof window !== "undefined" ? localStorage.getItem("name") : null);
+    const currentUserId = userId || (typeof window !== "undefined" ? localStorage.getItem("user_id") : null);
+
+    if (!currentUserName && !currentUserId) {
+      console.log("No user info available");
       return;
     }
 
     // 3개 독립된 form 데이터를 한번에 전송
     const requestData = {
-      userName: userName,
+      userName: currentUserName || "",
+      userId: currentUserId || "",
       date: dayjs(drawerSelectedDate).tz("Asia/Seoul").format("YYYY-MM-DD"),
       breakfast: {
         store: formData.breakfast.store || "",
@@ -125,12 +138,15 @@ export default function DashboardPage() {
   };
 
   const handleDeleteMeal = async (date: string) => {
-    if (!userName) {
+    const currentUserName = userName || localStorage.getItem("name");
+    const currentUserId = userId || localStorage.getItem("userId");
+    if (!currentUserName) {
       return;
     }
 
     const deleteData = {
-      userName: userName,
+      userName: currentUserName,
+      userId: currentUserId || undefined,
       date: date,
     };
 
@@ -142,7 +158,10 @@ export default function DashboardPage() {
     }
   };
 
-  if (!userName) {
+  const displayUserName = userName || (mounted ? localStorage.getItem("name") : null) || "";
+  const currentUserId = userId || (mounted ? localStorage.getItem("user_id") : null) || "";
+
+  if (!mounted || !displayUserName) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -152,10 +171,9 @@ export default function DashboardPage() {
 
   return (
     <React.Fragment>
-      <GreetingSection userName={userName} />
+      <GreetingSection userName={displayUserName} />
       <NoticeSection />
-      <BalanceSection currentMonth={currentMonth} calculationData={calculationData} />
-      <StatsSection userName={userName} month={currentMonth} year={currentYear} onDataChange={setCalculationData} />
+      <StatsSection userId={currentUserId} month={currentMonth} year={currentYear} onDataChange={setCalculationData} />
       <MealSection selectedDate={selectedDate} setSelectedDate={setSelectedDate} handleMonthChange={handleMonthChange} mealData={mealData} />
 
       {/* Lazy-loaded Meal Entry Drawer */}
@@ -178,7 +196,10 @@ export default function DashboardPage() {
       <BottomNavigation />
 
       {/* 업데이트 알림 Dialog */}
-      <UpdateNotificationDialog isOpen={showUpdateDialog} onClose={() => setShowUpdateDialog(false)} />
+      <UpdateNotificationDialog
+        isOpen={showUpdateDialog} 
+        onClose={() => setShowUpdateDialog(false)} 
+      />
     </React.Fragment>
   );
 }

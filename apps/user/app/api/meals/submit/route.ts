@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { findSemesterFolder, findExcelFiles, downloadFileBuffer, uploadFileBuffer } from "@/lib/firebase-storage";
-import { updateExcelMealData } from "@/lib/excel/meal-processor";
-import { MealSubmitData } from "@/lib/types/excel-types";
+import { saveMeal, MealData } from "@/lib/supabase/meals";
+import { createServiceClient } from "@/lib/supabase/client";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
@@ -9,73 +8,66 @@ import utc from "dayjs/plugin/utc";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
+// 개별식사 기본 금액 조회
+async function getDailyAllowance(): Promise<number> {
+  const supabase = createServiceClient();
+  if (!supabase) return 10000;
+
+  const { data, error } = await supabase
+    .from("global_settings")
+    .select("daily_allowance")
+    .eq("id", 1)
+    .single();
+
+  if (error || !data) return 10000;
+  return data.daily_allowance ?? 10000;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { userName, date, breakfast, lunch, dinner } = body;
+    const { userName, userId, date, breakfast, lunch, dinner } = body;
 
-    // 필수 파라미터 검증
-    if (!userName || !date) {
+    // 필수 파라미터 검증 (userId 또는 userName 필요)
+    if ((!userName && !userId) || !date) {
       return NextResponse.json(
         {
           error: "필수 파라미터가 누락되었습니다.",
-          required: ["userName", "date"],
-          received: { userName, date },
+          required: ["userName or userId", "date"],
+          received: { userName, userId, date },
         },
         { status: 400 }
       );
     }
 
+    // userId 우선 사용, 없으면 userName 사용
+    const userIdentifier = userId || userName;
+
     // 날짜 파싱 (한국 시간대로 처리)
     const targetDateKST = dayjs(date).tz("Asia/Seoul");
     if (!targetDateKST.isValid()) {
-      return NextResponse.json({ error: "올바르지 않은 날짜 형식입니다." }, { status: 400 });
+      return NextResponse.json(
+        { error: "올바르지 않은 날짜 형식입니다." },
+        { status: 400 }
+      );
     }
-
-    const targetDate = targetDateKST.toDate();
-    const targetMonth = targetDateKST.month() + 1;
-    const targetYear = targetDateKST.year();
 
     console.log(`=== Meal Submit API ===`);
-    console.log(`User: ${userName}, Date: ${date}`);
-    console.log(`Breakfast:`, breakfast);
-    console.log(`Lunch:`, lunch);
-    console.log(`Dinner:`, dinner);
+    console.log(`User: ${userIdentifier}, Date: ${date}`);
 
-    // 1. 해당 학기 폴더 찾기
-    const folderPath = await findSemesterFolder(targetMonth, targetYear);
-    if (!folderPath) {
-      return NextResponse.json({ 
-        error: "Semester folder not found", 
-        details: `${targetYear}년 ${targetMonth <= 6 ? '상반기' : '하반기'} 폴더를 찾을 수 없습니다.` 
-      }, { status: 404 });
+    // 개별식사인 경우 기본 금액 조회
+    const isIndividualMeal = lunch?.attendance === "근무(개별식사 / 식사안함)";
+    let lunchAmount = parseInt(lunch?.amount) || 0;
+
+    if (isIndividualMeal) {
+      const dailyAllowance = await getDailyAllowance();
+      lunchAmount = dailyAllowance;
+      console.log(`Individual meal detected, applying daily allowance: ${dailyAllowance}원`);
     }
 
-    // 2. 사용자의 Excel 파일 찾기
-    const files = await findExcelFiles(folderPath, userName);
-    if (files.length === 0) {
-      return NextResponse.json({ 
-        error: "Excel file not found", 
-        details: `${userName}.xlsx 또는 ${userName}.xls 파일을 찾을 수 없습니다.` 
-      }, { status: 404 });
-    }
-
-    const targetFile = files[0];
-    if (!targetFile) {
-      return NextResponse.json({ 
-        error: "No file found", 
-        details: "파일 목록이 비어있습니다." 
-      }, { status: 404 });
-    }
-    
-    console.log(`Found target file: ${targetFile.name}`);
-
-    // 3. Excel 파일 다운로드
-    const originalBuffer = await downloadFileBuffer(targetFile.fullPath);
-
-    // 4. 식사 데이터 준비
-    const mealData: MealSubmitData = {
-      date: targetDate,
+    // 식사 데이터 준비
+    const mealData: MealData = {
+      date: targetDateKST.toDate(),
       breakfast: {
         store: breakfast?.store || "",
         amount: parseInt(breakfast?.amount) || 0,
@@ -83,7 +75,7 @@ export async function POST(request: NextRequest) {
       },
       lunch: {
         store: lunch?.store || "",
-        amount: parseInt(lunch?.amount) || 0,
+        amount: lunchAmount,
         payer: lunch?.payer || "",
         attendance: lunch?.attendance || "",
       },
@@ -94,47 +86,38 @@ export async function POST(request: NextRequest) {
       },
     };
 
-    // 5. Excel 파일 업데이트
-    const updatedBuffer = await updateExcelMealData(originalBuffer, mealData);
+    // Supabase에 저장
+    const result = await saveMeal(userIdentifier, mealData);
 
-    // 6. 업데이트된 파일을 Firebase Storage에 업로드
-    await uploadFileBuffer(targetFile.fullPath, updatedBuffer);
+    if (!result.success) {
+      return NextResponse.json(
+        {
+          error: "Failed to save meal data",
+          details: result.error,
+        },
+        { status: 500 }
+      );
+    }
 
-    console.log(`✅ Successfully updated meal data for ${userName} on ${date}`);
+    console.log(`Successfully saved meal data for ${userIdentifier} on ${date}`);
 
     return NextResponse.json({
       success: true,
       message: "식사 기록이 성공적으로 저장되었습니다.",
       data: {
-        fileName: targetFile.name,
         date: date,
         updatedData: mealData,
       },
     });
-
   } catch (error) {
     console.error("Meal submit API error:", error);
-    
-    // 구체적인 에러 메시지 반환
-    if (error instanceof Error) {
-      if (error.message.includes("날짜의 행을 찾을 수 없습니다")) {
-        return NextResponse.json({ 
-          error: "Date not found", 
-          details: error.message 
-        }, { status: 404 });
-      }
-      
-      if (error.message.includes("파일을 찾을 수 없습니다")) {
-        return NextResponse.json({ 
-          error: "File not found", 
-          details: error.message 
-        }, { status: 404 });
-      }
-    }
-    
-    return NextResponse.json({ 
-      error: "Failed to submit meal data", 
-      details: error instanceof Error ? error.message : "Unknown error" 
-    }, { status: 500 });
+
+    return NextResponse.json(
+      {
+        error: "Failed to submit meal data",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 }
+    );
   }
 }

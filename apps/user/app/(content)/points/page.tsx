@@ -6,7 +6,7 @@ import { Card, CardContent } from "@repo/ui/src/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/src/select";
 import { NumberTicker } from "@repo/ui/src/number-ticker";
 import { ChartPieDonut } from "@repo/ui/src/chart-pie-donut";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@repo/ui/src/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/src/tabs"
 import { Check, Plus, SquircleDashed } from "@repo/ui/icons";
 import React, { useState, useEffect } from "react";
 import NoDataIcon from "@/public/icons/noData.png";
@@ -276,7 +276,7 @@ export default function Points() {
         {/* Chart Section */}
         <div className="mb-4">
           {isManager ? (
-            <Tabs defaultValue="welfare" className="w-full" onValueChange={(value) => setSelectedTab(value as "welfare" | "activity")}>
+            <Tabs defaultValue="welfare" className="w-full" onValueChange={(value:any) => setSelectedTab(value as "welfare" | "activity")}>
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="welfare" className="text-xs">
                   복지포인트

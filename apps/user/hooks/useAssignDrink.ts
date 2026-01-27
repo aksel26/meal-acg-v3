@@ -23,7 +23,7 @@ export const useAssignDrink = (): AssignDrinkResult => {
     setSuccess(false);
 
     try {
-      const response = await fetch("/api/google-sheets/monthly/assign", {
+      const response = await fetch("/api/monthly", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -2,7 +2,6 @@
 
 import { motion } from "motion/react";
 import CalendarComponent from "@/components/Calendar";
-import { MealCards } from "@/components/MealCards";
 import { MealData } from "./types";
 import { useMealDrawerStore } from "@/stores/mealDrawerStore";
 
@@ -21,19 +20,22 @@ export default function MealSection({
 }: MealSectionProps) {
   const { openDrawer, openDrawerForEdit, openDrawerForHolidayEdit } = useMealDrawerStore();
 
-  const handleAddMeal = (mealType: "breakfast" | "lunch" | "dinner") => {
-    console.log("Opening drawer for add meal:", { mealType, selectedDate });
-    openDrawer(mealType, selectedDate);
+  const handleAddMeal = (mealType: "breakfast" | "lunch" | "dinner", date?: Date) => {
+    const targetDate = date || selectedDate;
+    console.log("Opening drawer for add meal:", { mealType, targetDate });
+    openDrawer(mealType, targetDate);
   };
 
-  const handleEditMeal = (mealType: "breakfast" | "lunch" | "dinner", mealInfo: MealData) => {
-    console.log("Opening drawer for edit meal:", { mealType, mealInfo, selectedDate });
-    openDrawerForEdit(mealType, mealInfo, selectedDate);
+  const handleEditMeal = (mealType: "breakfast" | "lunch" | "dinner", mealInfo: MealData, date?: Date) => {
+    const targetDate = date || selectedDate;
+    console.log("Opening drawer for edit meal:", { mealType, mealInfo, targetDate });
+    openDrawerForEdit(mealType, mealInfo, targetDate);
   };
 
-  const handleHolidayAttendanceEdit = (mealInfo: MealData) => {
-    console.log("Opening drawer for holiday edit:", { mealInfo, selectedDate });
-    openDrawerForHolidayEdit(mealInfo, selectedDate);
+  const handleHolidayAttendanceEdit = (mealInfo: MealData, date?: Date) => {
+    const targetDate = date || selectedDate;
+    console.log("Opening drawer for holiday edit:", { mealInfo, targetDate });
+    openDrawerForHolidayEdit(mealInfo, targetDate);
   };
 
   return (
@@ -46,8 +48,15 @@ export default function MealSection({
         ease: [0.25, 0.46, 0.45, 0.94],
       }}
     >
-      <CalendarComponent onDateSelect={setSelectedDate} selectedDate={selectedDate} onMonthChange={handleMonthChange} mealData={mealData} />
-      <MealCards selectedDate={selectedDate} onAddMeal={handleAddMeal} onEditMeal={handleEditMeal} onHolidayEdit={handleHolidayAttendanceEdit} mealData={mealData} />
+      <CalendarComponent
+        onDateSelect={setSelectedDate}
+        selectedDate={selectedDate}
+        onMonthChange={handleMonthChange}
+        mealData={mealData}
+        onAddMeal={handleAddMeal}
+        onEditMeal={handleEditMeal}
+        onHolidayEdit={handleHolidayAttendanceEdit}
+      />
     </motion.div>
   );
 }

@@ -17,8 +17,7 @@ import { DRINKS } from "@/lib/const/const";
 const MonthlyDrink = () => {
   const [selectedDrink, setSelectedDrink] = useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
-  const [isAllHistoryDialogOpen, setIsAllHistoryDialogOpen] =
-    useState<boolean>(false);
+  const [isAllHistoryDialogOpen, setIsAllHistoryDialogOpen] = useState<boolean>(false);
 
   const { data, isLoading, fetchData } = useMonthlyData();
   const {
@@ -34,9 +33,7 @@ const MonthlyDrink = () => {
   const drinkOptions = data?.drinkOptions || [];
   const pickupPersons = data?.pickupPersons || [];
 
-  const availableDrinks = drinkOptions
-    .filter((option) => option.available)
-    .map((option) => option.name);
+  const availableDrinks = drinkOptions.filter((option) => option.available).map((option) => option.name);
   const displayDrinks = availableDrinks.length > 0 ? availableDrinks : DRINKS;
 
   const [currentUserName, setCurrentUserName] = useState<string>("");

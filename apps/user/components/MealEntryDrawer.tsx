@@ -212,6 +212,7 @@ export default function MealEntryDrawer({ onFormSubmit, onDeleteMeal }: MealEntr
                 await saveNewRestaurant(currentFormData.store);
               }
               await onFormSubmit(e);
+              // 폼 제출 성공 후 drawer 닫기는 onFormSubmit에서 처리됨
             } finally {
               setIsSubmitting(false);
             }
@@ -406,6 +407,7 @@ export default function MealEntryDrawer({ onFormSubmit, onDeleteMeal }: MealEntr
                   await saveNewRestaurant(currentFormData.store);
                 }
                 await onFormSubmit(e);
+                // 폼 제출 성공 후 drawer 닫기는 onFormSubmit에서 처리됨
               } finally {
                 setIsSubmitting(false);
               }

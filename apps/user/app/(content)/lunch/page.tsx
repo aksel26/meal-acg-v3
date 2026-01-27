@@ -71,6 +71,9 @@ const Lunch = () => {
     // 제외할 인원 목록
     const excludedMembers = new Set(["정진우", "장문경", "이서현"]);
 
+    // 제외할 인원 목록
+    const excludedMembers = new Set(['정진우', '장문경', '이서현']);
+
     // 모든 점심조에 배정된 멤버들 수집
     const assignedMembers = new Set<string>();
     lunchGroupData.groups.forEach((group) => {

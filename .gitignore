@@ -32,5 +32,8 @@ yarn-error.log*
 # turbo
 .turbo
 
+# MCP config (contains API tokens)
+.mcp.json
+
 # ui
 dist/

@@ -75,6 +75,13 @@ export const queryKeys = {
   restaurants: {
     all: ["restaurants"] as const,
     list: ["restaurants", "list"] as const,
+    popular: () => ["restaurants", "popular"] as const,
+  },
+
+  // 월간 음료 신청 관련 쿼리
+  monthly: {
+    all: ["monthly"] as const,
+    data: ["monthly", "data"] as const,
   },
 } as const;
 

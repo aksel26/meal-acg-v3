@@ -13,22 +13,22 @@ export async function GET(request: NextRequest) {
     // 해당 월의 시작일과 종료일
     const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
     const endDate = new Date(year, month, 0).toISOString().split("T")[0]; // 해당 월의 마지막 날
+    const today = new Date().toISOString().split("T")[0];
 
-    // 전체 멤버 수
-    const { data: members, error: membersError } = await supabase
-      .from("members")
-      .select("id, full_name");
+    // 멤버, 월간 식대기록, 오늘 기록을 병렬로 조회
+    const [membersResult, mealLogsResult, todayLogsResult] = await Promise.all([
+      supabase.from("members").select("id, full_name"),
+      supabase.from("meal_logs").select("user_id").gte("entry_date", startDate).lte("entry_date", endDate),
+      supabase.from("meal_logs").select("user_id").eq("entry_date", today),
+    ]);
+
+    const { data: members, error: membersError } = membersResult;
+    const { data: mealLogs, error: logsError } = mealLogsResult;
+    const { data: todayLogs } = todayLogsResult;
 
     if (membersError) {
       throw membersError;
     }
-
-    // 해당 월에 식대 기록이 있는 멤버 ID 목록
-    const { data: mealLogs, error: logsError } = await supabase
-      .from("meal_logs")
-      .select("user_id")
-      .gte("entry_date", startDate)
-      .lte("entry_date", endDate);
 
     if (logsError) {
       throw logsError;
@@ -38,13 +38,6 @@ export async function GET(request: NextRequest) {
 
     // 미입력 멤버 목록
     const missingMembers = members?.filter((m) => !memberIdsWithLogs.has(m.id)) || [];
-
-    // 오늘 기준 미입력 (오늘 업무일인데 기록이 없는 멤버)
-    const today = new Date().toISOString().split("T")[0];
-    const { data: todayLogs } = await supabase
-      .from("meal_logs")
-      .select("user_id")
-      .eq("entry_date", today);
 
     const todayMemberIds = new Set(todayLogs?.map((log) => log.user_id) || []);
     const todayMissing = members?.filter((m) => !todayMemberIds.has(m.id)).length || 0;

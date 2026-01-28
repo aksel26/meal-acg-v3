@@ -74,66 +74,89 @@ export async function POST(request: Request): Promise<NextResponse<ImportResult>
     let skipped = 0;
     const errors: { date: string; message: string }[] = [];
 
-    // 각 레코드 처리
+    // 모든 레코드의 날짜에 대해 기존 데이터를 한 번에 조회
+    const dates = records.map((r) => r.date);
+    const { data: existingLogs } = await supabase
+      .from("meal_logs")
+      .select("id, entry_date")
+      .eq("user_id", memberId)
+      .in("entry_date", dates);
+
+    const existingMap = new Map<string, string>();
+    existingLogs?.forEach((log) => {
+      existingMap.set(log.entry_date, log.id);
+    });
+
+    // 삽입/업데이트할 데이터 분리
+    const toInsert: typeof records = [];
+    const toUpdate: { id: string; data: typeof records[0] }[] = [];
+
     for (const record of records) {
-      try {
-        // 기존 데이터 확인
-        const { data: existing } = await supabase
-          .from("meal_logs")
-          .select("id")
-          .eq("user_id", memberId)
-          .eq("entry_date", record.date)
-          .single();
-
-        const mealLogData = {
-          user_id: memberId,
-          entry_date: record.date,
-          attendance: record.attendance,
-          lunch_store: record.lunch_store,
-          lunch_amount: record.lunch_amount,
-          lunch_payer: record.lunch_payer,
-          dinner_store: record.dinner_store,
-          dinner_amount: record.dinner_amount,
-          dinner_payer: record.dinner_payer,
-          breakfast_store: record.breakfast_store,
-          breakfast_amount: record.breakfast_amount,
-          breakfast_payer: record.breakfast_payer,
-        };
-
-        if (existing) {
-          if (overwrite) {
-            // 기존 데이터 업데이트
-            const { error: updateError } = await supabase
-              .from("meal_logs")
-              .update(mealLogData)
-              .eq("id", existing.id);
-
-            if (updateError) {
-              errors.push({ date: record.date, message: updateError.message });
-            } else {
-              updated++;
-            }
-          } else {
-            // 건너뛰기
-            skipped++;
-          }
+      const existingId = existingMap.get(record.date);
+      if (existingId) {
+        if (overwrite) {
+          toUpdate.push({ id: existingId, data: record });
         } else {
-          // 새로 삽입
-          const { error: insertError } = await supabase
-            .from("meal_logs")
-            .insert(mealLogData);
-
-          if (insertError) {
-            errors.push({ date: record.date, message: insertError.message });
-          } else {
-            inserted++;
-          }
+          skipped++;
         }
-      } catch (err) {
-        errors.push({
-          date: record.date,
-          message: err instanceof Error ? err.message : "알 수 없는 오류",
-        });
+      } else {
+        toInsert.push(record);
+      }
+    }
+
+    // 배치 삽입
+    if (toInsert.length > 0) {
+      const insertData = toInsert.map((record) => ({
+        user_id: memberId,
+        entry_date: record.date,
+        attendance: record.attendance,
+        lunch_store: record.lunch_store,
+        lunch_amount: record.lunch_amount,
+        lunch_payer: record.lunch_payer,
+        dinner_store: record.dinner_store,
+        dinner_amount: record.dinner_amount,
+        dinner_payer: record.dinner_payer,
+        breakfast_store: record.breakfast_store,
+        breakfast_amount: record.breakfast_amount,
+        breakfast_payer: record.breakfast_payer,
+      }));
+
+      const { error: insertError } = await supabase.from("meal_logs").insert(insertData);
+      if (insertError) {
+        errors.push({ date: "-", message: `배치 삽입 오류: ${insertError.message}` });
+      } else {
+        inserted = toInsert.length;
+      }
+    }
+
+    // 배치 업데이트 (Supabase는 배치 업데이트를 직접 지원하지 않아 병렬 처리)
+    if (toUpdate.length > 0) {
+      const updatePromises = toUpdate.map(({ id, data: record }) =>
+        supabase
+          .from("meal_logs")
+          .update({
+            attendance: record.attendance,
+            lunch_store: record.lunch_store,
+            lunch_amount: record.lunch_amount,
+            lunch_payer: record.lunch_payer,
+            dinner_store: record.dinner_store,
+            dinner_amount: record.dinner_amount,
+            dinner_payer: record.dinner_payer,
+            breakfast_store: record.breakfast_store,
+            breakfast_amount: record.breakfast_amount,
+            breakfast_payer: record.breakfast_payer,
+          })
+          .eq("id", id)
+          .then(({ error }) => ({ date: record.date, error }))
+      );
+
+      const updateResults = await Promise.all(updatePromises);
+      for (const result of updateResults) {
+        if (result.error) {
+          errors.push({ date: result.date, message: result.error.message });
+        } else {
+          updated++;
+        }
       }
     }
 

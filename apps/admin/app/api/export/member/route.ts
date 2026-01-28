@@ -28,36 +28,25 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "memberId is required" }, { status: 400 });
     }
 
-    // 멤버 정보 조회
-    const { data: member, error: memberError } = await supabase
-      .from("members")
-      .select("id, full_name")
-      .eq("id", memberId)
-      .single();
+    // 멤버 정보, 공휴일, meal_logs를 병렬로 조회
+    const [memberResult, holidaysResult, mealLogsResult] = await Promise.all([
+      supabase.from("members").select("id, full_name").eq("id", memberId).single(),
+      supabase.from("holidays").select("holiday_date, description").gte("holiday_date", startDate).lte("holiday_date", endDate),
+      supabase.from("meal_logs").select("*").eq("user_id", memberId).gte("entry_date", startDate).lte("entry_date", endDate),
+    ]);
+
+    const { data: member, error: memberError } = memberResult;
+    const { data: holidays } = holidaysResult;
+    const { data: mealLogs } = mealLogsResult;
 
     if (memberError || !member) {
       return NextResponse.json({ error: "Member not found" }, { status: 404 });
     }
 
-    // 반기 공휴일 조회 (내역용)
-    const { data: holidays } = await supabase
-      .from("holidays")
-      .select("holiday_date, description")
-      .gte("holiday_date", startDate)
-      .lte("holiday_date", endDate);
-
     const holidayMap = new Map<string, string>();
     holidays?.forEach((h) => {
       holidayMap.set(h.holiday_date, h.description || "");
     });
-
-    // 반기 meal_logs 조회 (내역용)
-    const { data: mealLogs } = await supabase
-      .from("meal_logs")
-      .select("*")
-      .eq("user_id", memberId)
-      .gte("entry_date", startDate)
-      .lte("entry_date", endDate);
 
     // 반기의 모든 날짜 생성 (내역용)
     const allDates: { date: Date; dateStr: string; month: number }[] = [];

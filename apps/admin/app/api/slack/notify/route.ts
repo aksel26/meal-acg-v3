@@ -44,11 +44,14 @@ export async function POST(request: NextRequest) {
 
     const supabase = createServiceClient();
 
-    // 선택된 유저들의 정보 조회 (email 포함)
-    const { data: members, error: membersError } = await supabase
-      .from("members")
-      .select("id, full_name, email")
-      .in("id", userIds);
+    // 멤버 정보와 정산 데이터를 병렬로 조회
+    const [membersResult, statsResult] = await Promise.all([
+      supabase.from("members").select("id, full_name, email").in("id", userIds),
+      supabase.rpc("get_user_monthly_stats", { p_year: year, p_month: month }),
+    ]);
+
+    const { data: members, error: membersError } = membersResult;
+    const { data: statsData, error: statsError } = statsResult;
 
     if (membersError) {
       console.error("Error fetching members:", membersError);
@@ -57,15 +60,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    // 정산 데이터 조회
-    const { data: statsData, error: statsError } = await supabase.rpc(
-      "get_user_monthly_stats",
-      {
-        p_year: year,
-        p_month: month,
-      }
-    );
 
     if (statsError) {
       console.error("Error fetching stats:", statsError);

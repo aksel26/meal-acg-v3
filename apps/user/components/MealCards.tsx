@@ -44,18 +44,11 @@ export function MealCards({
   onHolidayEdit,
   mealData = [],
 }: MealCardsProps) {
-  const [currentMealData, setCurrentMealData] = React.useState<MealData | null>(
-    null,
-  );
-
-  React.useEffect(() => {
-    if (selectedDate && mealData.length > 0) {
-      const dateString = dayjs(selectedDate).format("YYYY-MM-DD");
-      const dayData = mealData.find((meal) => meal.date === dateString) || null;
-      setCurrentMealData(dayData);
-    } else {
-      setCurrentMealData(null);
-    }
+  // 파생 상태: useMemo로 직접 계산 (불필요한 리렌더 방지)
+  const currentMealData = React.useMemo(() => {
+    if (!selectedDate || mealData.length === 0) return null;
+    const dateString = dayjs(selectedDate).format("YYYY-MM-DD");
+    return mealData.find((meal) => meal.date === dateString) || null;
   }, [selectedDate, mealData]);
 
   if (!selectedDate) {

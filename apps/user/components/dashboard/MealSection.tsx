@@ -2,6 +2,7 @@
 
 import { motion } from "motion/react";
 import CalendarComponent from "@/components/Calendar";
+import { MealCards } from "@/components/MealCards";
 import { MealData } from "./types";
 import { useMealDrawerStore } from "@/stores/mealDrawerStore";
 
@@ -20,22 +21,16 @@ export default function MealSection({
 }: MealSectionProps) {
   const { openDrawer, openDrawerForEdit, openDrawerForHolidayEdit } = useMealDrawerStore();
 
-  const handleAddMeal = (mealType: "breakfast" | "lunch" | "dinner", date?: Date) => {
-    const targetDate = date || selectedDate;
-    console.log("Opening drawer for add meal:", { mealType, targetDate });
-    openDrawer(mealType, targetDate);
+  const handleAddMeal = (mealType: "breakfast" | "lunch" | "dinner") => {
+    openDrawer(mealType, selectedDate);
   };
 
-  const handleEditMeal = (mealType: "breakfast" | "lunch" | "dinner", mealInfo: MealData, date?: Date) => {
-    const targetDate = date || selectedDate;
-    console.log("Opening drawer for edit meal:", { mealType, mealInfo, targetDate });
-    openDrawerForEdit(mealType, mealInfo, targetDate);
+  const handleEditMeal = (mealType: "breakfast" | "lunch" | "dinner", mealInfo: MealData) => {
+    openDrawerForEdit(mealType, mealInfo, selectedDate);
   };
 
-  const handleHolidayAttendanceEdit = (mealInfo: MealData, date?: Date) => {
-    const targetDate = date || selectedDate;
-    console.log("Opening drawer for holiday edit:", { mealInfo, targetDate });
-    openDrawerForHolidayEdit(mealInfo, targetDate);
+  const handleHolidayAttendanceEdit = (mealInfo: MealData) => {
+    openDrawerForHolidayEdit(mealInfo, selectedDate);
   };
 
   return (
@@ -52,6 +47,10 @@ export default function MealSection({
         onDateSelect={setSelectedDate}
         selectedDate={selectedDate}
         onMonthChange={handleMonthChange}
+        mealData={mealData}
+      />
+      <MealCards
+        selectedDate={selectedDate}
         mealData={mealData}
         onAddMeal={handleAddMeal}
         onEditMeal={handleEditMeal}

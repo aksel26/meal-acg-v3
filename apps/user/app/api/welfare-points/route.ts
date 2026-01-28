@@ -78,13 +78,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: "복지포인트 시트 ID가 설정되지 않았습니다." }, { status: 500 });
     }
 
-    // 1. 통계 시트에서 금액 관련 정보 조회
-    // B: 직책, C: 이름, D: 활동비 총금액, F: 활동비 잔여금액, H: 활동비 사용금액
-    // E: 복지포인트 총금액, G: 복지포인트 잔여금액, I: 복지포인트 사용금액
-    const statsResponse = await sheets.spreadsheets.values.get({
-      spreadsheetId: SHEET_ID,
-      range: "통계!B:I",
-    });
+    // 통계 시트와 내역 시트를 병렬로 조회
+    // 1. 통계: B: 직책, C: 이름, D: 활동비 총금액, F: 활동비 잔여금액, H: 활동비 사용금액
+    //         E: 복지포인트 총금액, G: 복지포인트 잔여금액, I: 복지포인트 사용금액
+    // 2. 내역: A: No, B: 직원 이름, C: 연도, D: 월, E: 일, F: 요일, G: 유형, H: 사용처, I: 금액, J: 확인내용, K: 비고
+    const [statsResponse, historyResponse] = await Promise.all([
+      sheets.spreadsheets.values.get({
+        spreadsheetId: SHEET_ID,
+        range: "통계!B:I",
+      }),
+      sheets.spreadsheets.get({
+        spreadsheetId: SHEET_ID,
+        ranges: ["내역!A:K"],
+        includeGridData: true,
+      }),
+    ]);
 
     let activityStatsData: ActivityPointsStats | null = null;
     let welfareStatsData: WelfarePointsStats | null = null;
@@ -117,14 +125,6 @@ export async function GET(request: NextRequest) {
         };
       }
     }
-
-    // 2. 내역 시트에서 해당 이름과 월에 해당하는 사용내역 조회 (셀 서식 정보 포함)
-    // A: No, B: 직원 이름, C: 연도, D: 월, E: 일, F: 요일, G: 유형, H: 사용처, I: 금액, J: 확인내용, K: 비고
-    const historyResponse = await sheets.spreadsheets.get({
-      spreadsheetId: SHEET_ID,
-      ranges: ["내역!A:K"],
-      includeGridData: true,
-    });
 
     const history: WelfareUsageHistory[] = [];
     let monthlyUsedAmount = "";

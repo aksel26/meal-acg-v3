@@ -8,7 +8,7 @@ import { Label } from "@repo/ui/src/label";
 import { motion } from "motion/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import CI from "@/public/images/ACG_LOGO_GRAY.png";
 import Character from "@/public/images/login-character.png";
@@ -26,6 +26,11 @@ export default function HomePage() {
   });
   const router = useRouter();
   const login = useUserStore((state) => state.login);
+
+  // 대시보드 페이지를 미리 prefetch하여 로그인 후 즉시 이동 가능하도록 함
+  useEffect(() => {
+    router.prefetch("/dashboard");
+  }, [router]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -60,6 +65,8 @@ export default function HomePage() {
 
       if (data.data.full_name) {
         login(data.data.user_id, data.data.full_name, data.data.role);
+        // 로그인 성공 시 loading 상태를 유지하여 대시보드 이동 중임을 표시
+        // (페이지 전환 시 자연스럽게 언마운트됨)
         router.push("/dashboard");
       } else {
         throw new Error("사용자 이름을 받아올 수 없습니다.");
@@ -67,7 +74,6 @@ export default function HomePage() {
     } catch (err) {
       console.error("로그인 오류:", err);
       setError(err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.");
-    } finally {
       setLoading(false);
     }
   };

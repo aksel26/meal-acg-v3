@@ -44,16 +44,17 @@ function matchesChosung(text: string, query: string): boolean {
   return textChosung.toLowerCase().includes(lowerQuery);
 }
 
-export interface AutoCompleteInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface AutoCompleteInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onSelect"> {
   suggestions?: string[];
   onValueChange?: (value: string) => void;
+  onSuggestionSelect?: (value: string) => void;
   allowFreeText?: boolean;
   maxSuggestions?: number;
   emptyText?: string;
 }
 
 const AutoCompleteInput = React.forwardRef<HTMLInputElement, AutoCompleteInputProps>(
-  ({ suggestions = [], onValueChange, allowFreeText = true, maxSuggestions = 10, emptyText = "No suggestions found", className, ...props }, ref) => {
+  ({ suggestions = [], onValueChange, onSuggestionSelect, allowFreeText = true, maxSuggestions = 10, emptyText = "No suggestions found", className, ...props }, ref) => {
     const [isOpen, setIsOpen] = React.useState(false);
     const [selectedIndex, setSelectedIndex] = React.useState(-1);
     const containerRef = React.useRef<HTMLDivElement>(null);
@@ -128,6 +129,7 @@ const AutoCompleteInput = React.forwardRef<HTMLInputElement, AutoCompleteInputPr
     // Handle suggestion click
     const handleSuggestionClick = (suggestion: string) => {
       onValueChange?.(suggestion);
+      onSuggestionSelect?.(suggestion);
       setIsOpen(false);
       setSelectedIndex(-1);
     };

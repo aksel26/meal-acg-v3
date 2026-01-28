@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@repo/ui/src/dialog";
 import { useMonthlyData } from "@/hooks/useMonthlyData";
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 
 interface AllHistoryDialogProps {
@@ -32,13 +32,8 @@ const getDrinkInfo = (drink: string) => {
 };
 
 export const AllHistoryDialog = ({ isOpen, onClose }: AllHistoryDialogProps) => {
-  const { data, isLoading, error, fetchData } = useMonthlyData();
-
-  useEffect(() => {
-    if (isOpen) {
-      fetchData();
-    }
-  }, [isOpen, fetchData]);
+  const { data, isLoading, isError } = useMonthlyData();
+  // TanStack Query가 자동으로 캐시된 데이터를 공유하므로 별도 fetch 불필요
 
   const applications = data?.applications || [];
 
@@ -118,7 +113,7 @@ export const AllHistoryDialog = ({ isOpen, onClose }: AllHistoryDialogProps) => 
                   />
                 ))}
               </motion.div>
-            ) : error ? (
+            ) : isError ? (
               <motion.div
                 key="error"
                 initial={{ opacity: 0 }}

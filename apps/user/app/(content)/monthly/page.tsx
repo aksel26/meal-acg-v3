@@ -19,16 +19,8 @@ const MonthlyDrink = () => {
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
   const [isAllHistoryDialogOpen, setIsAllHistoryDialogOpen] = useState<boolean>(false);
 
-  const { data, isLoading, fetchData } = useMonthlyData();
-  const {
-    isLoading: isAssigning,
-    error: assignError,
-    assignDrink,
-  } = useAssignDrink();
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const { data, isLoading } = useMonthlyData();
+  const { mutateAsync: assignDrink, isPending: isAssigning } = useAssignDrink();
 
   const drinkOptions = data?.drinkOptions || [];
   const pickupPersons = data?.pickupPersons || [];
@@ -59,13 +51,13 @@ const MonthlyDrink = () => {
       return;
     }
 
-    const success = await assignDrink(currentUserName, selectedDrink);
-    if (success) {
+    try {
+      await assignDrink({ name: currentUserName, drink: selectedDrink });
       setIsDialogOpen(false);
       setSelectedDrink("");
-      fetchData();
-    } else {
-      alert(`음료 선택 중 오류가 발생했습니다: ${assignError}`);
+      // TanStack Query의 onSuccess에서 자동으로 데이터 무효화됨
+    } catch (error) {
+      alert(`음료 선택 중 오류가 발생했습니다: ${error instanceof Error ? error.message : "알 수 없는 오류"}`);
     }
   };
 

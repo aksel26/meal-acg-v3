@@ -5,10 +5,9 @@ export const dynamic = "force-dynamic";
 import { BottomNavigation } from "@/components/BottomNavigation";
 import GreetingSection from "@/components/dashboard/GreetingSection";
 import MealSection from "@/components/dashboard/MealSection";
-import NoticeSection from "@/components/dashboard/NoticeSection";
+import PopularRestaurantsSection from "@/components/dashboard/PopularRestaurantsSection";
 import StatsSection from "@/components/dashboard/StatsSection";
 import { CalculationData } from "@/components/dashboard/types";
-import { useScrollHandler } from "@/components/dashboard/useScrollHandler";
 import { Footer } from "@/components/Footer";
 import { useMealData } from "@/hooks/use-meal-data";
 import { useMealDelete } from "@/hooks/use-meal-delete";
@@ -51,8 +50,6 @@ export default function DashboardPage() {
   const mealSubmitMutation = useMealSubmit();
   const mealDeleteMutation = useMealDelete();
 
-  // Custom hooks
-  useScrollHandler(() => {});
 
   useEffect(() => {
     setMounted(true);
@@ -61,25 +58,27 @@ export default function DashboardPage() {
   }, [hydrate]);
 
   useEffect(() => {
-    // 로그인 상태 확인 (hydrate 후)
-    const name = localStorage.getItem("name");
-    const storedUserId = localStorage.getItem("user_id");
-
-    if (!name && !isLoggedIn) {
+    // 로그인 상태 확인 (hydrate 후 - userName은 store에서 가져옴)
+    if (!userName && !isLoggedIn) {
       router.push("/");
       return;
     }
 
-    // 업데이트 알림 Dialog 표시 로직
-    const hideUpdateNotification = localStorage.getItem("hideUpdateNotification");
-    if (!hideUpdateNotification) {
+    // 업데이트 알림 Dialog 표시 로직 (버전 기반)
+    const NOTICE_VERSION = "v1.3";
+    const savedVersion = localStorage.getItem("hideNoticeVersion");
+
+    // 저장된 버전과 현재 버전이 다르면 (또는 저장된 버전이 없으면) 다이얼로그 표시
+    if (savedVersion !== NOTICE_VERSION) {
       const timer = setTimeout(() => {
         setShowUpdateDialog(true);
       }, 500);
 
       return () => clearTimeout(timer);
+    } else {
+      setShowUpdateDialog(false);
     }
-  }, [router, isLoggedIn]);
+  }, [router, isLoggedIn, userName]);
 
   const handleMonthChange = (month: number, year: number) => {
     setCurrentMonth(month);
@@ -94,18 +93,15 @@ export default function DashboardPage() {
       return;
     }
 
-    const currentUserName = userName || (typeof window !== "undefined" ? localStorage.getItem("name") : null);
-    const currentUserId = userId || (typeof window !== "undefined" ? localStorage.getItem("user_id") : null);
-
-    if (!currentUserName && !currentUserId) {
+    if (!userName && !userId) {
       console.log("No user info available");
       return;
     }
 
     // 3개 독립된 form 데이터를 한번에 전송
     const requestData = {
-      userName: currentUserName || "",
-      userId: currentUserId || "",
+      userName: userName || "",
+      userId: userId || "",
       date: dayjs(drawerSelectedDate).tz("Asia/Seoul").format("YYYY-MM-DD"),
       breakfast: {
         store: formData.breakfast.store || "",
@@ -138,15 +134,13 @@ export default function DashboardPage() {
   };
 
   const handleDeleteMeal = async (date: string) => {
-    const currentUserName = userName || localStorage.getItem("name");
-    const currentUserId = userId || localStorage.getItem("userId");
-    if (!currentUserName) {
+    if (!userName) {
       return;
     }
 
     const deleteData = {
-      userName: currentUserName,
-      userId: currentUserId || undefined,
+      userName,
+      userId: userId || undefined,
       date: date,
     };
 
@@ -158,8 +152,8 @@ export default function DashboardPage() {
     }
   };
 
-  const displayUserName = userName || (mounted ? localStorage.getItem("name") : null) || "";
-  const currentUserId = userId || (mounted ? localStorage.getItem("user_id") : null) || "";
+  const displayUserName = userName || "";
+  const currentUserId = userId || "";
 
   if (!mounted || !displayUserName) {
     return (
@@ -172,8 +166,8 @@ export default function DashboardPage() {
   return (
     <React.Fragment>
       <GreetingSection userName={displayUserName} />
-      <NoticeSection />
       <StatsSection userId={currentUserId} month={currentMonth} year={currentYear} onDataChange={setCalculationData} />
+      <PopularRestaurantsSection />
       <MealSection selectedDate={selectedDate} setSelectedDate={setSelectedDate} handleMonthChange={handleMonthChange} mealData={mealData} />
 
       {/* Lazy-loaded Meal Entry Drawer */}

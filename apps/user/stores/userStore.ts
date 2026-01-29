@@ -6,9 +6,11 @@ interface UserState {
   userName: string | null;
   role: string | null;
   isLoggedIn: boolean;
+  hasHydrated: boolean;
   login: (userId: string, userName: string, role: string | null) => void;
   logout: () => void;
   hydrate: () => void;
+  setHasHydrated: (state: boolean) => void;
 }
 
 export const useUserStore = create<UserState>()(
@@ -18,6 +20,11 @@ export const useUserStore = create<UserState>()(
       userName: null,
       role: null,
       isLoggedIn: false,
+      hasHydrated: false,
+
+      setHasHydrated: (state: boolean) => {
+        set({ hasHydrated: state });
+      },
 
       login: (userId: string, userName: string, role: string | null) => {
         set({
@@ -76,6 +83,9 @@ export const useUserStore = create<UserState>()(
         role: state.role,
         isLoggedIn: state.isLoggedIn,
       }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );

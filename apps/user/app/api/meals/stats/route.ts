@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
 
     const { data: mealLogs, error: mealError } = await supabase
       .from("meal_logs")
-      .select("total_amount, attendance")
+      .select("lunch_amount, attendance")
       .eq("user_id", userId)
       .gte("entry_date", startDate)
       .lte("entry_date", endDate);
@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
     }
 
     const totalUsed = mealLogs?.reduce(
-      (sum, log) => sum + (log.total_amount || 0),
+      (sum, log) => sum + (log.lunch_amount || 0),
       0
     ) ?? 0;
 

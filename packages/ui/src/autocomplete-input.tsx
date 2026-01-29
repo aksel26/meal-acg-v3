@@ -44,19 +44,22 @@ function matchesChosung(text: string, query: string): boolean {
   return textChosung.toLowerCase().includes(lowerQuery);
 }
 
-export interface AutoCompleteInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface AutoCompleteInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onSelect"> {
   suggestions?: string[];
   onValueChange?: (value: string) => void;
+  onSuggestionSelect?: (value: string) => void;
   allowFreeText?: boolean;
   maxSuggestions?: number;
   emptyText?: string;
 }
 
 const AutoCompleteInput = React.forwardRef<HTMLInputElement, AutoCompleteInputProps>(
-  ({ suggestions = [], onValueChange, allowFreeText = true, maxSuggestions = 10, emptyText = "No suggestions found", className, ...props }, ref) => {
+  ({ suggestions = [], onValueChange, onSuggestionSelect, allowFreeText = true, maxSuggestions = 10, emptyText = "No suggestions found", className, ...props }, ref) => {
     const [isOpen, setIsOpen] = React.useState(false);
     const [selectedIndex, setSelectedIndex] = React.useState(-1);
+    const [dropdownPosition, setDropdownPosition] = React.useState<"bottom" | "top">("bottom");
     const containerRef = React.useRef<HTMLDivElement>(null);
+    const dropdownRef = React.useRef<HTMLDivElement>(null);
 
     // Filter suggestions based on input value (supports Korean consonant search)
     const filteredSuggestions = React.useMemo(() => {
@@ -70,9 +73,28 @@ const AutoCompleteInput = React.forwardRef<HTMLInputElement, AutoCompleteInputPr
       return filtered.slice(0, maxSuggestions);
     }, [suggestions, props.value, maxSuggestions]);
 
+    // Calculate dropdown position based on available space
+    const calculateDropdownPosition = React.useCallback(() => {
+      if (!containerRef.current) return;
+
+      const rect = containerRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const dropdownHeight = Math.min(filteredSuggestions.length * 40 + 8, 240); // Approximate height
+
+      // Prefer bottom, but switch to top if not enough space below and more space above
+      if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
+        setDropdownPosition("top");
+      } else {
+        setDropdownPosition("bottom");
+      }
+    }, [filteredSuggestions.length]);
+
     // Handle input focus
     const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
       setIsOpen(true);
+      calculateDropdownPosition();
       props.onFocus?.(e);
     };
 
@@ -91,6 +113,7 @@ const AutoCompleteInput = React.forwardRef<HTMLInputElement, AutoCompleteInputPr
       const value = e.target.value;
       setSelectedIndex(-1);
       setIsOpen(true);
+      calculateDropdownPosition();
 
       if (allowFreeText) {
         onValueChange?.(value);
@@ -128,6 +151,7 @@ const AutoCompleteInput = React.forwardRef<HTMLInputElement, AutoCompleteInputPr
     // Handle suggestion click
     const handleSuggestionClick = (suggestion: string) => {
       onValueChange?.(suggestion);
+      onSuggestionSelect?.(suggestion);
       setIsOpen(false);
       setSelectedIndex(-1);
     };
@@ -144,6 +168,21 @@ const AutoCompleteInput = React.forwardRef<HTMLInputElement, AutoCompleteInputPr
       document.addEventListener("mousedown", handleClickOutside);
       return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
+
+    // Recalculate position on scroll or resize
+    React.useEffect(() => {
+      if (!isOpen) return;
+
+      const handleReposition = () => calculateDropdownPosition();
+
+      window.addEventListener("resize", handleReposition);
+      window.addEventListener("scroll", handleReposition, true);
+
+      return () => {
+        window.removeEventListener("resize", handleReposition);
+        window.removeEventListener("scroll", handleReposition, true);
+      };
+    }, [isOpen, calculateDropdownPosition]);
 
     return (
       <div ref={containerRef} className="relative w-full">
@@ -178,27 +217,32 @@ const AutoCompleteInput = React.forwardRef<HTMLInputElement, AutoCompleteInputPr
 
         {/* Suggestions Dropdown */}
         {isOpen && (
-          <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-60 overflow-auto rounded-md border border-input bg-popover shadow-md">
+          <div
+            ref={dropdownRef}
+            className={cn(
+              "absolute left-0 right-0 z-50 max-h-60 overflow-auto rounded-xl border border-gray-200 bg-white shadow-lg",
+              dropdownPosition === "bottom" ? "top-full mt-2" : "bottom-full mb-2"
+            )}
+          >
             {filteredSuggestions.length > 0 ? (
-              <div className="py-1">
+              <div className="py-1.5">
                 {filteredSuggestions.map((suggestion, index) => (
                   <button
                     key={suggestion}
                     type="button"
                     className={cn(
-                      "relative flex w-full cursor-pointer select-none items-center px-3 py-2 text-sm text-left",
-                      "hover:bg-accent hover:text-accent-foreground",
-                      "focus:bg-accent focus:text-accent-foreground",
-                      selectedIndex === index && "bg-accent text-accent-foreground"
+                      "relative flex w-full cursor-pointer select-none items-center px-4 py-3 text-sm text-left transition-colors",
+                      "active:bg-gray-100",
+                      selectedIndex === index ? "bg-gray-50 text-gray-900" : "text-gray-700 hover:bg-gray-50"
                     )}
                     onClick={() => handleSuggestionClick(suggestion)}
                     onMouseEnter={() => setSelectedIndex(index)}
                   >
                     <span className="block truncate">{suggestion}</span>
                     {props.value === suggestion && (
-                      <span className="absolute right-2 flex h-3.5 w-3.5 items-center justify-center">
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      <span className="absolute right-3 flex h-5 w-5 items-center justify-center text-gray-900">
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
                       </span>
                     )}
@@ -206,7 +250,7 @@ const AutoCompleteInput = React.forwardRef<HTMLInputElement, AutoCompleteInputPr
                 ))}
               </div>
             ) : (
-              <div className="px-3 py-6 text-center text-xs sm:text-sm text-muted-foreground">{emptyText}</div>
+              <div className="px-4 py-6 text-center text-sm text-gray-500">{emptyText}</div>
             )}
           </div>
         )}

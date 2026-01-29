@@ -15,6 +15,7 @@ import {
   DialogTitle,
   DialogClose,
 } from "@repo/ui/src/dialog";
+import { formatDate } from "utils";
 import { StepFormContainer } from "./meal-entry";
 import { X, ChevronLeft } from "lucide-react";
 
@@ -75,7 +76,7 @@ export default function MealEntryDrawer({
 
     setIsDeleting(true);
     try {
-      await onDeleteMeal(selectedDate.toISOString());
+      await onDeleteMeal(formatDate(selectedDate));
       closeDrawer();
     } finally {
       setIsDeleting(false);

@@ -1,6 +1,8 @@
 "use client";
 
+import { useMemo } from "react";
 import { motion } from "motion/react";
+import dayjs from "dayjs";
 import CalendarComponent from "@/components/Calendar";
 import { MealCards } from "@/components/MealCards";
 import { MealData } from "./types";
@@ -21,8 +23,15 @@ export default function MealSection({
 }: MealSectionProps) {
   const { openDrawer, openDrawerForEdit, openDrawerForHolidayEdit } = useMealDrawerStore();
 
+  // 선택된 날짜의 기존 meal 데이터 찾기
+  const existingMealData = useMemo(() => {
+    if (!selectedDate) return undefined;
+    const dateStr = dayjs(selectedDate).format("YYYY-MM-DD");
+    return mealData.find((meal) => meal.date === dateStr);
+  }, [selectedDate, mealData]);
+
   const handleAddMeal = (mealType: "breakfast" | "lunch" | "dinner") => {
-    openDrawer(mealType, selectedDate);
+    openDrawer(mealType, selectedDate, existingMealData);
   };
 
   const handleEditMeal = (mealType: "breakfast" | "lunch" | "dinner", mealInfo: MealData) => {

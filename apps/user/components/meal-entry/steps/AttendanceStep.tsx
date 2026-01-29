@@ -1,7 +1,12 @@
 "use client";
 
-import { motion } from "motion/react";
-import { useMealDrawerStore } from "@/stores/mealDrawerStore";
+import { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import {
+  useMealDrawerStore,
+  NO_MEAL_SUPPORT_ATTENDANCE,
+  INDIVIDUAL_MEAL_ATTENDANCE,
+} from "@/stores/mealDrawerStore";
 import { attendanceOptions } from "@/lib/const/const";
 
 const attendanceConfig: Record<string, { emoji: string; shortLabel: string }> = {
@@ -13,13 +18,36 @@ const attendanceConfig: Record<string, { emoji: string; shortLabel: string }> = 
   "재택근무": { emoji: "🏠", shortLabel: "재택" },
 };
 
-export function AttendanceStep() {
+interface AttendanceStepProps {
+  onSubmit?: () => Promise<void>;
+  isSubmitting?: boolean;
+}
+
+export function AttendanceStep({ onSubmit, isSubmitting }: AttendanceStepProps) {
   const { formData, updateFormField, completeStep } = useMealDrawerStore();
   const currentAttendance = formData.lunch.attendance;
+  const [selectedValue, setSelectedValue] = useState<string>(currentAttendance);
+
+  // 선택한 값이 식대 미지원 또는 개별식사인지 확인
+  const isNoMealSupport = NO_MEAL_SUPPORT_ATTENDANCE.includes(selectedValue);
+  const isIndividualMeal = selectedValue === INDIVIDUAL_MEAL_ATTENDANCE;
+  const showSaveButton = isNoMealSupport || isIndividualMeal;
 
   const handleSelect = (value: string) => {
+    setSelectedValue(value);
     updateFormField("attendance", value);
-    completeStep("attendance");
+
+    // 근무 선택 시에만 바로 다음 단계로 진행
+    if (value === "근무") {
+      completeStep("attendance");
+    }
+    // 식대 미지원/개별식사는 저장 버튼 표시 후 사용자가 직접 저장
+  };
+
+  const handleSave = async () => {
+    if (onSubmit) {
+      await onSubmit();
+    }
   };
 
   return (
@@ -42,7 +70,7 @@ export function AttendanceStep() {
       <div className="grid grid-cols-2 gap-2">
         {attendanceOptions?.map((option, index) => {
           const config = attendanceConfig[option.value];
-          const isSelected = currentAttendance === option.value;
+          const isSelected = selectedValue === option.value;
 
           return (
             <motion.button
@@ -64,6 +92,57 @@ export function AttendanceStep() {
           );
         })}
       </div>
+
+      {/* 식대 미지원 메시지 및 저장 버튼 */}
+      <AnimatePresence>
+        {showSaveButton && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+            className="space-y-3 pt-2"
+          >
+            {isNoMealSupport && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                <p className="text-sm text-amber-800 font-medium">
+                  {attendanceConfig[selectedValue]?.shortLabel} 시에는 식대가 지원되지 않습니다.
+                </p>
+                <p className="text-xs text-amber-600 mt-1">
+                  근태 정보만 저장됩니다.
+                </p>
+              </div>
+            )}
+
+            {isIndividualMeal && (
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <p className="text-sm text-blue-800 font-medium">
+                  개별식사로 기록됩니다.
+                </p>
+                <p className="text-xs text-blue-600 mt-1">
+                  식대 입력 없이 저장됩니다.
+                </p>
+              </div>
+            )}
+
+            <motion.button
+              type="button"
+              onClick={handleSave}
+              disabled={isSubmitting}
+              className="w-full py-4 px-4 rounded-xl bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                  저장 중...
+                </div>
+              ) : (
+                "저장하기"
+              )}
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

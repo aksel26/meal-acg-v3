@@ -2,7 +2,14 @@
 
 import { useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { useMealDrawerStore, StepId, STEP_ORDER } from "@/stores/mealDrawerStore";
+import {
+  useMealDrawerStore,
+  StepId,
+  STEP_ORDER_LUNCH,
+  STEP_ORDER_OTHER,
+  NO_MEAL_SUPPORT_ATTENDANCE,
+  INDIVIDUAL_MEAL_ATTENDANCE,
+} from "@/stores/mealDrawerStore";
 import { CompletedStepItem } from "./CompletedStepItem";
 import {
   MealTypeStep,
@@ -53,14 +60,23 @@ export function StepFormContainer({
   const createRestaurant = useCreateRestaurant();
   const currentFormData = formData[selectedMealType];
 
-  // Get steps to show based on meal type
+  // Get steps to show based on meal type and attendance
   const visibleSteps = useMemo(() => {
     if (selectedMealType === "lunch") {
-      return STEP_ORDER;
+      const attendance = formData.lunch.attendance;
+      // 식대 미지원 또는 개별식사인 경우 attendance만 표시
+      if (NO_MEAL_SUPPORT_ATTENDANCE.includes(attendance) || attendance === INDIVIDUAL_MEAL_ATTENDANCE) {
+        return ["attendance"] as StepId[];
+      }
+      // 근무인 경우: mealType 스킵 (attendance → payer → store → amount)
+      if (attendance === "근무") {
+        return STEP_ORDER_LUNCH.filter((step) => step !== "mealType");
+      }
+      // 아직 선택 안 한 경우
+      return STEP_ORDER_LUNCH;
     }
-    // Filter out attendance step for non-lunch meals
-    return STEP_ORDER.filter((step) => step !== "attendance");
-  }, [selectedMealType]);
+    return STEP_ORDER_OTHER;
+  }, [selectedMealType, formData.lunch.attendance]);
 
   // Get value to display for completed step
   const getStepValue = useCallback(
@@ -170,7 +186,13 @@ export function StepFormContainer({
       case "mealType":
         return <MealTypeStep key="mealType" />;
       case "attendance":
-        return <AttendanceStep key="attendance" />;
+        return (
+          <AttendanceStep
+            key="attendance"
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
+          />
+        );
       case "receipt":
         return <ReceiptStep key="receipt" />;
       case "payer":

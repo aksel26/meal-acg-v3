@@ -43,7 +43,7 @@ export default function DashboardPage() {
 
   // Zustand stores
   const { formData, selectedDate: drawerSelectedDate, closeDrawer, resetForm } = useMealDrawerStore();
-  const { userId, userName, isLoggedIn, hydrate } = useUserStore();
+  const { userId, userName, isLoggedIn, hydrate, hasHydrated } = useUserStore();
 
   // TanStack Query hooks 사용
   const { data: mealData = [] } = useMealData(userName || "", currentMonth, currentYear);
@@ -58,7 +58,12 @@ export default function DashboardPage() {
   }, [hydrate]);
 
   useEffect(() => {
-    // 로그인 상태 확인 (hydrate 후 - userName은 store에서 가져옴)
+    // hydration이 완료되지 않았으면 대기
+    if (!hasHydrated) {
+      return;
+    }
+
+    // 로그인 상태 확인 (hydration 완료 후)
     if (!userName && !isLoggedIn) {
       router.push("/");
       return;
@@ -78,7 +83,7 @@ export default function DashboardPage() {
     } else {
       setShowUpdateDialog(false);
     }
-  }, [router, isLoggedIn, userName]);
+  }, [router, isLoggedIn, userName, hasHydrated]);
 
   const handleMonthChange = (month: number, year: number) => {
     setCurrentMonth(month);
@@ -155,7 +160,7 @@ export default function DashboardPage() {
   const displayUserName = userName || "";
   const currentUserId = userId || "";
 
-  if (!mounted || !displayUserName) {
+  if (!mounted || !hasHydrated || !displayUserName) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>

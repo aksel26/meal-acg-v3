@@ -76,6 +76,21 @@ export async function GET(request: NextRequest) {
       .endOf("month")
       .format("YYYY-MM-DD");
 
+    // 해당 월 공휴일 조회
+    const { data: holidays, error: holidayError } = await supabase
+      .from("holidays")
+      .select("holiday_date")
+      .gte("holiday_date", startDate)
+      .lte("holiday_date", endDate);
+
+    if (holidayError) {
+      console.error("Holidays query error:", holidayError);
+      return NextResponse.json(
+        { success: false, error: "공휴일 데이터 조회 오류" },
+        { status: 500 }
+      );
+    }
+
     const { data: mealLogs, error: mealError } = await supabase
       .from("meal_logs")
       .select("lunch_amount, attendance")
@@ -91,10 +106,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const totalUsed = mealLogs?.reduce(
-      (sum, log) => sum + (log.lunch_amount || 0),
-      0
-    ) ?? 0;
+    // 총 사용액 계산 (개별식사는 사용액에서 제외 - 사용가능액에서만 차감됨)
+    const totalUsed = mealLogs?.reduce((sum, log) => {
+      if (log.attendance === INDIVIDUAL_MEAL_ATTENDANCE) return sum;
+      return sum + (log.lunch_amount || 0);
+    }, 0) ?? 0;
 
     const mealCount = mealLogs?.length ?? 0;
 
@@ -122,8 +138,12 @@ export async function GET(request: NextRequest) {
     // 반차 차감액 (반차 수 × 일일 지원금)
     const halfDayDeduction = halfDayOffCount * dailyAllowance;
 
+    // 공휴일 차감액 (공휴일 수 × 일일 지원금)
+    const holidayCount = holidays?.length ?? 0;
+    const holidayDeduction = holidayCount * dailyAllowance;
+
     // 총 차감액
-    const totalDeduction = individualMealDeduction + noMealDeduction + halfDayDeduction;
+    const totalDeduction = individualMealDeduction + noMealDeduction + halfDayDeduction + holidayDeduction;
 
     // 실제 사용가능 금액 = 월별 지원금 - 총 차감액
     const effectiveAllowance = allowanceAmount - totalDeduction;
@@ -145,6 +165,8 @@ export async function GET(request: NextRequest) {
         noMealDeduction, // 연차/재택/휴무 차감액
         halfDayOffCount, // 반차 일수
         halfDayDeduction, // 반차 차감액
+        holidayCount, // 공휴일 수
+        holidayDeduction, // 공휴일 차감액
         totalDeduction, // 총 차감액
         dailyAllowance,
       },

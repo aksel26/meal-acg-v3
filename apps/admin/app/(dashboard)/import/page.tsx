@@ -95,7 +95,7 @@ export default function ImportPage() {
     [members]
   );
 
-  // members 데이터가 로드되면 업로드된 파일들 재매칭
+  // members 데이터가 로드되면 매칭되지 않은 파일들 재매칭
   useEffect(() => {
     if (members.length === 0) return;
 
@@ -107,12 +107,21 @@ export default function ImportPage() {
       return prev.map((fileState) => {
         // 이미 매칭된 경우 스킵
         if (fileState.matchedMember) return fileState;
-        // 재매칭 시도
-        const matchedMember = findMemberByName(fileState.memberName);
+        // 유니코드 정규화 (NFC) 적용하여 매칭
+        const normalizedMemberName = fileState.memberName.normalize("NFC");
+        const matchedMember = members.find(
+          (m) => {
+            const normalizedFullName = m.full_name.normalize("NFC");
+            return (
+              normalizedFullName === normalizedMemberName ||
+              normalizedFullName.replace(/\s/g, "") === normalizedMemberName.replace(/\s/g, "")
+            );
+          }
+        ) || null;
         return { ...fileState, matchedMember };
       });
     });
-  }, [members, findMemberByName]);
+  }, [members]);
 
   // 파일 드롭 핸들러
   const onDrop = useCallback(
@@ -134,8 +143,18 @@ export default function ImportPage() {
         try {
           const buffer = await file.arrayBuffer();
           const parseResult = parseExcelFile(buffer, file.name);
-          const matchedMember = findMemberByName(parseResult.memberName);
-
+          // 유니코드 정규화 (NFC) 적용
+          const normalizedMemberName = parseResult.memberName.normalize("NFC");
+          // members를 직접 참조하여 매칭
+          const matchedMember = members.find(
+            (m) => {
+              const normalizedFullName = m.full_name.normalize("NFC");
+              return (
+                normalizedFullName === normalizedMemberName ||
+                normalizedFullName.replace(/\s/g, "") === normalizedMemberName.replace(/\s/g, "")
+              );
+            }
+          ) || null;
           newFiles.push({
             ...parseResult,
             file,
@@ -149,7 +168,7 @@ export default function ImportPage() {
 
       setUploadedFiles((prev) => [...prev, ...newFiles]);
     },
-    [uploadedFiles, findMemberByName]
+    [uploadedFiles, members]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({

@@ -106,11 +106,10 @@ export default function CalendarComponent({
         if (newMonth !== currentMonth || newYear !== currentYear) {
           setCurrentMonth(newMonth);
           setCurrentYear(newYear);
-          onMonthChange?.(newMonth, newYear);
         }
       }
     },
-    [onDateSelect, onMonthChange, currentMonth, currentYear]
+    [onDateSelect, currentMonth, currentYear]
   );
 
   const handleNextClick = React.useCallback(() => {
@@ -121,10 +120,9 @@ export default function CalendarComponent({
       const year = nextMonth.getFullYear();
       setCurrentMonth(month);
       setCurrentYear(year);
-      onMonthChange?.(month, year);
       return nextMonth;
     });
-  }, [onMonthChange]);
+  }, []);
 
   const handlePrevClick = React.useCallback(() => {
     setDirection(-1);
@@ -134,10 +132,9 @@ export default function CalendarComponent({
       const year = prevMonth.getFullYear();
       setCurrentMonth(month);
       setCurrentYear(year);
-      onMonthChange?.(month, year);
       return prevMonth;
     });
-  }, [onMonthChange]);
+  }, []);
 
   // 스와이프 핸들러
   const handleDragEnd = React.useCallback(
@@ -151,6 +148,18 @@ export default function CalendarComponent({
     },
     [handlePrevClick, handleNextClick]
   );
+
+  // 초기 렌더링 여부 추적
+  const isInitialMount = React.useRef(true);
+
+  // currentMonth/currentYear가 변경되면 부모에게 알림 (렌더링 후, 초기 렌더링 제외)
+  React.useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    onMonthChange?.(currentMonth, currentYear);
+  }, [currentMonth, currentYear, onMonthChange]);
 
   const calendarKey = `${currentYear}-${currentMonth}`;
 

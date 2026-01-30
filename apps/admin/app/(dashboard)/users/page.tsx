@@ -31,7 +31,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@repo/ui/src/dialog";
-import { SlackNotifyDialog } from "@/components/SlackNotifyDialog";
 
 interface UserStats {
   user_id: string;
@@ -59,7 +58,6 @@ export default function UsersPage() {
   const [isYearOpen, setIsYearOpen] = useState(false);
   const [isMonthOpen, setIsMonthOpen] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isSlackDialogOpen, setIsSlackDialogOpen] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
   const [newUserForm, setNewUserForm] = useState({
     fullName: "",
@@ -226,12 +224,11 @@ export default function UsersPage() {
     }
   };
 
-  const isAllSelected =
+  const isAllSelected = Boolean(
     filteredUsers &&
     filteredUsers.length > 0 &&
-    filteredUsers.every((u) => selectedUserIds.has(u.user_id));
-
-  const selectedUsers = users?.filter((u) => selectedUserIds.has(u.user_id)) || [];
+    filteredUsers.every((u) => selectedUserIds.has(u.user_id))
+  );
 
   const formatCurrency = (amount: number | null) => {
     if (amount === null || amount === undefined) return "-";
@@ -381,21 +378,6 @@ export default function UsersPage() {
           />
         </div>
 
-        {/* Slack Notify Button */}
-        <Button
-          onClick={() => setIsSlackDialogOpen(true)}
-          disabled={selectedUserIds.size === 0}
-          variant="outline"
-          size="sm"
-          className={cn(
-            "gap-1.5",
-            selectedUserIds.size > 0 && "border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100"
-          )}
-        >
-          <Send className="h-4 w-4" />
-          Slack 알림 {selectedUserIds.size > 0 && `(${selectedUserIds.size})`}
-        </Button>
-
         {/* Add User Button */}
         <Button
           onClick={() => setIsAddDialogOpen(true)}
@@ -458,6 +440,9 @@ export default function UsersPage() {
                   정산
                 </th>
                 <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  정산알림
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                   삭제
                 </th>
               </tr>
@@ -466,7 +451,7 @@ export default function UsersPage() {
               {isLoading ? (
                 Array.from({ length: 8 }).map((_, index) => (
                   <tr key={index}>
-                    {Array.from({ length: 14 }).map((_, cellIndex) => (
+                    {Array.from({ length: 15 }).map((_, cellIndex) => (
                       <td key={cellIndex} className="px-4 py-4">
                         <div className="h-4 w-full animate-pulse rounded bg-slate-100" />
                       </td>
@@ -583,6 +568,17 @@ export default function UsersPage() {
                       </td>
                       <td className="px-4 py-4 text-center">
                         <button
+                          onClick={() => {
+                            toast.info(`${user.full_name}님에게 정산 알림을 보냈습니다.`);
+                          }}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-sky-500 transition-colors hover:bg-sky-50 hover:text-sky-600"
+                          title="정산 알림 보내기"
+                        >
+                          <Send className="h-4 w-4" />
+                        </button>
+                      </td>
+                      <td className="px-4 py-4 text-center">
+                        <button
                           onClick={() => handleDeleteUser(user.user_id, user.full_name)}
                           disabled={deleteUserMutation.isPending}
                           className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
@@ -601,7 +597,7 @@ export default function UsersPage() {
               ) : (
                 <tr>
                   <td
-                    colSpan={14}
+                    colSpan={15}
                     className="px-4 py-12 text-center text-sm text-slate-500"
                   >
                     데이터가 없습니다.
@@ -702,18 +698,6 @@ export default function UsersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Slack Notify Dialog */}
-      <SlackNotifyDialog
-        open={isSlackDialogOpen}
-        onOpenChange={setIsSlackDialogOpen}
-        selectedUsers={selectedUsers.map((u) => ({
-          user_id: u.user_id,
-          full_name: u.full_name,
-          email: u.email,
-        }))}
-        year={selectedYear}
-        month={selectedMonth}
-      />
     </div>
   );
 }

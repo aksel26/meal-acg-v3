@@ -21,21 +21,24 @@ export interface ParseResult {
   errors: string[];
 }
 
-// 열 인덱스 (0-based) - Export 템플릿 기준: A열은 빈 열이지만 XLSX 파서가 생략함
+// 열 인덱스 (0-based) - Export 템플릿 기준
+// A=0(빈열), B=1(연도), C=2(월), D=3(일), E=4(요일), F=5(업무일구분), G=6(특이사항)
+// H=7(근태), I=8(중식상호), J=9(중식금액), K=10(알림용), L=11(중식비고)
+// M=12(석식상호), N=13(석식금액), O=14(석식비고), P=15(조식상호), Q=16(조식금액), R=17(조식비고)
 const COLUMNS = {
-  YEAR: 0, // B -> row[0] (A열 생략됨)
-  MONTH: 1, // C -> row[1]
-  DAY: 2, // D -> row[2]
-  ATTENDANCE: 6, // H -> row[6]
-  LUNCH_STORE: 7, // I -> row[7]
-  LUNCH_AMOUNT: 8, // J -> row[8]
-  LUNCH_PAYER: 10, // L -> row[10] (K열은 알림용)
-  DINNER_STORE: 11, // M -> row[11]
-  DINNER_AMOUNT: 12, // N -> row[12]
-  DINNER_PAYER: 13, // O -> row[13]
-  BREAKFAST_STORE: 14, // P -> row[14]
-  BREAKFAST_AMOUNT: 15, // Q -> row[15]
-  BREAKFAST_PAYER: 16, // R -> row[16]
+  YEAR: 1, // B
+  MONTH: 2, // C
+  DAY: 3, // D
+  ATTENDANCE: 7, // H
+  LUNCH_STORE: 8, // I
+  LUNCH_AMOUNT: 9, // J
+  LUNCH_PAYER: 11, // L (K열은 알림용)
+  DINNER_STORE: 12, // M
+  DINNER_AMOUNT: 13, // N
+  DINNER_PAYER: 14, // O
+  BREAKFAST_STORE: 15, // P
+  BREAKFAST_AMOUNT: 16, // Q
+  BREAKFAST_PAYER: 17, // R
 };
 
 function getCellValue(row: unknown[], index: number): string | null {

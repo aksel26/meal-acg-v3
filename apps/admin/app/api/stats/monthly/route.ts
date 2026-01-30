@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
+import type { MonthlyAllowancesJson } from "@/lib/supabase/types";
 
 // GET /api/stats/monthly - Get monthly stats per user
 export async function GET(request: NextRequest) {
@@ -57,7 +58,26 @@ export async function GET(request: NextRequest) {
       settlementMap.set(s.user_id, s.is_settled);
     });
 
+    // Get saved monthly allowance from global_settings
+    const { data: globalSettings, error: globalSettingsError } = await supabase
+      .from("global_settings")
+      .select("monthly_allowances")
+      .eq("id", 1)
+      .single();
+
+    if (globalSettingsError) {
+      console.error("Error fetching global settings:", globalSettingsError);
+    }
+
+    const monthlyAllowances = globalSettings?.monthly_allowances as MonthlyAllowancesJson | null;
+    const savedData = monthlyAllowances?.[String(year)]?.[String(month)];
+    // 저장된 데이터에서 일일 단가 계산 (allowance / workdays)
+    const savedDailyAllowance = savedData && savedData.workdays > 0
+      ? savedData.allowance / savedData.workdays
+      : null;
+
     // Transform data to include computed fields
+    // 사용가능액 = 일일단가 × (근무일 - 휴일 - 개별 + 주말)
     const transformedData = (data || []).map((user: {
       user_id: string;
       full_name: string;
@@ -71,15 +91,27 @@ export async function GET(request: NextRequest) {
       total_allowance: number;
       total_used: number;
       balance: number;
-    }) => ({
-      ...user,
-      // has_excel_file: true if user has any meal records (total_used > 0)
-      has_excel_file: user.total_used > 0,
-      // is_settled: get from settlement_status table (manual management by admin)
-      is_settled: settlementMap.get(user.user_id) || false,
-      // email: from members table
-      email: emailMap.get(user.user_id) || null,
-    }));
+    }) => {
+      // 일일 단가: 저장된 값 또는 RPC에서 받은 값
+      const dailyAllowance = savedDailyAllowance ?? user.daily_allowance;
+      // 사용가능액 = 일일단가 × (근무일 - 휴일 - 재택 - 개별 + 주말)
+      const effectiveDays = (user.work_days || 0) - (user.holiday_count || 0) - (user.remote_work_days || 0) - (user.individual_meals || 0) + (user.weekend_work_days || 0);
+      const totalAllowance = dailyAllowance * effectiveDays;
+      const balance = totalAllowance - user.total_used;
+
+      return {
+        ...user,
+        // Override with saved allowance if available
+        total_allowance: totalAllowance,
+        balance: balance,
+        // has_excel_file: true if user has any meal records (total_used > 0)
+        has_excel_file: user.total_used > 0,
+        // is_settled: get from settlement_status table (manual management by admin)
+        is_settled: settlementMap.get(user.user_id) || false,
+        // email: from members table
+        email: emailMap.get(user.user_id) || null,
+      };
+    });
 
     return NextResponse.json(transformedData);
   } catch (error) {

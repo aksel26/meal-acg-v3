@@ -7,6 +7,7 @@ import {
   sendSlackDM,
   SettlementMessageData,
 } from "@/lib/slack";
+import type { MonthlyAllowancesJson } from "@/lib/supabase/types";
 
 interface NotifyRequest {
   userIds: string[];
@@ -45,13 +46,27 @@ export async function POST(request: NextRequest) {
     const supabase = createServiceClient();
 
     // 멤버 정보와 정산 데이터를 병렬로 조회
-    const [membersResult, statsResult] = await Promise.all([
+    const [membersResult, statsResult, globalSettingsResult] = await Promise.all([
       supabase.from("members").select("id, full_name, email").in("id", userIds),
       supabase.rpc("get_user_monthly_stats", { p_year: year, p_month: month }),
+      supabase.from("global_settings").select("monthly_allowances").eq("id", 1).single(),
     ]);
 
     const { data: members, error: membersError } = membersResult;
     const { data: statsData, error: statsError } = statsResult;
+    const { data: globalSettings, error: globalSettingsError } = globalSettingsResult;
+
+    if (globalSettingsError) {
+      console.error("Error fetching global settings:", globalSettingsError);
+    }
+
+    // Get saved monthly allowance from global_settings
+    const monthlyAllowances = globalSettings?.monthly_allowances as MonthlyAllowancesJson | null;
+    const savedData = monthlyAllowances?.[String(year)]?.[String(month)];
+    // 저장된 데이터에서 일일 단가 계산 (allowance / workdays)
+    const savedDailyAllowance = savedData && savedData.workdays > 0
+      ? savedData.allowance / savedData.workdays
+      : null;
 
     if (membersError) {
       console.error("Error fetching members:", membersError);
@@ -70,6 +85,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 정산 데이터 맵으로 변환
+    // 사용가능액 = 일일단가 × (근무일 - 휴일 - 재택 - 개별 + 주말)
     const statsMap = new Map<
       string,
       {
@@ -81,14 +97,24 @@ export async function POST(request: NextRequest) {
     (statsData || []).forEach(
       (stat: {
         user_id: string;
+        work_days: number;
+        holiday_count: number;
+        remote_work_days: number;
+        individual_meals: number;
+        weekend_work_days: number;
+        daily_allowance: number;
         total_allowance: number;
         total_used: number;
         balance: number;
       }) => {
+        const dailyAllowance = savedDailyAllowance ?? stat.daily_allowance;
+        const effectiveDays = (stat.work_days || 0) - (stat.holiday_count || 0) - (stat.remote_work_days || 0) - (stat.individual_meals || 0) + (stat.weekend_work_days || 0);
+        const totalAllowance = dailyAllowance * effectiveDays;
+        const balance = totalAllowance - stat.total_used;
         statsMap.set(stat.user_id, {
-          totalAllowance: stat.total_allowance,
+          totalAllowance,
           totalUsed: stat.total_used,
-          balance: stat.balance,
+          balance,
         });
       }
     );

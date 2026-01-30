@@ -426,7 +426,7 @@ export default function CalendarPage() {
       </div>
 
       {/* Calendar */}
-      <Card>
+      <Card className="glass-panel border-0">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>{currentDate.format("YYYY년 M월")}</CardTitle>

@@ -4,6 +4,15 @@ import ExcelJS from "exceljs";
 
 const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
 
+// 날짜를 YYYY-MM-DD 형식으로 정규화
+function normalizeDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 // GET /api/export/member - 멤버별 엑셀 내보내기 (hmkim.xlsx 형식)
 export async function GET(request: NextRequest) {
   try {
@@ -62,7 +71,7 @@ export async function GET(request: NextRequest) {
     // meal_logs를 날짜별로 맵핑
     const logMap = new Map<string, NonNullable<typeof mealLogs>[number]>();
     mealLogs?.forEach((log) => {
-      logMap.set(log.entry_date, log);
+      logMap.set(normalizeDate(log.entry_date), log);
     });
 
     // Create workbook
@@ -324,6 +333,8 @@ export async function GET(request: NextRequest) {
         log?.breakfast_amount || null, // Q: 조식 금액
         log?.breakfast_payer || null, // R: 조식 비고
       ];
+
+      
 
       // 금액 포맷 (J=10, N=14, Q=17)
       if (log?.lunch_amount) {

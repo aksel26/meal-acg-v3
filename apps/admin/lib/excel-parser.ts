@@ -21,21 +21,21 @@ export interface ParseResult {
   errors: string[];
 }
 
-// 열 인덱스 (0-based) - Export 템플릿 기준: A열 빈 열, B열부터 데이터 시작
+// 열 인덱스 (0-based) - Export 템플릿 기준: A열은 빈 열이지만 XLSX 파서가 생략함
 const COLUMNS = {
-  YEAR: 1, // B
-  MONTH: 2, // C
-  DAY: 3, // D
-  ATTENDANCE: 7, // H
-  LUNCH_STORE: 8, // I
-  LUNCH_AMOUNT: 9, // J
-  LUNCH_PAYER: 11, // L (K열은 알림용)
-  DINNER_STORE: 12, // M
-  DINNER_AMOUNT: 13, // N
-  DINNER_PAYER: 14, // O
-  BREAKFAST_STORE: 15, // P
-  BREAKFAST_AMOUNT: 16, // Q
-  BREAKFAST_PAYER: 17, // R
+  YEAR: 0, // B -> row[0] (A열 생략됨)
+  MONTH: 1, // C -> row[1]
+  DAY: 2, // D -> row[2]
+  ATTENDANCE: 6, // H -> row[6]
+  LUNCH_STORE: 7, // I -> row[7]
+  LUNCH_AMOUNT: 8, // J -> row[8]
+  LUNCH_PAYER: 10, // L -> row[10] (K열은 알림용)
+  DINNER_STORE: 11, // M -> row[11]
+  DINNER_AMOUNT: 12, // N -> row[12]
+  DINNER_PAYER: 13, // O -> row[13]
+  BREAKFAST_STORE: 14, // P -> row[14]
+  BREAKFAST_AMOUNT: 15, // Q -> row[15]
+  BREAKFAST_PAYER: 16, // R -> row[16]
 };
 
 function getCellValue(row: unknown[], index: number): string | null {
@@ -115,6 +115,7 @@ export function parseExcelFile(buffer: ArrayBuffer, fileName: string, filterCurr
 
     // 4행부터 데이터 시작 (인덱스 3)
     const DATA_START_ROW = 3;
+
     for (let i = DATA_START_ROW; i < jsonData.length; i++) {
       const row = jsonData[i];
       if (!row || !Array.isArray(row)) continue;

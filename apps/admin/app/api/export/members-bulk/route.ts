@@ -5,6 +5,15 @@ import JSZip from "jszip";
 
 const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
 
+// 날짜를 YYYY-MM-DD 형식으로 정규화
+function normalizeDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 // GET /api/export/members-bulk - 전체 멤버 일괄 내보내기 (ZIP)
 export async function GET(request: NextRequest) {
   try {
@@ -34,7 +43,7 @@ export async function GET(request: NextRequest) {
     const [membersResult, holidaysResult, mealLogsResult] = await Promise.all([
       membersQuery,
       supabase.from("holidays").select("holiday_date, description").gte("holiday_date", startDate).lte("holiday_date", endDate),
-      supabase.from("meal_logs").select("*").gte("entry_date", startDate).lte("entry_date", endDate),
+      supabase.from("meal_logs").select("*").gte("entry_date", startDate).lte("entry_date", endDate).limit(10000),
     ]);
 
     const { data: members, error: membersError } = membersResult;
@@ -45,6 +54,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "No members found" }, { status: 404 });
     }
 
+    console.log("🔍 ~ allMealLogs count:", allMealLogs?.length);
     const holidayMap = new Map<string, string>();
     holidays?.forEach((h) => {
       holidayMap.set(h.holiday_date, h.description || "");
@@ -57,7 +67,6 @@ export async function GET(request: NextRequest) {
       userLogs.push(log);
       logsByUser.set(log.user_id, userLogs);
     });
-
     // 반기의 모든 날짜 생성
     const allDates: { date: Date; dateStr: string; month: number }[] = [];
     for (let m = startMonth; m <= endMonth; m++) {
@@ -80,10 +89,14 @@ export async function GET(request: NextRequest) {
 
       // 해당 멤버의 logs를 날짜별 맵으로 변환
       const userLogs = logsByUser.get(member.id) || [];
+      console.log("🔍 ~ member.id:", member.id, "userLogs.length:", userLogs.length);
+      console.log("🔍 ~ logsByUser keys:", [...logsByUser.keys()]);
       type MealLogType = NonNullable<typeof allMealLogs>[number];
       const logMap = new Map<string, MealLogType>();
       userLogs.forEach((log) => {
-        logMap.set(log.entry_date, log);
+        const key = log.entry_date; // normalizeDate 없이 직접 사용
+        console.log("🔍 ~ setting logMap key:", key, "from entry_date:", log.entry_date);
+        logMap.set(key, log);
       });
 
       // 통계 시트
@@ -129,6 +142,28 @@ export async function GET(request: NextRequest) {
       statsSheet.getRow(2).alignment = { vertical: "middle", horizontal: "center", wrapText: true };
       statsSheet.getRow(3).alignment = { vertical: "middle", horizontal: "center" };
 
+      // B2~M3 배경색 #D9D9D9 및 테두리
+      const statsBorder: ExcelJS.Border = { style: "thin", color: { argb: "FF808080" } };
+      for (let row = 2; row <= 3; row++) {
+        for (let col = 2; col <= 13; col++) { // B=2, M=13
+          const cell = statsSheet.getRow(row).getCell(col);
+          cell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "FFD9D9D9" },
+          };
+          cell.border = {
+            top: statsBorder,
+            left: statsBorder,
+            bottom: statsBorder,
+            right: statsBorder,
+          };
+        }
+      }
+
+      // N3 빨간색 텍스트
+      statsSheet.getCell("N3").font = { bold: true, color: { argb: "FFFF0000" } };
+
       // Row 4~9: 월별 데이터 (해당 반기 6개월) - 엑셀 수식 사용
       for (let m = startMonth; m <= endMonth; m++) {
         const rowNum = 3 + (m - startMonth + 1);
@@ -152,6 +187,16 @@ export async function GET(request: NextRequest) {
         row.getCell(12).numFmt = "#,##0";
         row.getCell(13).value = { formula: `SUMIFS(내역!$Q$4:$Q$1048576,내역!$H$4:$H$1048576,"근무",내역!$C$4:$C$1048576,통계!$C${rowNum})` };
         row.getCell(13).numFmt = "#,##0";
+
+        // B~M열 테두리 (2~13번 열)
+        for (let col = 2; col <= 13; col++) {
+          row.getCell(col).border = {
+            top: statsBorder,
+            left: statsBorder,
+            bottom: statsBorder,
+            right: statsBorder,
+          };
+        }
       }
 
       // 안내 문구 (Row 11 - 6개월 후)
@@ -216,6 +261,7 @@ export async function GET(request: NextRequest) {
         const specialNote = isHoliday ? holidayDesc : null;
 
         const log = logMap.get(dateStr);
+        console.log("🔍 ~ logMap.get dateStr:", dateStr, "→ log:", log ? "found" : "undefined");
 
         const row = detailSheet.getRow(rowNum);
         row.values = [
@@ -244,14 +290,44 @@ export async function GET(request: NextRequest) {
         if (log?.dinner_amount) row.getCell(14).numFmt = "#,##0";
         if (log?.breakfast_amount) row.getCell(17).numFmt = "#,##0";
 
+        // 기본 스타일: H~R열 배경색 #DDEBF7 (K열 제외)
+        const blueColumns = [8, 9, 10, 12, 13, 14, 15, 16, 17, 18]; // H,I,J,L,M,N,O,P,Q,R
+        blueColumns.forEach((col) => {
+          row.getCell(col).fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "FFDDEBF7" },
+          };
+        });
+
+        // A~H열 가운데 정렬 (1~8번 열)
+        for (let col = 1; col <= 8; col++) {
+          row.getCell(col).alignment = { horizontal: "center" };
+        }
+
+        // 휴일 스타일 (F열, G열만)
         if (isWeekend || isHoliday) {
-          row.eachCell((cell) => {
-            cell.fill = {
-              type: "pattern",
-              pattern: "solid",
-              fgColor: { argb: "FFF5F5F5" },
-            };
-          });
+          // F열(6): 배경색 + 빨간 텍스트
+          row.getCell(6).fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "FFF6C9CE" },
+          };
+          row.getCell(6).font = { color: { argb: "FFFF0000" } };
+
+          // G열(7): 빨간 텍스트만
+          row.getCell(7).font = { color: { argb: "FFFF0000" } };
+        }
+
+        // B~R열 테두리 (2~18번 열)
+        const border: ExcelJS.Border = { style: "thin", color: { argb: "FF808080" } };
+        for (let col = 2; col <= 18; col++) {
+          row.getCell(col).border = {
+            top: border,
+            left: border,
+            bottom: border,
+            right: border,
+          };
         }
       });
 
@@ -260,7 +336,26 @@ export async function GET(request: NextRequest) {
       zip.file(`${member.full_name}.xlsx`, buffer);
     }
 
-    // ZIP 생성
+    // 1명만 선택된 경우 단일 xlsx 파일로 반환
+    if (members.length === 1 && members[0]) {
+      const singleMember = members[0];
+      const files = zip.files;
+      const xlsxFileName = `${singleMember.full_name}.xlsx`;
+      const xlsxFile = files[xlsxFileName];
+
+      if (xlsxFile) {
+        const xlsxBuffer = await xlsxFile.async("nodebuffer");
+        const fileName = encodeURIComponent(`${singleMember.full_name}.xlsx`);
+        return new NextResponse(xlsxBuffer, {
+          headers: {
+            "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "Content-Disposition": `attachment; filename*=UTF-8''${fileName}`,
+          },
+        });
+      }
+    }
+
+    // ZIP 생성 (2명 이상)
     const zipBuffer = await zip.generateAsync({ type: "nodebuffer" });
 
     // Return ZIP file

@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Bell, Search, Calendar as CalendarIcon } from "lucide-react";
+import { Bell, Search, Calendar as CalendarIcon, Menu } from "lucide-react";
 import dayjs from "dayjs";
 import "dayjs/locale/ko";
 
@@ -16,6 +16,7 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
   "/holidays": { title: "공휴일 관리", subtitle: "공휴일 및 휴무일 설정" },
   "/settings": { title: "설정", subtitle: "월별 지원금 및 시스템 설정" },
   "/export": { title: "엑셀 내보내기", subtitle: "데이터 다운로드 및 보고서 생성" },
+  "/import": { title: "엑셀 가져오기", subtitle: "데이터 업로드" },
 };
 
 export default function Header() {
@@ -24,40 +25,42 @@ export default function Header() {
   const today = dayjs();
 
   return (
-    <header className="flex h-[72px] items-center justify-between border-b border-slate-200/60 bg-white/80 px-8 backdrop-blur-sm">
-      {/* Left - Page Title */}
-      <div>
-        <h2 className="text-xl font-bold tracking-tight text-slate-900">
+    <header className="z-10 flex w-full items-center justify-between px-6 py-4">
+      {/* Mobile menu button */}
+      <div className="flex items-center gap-4 lg:hidden">
+        <button className="flex items-center justify-center rounded-lg p-2 text-slate-500 hover:bg-white/50">
+          <Menu className="h-5 w-5" />
+        </button>
+      </div>
+
+      {/* Left - Page Title & Search */}
+      <div className="flex flex-1 items-center gap-6 md:px-4">
+        <h2 className="hidden text-2xl font-bold tracking-tight text-slate-800 md:block">
           {pageInfo.title}
         </h2>
-        <p className="text-sm text-slate-500">{pageInfo.subtitle}</p>
+
+        {/* Search Bar */}
+        <div className="relative hidden max-w-md flex-1 md:block">
+          <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            placeholder="검색..."
+            className="h-10 w-full rounded-xl border-none bg-white/60 pl-10 pr-4 text-sm text-slate-700 shadow-sm ring-1 ring-white/60 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#135bec]/20"
+          />
+        </div>
       </div>
 
       {/* Right - Actions */}
-      <div className="flex items-center gap-4">
-        {/* Date Display */}
-        <div className="hidden items-center gap-2 rounded-xl bg-slate-100/80 px-4 py-2 md:flex">
-          <CalendarIcon className="h-4 w-4 text-amber-500" />
-          <span className="text-sm font-medium text-slate-600">
-            {today.format("YYYY년 M월 D일")}
-          </span>
-          <span className="text-xs text-slate-400">
-            ({today.format("ddd")})
-          </span>
-        </div>
-
-        {/* Search Button */}
-        <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100/80 text-slate-500 transition-all hover:bg-slate-200/80 hover:text-slate-700">
-          <Search className="h-[18px] w-[18px]" />
+      <div className="flex items-center gap-3">
+        {/* Notifications */}
+        <button className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-white/60 text-slate-600 shadow-sm ring-1 ring-white transition-transform hover:scale-105 active:scale-95">
+          <Bell className="h-5 w-5" />
+          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
         </button>
 
-        {/* Notifications */}
-        <button className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100/80 text-slate-500 transition-all hover:bg-slate-200/80 hover:text-slate-700">
-          <Bell className="h-[18px] w-[18px]" />
-          <span className="absolute right-2 top-2 flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75"></span>
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500"></span>
-          </span>
+        {/* Calendar */}
+        <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/60 text-slate-600 shadow-sm ring-1 ring-white transition-transform hover:scale-105 active:scale-95">
+          <CalendarIcon className="h-5 w-5" />
         </button>
       </div>
     </header>

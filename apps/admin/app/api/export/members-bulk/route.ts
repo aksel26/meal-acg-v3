@@ -5,15 +5,6 @@ import JSZip from "jszip";
 
 const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
 
-// 날짜를 YYYY-MM-DD 형식으로 정규화
-function normalizeDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
 // GET /api/export/members-bulk - 전체 멤버 일괄 내보내기 (ZIP)
 export async function GET(request: NextRequest) {
   try {
@@ -40,21 +31,28 @@ export async function GET(request: NextRequest) {
       membersQuery = membersQuery.in("id", memberIds);
     }
 
-    const [membersResult, holidaysResult, mealLogsResult] = await Promise.all([
+    // 먼저 멤버와 공휴일 조회
+    const [membersResult, holidaysResult] = await Promise.all([
       membersQuery,
       supabase.from("holidays").select("holiday_date, description").gte("holiday_date", startDate).lte("holiday_date", endDate),
-      supabase.from("meal_logs").select("*").gte("entry_date", startDate).lte("entry_date", endDate).limit(10000),
     ]);
 
     const { data: members, error: membersError } = membersResult;
     const { data: holidays } = holidaysResult;
-    const { data: allMealLogs } = mealLogsResult;
 
     if (membersError || !members || members.length === 0) {
       return NextResponse.json({ error: "No members found" }, { status: 404 });
     }
 
-    console.log("🔍 ~ allMealLogs count:", allMealLogs?.length);
+    // 멤버 ID 목록으로 meal_logs 조회 (1000개 제한 우회)
+    const memberIdList = members.map((m) => m.id);
+    const { data: allMealLogs } = await supabase
+      .from("meal_logs")
+      .select("*")
+      .in("user_id", memberIdList)
+      .gte("entry_date", startDate)
+      .lte("entry_date", endDate);
+
     const holidayMap = new Map<string, string>();
     holidays?.forEach((h) => {
       holidayMap.set(h.holiday_date, h.description || "");
@@ -89,14 +87,10 @@ export async function GET(request: NextRequest) {
 
       // 해당 멤버의 logs를 날짜별 맵으로 변환
       const userLogs = logsByUser.get(member.id) || [];
-      console.log("🔍 ~ member.id:", member.id, "userLogs.length:", userLogs.length);
-      console.log("🔍 ~ logsByUser keys:", [...logsByUser.keys()]);
       type MealLogType = NonNullable<typeof allMealLogs>[number];
       const logMap = new Map<string, MealLogType>();
       userLogs.forEach((log) => {
-        const key = log.entry_date; // normalizeDate 없이 직접 사용
-        console.log("🔍 ~ setting logMap key:", key, "from entry_date:", log.entry_date);
-        logMap.set(key, log);
+        logMap.set(log.entry_date, log);
       });
 
       // 통계 시트
@@ -261,7 +255,6 @@ export async function GET(request: NextRequest) {
         const specialNote = isHoliday ? holidayDesc : null;
 
         const log = logMap.get(dateStr);
-        console.log("🔍 ~ logMap.get dateStr:", dateStr, "→ log:", log ? "found" : "undefined");
 
         const row = detailSheet.getRow(rowNum);
         row.values = [
@@ -344,7 +337,7 @@ export async function GET(request: NextRequest) {
       const xlsxFile = files[xlsxFileName];
 
       if (xlsxFile) {
-        const xlsxBuffer = await xlsxFile.async("nodebuffer");
+        const xlsxBuffer = await xlsxFile.async("uint8array");
         const fileName = encodeURIComponent(`${singleMember.full_name}.xlsx`);
         return new NextResponse(xlsxBuffer, {
           headers: {
@@ -356,7 +349,7 @@ export async function GET(request: NextRequest) {
     }
 
     // ZIP 생성 (2명 이상)
-    const zipBuffer = await zip.generateAsync({ type: "nodebuffer" });
+    const zipBuffer = await zip.generateAsync({ type: "uint8array" });
 
     // Return ZIP file
     const fileName = encodeURIComponent(`식대내역_${year}년_${halfLabel}.zip`);

@@ -113,6 +113,28 @@ export async function GET(request: NextRequest) {
     statsSheet.getRow(2).alignment = { vertical: "middle", horizontal: "center", wrapText: true };
     statsSheet.getRow(3).alignment = { vertical: "middle", horizontal: "center" };
 
+    // B2~M3 배경색 #D9D9D9 및 테두리
+    const statsBorder: ExcelJS.Border = { style: "thin", color: { argb: "FF808080" } };
+    for (let row = 2; row <= 3; row++) {
+      for (let col = 2; col <= 13; col++) { // B=2, M=13
+        const cell = statsSheet.getRow(row).getCell(col);
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFD9D9D9" },
+        };
+        cell.border = {
+          top: statsBorder,
+          left: statsBorder,
+          bottom: statsBorder,
+          right: statsBorder,
+        };
+      }
+    }
+
+    // N3 빨간색 텍스트
+    statsSheet.getCell("N3").font = { bold: true, color: { argb: "FFFF0000" } };
+
     // Row 4~: 월별 데이터 (해당 반기 6개월)
     for (let m = startMonth; m <= endMonth; m++) {
       const rowNum = 3 + (m - startMonth + 1);
@@ -148,7 +170,7 @@ export async function GET(request: NextRequest) {
 
       // I: 실 사용 가능액 (근태 반영) - 수식
       row.getCell(9).value = {
-        formula: `F${rowNum}-(10000*(COUNTIFS(내역!$H:$H,"연차/휴무",내역!$C:$C,통계!$C${rowNum})+COUNTIFS(내역!$H:$H,"오전 반차/휴무",내역!$C:$C,통계!$C${rowNum})+COUNTIFS(내역!$H:$H,"오후 반차/휴무",내역!$C:$C,통계!$C${rowNum})+COUNTIFS(내역!$H:$H,"재택근무",내역!$C:$C,통계!$C${rowNum})))+(10000*H${rowNum})`,
+        formula: `F${rowNum}-(10000*(COUNTIFS(내역!$H:$H,"연차/휴무",내역!$C:$C,통계!$C${rowNum})+COUNTIFS(내역!$H:$H,"오전 반차/휴무",내역!$C:$C,통계!$C${rowNum})+COUNTIFS(내역!$H:$H,"오후 반차/휴무",내역!$C:$C,통계!$C${rowNum})+COUNTIFS(내역!$H:$H,"재택근무",내역!$C:$C,통계!$C${rowNum})+COUNTIFS(내역!$H:$H,"근무(개별식사 / 식사안함)",내역!$C:$C,통계!$C${rowNum})))+(10000*H${rowNum})`,
       };
       row.getCell(9).numFmt = "#,##0";
 
@@ -175,6 +197,16 @@ export async function GET(request: NextRequest) {
         formula: `SUMIFS(내역!$Q$4:$Q$1048576,내역!$H$4:$H$1048576,"근무",내역!$C$4:$C$1048576,통계!$C${rowNum})`,
       };
       row.getCell(13).numFmt = "#,##0";
+
+      // B~M열 테두리 (2~13번 열)
+      for (let col = 2; col <= 13; col++) {
+        row.getCell(col).border = {
+          top: statsBorder,
+          left: statsBorder,
+          bottom: statsBorder,
+          right: statsBorder,
+        };
+      }
     }
 
     // 안내 문구 (6개월 데이터 후 한 줄 띄우고 - Row 11)
@@ -304,15 +336,44 @@ export async function GET(request: NextRequest) {
         row.getCell(17).numFmt = "#,##0";
       }
 
-      // 주말/공휴일 스타일
+      // 기본 스타일: H~R열 배경색 #DDEBF7 (K열 제외)
+      const blueColumns = [8, 9, 10, 12, 13, 14, 15, 16, 17, 18]; // H,I,J,L,M,N,O,P,Q,R
+      blueColumns.forEach((col) => {
+        row.getCell(col).fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFDDEBF7" },
+        };
+      });
+
+      // A~H열 가운데 정렬 (1~8번 열)
+      for (let col = 1; col <= 8; col++) {
+        row.getCell(col).alignment = { horizontal: "center" };
+      }
+
+      // 휴일 스타일 (F열, G열만)
       if (isWeekend || isHoliday) {
-        row.eachCell((cell) => {
-          cell.fill = {
-            type: "pattern",
-            pattern: "solid",
-            fgColor: { argb: "FFF5F5F5" },
-          };
-        });
+        // F열(6): 배경색 + 빨간 텍스트
+        row.getCell(6).fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFF6C9CE" },
+        };
+        row.getCell(6).font = { color: { argb: "FFFF0000" } };
+
+        // G열(7): 빨간 텍스트만
+        row.getCell(7).font = { color: { argb: "FFFF0000" } };
+      }
+
+      // B~R열 테두리 (2~18번 열)
+      const border: ExcelJS.Border = { style: "thin", color: { argb: "FF808080" } };
+      for (let col = 2; col <= 18; col++) {
+        row.getCell(col).border = {
+          top: border,
+          left: border,
+          bottom: border,
+          right: border,
+        };
       }
     });
 

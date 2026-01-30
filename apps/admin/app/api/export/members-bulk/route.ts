@@ -142,7 +142,7 @@ export async function GET(request: NextRequest) {
         row.getCell(6).numFmt = "#,##0";
         row.getCell(7).value = { formula: `COUNTIFS(내역!$H:$H,"연차/휴무",내역!$C:$C,통계!$C${rowNum})+COUNTIFS(내역!$H:$H,"오전 반차/휴무",내역!$C:$C,통계!$C${rowNum})+COUNTIFS(내역!$H:$H,"오후 반차/휴무",내역!$C:$C,통계!$C${rowNum})` };
         row.getCell(8).value = { formula: `COUNTIFS(내역!$H:$H,"근무",내역!$F:$F,"휴일",내역!$C:$C,통계!$C${rowNum})` };
-        row.getCell(9).value = { formula: `F${rowNum}-(10000*(COUNTIFS(내역!$H:$H,"연차/휴무",내역!$C:$C,통계!$C${rowNum})+COUNTIFS(내역!$H:$H,"오전 반차/휴무",내역!$C:$C,통계!$C${rowNum})+COUNTIFS(내역!$H:$H,"오후 반차/휴무",내역!$C:$C,통계!$C${rowNum})+COUNTIFS(내역!$H:$H,"재택근무",내역!$C:$C,통계!$C${rowNum})))+(10000*H${rowNum})` };
+        row.getCell(9).value = { formula: `F${rowNum}-(10000*(COUNTIFS(내역!$H:$H,"연차/휴무",내역!$C:$C,통계!$C${rowNum})+COUNTIFS(내역!$H:$H,"오전 반차/휴무",내역!$C:$C,통계!$C${rowNum})+COUNTIFS(내역!$H:$H,"오후 반차/휴무",내역!$C:$C,통계!$C${rowNum})+COUNTIFS(내역!$H:$H,"재택근무",내역!$C:$C,통계!$C${rowNum})+COUNTIFS(내역!$H:$H,"근무(개별식사 / 식사안함)",내역!$C:$C,통계!$C${rowNum})))+(10000*H${rowNum})` };
         row.getCell(9).numFmt = "#,##0";
         row.getCell(10).value = { formula: `IF(K${rowNum}>0,I${rowNum}-K${rowNum},"")` };
         row.getCell(10).numFmt = "#,##0";

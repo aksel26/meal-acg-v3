@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
+import acgLogo from "@/acg_ci_white.png";
 import {
   LayoutDashboard,
   Users,
@@ -209,15 +211,18 @@ export default function Sidebar() {
   return (
     <aside className="flex h-full w-[280px] flex-col bg-slate-900 shadow-2xl">
       {/* Logo Section */}
-      <div className="flex h-[72px] items-center gap-3 border-b border-slate-800/50 px-6">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 shadow-lg shadow-amber-500/20">
-          <Utensils className="h-5 w-5 text-white" />
-        </div>
+      <Link href="/" className="flex h-[72px] items-center gap-3 border-b border-slate-800/50 px-6">
+        <Image
+          src={acgLogo}
+          alt="ACG"
+          width={40}
+          height={40}
+        />
         <div>
-          <h1 className="text-lg font-bold tracking-tight text-white">ACG 식대</h1>
+          <h1 className="text-lg font-bold tracking-tight text-white">식대 Admin</h1>
           <p className="text-[11px] font-medium text-slate-500">Admin Console</p>
         </div>
-      </div>
+      </Link>
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 px-3 py-6 overflow-y-auto">

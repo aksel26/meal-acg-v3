@@ -62,7 +62,7 @@ function Calendar({
           "[&:not(:first-child):not(:last-child)]:text-muted-foreground",
           defaultClassNames.weekday
         ),
-        week: cn("flex w-full my-4", defaultClassNames.week),
+        week: cn("flex w-full my-1.5 sm:my-2.5", defaultClassNames.week),
         week_number_header: cn("select-none w-(--cell-size)", defaultClassNames.week_number_header),
         week_number: cn("text-[0.8rem] select-none text-muted-foreground", defaultClassNames.week_number),
         day: cn(

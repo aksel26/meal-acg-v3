@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import {
   Card,
@@ -22,12 +22,12 @@ import { toast } from "sonner";
 import {
   Download,
   FileSpreadsheet,
-  Loader2,
   CheckCircle2,
 } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
 import type { Member } from "@/lib/supabase/types";
 import { cn } from "@repo/ui/lib/utils";
+import { ExportProgressDialog } from "@/components/ExportProgressDialog";
 
 type HalfYear = "H1" | "H2"; // H1: 상반기 (1-6월), H2: 하반기 (7-12월)
 
@@ -39,6 +39,7 @@ export default function ExportPage() {
     currentDate.month() < 6 ? "H1" : "H2"
   );
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
 
   // 멤버 목록 조회
   const { data: members = [] } = useQuery<Member[]>({
@@ -53,53 +54,12 @@ export default function ExportPage() {
   // 반기 라벨
   const halfLabel = selectedHalf === "H1" ? "상반기" : "하반기";
 
-  // 멤버 내보내기 (1명: xlsx, 2명 이상: ZIP)
-  const exportMutation = useMutation({
-    mutationFn: async (memberIds: string[]) => {
-      const params = new URLSearchParams({
-        year: selectedYear.toString(),
-        half: selectedHalf,
-        memberIds: memberIds.join(","),
-      });
-
-      const response = await fetch(`/api/export/members-bulk?${params}`);
-      if (!response.ok) throw new Error("Failed to export");
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-
-      // 1명이면 xlsx, 2명 이상이면 zip
-      if (memberIds.length === 1) {
-        const member = members.find((m) => m.id === memberIds[0]);
-        a.download = member ? `${member.full_name}.xlsx` : "export.xlsx";
-      } else {
-        a.download = `식대내역_${selectedYear}년_${halfLabel}.zip`;
-      }
-
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    },
-    onSuccess: () => {
-      const message = selectedMemberIds.length === 1
-        ? "엑셀 파일이 다운로드되었습니다."
-        : "ZIP 파일이 다운로드되었습니다.";
-      toast.success(message);
-    },
-    onError: () => {
-      toast.error("내보내기 중 오류가 발생했습니다.");
-    },
-  });
-
   const handleExport = () => {
     if (selectedMemberIds.length === 0) {
       toast.error("내보낼 멤버를 선택해주세요.");
       return;
     }
-    exportMutation.mutate(selectedMemberIds);
+    setExportDialogOpen(true);
   };
 
   const toggleMemberSelection = (memberId: string) => {
@@ -119,8 +79,6 @@ export default function ExportPage() {
   };
 
   const years = Array.from({ length: 5 }, (_, i) => currentDate.year() - 2 + i);
-
-  const isLoading = exportMutation.isPending;
 
   return (
     <div className="space-y-6">
@@ -212,25 +170,16 @@ export default function ExportPage() {
           {/* 내보내기 버튼 */}
           <Button
             onClick={handleExport}
-            disabled={isLoading || selectedMemberIds.length === 0}
+            disabled={selectedMemberIds.length === 0}
             className="w-full"
             size="lg"
           >
-            {isLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                내보내기 중...
-              </>
-            ) : (
-              <>
-                <Download className="h-4 w-4 mr-2" />
-                {selectedMemberIds.length === 0
-                  ? "멤버를 선택하세요"
-                  : selectedMemberIds.length === 1
-                    ? "엑셀 다운로드"
-                    : `ZIP 다운로드 (${selectedMemberIds.length}명)`}
-              </>
-            )}
+            <Download className="h-4 w-4 mr-2" />
+            {selectedMemberIds.length === 0
+              ? "멤버를 선택하세요"
+              : selectedMemberIds.length === 1
+                ? "엑셀 다운로드"
+                : `다운로드 (${selectedMemberIds.length}명)`}
           </Button>
         </div>
 
@@ -284,6 +233,15 @@ export default function ExportPage() {
           </Card>
         </div>
       </div>
+
+      <ExportProgressDialog
+        open={exportDialogOpen}
+        onOpenChange={setExportDialogOpen}
+        members={members}
+        selectedMemberIds={selectedMemberIds}
+        year={selectedYear}
+        half={selectedHalf}
+      />
     </div>
   );
 }

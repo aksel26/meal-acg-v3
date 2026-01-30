@@ -31,6 +31,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@repo/ui/src/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@repo/ui/src/tooltip";
 
 interface UserStats {
   user_id: string;
@@ -179,6 +184,37 @@ export default function UsersPage() {
       } else {
         toast.error("사용자 추가에 실패했습니다.");
       }
+    },
+  });
+
+  const sendNotifyMutation = useMutation({
+    mutationFn: async ({ userId, fullName }: { userId: string; fullName: string }) => {
+      const response = await fetch("/api/slack/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userIds: [userId],
+          year: selectedYear,
+          month: selectedMonth,
+        }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to send notification");
+      }
+      const data = await response.json();
+      // 결과 확인
+      const result = data.results?.[0];
+      if (!result?.success) {
+        throw new Error(result?.error || "알림 발송 실패");
+      }
+      return { fullName };
+    },
+    onSuccess: (data) => {
+      toast.success(`${data.fullName}님에게 정산 요청을 보냈습니다.`);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "정산 요청 발송에 실패했습니다.");
     },
   });
 
@@ -440,7 +476,7 @@ export default function UsersPage() {
                   정산
                 </th>
                 <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  정산알림
+                  정산요청
                 </th>
                 <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                   삭제
@@ -567,15 +603,37 @@ export default function UsersPage() {
                         </button>
                       </td>
                       <td className="px-4 py-4 text-center">
-                        <button
-                          onClick={() => {
-                            toast.info(`${user.full_name}님에게 정산 알림을 보냈습니다.`);
-                          }}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-sky-500 transition-colors hover:bg-sky-50 hover:text-sky-600"
-                          title="정산 알림 보내기"
-                        >
-                          <Send className="h-4 w-4" />
-                        </button>
+                        {user.email ? (
+                          <button
+                            onClick={() => {
+                              sendNotifyMutation.mutate({
+                                userId: user.user_id,
+                                fullName: user.full_name,
+                              });
+                            }}
+                            disabled={sendNotifyMutation.isPending}
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-sky-500 transition-colors hover:bg-sky-50 hover:text-sky-600"
+                            title="정산 요청 보내기"
+                          >
+                            {sendNotifyMutation.isPending &&
+                            sendNotifyMutation.variables?.userId === user.user_id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Send className="h-4 w-4" />
+                            )}
+                          </button>
+                        ) : (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 cursor-not-allowed">
+                                <Send className="h-4 w-4" />
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              이메일이 등록되지 않았습니다
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
                       </td>
                       <td className="px-4 py-4 text-center">
                         <button

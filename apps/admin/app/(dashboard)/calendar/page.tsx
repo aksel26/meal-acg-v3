@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -23,6 +23,7 @@ import {
   DialogTitle,
 } from "@repo/ui/src/dialog";
 import { Skeleton } from "@repo/ui/src/skeleton";
+import { SearchableDropdown } from "@repo/ui/src/searchable-dropdown";
 import { toast } from "sonner";
 import {
   ChevronLeft,
@@ -30,7 +31,6 @@ import {
   Trash2,
   Search,
   X,
-  Check,
   ListPlus,
 } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
@@ -89,10 +89,6 @@ export default function CalendarPage() {
   const [editingLog, setEditingLog] = useState<MealLog | null>(null);
   const [formData, setFormData] = useState<MealFormData>(initialFormData);
 
-  // 사용자 검색 관련 state
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // 일괄 입력 관련 state
   const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
@@ -153,43 +149,6 @@ export default function CalendarPage() {
     return map;
   }, [holidays]);
 
-  // 검색어로 멤버 필터링 (일반 검색 + 초성 검색)
-  const filteredMembers = useMemo(() => {
-    if (!members) return [];
-    if (!searchQuery.trim()) return members;
-
-    const query = searchQuery.trim();
-    return members.filter((member) => {
-      const name = member.full_name || "";
-      // 일반 검색 (대소문자 무시)
-      if (name.toLowerCase().includes(query.toLowerCase())) return true;
-      // 초성 검색: 이름의 초성이 검색어로 시작하는지 확인
-      const nameChoseong = getChoseong(name);
-      if (nameChoseong.includes(query)) return true;
-      return false;
-    });
-  }, [members, searchQuery]);
-
-  // 선택된 사용자 이름
-  const selectedUserName = useMemo(() => {
-    if (!selectedUserId || !members) return "";
-    const member = members.find((m) => m.id === selectedUserId);
-    return member?.full_name || "";
-  }, [selectedUserId, members]);
-
-  // 드롭다운 외부 클릭 시 닫기
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   // Fetch meal logs for selected user and month
   const { data: mealLogs, isLoading: isLoadingLogs } = useQuery<MealLog[]>({
@@ -452,73 +411,18 @@ export default function CalendarPage() {
       {/* User Selection with Search */}
       <div className="flex items-center gap-4">
         <Label>사용자 선택</Label>
-        <div className="relative" ref={dropdownRef}>
-          {/* 선택된 사용자 표시 또는 검색 입력 */}
-          <div
-            className="flex items-center w-64 h-10 px-3 border rounded-lg bg-white cursor-pointer hover:border-blue-400 transition-colors"
-            onClick={() => setIsDropdownOpen(true)}
-          >
-            <Search className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
-            {isDropdownOpen ? (
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="이름 또는 초성 검색..."
-                className="flex-1 outline-none text-sm bg-transparent"
-                autoFocus
-              />
-            ) : (
-              <span
-                className={`flex-1 text-sm truncate ${selectedUserName ? "text-gray-900" : "text-gray-400"}`}
-              >
-                {selectedUserName || "사용자 선택..."}
-              </span>
-            )}
-            {selectedUserId && !isDropdownOpen && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedUserId("");
-                  setSearchQuery("");
-                }}
-                className="p-1 hover:bg-gray-100 rounded"
-              >
-                <X className="w-3.5 h-3.5 text-gray-400" />
-              </button>
-            )}
-          </div>
-
-          {/* 드롭다운 목록 */}
-          {isDropdownOpen && (
-            <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
-              {filteredMembers.length === 0 ? (
-                <div className="px-3 py-4 text-sm text-gray-500 text-center">
-                  검색 결과가 없습니다
-                </div>
-              ) : (
-                filteredMembers.map((member) => (
-                  <div
-                    key={member.id}
-                    onClick={() => {
-                      setSelectedUserId(member.id);
-                      setSearchQuery("");
-                      setIsDropdownOpen(false);
-                    }}
-                    className={`flex items-center justify-between px-3 py-2.5 cursor-pointer hover:bg-blue-50 transition-colors ${
-                      selectedUserId === member.id ? "bg-blue-50" : ""
-                    }`}
-                  >
-                    <span className="text-sm">{member.full_name}</span>
-                    {selectedUserId === member.id && (
-                      <Check className="w-4 h-4 text-blue-500" />
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-        </div>
+        <SearchableDropdown<Member>
+          items={members ?? []}
+          value={selectedUserId}
+          getItemKey={(m) => m.id}
+          getItemLabel={(m) => m.full_name}
+          onSelect={(member) => setSelectedUserId(member.id)}
+          onClear={() => setSelectedUserId("")}
+          placeholder="사용자 선택..."
+          searchPlaceholder="이름 또는 초성 검색..."
+          emptyText="검색 결과가 없습니다"
+          allowClear
+        />
       </div>
 
       {/* Calendar */}

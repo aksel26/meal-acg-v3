@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { getChoseong } from "es-hangul";
+import { cn } from "@repo/ui/lib/utils";
 import {
   Card,
   CardContent,
@@ -21,11 +21,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@repo/ui/src/dialog";
+import { SearchableDropdown } from "@repo/ui/src/searchable-dropdown";
 import { toast } from "sonner";
 import {
   ChevronLeft,
   ChevronRight,
-  Search,
   Settings,
   Coffee,
   Plus,
@@ -63,7 +63,7 @@ const DEFAULT_DRINKS = [
 export default function MonthlyPage() {
   const queryClient = useQueryClient();
   const [currentDate, setCurrentDate] = useState(dayjs());
-  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedUserId, setSelectedUserId] = useState("");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingApp, setEditingApp] = useState<
@@ -75,8 +75,6 @@ export default function MonthlyPage() {
   const [editDrinkOptions, setEditDrinkOptions] = useState<string[]>([]);
   const [editPickupPersons, setEditPickupPersons] = useState<string[]>([]);
   const [newDrinkOption, setNewDrinkOption] = useState("");
-  const [newPickupPerson, setNewPickupPerson] = useState("");
-  const [showPickupDropdown, setShowPickupDropdown] = useState(false);
 
   const year = currentDate.year();
   const month = currentDate.month() + 1;
@@ -179,40 +177,20 @@ export default function MonthlyPage() {
     },
   });
 
-  // 검색 필터링
+  // 사용자 필터링
   const filteredApplications = useMemo(() => {
     if (!monthlyData?.applications) return [];
-    if (!searchQuery.trim()) return monthlyData.applications;
+    if (!selectedUserId) return monthlyData.applications;
+    return monthlyData.applications.filter((app) => app.userId === selectedUserId);
+  }, [monthlyData?.applications, selectedUserId]);
 
-    const query = searchQuery.trim();
-    return monthlyData.applications.filter((app) => {
-      const name = app.name || "";
-      if (name.toLowerCase().includes(query.toLowerCase())) return true;
-      const nameChoseong = getChoseong(name);
-      if (nameChoseong.includes(query)) return true;
-      if (app.drink?.toLowerCase().includes(query.toLowerCase())) return true;
-      return false;
-    });
-  }, [monthlyData?.applications, searchQuery]);
-
-  // 픽업 담당자 검색 필터링
-  const filteredMembersForPickup = useMemo(() => {
-    if (!members || !newPickupPerson.trim()) return [];
-    const query = newPickupPerson.trim().toLowerCase();
-    return members
-      .filter((member) => {
-        // 이미 추가된 담당자는 제외
-        if (editPickupPersons.includes(member.full_name)) return false;
-        const name = member.full_name || "";
-        // 이름 직접 매칭
-        if (name.toLowerCase().includes(query)) return true;
-        // 자음 검색
-        const nameChoseong = getChoseong(name);
-        if (nameChoseong.includes(query)) return true;
-        return false;
-      })
-      .slice(0, 5); // 최대 5명까지 표시
-  }, [members, newPickupPerson, editPickupPersons]);
+  // 픽업 담당자 선택에 사용할 멤버 (이미 추가된 담당자 제외)
+  const availableMembersForPickup = useMemo(() => {
+    if (!members) return [];
+    return members.filter(
+      (member) => !editPickupPersons.includes(member.full_name)
+    );
+  }, [members, editPickupPersons]);
 
   // 음료별 통계
   const drinkStats = useMemo(() => {
@@ -387,15 +365,18 @@ export default function MonthlyPage() {
                 클릭하여 음료를 변경할 수 있습니다
               </CardDescription>
             </div>
-            <div className="relative w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="이름 또는 음료 검색..."
-                className="pl-9"
-              />
-            </div>
+            <SearchableDropdown<Member>
+              items={members ?? []}
+              value={selectedUserId}
+              getItemKey={(m) => m.id}
+              getItemLabel={(m) => m.full_name}
+              onSelect={(member) => setSelectedUserId(member.id)}
+              onClear={() => setSelectedUserId("")}
+              placeholder="사용자 선택..."
+              searchPlaceholder="이름 또는 초성 검색..."
+              emptyText="검색 결과가 없습니다"
+              allowClear
+            />
           </div>
         </CardHeader>
         <CardContent>
@@ -410,7 +391,7 @@ export default function MonthlyPage() {
             </div>
           ) : filteredApplications.length === 0 ? (
             <div className="text-center py-12 text-slate-500">
-              {searchQuery ? "검색 결과가 없습니다" : "신청 내역이 없습니다"}
+              {selectedUserId ? "해당 사용자의 신청 내역이 없습니다" : "신청 내역이 없습니다"}
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
@@ -597,95 +578,31 @@ export default function MonthlyPage() {
                   </div>
                 ))}
               </div>
-              <div className="relative">
-                <div className="flex gap-2">
-                  <Input
-                    value={newPickupPerson}
-                    onChange={(e) => {
-                      setNewPickupPerson(e.target.value);
-                      setShowPickupDropdown(true);
-                    }}
-                    onFocus={() => setShowPickupDropdown(true)}
-                    onBlur={() => {
-                      // delay to allow click on dropdown item
-                      setTimeout(() => setShowPickupDropdown(false), 150);
-                    }}
-                    placeholder="이름 또는 자음으로 검색 (예: ㄱㅎㅁ)"
-                    className="flex-1"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && newPickupPerson.trim()) {
-                        // 검색 결과가 있으면 첫 번째 결과 선택
-                        const firstMatch = filteredMembersForPickup[0];
-                        if (firstMatch) {
-                          setEditPickupPersons([
-                            ...editPickupPersons,
-                            firstMatch.full_name,
-                          ]);
-                        } else {
-                          setEditPickupPersons([
-                            ...editPickupPersons,
-                            newPickupPerson.trim(),
-                          ]);
-                        }
-                        setNewPickupPerson("");
-                        setShowPickupDropdown(false);
-                      }
-                    }}
-                  />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => {
-                      if (newPickupPerson.trim()) {
-                        const firstMatch = filteredMembersForPickup[0];
-                        if (firstMatch) {
-                          setEditPickupPersons([
-                            ...editPickupPersons,
-                            firstMatch.full_name,
-                          ]);
-                        } else {
-                          setEditPickupPersons([
-                            ...editPickupPersons,
-                            newPickupPerson.trim(),
-                          ]);
-                        }
-                        setNewPickupPerson("");
-                        setShowPickupDropdown(false);
-                      }
-                    }}
+              <SearchableDropdown<Member>
+                items={availableMembersForPickup}
+                value=""
+                getItemKey={(m) => m.id}
+                getItemLabel={(m) => m.full_name}
+                onSelect={(member) => {
+                  setEditPickupPersons([...editPickupPersons, member.full_name]);
+                }}
+                renderItem={(member, isHighlighted) => (
+                  <div
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2.5",
+                      isHighlighted && "bg-violet-50"
+                    )}
                   >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-                {/* 검색 드롭다운 */}
-                {showPickupDropdown && filteredMembersForPickup.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden">
-                    {filteredMembersForPickup.map((member) => (
-                      <button
-                        key={member.id}
-                        type="button"
-                        className="w-full px-4 py-2.5 text-left text-sm hover:bg-violet-50 flex items-center gap-2 transition-colors"
-                        onMouseDown={(e) => {
-                          e.preventDefault(); // prevent input blur
-                          setEditPickupPersons([
-                            ...editPickupPersons,
-                            member.full_name,
-                          ]);
-                          setNewPickupPerson("");
-                          setShowPickupDropdown(false);
-                        }}
-                      >
-                        <div className="w-7 h-7 bg-violet-100 rounded-full flex items-center justify-center text-xs font-medium text-violet-700">
-                          {member.full_name.charAt(0)}
-                        </div>
-                        <span className="text-slate-700">
-                          {member.full_name}
-                        </span>
-                      </button>
-                    ))}
+                    <div className="w-7 h-7 bg-violet-100 rounded-full flex items-center justify-center text-xs font-medium text-violet-700">
+                      {member.full_name.charAt(0)}
+                    </div>
+                    <span className="text-slate-700">{member.full_name}</span>
                   </div>
                 )}
-              </div>
+                placeholder="담당자 추가..."
+                searchPlaceholder="이름 또는 자음 검색 (예: ㄱㅎㅁ)"
+                emptyText="검색 결과가 없습니다"
+              />
             </div>
           </div>
 

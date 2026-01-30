@@ -4,9 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { getChoseong } from "es-hangul";
 import {
-  Search,
   ChevronDown,
   FileSpreadsheet,
   Check,
@@ -24,6 +22,7 @@ import { cn } from "@repo/ui/lib/utils";
 import { Button } from "@repo/ui/src/button";
 import { Input } from "@repo/ui/src/input";
 import { Label } from "@repo/ui/src/label";
+import { SearchableDropdown } from "@repo/ui/src/searchable-dropdown";
 import {
   Dialog,
   DialogContent,
@@ -59,7 +58,7 @@ export default function UsersPage() {
   const currentDate = dayjs();
   const [selectedYear, setSelectedYear] = useState(currentDate.year());
   const [selectedMonth, setSelectedMonth] = useState(currentDate.month() + 1);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedUserId, setSelectedUserId] = useState("");
   const [isYearOpen, setIsYearOpen] = useState(false);
   const [isMonthOpen, setIsMonthOpen] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -228,15 +227,8 @@ export default function UsersPage() {
   };
 
   const filteredUsers = users?.filter((user) => {
-    if (!searchTerm.trim()) return true;
-    const name = user.full_name || "";
-    const query = searchTerm.trim();
-    // 일반 검색
-    if (name.toLowerCase().includes(query.toLowerCase())) return true;
-    // 초성 검색
-    const nameChoseong = getChoseong(name);
-    if (nameChoseong.includes(query)) return true;
-    return false;
+    if (!selectedUserId) return true;
+    return user.user_id === selectedUserId;
   });
 
   // Selection handlers
@@ -403,14 +395,18 @@ export default function UsersPage() {
         </div>
 
         {/* Search */}
-        <div className="relative ml-auto">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            placeholder="이름 검색..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-48 rounded-xl bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 shadow-sm ring-1 ring-slate-200/60 transition-all placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+        <div className="ml-auto">
+          <SearchableDropdown<UserStats>
+            items={users ?? []}
+            value={selectedUserId}
+            getItemKey={(u) => u.user_id}
+            getItemLabel={(u) => u.full_name}
+            onSelect={(user) => setSelectedUserId(user.user_id)}
+            onClear={() => setSelectedUserId("")}
+            placeholder="사용자 선택..."
+            searchPlaceholder="이름 또는 초성 검색..."
+            emptyText="검색 결과가 없습니다"
+            allowClear
           />
         </div>
 

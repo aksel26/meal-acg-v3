@@ -23,6 +23,7 @@ import { Button } from "@repo/ui/src/button";
 import { Input } from "@repo/ui/src/input";
 import { Label } from "@repo/ui/src/label";
 import { Checkbox } from "@repo/ui/src/checkbox";
+import { SearchableDropdown } from "@repo/ui/src/searchable-dropdown";
 import { toast } from "sonner";
 import {
   Save,
@@ -670,6 +671,18 @@ export default function LunchGroupsPage() {
                     뽑기 요청하기
                   </Button>
                 </div>
+
+                {/* 멤버 선택 */}
+                <SearchableDropdown<Member>
+                  items={unassignedMembers}
+                  value=""
+                  getItemKey={(m) => m.id}
+                  getItemLabel={(m) => m.full_name}
+                  onSelect={(member) => toggleSelectMember(member.id)}
+                  placeholder="멤버 검색..."
+                  searchPlaceholder="이름 또는 초성 검색..."
+                  emptyText="검색 결과가 없습니다"
+                />
 
                 {/* 전체 선택 */}
                 <div className="flex items-center gap-2 py-2 border-b">

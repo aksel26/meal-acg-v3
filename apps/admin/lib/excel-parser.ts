@@ -21,21 +21,21 @@ export interface ParseResult {
   errors: string[];
 }
 
-// 열 인덱스 (0-based)
+// 열 인덱스 (0-based) - Export 템플릿 기준: A열 빈 열, B열부터 데이터 시작
 const COLUMNS = {
-  YEAR: 0, // A
-  MONTH: 1, // B
-  DAY: 2, // C
-  ATTENDANCE: 6, // G
-  LUNCH_STORE: 7, // H
-  LUNCH_AMOUNT: 8, // I
-  LUNCH_PAYER: 10, // K (비고)
-  DINNER_STORE: 11, // L
-  DINNER_AMOUNT: 12, // M
-  DINNER_PAYER: 13, // N
-  BREAKFAST_STORE: 14, // O
-  BREAKFAST_AMOUNT: 15, // P
-  BREAKFAST_PAYER: 16, // Q
+  YEAR: 1, // B
+  MONTH: 2, // C
+  DAY: 3, // D
+  ATTENDANCE: 7, // H
+  LUNCH_STORE: 8, // I
+  LUNCH_AMOUNT: 9, // J
+  LUNCH_PAYER: 11, // L (K열은 알림용)
+  DINNER_STORE: 12, // M
+  DINNER_AMOUNT: 13, // N
+  DINNER_PAYER: 14, // O
+  BREAKFAST_STORE: 15, // P
+  BREAKFAST_AMOUNT: 16, // Q
+  BREAKFAST_PAYER: 17, // R
 };
 
 function getCellValue(row: unknown[], index: number): string | null {

@@ -14,6 +14,8 @@ export async function POST(request: NextRequest) {
       entryDate,
       attendance,
       lunchAmount,
+      lunchStore,
+      lunchPayer,
     } = body;
 
     if (!entryDate) {
@@ -56,9 +58,9 @@ export async function POST(request: NextRequest) {
       breakfast_store: null,
       breakfast_amount: 0,
       breakfast_payer: null,
-      lunch_store: null,
+      lunch_store: lunchStore || null,
       lunch_amount: lunchAmount || 0,
-      lunch_payer: null,
+      lunch_payer: lunchPayer || null,
       dinner_store: null,
       dinner_amount: 0,
       dinner_payer: null,

@@ -34,7 +34,7 @@ import {
   ListPlus,
 } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
-import type { MealLog, Member } from "@/lib/supabase/types";
+import type { MealLog, Member, Holiday } from "@/lib/supabase/types";
 
 interface MealFormData {
   userId: string;
@@ -100,6 +100,8 @@ export default function CalendarPage() {
   const [bulkSearchQuery, setBulkSearchQuery] = useState("");
   const [bulkDate, setBulkDate] = useState("");
   const [bulkAmount, setBulkAmount] = useState<number>(0);
+  const [bulkStore, setBulkStore] = useState("");
+  const [bulkPayer, setBulkPayer] = useState("");
   const [bulkAttendance, setBulkAttendance] = useState("출근");
 
   // URL 파라미터가 변경되면 상태 업데이트
@@ -129,6 +131,27 @@ export default function CalendarPage() {
       return response.json();
     },
   });
+
+  // Fetch holidays for current month
+  const { data: holidays } = useQuery<Holiday[]>({
+    queryKey: queryKeys.holidays.byMonth(currentDate.year(), currentDate.month() + 1),
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/holidays?year=${currentDate.year()}&month=${currentDate.month() + 1}`
+      );
+      if (!response.ok) throw new Error("Failed to fetch holidays");
+      return response.json();
+    },
+  });
+
+  // 공휴일 맵 생성 (날짜 -> 설명)
+  const holidayMap = useMemo(() => {
+    const map = new Map<string, string>();
+    holidays?.forEach((h) => {
+      map.set(h.holiday_date, h.description);
+    });
+    return map;
+  }, [holidays]);
 
   // 검색어로 멤버 필터링 (일반 검색 + 초성 검색)
   const filteredMembers = useMemo(() => {
@@ -266,6 +289,8 @@ export default function CalendarPage() {
       entryDate: string;
       attendance: string;
       lunchAmount: number;
+      lunchStore: string;
+      lunchPayer: string;
     }) => {
       const response = await fetch("/api/meal-logs/bulk", {
         method: "POST",
@@ -298,6 +323,8 @@ export default function CalendarPage() {
     setBulkSearchQuery("");
     setBulkDate("");
     setBulkAmount(0);
+    setBulkStore("");
+    setBulkPayer("");
     setBulkAttendance("출근");
   };
 
@@ -312,6 +339,8 @@ export default function CalendarPage() {
       entryDate: bulkDate,
       attendance: bulkAttendance,
       lunchAmount: bulkAmount,
+      lunchStore: bulkStore,
+      lunchPayer: bulkPayer,
     });
   };
 
@@ -547,28 +576,35 @@ export default function CalendarPage() {
               const mealLog = getMealLogForDay(day);
               const dayOfWeek = currentDate.date(day).day();
               const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+              const holidayName = holidayMap.get(dateStr);
+              const isHoliday = !!holidayName;
 
-              // 근태별 배경색
-              const getAttendanceBg = (
+              // 근태별 스타일 (배경, 텍스트, 테두리)
+              const getAttendanceStyle = (
                 attendance: string | null | undefined,
               ) => {
                 if (!attendance)
-                  return { bg: "bg-gray-100", text: "text-gray-600" };
+                  return { bg: "bg-gray-100", text: "text-gray-600", border: "border-gray-200" };
                 const lower = attendance.toLowerCase();
                 if (lower.includes("출근") || lower.includes("근무")) {
-                  return { bg: "bg-emerald-100", text: "text-emerald-700" };
+                  return { bg: "bg-emerald-100", text: "text-emerald-700", border: "border-emerald-300" };
                 }
                 if (lower.includes("재택") || lower.includes("홈")) {
-                  return { bg: "bg-amber-100", text: "text-amber-700" };
+                  return { bg: "bg-amber-100", text: "text-amber-700", border: "border-amber-300" };
                 }
                 if (lower.includes("휴가") || lower.includes("연차")) {
-                  return { bg: "bg-sky-100", text: "text-sky-700" };
+                  return { bg: "bg-sky-100", text: "text-sky-700", border: "border-sky-300" };
                 }
                 if (lower.includes("반차")) {
-                  return { bg: "bg-violet-100", text: "text-violet-700" };
+                  return { bg: "bg-violet-100", text: "text-violet-700", border: "border-violet-300" };
                 }
-                return { bg: "bg-gray-100", text: "text-gray-600" };
+                if (lower.includes("개별")) {
+                  return { bg: "bg-slate-100", text: "text-slate-600", border: "border-slate-300" };
+                }
+                return { bg: "bg-gray-100", text: "text-gray-600", border: "border-gray-200" };
               };
+
+              const attendanceStyle = mealLog?.attendance ? getAttendanceStyle(mealLog.attendance) : null;
 
               const hasBreakfast =
                 mealLog?.breakfast_amount && mealLog.breakfast_amount > 0;
@@ -583,40 +619,66 @@ export default function CalendarPage() {
                 return amount.toLocaleString();
               };
 
+              // 셀 테두리 스타일 결정
+              const getCellBorderClass = () => {
+                // 근태가 있으면 해당 색상 테두리
+                if (attendanceStyle) return attendanceStyle.border;
+                // 기본 테두리
+                return "border-slate-200";
+              };
+
+              // hover 테두리 스타일
+              const getHoverClass = () => {
+                const scaleEffect = "hover:scale-[1.03] hover:shadow-md hover:z-10";
+                if (isHoliday) return `hover:bg-rose-100/80 ${scaleEffect}`;
+                if (dayOfWeek === 0) return `hover:border-rose-400 ${scaleEffect}`;
+                if (dayOfWeek === 6) return `hover:border-blue-400 ${scaleEffect}`;
+                return `hover:border-slate-300 ${scaleEffect}`;
+              };
+
               return (
                 <div
                   key={day}
                   onClick={() => handleDateClick(dateStr)}
-                  className={`h-[104px] border rounded-xl p-2 cursor-pointer transition-all duration-200 ${
-                    isWeekend ? "bg-slate-50/50" : "bg-white"
-                  } hover:border-blue-400 hover:shadow-sm ${
-                    mealLog ? "border-emerald-200" : "border-gray-100"
-                  }`}
+                  className={`h-24 rounded-lg p-2 cursor-pointer transition-all duration-150 ${
+                    isHoliday
+                      ? "bg-rose-50/80 border-0"
+                      : isWeekend
+                        ? `bg-slate-50/60 border ${getCellBorderClass()}`
+                        : `bg-white border ${getCellBorderClass()}`
+                  } ${getHoverClass()}`}
                 >
-                  {/* 날짜 */}
-                  <div
-                    className={`text-sm font-semibold mb-1 ${
-                      dayOfWeek === 0
-                        ? "text-rose-500"
-                        : dayOfWeek === 6
-                          ? "text-blue-500"
-                          : "text-gray-700"
-                    }`}
-                  >
-                    {day}
+                  {/* 날짜 헤더 */}
+                  <div className="flex items-baseline gap-1 mb-1">
+                    <span
+                      className={`text-sm font-semibold leading-none ${
+                        isHoliday || dayOfWeek === 0
+                          ? "text-rose-500"
+                          : dayOfWeek === 6
+                            ? "text-blue-500"
+                            : "text-slate-700"
+                      }`}
+                    >
+                      {day}
+                    </span>
+                    {isHoliday && (
+                      <span className="text-[8px] text-rose-400 truncate max-w-[50px] leading-none" title={holidayName}>
+                        {holidayName}
+                      </span>
+                    )}
                   </div>
 
                   {isLoadingLogs && selectedUserId ? (
-                    <div className="space-y-1">
-                      <Skeleton className="h-4 w-12 rounded-full" />
-                      <Skeleton className="h-3 w-full" />
+                    <div className="space-y-1.5">
+                      <Skeleton className="h-4 w-10 rounded" />
+                      <Skeleton className="h-3 w-14" />
                     </div>
                   ) : mealLog ? (
                     <div className="space-y-1">
-                      {/* 근태 배지 - 원본 텍스트 그대로 */}
-                      {mealLog.attendance && (
+                      {/* 근태 배지 */}
+                      {mealLog.attendance && attendanceStyle && (
                         <span
-                          className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-medium ${getAttendanceBg(mealLog.attendance).bg} ${getAttendanceBg(mealLog.attendance).text}`}
+                          className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-medium leading-none ${attendanceStyle.bg} ${attendanceStyle.text}`}
                         >
                           {mealLog.attendance}
                         </span>
@@ -627,19 +689,21 @@ export default function CalendarPage() {
                         (type) => mealLog.attendance?.includes(type)
                       ) && (
                         <>
-                          {/* 총 금액 */}
-                          {mealLog.total_amount && mealLog.total_amount > 0 && (
-                            <div className="text-xs font-bold text-emerald-600">
-                              {formatAmount(mealLog.total_amount)}원
-                            </div>
-                          )}
+                          {/* 총 금액 - 0원도 표시 */}
+                          <div className={`text-xs font-bold ${
+                            (mealLog.total_amount || 0) > 0 ? "text-emerald-600" : "text-slate-400"
+                          }`}>
+                            {formatAmount(mealLog.total_amount || 0)}원
+                          </div>
 
                           {/* 식사별 문구 */}
-                          <div className="flex flex-wrap gap-x-1.5 text-[9px] text-gray-500">
-                            {hasBreakfast && <span>조식</span>}
-                            {hasLunch && <span>중식</span>}
-                            {hasDinner && <span>석식</span>}
-                          </div>
+                          {(hasBreakfast || hasLunch || hasDinner) && (
+                            <div className="flex flex-wrap gap-x-1 text-[9px] text-slate-400">
+                              {hasBreakfast && <span>조</span>}
+                              {hasLunch && <span>중</span>}
+                              {hasDinner && <span>석</span>}
+                            </div>
+                          )}
                         </>
                       )}
                     </div>
@@ -666,7 +730,7 @@ export default function CalendarPage() {
           <div className="max-h-[calc(90vh-200px)] overflow-y-auto">
             {/* 날짜 및 금액 입력 */}
             <div className="px-6 py-4 border-b border-slate-100">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <Label className="text-xs font-medium text-slate-500 mb-2 block">
                     날짜
@@ -687,6 +751,32 @@ export default function CalendarPage() {
                     value={bulkAmount || ""}
                     onChange={(e) => setBulkAmount(parseInt(e.target.value) || 0)}
                     placeholder="0"
+                    className="h-10"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs font-medium text-slate-500 mb-2 block">
+                    식당
+                  </Label>
+                  <Input
+                    type="text"
+                    value={bulkStore}
+                    onChange={(e) => setBulkStore(e.target.value)}
+                    placeholder="식당명"
+                    className="h-10"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs font-medium text-slate-500 mb-2 block">
+                    결제자
+                  </Label>
+                  <Input
+                    type="text"
+                    value={bulkPayer}
+                    onChange={(e) => setBulkPayer(e.target.value)}
+                    placeholder="결제자"
                     className="h-10"
                   />
                 </div>

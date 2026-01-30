@@ -13,13 +13,11 @@ import {
   ArrowDownRight,
   ChevronDown,
   Sparkles,
-  AlertCircle,
   Store,
   BarChart3,
   Calendar,
   Upload,
   Download,
-  UserCheck,
 } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
 import { useAuth } from "@/hooks/useAuth";
@@ -33,11 +31,12 @@ interface DashboardStats {
   averageUsage: number;
 }
 
-interface AlertsData {
+interface SettlementData {
   totalMembers: number;
-  missingMembersCount: number;
-  missingMembers: { id: string; full_name: string }[];
-  todayMissing: number;
+  settledCount: number;
+  unsettledCount: number;
+  settledMembers: { id: string; full_name: string }[];
+  unsettledMembers: { id: string; full_name: string }[];
   month: string;
 }
 
@@ -53,6 +52,7 @@ interface MemberSpendingData {
     name: string;
     totalUsed: number;
     totalAllowance: number;
+    excess: number;
     usageRate: number;
   }[];
   average: number;
@@ -93,14 +93,14 @@ export default function DashboardPage() {
     },
   });
 
-  // 알림 데이터
-  const { data: alerts } = useQuery<AlertsData>({
-    queryKey: queryKeys.dashboard.alerts(selectedYear, selectedMonth),
+  // 정산 현황 데이터
+  const { data: settlement } = useQuery<SettlementData>({
+    queryKey: queryKeys.dashboard.settlement(selectedYear, selectedMonth),
     queryFn: async () => {
       const response = await fetch(
-        `/api/stats/alerts?year=${selectedYear}&month=${selectedMonth}`
+        `/api/stats/settlement?year=${selectedYear}&month=${selectedMonth}`
       );
-      if (!response.ok) throw new Error("Failed to fetch alerts");
+      if (!response.ok) throw new Error("Failed to fetch settlement");
       return response.json();
     },
   });
@@ -365,42 +365,42 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* 3열 그리드: 알림, 인기 가게, 멤버별 지출 */}
+      {/* 3열 그리드: 정산 현황, 인기 가게, 멤버별 초과액 */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* 3. 미입력/미처리 알림 */}
+        {/* 3. 정산 현황 */}
         <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/60">
           <div className="mb-4 flex items-center gap-2">
-            <AlertCircle className="h-5 w-5 text-amber-500" />
-            <h3 className="font-bold text-slate-900">미입력 알림</h3>
+            <Wallet className="h-5 w-5 text-emerald-500" />
+            <h3 className="font-bold text-slate-900">정산 현황</h3>
           </div>
           <div className="space-y-4">
+            <div className="flex items-center justify-between rounded-lg bg-emerald-50 p-3">
+              <span className="text-sm text-emerald-700">정산 완료</span>
+              <span className="text-lg font-bold text-emerald-600">
+                {settlement?.settledCount || 0}명
+              </span>
+            </div>
             <div className="flex items-center justify-between rounded-lg bg-amber-50 p-3">
-              <span className="text-sm text-amber-700">이번 달 미입력</span>
+              <span className="text-sm text-amber-700">미정산</span>
               <span className="text-lg font-bold text-amber-600">
-                {alerts?.missingMembersCount || 0}명
+                {settlement?.unsettledCount || 0}명
               </span>
             </div>
-            <div className="flex items-center justify-between rounded-lg bg-slate-50 p-3">
-              <span className="text-sm text-slate-600">오늘 미입력</span>
-              <span className="text-lg font-bold text-slate-700">
-                {alerts?.todayMissing || 0}명
-              </span>
-            </div>
-            {alerts?.missingMembers && alerts.missingMembers.length > 0 && (
+            {settlement?.unsettledMembers && settlement.unsettledMembers.length > 0 && (
               <div className="pt-2">
-                <p className="mb-2 text-xs font-medium text-slate-400">미입력 멤버</p>
+                <p className="mb-2 text-xs font-medium text-slate-400">미정산 멤버</p>
                 <div className="flex flex-wrap gap-1">
-                  {alerts.missingMembers.map((m) => (
+                  {settlement.unsettledMembers.map((m) => (
                     <span
                       key={m.id}
-                      className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600"
+                      className="rounded-full bg-amber-100 px-2 py-1 text-xs text-amber-700"
                     >
                       {m.full_name}
                     </span>
                   ))}
-                  {alerts.missingMembersCount > 5 && (
+                  {settlement.unsettledCount > 5 && (
                     <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-400">
-                      +{alerts.missingMembersCount - 5}명
+                      +{settlement.unsettledCount - 5}명
                     </span>
                   )}
                 </div>
@@ -451,53 +451,56 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* 5. 멤버별 지출 현황 */}
+        {/* 5. 멤버별 초과액 현황 */}
         <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/60">
           <div className="mb-4 flex items-center gap-2">
-            <UserCheck className="h-5 w-5 text-sky-500" />
-            <h3 className="font-bold text-slate-900">멤버별 지출 TOP 5</h3>
+            <TrendingUp className="h-5 w-5 text-rose-500" />
+            <h3 className="font-bold text-slate-900">멤버별 초과액 TOP 5</h3>
           </div>
           <div className="space-y-3">
             {memberSpending?.members && memberSpending.members.length > 0 ? (
-              memberSpending.members.map((member) => (
-                <div key={member.id} className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-slate-700">
-                      {member.name}
-                    </span>
-                    <span className="text-sm text-slate-500">
-                      {formatCurrency(member.totalUsed)}원
-                    </span>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                    <div
+              memberSpending.members.map((member, idx) => {
+                const maxExcess = memberSpending.members[0]?.excess || 1;
+                const barWidth = (member.excess / maxExcess) * 100;
+                return (
+                  <div key={member.id} className="flex items-center gap-3">
+                    <span
                       className={cn(
-                        "h-full rounded-full transition-all",
-                        member.usageRate > 100
-                          ? "bg-rose-400"
-                          : member.usageRate > 80
-                          ? "bg-amber-400"
-                          : "bg-sky-400"
+                        "flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold",
+                        idx === 0
+                          ? "bg-rose-100 text-rose-600"
+                          : idx === 1
+                          ? "bg-orange-100 text-orange-600"
+                          : idx === 2
+                          ? "bg-amber-100 text-amber-600"
+                          : "bg-slate-100 text-slate-500"
                       )}
-                      style={{ width: `${Math.min(member.usageRate, 100)}%` }}
-                    />
+                    >
+                      {idx + 1}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-slate-700 truncate">
+                          {member.name}
+                        </span>
+                        <span className="text-sm font-semibold text-rose-600">
+                          +{formatCurrency(member.excess)}원
+                        </span>
+                      </div>
+                      <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
+                        <div
+                          className="h-full rounded-full bg-rose-400 transition-all"
+                          style={{ width: `${barWidth}%` }}
+                        />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <p className="py-4 text-center text-sm text-slate-400">
-                데이터가 없습니다
+                초과액이 있는 멤버가 없습니다
               </p>
-            )}
-            {memberSpending?.average !== undefined && (
-              <div className="mt-4 rounded-lg bg-slate-50 p-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-600">전체 평균</span>
-                  <span className="font-bold text-slate-700">
-                    {formatCurrency(memberSpending.average)}원
-                  </span>
-                </div>
-              </div>
             )}
           </div>
         </div>

@@ -61,6 +61,8 @@ export const queryKeys = {
       ["dashboard", "memberSpending", year, month] as const,
     trends: (year: number, month: number) =>
       ["dashboard", "trends", year, month] as const,
+    settlement: (year: number, month: number) =>
+      ["dashboard", "settlement", year, month] as const,
   },
 
   // Lunch Groups

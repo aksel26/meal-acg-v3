@@ -20,18 +20,20 @@ export async function GET(request: NextRequest) {
       throw error;
     }
 
-    // 지출 금액 기준 정렬
+    // 초과액 기준 정렬 (초과액 = 사용액 - 지원금)
     const sortedStats = (stats || [])
       .map((s: { user_id: string; full_name: string; total_used: number; total_allowance: number }) => ({
         id: s.user_id,
         name: s.full_name,
         totalUsed: s.total_used || 0,
         totalAllowance: s.total_allowance || 0,
+        excess: (s.total_used || 0) - (s.total_allowance || 0),
         usageRate: s.total_allowance > 0 ? ((s.total_used || 0) / s.total_allowance) * 100 : 0,
       }))
-      .sort((a: { totalUsed: number }, b: { totalUsed: number }) => b.totalUsed - a.totalUsed);
+      .filter((s: { excess: number }) => s.excess > 0) // 초과액이 있는 멤버만
+      .sort((a: { excess: number }, b: { excess: number }) => b.excess - a.excess);
 
-    // 상위 5명
+    // 상위 5명 (초과액 기준)
     const topSpenders = sortedStats.slice(0, 5);
 
     // 평균 지출

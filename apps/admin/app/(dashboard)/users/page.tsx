@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
 import dayjs from "dayjs";
 import {
   ChevronDown,
@@ -15,6 +16,8 @@ import {
   Trash2,
   Plus,
   Send,
+  AlertTriangle,
+  RefreshCw,
 } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
 import { toast } from "sonner";
@@ -53,26 +56,168 @@ interface UserStats {
   is_settled: boolean;
 }
 
+interface UserFormData {
+  fullName: string;
+  loginId: string;
+  password: string;
+  email: string;
+}
+
+type InputCheckStatus = "idle" | "loading" | "complete" | "incomplete" | "error";
+
+interface InputCheckResult {
+  status: InputCheckStatus;
+  missingCount?: number;
+}
+
 export default function UsersPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const currentDate = dayjs();
-  const [selectedYear, setSelectedYear] = useState(currentDate.year());
-  const [selectedMonth, setSelectedMonth] = useState(currentDate.month() + 1);
+
+  // URL 쿼리 파라미터에서 연도/월 읽기 (없으면 현재 날짜)
+  const selectedYear = parseInt(searchParams.get("year") || String(currentDate.year()));
+  const selectedMonth = parseInt(searchParams.get("month") || String(currentDate.month() + 1));
+
+  // URL 쿼리 파라미터 업데이트 함수
+  const updateUrlParams = useCallback((year: number, month: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("year", String(year));
+    params.set("month", String(month));
+    router.replace(`/users?${params.toString()}`);
+  }, [router, searchParams]);
   const [selectedUserId, setSelectedUserId] = useState("");
   const [isYearOpen, setIsYearOpen] = useState(false);
   const [isMonthOpen, setIsMonthOpen] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
-  const [newUserForm, setNewUserForm] = useState({
-    fullName: "",
-    loginId: "",
-    password: "",
-  });
-  const [loginIdError, setLoginIdError] = useState("");
+  const [downloadingUserId, setDownloadingUserId] = useState<string | null>(null);
+
+  // 스크롤 위치 관련
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const SCROLL_STORAGE_KEY = "usersPageScrollPosition";
+
+  // 입력 체크 관련 상태
+  const [inputCheckResults, setInputCheckResults] = useState<Map<string, InputCheckResult>>(new Map());
+  const [isCheckingInputs, setIsCheckingInputs] = useState(false);
+  const [checkProgress, setCheckProgress] = useState({ current: 0, total: 0 });
+
   const queryClient = useQueryClient();
+
+  // localStorage 키 생성
+  const getStorageKey = useCallback((year: number, month: number) => {
+    return `inputCheckResults_${year}_${month}`;
+  }, []);
+
+  // localStorage에서 체크 결과 복원
+  useEffect(() => {
+    const storageKey = getStorageKey(selectedYear, selectedMonth);
+    const saved = localStorage.getItem(storageKey);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        const restoredMap = new Map<string, InputCheckResult>(Object.entries(parsed));
+        setInputCheckResults(restoredMap);
+      } catch {
+        setInputCheckResults(new Map());
+      }
+    } else {
+      setInputCheckResults(new Map());
+    }
+  }, [selectedYear, selectedMonth, getStorageKey]);
+
+  // 체크 결과를 localStorage에 저장
+  const saveResultsToStorage = useCallback((results: Map<string, InputCheckResult>, year: number, month: number) => {
+    const storageKey = getStorageKey(year, month);
+    const obj = Object.fromEntries(results);
+    localStorage.setItem(storageKey, JSON.stringify(obj));
+  }, [getStorageKey]);
+
+  // 스크롤 위치 저장
+  const handleScroll = useCallback(() => {
+    if (tableContainerRef.current) {
+      sessionStorage.setItem(SCROLL_STORAGE_KEY, String(tableContainerRef.current.scrollTop));
+    }
+  }, []);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setError,
+    formState: { errors },
+  } = useForm<UserFormData>({
+    defaultValues: {
+      fullName: "",
+      loginId: "",
+      password: "",
+      email: "",
+    },
+  });
 
   const handleUserClick = (userId: string) => {
     router.push(`/calendar?userId=${userId}&year=${selectedYear}&month=${selectedMonth}`);
+  };
+
+  // 입력 체크 실행
+  const handleCheckAllInputs = async () => {
+    if (!users || users.length === 0) return;
+
+    setIsCheckingInputs(true);
+    setCheckProgress({ current: 0, total: users.length });
+
+    // 모든 사용자를 loading 상태로 초기화
+    const initialResults = new Map<string, InputCheckResult>();
+    users.forEach(user => {
+      initialResults.set(user.user_id, { status: "loading" });
+    });
+    setInputCheckResults(initialResults);
+
+    // 최종 결과 저장용
+    const finalResults = new Map<string, InputCheckResult>();
+
+    // 각 사용자별로 순차 체크
+    for (let i = 0; i < users.length; i++) {
+      const user = users[i];
+      if (!user) continue;
+
+      setCheckProgress({ current: i + 1, total: users.length });
+
+      try {
+        const response = await fetch(
+          `/api/stats/incomplete-users?year=${selectedYear}&month=${selectedMonth}&userId=${user.user_id}`
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          const result: InputCheckResult = data.is_complete
+            ? { status: "complete" }
+            : { status: "incomplete", missingCount: data.missing_dates?.length || 0 };
+
+          finalResults.set(user.user_id, result);
+          setInputCheckResults(prev => {
+            const newMap = new Map(prev);
+            newMap.set(user.user_id, result);
+            return newMap;
+          });
+        } else {
+          throw new Error("API error");
+        }
+      } catch {
+        const errorResult: InputCheckResult = { status: "error" };
+        finalResults.set(user.user_id, errorResult);
+        setInputCheckResults(prev => {
+          const newMap = new Map(prev);
+          newMap.set(user.user_id, errorResult);
+          return newMap;
+        });
+      }
+    }
+
+    // 체크 완료 후 localStorage에 저장
+    saveResultsToStorage(finalResults, selectedYear, selectedMonth);
+
+    setIsCheckingInputs(false);
+    setCheckProgress({ current: 0, total: 0 });
   };
 
   const { data: users, isLoading } = useQuery<UserStats[]>({
@@ -85,6 +230,16 @@ export default function UsersPage() {
       return response.json();
     },
   });
+
+  // 스크롤 위치 복원 (데이터 로딩 완료 후)
+  useEffect(() => {
+    if (!isLoading && users && tableContainerRef.current) {
+      const savedPosition = sessionStorage.getItem(SCROLL_STORAGE_KEY);
+      if (savedPosition) {
+        tableContainerRef.current.scrollTop = parseInt(savedPosition, 10);
+      }
+    }
+  }, [isLoading, users]);
 
   const toggleSettlementMutation = useMutation({
     mutationFn: async ({
@@ -154,7 +309,7 @@ export default function UsersPage() {
   };
 
   const createUserMutation = useMutation({
-    mutationFn: async (data: { fullName: string; loginId: string; password: string }) => {
+    mutationFn: async (data: { fullName: string; loginId: string; password: string; email?: string }) => {
       const response = await fetch("/api/members", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -175,11 +330,11 @@ export default function UsersPage() {
       });
       toast.success("사용자가 추가되었습니다.");
       setIsAddDialogOpen(false);
-      setNewUserForm({ fullName: "", loginId: "", password: "" });
+      reset();
     },
     onError: (error: Error) => {
       if (error.message === "Login ID already exists") {
-        setLoginIdError("이미 존재하는 아이디입니다.");
+        setError("loginId", { message: "이미 존재하는 아이디입니다." });
       } else {
         toast.error("사용자 추가에 실패했습니다.");
       }
@@ -202,7 +357,6 @@ export default function UsersPage() {
         throw new Error(error.error || "Failed to send notification");
       }
       const data = await response.json();
-      // 결과 확인
       const result = data.results?.[0];
       if (!result?.success) {
         throw new Error(result?.error || "알림 발송 실패");
@@ -217,46 +371,44 @@ export default function UsersPage() {
     },
   });
 
-  const handleCreateUser = () => {
-    setLoginIdError("");
-    if (!newUserForm.fullName.trim() || !newUserForm.loginId.trim() || !newUserForm.password.trim()) {
-      toast.error("모든 필드를 입력해주세요.");
-      return;
+  const onSubmitUser = (data: UserFormData) => {
+    createUserMutation.mutate(data);
+  };
+
+  const handleDownloadExcel = async (userId: string, fullName: string) => {
+    try {
+      setDownloadingUserId(userId);
+      const half = selectedMonth <= 6 ? "H1" : "H2";
+      const response = await fetch(
+        `/api/export/member?year=${selectedYear}&half=${half}&memberId=${userId}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to download");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${fullName}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      toast.success(`${fullName}님의 엑셀 파일을 다운로드했습니다.`);
+    } catch {
+      toast.error("엑셀 파일 다운로드에 실패했습니다.");
+    } finally {
+      setDownloadingUserId(null);
     }
-    createUserMutation.mutate(newUserForm);
   };
 
   const filteredUsers = users?.filter((user) => {
     if (!selectedUserId) return true;
     return user.user_id === selectedUserId;
   });
-
-  // Selection handlers
-  const handleSelectUser = (userId: string, checked: boolean) => {
-    setSelectedUserIds((prev) => {
-      const next = new Set(prev);
-      if (checked) {
-        next.add(userId);
-      } else {
-        next.delete(userId);
-      }
-      return next;
-    });
-  };
-
-  const handleSelectAll = (checked: boolean) => {
-    if (checked && filteredUsers) {
-      setSelectedUserIds(new Set(filteredUsers.map((u) => u.user_id)));
-    } else {
-      setSelectedUserIds(new Set());
-    }
-  };
-
-  const isAllSelected = Boolean(
-    filteredUsers &&
-    filteredUsers.length > 0 &&
-    filteredUsers.every((u) => selectedUserIds.has(u.user_id))
-  );
 
   const formatCurrency = (amount: number | null) => {
     if (amount === null || amount === undefined) return "-";
@@ -266,10 +418,64 @@ export default function UsersPage() {
   const years = Array.from({ length: 5 }, (_, i) => currentDate.year() - 2 + i);
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
 
-  // Summary stats (전체 기준, 검색 결과와 무관)
+  // Summary stats
   const totalUsers = users?.length || 0;
   const settledUsers = users?.filter((u) => u.is_settled).length || 0;
   const totalUsed = users?.reduce((sum, u) => sum + (u.total_used || 0), 0) || 0;
+
+  // 입력완료 상태 렌더링
+  const renderInputCheckStatus = (userId: string) => {
+    const result = inputCheckResults.get(userId);
+
+    if (!result || result.status === "idle") {
+      return <span className="text-slate-300">-</span>;
+    }
+
+    if (result.status === "loading") {
+      return <Loader2 className="h-4 w-4 animate-spin text-slate-400 mx-auto" />;
+    }
+
+    if (result.status === "complete") {
+      return (
+        <div className="flex items-center justify-center">
+          <Check className="h-4 w-4 text-emerald-500" />
+        </div>
+      );
+    }
+
+    if (result.status === "incomplete") {
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center justify-center gap-1 cursor-help">
+              <X className="h-4 w-4 text-rose-500" />
+              <span className="text-xs text-rose-500">{result.missingCount}</span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            {result.missingCount}일 누락
+          </TooltipContent>
+        </Tooltip>
+      );
+    }
+
+    if (result.status === "error") {
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center justify-center cursor-help">
+              <AlertTriangle className="h-4 w-4 text-amber-500" />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            체크 중 오류 발생
+          </TooltipContent>
+        </Tooltip>
+      );
+    }
+
+    return null;
+  };
 
   return (
     <div className="space-y-6">
@@ -305,7 +511,7 @@ export default function UsersPage() {
           <div>
             <p className="text-sm font-medium text-slate-500">총 사용액</p>
             <p className="text-2xl font-bold text-slate-900">
-              {(totalUsed / 10000).toFixed(0)}
+              {(totalUsed / 10000).toFixed(1)}
               <span className="ml-1 text-lg font-medium text-slate-400">만원</span>
             </p>
           </div>
@@ -337,7 +543,7 @@ export default function UsersPage() {
                 <button
                   key={year}
                   onClick={() => {
-                    setSelectedYear(year);
+                    updateUrlParams(year, selectedMonth);
                     setIsYearOpen(false);
                   }}
                   className={cn(
@@ -377,7 +583,7 @@ export default function UsersPage() {
                 <button
                   key={month}
                   onClick={() => {
-                    setSelectedMonth(month);
+                    updateUrlParams(selectedYear, month);
                     setIsMonthOpen(false);
                   }}
                   className={cn(
@@ -410,6 +616,26 @@ export default function UsersPage() {
           />
         </div>
 
+        {/* 입력 체크 버튼 */}
+        <Button
+          onClick={handleCheckAllInputs}
+          size="sm"
+          className="gap-1.5"
+          disabled={isCheckingInputs || !users || users.length === 0}
+        >
+          {isCheckingInputs ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              {checkProgress.current}/{checkProgress.total}
+            </>
+          ) : (
+            <>
+              <RefreshCw className="h-4 w-4" />
+              입력 체크
+            </>
+          )}
+        </Button>
+
         {/* Add User Button */}
         <Button
           onClick={() => setIsAddDialogOpen(true)}
@@ -423,18 +649,14 @@ export default function UsersPage() {
 
       {/* Users Table */}
       <div className="glass-panel overflow-hidden rounded-2xl">
-        <div className="max-h-[calc(100vh-360px)] overflow-auto">
+        <div
+          ref={tableContainerRef}
+          onScroll={handleScroll}
+          className="max-h-[calc(100vh-360px)] overflow-auto"
+        >
           <table className="w-full">
             <thead className="sticky top-0 z-10 bg-slate-50 shadow-[0_1px_0_0_rgb(241,245,249)]">
               <tr>
-                <th className="w-10 px-2 py-3 text-center">
-                  <input
-                    type="checkbox"
-                    checked={isAllSelected}
-                    onChange={(e) => handleSelectAll(e.target.checked)}
-                    className="h-4 w-4 rounded border-slate-300 text-[#135bec] focus:ring-[#135bec]"
-                  />
-                </th>
                 <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                   No.
                 </th>
@@ -465,16 +687,19 @@ export default function UsersPage() {
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
                   잔액
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  파일
+                <th className="w-16 px-3 py-3 text-center text-xs font-semibold tracking-wider text-slate-500 whitespace-nowrap">
+                  입력완료
                 </th>
                 <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                   정산
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <th className="w-14 px-1 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                   정산요청
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <th className="w-12 px-2 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  파일
+                </th>
+                <th className="w-14 px-1 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                   삭제
                 </th>
               </tr>
@@ -493,25 +718,11 @@ export default function UsersPage() {
               ) : filteredUsers && filteredUsers.length > 0 ? (
                 filteredUsers.map((user, index) => {
                   const balance = user.balance ?? 0;
-                  const isSelected = selectedUserIds.has(user.user_id);
                   return (
                     <tr
                       key={user.user_id || index}
-                      className={cn(
-                        "table-row-interactive",
-                        isSelected && "bg-[#135bec]/5"
-                      )}
+                      className="table-row-interactive"
                     >
-                      <td className="w-10 px-2 py-2.5 text-center">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={(e) =>
-                            handleSelectUser(user.user_id, e.target.checked)
-                          }
-                          className="h-4 w-4 rounded border-slate-300 text-[#135bec] focus:ring-[#135bec]"
-                        />
-                      </td>
                       <td className="px-4 py-2.5 text-center text-sm text-slate-400">
                         {index + 1}
                       </td>
@@ -552,23 +763,17 @@ export default function UsersPage() {
                       >
                         {formatCurrency(balance)}
                       </td>
-                      <td className="px-4 py-2.5 text-center">
-                        {user.has_excel_file ? (
-                          <button className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-emerald-600 transition-colors hover:bg-emerald-50">
-                            <FileSpreadsheet className="h-4 w-4" />
-                          </button>
-                        ) : (
-                          <span className="text-slate-300">-</span>
-                        )}
+                      <td className="px-3 py-2.5 text-center">
+                        {renderInputCheckStatus(user.user_id)}
                       </td>
-                      <td className="px-4 py-2.5 text-center">
+                      <td className="px-2 py-2.5 text-center">
                         <button
                           onClick={() =>
                             handleToggleSettlement(user.user_id, user.is_settled)
                           }
                           disabled={toggleSettlementMutation.isPending}
                           className={cn(
-                            "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all",
+                            "inline-flex items-center gap-1.5 rounded-full px-2 py-1.5 text-xs font-medium transition-all",
                             toggleSettlementMutation.isPending &&
                               toggleSettlementMutation.variables?.userId ===
                                 user.user_id
@@ -598,7 +803,7 @@ export default function UsersPage() {
                           )}
                         </button>
                       </td>
-                      <td className="px-4 py-2.5 text-center">
+                      <td className="px-1 py-2.5 text-center">
                         {user.email ? (
                           <button
                             onClick={() => {
@@ -608,21 +813,21 @@ export default function UsersPage() {
                               });
                             }}
                             disabled={sendNotifyMutation.isPending}
-                            className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-sky-500 transition-colors hover:bg-sky-50 hover:text-sky-600"
+                            className="inline-flex h-6 w-6 items-center justify-center rounded-lg text-sky-500 transition-colors hover:bg-sky-50 hover:text-sky-600"
                             title="정산 요청 보내기"
                           >
                             {sendNotifyMutation.isPending &&
                             sendNotifyMutation.variables?.userId === user.user_id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
                             ) : (
-                              <Send className="h-4 w-4" />
+                              <Send className="h-3.5 w-3.5" />
                             )}
                           </button>
                         ) : (
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-slate-300 cursor-not-allowed">
-                                <Send className="h-4 w-4" />
+                              <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg text-slate-300 cursor-not-allowed">
+                                <Send className="h-3.5 w-3.5" />
                               </span>
                             </TooltipTrigger>
                             <TooltipContent>
@@ -632,16 +837,33 @@ export default function UsersPage() {
                         )}
                       </td>
                       <td className="px-4 py-2.5 text-center">
+                        {user.has_excel_file ? (
+                          <button
+                            onClick={() => handleDownloadExcel(user.user_id, user.full_name)}
+                            disabled={downloadingUserId === user.user_id}
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-emerald-600 transition-colors hover:bg-emerald-50"
+                          >
+                            {downloadingUserId === user.user_id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <FileSpreadsheet className="h-4 w-4" />
+                            )}
+                          </button>
+                        ) : (
+                          <span className="text-slate-300">-</span>
+                        )}
+                      </td>
+                      <td className="px-1 py-2.5 text-center">
                         <button
                           onClick={() => handleDeleteUser(user.user_id, user.full_name)}
                           disabled={deleteUserMutation.isPending}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                          className="inline-flex h-6 w-6 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
                         >
                           {deleteUserMutation.isPending &&
                           deleteUserMutation.variables === user.user_id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
                           ) : (
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3.5 w-3.5" />
                           )}
                         </button>
                       </td>
@@ -680,8 +902,7 @@ export default function UsersPage() {
         onOpenChange={(open) => {
           setIsAddDialogOpen(open);
           if (!open) {
-            setNewUserForm({ fullName: "", loginId: "", password: "" });
-            setLoginIdError("");
+            reset();
           }
         }}
       >
@@ -690,68 +911,85 @@ export default function UsersPage() {
             <DialogTitle>사용자 추가</DialogTitle>
             <DialogDescription>새 사용자 정보를 입력하세요.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="fullName">이름</Label>
-              <Input
-                id="fullName"
-                value={newUserForm.fullName}
-                onChange={(e) =>
-                  setNewUserForm({ ...newUserForm, fullName: e.target.value })
-                }
-                placeholder="홍길동"
-              />
+          <form onSubmit={handleSubmit(onSubmitUser)}>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="fullName">이름</Label>
+                <Input
+                  id="fullName"
+                  placeholder="홍길동"
+                  className={errors.fullName ? "border-red-500 focus-visible:ring-red-500" : ""}
+                  {...register("fullName", { required: "이름을 입력해주세요." })}
+                />
+                {errors.fullName && (
+                  <p className="text-sm text-red-500">{errors.fullName.message}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="loginId">아이디</Label>
+                <Input
+                  id="loginId"
+                  placeholder="hong123"
+                  className={errors.loginId ? "border-red-500 focus-visible:ring-red-500" : ""}
+                  {...register("loginId", { required: "아이디를 입력해주세요." })}
+                />
+                {errors.loginId && (
+                  <p className="text-sm text-red-500">{errors.loginId.message}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">비밀번호</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  className={errors.password ? "border-red-500 focus-visible:ring-red-500" : ""}
+                  {...register("password", { required: "비밀번호를 입력해주세요." })}
+                />
+                {errors.password && (
+                  <p className="text-sm text-red-500">{errors.password.message}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">이메일 (선택)</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="hong@example.com"
+                  className={errors.email ? "border-red-500 focus-visible:ring-red-500" : ""}
+                  {...register("email", {
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message: "올바른 이메일 형식이 아닙니다.",
+                    },
+                  })}
+                />
+                {errors.email && (
+                  <p className="text-sm text-red-500">{errors.email.message}</p>
+                )}
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="loginId">아이디</Label>
-              <Input
-                id="loginId"
-                value={newUserForm.loginId}
-                onChange={(e) => {
-                  setNewUserForm({ ...newUserForm, loginId: e.target.value });
-                  if (loginIdError) setLoginIdError("");
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsAddDialogOpen(false);
+                  reset();
                 }}
-                placeholder="hong123"
-                className={loginIdError ? "border-red-500 focus-visible:ring-red-500" : ""}
-              />
-              {loginIdError && (
-                <p className="text-sm text-red-500">{loginIdError}</p>
-              )}
+              >
+                취소
+              </Button>
+              <Button
+                type="submit"
+                disabled={createUserMutation.isPending}
+              >
+                {createUserMutation.isPending ? "추가 중..." : "추가"}
+              </Button>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">비밀번호</Label>
-              <Input
-                id="password"
-                type="password"
-                value={newUserForm.password}
-                onChange={(e) =>
-                  setNewUserForm({ ...newUserForm, password: e.target.value })
-                }
-                placeholder="••••••••"
-              />
-            </div>
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsAddDialogOpen(false);
-                setNewUserForm({ fullName: "", loginId: "", password: "" });
-                setLoginIdError("");
-              }}
-            >
-              취소
-            </Button>
-            <Button
-              onClick={handleCreateUser}
-              disabled={createUserMutation.isPending}
-            >
-              {createUserMutation.isPending ? "추가 중..." : "추가"}
-            </Button>
-          </div>
+          </form>
         </DialogContent>
       </Dialog>
-
     </div>
   );
 }

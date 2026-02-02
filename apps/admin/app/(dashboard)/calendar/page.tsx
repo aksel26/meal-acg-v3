@@ -206,6 +206,12 @@ export default function CalendarPage() {
           currentDate.month() + 1,
         ),
       });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.stats.monthly(
+          currentDate.year(),
+          currentDate.month() + 1,
+        ),
+      });
       toast.success(
         editingLog
           ? "식대 정보가 수정되었습니다."
@@ -230,6 +236,12 @@ export default function CalendarPage() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.mealLogs.byUserAndMonth(
           selectedUserId,
+          currentDate.year(),
+          currentDate.month() + 1,
+        ),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.stats.monthly(
           currentDate.year(),
           currentDate.month() + 1,
         ),
@@ -263,6 +275,12 @@ export default function CalendarPage() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.mealLogs.byUserAndMonth(
           selectedUserId,
+          currentDate.year(),
+          currentDate.month() + 1,
+        ),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.stats.monthly(
           currentDate.year(),
           currentDate.month() + 1,
         ),

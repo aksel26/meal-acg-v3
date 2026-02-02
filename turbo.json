@@ -3,6 +3,14 @@
   "ui": "tui",
   "globalDependencies": [".env*"],
   "tasks": {
+    "build:styles": {
+      "outputs": ["dist/**"],
+      "env": []
+    },
+    "build:components": {
+      "outputs": ["dist/**"],
+      "env": []
+    },
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],

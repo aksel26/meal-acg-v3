@@ -153,33 +153,33 @@ export async function GET(request: NextRequest) {
       row.getCell(2).value = year;
       row.getCell(3).value = m;
 
-      // D: 업무일 - 수식
+      // D: 업무일 - 수식 (내역 E열=업무일구분, B열=월)
       row.getCell(4).value = {
-        formula: `COUNTIFS(내역!$F:$F,"업무일",내역!$C:$C,통계!$C${rowNum})`,
+        formula: `COUNTIFS(내역!$E:$E,"업무일",내역!$B:$B,통계!$C${rowNum})`,
       };
 
       // E: 휴일 - 수식
       row.getCell(5).value = {
-        formula: `COUNTIFS(내역!$F:$F,"휴일",내역!$C:$C,통계!$C${rowNum})`,
+        formula: `COUNTIFS(내역!$E:$E,"휴일",내역!$B:$B,통계!$C${rowNum})`,
       };
 
       // F: 업무일 기준 사용 가능액 - 수식
       row.getCell(6).value = { formula: `D${rowNum}*10000` };
       row.getCell(6).numFmt = "#,##0";
 
-      // G: 근태 - 연차/휴무 - 수식
+      // G: 근태 - 연차/휴무 - 수식 (내역 G열=근태, B열=월)
       row.getCell(7).value = {
-        formula: `COUNTIFS(내역!$H:$H,"연차/휴무",내역!$C:$C,통계!$C${rowNum})+COUNTIFS(내역!$H:$H,"오전 반차/휴무",내역!$C:$C,통계!$C${rowNum})+COUNTIFS(내역!$H:$H,"오후 반차/휴무",내역!$C:$C,통계!$C${rowNum})`,
+        formula: `COUNTIFS(내역!$G:$G,"연차/휴무",내역!$B:$B,통계!$C${rowNum})+COUNTIFS(내역!$G:$G,"오전 반차/휴무",내역!$B:$B,통계!$C${rowNum})+COUNTIFS(내역!$G:$G,"오후 반차/휴무",내역!$B:$B,통계!$C${rowNum})`,
       };
 
       // H: 휴일근무 - 수식
       row.getCell(8).value = {
-        formula: `COUNTIFS(내역!$H:$H,"근무",내역!$F:$F,"휴일",내역!$C:$C,통계!$C${rowNum})`,
+        formula: `COUNTIFS(내역!$G:$G,"근무",내역!$E:$E,"휴일",내역!$B:$B,통계!$C${rowNum})`,
       };
 
       // I: 실 사용 가능액 (근태 반영) - 수식
       row.getCell(9).value = {
-        formula: `F${rowNum}-(10000*(COUNTIFS(내역!$H:$H,"연차/휴무",내역!$C:$C,통계!$C${rowNum})+COUNTIFS(내역!$H:$H,"오전 반차/휴무",내역!$C:$C,통계!$C${rowNum})+COUNTIFS(내역!$H:$H,"오후 반차/휴무",내역!$C:$C,통계!$C${rowNum})+COUNTIFS(내역!$H:$H,"재택근무",내역!$C:$C,통계!$C${rowNum})+COUNTIFS(내역!$H:$H,"근무(개별식사 / 식사안함)",내역!$C:$C,통계!$C${rowNum})))+(10000*H${rowNum})`,
+        formula: `F${rowNum}-(10000*(COUNTIFS(내역!$G:$G,"연차/휴무",내역!$B:$B,통계!$C${rowNum})+COUNTIFS(내역!$G:$G,"오전 반차/휴무",내역!$B:$B,통계!$C${rowNum})+COUNTIFS(내역!$G:$G,"오후 반차/휴무",내역!$B:$B,통계!$C${rowNum})+COUNTIFS(내역!$G:$G,"재택근무",내역!$B:$B,통계!$C${rowNum})+COUNTIFS(내역!$G:$G,"근무(개별식사 / 식사안함)",내역!$B:$B,통계!$C${rowNum})))+(10000*H${rowNum})`,
       };
       row.getCell(9).numFmt = "#,##0";
 
@@ -189,21 +189,21 @@ export async function GET(request: NextRequest) {
       };
       row.getCell(10).numFmt = "#,##0";
 
-      // K: 중식 사용액 - 수식
+      // K: 중식 사용액 - 수식 (내역 I열=중식금액, G열=근태, B열=월)
       row.getCell(11).value = {
-        formula: `SUMIFS(내역!$J$4:$J$1048576,내역!$H$4:$H$1048576,"근무",내역!$C$4:$C$1048576,통계!$C${rowNum})`,
+        formula: `SUMIFS(내역!$I$4:$I$1048576,내역!$G$4:$G$1048576,"근무",내역!$B$4:$B$1048576,통계!$C${rowNum})`,
       };
       row.getCell(11).numFmt = "#,##0";
 
-      // L: 석식 사용액 - 수식
+      // L: 석식 사용액 - 수식 (내역 M열=석식금액)
       row.getCell(12).value = {
-        formula: `SUMIFS(내역!$N$4:$N$1048576,내역!$H$4:$H$1048576,"근무",내역!$C$4:$C$1048576,통계!$C${rowNum})`,
+        formula: `SUMIFS(내역!$M$4:$M$1048576,내역!$G$4:$G$1048576,"근무",내역!$B$4:$B$1048576,통계!$C${rowNum})`,
       };
       row.getCell(12).numFmt = "#,##0";
 
-      // M: 조식 사용액 - 수식
+      // M: 조식 사용액 - 수식 (내역 P열=조식금액)
       row.getCell(13).value = {
-        formula: `SUMIFS(내역!$Q$4:$Q$1048576,내역!$H$4:$H$1048576,"근무",내역!$C$4:$C$1048576,통계!$C${rowNum})`,
+        formula: `SUMIFS(내역!$P$4:$P$1048576,내역!$G$4:$G$1048576,"근무",내역!$B$4:$B$1048576,통계!$C${rowNum})`,
       };
       row.getCell(13).numFmt = "#,##0";
 
@@ -242,18 +242,18 @@ export async function GET(request: NextRequest) {
       { width: 50 },  // N: 안내
     ];
 
-    // 내역 시트 (컬럼 구조: A=빈열, B=연도, C=월, D=일, E=요일, F=업무일구분, G=특이사항, H=근태, I=중식상호, J=중식금액, K=알림용, L=중식비고, M=석식상호, N=석식금액, O=석식비고, P=조식상호, Q=조식금액, R=조식비고)
+    // 내역 시트 (컬럼 구조: A=연도, B=월, C=일, D=요일, E=업무일구분, F=특이사항, G=근태, H=중식상호, I=중식금액, J=알림용, K=중식비고, L=석식상호, M=석식금액, N=석식비고, O=조식상호, P=조식금액, Q=조식비고)
     const detailSheet = workbook.addWorksheet("내역");
 
     // 헤더 Row 1
     detailSheet.getRow(1).values = [
-      null, null, null, null, null, null, null, "직접 입력",
+      null, null, null, null, null, null, "직접 입력",
       null, null, null, null, null, null, null, null, null, null
     ];
 
     // 헤더 Row 2
     detailSheet.getRow(2).values = [
-      null, "일자", null, null, null, null, null, "근태",
+      "일자", null, null, null, null, null, "근태",
       "중식 내역", null, null, null,
       "석식 내역", null, null,
       "조식 내역", null, null
@@ -261,45 +261,76 @@ export async function GET(request: NextRequest) {
 
     // 헤더 Row 3
     detailSheet.getRow(3).values = [
-      null, "연도", "월", "일", "요일", "업무일 구분", "특이 사항", null,
+      "연도", "월", "일", "요일", "업무일 구분", "특이 사항", null,
       "상호명", "금액", "알림용(작성 금지)", "비고",
       "상호명", "금액", "비고",
       "상호명", "금액", "비고"
     ];
 
+    // 셀 병합
+    detailSheet.mergeCells("A2:F2"); // 일자
+    detailSheet.mergeCells("G1:Q1"); // 직접 입력
+    detailSheet.mergeCells("G2:G3"); // 근태
+    detailSheet.mergeCells("H2:K2"); // 중식 내역
+    detailSheet.mergeCells("L2:N2"); // 석식 내역
+    detailSheet.mergeCells("O2:Q2"); // 조식 내역
+
     // 스타일 적용
-    detailSheet.getRow(1).font = { bold: true };
-    detailSheet.getRow(2).font = { bold: true };
-    detailSheet.getRow(3).font = { bold: true };
-    detailSheet.getRow(3).fill = {
-      type: "pattern",
-      pattern: "solid",
-      fgColor: { argb: "FFE0E0E0" },
-    };
+    const detailBorder: ExcelJS.Border = { style: "thin", color: { argb: "FF808080" } };
+
+    // G1~Q1: 파란색 배경, 글씨 굵기 보통
+    for (let col = 7; col <= 17; col++) { // G=7, Q=17
+      const cell = detailSheet.getRow(1).getCell(col);
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFDDEBF7" },
+      };
+      cell.alignment = { vertical: "middle", horizontal: "center" };
+    }
+
+    // A2~Q3: 회색 배경, 테두리
+    for (let row = 2; row <= 3; row++) {
+      for (let col = 1; col <= 17; col++) { // A=1, Q=17
+        const cell = detailSheet.getRow(row).getCell(col);
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFE0E0E0" },
+        };
+        cell.border = {
+          top: detailBorder,
+          left: detailBorder,
+          bottom: detailBorder,
+          right: detailBorder,
+        };
+        cell.alignment = { vertical: "middle", horizontal: "center" };
+        cell.font = { bold: true };
+      }
+    }
 
     // 열 너비 설정
     detailSheet.columns = [
-      { width: 3 },  // A: 빈 열
-      { width: 8 },  // B: 연도
-      { width: 5 },  // C: 월
-      { width: 5 },  // D: 일
-      { width: 5 },  // E: 요일
-      { width: 12 }, // F: 업무일 구분
-      { width: 12 }, // G: 특이 사항
-      { width: 10 }, // H: 근태
-      { width: 15 }, // I: 중식 상호명
-      { width: 10 }, // J: 중식 금액
-      { width: 15 }, // K: 알림용
-      { width: 12 }, // L: 중식 비고
-      { width: 15 }, // M: 석식 상호명
-      { width: 10 }, // N: 석식 금액
-      { width: 12 }, // O: 석식 비고
-      { width: 15 }, // P: 조식 상호명
-      { width: 10 }, // Q: 조식 금액
-      { width: 12 }, // R: 조식 비고
+      { width: 8 },  // A: 연도
+      { width: 5 },  // B: 월
+      { width: 5 },  // C: 일
+      { width: 5 },  // D: 요일
+      { width: 12 }, // E: 업무일 구분
+      { width: 12 }, // F: 특이 사항
+      { width: 20 }, // G: 근태
+      { width: 15 }, // H: 중식 상호명
+      { width: 10 }, // I: 중식 금액
+      { width: 15 }, // J: 알림용
+      { width: 12 }, // K: 중식 비고
+      { width: 15 }, // L: 석식 상호명
+      { width: 10 }, // M: 석식 금액
+      { width: 12 }, // N: 석식 비고
+      { width: 15 }, // O: 조식 상호명
+      { width: 10 }, // P: 조식 금액
+      { width: 12 }, // Q: 조식 비고
     ];
 
-    // 데이터 Row 4부터 (A열은 비어있음, B~R에 데이터)
+    // 데이터 Row 4부터 (A~Q에 데이터)
     allDates.forEach(({ date, dateStr, month }, index) => {
       const rowNum = index + 4;
       const dayOfWeek = date.getDay();
@@ -314,41 +345,38 @@ export async function GET(request: NextRequest) {
 
       const row = detailSheet.getRow(rowNum);
       row.values = [
-        null, // A: 빈 열
-        year, // B: 연도
-        month, // C: 월
-        date.getDate(), // D: 일
-        DAY_NAMES[dayOfWeek], // E: 요일
-        workType, // F: 업무일 구분
-        specialNote, // G: 특이 사항
-        log?.attendance || null, // H: 근태
-        log?.lunch_store || null, // I: 중식 상호명
-        log?.lunch_amount || null, // J: 중식 금액
-        null, // K: 알림용
-        log?.lunch_payer || null, // L: 중식 비고
-        log?.dinner_store || null, // M: 석식 상호명
-        log?.dinner_amount || null, // N: 석식 금액
-        log?.dinner_payer || null, // O: 석식 비고
-        log?.breakfast_store || null, // P: 조식 상호명
-        log?.breakfast_amount || null, // Q: 조식 금액
-        log?.breakfast_payer || null, // R: 조식 비고
+        year, // A: 연도
+        month, // B: 월
+        date.getDate(), // C: 일
+        DAY_NAMES[dayOfWeek], // D: 요일
+        workType, // E: 업무일 구분
+        specialNote, // F: 특이 사항
+        log?.attendance || null, // G: 근태
+        log?.lunch_store || null, // H: 중식 상호명
+        log?.lunch_amount || null, // I: 중식 금액
+        null, // J: 알림용
+        log?.lunch_payer || null, // K: 중식 비고
+        log?.dinner_store || null, // L: 석식 상호명
+        log?.dinner_amount || null, // M: 석식 금액
+        log?.dinner_payer || null, // N: 석식 비고
+        log?.breakfast_store || null, // O: 조식 상호명
+        log?.breakfast_amount || null, // P: 조식 금액
+        log?.breakfast_payer || null, // Q: 조식 비고
       ];
 
-      
-
-      // 금액 포맷 (J=10, N=14, Q=17)
+      // 금액 포맷 (I=9, M=13, P=16)
       if (log?.lunch_amount) {
-        row.getCell(10).numFmt = "#,##0";
+        row.getCell(9).numFmt = "#,##0";
       }
       if (log?.dinner_amount) {
-        row.getCell(14).numFmt = "#,##0";
+        row.getCell(13).numFmt = "#,##0";
       }
       if (log?.breakfast_amount) {
-        row.getCell(17).numFmt = "#,##0";
+        row.getCell(16).numFmt = "#,##0";
       }
 
-      // 기본 스타일: H~R열 배경색 #DDEBF7 (K열 제외)
-      const blueColumns = [8, 9, 10, 12, 13, 14, 15, 16, 17, 18]; // H,I,J,L,M,N,O,P,Q,R
+      // 기본 스타일: G~Q열 배경색 #DDEBF7 (J열 제외)
+      const blueColumns = [7, 8, 9, 11, 12, 13, 14, 15, 16, 17]; // G,H,I,K,L,M,N,O,P,Q
       blueColumns.forEach((col) => {
         row.getCell(col).fill = {
           type: "pattern",
@@ -357,28 +385,28 @@ export async function GET(request: NextRequest) {
         };
       });
 
-      // A~H열 가운데 정렬 (1~8번 열)
-      for (let col = 1; col <= 8; col++) {
+      // A~G열 가운데 정렬 (1~7번 열)
+      for (let col = 1; col <= 7; col++) {
         row.getCell(col).alignment = { horizontal: "center" };
       }
 
-      // 휴일 스타일 (F열, G열만)
+      // 휴일 스타일 (E열, F열만)
       if (isWeekend || isHoliday) {
-        // F열(6): 배경색 + 빨간 텍스트
-        row.getCell(6).fill = {
+        // E열(5): 배경색 + 빨간 텍스트
+        row.getCell(5).fill = {
           type: "pattern",
           pattern: "solid",
           fgColor: { argb: "FFF6C9CE" },
         };
-        row.getCell(6).font = { color: { argb: "FFFF0000" } };
+        row.getCell(5).font = { color: { argb: "FFFF0000" } };
 
-        // G열(7): 빨간 텍스트만
-        row.getCell(7).font = { color: { argb: "FFFF0000" } };
+        // F열(6): 빨간 텍스트만
+        row.getCell(6).font = { color: { argb: "FFFF0000" } };
       }
 
-      // B~R열 테두리 (2~18번 열)
+      // A~Q열 테두리 (1~17번 열)
       const border: ExcelJS.Border = { style: "thin", color: { argb: "FF808080" } };
-      for (let col = 2; col <= 18; col++) {
+      for (let col = 1; col <= 17; col++) {
         row.getCell(col).border = {
           top: border,
           left: border,

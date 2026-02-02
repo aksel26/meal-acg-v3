@@ -206,6 +206,12 @@ export default function CalendarPage() {
           currentDate.month() + 1,
         ),
       });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.stats.monthly(
+          currentDate.year(),
+          currentDate.month() + 1,
+        ),
+      });
       toast.success(
         editingLog
           ? "식대 정보가 수정되었습니다."
@@ -230,6 +236,12 @@ export default function CalendarPage() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.mealLogs.byUserAndMonth(
           selectedUserId,
+          currentDate.year(),
+          currentDate.month() + 1,
+        ),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.stats.monthly(
           currentDate.year(),
           currentDate.month() + 1,
         ),
@@ -263,6 +275,12 @@ export default function CalendarPage() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.mealLogs.byUserAndMonth(
           selectedUserId,
+          currentDate.year(),
+          currentDate.month() + 1,
+        ),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.stats.monthly(
           currentDate.year(),
           currentDate.month() + 1,
         ),
@@ -348,10 +366,32 @@ export default function CalendarPage() {
 
     if (existingLog) {
       setEditingLog(existingLog);
+      // DB 근태 값을 폼 옵션으로 매핑
+      const mapAttendanceToFormValue = (dbValue: string | null): string => {
+        if (!dbValue) return "";
+        const value = dbValue.trim();
+        // 개별식사 관련
+        if (value.includes("개별")) return "개별식사";
+        // 출근/근무 관련
+        if (value === "출근" || value === "근무") return "출근";
+        // 재택 관련
+        if (value.includes("재택") || value.includes("홈")) return "재택";
+        // 휴가/연차 관련
+        if (value.includes("휴가") || value.includes("연차") || value === "휴무") return "휴가";
+        // 오전반차
+        if (value.includes("오전") && value.includes("반차")) return "오전반차";
+        // 오후반차
+        if (value.includes("오후") && value.includes("반차")) return "오후반차";
+        // 반차 (오전/오후 구분 없으면 오전반차로 기본)
+        if (value.includes("반차")) return "오전반차";
+        // 매핑되지 않으면 원래 값 반환
+        return value;
+      };
+
       setFormData({
         userId: existingLog.user_id,
         entryDate: existingLog.entry_date,
-        attendance: existingLog.attendance || "",
+        attendance: mapAttendanceToFormValue(existingLog.attendance),
         breakfastStore: existingLog.breakfast_store || "",
         breakfastAmount: existingLog.breakfast_amount || 0,
         breakfastPayer: existingLog.breakfast_payer || "",
@@ -693,7 +733,7 @@ export default function CalendarPage() {
                 근태
               </Label>
               <div className="flex flex-wrap gap-1.5">
-                {["출근", "개별식사", "재택", "휴가", "반차", "주말근무"].map(
+                {["출근", "개별식사", "재택", "휴가", "오전반차", "오후반차"].map(
                   (value) => {
                     const isSelected = bulkAttendance === value;
                     return (
@@ -836,7 +876,7 @@ export default function CalendarPage() {
                 근태
               </Label>
               <div className="flex flex-wrap gap-1.5">
-                {["출근", "개별식사", "재택", "휴가", "반차", "주말근무"].map(
+                {["출근", "개별식사", "재택", "휴가", "오전반차", "오후반차"].map(
                   (value) => {
                     const isSelected = formData.attendance === value;
                     return (

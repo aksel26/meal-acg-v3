@@ -44,8 +44,8 @@ export async function GET(request: NextRequest) {
       totalMembers: members?.length || 0,
       settledCount: settledMembers.length,
       unsettledCount: unsettledMembers.length,
-      settledMembers: settledMembers.slice(0, 5),
-      unsettledMembers: unsettledMembers.slice(0, 5),
+      settledMembers,
+      unsettledMembers,
       month: `${year}년 ${month}월`,
     });
   } catch (error) {

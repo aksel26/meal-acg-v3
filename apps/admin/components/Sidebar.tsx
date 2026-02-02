@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import Image from "next/image";
 
 interface NavItem {
   name: string;
@@ -175,11 +176,17 @@ export default function Sidebar() {
       <div className="flex flex-col gap-6">
         {/* Logo Area */}
         <Link href="/" className="flex items-center gap-3 px-2">
-          <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#135bec] to-[#a855f7] text-white shadow-lg">
-            <Grid3X3 className="h-5 w-5" />
+          <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#b8d0ff] to-[#ffc39a] text-white shadow-lg">
+            <Image
+              src="/acg_ci_white.png"
+              alt="ACG Logo"
+              width={40}
+              height={32}
+              className="h-3 w-8"
+            />
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900">
-            식대 Admin
+          <h1 className="text-lg font-medium tracking-tight text-slate-900">
+            식대 관리 Admin
           </h1>
         </Link>
 

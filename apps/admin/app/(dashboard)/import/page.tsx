@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useDropzone } from "react-dropzone";
 import {
   Card,
@@ -49,6 +49,7 @@ interface FileUploadState extends ParseResult {
 }
 
 export default function ImportPage() {
+  const queryClient = useQueryClient();
   const [uploadedFiles, setUploadedFiles] = useState<FileUploadState[]>([]);
   const [overwrite, setOverwrite] = useState(false);
   const [selectedPreview, setSelectedPreview] = useState<string | null>(null);
@@ -216,6 +217,11 @@ export default function ImportPage() {
       );
 
       if (result.success) {
+        // 관련 쿼리 무효화
+        await queryClient.invalidateQueries({ queryKey: queryKeys.mealLogs.all });
+        await queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
+        await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+
         toast.success(
           `${fileState.memberName}: ${result.inserted}건 추가, ${result.updated}건 업데이트, ${result.skipped}건 건너뜀`
         );
@@ -241,6 +247,14 @@ export default function ImportPage() {
     for (const file of filesToImport) {
       await importFile(file);
     }
+
+    // 관련 쿼리 무효화하여 최신 데이터 반영
+    await queryClient.invalidateQueries({ queryKey: queryKeys.mealLogs.all });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
+    await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+
+    // 전체 작업 완료 알림
+    toast.success(`가져오기 작업이 완료되었습니다. (${filesToImport.length}개 파일)`);
   };
 
   // 통계

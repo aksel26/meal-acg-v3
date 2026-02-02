@@ -99,9 +99,10 @@ export function AmountStep({ onSubmit, isSubmitting }: AmountStepProps) {
               value={formatNumberWithCommas(currentAmount)}
               onChange={handleValueChange}
               onKeyDown={handleKeyDown}
-              className="h-14 text-2xl font-semibold text-right pr-12 rounded-xl border-2 border-gray-100 bg-white focus:border-gray-300 focus:ring-0 transition-all placeholder:text-gray-300 placeholder:font-normal"
+              className="h-14 text-2xl font-semibold text-right rounded-xl border-2 border-gray-100 bg-white focus:border-gray-300 focus:ring-0 transition-all placeholder:text-gray-300 placeholder:font-normal"
+              style={{ paddingRight: '2.3rem' }}
             />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-lg text-gray-400 font-medium">
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-lg text-gray-400 font-medium pointer-events-none">
               원
             </span>
           </motion.div>

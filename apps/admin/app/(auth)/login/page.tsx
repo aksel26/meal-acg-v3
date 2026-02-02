@@ -3,7 +3,8 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { Utensils, Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
+import Image from "next/image";
+import { Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
 
 function LoginForm() {
   const router = useRouter();
@@ -180,14 +181,18 @@ export default function LoginPage() {
       {/* Login Card */}
       <div className="relative z-10 w-full max-w-md">
         {/* Logo */}
-        <div className="mb-8 flex flex-col items-center">
-          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 shadow-2xl shadow-amber-500/30">
-            <Utensils className="h-8 w-8 text-white" />
-          </div>
+        <div className="mb-8 flex flex-col items-center gap-y-3">
+            <Image
+              src="/acg_ci_white.png"
+              alt="ACG Logo"
+              width={80}
+              height={32}
+              // className="h-8 w-8"
+            />
           <h1 className="text-2xl font-bold tracking-tight text-white">
-            ACG 식대
+            
           </h1>
-          <p className="mt-1 text-sm text-slate-400">Admin Console</p>
+          <p className="text-md text-slate-400">식대 관리 Admin</p>
         </div>
 
         {/* Form with Suspense */}

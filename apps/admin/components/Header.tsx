@@ -23,46 +23,34 @@ export default function Header() {
   const pathname = usePathname();
   const pageInfo = pageTitles[pathname] ?? pageTitles["/"] ?? { title: "대시보드", subtitle: "" };
   const today = dayjs();
-
+  console.log("🔍 ~ Header ~ apps/admin/components/Header.tsx:39 ~ pageInfo:", pageInfo);
   return (
     <header className="z-10 flex w-full items-center justify-between px-6 py-4">
       {/* Mobile menu button */}
-      <div className="flex items-center gap-4 lg:hidden">
+      {/* <div className="flex items-center gap-4 lg:hidden">
         <button className="flex items-center justify-center rounded-lg p-2 text-slate-500 hover:bg-white/50">
           <Menu className="h-5 w-5" />
         </button>
-      </div>
+      </div> */}
 
       {/* Left - Page Title & Search */}
-      <div className="flex flex-1 items-center gap-6 md:px-4">
-        <h2 className="hidden text-2xl font-bold tracking-tight text-slate-800 md:block">
+      <div className="flex flex-1 gap-1 md:px-4 flex-col">
+        <h2 className="text-xl font-semibold tracking-tight text-slate-800 md:block">
           {pageInfo.title}
         </h2>
+        <p className="text-slate-500">{pageInfo.subtitle}</p>
 
         {/* Search Bar */}
-        <div className="relative hidden max-w-md flex-1 md:block">
+        {/* <div className="relative max-w-md flex-1 md:block">
           <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             placeholder="검색..."
             className="h-10 w-full rounded-xl border-none bg-white/60 pl-10 pr-4 text-sm text-slate-700 shadow-sm ring-1 ring-white/60 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#135bec]/20"
           />
-        </div>
+        </div> */}
       </div>
 
-      {/* Right - Actions */}
-      <div className="flex items-center gap-3">
-        {/* Notifications */}
-        <button className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-white/60 text-slate-600 shadow-sm ring-1 ring-white transition-transform hover:scale-105 active:scale-95">
-          <Bell className="h-5 w-5" />
-          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-        </button>
-
-        {/* Calendar */}
-        <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/60 text-slate-600 shadow-sm ring-1 ring-white transition-transform hover:scale-105 active:scale-95">
-          <CalendarIcon className="h-5 w-5" />
-        </button>
-      </div>
     </header>
   );
 }

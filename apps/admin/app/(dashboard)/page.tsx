@@ -93,6 +93,8 @@ export default function DashboardPage() {
     },
   });
 
+  console.log("🔍 ~ DashboardPage ~ apps/admin/app/(dashboard)/page.tsx:299 ~ totalUsed:", stats);
+
   const { data: settlement } = useQuery<SettlementData>({
     queryKey: queryKeys.dashboard.settlement(selectedYear, selectedMonth),
     queryFn: async () => {
@@ -145,7 +147,7 @@ export default function DashboardPage() {
       return `${(amount / 10000000).toFixed(1)}천만`;
     }
     if (amount >= 10000) {
-      return `${(amount / 10000).toFixed(0)}만`;
+      return `${(amount / 10000).toFixed(1)}만`;
     }
     return formatCurrency(amount);
   };
@@ -289,7 +291,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-slate-500">사용 금액</p>
             <span className="rounded-full bg-[#a855f7]/10 px-2 py-0.5 text-[10px] font-semibold text-[#a855f7]">
-              {usageRate.toFixed(0)}%
+              {usageRate.toFixed(1)}%
             </span>
           </div>
           {isLoading ? (
@@ -524,9 +526,10 @@ export default function DashboardPage() {
                     strokeWidth={2}
                     fill="url(#excessGradient)"
                     dot={(props) => {
-                      const { cx, cy } = props;
+                      const { cx, cy, index } = props;
                       return (
                         <circle
+                          key={`dot-${index}`}
                           cx={cx}
                           cy={cy}
                           r={4}

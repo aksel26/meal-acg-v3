@@ -68,28 +68,17 @@ export async function GET(request: NextRequest) {
     const yearData = monthlyAllowances[String(yearNum)] || {};
     const monthData = yearData[String(monthNum)];
     const allowanceAmount = monthData?.allowance ?? 0;
-    const dailyAllowance = settingsData?.daily_allowance ?? 10000;
+    // 저장된 월별 데이터에서 일일 단가 계산 (allowance / workdays)
+    const savedDailyAllowance = monthData && monthData.workdays > 0
+      ? monthData.allowance / monthData.workdays
+      : null;
+    const dailyAllowance = savedDailyAllowance ?? settingsData?.daily_allowance ?? 10000;
 
     // 해당 월 식대 총 사용액 계산
     const startDate = dayjs(`${yearNum}-${monthNum}-01`).format("YYYY-MM-DD");
     const endDate = dayjs(`${yearNum}-${monthNum}-01`)
       .endOf("month")
       .format("YYYY-MM-DD");
-
-    // 해당 월 공휴일 조회
-    const { data: holidays, error: holidayError } = await supabase
-      .from("holidays")
-      .select("holiday_date")
-      .gte("holiday_date", startDate)
-      .lte("holiday_date", endDate);
-
-    if (holidayError) {
-      console.error("Holidays query error:", holidayError);
-      return NextResponse.json(
-        { success: false, error: "공휴일 데이터 조회 오류" },
-        { status: 500 }
-      );
-    }
 
     const { data: mealLogs, error: mealError } = await supabase
       .from("meal_logs")
@@ -138,12 +127,8 @@ export async function GET(request: NextRequest) {
     // 반차 차감액 (반차 수 × 일일 지원금)
     const halfDayDeduction = halfDayOffCount * dailyAllowance;
 
-    // 공휴일 차감액 (공휴일 수 × 일일 지원금)
-    const holidayCount = holidays?.length ?? 0;
-    const holidayDeduction = holidayCount * dailyAllowance;
-
-    // 총 차감액
-    const totalDeduction = individualMealDeduction + noMealDeduction + halfDayDeduction + holidayDeduction;
+    // 총 차감액 (공휴일은 Admin에서 월별 지원금 저장 시 이미 제외됨)
+    const totalDeduction = individualMealDeduction + noMealDeduction + halfDayDeduction;
 
     // 실제 사용가능 금액 = 월별 지원금 - 총 차감액
     const effectiveAllowance = allowanceAmount - totalDeduction;
@@ -165,8 +150,6 @@ export async function GET(request: NextRequest) {
         noMealDeduction, // 연차/재택/휴무 차감액
         halfDayOffCount, // 반차 일수
         halfDayDeduction, // 반차 차감액
-        holidayCount, // 공휴일 수
-        holidayDeduction, // 공휴일 차감액
         totalDeduction, // 총 차감액
         dailyAllowance,
       },

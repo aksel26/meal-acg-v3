@@ -275,18 +275,18 @@ export default function UsersPage() {
     <div className="space-y-6">
       {/* Quick Stats */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="flex items-center gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/60">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-slate-500 to-slate-600 shadow-lg">
-            <Users className="h-6 w-6 text-white" />
+        <div className="flex items-center gap-4 glass-panel rounded-2xl p-5 transition-all duration-300 hover:border-white/80">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#135bec]/10">
+            <Users className="h-5 w-5 text-[#135bec]" />
           </div>
           <div>
             <p className="text-sm font-medium text-slate-500">총 인원</p>
             <p className="text-2xl font-bold text-slate-900">{totalUsers}명</p>
           </div>
         </div>
-        <div className="flex items-center gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/60">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-lg">
-            <Check className="h-6 w-6 text-white" />
+        <div className="flex items-center gap-4 glass-panel rounded-2xl p-5 transition-all duration-300 hover:border-white/80">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10">
+            <Check className="h-5 w-5 text-emerald-600" />
           </div>
           <div>
             <p className="text-sm font-medium text-slate-500">정산 완료</p>
@@ -298,9 +298,9 @@ export default function UsersPage() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/60">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 shadow-lg">
-            <Wallet className="h-6 w-6 text-white" />
+        <div className="flex items-center gap-4 glass-panel rounded-2xl p-5 transition-all duration-300 hover:border-white/80">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#a855f7]/10">
+            <Wallet className="h-5 w-5 text-[#a855f7]" />
           </div>
           <div>
             <p className="text-sm font-medium text-slate-500">총 사용액</p>
@@ -343,7 +343,7 @@ export default function UsersPage() {
                   className={cn(
                     "flex w-full items-center rounded-lg px-3 py-2 text-sm transition-colors",
                     year === selectedYear
-                      ? "bg-amber-50 font-medium text-amber-600"
+                      ? "bg-[#135bec]/10 font-medium text-[#135bec]"
                       : "text-slate-600 hover:bg-slate-50"
                   )}
                 >
@@ -383,7 +383,7 @@ export default function UsersPage() {
                   className={cn(
                     "flex items-center justify-center rounded-lg py-2 text-sm transition-colors",
                     month === selectedMonth
-                      ? "bg-amber-50 font-medium text-amber-600"
+                      ? "bg-[#135bec]/10 font-medium text-[#135bec]"
                       : "text-slate-600 hover:bg-slate-50"
                   )}
                 >
@@ -422,7 +422,7 @@ export default function UsersPage() {
       </div>
 
       {/* Users Table */}
-      <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/60">
+      <div className="glass-panel overflow-hidden rounded-2xl">
         <div className="max-h-[calc(100vh-360px)] overflow-auto">
           <table className="w-full">
             <thead className="sticky top-0 z-10 bg-slate-50 shadow-[0_1px_0_0_rgb(241,245,249)]">
@@ -432,7 +432,7 @@ export default function UsersPage() {
                     type="checkbox"
                     checked={isAllSelected}
                     onChange={(e) => handleSelectAll(e.target.checked)}
-                    className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
+                    className="h-4 w-4 rounded border-slate-300 text-[#135bec] focus:ring-[#135bec]"
                   />
                 </th>
                 <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -457,7 +457,7 @@ export default function UsersPage() {
                   재택
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  지원금
+                  사용가능액
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
                   사용액
@@ -484,7 +484,7 @@ export default function UsersPage() {
                 Array.from({ length: 8 }).map((_, index) => (
                   <tr key={index}>
                     {Array.from({ length: 15 }).map((_, cellIndex) => (
-                      <td key={cellIndex} className="px-4 py-4">
+                      <td key={cellIndex} className="px-4 py-2.5">
                         <div className="h-4 w-full animate-pulse rounded bg-slate-100" />
                       </td>
                     ))}
@@ -499,69 +499,69 @@ export default function UsersPage() {
                       key={user.user_id || index}
                       className={cn(
                         "table-row-interactive",
-                        isSelected && "bg-amber-50/50"
+                        isSelected && "bg-[#135bec]/5"
                       )}
                     >
-                      <td className="w-10 px-2 py-4 text-center">
+                      <td className="w-10 px-2 py-2.5 text-center">
                         <input
                           type="checkbox"
                           checked={isSelected}
                           onChange={(e) =>
                             handleSelectUser(user.user_id, e.target.checked)
                           }
-                          className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
+                          className="h-4 w-4 rounded border-slate-300 text-[#135bec] focus:ring-[#135bec]"
                         />
                       </td>
-                      <td className="px-4 py-4 text-center text-sm text-slate-400">
+                      <td className="px-4 py-2.5 text-center text-sm text-slate-400">
                         {index + 1}
                       </td>
-                      <td className="px-4 py-4">
+                      <td className="px-4 py-2.5">
                         <button
                           onClick={() => handleUserClick(user.user_id)}
-                          className="font-medium text-amber-600 hover:text-amber-700 underline underline-offset-2 decoration-amber-300 hover:decoration-amber-500 transition-colors"
+                          className="text-sm text-[#135bec] hover:text-[#135bec]/80 underline underline-offset-2 decoration-[#135bec]/30 hover:decoration-[#135bec]/60 transition-colors"
                         >
                           {user.full_name}
                         </button>
                       </td>
-                      <td className="px-4 py-4 text-center text-sm text-slate-600">
+                      <td className="px-4 py-2.5 text-center text-sm text-slate-600">
                         {user.work_days ?? 0}일
                       </td>
-                      <td className="px-4 py-4 text-center text-sm text-slate-600">
+                      <td className="px-4 py-2.5 text-center text-sm text-slate-600">
                         {user.holiday_count ?? 0}일
                       </td>
-                      <td className="px-4 py-4 text-center text-sm text-slate-600">
+                      <td className="px-4 py-2.5 text-center text-sm text-slate-600">
                         {user.weekend_work_days ?? 0}일
                       </td>
-                      <td className="px-4 py-4 text-center text-sm text-slate-600">
+                      <td className="px-4 py-2.5 text-center text-sm text-slate-600">
                         {user.individual_meals ?? 0}회
                       </td>
-                      <td className="px-4 py-4 text-center text-sm text-slate-600">
+                      <td className="px-4 py-2.5 text-center text-sm text-slate-600">
                         {user.remote_work_days ?? 0}일
                       </td>
-                      <td className="px-4 py-4 text-right text-sm font-medium text-sky-600">
+                      <td className="px-4 py-2.5 text-right text-sm font-medium text-sky-600">
                         {formatCurrency(user.total_allowance)}
                       </td>
-                      <td className="px-4 py-4 text-right text-sm font-medium text-amber-600">
+                      <td className="px-4 py-2.5 text-right text-sm font-medium text-[#a855f7]">
                         {formatCurrency(user.total_used)}
                       </td>
                       <td
                         className={cn(
-                          "px-4 py-4 text-right text-sm font-bold",
+                          "px-4 py-2.5 text-right text-sm font-semibold",
                           balance >= 0 ? "text-emerald-600" : "text-rose-600"
                         )}
                       >
                         {formatCurrency(balance)}
                       </td>
-                      <td className="px-4 py-4 text-center">
+                      <td className="px-4 py-2.5 text-center">
                         {user.has_excel_file ? (
-                          <button className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-emerald-600 transition-colors hover:bg-emerald-50">
+                          <button className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-emerald-600 transition-colors hover:bg-emerald-50">
                             <FileSpreadsheet className="h-4 w-4" />
                           </button>
                         ) : (
                           <span className="text-slate-300">-</span>
                         )}
                       </td>
-                      <td className="px-4 py-4 text-center">
+                      <td className="px-4 py-2.5 text-center">
                         <button
                           onClick={() =>
                             handleToggleSettlement(user.user_id, user.is_settled)
@@ -598,7 +598,7 @@ export default function UsersPage() {
                           )}
                         </button>
                       </td>
-                      <td className="px-4 py-4 text-center">
+                      <td className="px-4 py-2.5 text-center">
                         {user.email ? (
                           <button
                             onClick={() => {
@@ -608,7 +608,7 @@ export default function UsersPage() {
                               });
                             }}
                             disabled={sendNotifyMutation.isPending}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-sky-500 transition-colors hover:bg-sky-50 hover:text-sky-600"
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-sky-500 transition-colors hover:bg-sky-50 hover:text-sky-600"
                             title="정산 요청 보내기"
                           >
                             {sendNotifyMutation.isPending &&
@@ -621,7 +621,7 @@ export default function UsersPage() {
                         ) : (
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 cursor-not-allowed">
+                              <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-slate-300 cursor-not-allowed">
                                 <Send className="h-4 w-4" />
                               </span>
                             </TooltipTrigger>
@@ -631,11 +631,11 @@ export default function UsersPage() {
                           </Tooltip>
                         )}
                       </td>
-                      <td className="px-4 py-4 text-center">
+                      <td className="px-4 py-2.5 text-center">
                         <button
                           onClick={() => handleDeleteUser(user.user_id, user.full_name)}
                           disabled={deleteUserMutation.isPending}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
                         >
                           {deleteUserMutation.isPending &&
                           deleteUserMutation.variables === user.user_id ? (

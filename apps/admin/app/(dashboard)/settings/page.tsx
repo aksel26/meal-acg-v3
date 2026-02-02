@@ -41,8 +41,12 @@ interface MonthlyAllowancesResponse {
 export default function SettingsPage() {
   const queryClient = useQueryClient();
   const [dailyAllowance, setDailyAllowance] = useState<number>(10000);
-  const [currentYear, setCurrentYear] = useState<number>(new Date().getFullYear());
-  const [currentMonth, setCurrentMonth] = useState<number>(new Date().getMonth() + 1);
+  const [currentYear, setCurrentYear] = useState<number>(
+    new Date().getFullYear(),
+  );
+  const [currentMonth, setCurrentMonth] = useState<number>(
+    new Date().getMonth() + 1,
+  );
 
   const calendarDate = useMemo(() => {
     return new Date(currentYear, currentMonth - 1, 1);
@@ -57,19 +61,24 @@ export default function SettingsPage() {
     },
   });
 
-  const { data: workdaysData, isLoading: isLoadingWorkdays } = useQuery<WorkdaysData>({
-    queryKey: queryKeys.settings.workdays(currentYear, currentMonth),
-    queryFn: async () => {
-      const response = await fetch(`/api/settings/workdays?year=${currentYear}&month=${currentMonth}`);
-      if (!response.ok) throw new Error("Failed to fetch workdays");
-      return response.json();
-    },
-  });
+  const { data: workdaysData, isLoading: isLoadingWorkdays } =
+    useQuery<WorkdaysData>({
+      queryKey: queryKeys.settings.workdays(currentYear, currentMonth),
+      queryFn: async () => {
+        const response = await fetch(
+          `/api/settings/workdays?year=${currentYear}&month=${currentMonth}`,
+        );
+        if (!response.ok) throw new Error("Failed to fetch workdays");
+        return response.json();
+      },
+    });
 
   const { data: savedAllowances } = useQuery<MonthlyAllowancesResponse>({
     queryKey: queryKeys.settings.monthlyAllowances(currentYear, 0),
     queryFn: async () => {
-      const response = await fetch(`/api/settings/monthly-allowances?year=${currentYear}`);
+      const response = await fetch(
+        `/api/settings/monthly-allowances?year=${currentYear}`,
+      );
       if (!response.ok) throw new Error("Failed to fetch saved allowances");
       return response.json();
     },
@@ -121,7 +130,9 @@ export default function SettingsPage() {
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.settings.monthlyAllowances(currentYear, 0) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.settings.monthlyAllowances(currentYear, 0),
+      });
       toast.success(data.message || "월별 지원금이 저장되었습니다.");
     },
     onError: () => {
@@ -186,7 +197,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-8">
       {/* 일일 식대 단가 설정 */}
-      <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/60">
+      <section className="glass-panel rounded-2xl p-6">
         <div className="mb-5 border-b border-slate-100 pb-4">
           <h2 className="text-lg font-bold text-slate-900">일일 식대 단가</h2>
           <p className="mt-1 text-sm text-slate-500">
@@ -199,7 +210,10 @@ export default function SettingsPage() {
         ) : (
           <div className="flex flex-wrap items-end gap-4">
             <div className="flex-1 min-w-[200px] max-w-xs">
-              <label htmlFor="dailyAllowance" className="mb-2 block text-sm font-medium text-slate-600">
+              <label
+                htmlFor="dailyAllowance"
+                className="mb-2 block text-sm font-medium text-slate-600"
+              >
                 금액
               </label>
               <div className="relative">
@@ -207,7 +221,9 @@ export default function SettingsPage() {
                   id="dailyAllowance"
                   type="number"
                   value={dailyAllowance}
-                  onChange={(e) => setDailyAllowance(parseInt(e.target.value) || 0)}
+                  onChange={(e) =>
+                    setDailyAllowance(parseInt(e.target.value) || 0)
+                  }
                   min={0}
                   step={1000}
                   className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 pr-12 text-lg font-semibold text-slate-900 transition-all focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
@@ -224,8 +240,8 @@ export default function SettingsPage() {
               className={cn(
                 "flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition-all",
                 hasChanges
-                  ? "bg-slate-900 text-white hover:bg-slate-800"
-                  : "cursor-not-allowed bg-slate-100 text-slate-400"
+                  ? "bg-[#135bec]/5 text-[#135bec] hover:bg-[#135bec]/10"
+                  : "cursor-not-allowed bg-slate-100 text-slate-400",
               )}
             >
               <Save className="h-4 w-4" />
@@ -235,234 +251,278 @@ export default function SettingsPage() {
         )}
       </section>
 
-      {/* 월별 지원금 계산 */}
-      <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/60">
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
-          <div>
-            <h2 className="text-lg font-bold text-slate-900">월별 지원금 계산</h2>
+      {/* 월별 지원금 계산 & 연간 현황 */}
+      <div className="grid grid-cols-12 gap-6">
+        {/* 월별 지원금 계산 */}
+        <section className="col-span-6 glass-panel rounded-2xl p-6">
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">
+                월별 지원금 계산
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                근무일수 기반으로 월별 총 지원금을 계산합니다
+              </p>
+            </div>
+
+            {/* 월 선택 */}
+            <div className="flex items-center gap-1 rounded-xl bg-[#135bec]/5 p-1">
+              <button
+                onClick={handlePrevMonth}
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-[#135bec] transition-colors hover:bg-[#135bec]/10"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <span className="min-w-[100px] text-center text-sm font-semibold text-[#135bec]">
+                {currentYear}년 {currentMonth}월
+              </span>
+              <button
+                onClick={handleNextMonth}
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-[#135bec] transition-colors hover:bg-[#135bec]/10"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* 달력 */}
+            <div>
+              <Calendar
+                mode="single"
+                locale={ko}
+                month={calendarDate}
+                onMonthChange={(date) => {
+                  setCurrentYear(date.getFullYear());
+                  setCurrentMonth(date.getMonth() + 1);
+                }}
+                modifiers={{
+                  holiday: holidayDates,
+                  weekend: (date) => date.getDay() === 0 || date.getDay() === 6,
+                }}
+                modifiersClassNames={{
+                  holiday: "bg-slate-100 text-slate-400 line-through",
+                  weekend: "text-slate-300",
+                }}
+                disabled={(date) => {
+                  const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                  const isHoliday = holidayDates.some(
+                    (h) => h.toDateString() === date.toDateString(),
+                  );
+                  return isWeekend || isHoliday;
+                }}
+                className="rounded-xl"
+              />
+
+              {workdaysData?.holidays && workdaysData.holidays.length > 0 && (
+                <div className="mt-4 space-y-1">
+                  {workdaysData.holidays.map((holiday) => (
+                    <div
+                      key={holiday.date}
+                      className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm"
+                    >
+                      <span className="text-slate-500">{holiday.date}</span>
+                      <span className="text-slate-600">
+                        {holiday.description}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 계산 결과 */}
+            <div className="space-y-4">
+              {isLoadingWorkdays ? (
+                <div className="space-y-3">
+                  {[...Array(4)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-14 animate-pulse rounded-xl bg-slate-100"
+                    />
+                  ))}
+                </div>
+              ) : (
+                <>
+                  {/* 계산 공식 시각화 */}
+                  <div className="rounded-xl bg-slate-50 p-4">
+                    <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                      근무일 계산
+                    </div>
+                    <div className="flex items-center gap-3 text-lg">
+                      <div className="text-center">
+                        <div className="font-bold text-slate-900">
+                          {workdaysData?.totalDays || 0}
+                        </div>
+                        <div className="text-xs text-slate-400">전체</div>
+                      </div>
+                      <Minus className="h-4 w-4 text-slate-300" />
+                      <div className="text-center">
+                        <div className="font-bold text-slate-900">
+                          {workdaysData?.weekendDays || 0}
+                        </div>
+                        <div className="text-xs text-slate-400">주말</div>
+                      </div>
+                      <Minus className="h-4 w-4 text-slate-300" />
+                      <div className="text-center">
+                        <div className="font-bold text-slate-900">
+                          {workdaysData?.holidayCount || 0}
+                        </div>
+                        <div className="text-xs text-slate-400">공휴일</div>
+                      </div>
+                      <Equal className="h-4 w-4 text-slate-300" />
+                      <div className="text-center rounded-lg bg-white px-3 py-1 shadow-sm ring-1 ring-slate-200">
+                        <div className="font-bold text-slate-900">
+                          {workdaysData?.actualWorkdays || 0}
+                        </div>
+                        <div className="text-xs text-slate-400">근무일</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 지원금 계산 */}
+                  <div className="rounded-xl bg-[#135bec]/5 p-4">
+                    <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-[#135bec]/60">
+                      총 지원금
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-bold text-[#135bec]">
+                        {formatCurrency(totalAllowance)}
+                      </span>
+                      <span className="text-[#135bec]/60">원</span>
+                    </div>
+                    <div className="mt-2 text-sm text-[#135bec]/60">
+                      {formatCurrency(dailyAllowance)}원 ×{" "}
+                      {workdaysData?.actualWorkdays || 0}일
+                    </div>
+                  </div>
+
+                  {/* 저장 상태 */}
+                  {savedMonthData && (
+                    <div
+                      className={cn(
+                        "flex items-center justify-between rounded-xl p-4",
+                        needsUpdate ? "bg-orange-50" : "bg-slate-50",
+                      )}
+                    >
+                      <div>
+                        <div className="text-sm font-medium text-slate-700">
+                          저장된 값
+                        </div>
+                        <div className="text-sm text-slate-500">
+                          {savedMonthData.workdays}일 /{" "}
+                          {formatCurrency(savedMonthData.allowance)}원
+                        </div>
+                      </div>
+                      {needsUpdate ? (
+                        <div className="flex items-center gap-1.5 text-sm font-medium text-orange-600">
+                          <AlertCircle className="h-4 w-4" />
+                          변경됨
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 text-sm font-medium text-slate-500">
+                          <Check className="h-4 w-4" />
+                          최신
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 저장 버튼 */}
+                  <button
+                    onClick={handleSaveMonthlyAllowances}
+                    disabled={
+                      saveAllowancesMutation.isPending ||
+                      !workdaysData?.actualWorkdays
+                    }
+                    className={cn(
+                      "flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold transition-all",
+                      workdaysData?.actualWorkdays
+                        ? "bg-[#135bec]/5 text-[#135bec] hover:bg-[#135bec]/10"
+                        : "cursor-not-allowed bg-slate-100 text-slate-400",
+                    )}
+                  >
+                    <Save className="h-4 w-4" />
+                    {saveAllowancesMutation.isPending
+                      ? "저장 중..."
+                      : `${currentMonth}월 지원금 저장`}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* 연간 현황 */}
+        <section className="col-span-6 glass-panel rounded-2xl p-6">
+          <div className="mb-5 border-b border-slate-100 pb-4">
+            <h2 className="text-lg font-bold text-slate-900">
+              {currentYear}년 현황
+            </h2>
             <p className="mt-1 text-sm text-slate-500">
-              근무일수 기반으로 월별 총 지원금을 계산합니다
+              월을 클릭하여 지원금 설정
             </p>
           </div>
 
-          {/* 월 선택 */}
-          <div className="flex items-center gap-1 rounded-xl bg-slate-50 p-1">
-            <button
-              onClick={handlePrevMonth}
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white hover:text-slate-900 hover:shadow-sm"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <span className="min-w-[100px] text-center text-sm font-semibold text-slate-700">
-              {currentYear}년 {currentMonth}월
-            </span>
-            <button
-              onClick={handleNextMonth}
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white hover:text-slate-900 hover:shadow-sm"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
+          <div className="grid grid-cols-4 gap-2">
+            {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => {
+              const monthData = savedAllowances?.data?.[String(month)];
+              const isCurrentMonth = month === currentMonth;
+              const isSaved = !!monthData;
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* 달력 */}
-          <div>
-            <Calendar
-              mode="single"
-              locale={ko}
-              month={calendarDate}
-              onMonthChange={(date) => {
-                setCurrentYear(date.getFullYear());
-                setCurrentMonth(date.getMonth() + 1);
-              }}
-              modifiers={{
-                holiday: holidayDates,
-                weekend: (date) => date.getDay() === 0 || date.getDay() === 6,
-              }}
-              modifiersClassNames={{
-                holiday: "bg-slate-100 text-slate-400 line-through",
-                weekend: "text-slate-300",
-              }}
-              disabled={(date) => {
-                const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-                const isHoliday = holidayDates.some(
-                  (h) => h.toDateString() === date.toDateString()
-                );
-                return isWeekend || isHoliday;
-              }}
-              className="rounded-xl border border-slate-200"
-            />
-
-            {workdaysData?.holidays && workdaysData.holidays.length > 0 && (
-              <div className="mt-4 space-y-1">
-                {workdaysData.holidays.map((holiday) => (
-                  <div
-                    key={holiday.date}
-                    className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm"
-                  >
-                    <span className="text-slate-500">{holiday.date}</span>
-                    <span className="text-slate-600">{holiday.description}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* 계산 결과 */}
-          <div className="space-y-4">
-            {isLoadingWorkdays ? (
-              <div className="space-y-3">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="h-14 animate-pulse rounded-xl bg-slate-100" />
-                ))}
-              </div>
-            ) : (
-              <>
-                {/* 계산 공식 시각화 */}
-                <div className="rounded-xl bg-slate-50 p-4">
-                  <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                    근무일 계산
-                  </div>
-                  <div className="flex items-center gap-3 text-lg">
-                    <div className="text-center">
-                      <div className="font-bold text-slate-900">{workdaysData?.totalDays || 0}</div>
-                      <div className="text-xs text-slate-400">전체</div>
-                    </div>
-                    <Minus className="h-4 w-4 text-slate-300" />
-                    <div className="text-center">
-                      <div className="font-bold text-slate-900">{workdaysData?.weekendDays || 0}</div>
-                      <div className="text-xs text-slate-400">주말</div>
-                    </div>
-                    <Minus className="h-4 w-4 text-slate-300" />
-                    <div className="text-center">
-                      <div className="font-bold text-slate-900">{workdaysData?.holidayCount || 0}</div>
-                      <div className="text-xs text-slate-400">공휴일</div>
-                    </div>
-                    <Equal className="h-4 w-4 text-slate-300" />
-                    <div className="text-center rounded-lg bg-white px-3 py-1 shadow-sm ring-1 ring-slate-200">
-                      <div className="font-bold text-slate-900">{workdaysData?.actualWorkdays || 0}</div>
-                      <div className="text-xs text-slate-400">근무일</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 지원금 계산 */}
-                <div className="rounded-xl bg-slate-900 p-4 text-white">
-                  <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                    총 지원금
-                  </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold">{formatCurrency(totalAllowance)}</span>
-                    <span className="text-slate-400">원</span>
-                  </div>
-                  <div className="mt-2 text-sm text-slate-400">
-                    {formatCurrency(dailyAllowance)}원 × {workdaysData?.actualWorkdays || 0}일
-                  </div>
-                </div>
-
-                {/* 저장 상태 */}
-                {savedMonthData && (
-                  <div
-                    className={cn(
-                      "flex items-center justify-between rounded-xl p-4",
-                      needsUpdate ? "bg-amber-50" : "bg-slate-50"
-                    )}
-                  >
-                    <div>
-                      <div className="text-sm font-medium text-slate-700">저장된 값</div>
-                      <div className="text-sm text-slate-500">
-                        {savedMonthData.workdays}일 / {formatCurrency(savedMonthData.allowance)}원
-                      </div>
-                    </div>
-                    {needsUpdate ? (
-                      <div className="flex items-center gap-1.5 text-sm font-medium text-amber-600">
-                        <AlertCircle className="h-4 w-4" />
-                        변경됨
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1.5 text-sm font-medium text-slate-500">
-                        <Check className="h-4 w-4" />
-                        최신
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* 저장 버튼 */}
+              return (
                 <button
-                  onClick={handleSaveMonthlyAllowances}
-                  disabled={saveAllowancesMutation.isPending || !workdaysData?.actualWorkdays}
+                  key={month}
+                  onClick={() => setCurrentMonth(month)}
                   className={cn(
-                    "flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold transition-all",
-                    workdaysData?.actualWorkdays
-                      ? "bg-slate-900 text-white hover:bg-slate-800"
-                      : "cursor-not-allowed bg-slate-100 text-slate-400"
+                    "relative rounded-xl p-3 text-center transition-all",
+                    isCurrentMonth
+                      ? "bg-[#135bec]/5 text-[#135bec] shadow-lg ring-1 ring-[#135bec]/20"
+                      : isSaved
+                        ? "bg-slate-50 text-slate-900 hover:bg-slate-100"
+                        : "bg-white text-slate-400 ring-1 ring-slate-100 hover:ring-slate-200",
                   )}
                 >
-                  <Save className="h-4 w-4" />
-                  {saveAllowancesMutation.isPending ? "저장 중..." : `${currentMonth}월 지원금 저장`}
+                  <div className="text-sm font-bold">{month}월</div>
+                  {monthData && (
+                    <div
+                      className={cn(
+                        "mt-1 text-xs",
+                        isCurrentMonth ? "text-[#135bec]/70" : "text-slate-500",
+                      )}
+                    >
+                      {(monthData.allowance / 10000).toFixed(0)}만
+                    </div>
+                  )}
+                  {isSaved && !isCurrentMonth && (
+                    <div className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-[#135bec]" />
+                  )}
                 </button>
-              </>
+              );
+            })}
+          </div>
+
+          {savedAllowances?.data &&
+            Object.keys(savedAllowances.data).length > 0 && (
+              <div className="mt-6 rounded-xl bg-slate-50 px-4 py-4">
+                <div className="text-sm font-medium text-slate-500 mb-1">
+                  연간 총 지원금
+                </div>
+                <div className="text-2xl font-bold text-slate-900">
+                  {formatCurrency(
+                    Object.values(savedAllowances.data).reduce(
+                      (sum, d) => sum + (d?.allowance || 0),
+                      0,
+                    ),
+                  )}
+                  <span className="ml-1 text-sm font-normal text-slate-500">
+                    원
+                  </span>
+                </div>
+              </div>
             )}
-          </div>
-        </div>
-      </section>
-
-      {/* 연간 현황 */}
-      <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/60">
-        <div className="mb-5 border-b border-slate-100 pb-4">
-          <h2 className="text-lg font-bold text-slate-900">{currentYear}년 월별 현황</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            월을 클릭하여 해당 월의 지원금을 설정하세요
-          </p>
-        </div>
-
-        <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 lg:grid-cols-12">
-          {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => {
-            const monthData = savedAllowances?.data?.[String(month)];
-            const isCurrentMonth = month === currentMonth;
-            const isSaved = !!monthData;
-
-            return (
-              <button
-                key={month}
-                onClick={() => setCurrentMonth(month)}
-                className={cn(
-                  "relative rounded-xl p-3 text-center transition-all",
-                  isCurrentMonth
-                    ? "bg-slate-900 text-white shadow-lg"
-                    : isSaved
-                    ? "bg-slate-50 text-slate-900 hover:bg-slate-100"
-                    : "bg-white text-slate-400 ring-1 ring-slate-100 hover:ring-slate-200"
-                )}
-              >
-                <div className="text-sm font-bold">{month}월</div>
-                {monthData && (
-                  <div className={cn("mt-1 text-xs", isCurrentMonth ? "text-slate-300" : "text-slate-500")}>
-                    {(monthData.allowance / 10000).toFixed(0)}만
-                  </div>
-                )}
-                {isSaved && !isCurrentMonth && (
-                  <div className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-slate-400" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {savedAllowances?.data && Object.keys(savedAllowances.data).length > 0 && (
-          <div className="mt-6 flex items-center justify-between rounded-xl bg-slate-50 px-5 py-4">
-            <span className="text-sm font-medium text-slate-600">연간 총 지원금</span>
-            <span className="text-xl font-bold text-slate-900">
-              {formatCurrency(
-                Object.values(savedAllowances.data).reduce((sum, d) => sum + (d?.allowance || 0), 0)
-              )}
-              <span className="ml-1 text-sm font-normal text-slate-500">원</span>
-            </span>
-          </div>
-        )}
-      </section>
+        </section>
+      </div>
     </div>
   );
 }

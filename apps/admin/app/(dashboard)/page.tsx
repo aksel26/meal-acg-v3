@@ -5,19 +5,13 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import dayjs from "dayjs";
 import {
-  Users,
-  Wallet,
+  ChevronDown,
   TrendingUp,
   TrendingDown,
-  ArrowUpRight,
-  ArrowDownRight,
-  ChevronDown,
-  Sparkles,
-  Store,
-  BarChart3,
   Calendar,
   Upload,
   Download,
+  Users,
 } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
 import { useAuth } from "@/hooks/useAuth";
@@ -81,7 +75,6 @@ export default function DashboardPage() {
     checkSession();
   }, []);
 
-  // 기존 통계
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: queryKeys.dashboard.summary(selectedYear, selectedMonth),
     queryFn: async () => {
@@ -93,7 +86,6 @@ export default function DashboardPage() {
     },
   });
 
-  // 정산 현황 데이터
   const { data: settlement } = useQuery<SettlementData>({
     queryKey: queryKeys.dashboard.settlement(selectedYear, selectedMonth),
     queryFn: async () => {
@@ -105,7 +97,6 @@ export default function DashboardPage() {
     },
   });
 
-  // 인기 가게
   const { data: popularStores } = useQuery<{ stores: StoreData[] }>({
     queryKey: queryKeys.dashboard.popularStores(selectedYear, selectedMonth),
     queryFn: async () => {
@@ -117,7 +108,6 @@ export default function DashboardPage() {
     },
   });
 
-  // 멤버별 지출
   const { data: memberSpending } = useQuery<MemberSpendingData>({
     queryKey: queryKeys.dashboard.memberSpending(selectedYear, selectedMonth),
     queryFn: async () => {
@@ -129,7 +119,6 @@ export default function DashboardPage() {
     },
   });
 
-  // 월별 추이
   const { data: trends } = useQuery<{ trends: TrendData[] }>({
     queryKey: queryKeys.dashboard.trends(selectedYear, selectedMonth),
     queryFn: async () => {
@@ -162,71 +151,22 @@ export default function DashboardPage() {
     ? ((stats.totalUsed || 0) / stats.totalAllowance) * 100
     : 0;
 
-  const statCards = [
-    {
-      title: "총 인원",
-      value: stats?.totalMembers || 0,
-      suffix: "명",
-      icon: Users,
-      color: "slate",
-      bgGradient: "from-slate-500 to-slate-600",
-      change: null,
-    },
-    {
-      title: "총 지원금",
-      value: stats?.totalAllowance || 0,
-      suffix: "원",
-      icon: Wallet,
-      color: "sky",
-      bgGradient: "from-sky-500 to-sky-600",
-      change: null,
-      isCurrency: true,
-    },
-    {
-      title: "사용 금액",
-      value: stats?.totalUsed || 0,
-      suffix: "원",
-      icon: TrendingUp,
-      color: "amber",
-      bgGradient: "from-amber-500 to-amber-600",
-      change: usageRate > 0 ? `${usageRate.toFixed(1)}% 사용` : null,
-      changeType: "neutral" as const,
-      isCurrency: true,
-    },
-    {
-      title: "잔여 금액",
-      value: stats?.totalBalance || 0,
-      suffix: "원",
-      icon: (stats?.totalBalance || 0) >= 0 ? TrendingUp : TrendingDown,
-      color: (stats?.totalBalance || 0) >= 0 ? "emerald" : "rose",
-      bgGradient:
-        (stats?.totalBalance || 0) >= 0
-          ? "from-emerald-500 to-emerald-600"
-          : "from-rose-500 to-rose-600",
-      change:
-        (stats?.totalBalance || 0) >= 0
-          ? `${(100 - usageRate).toFixed(1)}% 남음`
-          : "초과 사용",
-      changeType: (stats?.totalBalance || 0) >= 0 ? ("positive" as const) : ("negative" as const),
-      isCurrency: true,
-    },
-  ];
-
-  // 월별 추이 차트의 최대값 계산
   const maxTrendValue = Math.max(...(trends?.trends.map((t) => t.total) || [1]));
+  const settlementRate = settlement?.totalMembers
+    ? (settlement.settledCount / settlement.totalMembers) * 100
+    : 0;
 
   return (
     <div className="space-y-6">
       {/* Date Selector */}
       <div className="flex flex-wrap items-center gap-3">
-        {/* Year Dropdown */}
         <div className="relative">
           <button
             onClick={() => {
               setIsYearOpen(!isYearOpen);
               setIsMonthOpen(false);
             }}
-            className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-slate-200/60 transition-all hover:bg-slate-50 hover:shadow-md"
+            className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-slate-200/60 transition-all hover:bg-slate-50"
           >
             {selectedYear}년
             <ChevronDown
@@ -248,7 +188,7 @@ export default function DashboardPage() {
                   className={cn(
                     "flex w-full items-center rounded-lg px-3 py-2 text-sm transition-colors",
                     year === selectedYear
-                      ? "bg-amber-50 font-medium text-amber-600"
+                      ? "bg-[#135bec]/10 font-medium text-[#135bec]"
                       : "text-slate-600 hover:bg-slate-50"
                   )}
                 >
@@ -259,14 +199,13 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Month Dropdown */}
         <div className="relative">
           <button
             onClick={() => {
               setIsMonthOpen(!isMonthOpen);
               setIsYearOpen(false);
             }}
-            className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-slate-200/60 transition-all hover:bg-slate-50 hover:shadow-md"
+            className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-slate-200/60 transition-all hover:bg-slate-50"
           >
             {selectedMonth}월
             <ChevronDown
@@ -288,7 +227,7 @@ export default function DashboardPage() {
                   className={cn(
                     "flex items-center justify-center rounded-lg py-2 text-sm transition-colors",
                     month === selectedMonth
-                      ? "bg-amber-50 font-medium text-amber-600"
+                      ? "bg-[#135bec]/10 font-medium text-[#135bec]"
                       : "text-slate-600 hover:bg-slate-50"
                   )}
                 >
@@ -299,271 +238,264 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Current period indicator */}
-        <div className="ml-auto flex items-center gap-2 text-sm text-slate-500">
-          <Sparkles className="h-4 w-4 text-amber-500" />
-          <span>
-            {selectedYear}년 {selectedMonth}월 현황
-          </span>
+        <div className="ml-auto text-sm text-slate-500">
+          {selectedYear}년 {selectedMonth}월 현황
         </div>
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {statCards.map((card, index) => (
-          <div
-            key={card.title}
-            className="stat-card group rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/60"
-            style={{ animationDelay: `${index * 100}ms` }}
-          >
-            <div className="flex items-start justify-between">
-              <div className="space-y-3">
-                <p className="text-sm font-medium text-slate-500">{card.title}</p>
-                <div className="space-y-1">
-                  {isLoading ? (
-                    <div className="h-9 w-24 animate-pulse rounded-lg bg-slate-100" />
-                  ) : (
-                    <p className="text-3xl font-bold tracking-tight text-slate-900">
-                      {card.isCurrency
-                        ? formatCurrencyShort(card.value)
-                        : card.value}
-                      <span className="ml-1 text-lg font-medium text-slate-400">
-                        {card.suffix === "원" && card.isCurrency ? "" : card.suffix}
-                      </span>
-                    </p>
-                  )}
-                  {card.change && !isLoading && (
-                    <div
-                      className={cn(
-                        "flex items-center gap-1 text-xs font-medium",
-                        card.changeType === "positive" && "text-emerald-600",
-                        card.changeType === "negative" && "text-rose-600",
-                        card.changeType === "neutral" && "text-slate-500"
-                      )}
-                    >
-                      {card.changeType === "positive" && (
-                        <ArrowUpRight className="h-3.5 w-3.5" />
-                      )}
-                      {card.changeType === "negative" && (
-                        <ArrowDownRight className="h-3.5 w-3.5" />
-                      )}
-                      {card.change}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div
-                className={cn(
-                  "flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br shadow-lg transition-transform group-hover:scale-110",
-                  card.bgGradient
-                )}
-              >
-                <card.icon className="h-6 w-6 text-white" />
-              </div>
-            </div>
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+        {/* 총 인원 */}
+        <div className="glass-panel rounded-2xl p-5 transition-all duration-300 hover:shadow-lg">
+          <p className="text-sm font-medium text-slate-500">총 인원</p>
+          {isLoading ? (
+            <div className="mt-2 h-8 w-20 animate-pulse rounded bg-slate-100" />
+          ) : (
+            <p className="mt-2 text-2xl font-bold text-slate-900">
+              {stats?.totalMembers || 0}
+              <span className="ml-1 text-base font-medium text-slate-400">명</span>
+            </p>
+          )}
+        </div>
+
+        {/* 총 지원금 */}
+        <div className="glass-panel rounded-2xl p-5 transition-all duration-300 hover:shadow-lg">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-slate-500">총 지원금</p>
+            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-600">
+              예산
+            </span>
           </div>
-        ))}
+          {isLoading ? (
+            <div className="mt-2 h-8 w-24 animate-pulse rounded bg-slate-100" />
+          ) : (
+            <p className="mt-2 text-2xl font-bold text-slate-900">
+              {formatCurrencyShort(stats?.totalAllowance || 0)}
+            </p>
+          )}
+        </div>
+
+        {/* 사용 금액 */}
+        <div className="glass-panel rounded-2xl p-5 transition-all duration-300 hover:shadow-lg">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-slate-500">사용 금액</p>
+            <span className="rounded-full bg-[#a855f7]/10 px-2 py-0.5 text-[10px] font-semibold text-[#a855f7]">
+              {usageRate.toFixed(0)}%
+            </span>
+          </div>
+          {isLoading ? (
+            <div className="mt-2 h-8 w-24 animate-pulse rounded bg-slate-100" />
+          ) : (
+            <p className="mt-2 text-2xl font-bold text-slate-900">
+              {formatCurrencyShort(stats?.totalUsed || 0)}
+            </p>
+          )}
+        </div>
+
+        {/* 잔여 금액 */}
+        <div className="glass-panel rounded-2xl p-5 transition-all duration-300 hover:shadow-lg">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-slate-500">잔여 금액</p>
+            {(stats?.totalBalance || 0) >= 0 ? (
+              <TrendingUp className="h-4 w-4 text-emerald-500" />
+            ) : (
+              <TrendingDown className="h-4 w-4 text-rose-500" />
+            )}
+          </div>
+          {isLoading ? (
+            <div className="mt-2 h-8 w-24 animate-pulse rounded bg-slate-100" />
+          ) : (
+            <p
+              className={cn(
+                "mt-2 text-2xl font-bold",
+                (stats?.totalBalance || 0) >= 0 ? "text-emerald-600" : "text-rose-600"
+              )}
+            >
+              {formatCurrencyShort(stats?.totalBalance || 0)}
+            </p>
+          )}
+        </div>
       </div>
 
-      {/* 3열 그리드: 정산 현황, 인기 가게, 멤버별 초과액 */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* 3. 정산 현황 */}
-        <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/60">
-          <div className="mb-4 flex items-center gap-2">
-            <Wallet className="h-5 w-5 text-emerald-500" />
-            <h3 className="font-bold text-slate-900">정산 현황</h3>
+      {/* 3열 그리드 */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+        {/* 정산 현황 */}
+        <div className="glass-panel rounded-2xl p-5 transition-all duration-300 hover:shadow-lg">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="font-semibold text-slate-900">정산 현황</h3>
+            <span className="rounded-full bg-[#135bec]/10 px-2.5 py-0.5 text-xs font-medium text-[#135bec]">
+              {settlement?.settledCount || 0}/{settlement?.totalMembers || 0}
+            </span>
           </div>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between rounded-lg bg-emerald-50 p-3">
-              <span className="text-sm text-emerald-700">정산 완료</span>
-              <span className="text-lg font-bold text-emerald-600">
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between rounded-xl bg-[#135bec]/5 p-3.5">
+              <span className="text-sm font-medium text-[#135bec]">정산 완료</span>
+              <span className="text-lg font-bold text-[#135bec]">
                 {settlement?.settledCount || 0}명
               </span>
             </div>
-            <div className="flex items-center justify-between rounded-lg bg-amber-50 p-3">
-              <span className="text-sm text-amber-700">미정산</span>
-              <span className="text-lg font-bold text-amber-600">
+            <div className="flex items-center justify-between rounded-xl bg-orange-50 p-3.5">
+              <span className="text-sm font-medium text-orange-600">미정산</span>
+              <span className="text-lg font-bold text-orange-600">
                 {settlement?.unsettledCount || 0}명
               </span>
             </div>
-            {settlement?.unsettledMembers && settlement.unsettledMembers.length > 0 && (
-              <div className="pt-2">
-                <p className="mb-2 text-xs font-medium text-slate-400">미정산 멤버</p>
-                <div className="flex flex-wrap gap-1">
-                  {settlement.unsettledMembers.map((m) => (
-                    <span
-                      key={m.id}
-                      className="rounded-full bg-amber-100 px-2 py-1 text-xs text-amber-700"
-                    >
-                      {m.full_name}
-                    </span>
-                  ))}
-                  {settlement.unsettledCount > 5 && (
-                    <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-400">
-                      +{settlement.unsettledCount - 5}명
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
+
+          {settlement?.unsettledMembers && settlement.unsettledMembers.length > 0 && (
+            <div className="mt-4">
+              <p className="mb-2 text-xs font-medium text-slate-400">미정산 멤버</p>
+              <div className="flex flex-wrap gap-1.5">
+                {settlement.unsettledMembers.slice(0, 5).map((m) => (
+                  <span
+                    key={m.id}
+                    className="rounded-full bg-orange-50 px-2.5 py-1 text-xs font-medium text-orange-600"
+                  >
+                    {m.full_name}
+                  </span>
+                ))}
+                {settlement.unsettledCount > 5 && (
+                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-500">
+                    +{settlement.unsettledCount - 5}명
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* 4. 인기 가게 TOP 5 */}
-        <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/60">
-          <div className="mb-4 flex items-center gap-2">
-            <Store className="h-5 w-5 text-emerald-500" />
-            <h3 className="font-bold text-slate-900">인기 가게 TOP 5</h3>
-          </div>
-          <div className="space-y-3">
+        {/* 인기 가게 TOP 5 */}
+        <div className="glass-panel rounded-2xl p-5 transition-all duration-300 hover:shadow-lg">
+          <h3 className="mb-4 font-semibold text-slate-900">인기 가게</h3>
+          <div className="space-y-1">
             {popularStores?.stores && popularStores.stores.length > 0 ? (
               popularStores.stores.map((store, idx) => (
-                <div key={store.name} className="flex items-center gap-3">
+                <div
+                  key={store.name}
+                  className="group flex items-center gap-3 rounded-lg px-2 py-2 transition-all hover:bg-[#135bec]/5"
+                >
                   <span
                     className={cn(
-                      "flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold",
+                      "flex h-6 w-6 items-center justify-center rounded-lg text-xs font-bold transition-transform group-hover:scale-110",
                       idx === 0
-                        ? "bg-amber-100 text-amber-600"
+                        ? "bg-yellow-400 text-white"
                         : idx === 1
-                        ? "bg-slate-200 text-slate-600"
+                        ? "bg-slate-300 text-white"
                         : idx === 2
-                        ? "bg-orange-100 text-orange-600"
+                        ? "bg-amber-600 text-white"
                         : "bg-slate-100 text-slate-500"
                     )}
                   >
                     {idx + 1}
                   </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="truncate text-sm font-medium text-slate-700">
-                      {store.name}
-                    </p>
-                    <p className="text-xs text-slate-400">
-                      {store.count}회 · {formatCurrency(store.totalAmount)}원
-                    </p>
-                  </div>
+                  <p className="flex-1 min-w-0 truncate text-sm font-medium text-slate-700 group-hover:text-[#135bec]">
+                    {store.name}
+                  </p>
+                  <span className="text-xs text-slate-400 group-hover:text-[#135bec]">
+                    {store.count}회
+                  </span>
                 </div>
               ))
             ) : (
-              <p className="py-4 text-center text-sm text-slate-400">
+              <p className="py-6 text-center text-sm text-slate-400">
                 데이터가 없습니다
               </p>
             )}
           </div>
         </div>
 
-        {/* 5. 멤버별 초과액 현황 */}
-        <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/60">
-          <div className="mb-4 flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-rose-500" />
-            <h3 className="font-bold text-slate-900">멤버별 초과액 TOP 5</h3>
-          </div>
-          <div className="space-y-3">
+        {/* 초과액 TOP 5 */}
+        <div className="glass-panel rounded-2xl p-5 transition-all duration-300 hover:shadow-lg">
+          <h3 className="mb-4 font-semibold text-slate-900">초과액 현황</h3>
+          <div className="space-y-1">
             {memberSpending?.members && memberSpending.members.length > 0 ? (
-              memberSpending.members.map((member, idx) => {
-                const maxExcess = memberSpending.members[0]?.excess || 1;
-                const barWidth = (member.excess / maxExcess) * 100;
-                return (
-                  <div key={member.id} className="flex items-center gap-3">
-                    <span
-                      className={cn(
-                        "flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold",
-                        idx === 0
-                          ? "bg-rose-100 text-rose-600"
-                          : idx === 1
-                          ? "bg-orange-100 text-orange-600"
-                          : idx === 2
-                          ? "bg-amber-100 text-amber-600"
-                          : "bg-slate-100 text-slate-500"
-                      )}
-                    >
-                      {idx + 1}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-slate-700 truncate">
-                          {member.name}
-                        </span>
-                        <span className="text-sm font-semibold text-rose-600">
-                          +{formatCurrency(member.excess)}원
-                        </span>
-                      </div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
-                        <div
-                          className="h-full rounded-full bg-rose-400 transition-all"
-                          style={{ width: `${barWidth}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
+              memberSpending.members.map((member, idx) => (
+                <div
+                  key={member.id}
+                  className="group flex items-center gap-3 rounded-lg px-2 py-2 transition-all hover:bg-rose-50"
+                >
+                  <span
+                    className={cn(
+                      "flex h-6 w-6 items-center justify-center rounded-lg text-xs font-bold transition-transform group-hover:scale-110",
+                      idx === 0
+                        ? "bg-rose-500 text-white"
+                        : idx === 1
+                        ? "bg-orange-400 text-white"
+                        : idx === 2
+                        ? "bg-amber-400 text-white"
+                        : "bg-slate-100 text-slate-500"
+                    )}
+                  >
+                    {idx + 1}
+                  </span>
+                  <p className="flex-1 min-w-0 text-sm font-medium text-slate-700 group-hover:text-rose-600">
+                    {member.name}
+                  </p>
+                  <span className="text-xs font-medium text-rose-500">
+                    +{formatCurrency(member.excess)}원
+                  </span>
+                </div>
+              ))
             ) : (
-              <p className="py-4 text-center text-sm text-slate-400">
-                초과액이 있는 멤버가 없습니다
+              <p className="py-6 text-center text-sm text-slate-400">
+                초과액이 없습니다
               </p>
             )}
           </div>
         </div>
       </div>
 
-      {/* 6. 월별 추이 차트 */}
-      <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/60">
-        <div className="mb-6 flex items-center gap-2">
-          <BarChart3 className="h-5 w-5 text-violet-500" />
-          <h3 className="font-bold text-slate-900">월별 지출 추이 (최근 6개월)</h3>
-        </div>
-        <div className="space-y-4">
-          {/* 범례 */}
-          <div className="flex gap-4 text-xs">
-            <div className="flex items-center gap-1">
-              <div className="h-3 w-3 rounded bg-amber-400" />
-              <span className="text-slate-500">중식</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="h-3 w-3 rounded bg-violet-400" />
-              <span className="text-slate-500">석식</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="h-3 w-3 rounded bg-emerald-400" />
-              <span className="text-slate-500">조식</span>
+      {/* 월별 추이 + 빠른 작업 (6:4) */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-10">
+        {/* 월별 추이 차트 (6) */}
+        <div className="glass-panel rounded-2xl p-5 transition-all duration-300 hover:shadow-lg lg:col-span-6">
+          <div className="mb-5 flex items-center justify-between">
+            <h3 className="font-semibold text-slate-900">월별 지출 추이</h3>
+            <div className="flex gap-3 text-xs">
+              <div className="flex items-center gap-1.5">
+                <div className="h-2 w-2 rounded-full bg-[#135bec]" />
+                <span className="text-slate-500">중식</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="h-2 w-2 rounded-full bg-[#a855f7]" />
+                <span className="text-slate-500">석식</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="h-2 w-2 rounded-full bg-emerald-400" />
+                <span className="text-slate-500">조식</span>
+              </div>
             </div>
           </div>
-          {/* 차트 */}
-          <div className="flex items-end gap-4">
+          <div className="flex h-[180px] items-end gap-3">
             {trends?.trends && trends.trends.length > 0 ? (
               trends.trends.map((trend) => (
-                <div key={trend.fullMonth} className="flex-1 space-y-2">
+                <div key={trend.fullMonth} className="flex flex-1 flex-col items-center gap-2">
                   <div
-                    className="flex flex-col justify-end rounded-t-lg overflow-hidden"
-                    style={{ height: "160px" }}
+                    className="flex w-full flex-col justify-end overflow-hidden rounded-t-lg"
+                    style={{ height: "140px" }}
                   >
-                    {/* 조식 */}
                     <div
-                      className="w-full bg-emerald-400 transition-all"
+                      className="w-full bg-emerald-400/80 transition-all"
                       style={{
-                        height: `${(trend.breakfast / maxTrendValue) * 160}px`,
+                        height: `${(trend.breakfast / maxTrendValue) * 140}px`,
                       }}
                     />
-                    {/* 석식 */}
                     <div
-                      className="w-full bg-violet-400 transition-all"
+                      className="w-full bg-[#a855f7]/80 transition-all"
                       style={{
-                        height: `${(trend.dinner / maxTrendValue) * 160}px`,
+                        height: `${(trend.dinner / maxTrendValue) * 140}px`,
                       }}
                     />
-                    {/* 중식 */}
                     <div
-                      className="w-full bg-amber-400 transition-all"
+                      className="w-full bg-[#135bec] transition-all"
                       style={{
-                        height: `${(trend.lunch / maxTrendValue) * 160}px`,
+                        height: `${(trend.lunch / maxTrendValue) * 140}px`,
                       }}
                     />
                   </div>
                   <div className="text-center">
                     <p className="text-xs font-medium text-slate-600">{trend.month}</p>
-                    <p className="text-[10px] text-slate-400">
-                      {formatCurrencyShort(trend.total)}
-                    </p>
                   </div>
                 </div>
               ))
@@ -574,43 +506,48 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
-      </div>
 
-      {/* 7. 빠른 작업 */}
-      <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/60">
-        <div className="mb-4 flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-amber-500" />
-          <h3 className="font-bold text-slate-900">빠른 작업</h3>
-        </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Link
-            href="/calendar"
-            className="flex flex-col items-center gap-2 rounded-xl bg-amber-50 p-4 transition-all hover:bg-amber-100 hover:shadow-sm"
-          >
-            <Calendar className="h-6 w-6 text-amber-600" />
-            <span className="text-sm font-medium text-amber-700">식대 입력</span>
-          </Link>
-          <Link
-            href="/import"
-            className="flex flex-col items-center gap-2 rounded-xl bg-sky-50 p-4 transition-all hover:bg-sky-100 hover:shadow-sm"
-          >
-            <Upload className="h-6 w-6 text-sky-600" />
-            <span className="text-sm font-medium text-sky-700">엑셀 Import</span>
-          </Link>
-          <Link
-            href="/export"
-            className="flex flex-col items-center gap-2 rounded-xl bg-emerald-50 p-4 transition-all hover:bg-emerald-100 hover:shadow-sm"
-          >
-            <Download className="h-6 w-6 text-emerald-600" />
-            <span className="text-sm font-medium text-emerald-700">엑셀 Export</span>
-          </Link>
-          <Link
-            href="/users"
-            className="flex flex-col items-center gap-2 rounded-xl bg-violet-50 p-4 transition-all hover:bg-violet-100 hover:shadow-sm"
-          >
-            <Users className="h-6 w-6 text-violet-600" />
-            <span className="text-sm font-medium text-violet-700">사용자 현황</span>
-          </Link>
+        {/* 빠른 작업 (4) */}
+        <div className="glass-panel rounded-2xl p-5 transition-all duration-300 hover:shadow-lg lg:col-span-4">
+          <h3 className="mb-4 font-semibold text-slate-900">빠른 작업</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <Link
+              href="/calendar"
+              className="flex flex-col items-center gap-2.5 rounded-xl bg-white/50 p-4 ring-1 ring-slate-100 transition-all hover:bg-white hover:shadow-md hover:ring-[#135bec]/20"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#135bec]/10">
+                <Calendar className="h-5 w-5 text-[#135bec]" />
+              </div>
+              <span className="text-xs font-medium text-slate-600">식대 입력</span>
+            </Link>
+            <Link
+              href="/import"
+              className="flex flex-col items-center gap-2.5 rounded-xl bg-white/50 p-4 ring-1 ring-slate-100 transition-all hover:bg-white hover:shadow-md hover:ring-orange-200"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100">
+                <Upload className="h-5 w-5 text-orange-500" />
+              </div>
+              <span className="text-xs font-medium text-slate-600">Import</span>
+            </Link>
+            <Link
+              href="/export"
+              className="flex flex-col items-center gap-2.5 rounded-xl bg-white/50 p-4 ring-1 ring-slate-100 transition-all hover:bg-white hover:shadow-md hover:ring-emerald-200"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100">
+                <Download className="h-5 w-5 text-emerald-500" />
+              </div>
+              <span className="text-xs font-medium text-slate-600">Export</span>
+            </Link>
+            <Link
+              href="/users"
+              className="flex flex-col items-center gap-2.5 rounded-xl bg-white/50 p-4 ring-1 ring-slate-100 transition-all hover:bg-white hover:shadow-md hover:ring-[#a855f7]/20"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#a855f7]/10">
+                <Users className="h-5 w-5 text-[#a855f7]" />
+              </div>
+              <span className="text-xs font-medium text-slate-600">사용자</span>
+            </Link>
+          </div>
         </div>
       </div>
 

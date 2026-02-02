@@ -15,7 +15,13 @@
   --color-slate-100: #f1f5f9;
   --color-slate-50: #f8fafc;
 
-  /* Accent - Warm Amber */
+  /* BentoAdmin Primary - Blue */
+  --color-primary-bento: #135bec;
+  --color-primary-light-bento: #5c8df6;
+  --color-accent-purple: #a855f7;
+  --color-background-light: #f0f2f5;
+
+  /* Accent - Warm Amber (legacy support) */
   --color-amber-500: #f59e0b;
   --color-amber-400: #fbbf24;
   --color-amber-300: #fcd34d;
@@ -38,6 +44,7 @@
 
   /* Spacing */
   --sidebar-width: 280px;
+  --sidebar-width-collapsed: 80px;
   --header-height: 72px;
 
   /* Shadows */
@@ -45,6 +52,8 @@
   --shadow-elevated: 0 8px 24px -8px rgba(0, 0, 0, 0.15), 0 16px 48px -16px rgba(0, 0, 0, 0.2);
   --shadow-glow-amber: 0 0 24px rgba(245, 158, 11, 0.25);
   --shadow-glow-emerald: 0 0 24px rgba(16, 185, 129, 0.25);
+  --shadow-glow-primary: 0 0 24px rgba(19, 91, 236, 0.25);
+  --shadow-glass: 0 4px 30px rgba(0, 0, 0, 0.1);
 }
 
 * {
@@ -52,7 +61,7 @@
 }
 
 body {
-  background: linear-gradient(135deg, var(--color-slate-100) 0%, var(--color-slate-200) 100%);
+  background: var(--color-background-light);
   min-height: 100vh;
   color: var(--color-slate-800);
   -webkit-font-smoothing: antialiased;
@@ -82,12 +91,30 @@ body {
 .glass-card {
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.5);
   box-shadow: var(--shadow-soft);
 }
 
+/* BentoAdmin Glass Panel */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+/* BentoAdmin Glass Sidebar */
+.glass-sidebar {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(255, 255, 255, 0.6);
+}
+
 .gradient-text {
-  background: linear-gradient(135deg, var(--color-amber-500) 0%, var(--color-amber-600) 100%);
+  background: linear-gradient(135deg, var(--color-primary-bento) 0%, var(--color-accent-purple) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -106,7 +133,7 @@ body {
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, var(--color-amber-400) 0%, var(--color-amber-500) 100%);
+  background: linear-gradient(90deg, var(--color-primary-bento) 0%, var(--color-accent-purple) 100%);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -134,7 +161,7 @@ body {
   transform: translateY(-50%);
   width: 3px;
   height: 0;
-  background: var(--color-amber-500);
+  background: var(--color-primary-bento);
   border-radius: 0 2px 2px 0;
   transition: height 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -145,8 +172,8 @@ body {
 }
 
 .nav-item.active {
-  background: rgba(245, 158, 11, 0.1);
-  color: var(--color-amber-500);
+  background: rgba(19, 91, 236, 0.1);
+  color: var(--color-primary-bento);
 }
 
 /* Badge animations */
@@ -169,16 +196,20 @@ body {
 }
 
 .table-row-interactive:hover {
-  background: rgba(245, 158, 11, 0.04);
+  background: rgba(255, 255, 255, 0.4);
 }
 
 /* Button hover glow */
 .btn-glow:hover {
-  box-shadow: var(--shadow-glow-amber);
+  box-shadow: var(--shadow-glow-primary);
 }
 
 .btn-glow-success:hover {
   box-shadow: var(--shadow-glow-emerald);
+}
+
+.btn-glow-amber:hover {
+  box-shadow: var(--shadow-glow-amber);
 }
 
 /* Page transitions */
@@ -233,7 +264,7 @@ body {
 /* Focus ring */
 .focus-ring:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--color-slate-50), 0 0 0 4px var(--color-amber-500);
+  box-shadow: 0 0 0 2px var(--color-slate-50), 0 0 0 4px var(--color-primary-bento);
 }
 
 /* Tooltip */

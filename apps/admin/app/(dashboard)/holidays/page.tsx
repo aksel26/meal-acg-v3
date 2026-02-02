@@ -201,7 +201,7 @@ export default function HolidaysPage() {
       </div>
 
       {/* Holidays Table */}
-      <Card>
+      <Card className="glass-panel border-0">
         <CardHeader>
           <CardTitle>공휴일 목록</CardTitle>
           <CardDescription>
@@ -212,18 +212,18 @@ export default function HolidaysPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-12">#</TableHead>
-                <TableHead>날짜</TableHead>
-                <TableHead>요일</TableHead>
-                <TableHead>공휴일명</TableHead>
-                <TableHead className="w-24">관리</TableHead>
+                <TableHead className="w-12 py-2">#</TableHead>
+                <TableHead className="py-2">날짜</TableHead>
+                <TableHead className="py-2">요일</TableHead>
+                <TableHead className="py-2">공휴일명</TableHead>
+                <TableHead className="w-24 py-2">관리</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell colSpan={5} className="text-center">
+                    <TableCell colSpan={5} className="py-1.5 text-center">
                       로딩 중...
                     </TableCell>
                   </TableRow>
@@ -237,38 +237,40 @@ export default function HolidaysPage() {
 
                   return (
                     <TableRow key={holiday.holiday_date}>
-                      <TableCell className="text-gray-500">{index + 1}</TableCell>
-                      <TableCell>{date.format("YYYY-MM-DD")}</TableCell>
+                      <TableCell className="py-1.5 text-gray-500">{index + 1}</TableCell>
+                      <TableCell className="py-1.5">{date.format("YYYY-MM-DD")}</TableCell>
                       <TableCell
-                        className={
+                        className={`py-1.5 ${
                           date.day() === 0
                             ? "text-red-500"
                             : date.day() === 6
                             ? "text-blue-500"
                             : ""
-                        }
+                        }`}
                       >
                         {dayOfWeek}
                       </TableCell>
-                      <TableCell className="font-medium">
+                      <TableCell className="py-1.5 font-medium">
                         {holiday.description}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="py-1.5">
                         <div className="flex gap-1">
                           <Button
                             variant="ghost"
                             size="icon"
+                            className="h-7 w-7"
                             onClick={() => handleOpenDialog(holiday)}
                           >
-                            <Pencil className="h-4 w-4" />
+                            <Pencil className="h-3.5 w-3.5" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
+                            className="h-7 w-7"
                             onClick={() => deleteMutation.mutate(holiday.holiday_date)}
                             disabled={deleteMutation.isPending}
                           >
-                            <Trash2 className="h-4 w-4 text-red-500" />
+                            <Trash2 className="h-3.5 w-3.5 text-red-500" />
                           </Button>
                         </div>
                       </TableCell>
@@ -277,7 +279,7 @@ export default function HolidaysPage() {
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-gray-500">
+                  <TableCell colSpan={5} className="py-1.5 text-center text-gray-500">
                     등록된 공휴일이 없습니다.
                   </TableCell>
                 </TableRow>

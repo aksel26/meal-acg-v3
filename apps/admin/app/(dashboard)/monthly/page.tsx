@@ -253,7 +253,7 @@ export default function MonthlyPage() {
       {/* Month Navigation & Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Month Selector */}
-        <Card>
+        <Card className="glass-panel border-0">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <Button variant="ghost" size="icon" onClick={handlePrevMonth}>
@@ -270,7 +270,7 @@ export default function MonthlyPage() {
         </Card>
 
         {/* Stats */}
-        <Card>
+        <Card className="glass-panel border-0">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
@@ -290,7 +290,7 @@ export default function MonthlyPage() {
         </Card>
 
         {/* Pickup Persons */}
-        <Card>
+        <Card className="glass-panel border-0">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center">
@@ -310,7 +310,7 @@ export default function MonthlyPage() {
 
         {/* Settings */}
         <Card
-          className="cursor-pointer hover:bg-slate-50 transition-colors"
+          className="glass-panel border-0 cursor-pointer hover:bg-white/80 transition-colors"
           onClick={handleOpenSettings}
         >
           <CardContent className="p-4">
@@ -331,7 +331,7 @@ export default function MonthlyPage() {
 
       {/* Drink Stats */}
       {Object.keys(drinkStats).length > 0 && (
-        <Card>
+        <Card className="glass-panel border-0">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">음료별 현황</CardTitle>
           </CardHeader>
@@ -356,7 +356,7 @@ export default function MonthlyPage() {
       )}
 
       {/* Applications List */}
-      <Card>
+      <Card className="glass-panel border-0">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>

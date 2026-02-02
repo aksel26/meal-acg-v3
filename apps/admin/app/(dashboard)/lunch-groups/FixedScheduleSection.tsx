@@ -203,6 +203,7 @@ export default function FixedScheduleSection({ members }: FixedScheduleSectionPr
             size="sm"
             onClick={handleSave}
             disabled={saveMutation.isPending}
+            className="bg-[#135bec]/5 text-[#135bec] hover:bg-[#135bec]/10"
           >
             <Save className="w-4 h-4 mr-1" />
             {saveMutation.isPending ? "저장 중..." : "저장"}
@@ -229,7 +230,7 @@ export default function FixedScheduleSection({ members }: FixedScheduleSectionPr
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 text-xs"
+                    className="h-7 text-xs text-[#135bec] hover:bg-[#135bec]/10"
                     onClick={() => {
                       setAddingMemberDay(isAddingMember ? null : day.value);
                       setAddingLabelDay(null);
@@ -241,7 +242,7 @@ export default function FixedScheduleSection({ members }: FixedScheduleSectionPr
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 text-xs"
+                    className="h-7 text-xs text-[#135bec] hover:bg-[#135bec]/10"
                     onClick={() => {
                       setAddingLabelDay(isAddingLabel ? null : day.value);
                       setAddingMemberDay(null);
@@ -286,7 +287,7 @@ export default function FixedScheduleSection({ members }: FixedScheduleSectionPr
                   />
                   <Button
                     size="sm"
-                    className="h-9"
+                    className="h-9 bg-[#135bec]/5 text-[#135bec] hover:bg-[#135bec]/10"
                     onClick={() => handleAddLabel(day.value)}
                     disabled={!newLabel.trim()}
                   >

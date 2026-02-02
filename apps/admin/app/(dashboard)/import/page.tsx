@@ -269,7 +269,7 @@ export default function ImportPage() {
         {/* 왼쪽: 업로드 영역 */}
         <div className="col-span-5 space-y-4">
           {/* 드롭존 */}
-          <Card>
+          <Card className="glass-panel border-0">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <Upload className="w-4 h-4" />
@@ -307,7 +307,7 @@ export default function ImportPage() {
           </Card>
 
           {/* 옵션 */}
-          <Card>
+          <Card className="glass-panel border-0">
             <CardContent className="pt-4">
               <div className="flex items-center space-x-2">
                 <Checkbox
@@ -327,7 +327,7 @@ export default function ImportPage() {
 
           {/* 파일 목록 */}
           {uploadedFiles.length > 0 && (
-            <Card>
+            <Card className="glass-panel border-0">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base">
@@ -439,7 +439,7 @@ export default function ImportPage() {
 
         {/* 오른쪽: 미리보기 */}
         <div className="col-span-7">
-          <Card className="h-full">
+          <Card className="glass-panel border-0 h-full">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">데이터 미리보기</CardTitle>
               <CardDescription>

@@ -21,24 +21,24 @@ export interface ParseResult {
   errors: string[];
 }
 
-// 열 인덱스 (0-based) - Export 템플릿 기준
-// A=0(빈열), B=1(연도), C=2(월), D=3(일), E=4(요일), F=5(업무일구분), G=6(특이사항)
-// H=7(근태), I=8(중식상호), J=9(중식금액), K=10(알림용), L=11(중식비고)
-// M=12(석식상호), N=13(석식금액), O=14(석식비고), P=15(조식상호), Q=16(조식금액), R=17(조식비고)
+// 열 인덱스 (0-based) - 실제 Excel 구조 기준
+// A=0(연도), B=1(월), C=2(일), D=3(요일), E=4(업무일구분), F=5(특이사항)
+// G=6(근태), H=7(중식상호), I=8(중식금액), J=9(알림용), K=10(중식비고)
+// L=11(석식상호), M=12(석식금액), N=13(석식비고), O=14(조식상호), P=15(조식금액), Q=16(조식비고)
 const COLUMNS = {
-  YEAR: 1, // B
-  MONTH: 2, // C
-  DAY: 3, // D
-  ATTENDANCE: 7, // H
-  LUNCH_STORE: 8, // I
-  LUNCH_AMOUNT: 9, // J
-  LUNCH_PAYER: 11, // L (K열은 알림용)
-  DINNER_STORE: 12, // M
-  DINNER_AMOUNT: 13, // N
-  DINNER_PAYER: 14, // O
-  BREAKFAST_STORE: 15, // P
-  BREAKFAST_AMOUNT: 16, // Q
-  BREAKFAST_PAYER: 17, // R
+  YEAR: 0, // A
+  MONTH: 1, // B
+  DAY: 2, // C
+  ATTENDANCE: 6, // G
+  LUNCH_STORE: 7, // H
+  LUNCH_AMOUNT: 8, // I
+  LUNCH_PAYER: 10, // K (J열은 알림용)
+  DINNER_STORE: 11, // L
+  DINNER_AMOUNT: 12, // M
+  DINNER_PAYER: 13, // N
+  BREAKFAST_STORE: 14, // O
+  BREAKFAST_AMOUNT: 15, // P
+  BREAKFAST_PAYER: 16, // Q
 };
 
 function getCellValue(row: unknown[], index: number): string | null {
@@ -79,6 +79,7 @@ export function parseExcelFile(buffer: ArrayBuffer, fileName: string, filterCurr
   const memberName = extractMemberNameFromFileName(fileName);
   const errors: string[] = [];
   const records: MealRecord[] = [];
+  let missingDateCount = 0;
 
   // 현재 월 필터링용
   const now = new Date();
@@ -133,7 +134,7 @@ export function parseExcelFile(buffer: ArrayBuffer, fileName: string, filterCurr
         // 날짜가 없어도 다른 데이터가 있으면 경고만 남기고 건너뜀
         const hasOtherData = row.some((cell, idx) => idx > COLUMNS.DAY && cell !== null && cell !== "");
         if (hasOtherData) {
-          errors.push(`행 ${i + 1}: 날짜 정보 누락`);
+          missingDateCount++;
         }
         continue;
       }
@@ -165,6 +166,10 @@ export function parseExcelFile(buffer: ArrayBuffer, fileName: string, filterCurr
 
       // 날짜가 유효하면 레코드 추가 (빈 데이터도 포함)
       records.push(record);
+    }
+
+    if (missingDateCount > 0) {
+      errors.push(`날짜 정보 누락 ${missingDateCount}건`);
     }
 
     return {

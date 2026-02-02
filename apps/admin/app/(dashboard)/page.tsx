@@ -13,6 +13,14 @@ import {
   Download,
   Users,
 } from "lucide-react";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import { queryKeys } from "@/lib/query-keys";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@repo/ui/lib/utils";
@@ -57,10 +65,9 @@ interface TrendData {
   month: string;
   year: number;
   fullMonth: string;
-  lunch: number;
-  dinner: number;
-  breakfast: number;
-  total: number;
+  averageExcess: number;
+  totalExcess: number;
+  memberCount: number;
 }
 
 export default function DashboardPage() {
@@ -119,12 +126,11 @@ export default function DashboardPage() {
     },
   });
 
+  // trends는 항상 현재 월 기준 6개월 (선택한 월과 무관)
   const { data: trends } = useQuery<{ trends: TrendData[] }>({
-    queryKey: queryKeys.dashboard.trends(selectedYear, selectedMonth),
+    queryKey: queryKeys.dashboard.trends(currentDate.year(), currentDate.month() + 1),
     queryFn: async () => {
-      const response = await fetch(
-        `/api/stats/trends?year=${selectedYear}&month=${selectedMonth}`
-      );
+      const response = await fetch(`/api/stats/trends`);
       if (!response.ok) throw new Error("Failed to fetch trends");
       return response.json();
     },
@@ -151,7 +157,10 @@ export default function DashboardPage() {
     ? ((stats.totalUsed || 0) / stats.totalAllowance) * 100
     : 0;
 
-  const maxTrendValue = Math.max(...(trends?.trends.map((t) => t.total) || [1]));
+  // Y축 범위 계산 (최대 초과금 기준)
+  const maxExcess = Math.max(
+    ...((trends?.trends.map((t) => Math.max(0, t.averageExcess)) || [10000]))
+  );
   const settlementRate = settlement?.totalMembers
     ? (settlement.settledCount / settlement.totalMembers) * 100
     : 0;
@@ -448,59 +457,96 @@ export default function DashboardPage() {
 
       {/* 월별 추이 + 빠른 작업 (6:4) */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-10">
-        {/* 월별 추이 차트 (6) */}
+        {/* 월별 평균 초과금 추이 차트 (6) */}
         <div className="glass-panel rounded-2xl p-5 transition-all duration-300 hover:shadow-lg lg:col-span-6">
           <div className="mb-5 flex items-center justify-between">
-            <h3 className="font-semibold text-slate-900">월별 지출 추이</h3>
-            <div className="flex gap-3 text-xs">
-              <div className="flex items-center gap-1.5">
-                <div className="h-2 w-2 rounded-full bg-[#135bec]" />
-                <span className="text-slate-500">중식</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="h-2 w-2 rounded-full bg-[#a855f7]" />
-                <span className="text-slate-500">석식</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="h-2 w-2 rounded-full bg-emerald-400" />
-                <span className="text-slate-500">조식</span>
-              </div>
+            <h3 className="font-semibold text-slate-900">월별 평균 초과금 추이</h3>
+            <div className="flex items-center gap-1.5 text-xs">
+              <div className="h-2 w-2 rounded-full bg-rose-500" />
+              <span className="text-slate-500">초과</span>
             </div>
           </div>
-          <div className="flex h-[180px] items-end gap-3">
+          <div className="h-[180px]">
             {trends?.trends && trends.trends.length > 0 ? (
-              trends.trends.map((trend) => (
-                <div key={trend.fullMonth} className="flex flex-1 flex-col items-center gap-2">
-                  <div
-                    className="flex w-full flex-col justify-end overflow-hidden rounded-t-lg"
-                    style={{ height: "140px" }}
-                  >
-                    <div
-                      className="w-full bg-emerald-400/80 transition-all"
-                      style={{
-                        height: `${(trend.breakfast / maxTrendValue) * 140}px`,
-                      }}
-                    />
-                    <div
-                      className="w-full bg-[#a855f7]/80 transition-all"
-                      style={{
-                        height: `${(trend.dinner / maxTrendValue) * 140}px`,
-                      }}
-                    />
-                    <div
-                      className="w-full bg-[#135bec] transition-all"
-                      style={{
-                        height: `${(trend.lunch / maxTrendValue) * 140}px`,
-                      }}
-                    />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs font-medium text-slate-600">{trend.month}</p>
-                  </div>
-                </div>
-              ))
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={trends.trends.map((t) => ({
+                    ...t,
+                    // 음수는 0으로 처리 (초과 금액만 표시)
+                    excess: Math.max(0, t.averageExcess),
+                  }))}
+                  margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient id="excessGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#f43f5e" stopOpacity={0.4} />
+                      <stop offset="100%" stopColor="#f43f5e" stopOpacity={0.05} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis
+                    dataKey="month"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 10, fill: "#64748b" }}
+                    dy={5}
+                  />
+                  <YAxis
+                    domain={[0, maxExcess || 10000]}
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 10, fill: "#94a3b8" }}
+                    tickFormatter={(value) => {
+                      if (value === 0) return "0";
+                      if (value >= 10000) {
+                        return `+${(value / 10000).toFixed(0)}만`;
+                      }
+                      return `+${(value / 1000).toFixed(0)}천`;
+                    }}
+                    width={45}
+                  />
+                  <Tooltip
+                    formatter={(value: number) => [
+                      `+${formatCurrency(value)}원`,
+                      "평균 초과금",
+                    ]}
+                    labelFormatter={(label) => `${label}`}
+                    contentStyle={{
+                      backgroundColor: "white",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="excess"
+                    stroke="#f43f5e"
+                    strokeWidth={2}
+                    fill="url(#excessGradient)"
+                    dot={(props) => {
+                      const { cx, cy } = props;
+                      return (
+                        <circle
+                          cx={cx}
+                          cy={cy}
+                          r={4}
+                          fill="#f43f5e"
+                          stroke="white"
+                          strokeWidth={2}
+                        />
+                      );
+                    }}
+                    activeDot={{
+                      r: 6,
+                      stroke: "white",
+                      strokeWidth: 2,
+                      fill: "#f43f5e",
+                    }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             ) : (
-              <p className="flex-1 py-8 text-center text-sm text-slate-400">
+              <p className="flex h-full items-center justify-center text-sm text-slate-400">
                 데이터가 없습니다
               </p>
             )}

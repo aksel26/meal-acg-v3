@@ -225,6 +225,7 @@ export default function CalendarComponent({
               classNames={{
                 month_caption: "hidden",
                 nav: "hidden",
+                day: "relative w-full p-0 text-center min-h-[60px] sm:min-h-[72px] select-none",
               }}
               components={{
                 DayButton: ({ children, modifiers, day, ...props }) => {

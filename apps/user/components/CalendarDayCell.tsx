@@ -70,7 +70,7 @@ export const CalendarDayCell = React.memo(function CalendarDayCell({
         touch-manipulation
       `}
     >
-      <div className="flex flex-col items-center gap-0.5 sm:gap-1 py-1 sm:py-1.5 min-h-[44px] sm:min-h-[56px]">
+      <div className="flex flex-col items-center gap-0.5 sm:gap-1 py-1 sm:py-1.5 min-h-[60px] sm:min-h-[72px]">
         <span
           className={`
             text-xs sm:text-sm font-semibold transition-all duration-200 leading-none

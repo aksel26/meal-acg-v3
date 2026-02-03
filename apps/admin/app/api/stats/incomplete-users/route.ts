@@ -125,23 +125,27 @@ export async function GET(request: NextRequest) {
       const hasAttendance = Boolean(log?.attendance);
       const attendance = log?.attendance || "";
 
-      // 누락 체크 제외 조건: 개별식사, 연차, 휴무, 휴가, 반차
+      // 누락 체크 제외 조건: 개별식사, 연차, 휴무, 휴가, 반차, 재택
       const isIndividualMeal = attendance.includes("개별");
       const isLeave = attendance.includes("연차") || attendance.includes("휴무") || attendance.includes("휴가");
       const isHalfDay = attendance.includes("반차");
+      const isRemote = attendance.includes("재택");
+
+      // 개별식사, 연차/휴무/휴가, 반차, 재택인 경우 누락 조건에서 제외
+      if (isIndividualMeal || isLeave || isHalfDay || isRemote) {
+        continue;
+      }
+
+      // '근무' 또는 '출근'이면 식사 입력 없어도 OK
+      const isWork = attendance.includes("근무") || attendance.includes("출근");
 
       const hasBreakfast = Boolean(log?.breakfast_store || (log?.breakfast_amount && log.breakfast_amount > 0));
       const hasLunch = Boolean(log?.lunch_store || (log?.lunch_amount && log.lunch_amount > 0));
       const hasDinner = Boolean(log?.dinner_store || (log?.dinner_amount && log.dinner_amount > 0));
-
-      // 개별식사, 연차/휴무/휴가, 반차인 경우 누락 조건에서 제외
-      if (isIndividualMeal || isLeave || isHalfDay) {
-        continue;
-      }
-
       const hasMealEntry = hasBreakfast || hasLunch || hasDinner;
 
-      if (!hasAttendance || !hasMealEntry) {
+      // 근태 없음 OR (근무/출근이 아닌데 식사 입력도 없음)
+      if (!hasAttendance || (!isWork && !hasMealEntry)) {
         missingDates.push({
           date: weekday,
           hasAttendance,

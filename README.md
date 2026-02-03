@@ -1,160 +1,256 @@
-# 🍽️ Meal ACG v3
+# Meal ACG v3
 
-> 스마트한 식비 관리를 위한 기업용 식대 관리 애플리케이션
+기업용 식대 관리 애플리케이션
 
-## 📋 프로젝트 개요
+## Overview
 
-**Meal ACG v3**는 기업 구성원들의 식비를 체계적으로 관리하고 추적할 수 있는 모던 웹 애플리케이션입니다. PWA 지원으로 모바일에서도 네이티브 앱과 같은 경험을 제공합니다.
+직원들의 식대 사용 내역을 관리하고, 월별 정산을 자동화하는 시스템입니다. Turborepo 기반 모노레포로 User/Admin 두 개의 Next.js 앱과 공유 패키지로 구성됩니다.
 
-### 🎯 주요 기능
+| App | Port | 설명 |
+|-----|------|------|
+| User | 3000 | 직원용 - 식사 기록, 영수증 스캔, 점심조 관리 |
+| Admin | 3001 | 관리자용 - 대시보드, 정산 관리, Excel 가져오기/내보내기 |
 
-- 📱 **PWA 지원** - 모바일 설치 및 오프라인 사용 가능
-- 🔐 **인증 시스템** - 안전한 로그인 및 사용자 관리
-- 📊 **대시보드** - 식비 현황 및 통계 시각화
-- 🍴 **식비 기록** - 일별/월별 식비 입력 및 관리
-- 👥 **점심조 관리** - 팀원들과 함께하는 점심 시간 관리
-- ☕ **음료 관리** - Monthly Meeting 음료비 추적
-- 📈 **포인트 시스템** - 식비 사용 내역 포인트화
+## Tech Stack
 
-## 🛠️ 기술 스택
+### Core
+- **Framework**: Next.js 15 (App Router, Turbopack)
+- **React**: 19
+- **Language**: TypeScript 5 (strict mode)
 
-### Frontend
+### Styling
+- **CSS**: Tailwind CSS 4
+- **Components**: Radix UI (Headless)
+- **Animation**: Motion
 
-- **Next.js 15** - React 프레임워크 (App Router)
-- **React 19** - UI 라이브러리
-- **TypeScript** - 정적 타입 검사
-- **Tailwind CSS 4** - 유틸리티 기반 CSS 프레임워크
-- **Motion** - 애니메이션 라이브러리
+### State Management
+- **Client**: Zustand (persist middleware)
+- **Server**: TanStack React Query v5
 
-### State Management & Data Fetching
+### Backend Services
 
-- **Zustand** - 경량 상태 관리
-- **TanStack React Query** - 서버 상태 관리 및 캐싱
+| Service | User App | Admin App |
+|---------|----------|-----------|
+| Database | - | Supabase (PostgreSQL + RLS) |
+| Auth | Firebase Admin SDK | Supabase Auth |
+| Storage | Firebase Storage | Supabase Storage |
+| External APIs | Google Sheets, Calendar, Drive | Google Calendar (공휴일) |
+| AI | Gemini (영수증 스캔) | - |
+| Notifications | - | Slack Bot |
 
-### Backend Integration
+### Build Tools
+- **Monorepo**: Turborepo
+- **Package Manager**: pnpm 8.15+
+- **Linting**: ESLint (zero warnings policy)
+- **Formatting**: Prettier
 
-- **Firebase Admin SDK** - 백엔드 서비스
-- **Google APIs** - Drive, Sheets, Calendar 연동
-
-### Development Tools
-
-- **Turborepo** - 모노레포 관리
-- **pnpm** - 패키지 매니저
-- **ESLint** - 코드 품질 관리
-- **Prettier** - 코드 포매팅
-
-## 🏗️ 프로젝트 구조
+## Project Structure
 
 ```
-meal-acg-v3/
+meal-v3/
 ├── apps/
-│   └── user/                 # 메인 Next.js 애플리케이션
-│       ├── app/             # App Router 페이지
-│       ├── components/      # React 컴포넌트
-│       ├── hooks/          # 커스텀 React 훅
-│       ├── lib/            # 유틸리티 라이브러리
-│       └── stores/         # Zustand 스토어
-├── packages/
-│   ├── ui/                  # 공유 React 컴포넌트 라이브러리
-│   ├── utils/              # 공유 유틸리티 함수
-│   ├── eslint-config/      # ESLint 설정
-│   ├── typescript-config/  # TypeScript 설정
-│   └── tailwind-config/    # Tailwind CSS 설정
-└── docs/                   # 문서화
+│   ├── user/                    # 직원용 Next.js 앱
+│   │   ├── app/                 # App Router pages
+│   │   │   ├── (auth)/          # 인증 관련 페이지
+│   │   │   ├── (content)/       # 메인 콘텐츠 페이지
+│   │   │   └── api/             # API Routes
+│   │   ├── components/          # React 컴포넌트
+│   │   ├── hooks/               # Custom hooks (use-meal-data, use-meal-submit 등)
+│   │   ├── lib/                 # 유틸리티, Supabase/Firebase 클라이언트
+│   │   └── stores/              # Zustand stores
+│   │
+│   └── admin/                   # 관리자용 Next.js 앱
+│       ├── app/
+│       │   ├── (dashboard)/     # 대시보드 페이지들
+│       │   │   ├── page.tsx     # 메인 대시보드
+│       │   │   ├── users/       # 사용자 현황
+│       │   │   ├── calendar/    # 캘린더 뷰
+│       │   │   ├── import/      # Excel 가져오기
+│       │   │   └── lunch-groups/# 점심조 관리
+│       │   └── api/             # API Routes
+│       │       ├── stats/       # 통계 API (monthly, summary, trends)
+│       │       ├── members/     # 멤버 CRUD
+│       │       ├── meal-logs/   # 식사 기록 CRUD
+│       │       ├── export/      # Excel 내보내기
+│       │       ├── import/      # Excel 가져오기
+│       │       ├── settlement/  # 정산 처리
+│       │       └── slack/       # Slack 알림
+│       ├── hooks/               # Custom hooks
+│       └── lib/                 # Supabase 클라이언트, 인증, Excel 파서
+│
+└── packages/
+    ├── ui/                      # 공유 UI 컴포넌트 (@repo/ui)
+    │   └── src/                 # Button, Dialog, Drawer, Input 등
+    ├── utils/                   # 공유 유틸리티 (@repo/utils)
+    │   └── src/                 # dayjs, KST 날짜 함수
+    ├── eslint-config/           # 공유 ESLint 설정
+    ├── typescript-config/       # 공유 TypeScript 설정
+    └── tailwind-config/         # 공유 Tailwind 설정
 ```
 
-## 🚀 시작하기
+## Getting Started
 
-### 요구사항
+### Prerequisites
 
-- Node.js >= 18
-- pnpm (필수)
+- Node.js 18+
+- pnpm 8.15+
 
-### 설치 및 실행
+### Installation
 
 ```bash
 # 의존성 설치
 pnpm install
+```
 
-# 개발 서버 시작
+### Environment Setup
+
+**Admin App** (`apps/admin/.env.local`):
+```bash
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=xxx
+SUPABASE_SERVICE_ROLE_KEY=xxx          # RLS 우회용 (관리자 작업)
+
+# Google Calendar API (공휴일 동기화)
+GOOGLE_CALENDAR_API_KEY=xxx
+
+# Slack Bot (정산 요청 알림)
+SLACK_BOT_TOKEN=xoxb-xxx
+```
+
+**User App** (`apps/user/.env.local`):
+```bash
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=xxx
+
+# Google Service Account (Sheets/Drive 연동)
+GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+GOOGLE_CLIENT_EMAIL=xxx@xxx.iam.gserviceaccount.com
+
+# Google Sheets
+GOOGLE_SHEET_ID=xxx                     # 월간 음료 시트
+GOOGLE_SHEET_ID_WELFARE_POINTS=xxx      # 복지포인트 시트
+
+# Gemini AI (영수증 OCR)
+GEMINI_API_KEY=xxx
+```
+
+### Development
+
+```bash
+# 전체 앱 실행 (user:3000, admin:3001)
 pnpm dev
 
-# 특정 앱만 실행
-pnpm dev:user
+# 개별 앱 실행
+pnpm dev:user     # http://localhost:3000
+pnpm dev:admin    # http://localhost:3001
+```
 
-# 빌드
+### Build & Production
+
+```bash
+# 전체 빌드
 pnpm build
 
-# 타입 체크
-pnpm check-types
+# 개별 빌드
+pnpm build:user
+pnpm build:admin
 
-# 린트
-pnpm lint
+# 프로덕션 실행
+pnpm start:user
+pnpm start:admin
 ```
 
-### 환경 변수 설정
+## Features
 
-다음 환경 변수들을 설정해야 합니다:
+### User App
 
-```env
-# Firebase
-FIREBASE_SERVICE_ACCOUNT_KEY=
-NEXT_PUBLIC_FIREBASE_*=
+| 기능 | 설명 |
+|------|------|
+| 식사 기록 | 조식/중식/석식 금액 및 가게 입력 |
+| 영수증 스캔 | Gemini AI로 영수증 자동 인식 |
+| 캘린더 뷰 | 월별 식사 기록 조회 |
+| 점심조 | 주간 점심조 배정 및 조회 |
+| 월간 음료 | Monthly Meeting 음료 선택 |
+| 포인트 | 활동포인트/복지포인트 조회 |
+| PWA | 모바일 앱 설치 지원 |
 
-# Google APIs
-GOOGLE_PRIVATE_KEY=
-GOOGLE_CLIENT_EMAIL=
-GOOGLE_SHEET_ID=
-GOOGLE_CALENDAR_API_KEY=
+### Admin App
 
-# Authentication
-NEXT_PUBLIC_AUTH_URL=
+| 기능 | 설명 |
+|------|------|
+| 대시보드 | 월별 통계, 사용 트렌드, 인기 가게 |
+| 사용자 현황 | 전체 사용자 식대 현황 테이블 |
+| 캘린더 관리 | 사용자별 식사 기록 수정 |
+| 누락 체크 | 미입력 날짜 일괄 확인 |
+| Excel Import | Excel 파일에서 식사 기록 가져오기 |
+| Excel Export | 개인별/전체 정산 Excel 내보내기 |
+| 정산 처리 | 월별 정산 완료 처리 |
+| Slack 알림 | 미정산자에게 정산 요청 발송 |
+| 점심조 설정 | 고정 점심조 및 주간 배정 관리 |
+
+## Key Patterns
+
+### Query Keys (Factory Pattern)
+```typescript
+// apps/admin/lib/query-keys.ts
+queryKeys.stats.monthly(year, month)
+queryKeys.mealLogs.byUserAndMonth(userId, year, month)
+queryKeys.dashboard.summary(year, month)
 ```
 
-## 🎨 주요 특징
+### Custom Hooks
+```typescript
+// 패턴: use-{resource}.ts 또는 use-{resource}-{action}.ts
+useMealData(userName, month, year)  // 데이터 조회
+useMealSubmit()                     // mutation hook
+```
 
-### 1. 모던한 UI/UX
+### Supabase Clients (Admin App)
+```typescript
+// Browser Client - RLS 적용
+import { createBrowserClient } from '@/lib/supabase/client'
 
-- **반응형 디자인** - 모바일 퍼스트 접근
-- **애니메이션** - Motion 라이브러리를 활용한 부드러운 인터랙션
-- **컴포넌트 기반** - 재사용 가능한 UI 컴포넌트 라이브러리
+// Server Client - 쿠키 기반 인증
+import { createServerClient } from '@/lib/supabase/server'
 
-### 2. 성능 최적화
+// Service Client - RLS 우회 (관리자 작업용)
+import { createServiceClient } from '@/lib/supabase/server'
+```
 
-- **Turbopack** - 빠른 개발 빌드
-- **React Query** - 효율적인 데이터 캐싱
-- **PWA** - 오프라인 지원 및 앱 설치
+## Attendance Types (근태 값)
 
-### 3. 개발자 경험
+`meal_logs.attendance` 컬럼에 저장되는 값:
 
-- **모노레포** - Turborepo로 효율적인 워크스페이스 관리
-- **타입 안정성** - TypeScript 적용
-- **코드 품질** - ESLint + Prettier 자동화
+| 값 | 식대 포함 |
+|----|----------|
+| `근무` | O |
+| `근무(개별식사 / 식사안함)` | X |
+| `재택근무` | X |
+| `연차/휴무` | X |
+| `오전 반차/휴무` | X |
+| `오후 반차/휴무` | X |
 
-## 📱 주요 페이지
+**사용가능액 계산**: `일일단가 × (근무일 - 휴일 - 재택 - 개별 + 주말근무)`
 
-- **로그인** (`/`) - 사용자 인증 및 온보딩
-- **대시보드** (`/dashboard`) - 식비 현황 및 통계
-- **점심조** (`/lunch`) - 팀별 점심 관리
-- **월별 현황** (`/monthly`) - 월간 식비 분석
-- **포인트** (`/points`) - 적립 포인트 관리
+## Scripts
 
-## 🔧 개발 가이드라인
+| Command | Description |
+|---------|-------------|
+| `pnpm dev` | 개발 서버 실행 |
+| `pnpm build` | 프로덕션 빌드 |
+| `pnpm lint` | ESLint 검사 (max warnings = 0) |
+| `pnpm check-types` | TypeScript 타입 검사 |
+| `pnpm format` | Prettier 포맷팅 |
 
-### 코드 스타일
+## Code Standards
 
-- **0 Warning Policy** - ESLint 경고 0개 유지
-- **Strict TypeScript** - 엄격한 타입 체크
-- **Component Driven** - 재사용 가능한 컴포넌트 설계
-
-### 커밋 컨벤션
-
-- feat: 새로운 기능 추가
-- fix: 버그 수정
-- refactor: 코드 리팩토링
-- style: 스타일 변경
-- docs: 문서 수정
-
----
-
-_Built with ❤️ using Next.js, TypeScript, and Tailwind CSS_
+- **ESLint**: Zero warnings policy (`--max-warnings 0`)
+- **TypeScript**: Strict mode (`tsc --noEmit`)
+- **Commits**: Korean commit messages with prefix
+  - `feat`: 새로운 기능
+  - `fix`: 버그 수정
+  - `refactor`: 리팩토링
+  - `style`: 스타일 변경
+  - `docs`: 문서 수정

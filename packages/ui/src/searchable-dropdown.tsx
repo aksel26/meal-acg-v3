@@ -221,7 +221,7 @@ function SearchableDropdown<T>({
         aria-expanded={isOpen}
         aria-haspopup="listbox"
         className={cn(
-          "flex items-center w-64 h-10 px-3 border rounded-lg bg-white cursor-pointer transition-colors",
+          "flex items-center w-full h-10 px-3 border rounded-lg bg-white cursor-pointer transition-colors",
           disabled
             ? "bg-slate-100 cursor-not-allowed opacity-60"
             : "hover:border-blue-400",

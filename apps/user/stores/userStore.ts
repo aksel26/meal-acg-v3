@@ -5,12 +5,15 @@ interface UserState {
   userId: string | null;
   userName: string | null;
   role: string | null;
+  memberId: string | null;
+  memberRole: string | null;
   isLoggedIn: boolean;
   hasHydrated: boolean;
   login: (userId: string, userName: string, role: string | null) => void;
   logout: () => void;
   hydrate: () => void;
   setHasHydrated: (state: boolean) => void;
+  setMemberInfo: (memberId: string, memberRole: string) => void;
 }
 
 export const useUserStore = create<UserState>()(
@@ -19,6 +22,8 @@ export const useUserStore = create<UserState>()(
       userId: null,
       userName: null,
       role: null,
+      memberId: null,
+      memberRole: null,
       isLoggedIn: false,
       hasHydrated: false,
 
@@ -41,11 +46,17 @@ export const useUserStore = create<UserState>()(
         }
       },
 
+      setMemberInfo: (memberId: string, memberRole: string) => {
+        set({ memberId, memberRole });
+      },
+
       logout: () => {
         set({
           userId: null,
           userName: null,
           role: null,
+          memberId: null,
+          memberRole: null,
           isLoggedIn: false,
         });
         // localStorage 정리
@@ -81,6 +92,8 @@ export const useUserStore = create<UserState>()(
         userId: state.userId,
         userName: state.userName,
         role: state.role,
+        memberId: state.memberId,
+        memberRole: state.memberRole,
         isLoggedIn: state.isLoggedIn,
       }),
       onRehydrateStorage: () => (state) => {

@@ -46,26 +46,6 @@ export const queryKeys = {
     fixedSchedules: ["lunchGroup", "fixedSchedules"] as const,
   },
 
-  // 활동비 관련 쿼리
-  activityPoints: {
-    all: ["activityPoints"] as const,
-    byMonth: (month: string) => ["activityPoints", month] as const,
-    usage: (employeeId: string, month: string) => ["activityPoints", "usage", employeeId, month] as const,
-  },
-
-  // 포인트 내역 관련 쿼리
-  pointsHistory: {
-    all: ["pointsHistory"] as const,
-    byNameAndMonth: (name: string, year: number, month: number) => ["pointsHistory", name, year, month] as const,
-  },
-
-  // 복지포인트 관련 쿼리
-  welfarePoints: {
-    all: ["welfarePoints"] as const,
-    byNameAndYear: (name: string, year: number) => ["welfarePoints", name, year] as const,
-    byNameAndMonth: (name: string, year: number, month: number) => ["welfarePoints", name, year, month] as const,
-  },
-
   // 전역 설정 관련 쿼리
   settings: {
     all: ["settings"] as const,
@@ -82,6 +62,42 @@ export const queryKeys = {
   monthly: {
     all: ["monthly"] as const,
     data: ["monthly", "data"] as const,
+  },
+
+  // 포인트 관련 쿼리 (Supabase 기반)
+  points: {
+    all: ["points"] as const,
+    welfare: {
+      all: ["points", "welfare"] as const,
+      byPeriod: (memberId: string, period: string) =>
+        ["points", "welfare", memberId, period] as const,
+    },
+    activity: {
+      all: ["points", "activity"] as const,
+      byPeriod: (memberId: string, period: string) =>
+        ["points", "activity", memberId, period] as const,
+    },
+    dashboard: {
+      all: ["points", "dashboard"] as const,
+      byPeriod: (period: string, type?: string) =>
+        ["points", "dashboard", period, type ?? "all"] as const,
+    },
+    allocationRecords: {
+      byAllocation: (
+        memberId: string,
+        allocationId: string,
+        yearMonth?: string
+      ) =>
+        [
+          "points",
+          "allocationRecords",
+          memberId,
+          allocationId,
+          yearMonth ?? "all",
+        ] as const,
+    },
+    me: ["points", "me"] as const,
+    members: ["points", "members"] as const,
   },
 } as const;
 

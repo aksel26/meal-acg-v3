@@ -6,16 +6,26 @@ import { Card, CardContent } from "@repo/ui/src/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/src/select";
 import { NumberTicker } from "@repo/ui/src/number-ticker";
 import { ChartPieDonut } from "@repo/ui/src/chart-pie-donut";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/src/tabs"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/src/tabs";
 import { Check, Plus, SquircleDashed } from "@repo/ui/icons";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import NoDataIcon from "@/public/icons/noData.png";
 import Image from "next/image";
 import { EditPointDrawer } from "@/components/points/EditPointDrawer";
 import { ActivityViewDialog } from "../../../components/points/ActivityViewDialog";
 import { PointsGuideDialog } from "@/components/points/PointsGuideDialog";
-import { useWelfarePointsMonthly } from "@/hooks/use-welfare-points-monthly";
-import { useAddWelfarePoint, useUpdateWelfarePoint, useDeleteWelfarePoint } from "@/hooks/use-welfare-points-mutations";
+import {
+  useMemberIdLookup,
+  usePointsWelfare,
+  usePointsActivity,
+  type UsageRecord,
+} from "@/hooks/use-points-data";
+import {
+  useAddUsageRecord,
+  useUpdateUsageRecord,
+  useDeleteUsageRecord,
+} from "@/hooks/use-points-mutations";
+import { useUserStore } from "@/stores/userStore";
 import dayjs from "dayjs";
 
 interface WelfarePoint {
@@ -35,186 +45,189 @@ export default function Points() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isNewPoint, setIsNewPoint] = useState(false);
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest" | "amount-high" | "amount-low">("newest");
-  const [userName, setUserName] = useState<string>("");
-  const [gradeName, setGradeName] = useState<string>("");
   const [selectedTab, setSelectedTab] = useState<"welfare" | "activity">("welfare");
-  const [displayRemainingAmount, setDisplayRemainingAmount] = useState(0);
-  const [displayTabName, setDisplayTabName] = useState("복지포인트");
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // localStorage에서 사용자명과 등급명 가져오기
+  // Zustand store에서 사용자 정보 가져오기
+  const { userName, memberId, memberRole, setMemberInfo } = useUserStore();
+
+  // userName으로 member_id 조회 (store에 없는 경우)
+  const { data: memberLookup } = useMemberIdLookup(!memberId ? userName : null);
+
+  // member_id가 lookup에서 확인되면 store에 저장
   useEffect(() => {
-    const storedName = localStorage.getItem("name");
-    const storedGradeName = localStorage.getItem("grade");
-
-    if (storedName) {
-      setUserName(storedName);
+    if (memberLookup && !memberId) {
+      setMemberInfo(memberLookup.id, memberLookup.member_role);
     }
-    if (storedGradeName) {
-      setGradeName(storedGradeName);
-    }
-  }, []);
+  }, [memberLookup, memberId, setMemberInfo]);
 
-  // dayjs로 날짜 처리
-  const selectedDate = dayjs(selectedMonth);
-  const selectedYear = selectedDate.year();
-  const selectedMonthNum = selectedDate.month() + 1;
+  const currentMemberId = memberId || memberLookup?.id || null;
+  const currentMemberRole = memberRole || memberLookup?.member_role || null;
 
-  // 새로운 복지포인트 월별 API 사용
-  const { data: welfareMonthlyResponse, isLoading: isWelfareLoading, error: welfareError } = useWelfarePointsMonthly(userName, selectedYear, selectedMonthNum, !!userName);
-  console.log("welfareMonthlyResponse:", welfareMonthlyResponse);
+  // 매니저 여부 (팀장/본부장만 활동비 탭 접근 가능)
+  const isManager = currentMemberRole === "팀장" || currentMemberRole === "본부장";
+
+  // Supabase 기반 데이터 조회
+  const {
+    data: welfareData,
+    isLoading: isWelfareLoading,
+    error: welfareError,
+  } = usePointsWelfare(currentMemberId, selectedMonth);
+
+  const {
+    data: activityData,
+    isLoading: isActivityLoading,
+  } = usePointsActivity(isManager ? currentMemberId : null, selectedMonth);
 
   // Mutation hooks
-  const addWelfarePointMutation = useAddWelfarePoint();
-  const updateWelfarePointMutation = useUpdateWelfarePoint();
-  const deleteWelfarePointMutation = useDeleteWelfarePoint();
+  const addMutation = useAddUsageRecord();
+  const updateMutation = useUpdateUsageRecord();
+  const deleteMutation = useDeleteUsageRecord();
 
-  const welfareData = welfareMonthlyResponse?.data;
-  const welfareHistory = welfareMonthlyResponse?.data.history;
+  // 복지포인트 금액 데이터
+  const welfareTotalAmount = welfareData?.summary?.total_amount ?? 0;
+  const welfareUsedAmount = welfareData?.summary?.used_amount ?? 0;
+  const welfareRemainingAmount = welfareData?.summary?.remaining_amount ?? 0;
 
-  // API 데이터를 WelfarePoint 형식으로 변환
+  // 활동비 금액 데이터
+  const activityTotalAmount = activityData?.summary?.total_amount ?? 0;
+  const activityUsedAmount = activityData?.summary?.used_amount ?? 0;
+  const activityRemainingAmount = activityData?.summary?.remaining_amount ?? 0;
 
-  // dayjs를 사용한 하반기/상반기 구분
+  // 현재 표시할 잔액 및 탭 이름
+  const displayRemainingAmount = useMemo(() => {
+    if (!isManager || selectedTab === "welfare") return welfareRemainingAmount;
+    return activityRemainingAmount;
+  }, [selectedTab, welfareRemainingAmount, activityRemainingAmount, isManager]);
+
+  const displayTabName = useMemo(() => {
+    if (!isManager || selectedTab === "welfare") return "복지포인트";
+    return "활동비";
+  }, [selectedTab, isManager]);
+
+  // 현재 탭에 해당하는 records
+  const currentRecords = useMemo(() => {
+    if (!isManager || selectedTab === "welfare") {
+      return welfareData?.records ?? [];
+    }
+    return activityData?.records ?? [];
+  }, [selectedTab, welfareData, activityData, isManager]);
+
+  // 정렬된 records
+  const sortedRecords = useMemo(() => {
+    const records = [...currentRecords];
+    return records.sort((a, b) => {
+      switch (sortOrder) {
+        case "newest":
+          return new Date(b.used_at).getTime() - new Date(a.used_at).getTime();
+        case "oldest":
+          return new Date(a.used_at).getTime() - new Date(b.used_at).getTime();
+        case "amount-high":
+          return b.amount - a.amount;
+        case "amount-low":
+          return a.amount - b.amount;
+        default:
+          return 0;
+      }
+    });
+  }, [currentRecords, sortOrder]);
+
+  // 하반기/상반기 월 목록
   const currentDate = dayjs();
   const currentYear = currentDate.year();
-  const currentMonth = currentDate.month() + 1; // dayjs는 0부터 시작하므로 +1
-
-  const isSecondHalf = currentMonth >= 7; // 7월 이상이면 하반기
+  const currentMonth = currentDate.month() + 1;
+  const isSecondHalf = currentMonth >= 7;
 
   const months = Array.from({ length: 6 }, (_, i) => {
-    const monthNum = isSecondHalf ? i + 7 : i + 1; // 하반기: 7-12월, 상반기: 1-6월
-    const date = dayjs()
-      .year(currentYear)
-      .month(monthNum - 1)
-      .date(1);
+    const monthNum = isSecondHalf ? i + 7 : i + 1;
+    const date = dayjs().year(currentYear).month(monthNum - 1).date(1);
     return {
       value: date.format("YYYY-MM"),
       label: `${monthNum}월`,
     };
   });
 
-  // API 데이터와 로컬에서 추가된 데이터를 합치기
+  const isLoading = isWelfareLoading || (isManager && isActivityLoading);
 
-  // API에서 제공되는 데이터 사용 (문자열을 숫자로 변환)
-  const welfareTotalAmount = parseInt((welfareData?.welfareStats?.totalAmount || "0").toString().replace(/,/g, "")) || 0;
-  const welfareUsedAmount = parseInt((welfareData?.welfareStats?.usedAmount || "0").toString().replace(/,/g, "")) || 0;
-  const welfareRemainingAmount = parseInt((welfareData?.welfareStats?.remainingAmount || "0").toString().replace(/,/g, "")) || 0;
+  // UsageRecord → WelfarePoint 변환 (EditPointDrawer 호환)
+  const toEditablePoint = (record: UsageRecord): WelfarePoint => ({
+    id: record.id,
+    date: record.used_at,
+    type: record.type === "활동비" ? "activity" : "welfare",
+    vendor: record.description,
+    amount: record.amount,
+    used: true,
+    confirmed: record.is_reviewed,
+    notes: record.companions?.length ? `동반: ${record.companions.join(", ")}` : "",
+  });
 
-  const activityTotalAmount = parseInt((welfareData?.activityStats?.totalAmount || "0").toString().replace(/,/g, "")) || 0;
-  const activityUsedAmount = parseInt((welfareData?.activityStats?.usedAmount || "0").toString().replace(/,/g, "")) || 0;
-  const activityRemainingAmount = parseInt((welfareData?.activityStats?.remainingAmount || "0").toString().replace(/,/g, "")) || 0;
-
-  // 팀장, 본부장만 탭과 활동비 볼 수 있음
-  const isManager = gradeName === "팀장" || gradeName === "본부장";
-
-  // 탭이나 API 데이터가 변경될 때 표시 금액 업데이트
-  useEffect(() => {
-    // 팀장/본부장이 아니면 항상 복지포인트만 표시
-    if (!isManager) {
-      setDisplayRemainingAmount(welfareRemainingAmount);
-      setDisplayTabName("복지포인트");
-      setSelectedTab("welfare");
-      return;
-    }
-
-    const newDisplayRemainingAmount = selectedTab === "welfare" ? welfareRemainingAmount : activityRemainingAmount;
-    const newDisplayTabName = selectedTab === "welfare" ? "복지포인트" : "활동비";
-
-    setDisplayRemainingAmount(newDisplayRemainingAmount);
-    setDisplayTabName(newDisplayTabName);
-  }, [selectedTab, welfareRemainingAmount, activityRemainingAmount, isManager]);
-
-  const handleEditPoint = (apiPoint: any) => {
-    // API 데이터를 EditPointDrawer 형식으로 변환
-    const editablePoint: WelfarePoint = {
-      id: apiPoint.no?.toString() || "",
-      date: `${apiPoint.year}-${String(apiPoint.month).padStart(2, "0")}-${String(apiPoint.day).padStart(2, "0")}`,
-      type: apiPoint.type?.includes("복지") ? "welfare" : "activity",
-      vendor: apiPoint.vendor || "",
-      amount: apiPoint.amount || 0,
-      used: true, // API 데이터는 이미 사용된 것으로 간주
-      confirmed: apiPoint.confirmed || false,
-      notes: apiPoint.notes || "",
-    };
-
-    setEditingPoint(editablePoint);
+  const handleEditPoint = (record: UsageRecord) => {
+    // 검토 완료된 내역은 수정 불가
+    if (record.is_reviewed) return;
+    setEditingPoint(toEditablePoint(record));
     setIsNewPoint(false);
     setIsEditDialogOpen(true);
   };
 
   const handleSavePoint = async () => {
-    if (!editingPoint || !userName) return;
+    if (!editingPoint || !currentMemberId) return;
+
     try {
-      // date를 year, month, day로 분할
-      const selectedDate = dayjs(editingPoint.date);
-      const year = selectedDate.year();
-      const month = selectedDate.month() + 1;
-      const day = selectedDate.date();
-      const dayOfWeek = selectedDate.format("dd"); // 월, 화, 수, 목, 금, 토, 일
+      const pointType = editingPoint.type === "welfare" ? "welfare" : "activity";
 
-      // type을 API 형식으로 변환
-      const typeText = editingPoint.type === "welfare" ? "복지포인트" : "활동비";
-
-      const apiData = {
-        name: userName,
-        year,
-        month,
-        day,
-        dayOfWeek,
-        type: typeText,
-        vendor: editingPoint.vendor,
-        amount: editingPoint.amount,
-        notes: editingPoint.notes || "",
-      };
       if (isNewPoint) {
-        // 새로운 포인트 추가
-        await addWelfarePointMutation.mutateAsync(apiData);
-      } else {
-        // 기존 포인트 수정 (editingPoint.id에서 no를 가져옴)
-        const no = parseInt(editingPoint.id);
-        if (no) {
-          await updateWelfarePointMutation.mutateAsync({
-            no,
-            ...apiData,
-          });
+        // 새 내역 추가 - allocation_id 필요
+        const allocId = pointType === "welfare"
+          ? welfareData?.summary?.allocation_id
+          : activityData?.summary?.allocation_id;
+
+        if (!allocId) {
+          console.error("할당 정보가 없습니다. 관리자에게 예산 할당을 요청하세요.");
+          return;
         }
+
+        await addMutation.mutateAsync({
+          type: pointType,
+          allocation_id: allocId,
+          member_id: currentMemberId,
+          amount: editingPoint.amount,
+          description: editingPoint.vendor,
+          used_at: editingPoint.date,
+          companions: [],
+        });
+      } else {
+        await updateMutation.mutateAsync({
+          type: pointType,
+          id: editingPoint.id,
+          amount: editingPoint.amount,
+          description: editingPoint.vendor,
+          used_at: editingPoint.date,
+        });
       }
 
       setEditingPoint(null);
       setIsEditDialogOpen(false);
     } catch (error) {
       console.error("포인트 저장 오류:", error);
-      // TODO: 오류 메시지 표시
     }
   };
 
   const handleDeletePoint = async (point: WelfarePoint) => {
-    console.log("point:", point);
-    if (!point.id || !userName) return;
+    if (!point.id || !currentMemberId) return;
 
     setIsDeleting(true);
     try {
-      const no = parseInt(point.id);
-      console.log("no:", no);
-      if (no) {
-        // date에서 year, month 추출
-        const selectedDate = dayjs(point.date);
-        const year = selectedDate.year();
-        const month = selectedDate.month() + 1;
+      const pointType = point.type === "welfare" ? "welfare" : "activity";
+      await deleteMutation.mutateAsync({
+        type: pointType,
+        id: point.id,
+        member_id: currentMemberId,
+      });
 
-        await deleteWelfarePointMutation.mutateAsync({
-          no,
-          name: userName,
-          year,
-          month,
-        });
-
-        setEditingPoint(null);
-        setIsEditDialogOpen(false);
-      }
+      setEditingPoint(null);
+      setIsEditDialogOpen(false);
     } catch (error) {
       console.error("포인트 삭제 오류:", error);
-      // TODO: 오류 메시지 표시
     } finally {
       setIsDeleting(false);
     }
@@ -224,7 +237,7 @@ export default function Points() {
     const newPoint: WelfarePoint = {
       id: "",
       date: dayjs().format("YYYY-MM-DD"),
-      type: "welfare",
+      type: selectedTab,
       vendor: "",
       amount: 0,
       used: false,
@@ -235,8 +248,6 @@ export default function Points() {
     setIsNewPoint(true);
     setIsEditDialogOpen(true);
   };
-
-  const filteredAndSortedPoints: any = [];
 
   return (
     <React.Fragment>
@@ -259,7 +270,7 @@ export default function Points() {
               {selectedMonth.split("-")[0]}년 {displayTabName} 남은 금액
             </p>
             <div className="flex space-x-1">
-              {isWelfareLoading ? (
+              {isLoading ? (
                 <div className="animate-pulse bg-gray-200 rounded h-8 w-32"></div>
               ) : (
                 <NumberTicker className={`text-2xl font-black ${displayRemainingAmount < 0 ? "text-red-600" : "text-gray-900"}`} value={displayRemainingAmount} />
@@ -269,14 +280,14 @@ export default function Points() {
             {welfareError && <p className="text-xs text-red-500">데이터 로딩 중 오류가 발생했습니다.</p>}
           </div>
           <div>
-            <ActivityViewDialog />
+            <ActivityViewDialog memberId={currentMemberId} period={selectedMonth} />
           </div>
         </div>
 
         {/* Chart Section */}
         <div className="mb-4">
           {isManager ? (
-            <Tabs defaultValue="welfare" className="w-full" onValueChange={(value:any) => setSelectedTab(value as "welfare" | "activity")}>
+            <Tabs defaultValue="welfare" className="w-full" onValueChange={(value: string) => setSelectedTab(value as "welfare" | "activity")}>
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="welfare" className="text-xs">
                   복지포인트
@@ -293,7 +304,6 @@ export default function Points() {
               </TabsContent>
             </Tabs>
           ) : (
-            // 팀장/본부장이 아닌 경우 복지포인트만 표시
             <div className="mt-4">
               <ChartPieDonut availableAmount={welfareTotalAmount} totalUsed={welfareUsedAmount} className="relative" chartType="welfare" />
             </div>
@@ -303,8 +313,6 @@ export default function Points() {
 
       {/* Points List */}
       <div>
-        {/* Month Selector */}
-
         <div className="mb-3 flex justify-between items-center">
           <h2 className="text-md font-semibold text-gray-900">포인트 사용 내역</h2>
           <div className="flex gap-2">
@@ -349,7 +357,7 @@ export default function Points() {
             </CardContent>
           </Card>
 
-          {isWelfareLoading ? (
+          {isLoading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
                 <Card key={i} className="border-0 shadow-none bg-white">
@@ -369,7 +377,7 @@ export default function Points() {
                 </Card>
               ))}
             </div>
-          ) : welfareHistory?.length === 0 ? (
+          ) : sortedRecords.length === 0 ? (
             <Card className="border-0 shadow-none bg-white">
               <CardContent className="p-8 text-center">
                 <Image src={NoDataIcon} alt="No Data" width={40} height={40} className="mx-auto mb-4" />
@@ -377,71 +385,63 @@ export default function Points() {
               </CardContent>
             </Card>
           ) : (
-            welfareHistory
-              ?.sort((a: any, b: any) => {
-                switch (sortOrder) {
-                  case "newest":
-                    return new Date(b.year, b.month - 1, b.day).getTime() - new Date(a.year, a.month - 1, a.day).getTime();
-                  case "oldest":
-                    return new Date(a.year, a.month - 1, a.day).getTime() - new Date(b.year, b.month - 1, b.day).getTime();
-                  case "amount-high":
-                    return b.amount - a.amount;
-                  case "amount-low":
-                    return a.amount - b.amount;
-                  default:
-                    return 0;
-                }
-              })
-              ?.map((point: any, index: number) => {
-                const { year, month, day, dayOfWeek } = point;
-                console.log("point:", point);
+            sortedRecords.map((record) => {
+              const recordDate = dayjs(record.used_at);
+              const dayOfWeekMap: Record<number, string> = { 0: "일", 1: "월", 2: "화", 3: "수", 4: "목", 5: "금", 6: "토" };
+              const dayOfWeek = dayOfWeekMap[recordDate.day()] || "";
 
-                return (
-                  <Card key={index} className="border-0 shadow-none bg-white hover:shadow-md transition-shadow duration-200 cursor-pointer" onClick={() => handleEditPoint(point)}>
-                    <CardContent className="p-5">
-                      <div className="space-y-3">
-                        {/* Header Row */}
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <span className="text-sm font-light text-gray-400">
-                              {year}년 {month}월 {day}일 ({dayOfWeek})
-                            </span>
-                          </div>
-                          <div className="text-right">
-                            <p className={`text-base font-semibold`}>{point.amount.toLocaleString()} 원</p>
-                          </div>
-                        </div>
-
-                        {/* Vendor */}
+              return (
+                <Card
+                  key={record.id}
+                  className={`border-0 shadow-none bg-white hover:shadow-md transition-shadow duration-200 ${record.is_reviewed ? "opacity-80" : "cursor-pointer"}`}
+                  onClick={() => handleEditPoint(record)}
+                >
+                  <CardContent className="p-5">
+                    <div className="space-y-3">
+                      {/* Header Row */}
+                      <div className="flex justify-between items-start">
                         <div>
-                          <p className="font-medium text-gray-900">{point.vendor}</p>
-                          {point.notes && <p className="text-gray-500 text-sm mt-1">{point.notes}</p>}
+                          <span className="text-sm font-light text-gray-400">
+                            {recordDate.year()}년 {recordDate.month() + 1}월 {recordDate.date()}일 ({dayOfWeek})
+                          </span>
                         </div>
-
-                        {/* Bottom Info */}
-                        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                          <Badge variant={point.type === "활동비" ? "secondary" : "outline"} className="text-xs">
-                            {point.type}
-                          </Badge>
-                          <div className="flex items-center space-x-1">
-                            {point.confirmed ? (
-                              <Badge className="bg-lime-50 flex items-center space-x-1">
-                                <Check className="w-3 h-3 text-lime-500" />
-                                <span className="text-xs text-lime-500">P&C 확인</span>
-                              </Badge>
-                            ) : (
-                              <>
-                                <SquircleDashed className="w-4 h-4 text-gray-400" />
-                                <span className="text-xs font-light text-gray-400">P&C 확인 전</span>
-                              </>
-                            )}
-                          </div>
+                        <div className="text-right">
+                          <p className="text-base font-semibold">{record.amount.toLocaleString()} 원</p>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                );
-              })
+
+                      {/* Description */}
+                      <div>
+                        <p className="font-medium text-gray-900">{record.description}</p>
+                        {record.companions?.length > 0 && (
+                          <p className="text-gray-500 text-sm mt-1">동반: {record.companions.join(", ")}</p>
+                        )}
+                      </div>
+
+                      {/* Bottom Info */}
+                      <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                        <Badge variant={record.type === "활동비" ? "secondary" : "outline"} className="text-xs">
+                          {record.type}
+                        </Badge>
+                        <div className="flex items-center space-x-1">
+                          {record.is_reviewed ? (
+                            <Badge className="bg-lime-50 flex items-center space-x-1">
+                              <Check className="w-3 h-3 text-lime-500" />
+                              <span className="text-xs text-lime-500">P&C 확인</span>
+                            </Badge>
+                          ) : (
+                            <>
+                              <SquircleDashed className="w-4 h-4 text-gray-400" />
+                              <span className="text-xs font-light text-gray-400">P&C 확인 전</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
           )}
         </div>
       </div>

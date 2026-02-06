@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
 
-// PUT /api/members/[id] - Update a member (organization info, role, etc.)
+// PUT /api/teams/[id] - Update a team
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -13,50 +13,45 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
 
+    const { name, division_id } = body;
+
     if (!id) {
-      return NextResponse.json({ error: "Member ID is required" }, { status: 400 });
+      return NextResponse.json({ error: "Team ID is required" }, { status: 400 });
     }
 
-    const updateData: Record<string, unknown> = {};
-
-    if (body.team_id !== undefined) {
-      updateData.team_id = body.team_id || null;
-    }
-    if (body.division_id !== undefined) {
-      updateData.division_id = body.division_id || null;
-    }
-    if (body.member_role !== undefined) {
-      updateData.member_role = body.member_role;
-    }
-    if (body.organization_id !== undefined) {
-      updateData.organization_id = body.organization_id || null;
+    if (!name) {
+      return NextResponse.json({ error: "name is required" }, { status: 400 });
     }
 
-    if (Object.keys(updateData).length === 0) {
-      return NextResponse.json({ error: "No fields to update" }, { status: 400 });
+    const updateData: { name: string; division_id?: string | null } = { name };
+    if (division_id !== undefined) {
+      updateData.division_id = division_id || null;
     }
 
     const { data, error } = await supabase
-      .from("members")
+      .from("teams")
       .update(updateData)
       .eq("id", id)
       .select()
       .single();
 
     if (error) {
-      console.error("Error updating member:", error);
+      console.error("Error updating team:", error);
       if (error.code === "PGRST116") {
-        return NextResponse.json({ error: "Member not found" }, { status: 404 });
+        return NextResponse.json({ error: "Team not found" }, { status: 404 });
+      }
+      if (error.code === "23505") {
+        return NextResponse.json({ error: "Team name already exists" }, { status: 409 });
       }
       if (error.code === "23503") {
-        return NextResponse.json({ error: "Referenced team or division not found" }, { status: 404 });
+        return NextResponse.json({ error: "Division not found" }, { status: 404 });
       }
-      return NextResponse.json({ error: "Failed to update member" }, { status: 500 });
+      return NextResponse.json({ error: "Failed to update team" }, { status: 500 });
     }
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Members API error:", error);
+    console.error("Teams API error:", error);
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -64,7 +59,7 @@ export async function PUT(
   }
 }
 
-// DELETE /api/members/[id] - Delete a member
+// DELETE /api/teams/[id] - Delete a team
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -75,22 +70,22 @@ export async function DELETE(
     const { id } = await params;
 
     if (!id) {
-      return NextResponse.json({ error: "Member ID is required" }, { status: 400 });
+      return NextResponse.json({ error: "Team ID is required" }, { status: 400 });
     }
 
     const { error } = await supabase
-      .from("members")
+      .from("teams")
       .delete()
       .eq("id", id);
 
     if (error) {
-      console.error("Error deleting member:", error);
-      return NextResponse.json({ error: "Failed to delete member" }, { status: 500 });
+      console.error("Error deleting team:", error);
+      return NextResponse.json({ error: "Failed to delete team" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Members API error:", error);
+    console.error("Teams API error:", error);
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

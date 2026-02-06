@@ -16,9 +16,13 @@ import {
   Coffee,
   Upload,
   Download,
-  Database,
   Cog,
   Grid3X3,
+  Coins,
+  Building2,
+  PiggyBank,
+  ClipboardCheck,
+  UserCheck,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -52,24 +56,29 @@ const navigation: NavigationItem[] = [
     name: "식대 관리",
     icon: Utensils,
     items: [
-      { name: "사용자 현황", href: "/users", icon: Users },
+      { name: "사용현황 (인원별)", href: "/users", icon: Users },
       { name: "식대 입력", href: "/calendar", icon: Calendar },
+      { name: "식대 기본금 설정", href: "/settings", icon: Settings },
+      { name: "엑셀 가져오기", href: "/import", icon: Upload },
+      { name: "엑셀 내보내기", href: "/export", icon: Download },
     ],
   },
   {
     name: "조직 관리",
     icon: Users,
     items: [
+      { name: "조직 구성", href: "/organization", icon: Building2 },
+      { name: "조직원 현황", href: "/member-status", icon: UserCheck },
       { name: "점심조 관리", href: "/lunch-groups", icon: Shuffle },
       { name: "Monthly 음료", href: "/monthly", icon: Coffee },
     ],
   },
   {
-    name: "데이터 관리",
-    icon: Database,
+    name: "포인트 관리",
+    icon: Coins,
     items: [
-      { name: "엑셀 가져오기", href: "/import", icon: Upload },
-      { name: "엑셀 내보내기", href: "/export", icon: Download },
+      { name: "예산 할당", href: "/budget", icon: PiggyBank },
+      { name: "사용내역 검토", href: "/review", icon: ClipboardCheck },
     ],
   },
   {
@@ -77,7 +86,6 @@ const navigation: NavigationItem[] = [
     icon: Cog,
     items: [
       { name: "공휴일 관리", href: "/holidays", icon: CalendarDays },
-      { name: "지원금 설정", href: "/settings", icon: Settings },
     ],
   },
 ];

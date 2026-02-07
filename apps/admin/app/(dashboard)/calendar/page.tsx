@@ -118,11 +118,11 @@ export default function CalendarPage() {
     }
   }, [searchParams]);
 
-  // Fetch members
+  // Fetch members (특이사항 인원 제외)
   const { data: members } = useQuery<Member[]>({
-    queryKey: queryKeys.members.all,
+    queryKey: queryKeys.members.active,
     queryFn: async () => {
-      const response = await fetch("/api/members");
+      const response = await fetch("/api/members?exclude_status=true");
       if (!response.ok) throw new Error("Failed to fetch members");
       return response.json();
     },

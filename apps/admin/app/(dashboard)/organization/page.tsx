@@ -53,6 +53,7 @@ import {
   useBatchAssignMembers,
 } from "@/hooks/useOrganizationMutations";
 import { Checkbox } from "@repo/ui/src/checkbox";
+import { useActiveStatusMembers } from "@/hooks/useActiveStatusMembers";
 
 // ── Role badge color helper ──
 
@@ -66,6 +67,15 @@ function roleBadgeStyle(role: string) {
       return "bg-slate-50 text-slate-600 border-slate-200";
   }
 }
+
+const STATUS_COLORS: Record<string, string> = {
+  육아휴직: "bg-pink-50 text-pink-700 border-pink-200",
+  병가: "bg-red-50 text-red-700 border-red-200",
+  재택근무: "bg-cyan-50 text-cyan-700 border-cyan-200",
+  파견: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  휴직: "bg-amber-50 text-amber-700 border-amber-200",
+  퇴사: "bg-slate-100 text-slate-500 border-slate-300",
+};
 
 // ── Types for dialog state ──
 
@@ -81,12 +91,17 @@ type DialogMode =
 function MemberRow({
   member,
   onEdit,
+  status,
 }: {
   member: OrgMember;
   onEdit: (member: OrgMember) => void;
+  status?: string;
 }) {
   return (
-    <div className="group flex items-center justify-between rounded-lg px-3 py-2 transition-colors hover:bg-slate-50">
+    <div className={cn(
+      "group flex items-center justify-between rounded-lg px-3 py-2 transition-colors hover:bg-slate-50",
+      status && "opacity-50"
+    )}>
       <div className="flex items-center gap-3">
         <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-500">
           <User className="h-3.5 w-3.5" />
@@ -100,6 +115,14 @@ function MemberRow({
         >
           {member.member_role}
         </Badge>
+        {status && (
+          <span className={cn(
+            "inline-flex items-center rounded-full border px-1.5 py-0.5 text-[10px] font-medium",
+            STATUS_COLORS[status] || "bg-slate-100 text-slate-500 border-slate-300"
+          )}>
+            {status}
+          </span>
+        )}
       </div>
       <button
         onClick={() => onEdit(member)}
@@ -119,14 +142,22 @@ function TeamSection({
   onEditTeam,
   onDeleteTeam,
   onEditMember,
+  statusMap,
 }: {
   team: OrgTeam;
   onEditTeam: (team: OrgTeam) => void;
   onDeleteTeam: (team: OrgTeam) => void;
   onEditMember: (member: OrgMember) => void;
+  statusMap?: Map<string, string>;
 }) {
   const [isOpen, setIsOpen] = useState(true);
-  const members = team.members || [];
+  const members = useMemo(() => {
+    const raw = team.members || [];
+    const roleOrder: Record<string, number> = { 본부장: 0, 팀장: 1, 팀원: 2 };
+    return [...raw].sort(
+      (a, b) => (roleOrder[a.member_role] ?? 9) - (roleOrder[b.member_role] ?? 9),
+    );
+  }, [team.members]);
 
   return (
     <div className="rounded-xl border border-slate-100 bg-white">
@@ -175,6 +206,7 @@ function TeamSection({
               key={member.id}
               member={member}
               onEdit={onEditMember}
+              status={statusMap?.get(member.id)}
             />
           ))}
         </div>
@@ -199,6 +231,7 @@ function DivisionSection({
   onEditTeam,
   onDeleteTeam,
   onEditMember,
+  statusMap,
 }: {
   division: OrgDivision;
   onEditDivision: (division: OrgDivision) => void;
@@ -207,6 +240,7 @@ function DivisionSection({
   onEditTeam: (team: OrgTeam) => void;
   onDeleteTeam: (team: OrgTeam) => void;
   onEditMember: (member: OrgMember) => void;
+  statusMap?: Map<string, string>;
 }) {
   const [isOpen, setIsOpen] = useState(true);
   const teams = division.teams || [];
@@ -270,6 +304,7 @@ function DivisionSection({
                 onEditTeam={onEditTeam}
                 onDeleteTeam={onDeleteTeam}
                 onEditMember={onEditMember}
+                statusMap={statusMap}
               />
             ))
           ) : (
@@ -289,13 +324,18 @@ function UnassignedMemberRow({
   member,
   checked,
   onToggle,
+  status,
 }: {
   member: OrgMember;
   checked: boolean;
   onToggle: (id: string) => void;
+  status?: string;
 }) {
   return (
-    <label className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-orange-50/50">
+    <label className={cn(
+      "flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-orange-50/50",
+      status && "opacity-50"
+    )}>
       <Checkbox
         checked={checked}
         onCheckedChange={() => onToggle(member.id)}
@@ -312,6 +352,14 @@ function UnassignedMemberRow({
       >
         {member.member_role}
       </Badge>
+      {status && (
+        <span className={cn(
+          "inline-flex items-center rounded-full border px-1.5 py-0.5 text-[10px] font-medium",
+          STATUS_COLORS[status] || "bg-slate-100 text-slate-500 border-slate-300"
+        )}>
+          {status}
+        </span>
+      )}
     </label>
   );
 }
@@ -320,6 +368,18 @@ function UnassignedMemberRow({
 
 export default function OrganizationPage() {
   const { data: orgTree, isLoading } = useOrganizationTree(null);
+
+  // 특이사항 인원 조회
+  const { data: activeStatusMembers } = useActiveStatusMembers();
+  const statusMap = useMemo(() => {
+    const map = new Map<string, string>();
+    activeStatusMembers?.forEach((m) => {
+      if (m.member_id && m.current_status) {
+        map.set(m.member_id, m.current_status);
+      }
+    });
+    return map;
+  }, [activeStatusMembers]);
 
   // Mutations
   const createDivisionMutation = useCreateDivision();
@@ -653,6 +713,7 @@ export default function OrganizationPage() {
               onEditTeam={(t) => openDialog({ type: "editTeam", team: t })}
               onDeleteTeam={handleDeleteTeam}
               onEditMember={(m) => openDialog({ type: "editMember", member: m })}
+              statusMap={statusMap}
             />
           ))}
 
@@ -693,6 +754,7 @@ export default function OrganizationPage() {
                         onEditMember={(m) =>
                           openDialog({ type: "editMember", member: m })
                         }
+                        statusMap={statusMap}
                       />
                     ))
                   ) : (
@@ -741,6 +803,7 @@ export default function OrganizationPage() {
                           member={member}
                           checked={selectedMemberIds.has(member.id)}
                           onToggle={toggleMember}
+                          status={statusMap.get(member.id)}
                         />
                       ))}
                     </div>

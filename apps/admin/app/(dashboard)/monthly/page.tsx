@@ -30,11 +30,20 @@ import {
   Coffee,
   Plus,
   X,
-  Users,
   Trash2,
 } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
+import { useActiveStatusMembers } from "@/hooks/useActiveStatusMembers";
 import type { Member } from "@/lib/supabase/types";
+
+const STATUS_COLORS: Record<string, string> = {
+  육아휴직: "bg-pink-50 text-pink-700 border-pink-200",
+  병가: "bg-red-50 text-red-700 border-red-200",
+  재택근무: "bg-cyan-50 text-cyan-700 border-cyan-200",
+  파견: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  휴직: "bg-amber-50 text-amber-700 border-amber-200",
+  퇴사: "bg-slate-100 text-slate-500 border-slate-300",
+};
 
 interface MonthlyData {
   applications: {
@@ -90,15 +99,27 @@ export default function MonthlyPage() {
     },
   });
 
-  // Fetch members for adding new applications
+  // Fetch members for adding new applications (특이사항 인원 제외)
   const { data: members } = useQuery<Member[]>({
-    queryKey: queryKeys.members.all,
+    queryKey: queryKeys.members.active,
     queryFn: async () => {
-      const response = await fetch("/api/members");
+      const response = await fetch("/api/members?exclude_status=true");
       if (!response.ok) throw new Error("Failed to fetch members");
       return response.json();
     },
   });
+
+  // 특이사항 인원 조회
+  const { data: activeStatusMembers } = useActiveStatusMembers();
+  const statusMap = useMemo(() => {
+    const map = new Map<string, string>();
+    activeStatusMembers?.forEach((m) => {
+      if (m.member_id && m.current_status) {
+        map.set(m.member_id, m.current_status);
+      }
+    });
+    return map;
+  }, [activeStatusMembers]);
 
   // Update drink mutation
   const updateDrinkMutation = useMutation({
@@ -250,109 +271,81 @@ export default function MonthlyPage() {
 
   return (
     <div className="space-y-6">
-      {/* Month Navigation & Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Top Bar */}
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-xl border border-slate-200/60 bg-white/50 px-5 py-3 backdrop-blur-sm">
         {/* Month Selector */}
-        <Card className="glass-panel border-0">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <Button variant="ghost" size="icon" onClick={handlePrevMonth}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="text-lg font-semibold">
-                {currentDate.format("YYYY년 M월")}
-              </span>
-              <Button variant="ghost" size="icon" onClick={handleNextMonth}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handlePrevMonth}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="min-w-[7rem] text-center text-base font-semibold text-slate-800">
+            {currentDate.format("YYYY년 M월")}
+          </span>
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleNextMonth}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <div className="h-4 w-px bg-slate-200" />
 
         {/* Stats */}
-        <Card className="glass-panel border-0">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
-                <Coffee className="h-5 w-5 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-sm text-slate-500">신청 완료</p>
-                <p className="text-xl font-bold text-slate-900">
-                  {completedCount}
-                  <span className="text-sm font-normal text-slate-400">
-                    /{monthlyData?.applications.length || 0}명
-                  </span>
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-slate-500">신청</span>
+          <span className="text-base font-semibold tabular-nums text-slate-800">
+            {completedCount}
+            <span className="text-sm font-normal text-slate-400">
+              /{monthlyData?.applications.length || 0}명
+            </span>
+          </span>
+        </div>
+
+        <div className="h-4 w-px bg-slate-200" />
 
         {/* Pickup Persons */}
-        <Card className="glass-panel border-0">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center">
-                <Users className="h-5 w-5 text-violet-600" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm text-slate-500">픽업 담당</p>
-                <p className="text-sm font-semibold text-slate-900 truncate">
-                  {monthlyData?.pickupPersons?.length
-                    ? monthlyData.pickupPersons.join(", ")
-                    : "미지정"}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-sm text-slate-500 shrink-0">픽업</span>
+          <span className="text-sm font-medium text-slate-800 truncate">
+            {monthlyData?.pickupPersons?.length
+              ? monthlyData.pickupPersons.join(", ")
+              : "미지정"}
+          </span>
+        </div>
 
         {/* Settings */}
-        <Card
-          className="glass-panel border-0 cursor-pointer hover:bg-white/80 transition-colors"
+        <button
           onClick={handleOpenSettings}
+          className="ml-auto flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+          title="설정"
         >
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center">
-                <Settings className="h-5 w-5 text-slate-600" />
-              </div>
-              <div>
-                <p className="text-sm text-slate-500">설정</p>
-                <p className="text-sm font-semibold text-slate-900">
-                  음료 옵션 관리
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          <Settings className="h-4 w-4" />
+        </button>
       </div>
 
       {/* Drink Stats */}
       {Object.keys(drinkStats).length > 0 && (
-        <Card className="glass-panel border-0">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">음료별 현황</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {Object.entries(drinkStats)
-                .sort(([, a], [, b]) => b - a)
-                .map(([drink, count]) => (
-                  <div
-                    key={drink}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-full"
-                  >
-                    <span className="text-sm text-slate-700">{drink}</span>
-                    <span className="text-xs font-semibold text-slate-500 bg-white px-1.5 py-0.5 rounded-full">
-                      {count}
-                    </span>
-                  </div>
-                ))}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="mr-1 text-xs font-medium text-slate-400">음료별</span>
+          {Object.entries(drinkStats)
+            .sort(([, a], [, b]) => b - a)
+            .map(([drink, count]) => (
+              <div
+                key={drink}
+                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/60 px-2.5 py-1 text-xs"
+              >
+                <span className="text-slate-600">{drink}</span>
+                <span className="font-semibold tabular-nums text-slate-800">
+                  {count}
+                </span>
+              </div>
+            ))}
+          <div className="h-3 w-px bg-slate-200" />
+          <span className="text-xs text-slate-400">
+            합계{" "}
+            <span className="font-semibold tabular-nums text-slate-700">
+              {Object.values(drinkStats).reduce((a, b) => a + b, 0)}
+            </span>
+          </span>
+        </div>
       )}
 
       {/* Applications List */}
@@ -395,53 +388,77 @@ export default function MonthlyPage() {
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
-              {filteredApplications.map((app) => (
-                <div
-                  key={app.id}
-                  className="flex items-center justify-between py-2 hover:bg-slate-50 -mx-4 px-4 cursor-pointer rounded-lg transition-colors"
-                  onClick={() => handleEditClick(app)}
-                >
-                  <div className="flex items-center gap-2.5">
-                    {hasDrink(app.drink) ? (
-                      <div className="w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center">
-                        <Coffee className="h-3.5 w-3.5 text-white" />
-                      </div>
-                    ) : (
-                      <div className="w-8 h-8 rounded-full border-2 border-dashed border-slate-300" />
+              {filteredApplications.map((app) => {
+                const memberStatus = statusMap.get(app.userId);
+                return (
+                  <div
+                    key={app.id}
+                    className={cn(
+                      "flex items-center justify-between py-2 -mx-4 px-4 rounded-lg transition-colors",
+                      memberStatus
+                        ? "opacity-50 cursor-default"
+                        : "hover:bg-slate-50 cursor-pointer"
                     )}
-                    <div>
-                      <p className="font-medium text-sm text-slate-900">{app.name}</p>
-                      {app.memo && (
-                        <p className="text-xs text-slate-400">{app.memo}</p>
+                    onClick={() => !memberStatus && handleEditClick(app)}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      {hasDrink(app.drink) ? (
+                        <div className="w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center">
+                          <Coffee className="h-3.5 w-3.5 text-white" />
+                        </div>
+                      ) : app.drink === "선택안함" ? (
+                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+                          <X className="h-3.5 w-3.5 text-slate-400" />
+                        </div>
+                      ) : (
+                        <div className="w-8 h-8 rounded-full border-2 border-dashed border-slate-300" />
+                      )}
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-medium text-sm text-slate-900">{app.name}</p>
+                          {memberStatus && (
+                            <span className={cn(
+                              "inline-flex items-center rounded-full border px-1.5 py-0.5 text-[10px] font-medium",
+                              STATUS_COLORS[memberStatus] || "bg-slate-100 text-slate-500 border-slate-300"
+                            )}>
+                              {memberStatus}
+                            </span>
+                          )}
+                        </div>
+                        {app.memo && (
+                          <p className="text-xs text-slate-400">{app.memo}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`text-sm font-medium ${
+                          app.drink ? "text-slate-700" : "text-slate-400"
+                        }`}
+                      >
+                        {app.drink || "미선택"}
+                      </span>
+                      {!memberStatus && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-slate-400 hover:text-red-500"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (
+                              confirm(`${app.name}님의 신청을 삭제하시겠습니까?`)
+                            ) {
+                              deleteMutation.mutate(app.id);
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={`text-sm font-medium ${
-                        app.drink ? "text-slate-700" : "text-slate-400"
-                      }`}
-                    >
-                      {app.drink || "미선택"}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-slate-400 hover:text-red-500"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (
-                          confirm(`${app.name}님의 신청을 삭제하시겠습니까?`)
-                        ) {
-                          deleteMutation.mutate(app.id);
-                        }
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>

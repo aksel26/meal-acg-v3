@@ -16,9 +16,11 @@ import {
   Wallet,
   CreditCard,
   PiggyBank,
+  AlertTriangle,
 } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
 import { useAuth } from "@/hooks/useAuth";
+import { useActiveStatusMembers } from "@/hooks/useActiveStatusMembers";
 import { cn } from "@repo/ui/lib/utils";
 
 interface DashboardStats {
@@ -64,6 +66,15 @@ interface MemberSpendingData {
   totalMembers: number;
 }
 
+
+const STATUS_COLORS: Record<string, string> = {
+  육아휴직: "bg-pink-50 text-pink-700 border-pink-200",
+  병가: "bg-red-50 text-red-700 border-red-200",
+  재택근무: "bg-cyan-50 text-cyan-700 border-cyan-200",
+  파견: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  휴직: "bg-amber-50 text-amber-700 border-amber-200",
+  퇴사: "bg-slate-100 text-slate-500 border-slate-300",
+};
 
 const getWeekStartDate = (date: dayjs.Dayjs) => {
   const day = date.day();
@@ -125,7 +136,17 @@ export default function DashboardPage() {
     },
   });
 
-  console.log("🔍 ~ DashboardPage ~ apps/admin/app/(dashboard)/page.tsx:299 ~ totalUsed:", stats);
+  // 특이사항 인원 조회
+  const { data: statusMembers } = useActiveStatusMembers();
+  const statusMemberCount = statusMembers?.length || 0;
+
+  // 정산 제외 대상 (특이사항 인원 중 정산 불필요한 상태)
+  const SETTLEMENT_EXCLUDED_STATUSES = new Set(["육아휴직", "병가", "파견", "휴직", "퇴사"]);
+  const excludedMemberNames = new Set(
+    statusMembers
+      ?.filter((m) => m.current_status && SETTLEMENT_EXCLUDED_STATUSES.has(m.current_status))
+      .map((m) => m.full_name) || []
+  );
 
   const { data: settlement } = useQuery<SettlementData>({
     queryKey: queryKeys.dashboard.settlement(selectedYear, selectedMonth),
@@ -296,7 +317,14 @@ export default function DashboardPage() {
                 <span className="ml-1 text-sm font-medium text-slate-400">명</span>
               </p>
             )}
-            <p className="mt-0.5 text-xs font-medium text-slate-500">총 인원</p>
+            <p className="mt-0.5 text-xs font-medium text-slate-500">
+              총 인원
+              {statusMemberCount > 0 && (
+                <span className="ml-1 text-slate-400">
+                  (특이사항 {statusMemberCount}명 포함)
+                </span>
+              )}
+            </p>
           </div>
         </Link>
 
@@ -374,43 +402,59 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 3열 그리드 */}
-      <div className="grid min-h-0 flex-[7.5] grid-cols-1 gap-4 lg:grid-cols-3">
+      {/* 4열 그리드 */}
+      <div className="grid min-h-0 flex-[7.5] grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         {/* 정산 현황 */}
         <div className="glass-panel flex flex-col rounded-2xl p-5 transition-all duration-300 hover:shadow-lg">
           <h3 className="mb-3 font-semibold text-slate-900">정산 현황</h3>
-          <div className="flex items-baseline gap-3">
-            <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-bold text-[#135bec]">
-                {settlement?.settledCount || 0}
-              </span>
-              <span className="text-xs text-slate-400">완료</span>
-            </div>
-            <span className="text-slate-300">/</span>
-            <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-bold text-orange-500">
-                {settlement?.unsettledCount || 0}
-              </span>
-              <span className="text-xs text-slate-400">미정산</span>
-            </div>
-          </div>
-          {settlement?.unsettledMembers && settlement.unsettledMembers.length > 0 && (
-            <div className="mt-3 flex-1 overflow-y-auto border-t border-slate-100 pt-3">
-              <p className="mb-2 text-[10px] font-medium text-slate-400">미정산</p>
-              <div className="flex flex-wrap gap-1.5">
-                {[...settlement.unsettledMembers]
-                  .sort((a, b) => a.full_name.localeCompare(b.full_name, "ko"))
-                  .map((m) => (
-                    <span
-                      key={m.id}
-                      className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600"
-                    >
-                      {m.full_name}
+          {(() => {
+            const filteredUnsettled = settlement?.unsettledMembers?.filter(
+              (m) => !excludedMemberNames.has(m.full_name)
+            ) || [];
+            const filteredUnsettledCount = filteredUnsettled.length;
+            const excludedCount = (settlement?.unsettledCount || 0) - filteredUnsettledCount;
+            return (
+              <>
+                <div className="flex items-baseline gap-3">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-bold text-[#135bec]">
+                      {settlement?.settledCount || 0}
                     </span>
-                  ))}
-              </div>
-            </div>
-          )}
+                    <span className="text-xs text-slate-400">완료</span>
+                  </div>
+                  <span className="text-slate-300">/</span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-bold text-orange-500">
+                      {filteredUnsettledCount}
+                    </span>
+                    <span className="text-xs text-slate-400">미정산</span>
+                  </div>
+                </div>
+                {excludedCount > 0 && (
+                  <p className="mt-1 text-[10px] text-slate-400">
+                    특이사항 {excludedCount}명 제외
+                  </p>
+                )}
+                {filteredUnsettled.length > 0 && (
+                  <div className="mt-3 flex-1 overflow-y-auto border-t border-slate-100 pt-3">
+                    <p className="mb-2 text-[10px] font-medium text-slate-400">미정산</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[...filteredUnsettled]
+                        .sort((a, b) => a.full_name.localeCompare(b.full_name, "ko"))
+                        .map((m) => (
+                          <span
+                            key={m.id}
+                            className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600"
+                          >
+                            {m.full_name}
+                          </span>
+                        ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </div>
 
         {/* 초과액 TOP 5 */}
@@ -512,6 +556,67 @@ export default function DashboardPage() {
               </p>
             )}
           </div>
+        </div>
+
+        {/* 특이사항 인원 */}
+        <div className="glass-panel flex flex-col rounded-2xl p-5 transition-all duration-300 hover:shadow-lg">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="font-semibold text-slate-900">특이사항 인원</h3>
+            <Link
+              href="/member-status"
+              className="text-xs text-[#135bec] hover:underline"
+            >
+              관리하기
+            </Link>
+          </div>
+          {statusMembers && statusMembers.length > 0 ? (
+            <>
+              <div className="mb-3 flex flex-wrap gap-1.5">
+                {Object.entries(
+                  statusMembers.reduce<Record<string, number>>((acc, m) => {
+                    const status = m.current_status || "기타";
+                    acc[status] = (acc[status] || 0) + 1;
+                    return acc;
+                  }, {})
+                ).map(([status, count]) => (
+                  <span
+                    key={status}
+                    className={cn(
+                      "rounded-full border px-2 py-0.5 text-[10px] font-medium",
+                      STATUS_COLORS[status] || "bg-slate-50 text-slate-600 border-slate-200"
+                    )}
+                  >
+                    {status} {count}
+                  </span>
+                ))}
+              </div>
+              <div className="flex-1 space-y-1 overflow-y-auto border-t border-slate-100 pt-3">
+                {statusMembers.map((m) => (
+                  <div
+                    key={m.member_id}
+                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-slate-50"
+                  >
+                    <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-400" />
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-700">
+                      {m.full_name}
+                    </span>
+                    <span
+                      className={cn(
+                        "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium",
+                        STATUS_COLORS[m.current_status || ""] || "bg-slate-50 text-slate-600 border-slate-200"
+                      )}
+                    >
+                      {m.current_status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <p className="py-6 text-center text-sm text-slate-400">
+              특이사항 인원이 없습니다
+            </p>
+          )}
         </div>
       </div>
 

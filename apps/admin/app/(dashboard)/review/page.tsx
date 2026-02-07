@@ -46,11 +46,8 @@ import {
   Trash2,
   Loader2,
   ClipboardList,
-  FileCheck,
-  Banknote,
   History,
   AlertTriangle,
-  Users,
 } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
 import { useAuth } from "@/hooks/useAuth";
@@ -73,6 +70,7 @@ interface UsageRecord {
   description: string | null;
   used_at: string;
   companions: string[] | null;
+  notes: string | null;
   receipt_url: string | null;
   is_reviewed: boolean;
   reviewed_by: string | null;
@@ -143,7 +141,11 @@ export default function ReviewPage() {
   const { user } = useAuth();
 
   // Filter state
-  const [period, setPeriod] = useState("");
+  const currentYear = new Date().getFullYear();
+  const currentHalf = new Date().getMonth() < 6 ? "H1" : "H2";
+  const [periodYear, setPeriodYear] = useState(String(currentYear));
+  const [periodHalf, setPeriodHalf] = useState(currentHalf);
+  const period = `${periodYear}-${periodHalf}`;
   const [typeFilter, setTypeFilter] = useState("전체");
   const [memberFilter, setMemberFilter] = useState("전체");
   const [reviewFilter, setReviewFilter] = useState("전체");
@@ -154,6 +156,8 @@ export default function ReviewPage() {
   const [editAmount, setEditAmount] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editUsedAt, setEditUsedAt] = useState("");
+
+  const [editNotes, setEditNotes] = useState("");
 
   // Delete confirm
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -170,7 +174,7 @@ export default function ReviewPage() {
   // Build query filters
   const queryFilters = useMemo(
     () => ({
-      period: period || undefined,
+      period,
       type: typeFilter !== "전체" ? typeFilter : undefined,
       member_id: memberFilter !== "전체" ? memberFilter : undefined,
       is_reviewed:
@@ -238,6 +242,7 @@ export default function ReviewPage() {
     setEditAmount(String(record.amount));
     setEditDescription(record.description || "");
     setEditUsedAt(formatDate(record.used_at));
+    setEditNotes(record.notes || "");
     setIsEditOpen(true);
   };
 
@@ -258,6 +263,7 @@ export default function ReviewPage() {
         amount,
         description: editDescription || undefined,
         used_at: editUsedAt,
+        notes: editNotes || null,
         modified_by: user?.id,
       },
       {
@@ -300,95 +306,47 @@ export default function ReviewPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Stats Cards */}
-      {records.length > 0 && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div className="flex items-center gap-4 glass-panel rounded-2xl p-5 transition-all duration-300 hover:border-white/80">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#135bec]/10">
-              <ClipboardList className="h-5 w-5 text-[#135bec]" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-slate-500">전체 건수</p>
-              <p className="text-2xl font-bold text-slate-900">
-                {totalCount}
-                <span className="ml-1 text-lg font-medium text-slate-400">
-                  건
-                </span>
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4 glass-panel rounded-2xl p-5 transition-all duration-300 hover:border-white/80">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10">
-              <FileCheck className="h-5 w-5 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-slate-500">검토 완료</p>
-              <p className="text-2xl font-bold text-emerald-600">
-                {reviewedCount}
-                <span className="ml-1 text-lg font-medium text-slate-400">
-                  / {totalCount}건
-                </span>
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4 glass-panel rounded-2xl p-5 transition-all duration-300 hover:border-white/80">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#a855f7]/10">
-              <Banknote className="h-5 w-5 text-[#a855f7]" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-slate-500">총 사용금액</p>
-              <p className="text-2xl font-bold text-slate-900">
-                {(totalAmount / 10000).toFixed(1)}
-                <span className="ml-1 text-lg font-medium text-slate-400">
-                  만원
-                </span>
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Filter Bar */}
-      <div className="flex flex-wrap items-end gap-4">
-        <div className="space-y-1.5">
-          <Label
-            htmlFor="period"
-            className="text-sm font-medium text-slate-700"
-          >
-            기간
-          </Label>
-          <Input
-            id="period"
-            value={period}
-            onChange={(e) => setPeriod(e.target.value)}
-            placeholder="예: 2026-H1"
-            className="w-40"
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label className="text-sm font-medium text-slate-700">유형</Label>
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-36">
+    <div className="flex h-[calc(100vh-10rem)] flex-col gap-6">
+      {/* Filter Bar + Stats */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Select value={periodYear} onValueChange={setPeriodYear}>
+            <SelectTrigger className="h-9 w-24 text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="전체">전체</SelectItem>
+              {[currentYear - 1, currentYear, currentYear + 1].map((y) => (
+                <SelectItem key={y} value={String(y)}>
+                  {y}년
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={periodHalf} onValueChange={setPeriodHalf}>
+            <SelectTrigger className="h-9 w-24 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="H1">상반기</SelectItem>
+              <SelectItem value="H2">하반기</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="h-9 w-32 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="전체">유형 전체</SelectItem>
               <SelectItem value="복지포인트">복지포인트</SelectItem>
               <SelectItem value="활동비">활동비</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label className="text-sm font-medium text-slate-700">멤버</Label>
           <Select value={memberFilter} onValueChange={setMemberFilter}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="h-9 w-36 text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="전체">전체</SelectItem>
+              <SelectItem value="전체">멤버 전체</SelectItem>
               {members?.map((member) => (
                 <SelectItem key={member.id} value={member.id}>
                   {member.full_name}
@@ -396,27 +354,31 @@ export default function ReviewPage() {
               ))}
             </SelectContent>
           </Select>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label className="text-sm font-medium text-slate-700">
-            검토 상태
-          </Label>
           <Select value={reviewFilter} onValueChange={setReviewFilter}>
-            <SelectTrigger className="w-36">
+            <SelectTrigger className="h-9 w-32 text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="전체">전체</SelectItem>
+              <SelectItem value="전체">검토 전체</SelectItem>
               <SelectItem value="검토 완료">검토 완료</SelectItem>
               <SelectItem value="미검토">미검토</SelectItem>
             </SelectContent>
           </Select>
         </div>
+
+        {records.length > 0 && (
+          <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
+            <span>{totalCount}건</span>
+            <span className="text-slate-300">·</span>
+            <span>검토 {reviewedCount}/{totalCount}</span>
+            <span className="text-slate-300">·</span>
+            <span>{(totalAmount / 10000).toFixed(1)}만원</span>
+          </div>
+        )}
       </div>
 
       {/* Main Table */}
-      <div className="glass-panel overflow-hidden rounded-2xl">
+      <div className="glass-panel min-h-0 flex-1 overflow-hidden rounded-2xl">
         {isLoading ? (
           <div className="divide-y divide-slate-100">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -441,10 +403,10 @@ export default function ReviewPage() {
             </p>
           </div>
         ) : (
-          <div className="max-h-[calc(100vh-420px)] overflow-auto">
+          <div className="h-full overflow-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-slate-50">
+                <TableRow className="bg-slate-50 [&>th]:h-8 [&>th]:px-2 [&>th]:py-0">
                   <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                     날짜
                   </TableHead>
@@ -460,13 +422,13 @@ export default function ReviewPage() {
                   <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
                     금액
                   </TableHead>
-                  <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    동반자
+                  <TableHead className="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    비고
                   </TableHead>
                   <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                     검토
                   </TableHead>
-                  <TableHead className="w-28 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <TableHead className="w-24 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                     액션
                   </TableHead>
                 </TableRow>
@@ -475,7 +437,7 @@ export default function ReviewPage() {
                 {records.map((record) => (
                   <TableRow
                     key={record.id}
-                    className="transition-colors hover:bg-slate-50/50"
+                    className="transition-colors hover:bg-slate-50/50 [&>td]:px-2 [&>td]:py-1"
                   >
                     <TableCell className="text-center text-sm text-slate-600">
                       {formatDate(record.used_at)}
@@ -500,59 +462,56 @@ export default function ReviewPage() {
                     <TableCell className="text-right text-sm font-medium text-slate-900">
                       {formatCurrency(record.amount)}
                     </TableCell>
-                    <TableCell className="text-center">
-                      {record.companions && record.companions.length > 0 ? (
-                        <Badge
-                          variant="outline"
-                          className="border-sky-200 bg-sky-50 px-1.5 py-0 text-[11px] text-sky-700"
-                        >
-                          <Users className="mr-0.5 h-3 w-3" />
-                          {record.companions.length}
-                        </Badge>
-                      ) : (
-                        <span className="text-sm text-slate-300">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <button
-                        onClick={() => handleToggleReview(record)}
-                        disabled={toggleReview.isPending}
-                        className={cn(
-                          "inline-flex h-7 w-7 items-center justify-center rounded-lg transition-colors",
-                          record.is_reviewed
-                            ? "text-emerald-600 hover:bg-emerald-50"
-                            : "text-slate-300 hover:bg-slate-100 hover:text-slate-500"
-                        )}
-                        title={
-                          record.is_reviewed ? "검토 완료" : "미검토 - 클릭하여 검토"
-                        }
-                      >
-                        {record.is_reviewed ? (
-                          <CheckCircle2 className="h-5 w-5" />
-                        ) : (
-                          <Circle className="h-5 w-5" />
-                        )}
-                      </button>
+                    <TableCell className="max-w-[150px] truncate text-sm text-slate-600">
+                      {record.notes || <span className="text-slate-300">-</span>}
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-1">
                         <button
+                          onClick={() => handleToggleReview(record)}
+                          disabled={toggleReview.isPending}
+                          className={cn(
+                            "inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-colors",
+                            record.is_reviewed
+                              ? "text-emerald-600 hover:bg-emerald-50"
+                              : "text-slate-300 hover:bg-slate-100 hover:text-slate-500"
+                          )}
+                          title={
+                            record.is_reviewed ? "검토 완료" : "미검토 - 클릭하여 검토"
+                          }
+                        >
+                          {record.is_reviewed ? (
+                            <CheckCircle2 className="h-4 w-4" />
+                          ) : (
+                            <Circle className="h-4 w-4" />
+                          )}
+                        </button>
+                        {record.is_reviewed && record.reviewed_at && (
+                          <span className="text-[11px] tabular-nums text-slate-400">
+                            {record.reviewed_at.slice(0, 10)}
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center gap-0.5">
+                        <button
                           onClick={() => handleAuditOpen(record.id)}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+                          className="inline-flex h-6 w-6 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
                           title="변경 이력"
                         >
                           <History className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={() => handleEditClick(record)}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-[#135bec]/10 hover:text-[#135bec]"
+                          className="inline-flex h-6 w-6 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-[#135bec]/10 hover:text-[#135bec]"
                           title="수정"
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={() => handleDeleteClick(record)}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                          className="inline-flex h-6 w-6 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
                           title="삭제"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -615,6 +574,16 @@ export default function ReviewPage() {
                 type="date"
                 value={editUsedAt}
                 onChange={(e) => setEditUsedAt(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-notes">비고</Label>
+              <Input
+                id="edit-notes"
+                value={editNotes}
+                onChange={(e) => setEditNotes(e.target.value)}
+                placeholder="비고를 입력하세요"
               />
             </div>
           </div>

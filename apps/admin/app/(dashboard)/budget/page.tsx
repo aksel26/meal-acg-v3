@@ -23,7 +23,6 @@ import {
   DialogTitle,
 } from "@repo/ui/src/dialog";
 import {
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -32,20 +31,18 @@ import {
 } from "@repo/ui/src/table";
 import { toast } from "sonner";
 import {
-  Pencil,
   Loader2,
   Wallet,
-  Users,
   Calculator,
   DollarSign,
   ListPlus,
 } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
 import { useBudgetSummary } from "@/hooks/useBudgetAllocations";
+import { useActiveStatusMembers } from "@/hooks/useActiveStatusMembers";
 import {
   useUpdateAllocation,
   useBulkUpsertAllocations,
-  useCalculateActivityBudget,
 } from "@/hooks/useBudgetMutations";
 
 // ── Types ──
@@ -56,7 +53,7 @@ interface BudgetSummaryItem {
   member_name: string;
   member_role: string;
   team_name: string | null;
-  allocation_type: string;
+  type: string;
   total_amount: number;
   used_amount: number;
   remaining_amount: number;
@@ -65,11 +62,22 @@ interface BudgetSummaryItem {
   description: string | null;
 }
 
+interface MemberBudgetRow {
+  member_id: string;
+  member_name: string;
+  member_role: string;
+  team_name: string | null;
+  welfare: BudgetSummaryItem | null;
+  activity: BudgetSummaryItem | null;
+}
+
 interface Member {
   id: string;
   full_name: string;
   member_role: string;
   team_name: string | null;
+  team_id: string | null;
+  division_id: string | null;
 }
 
 // ── Role Badge Helper ──
@@ -80,17 +88,6 @@ function roleBadgeStyle(role: string) {
       return "bg-purple-50 text-purple-700 border-purple-200";
     case "팀장":
       return "bg-blue-50 text-blue-700 border-blue-200";
-    default:
-      return "bg-slate-50 text-slate-600 border-slate-200";
-  }
-}
-
-function typeBadgeStyle(type: string) {
-  switch (type) {
-    case "복지포인트":
-      return "bg-emerald-50 text-emerald-700 border-emerald-200";
-    case "활동비":
-      return "bg-amber-50 text-amber-700 border-amber-200";
     default:
       return "bg-slate-50 text-slate-600 border-slate-200";
   }
@@ -127,8 +124,9 @@ export default function BudgetPage() {
   const [bulkDescription, setBulkDescription] = useState("");
 
   const [isCalcOpen, setIsCalcOpen] = useState(false);
-  const [calcBaseAmount, setCalcBaseAmount] = useState("");
-  const [calcPerMemberAmount, setCalcPerMemberAmount] = useState("");
+  const [calcLeaderRate, setCalcLeaderRate] = useState("200000");
+  const [calcManagerRate, setCalcManagerRate] = useState("150000");
+  const [calcPncExtraRate, setCalcPncExtraRate] = useState("50000");
 
   // Queries
   const typeParam = typeFilter === "전체" ? undefined : typeFilter;
@@ -143,16 +141,59 @@ export default function BudgetPage() {
     },
   });
 
+  // 특이사항 인원 조회
+  const { data: statusMembers } = useActiveStatusMembers();
+
   // Mutations
   const updateAllocation = useUpdateAllocation();
   const bulkUpsert = useBulkUpsertAllocations();
-  const calculateActivity = useCalculateActivityBudget();
 
   // Derived data
   const summaryItems: BudgetSummaryItem[] = useMemo(() => {
     if (!summaryData) return [];
     return Array.isArray(summaryData) ? summaryData : summaryData.data || [];
   }, [summaryData]);
+
+  // 멤버별 그룹화
+  const memberRows: MemberBudgetRow[] = useMemo(() => {
+    const map = new Map<string, MemberBudgetRow>();
+    for (const item of summaryItems) {
+      let row = map.get(item.member_id);
+      if (!row) {
+        row = {
+          member_id: item.member_id,
+          member_name: item.member_name,
+          member_role: item.member_role,
+          team_name: item.team_name,
+          welfare: null,
+          activity: null,
+        };
+        map.set(item.member_id, row);
+      }
+      if (item.type === "복지포인트") row.welfare = item;
+      else if (item.type === "활동비") row.activity = item;
+    }
+    return Array.from(map.values());
+  }, [summaryItems]);
+
+  // 특이사항 인원 ID Set
+  const statusMemberIds = useMemo(() => {
+    return new Set(
+      (statusMembers || []).map((m) => m.member_id).filter(Boolean)
+    );
+  }, [statusMembers]);
+
+  // 일괄 할당 대상 인원 수
+  const bulkTargetCount = useMemo(() => {
+    if (!members) return 0;
+    const base =
+      bulkType === "복지포인트"
+        ? members
+        : members.filter(
+            (m) => m.member_role === "팀장" || m.member_role === "본부장",
+          );
+    return base.filter((m) => !statusMemberIds.has(m.id)).length;
+  }, [members, bulkType, statusMemberIds]);
 
   // Leaders for auto-calculate
   const leaderMembers = useMemo(() => {
@@ -162,21 +203,83 @@ export default function BudgetPage() {
     );
   }, [members]);
 
+  // Activity preview calculation
+  const activityPreview = useMemo(() => {
+    if (!members || !leaderMembers.length) return [];
+    const leaderRate = parseInt(calcLeaderRate) || 0;
+    const managerRate = parseInt(calcManagerRate) || 0;
+    const pncExtraRate = parseInt(calcPncExtraRate) || 0;
+
+    // team_id별 멤버 수 집계
+    const teamCounts = new Map<string, number>();
+    members.forEach((m) => {
+      if (m.team_id)
+        teamCounts.set(m.team_id, (teamCounts.get(m.team_id) || 0) + 1);
+    });
+
+    // P&C팀 식별
+    const pncLeader = leaderMembers.find(
+      (l) =>
+        l.team_name?.includes("People & Culture") ||
+        l.team_name?.includes("P&C"),
+    );
+    const pncTeamId = pncLeader?.team_id;
+
+    // P&C팀 외 팀원급 인원 수 (특이사항 인원 제외, 팀 배정된 멤버만)
+    const pncExtraCount = pncTeamId
+      ? members.filter(
+          (m) =>
+            m.member_role === "팀원" &&
+            m.team_id &&
+            m.team_id !== pncTeamId &&
+            !statusMemberIds.has(m.id),
+        ).length
+      : 0;
+
+    return leaderMembers.map((leader) => {
+      const memberCount = leader.team_id
+        ? (teamCounts.get(leader.team_id) || 1)
+        : 1;
+      const isPnC = !!(pncTeamId && leader.team_id === pncTeamId);
+
+      let amount: number;
+      if (leader.member_role === "본부장") {
+        amount = memberCount * leaderRate;
+      } else if (isPnC) {
+        amount = memberCount * managerRate + pncExtraCount * pncExtraRate;
+      } else {
+        amount = memberCount * managerRate;
+      }
+
+      return { ...leader, memberCount, amount, isPnC, pncExtraCount };
+    });
+  }, [members, leaderMembers, calcLeaderRate, calcManagerRate, calcPncExtraRate, statusMemberIds]);
+
+  const activityPreviewTotal = useMemo(
+    () =>
+      activityPreview
+        .filter((p) => !statusMemberIds.has(p.id))
+        .reduce((sum, p) => sum + p.amount, 0),
+    [activityPreview, statusMemberIds],
+  );
+
   // Stats
   const totalAllocated = useMemo(
     () => summaryItems.reduce((sum, item) => sum + (item.total_amount || 0), 0),
     [summaryItems],
   );
-  const totalUsed = useMemo(
-    () => summaryItems.reduce((sum, item) => sum + (item.used_amount || 0), 0),
+  const welfareRemaining = useMemo(
+    () =>
+      summaryItems
+        .filter((item) => item.type === "복지포인트")
+        .reduce((sum, item) => sum + (item.remaining_amount || 0), 0),
     [summaryItems],
   );
-  const totalRemaining = useMemo(
+  const activityRemaining = useMemo(
     () =>
-      summaryItems.reduce(
-        (sum, item) => sum + (item.remaining_amount || 0),
-        0,
-      ),
+      summaryItems
+        .filter((item) => item.type === "활동비")
+        .reduce((sum, item) => sum + (item.remaining_amount || 0), 0),
     [summaryItems],
   );
 
@@ -235,7 +338,7 @@ export default function BudgetPage() {
       return;
     }
 
-    // Welfare: all members. Activity: only leaders
+    // Welfare: all members. Activity: only leaders. 특이사항 인원은 할당액 0.
     const targetMembers =
       bulkType === "복지포인트"
         ? members
@@ -250,9 +353,9 @@ export default function BudgetPage() {
 
     const allocations = targetMembers.map((m) => ({
       member_id: m.id,
-      allocation_type: bulkType,
+      type: bulkType,
       period,
-      total_amount: amount,
+      total_amount: statusMemberIds.has(m.id) ? 0 : amount,
       description: bulkDescription || undefined,
     }));
 
@@ -269,8 +372,9 @@ export default function BudgetPage() {
   // ── Auto Calculate Handlers ──
 
   const handleCalcOpen = () => {
-    setCalcBaseAmount("");
-    setCalcPerMemberAmount("");
+    setCalcLeaderRate("200000");
+    setCalcManagerRate("150000");
+    setCalcPncExtraRate("50000");
     setIsCalcOpen(true);
   };
 
@@ -279,23 +383,20 @@ export default function BudgetPage() {
       toast.error("기간을 먼저 입력해주세요.");
       return;
     }
-    const baseAmount = parseInt(calcBaseAmount, 10);
-    const perMemberAmount = parseInt(calcPerMemberAmount, 10);
-    if (isNaN(baseAmount) || baseAmount < 0) {
-      toast.error("기본 금액을 올바르게 입력해주세요.");
-      return;
-    }
-    if (isNaN(perMemberAmount) || perMemberAmount < 0) {
-      toast.error("인당 금액을 올바르게 입력해주세요.");
+    if (activityPreview.length === 0) {
+      toast.error("대상 멤버가 없습니다.");
       return;
     }
 
-    calculateActivity.mutate(
-      {
-        period,
-        base_amount: baseAmount,
-        per_member_amount: perMemberAmount,
-      },
+    const allocations = activityPreview.map((p) => ({
+      member_id: p.id,
+      type: "활동비",
+      period,
+      total_amount: statusMemberIds.has(p.id) ? 0 : p.amount,
+    }));
+
+    bulkUpsert.mutate(
+      { allocations },
       {
         onSuccess: () => {
           setIsCalcOpen(false);
@@ -305,56 +406,38 @@ export default function BudgetPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex h-[calc(100vh-10rem)] flex-col gap-6">
       {/* Quick Stats */}
       {period && summaryItems.length > 0 && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div className="flex items-center gap-4 glass-panel rounded-2xl p-5 transition-all duration-300 hover:border-white/80">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#135bec]/10">
-              <DollarSign className="h-5 w-5 text-[#135bec]" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-slate-500">총 할당액</p>
-              <p className="text-2xl font-bold text-slate-900">
-                {(totalAllocated / 10000).toFixed(1)}
-                <span className="ml-1 text-lg font-medium text-slate-400">
-                  만원
-                </span>
-              </p>
-            </div>
+        <div className="flex items-center gap-6 rounded-xl border border-slate-200/60 bg-white/50 px-6 py-3 backdrop-blur-sm">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-500">총 할당액</span>
+            <span className="text-lg font-semibold tabular-nums text-slate-800">
+              {(totalAllocated / 10000).toFixed(1)}
+              <span className="ml-0.5 text-sm font-normal text-slate-400">만원</span>
+            </span>
           </div>
-          <div className="flex items-center gap-4 glass-panel rounded-2xl p-5 transition-all duration-300 hover:border-white/80">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#a855f7]/10">
-              <Wallet className="h-5 w-5 text-[#a855f7]" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-slate-500">총 사용액</p>
-              <p className="text-2xl font-bold text-slate-900">
-                {(totalUsed / 10000).toFixed(1)}
-                <span className="ml-1 text-lg font-medium text-slate-400">
-                  만원
-                </span>
-              </p>
-            </div>
+          <div className="h-4 w-px bg-slate-200" />
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-500">복지포인트 잔액</span>
+            <span className={cn(
+              "text-lg font-semibold tabular-nums",
+              welfareRemaining < 0 ? "text-rose-600" : "text-slate-800",
+            )}>
+              {(welfareRemaining / 10000).toFixed(1)}
+              <span className="ml-0.5 text-sm font-normal text-slate-400">만원</span>
+            </span>
           </div>
-          <div className="flex items-center gap-4 glass-panel rounded-2xl p-5 transition-all duration-300 hover:border-white/80">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10">
-              <Users className="h-5 w-5 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-slate-500">총 잔액</p>
-              <p
-                className={cn(
-                  "text-2xl font-bold",
-                  totalRemaining >= 0 ? "text-emerald-600" : "text-rose-600",
-                )}
-              >
-                {(totalRemaining / 10000).toFixed(1)}
-                <span className="ml-1 text-lg font-medium text-slate-400">
-                  만원
-                </span>
-              </p>
-            </div>
+          <div className="h-4 w-px bg-slate-200" />
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-500">활동비 잔액</span>
+            <span className={cn(
+              "text-lg font-semibold tabular-nums",
+              activityRemaining < 0 ? "text-rose-600" : "text-slate-800",
+            )}>
+              {(activityRemaining / 10000).toFixed(1)}
+              <span className="ml-0.5 text-sm font-normal text-slate-400">만원</span>
+            </span>
           </div>
         </div>
       )}
@@ -428,7 +511,7 @@ export default function BudgetPage() {
       </div>
 
       {/* Main Table */}
-      <div className="glass-panel overflow-hidden rounded-2xl">
+      <div className="glass-panel min-h-0 flex-1 overflow-hidden rounded-2xl">
         {!period ? (
           <div className="py-16 text-center">
             <Wallet className="mx-auto h-12 w-12 text-slate-300" />
@@ -449,7 +532,7 @@ export default function BudgetPage() {
               </div>
             ))}
           </div>
-        ) : summaryItems.length === 0 ? (
+        ) : memberRows.length === 0 ? (
           <div className="py-16 text-center">
             <DollarSign className="mx-auto h-12 w-12 text-slate-300" />
             <p className="mt-4 text-lg font-medium text-slate-600">
@@ -460,15 +543,15 @@ export default function BudgetPage() {
             </p>
           </div>
         ) : (
-          <div className="max-h-[calc(100vh-420px)] overflow-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-slate-50">
+          <div className="h-full overflow-auto">
+            <table className="w-full caption-bottom text-sm">
+              <TableHeader className="sticky top-0 z-10">
+                <TableRow className="bg-slate-50 [&>th]:bg-slate-50 [&>th]:h-9 [&>th]:px-3 [&>th]:py-0">
                   <TableHead className="w-14 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                     No
                   </TableHead>
                   <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    구분
+                    직급
                   </TableHead>
                   <TableHead className="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                     이름
@@ -477,94 +560,69 @@ export default function BudgetPage() {
                     팀
                   </TableHead>
                   <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    할당액
+                    활동비
                   </TableHead>
                   <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    사용액
-                  </TableHead>
-                  <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    잔액
-                  </TableHead>
-                  <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    검토
-                  </TableHead>
-                  <TableHead className="w-16 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    액션
+                    복지포인트
                   </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {summaryItems.map((item, index) => {
-                  const remaining = item.remaining_amount ?? 0;
+                {memberRows.map((row, index) => {
                   return (
                     <TableRow
-                      key={item.allocation_id || `${item.member_id}-${index}`}
-                      className="transition-colors hover:bg-slate-50/50"
+                      key={row.member_id}
+                      className="transition-colors hover:bg-slate-50/50 [&>td]:px-3 [&>td]:py-1.5"
                     >
                       <TableCell className="text-center text-sm text-slate-400">
                         {index + 1}
                       </TableCell>
                       <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-1.5">
-                          <Badge
-                            variant="outline"
-                            className={cn(
-                              "text-[11px] px-1.5 py-0",
-                              roleBadgeStyle(item.member_role),
-                            )}
-                          >
-                            {item.member_role}
-                          </Badge>
-                          <Badge
-                            variant="outline"
-                            className={cn(
-                              "text-[11px] px-1.5 py-0",
-                              typeBadgeStyle(item.allocation_type),
-                            )}
-                          >
-                            {item.allocation_type}
-                          </Badge>
-                        </div>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "text-[11px] px-1.5 py-0",
+                            roleBadgeStyle(row.member_role),
+                          )}
+                        >
+                          {row.member_role}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-sm font-medium text-slate-900">
-                        {item.member_name}
+                        {row.member_name}
                       </TableCell>
                       <TableCell className="text-sm text-slate-600">
-                        {item.team_name || "-"}
+                        {row.team_name || "-"}
                       </TableCell>
-                      <TableCell className="text-right text-sm font-medium text-sky-600">
-                        {formatCurrency(item.total_amount)}
-                      </TableCell>
-                      <TableCell className="text-right text-sm font-medium text-[#a855f7]">
-                        {formatCurrency(item.used_amount)}
-                      </TableCell>
-                      <TableCell
-                        className={cn(
-                          "text-right text-sm font-semibold",
-                          remaining >= 0
-                            ? "text-emerald-600"
-                            : "text-rose-600",
+                      <TableCell className="text-right">
+                        {row.activity ? (
+                          <button
+                            onClick={() => handleEditClick(row.activity!)}
+                            className="cursor-pointer rounded px-2 py-0.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:underline"
+                          >
+                            {formatCurrency(row.activity.total_amount)}
+                          </button>
+                        ) : (
+                          <span className="text-sm text-slate-300">-</span>
                         )}
-                      >
-                        {formatCurrency(remaining)}
                       </TableCell>
-                      <TableCell className="text-center text-sm text-slate-600">
-                        {item.reviewed_count}/{item.usage_count}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <button
-                          onClick={() => handleEditClick(item)}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-[#135bec]/10 hover:text-[#135bec]"
-                          title="수정"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </button>
+                      <TableCell className="text-right">
+                        {row.welfare ? (
+                          <button
+                            onClick={() => handleEditClick(row.welfare!)}
+                            className="cursor-pointer rounded px-2 py-0.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:underline"
+                          >
+                            {formatCurrency(row.welfare.total_amount)}
+                          </button>
+                        ) : (
+                          <span className="text-sm text-slate-300">-</span>
+                        )}
                       </TableCell>
                     </TableRow>
                   );
                 })}
               </TableBody>
-            </Table>
+            </table>
           </div>
         )}
       </div>
@@ -679,9 +737,8 @@ export default function BudgetPage() {
                 <p className="text-xs text-slate-500">
                   대상 인원:{" "}
                   <span className="font-semibold text-slate-700">
-                    {bulkType === "복지포인트"
-                      ? `${members?.length ?? 0}명 (전체)`
-                      : `${leaderMembers.length}명 (팀장/본부장)`}
+                    {bulkTargetCount}명
+                    {bulkType === "복지포인트" ? "" : " (팀장/본부장)"}
                   </span>
                 </p>
                 {bulkAmount && (
@@ -689,13 +746,16 @@ export default function BudgetPage() {
                     총 예산:{" "}
                     <span className="font-semibold text-slate-700">
                       {(
-                        parseInt(bulkAmount, 10) *
-                        (bulkType === "복지포인트"
-                          ? (members?.length ?? 0)
-                          : leaderMembers.length)
+                        parseInt(bulkAmount, 10) * bulkTargetCount
                       ).toLocaleString()}
                       원
                     </span>
+                  </p>
+                )}
+                {statusMembers && statusMembers.length > 0 && (
+                  <p className="mt-2 text-xs text-amber-600">
+                    특이사항 인원 {statusMembers.length}명은 할당액 0원으로
+                    포함됩니다.
                   </p>
                 )}
               </CardContent>
@@ -725,80 +785,174 @@ export default function BudgetPage() {
 
       {/* ── Auto Calculate Activity Budget Dialog ── */}
       <Dialog open={isCalcOpen} onOpenChange={setIsCalcOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>활동비 자동 계산</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
-            <p className="text-sm text-slate-500">
-              팀장/본부장의 활동비를 자동으로 계산합니다. 기본 금액 + (팀원 수
-              x 인당 금액) 공식으로 산출됩니다.
-            </p>
-
-            <div className="space-y-2">
-              <Label htmlFor="calc-base">기본 금액</Label>
-              <Input
-                id="calc-base"
-                type="number"
-                value={calcBaseAmount}
-                onChange={(e) => setCalcBaseAmount(e.target.value)}
-                placeholder="기본 금액을 입력하세요"
-                min={0}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="calc-per-member">인당 추가 금액</Label>
-              <Input
-                id="calc-per-member"
-                type="number"
-                value={calcPerMemberAmount}
-                onChange={(e) => setCalcPerMemberAmount(e.target.value)}
-                placeholder="팀원 1인당 추가 금액"
-                min={0}
-              />
-            </div>
-
-            {/* Leader preview list */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-slate-700">
-                대상 멤버 ({leaderMembers.length}명)
+          <div className="space-y-5 py-2">
+            {/* 직책별 단가 설정 */}
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold text-slate-700">
+                직책별 단가 설정
               </Label>
-              <div className="max-h-48 overflow-auto rounded-lg border border-slate-200 bg-slate-50">
-                {leaderMembers.length === 0 ? (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label
+                    htmlFor="calc-leader-rate"
+                    className="text-xs text-slate-500"
+                  >
+                    본부장 (인당)
+                  </Label>
+                  <Input
+                    id="calc-leader-rate"
+                    type="number"
+                    value={calcLeaderRate}
+                    onChange={(e) => setCalcLeaderRate(e.target.value)}
+                    min={0}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label
+                    htmlFor="calc-manager-rate"
+                    className="text-xs text-slate-500"
+                  >
+                    팀장 (인당)
+                  </Label>
+                  <Input
+                    id="calc-manager-rate"
+                    type="number"
+                    value={calcManagerRate}
+                    onChange={(e) => setCalcManagerRate(e.target.value)}
+                    min={0}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* P&C팀 특별 설정 */}
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold text-slate-700">
+                P&C팀 특별 설정
+              </Label>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-slate-500">기타 인원 수</Label>
+                  <Input
+                    value={
+                      activityPreview.find((p) => p.isPnC)?.pncExtraCount ?? 0
+                    }
+                    disabled
+                    className="bg-slate-50"
+                  />
+                  <p className="text-[11px] text-slate-400">
+                    P&C팀 외 팀원급 (자동)
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label
+                    htmlFor="calc-pnc-extra"
+                    className="text-xs text-slate-500"
+                  >
+                    기타 인당 금액
+                  </Label>
+                  <Input
+                    id="calc-pnc-extra"
+                    type="number"
+                    value={calcPncExtraRate}
+                    onChange={(e) => setCalcPncExtraRate(e.target.value)}
+                    min={0}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 미리보기 테이블 */}
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-slate-700">
+                미리보기
+              </Label>
+              <div className="max-h-56 overflow-auto rounded-lg border border-slate-200">
+                {activityPreview.length === 0 ? (
                   <p className="p-4 text-center text-sm text-slate-400">
                     대상 멤버가 없습니다
                   </p>
                 ) : (
-                  <div className="divide-y divide-slate-100">
-                    {leaderMembers.map((member) => (
-                      <div
-                        key={member.id}
-                        className="flex items-center justify-between px-3 py-2"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-slate-700">
-                            {member.full_name}
-                          </span>
-                          <Badge
-                            variant="outline"
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-200 bg-slate-50 text-xs text-slate-500">
+                        <th className="px-3 py-2 text-left font-medium">이름</th>
+                        <th className="px-2 py-2 text-center font-medium">직급</th>
+                        <th className="px-2 py-2 text-left font-medium">팀</th>
+                        <th className="px-2 py-2 text-center font-medium">인원</th>
+                        <th className="px-3 py-2 text-right font-medium">계산액</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {activityPreview.map((row) => {
+                        const isExcluded = statusMemberIds.has(row.id);
+                        return (
+                          <tr
+                            key={row.id}
                             className={cn(
-                              "text-[11px] px-1.5 py-0",
-                              roleBadgeStyle(member.member_role),
+                              isExcluded && "bg-amber-50/50 text-slate-400",
                             )}
                           >
-                            {member.member_role}
-                          </Badge>
-                        </div>
-                        <span className="text-xs text-slate-400">
-                          {member.team_name || "-"}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+                            <td className="px-3 py-2 font-medium">
+                              {row.full_name}
+                              {isExcluded && (
+                                <span className="ml-1 text-[10px] text-amber-500">
+                                  (특이사항)
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-2 py-2 text-center">
+                              <Badge
+                                variant="outline"
+                                className={cn(
+                                  "text-[10px] px-1 py-0",
+                                  roleBadgeStyle(row.member_role),
+                                )}
+                              >
+                                {row.member_role}
+                              </Badge>
+                            </td>
+                            <td className="px-2 py-2 text-slate-600">
+                              {row.team_name || "-"}
+                            </td>
+                            <td className="px-2 py-2 text-center tabular-nums">
+                              {row.isPnC
+                                ? `${row.memberCount}+${row.pncExtraCount}`
+                                : row.memberCount}
+                            </td>
+                            <td className="px-3 py-2 text-right tabular-nums font-medium">
+                              {isExcluded
+                                ? "0원"
+                                : formatCurrency(row.amount)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-t border-slate-300 bg-slate-50 font-semibold">
+                        <td colSpan={4} className="px-3 py-2 text-right text-slate-600">
+                          합계
+                        </td>
+                        <td className="px-3 py-2 text-right tabular-nums text-slate-900">
+                          {formatCurrency(activityPreviewTotal)}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
                 )}
               </div>
+              {statusMembers && statusMembers.length > 0 && (
+                <p className="text-xs text-amber-600">
+                  특이사항 인원 {statusMembers.length}명은 할당액 0원으로
+                  포함됩니다.
+                </p>
+              )}
             </div>
           </div>
 
@@ -808,12 +962,12 @@ export default function BudgetPage() {
             </Button>
             <Button
               onClick={handleCalcExecute}
-              disabled={calculateActivity.isPending || leaderMembers.length === 0}
+              disabled={bulkUpsert.isPending || activityPreview.length === 0}
             >
-              {calculateActivity.isPending ? (
+              {bulkUpsert.isPending ? (
                 <>
                   <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-                  계산 중...
+                  할당 중...
                 </>
               ) : (
                 "계산 및 할당"

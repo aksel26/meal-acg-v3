@@ -112,7 +112,7 @@ export function useBulkUpsertAllocations() {
     mutationFn: async (data: {
       allocations: {
         member_id: string;
-        allocation_type: string;
+        type: string;
         period: string;
         total_amount: number;
         description?: string;
@@ -132,7 +132,7 @@ export function useBulkUpsertAllocations() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.budgetAllocations.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.budgetSummary.all });
-      const count = data?.count ?? 0;
+      const count = Array.isArray(data) ? data.length : 0;
       toast.success(`${count}명에게 예산이 할당되었습니다.`);
     },
     onError: (error: Error) => {

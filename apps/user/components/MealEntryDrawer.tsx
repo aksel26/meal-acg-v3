@@ -1,11 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, lazy, Suspense } from "react";
-import {
-  useMealDrawerStore,
-  NO_MEAL_SUPPORT_ATTENDANCE,
-  INDIVIDUAL_MEAL_ATTENDANCE,
-} from "@/stores/mealDrawerStore";
+import { useState, lazy, Suspense } from "react";
+import { useMealDrawerStore } from "@/stores/mealDrawerStore";
 import { motion, AnimatePresence } from "motion/react";
 
 import {
@@ -42,34 +38,12 @@ export default function MealEntryDrawer({
     selectedMealType,
     currentStep,
     completedSteps,
-    formData,
     closeDrawer,
     prevStep,
   } = useMealDrawerStore();
 
-  // 반차, 연차, 재택근무, 개별식사 시 프로그레스바 숨김
-  const attendance = formData.lunch.attendance;
-  const hideProgressBar =
-    selectedMealType === "lunch" &&
-    (NO_MEAL_SUPPORT_ATTENDANCE.includes(attendance) ||
-      attendance === INDIVIDUAL_MEAL_ATTENDANCE);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [skipProgressAnimation, setSkipProgressAnimation] = useState(false);
-  const prevIsOpen = useRef(false);
-
-  // 수정 모드로 열릴 때 프로그레스바 애니메이션 스킵
-  useEffect(() => {
-    if (isOpen && !prevIsOpen.current && isEditMode) {
-      setSkipProgressAnimation(true);
-      // 다음 렌더 사이클 후 애니메이션 활성화
-      requestAnimationFrame(() => {
-        setSkipProgressAnimation(false);
-      });
-    }
-    prevIsOpen.current = isOpen;
-  }, [isOpen, isEditMode]);
 
   const handleDeleteMeal = async () => {
     if (!selectedDate || !onDeleteMeal) return;
@@ -163,30 +137,6 @@ export default function MealEntryDrawer({
             </div>
           </div>
         </DialogHeader>
-
-        {/* Step Progress Indicator - 반차/연차/재택/개별식사 시 숨김 */}
-        {!hideProgressBar && (
-          <div className="px-5 pb-4">
-            <div className="flex gap-1">
-              {[1, 2, 3, 4, 5].map((step, index) => {
-                const isCompleted = index < completedSteps.length;
-                return (
-                  <motion.div
-                    key={step}
-                    className="h-1 flex-1 rounded-full overflow-hidden bg-gray-100"
-                  >
-                    <motion.div
-                      className="h-full bg-gray-900 rounded-full"
-                      initial={{ width: skipProgressAnimation && isCompleted ? "100%" : "0%" }}
-                      animate={{ width: isCompleted ? "100%" : "0%" }}
-                      transition={skipProgressAnimation ? { duration: 0 } : { duration: 0.3, ease: "easeOut" }}
-                    />
-                  </motion.div>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
         {/* Form Content - overflow-visible for autocomplete dropdowns */}
         <div className="px-5 pb-6 pb-safe overflow-visible">

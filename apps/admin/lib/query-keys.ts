@@ -2,6 +2,7 @@ export const queryKeys = {
   // Members
   members: {
     all: ["members"] as const,
+    active: ["members", { excludeStatus: true }] as const,
     detail: (id: string) => ["members", id] as const,
   },
 
@@ -118,6 +119,7 @@ export const queryKeys = {
   // Member Statuses
   memberStatuses: {
     all: ["memberStatuses"] as const,
+    active: ["memberStatuses", "active"] as const,
     list: (filters?: Record<string, string>) =>
       ["memberStatuses", "list", filters] as const,
     history: (memberId: string) =>

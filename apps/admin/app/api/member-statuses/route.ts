@@ -47,6 +47,55 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// DELETE /api/member-statuses?member_id=xxx - Clear all active statuses for a member
+export async function DELETE(request: NextRequest) {
+  try {
+    await requireAdmin();
+    const supabase = createServiceClient();
+    const { searchParams } = new URL(request.url);
+    const memberId = searchParams.get("member_id");
+
+    if (!memberId) {
+      return NextResponse.json(
+        { error: "member_id는 필수입니다." },
+        { status: 400 }
+      );
+    }
+
+    const { data, error } = await supabase
+      .from("member_statuses")
+      .delete()
+      .eq("member_id", memberId)
+      .select();
+
+    if (error) {
+      console.error("Error clearing member statuses:", error);
+      return NextResponse.json(
+        { error: "특이사항 삭제에 실패했습니다." },
+        { status: 500 }
+      );
+    }
+
+    if (!data || data.length === 0) {
+      return NextResponse.json(
+        { error: "삭제할 특이사항이 없습니다." },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true, deleted: data.length });
+  } catch (error) {
+    console.error("Member statuses API error:", error);
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
 // POST /api/member-statuses - Create a new member status
 export async function POST(request: NextRequest) {
   try {

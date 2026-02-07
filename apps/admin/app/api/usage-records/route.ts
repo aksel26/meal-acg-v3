@@ -2,6 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
 
+// "2026-H1" → { start: "2026-01-01", end: "2026-06-30" }
+// "2026-H2" → { start: "2026-07-01", end: "2026-12-31" }
+function halfYearToDateRange(period: string): { start: string; end: string } | null {
+  const match = period.match(/^(\d{4})-H([12])$/);
+  if (!match) return null;
+  const year = match[1];
+  if (match[2] === "1") {
+    return { start: `${year}-01-01`, end: `${year}-06-30` };
+  }
+  return { start: `${year}-07-01`, end: `${year}-12-31` };
+}
+
 // GET /api/usage-records - List usage records with filters
 export async function GET(request: NextRequest) {
   try {
@@ -22,7 +34,12 @@ export async function GET(request: NextRequest) {
       );
 
     if (period) {
-      query = query.like("used_at", `${period}%`);
+      const range = halfYearToDateRange(period);
+      if (range) {
+        query = query.gte("used_at", range.start).lte("used_at", range.end);
+      } else {
+        query = query.like("used_at", `${period}%`);
+      }
     }
     if (type) {
       query = query.eq("type", type);

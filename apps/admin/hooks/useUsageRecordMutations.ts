@@ -56,6 +56,7 @@ export function useUpdateUsageRecord() {
       amount?: number;
       description?: string;
       used_at?: string;
+      notes?: string | null;
       modified_by?: string;
     }) => {
       const res = await fetch(`/api/usage-records/${id}`, {

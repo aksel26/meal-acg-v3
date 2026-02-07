@@ -1,8 +1,7 @@
 "use client";
 
 import { BottomNavigation } from "@/components/BottomNavigation";
-import { Badge } from "@repo/ui/src/badge";
-import { Card, CardContent } from "@repo/ui/src/card";
+
 import {
   Select,
   SelectContent,
@@ -11,7 +10,7 @@ import {
   SelectValue,
 } from "@repo/ui/src/select";
 import { NumberTicker } from "@repo/ui/src/number-ticker";
-import { Check, ListFilter, Plus, SquircleDashed } from "@repo/ui/icons";
+import { Check, ListFilter, Plus } from "@repo/ui/icons";
 import {
   Popover,
   PopoverContent,
@@ -501,147 +500,103 @@ export default function Points() {
         </div>
 
         <div className="space-y-3">
-          {/* Add New Point Button */}
-          <Card
-            className="border border-blue-200 shadow-none bg-blue-50 hover:bg-blue-100 transition-colors duration-200 cursor-pointer"
+          {/* Add New Point */}
+          <button
+            className="w-full py-3 bg-white rounded-xl text-sm font-medium text-blue-600 flex items-center justify-center gap-2 active:bg-gray-50 transition-colors"
             onClick={handleAddNewPoint}
           >
-            <CardContent className="p-5">
-              <div className="flex items-center justify-center space-x-3">
-                <div className="w-8 h-8 bg-blue-200 rounded-full flex items-center justify-center">
-                  <Plus className="w-5 h-5 text-blue-600" />
-                </div>
-                <div className="text-center">
-                  <p className="text-sm font-medium text-blue-900">
-                    새 포인트 내역 추가
-                  </p>
-                  <p className="text-xs text-blue-600">
-                    클릭하여 새로운 내역을 등록하세요
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            <Plus className="w-4 h-4" />
+            새 내역 추가
+          </button>
 
           {isLoading ? (
-            <div className="space-y-3">
+            <div className="bg-white rounded-xl divide-y divide-gray-50">
               {[1, 2, 3].map((i) => (
-                <Card key={i} className="border-0 shadow-none bg-white">
-                  <CardContent className="p-5">
-                    <div className="animate-pulse space-y-3">
-                      <div className="flex justify-between items-start">
-                        <div className="bg-gray-200 rounded h-4 w-32"></div>
-                        <div className="bg-gray-200 rounded h-4 w-20"></div>
-                      </div>
-                      <div className="bg-gray-200 rounded h-5 w-48"></div>
-                      <div className="flex justify-between items-center pt-2">
-                        <div className="bg-gray-200 rounded h-5 w-16"></div>
-                        <div className="bg-gray-200 rounded h-4 w-12"></div>
-                      </div>
+                <div key={i} className="px-4 py-4">
+                  <div className="animate-pulse">
+                    <div className="flex justify-between mb-2">
+                      <div className="bg-gray-100 rounded h-[15px] w-32" />
+                      <div className="bg-gray-100 rounded h-[15px] w-16" />
                     </div>
-                  </CardContent>
-                </Card>
+                    <div className="flex justify-between">
+                      <div className="bg-gray-50 rounded h-3 w-24" />
+                      <div className="bg-gray-50 rounded h-3 w-10" />
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
           ) : sortedRecords.length === 0 ? (
-            <Card className="border-0 shadow-none bg-white">
-              <CardContent className="p-8 text-center">
-                <Image
-                  src={NoDataIcon}
-                  alt="No Data"
-                  width={40}
-                  height={40}
-                  className="mx-auto mb-4"
-                />
-                <p className="text-gray-500 text-sm">
-                  {welfareError
-                    ? "포인트 내역을 불러올 수 없습니다."
-                    : "선택한 월에 포인트 내역이 없습니다."}
-                </p>
-              </CardContent>
-            </Card>
+            <div className="bg-white rounded-xl py-12 text-center">
+              <Image
+                src={NoDataIcon}
+                alt="No Data"
+                width={40}
+                height={40}
+                className="mx-auto mb-3 opacity-40"
+              />
+              <p className="text-sm text-gray-400">
+                {welfareError
+                  ? "내역을 불러올 수 없습니다."
+                  : "이 달에 내역이 없습니다."}
+              </p>
+            </div>
           ) : (
-            sortedRecords.map((record) => {
-              const recordDate = dayjs(record.used_at);
-              const dayOfWeekMap: Record<number, string> = {
-                0: "일",
-                1: "월",
-                2: "화",
-                3: "수",
-                4: "목",
-                5: "금",
-                6: "토",
-              };
-              const dayOfWeek = dayOfWeekMap[recordDate.day()] || "";
+            <div className="bg-white rounded-xl divide-y divide-gray-100 overflow-hidden">
+              {sortedRecords.map((record) => {
+                const d = dayjs(record.used_at);
+                const dow = ["일", "월", "화", "수", "목", "금", "토"][d.day()];
+                const isActivity = record.type === "활동비";
 
-              return (
-                <Card
-                  key={record.id}
-                  className={`border-0 shadow-none bg-white hover:shadow-md transition-shadow duration-200 ${record.is_reviewed ? "opacity-80" : "cursor-pointer"}`}
-                  onClick={() => handleEditPoint(record)}
-                >
-                  <CardContent className="p-5">
-                    <div className="space-y-3">
-                      {/* Header Row */}
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <span className="text-sm font-light text-gray-400">
-                            {recordDate.year()}년 {recordDate.month() + 1}월{" "}
-                            {recordDate.date()}일 ({dayOfWeek})
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-base font-semibold">
-                            {record.amount.toLocaleString()} 원
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Description */}
-                      <div>
-                        <p className="font-medium text-gray-900">
-                          {record.description}
-                        </p>
-                        {record.notes && (
-                          <p className="text-gray-500 text-sm mt-1">
-                            {record.notes}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Bottom Info */}
-                      <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                        <Badge
-                          variant={
-                            record.type === "활동비" ? "secondary" : "outline"
-                          }
-                          className="text-xs"
+                return (
+                  <div
+                    key={record.id}
+                    className={`px-4 py-3.5 ${
+                      record.is_reviewed
+                        ? "opacity-55"
+                        : "cursor-pointer active:bg-gray-50"
+                    } transition-colors`}
+                    onClick={() => handleEditPoint(record)}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <p className="text-[15px] font-medium text-gray-900 flex-1 min-w-0 truncate">
+                        {record.description}
+                      </p>
+                      <p className="text-[15px] font-semibold text-gray-900 tabular-nums shrink-0">
+                        {record.amount.toLocaleString()}원
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-between mt-1.5">
+                      <div className="flex items-center gap-2 text-xs text-gray-400">
+                        <span>
+                          {d.month() + 1}.{String(d.date()).padStart(2, "0")} ({dow})
+                        </span>
+                        <span
+                          className={`px-1.5 py-px rounded text-[10px] font-medium ${
+                            isActivity
+                              ? "bg-amber-50 text-amber-600"
+                              : "bg-blue-50 text-blue-600"
+                          }`}
                         >
                           {record.type}
-                        </Badge>
-                        <div className="flex items-center space-x-1">
-                          {record.is_reviewed ? (
-                            <Badge className="bg-lime-50 flex items-center space-x-1">
-                              <Check className="w-3 h-3 text-lime-500" />
-                              <span className="text-xs text-lime-500">
-                                P&C 확인
-                              </span>
-                            </Badge>
-                          ) : (
-                            <>
-                              <SquircleDashed className="w-4 h-4 text-gray-400" />
-                              <span className="text-xs font-light text-gray-400">
-                                P&C 확인 전
-                              </span>
-                            </>
-                          )}
-                        </div>
+                        </span>
                       </div>
+                      {record.is_reviewed ? (
+                        <span className="text-[11px] text-emerald-500 flex items-center gap-0.5">
+                          <Check className="w-3 h-3" />
+                          확인
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-gray-300">미확인</span>
+                      )}
                     </div>
-                  </CardContent>
-                </Card>
-              );
-            })
+                    {record.notes && (
+                      <p className="text-xs text-gray-400 mt-1">{record.notes}</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
       </div>

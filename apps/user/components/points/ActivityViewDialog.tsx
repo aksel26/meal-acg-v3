@@ -210,39 +210,9 @@ function EmployeeCard({
         <div>
           <div className="px-2 flex items-center justify-between mb-3">
             <p className="text-sm text-gray-400 font-light">총 금액</p>
-            <Popover>
-              <PopoverTrigger asChild>
-                <button className="font-bold text-sm text-gray-700 hover:text-blue-800 cursor-pointer transition-all duration-200 hover:scale-105 group flex items-center gap-2 justify-center">
-                  <Info className="w-4 h-4 opacity-60 group-hover:opacity-100 transition-opacity" />
-                  {summary.total_amount.toLocaleString()}원
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80 shadow-xl border rounded-xl">
-                <div className="space-y-3">
-                  <h4 className="font-medium text-sm">활동비 산정 기준</h4>
-                  <div className="space-y-3 text-sm">
-                    <div className="bg-gray-50 p-3 rounded-lg space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-500">배정 금액</span>
-                        <span className="font-semibold">
-                          {summary.total_amount.toLocaleString()}원
-                        </span>
-                      </div>
-                    </div>
-                    <div className="border-t pt-3">
-                      <div className="flex justify-between items-center font-bold text-base">
-                        <span className="text-sm text-gray-400 font-medium">
-                          총 금액
-                        </span>
-                        <span>
-                          {summary.total_amount.toLocaleString()}원
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
+            <p className="font-bold text-sm text-gray-700">
+              {summary.total_amount.toLocaleString()}원
+            </p>
           </div>
           <div className="px-2 flex items-center justify-between mb-3">
             <p className="text-sm text-gray-400 font-light">사용금액</p>

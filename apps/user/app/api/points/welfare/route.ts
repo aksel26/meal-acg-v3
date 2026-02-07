@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
 
+// "YYYY-MM" → "YYYY-H1" or "YYYY-H2" 변환
+function toHalfYearPeriod(monthlyPeriod: string): string {
+  const parts = monthlyPeriod.split("-");
+  const half = parseInt(parts[1] ?? "1", 10) <= 6 ? "H1" : "H2";
+  return `${parts[0]}-${half}`;
+}
+
 // GET: 복지포인트 데이터 조회
 export async function GET(request: NextRequest) {
   try {
@@ -31,12 +38,13 @@ export async function GET(request: NextRequest) {
     }
 
     // budget_summary 뷰에서 해당 멤버의 복지포인트 요약 조회
+    const halfYearPeriod = toHalfYearPeriod(period);
     const { data: summary, error: summaryError } = await supabase
       .from("budget_summary")
       .select("*")
       .eq("member_id", memberId)
       .eq("type", "복지포인트")
-      .eq("period", period)
+      .eq("period", halfYearPeriod)
       .maybeSingle();
 
     if (summaryError) {
@@ -97,6 +105,7 @@ export async function POST(request: NextRequest) {
       used_at,
       companions,
       receipt_url,
+      notes,
     } = body;
 
     // 필수 필드 검증
@@ -129,6 +138,7 @@ export async function POST(request: NextRequest) {
         used_at,
         companions: companions || [],
         receipt_url: receipt_url || null,
+        notes: notes || null,
       })
       .select()
       .single();
@@ -155,7 +165,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, amount, description, used_at, companions, receipt_url } = body;
+    const { id, amount, description, used_at, companions, receipt_url, notes } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -200,6 +210,7 @@ export async function PUT(request: NextRequest) {
     if (used_at !== undefined) updateData.used_at = used_at;
     if (companions !== undefined) updateData.companions = companions;
     if (receipt_url !== undefined) updateData.receipt_url = receipt_url;
+    if (notes !== undefined) updateData.notes = notes;
 
     const { data, error } = await supabase
       .from("usage_records")

@@ -38,6 +38,7 @@ export interface UsageRecord {
   used_at: string;
   companions: string[];
   receipt_url: string | null;
+  notes: string | null;
   is_reviewed: boolean;
   reviewed_by: string | null;
   reviewed_at: string | null;

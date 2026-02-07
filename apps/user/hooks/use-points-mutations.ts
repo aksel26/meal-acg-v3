@@ -14,6 +14,7 @@ interface AddUsageInput {
   used_at: string;
   companions?: string[];
   receipt_url?: string;
+  notes?: string;
 }
 
 interface UpdateUsageInput {
@@ -25,6 +26,7 @@ interface UpdateUsageInput {
   used_at?: string;
   companions?: string[];
   receipt_url?: string;
+  notes?: string;
 }
 
 interface DeleteUsageInput {

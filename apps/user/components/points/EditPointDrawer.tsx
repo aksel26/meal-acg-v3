@@ -46,6 +46,27 @@ interface EditPointDrawerProps {
 export function EditPointDrawer({ isOpen, onOpenChange, editingPoint, onSave, onDelete, onPointChange, isNewPoint, isDeleting = false }: EditPointDrawerProps) {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
 
+  // 영수증 스캔 완료 핸들러
+  const handleScanComplete = useCallback(
+    (result: ReceiptScanResult) => {
+      if (!editingPoint) return;
+      const updates: Partial<WelfarePoint> = {};
+      if (result.storeName) {
+        updates.vendor = result.storeName;
+      }
+      if (result.totalAmount > 0) {
+        updates.amount = result.totalAmount;
+      }
+      if (result.date) {
+        updates.date = result.date;
+      }
+      if (Object.keys(updates).length > 0) {
+        onPointChange({ ...editingPoint, ...updates });
+      }
+    },
+    [editingPoint, onPointChange]
+  );
+
   if (!editingPoint) return null;
 
   const handleSave = () => {
@@ -84,26 +105,6 @@ export function EditPointDrawer({ isOpen, onOpenChange, editingPoint, onSave, on
   };
 
   const selectedDate = editingPoint.date ? new Date(editingPoint.date) : undefined;
-
-  // 영수증 스캔 완료 핸들러
-  const handleScanComplete = useCallback(
-    (result: ReceiptScanResult) => {
-      const updates: Partial<WelfarePoint> = {};
-      if (result.storeName) {
-        updates.vendor = result.storeName;
-      }
-      if (result.totalAmount > 0) {
-        updates.amount = result.totalAmount;
-      }
-      if (result.date) {
-        updates.date = result.date;
-      }
-      if (Object.keys(updates).length > 0) {
-        updatePoint(updates);
-      }
-    },
-    [updatePoint]
-  );
 
   return (
     <Drawer open={isOpen} onOpenChange={onOpenChange}>
@@ -291,7 +292,7 @@ export function EditPointDrawer({ isOpen, onOpenChange, editingPoint, onSave, on
             className={`flex-1 rounded-lg hover:shadow-sm transition-all duration-200 text-xs font-semibold ${
               isNewPoint
                 ? "bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white"
-                : "bg-gradient-to-r text-white from-orange-300 to-orange-400 hover:from-orange-100 hover:to-orange-200 hover:text-orange-400"
+                : "bg-gray-800 hover:bg-gray-700 text-white"
             } `}
           >
             {isNewPoint ? "추가하기" : "수정하기"}

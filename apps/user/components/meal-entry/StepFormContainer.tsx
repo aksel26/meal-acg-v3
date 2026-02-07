@@ -215,25 +215,19 @@ export function StepFormContainer({
   return (
     <div className="flex flex-col min-h-0">
       {/* Completed Steps */}
-      <AnimatePresence mode="popLayout">
-        {displayedCompletedSteps.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="space-y-2 mb-6"
-          >
-            {displayedCompletedSteps.map((stepId, index) => (
-              <CompletedStepItem
-                key={stepId}
-                stepId={stepId}
-                value={getStepValue(stepId)}
-                onEdit={() => goToStep(stepId)}
-                index={index}
-              />
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {displayedCompletedSteps.length > 0 && (
+        <div className="space-y-2 mb-6">
+          {displayedCompletedSteps.map((stepId, index) => (
+            <CompletedStepItem
+              key={stepId}
+              stepId={stepId}
+              value={getStepValue(stepId)}
+              onEdit={() => goToStep(stepId)}
+              index={index}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Current Step or Summary Save Button */}
       <div className="flex-1">

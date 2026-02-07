@@ -51,6 +51,19 @@ interface MealFormData {
   dinnerPayer: string;
 }
 
+/** 폼 UI 값 → DB 저장 값 매핑 */
+const mapFormValueToAttendance = (formValue: string): string | null => {
+  switch (formValue) {
+    case "출근": return "근무";
+    case "개별식사": return "근무(개별식사 / 식사안함)";
+    case "재택": return "재택근무";
+    case "휴가": return "연차/휴무";
+    case "오전반차": return "오전 반차/휴무";
+    case "오후반차": return "오후 반차/휴무";
+    default: return formValue || null;
+  }
+};
+
 const initialFormData: MealFormData = {
   userId: "",
   entryDate: "",
@@ -182,7 +195,7 @@ export default function CalendarPage() {
         body: JSON.stringify({
           userId: data.userId,
           entryDate: data.entryDate,
-          attendance: data.attendance || null,
+          attendance: mapFormValueToAttendance(data.attendance),
           breakfastStore: data.breakfastStore || null,
           breakfastAmount: data.breakfastAmount || 0,
           breakfastPayer: data.breakfastPayer || null,
@@ -314,7 +327,7 @@ export default function CalendarPage() {
     bulkMutation.mutate({
       excludedUserIds: bulkExcludedIds,
       entryDate: bulkDate,
-      attendance: bulkAttendance,
+      attendance: mapFormValueToAttendance(bulkAttendance) || "근무",
       lunchAmount: bulkAmount,
       lunchStore: bulkStore,
       lunchPayer: bulkPayer,

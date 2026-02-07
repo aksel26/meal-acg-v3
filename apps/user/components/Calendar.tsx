@@ -10,6 +10,8 @@ import { CalendarDayCell } from "./CalendarDayCell";
 
 dayjs.locale("ko");
 
+const EMPTY_MEAL_DATA: MealData[] = [];
+
 interface Calendar21Props {
   onDateSelect?: (date: Date | undefined) => void;
   selectedDate?: Date;
@@ -22,7 +24,7 @@ export default function CalendarComponent({
   onDateSelect,
   selectedDate,
   onMonthChange,
-  mealData = [],
+  mealData = EMPTY_MEAL_DATA,
   isLoading = false,
 }: Calendar21Props) {
   const [date, setDate] = React.useState<Date | undefined>(selectedDate || new Date());

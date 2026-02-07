@@ -1,6 +1,9 @@
 "use client";
 import { BottomNavigation } from "@/components/BottomNavigation";
-import GachaMachine from "@/components/lunch/GachaMachine";
+const GachaMachine = dynamic(
+  () => import("@/components/lunch/GachaMachine"),
+  { ssr: false },
+);
 import LunchGroupList from "@/components/lunch/LunchGroupList";
 import { useLunchGroup } from "@/hooks/useLunchGroup";
 import { useUsers } from "@/hooks/useUsers";

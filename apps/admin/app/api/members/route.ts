@@ -3,22 +3,44 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
 
 // GET /api/members - List all members
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await requireAdmin();
     const supabase = createServiceClient();
+    const { searchParams } = new URL(request.url);
+    const excludeStatus = searchParams.get("exclude_status");
 
-    const { data, error } = await supabase
-      .from("members")
-      .select("*")
-      .order("full_name");
+    let query = supabase.from("members").select("*, teams(name)");
+
+    if (excludeStatus === "true") {
+      const { data: statusMembers } = await supabase
+        .from("member_current_status")
+        .select("member_id")
+        .not("current_status", "is", null);
+
+      const excludeIds = (statusMembers || [])
+        .map((m) => m.member_id)
+        .filter(Boolean) as string[];
+
+      if (excludeIds.length > 0) {
+        query = query.not("id", "in", `(${excludeIds.join(",")})`);
+      }
+    }
+
+    const { data, error } = await query.order("full_name");
 
     if (error) {
       console.error("Error fetching members:", error);
       return NextResponse.json({ error: "Failed to fetch members" }, { status: 500 });
     }
 
-    return NextResponse.json(data);
+    // Flatten teams join → team_name
+    const result = (data || []).map(({ teams, ...rest }) => ({
+      ...rest,
+      team_name: (teams as { name: string } | null)?.name ?? null,
+    }));
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Members API error:", error);
     if (error instanceof Error && error.message === "Unauthorized") {

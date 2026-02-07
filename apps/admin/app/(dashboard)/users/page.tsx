@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -11,8 +11,6 @@ import {
   Check,
   X,
   Loader2,
-  Users,
-  Wallet,
   Trash2,
   Plus,
   Send,
@@ -33,11 +31,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@repo/ui/src/dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@repo/ui/src/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui/src/tooltip";
+import { useActiveStatusMembers } from "@/hooks/useActiveStatusMembers";
 
 interface UserStats {
   user_id: string;
@@ -63,12 +58,25 @@ interface UserFormData {
   email: string;
 }
 
-type InputCheckStatus = "idle" | "loading" | "complete" | "incomplete" | "error";
+type InputCheckStatus =
+  | "idle"
+  | "loading"
+  | "complete"
+  | "incomplete"
+  | "error";
 
 interface InputCheckResult {
   status: InputCheckStatus;
   missingCount?: number;
 }
+
+const formatCurrency = (amount: number | null) => {
+  if (amount === null || amount === undefined) return "-";
+  return new Intl.NumberFormat("ko-KR").format(amount);
+};
+
+const YEARS_RANGE = 5;
+const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 
 export default function UsersPage() {
   const router = useRouter();
@@ -76,32 +84,55 @@ export default function UsersPage() {
   const currentDate = dayjs();
 
   // URL 쿼리 파라미터에서 연도/월 읽기 (없으면 현재 날짜)
-  const selectedYear = parseInt(searchParams.get("year") || String(currentDate.year()));
-  const selectedMonth = parseInt(searchParams.get("month") || String(currentDate.month() + 1));
+  const selectedYear = parseInt(
+    searchParams.get("year") || String(currentDate.year()),
+  );
+  const selectedMonth = parseInt(
+    searchParams.get("month") || String(currentDate.month() + 1),
+  );
 
   // URL 쿼리 파라미터 업데이트 함수
-  const updateUrlParams = useCallback((year: number, month: number) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("year", String(year));
-    params.set("month", String(month));
-    router.replace(`/users?${params.toString()}`);
-  }, [router, searchParams]);
+  const updateUrlParams = useCallback(
+    (year: number, month: number) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("year", String(year));
+      params.set("month", String(month));
+      router.replace(`/users?${params.toString()}`);
+    },
+    [router, searchParams],
+  );
   const [selectedUserId, setSelectedUserId] = useState("");
   const [isYearOpen, setIsYearOpen] = useState(false);
   const [isMonthOpen, setIsMonthOpen] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [downloadingUserId, setDownloadingUserId] = useState<string | null>(null);
+  const [downloadingUserId, setDownloadingUserId] = useState<string | null>(
+    null,
+  );
 
   // 스크롤 위치 관련
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const SCROLL_STORAGE_KEY = "usersPageScrollPosition";
 
   // 입력 체크 관련 상태
-  const [inputCheckResults, setInputCheckResults] = useState<Map<string, InputCheckResult>>(new Map());
+  const [inputCheckResults, setInputCheckResults] = useState<
+    Map<string, InputCheckResult>
+  >(new Map());
   const [isCheckingInputs, setIsCheckingInputs] = useState(false);
   const [checkProgress, setCheckProgress] = useState({ current: 0, total: 0 });
 
   const queryClient = useQueryClient();
+
+  // 특이사항 인원 조회
+  const { data: statusMembers } = useActiveStatusMembers();
+  const statusMap = useMemo(() => {
+    const map = new Map<string, string>();
+    statusMembers?.forEach((m) => {
+      if (m.member_id && m.current_status) {
+        map.set(m.member_id, m.current_status);
+      }
+    });
+    return map;
+  }, [statusMembers]);
 
   // localStorage 키 생성
   const getStorageKey = useCallback((year: number, month: number) => {
@@ -115,7 +146,9 @@ export default function UsersPage() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        const restoredMap = new Map<string, InputCheckResult>(Object.entries(parsed));
+        const restoredMap = new Map<string, InputCheckResult>(
+          Object.entries(parsed),
+        );
         setInputCheckResults(restoredMap);
       } catch {
         setInputCheckResults(new Map());
@@ -126,16 +159,22 @@ export default function UsersPage() {
   }, [selectedYear, selectedMonth, getStorageKey]);
 
   // 체크 결과를 localStorage에 저장
-  const saveResultsToStorage = useCallback((results: Map<string, InputCheckResult>, year: number, month: number) => {
-    const storageKey = getStorageKey(year, month);
-    const obj = Object.fromEntries(results);
-    localStorage.setItem(storageKey, JSON.stringify(obj));
-  }, [getStorageKey]);
+  const saveResultsToStorage = useCallback(
+    (results: Map<string, InputCheckResult>, year: number, month: number) => {
+      const storageKey = getStorageKey(year, month);
+      const obj = Object.fromEntries(results);
+      localStorage.setItem(storageKey, JSON.stringify(obj));
+    },
+    [getStorageKey],
+  );
 
   // 스크롤 위치 저장
   const handleScroll = useCallback(() => {
     if (tableContainerRef.current) {
-      sessionStorage.setItem(SCROLL_STORAGE_KEY, String(tableContainerRef.current.scrollTop));
+      sessionStorage.setItem(
+        SCROLL_STORAGE_KEY,
+        String(tableContainerRef.current.scrollTop),
+      );
     }
   }, []);
 
@@ -155,7 +194,9 @@ export default function UsersPage() {
   });
 
   const handleUserClick = (userId: string) => {
-    router.push(`/calendar?userId=${userId}&year=${selectedYear}&month=${selectedMonth}`);
+    router.push(
+      `/calendar?userId=${userId}&year=${selectedYear}&month=${selectedMonth}`,
+    );
   };
 
   // 입력 체크 실행
@@ -167,7 +208,7 @@ export default function UsersPage() {
 
     // 모든 사용자를 loading 상태로 초기화
     const initialResults = new Map<string, InputCheckResult>();
-    users.forEach(user => {
+    users.forEach((user) => {
       initialResults.set(user.user_id, { status: "loading" });
     });
     setInputCheckResults(initialResults);
@@ -184,17 +225,20 @@ export default function UsersPage() {
 
       try {
         const response = await fetch(
-          `/api/stats/incomplete-users?year=${selectedYear}&month=${selectedMonth}&userId=${user.user_id}`
+          `/api/stats/incomplete-users?year=${selectedYear}&month=${selectedMonth}&userId=${user.user_id}`,
         );
 
         if (response.ok) {
           const data = await response.json();
           const result: InputCheckResult = data.is_complete
             ? { status: "complete" }
-            : { status: "incomplete", missingCount: data.missing_dates?.length || 0 };
+            : {
+                status: "incomplete",
+                missingCount: data.missing_dates?.length || 0,
+              };
 
           finalResults.set(user.user_id, result);
-          setInputCheckResults(prev => {
+          setInputCheckResults((prev) => {
             const newMap = new Map(prev);
             newMap.set(user.user_id, result);
             return newMap;
@@ -205,7 +249,7 @@ export default function UsersPage() {
       } catch {
         const errorResult: InputCheckResult = { status: "error" };
         finalResults.set(user.user_id, errorResult);
-        setInputCheckResults(prev => {
+        setInputCheckResults((prev) => {
           const newMap = new Map(prev);
           newMap.set(user.user_id, errorResult);
           return newMap;
@@ -224,7 +268,7 @@ export default function UsersPage() {
     queryKey: queryKeys.stats.monthly(selectedYear, selectedMonth),
     queryFn: async () => {
       const response = await fetch(
-        `/api/stats/monthly?year=${selectedYear}&month=${selectedMonth}`
+        `/api/stats/monthly?year=${selectedYear}&month=${selectedMonth}`,
       );
       if (!response.ok) throw new Error("Failed to fetch stats");
       return response.json();
@@ -303,13 +347,22 @@ export default function UsersPage() {
   });
 
   const handleDeleteUser = (userId: string, userName: string) => {
-    if (window.confirm(`"${userName}" 사용자를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) {
+    if (
+      window.confirm(
+        `"${userName}" 사용자를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`,
+      )
+    ) {
       deleteUserMutation.mutate(userId);
     }
   };
 
   const createUserMutation = useMutation({
-    mutationFn: async (data: { fullName: string; loginId: string; password: string; email?: string }) => {
+    mutationFn: async (data: {
+      fullName: string;
+      loginId: string;
+      password: string;
+      email?: string;
+    }) => {
       const response = await fetch("/api/members", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -342,7 +395,13 @@ export default function UsersPage() {
   });
 
   const sendNotifyMutation = useMutation({
-    mutationFn: async ({ userId, fullName }: { userId: string; fullName: string }) => {
+    mutationFn: async ({
+      userId,
+      fullName,
+    }: {
+      userId: string;
+      fullName: string;
+    }) => {
       const response = await fetch("/api/slack/notify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -380,7 +439,7 @@ export default function UsersPage() {
       setDownloadingUserId(userId);
       const half = selectedMonth <= 6 ? "H1" : "H2";
       const response = await fetch(
-        `/api/export/member?year=${selectedYear}&half=${half}&memberId=${userId}`
+        `/api/export/member?year=${selectedYear}&half=${half}&memberId=${userId}`,
       );
 
       if (!response.ok) {
@@ -410,18 +469,22 @@ export default function UsersPage() {
     return user.user_id === selectedUserId;
   });
 
-  const formatCurrency = (amount: number | null) => {
-    if (amount === null || amount === undefined) return "-";
-    return new Intl.NumberFormat("ko-KR").format(amount);
-  };
+  const years = useMemo(
+    () => Array.from({ length: YEARS_RANGE }, (_, i) => currentDate.year() - 2 + i),
+    [currentDate],
+  );
 
-  const years = Array.from({ length: 5 }, (_, i) => currentDate.year() - 2 + i);
-  const months = Array.from({ length: 12 }, (_, i) => i + 1);
-
-  // Summary stats
-  const totalUsers = users?.length || 0;
-  const settledUsers = users?.filter((u) => u.is_settled).length || 0;
-  const totalUsed = users?.reduce((sum, u) => sum + (u.total_used || 0), 0) || 0;
+  // Summary stats (js-combine-iterations: single pass)
+  const { totalUsers, settledUsers, totalUsed } = useMemo(() => {
+    if (!users) return { totalUsers: 0, settledUsers: 0, totalUsed: 0 };
+    let settled = 0;
+    let used = 0;
+    for (const u of users) {
+      if (u.is_settled) settled++;
+      used += u.total_used || 0;
+    }
+    return { totalUsers: users.length, settledUsers: settled, totalUsed: used };
+  }, [users]);
 
   // 입력완료 상태 렌더링
   const renderInputCheckStatus = (userId: string) => {
@@ -432,7 +495,9 @@ export default function UsersPage() {
     }
 
     if (result.status === "loading") {
-      return <Loader2 className="h-4 w-4 animate-spin text-slate-400 mx-auto" />;
+      return (
+        <Loader2 className="h-4 w-4 animate-spin text-slate-400 mx-auto" />
+      );
     }
 
     if (result.status === "complete") {
@@ -449,12 +514,12 @@ export default function UsersPage() {
           <TooltipTrigger asChild>
             <div className="flex items-center justify-center gap-1 cursor-help">
               <X className="h-4 w-4 text-rose-500" />
-              <span className="text-xs text-rose-500">{result.missingCount}</span>
+              <span className="text-xs text-rose-500">
+                {result.missingCount}
+              </span>
             </div>
           </TooltipTrigger>
-          <TooltipContent>
-            {result.missingCount}일 누락
-          </TooltipContent>
+          <TooltipContent>{result.missingCount}일 누락</TooltipContent>
         </Tooltip>
       );
     }
@@ -467,9 +532,7 @@ export default function UsersPage() {
               <AlertTriangle className="h-4 w-4 text-amber-500" />
             </div>
           </TooltipTrigger>
-          <TooltipContent>
-            체크 중 오류 발생
-          </TooltipContent>
+          <TooltipContent>체크 중 오류 발생</TooltipContent>
         </Tooltip>
       );
     }
@@ -478,43 +541,35 @@ export default function UsersPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex h-[calc(100vh-10rem)] flex-col gap-6">
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="flex items-center gap-4 glass-panel rounded-2xl p-5 transition-all duration-300 hover:border-white/80">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#135bec]/10">
-            <Users className="h-5 w-5 text-[#135bec]" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-slate-500">총 인원</p>
-            <p className="text-2xl font-bold text-slate-900">{totalUsers}명</p>
-          </div>
+      <div className="flex items-center gap-6 rounded-xl border border-slate-200/60 bg-white/50 px-6 py-3 backdrop-blur-sm">
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-sm text-slate-500">총 인원</span>
+          <span className="text-lg font-semibold tabular-nums text-slate-900">
+            {totalUsers}명
+          </span>
+          {statusMembers && statusMembers.length > 0 && (
+            <span className="text-xs text-slate-400">
+              (특이사항 {statusMembers.length})
+            </span>
+          )}
         </div>
-        <div className="flex items-center gap-4 glass-panel rounded-2xl p-5 transition-all duration-300 hover:border-white/80">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10">
-            <Check className="h-5 w-5 text-emerald-600" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-slate-500">정산 완료</p>
-            <p className="text-2xl font-bold text-slate-900">
-              {settledUsers}
-              <span className="ml-1 text-lg font-medium text-slate-400">
-                / {totalUsers}
-              </span>
-            </p>
-          </div>
+        <div className="h-4 w-px bg-slate-200" />
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-sm text-slate-500">정산 완료</span>
+          <span className="text-lg font-semibold tabular-nums text-slate-900">
+            {settledUsers}
+          </span>
+          <span className="text-sm text-slate-400">/ {totalUsers}</span>
         </div>
-        <div className="flex items-center gap-4 glass-panel rounded-2xl p-5 transition-all duration-300 hover:border-white/80">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#a855f7]/10">
-            <Wallet className="h-5 w-5 text-[#a855f7]" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-slate-500">총 사용액</p>
-            <p className="text-2xl font-bold text-slate-900">
-              {(totalUsed / 10000).toFixed(1)}
-              <span className="ml-1 text-lg font-medium text-slate-400">만원</span>
-            </p>
-          </div>
+        <div className="h-4 w-px bg-slate-200" />
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-sm text-slate-500">총 사용액</span>
+          <span className="text-lg font-semibold tabular-nums text-slate-900">
+            {(totalUsed / 10000).toFixed(1)}
+          </span>
+          <span className="text-sm text-slate-400">만원</span>
         </div>
       </div>
 
@@ -527,18 +582,18 @@ export default function UsersPage() {
               setIsYearOpen(!isYearOpen);
               setIsMonthOpen(false);
             }}
-            className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-slate-200/60 transition-all hover:bg-slate-50"
+            className="flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-slate-200/60 transition-all hover:bg-slate-50"
           >
             {selectedYear}년
             <ChevronDown
               className={cn(
                 "h-4 w-4 text-slate-400 transition-transform",
-                isYearOpen && "rotate-180"
+                isYearOpen && "rotate-180",
               )}
             />
           </button>
           {isYearOpen && (
-            <div className="absolute left-0 top-full z-50 mt-2 w-32 rounded-xl bg-white p-1 shadow-lg ring-1 ring-slate-200/60">
+            <div className="absolute left-0 top-full z-50 mt-2 w-32 rounded-lg bg-white p-1 shadow-lg ring-1 ring-slate-200/60">
               {years.map((year) => (
                 <button
                   key={year}
@@ -550,7 +605,7 @@ export default function UsersPage() {
                     "flex w-full items-center rounded-lg px-3 py-2 text-sm transition-colors",
                     year === selectedYear
                       ? "bg-[#135bec]/10 font-medium text-[#135bec]"
-                      : "text-slate-600 hover:bg-slate-50"
+                      : "text-slate-600 hover:bg-slate-50",
                   )}
                 >
                   {year}년
@@ -567,19 +622,19 @@ export default function UsersPage() {
               setIsMonthOpen(!isMonthOpen);
               setIsYearOpen(false);
             }}
-            className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-slate-200/60 transition-all hover:bg-slate-50"
+            className="flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-slate-200/60 transition-all hover:bg-slate-50"
           >
             {selectedMonth}월
             <ChevronDown
               className={cn(
                 "h-4 w-4 text-slate-400 transition-transform",
-                isMonthOpen && "rotate-180"
+                isMonthOpen && "rotate-180",
               )}
             />
           </button>
           {isMonthOpen && (
-            <div className="absolute left-0 top-full z-50 mt-2 grid w-48 grid-cols-4 gap-1 rounded-xl bg-white p-2 shadow-lg ring-1 ring-slate-200/60">
-              {months.map((month) => (
+            <div className="absolute left-0 top-full z-50 mt-2 grid w-48 grid-cols-4 gap-1 rounded-lg bg-white p-2 shadow-lg ring-1 ring-slate-200/60">
+              {MONTHS.map((month) => (
                 <button
                   key={month}
                   onClick={() => {
@@ -590,7 +645,7 @@ export default function UsersPage() {
                     "flex items-center justify-center rounded-lg py-2 text-sm transition-colors",
                     month === selectedMonth
                       ? "bg-[#135bec]/10 font-medium text-[#135bec]"
-                      : "text-slate-600 hover:bg-slate-50"
+                      : "text-slate-600 hover:bg-slate-50",
                   )}
                 >
                   {month}월
@@ -648,58 +703,58 @@ export default function UsersPage() {
       </div>
 
       {/* Users Table */}
-      <div className="glass-panel overflow-hidden rounded-2xl">
+      <div className="glass-panel min-h-0 flex-1 overflow-hidden rounded-2xl">
         <div
           ref={tableContainerRef}
           onScroll={handleScroll}
-          className="max-h-[calc(100vh-360px)] overflow-auto"
+          className="h-full overflow-auto"
         >
           <table className="w-full">
-            <thead className="sticky top-0 z-10 bg-slate-50 shadow-[0_1px_0_0_rgb(241,245,249)]">
+            <thead className="sticky top-0 z-10 bg-slate-50 shadow-[0_1px_0_0_rgb(241,245,249)] [&>tr>th]:h-9 [&>tr>th]:px-3 [&>tr>th]:py-0">
               <tr>
-                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <th className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                   No.
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <th className="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                   성명
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <th className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                   근무
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <th className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                   휴일
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <th className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                   주말
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <th className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                   개별
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <th className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                   재택
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <th className="text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
                   사용가능액
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <th className="text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
                   사용액
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <th className="text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
                   잔액
                 </th>
-                <th className="w-16 px-3 py-3 text-center text-xs font-semibold tracking-wider text-slate-500 whitespace-nowrap">
+                <th className="w-16 whitespace-nowrap text-center text-xs font-semibold tracking-wider text-slate-500">
                   입력완료
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <th className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                   정산
                 </th>
-                <th className="w-14 px-1 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <th className="w-14 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                   정산요청
                 </th>
-                <th className="w-12 px-2 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <th className="w-12 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                   파일
                 </th>
-                <th className="w-14 px-1 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <th className="w-14 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                   삭제
                 </th>
               </tr>
@@ -709,7 +764,7 @@ export default function UsersPage() {
                 Array.from({ length: 8 }).map((_, index) => (
                   <tr key={index}>
                     {Array.from({ length: 15 }).map((_, cellIndex) => (
-                      <td key={cellIndex} className="px-4 py-2.5">
+                      <td key={cellIndex} className="px-3 py-1.5">
                         <div className="h-4 w-full animate-pulse rounded bg-slate-100" />
                       </td>
                     ))}
@@ -718,58 +773,72 @@ export default function UsersPage() {
               ) : filteredUsers && filteredUsers.length > 0 ? (
                 filteredUsers.map((user, index) => {
                   const balance = user.balance ?? 0;
+                  const memberStatus = statusMap.get(user.user_id);
                   return (
                     <tr
                       key={user.user_id || index}
-                      className="table-row-interactive"
+                      className={cn(
+                        "table-row-interactive",
+                        memberStatus && "opacity-50",
+                      )}
                     >
-                      <td className="px-4 py-2.5 text-center text-sm text-slate-400">
+                      <td className="px-3 py-1.5 text-center text-sm text-slate-400">
                         {index + 1}
                       </td>
-                      <td className="px-4 py-2.5">
-                        <button
-                          onClick={() => handleUserClick(user.user_id)}
-                          className="text-sm text-[#135bec] hover:text-[#135bec]/80 underline underline-offset-2 decoration-[#135bec]/30 hover:decoration-[#135bec]/60 transition-colors"
-                        >
-                          {user.full_name}
-                        </button>
+                      <td className="px-3 py-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => handleUserClick(user.user_id)}
+                            className="text-sm text-[#135bec] hover:text-[#135bec]/80 underline underline-offset-2 decoration-[#135bec]/30 hover:decoration-[#135bec]/60 transition-colors"
+                          >
+                            {user.full_name}
+                          </button>
+                          {memberStatus && (
+                            <span className="inline-flex items-center rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
+                              {memberStatus}
+                            </span>
+                          )}
+                        </div>
                       </td>
-                      <td className="px-4 py-2.5 text-center text-sm text-slate-600">
+                      <td className="px-3 py-1.5 text-center text-sm text-slate-600">
                         {user.work_days ?? 0}일
                       </td>
-                      <td className="px-4 py-2.5 text-center text-sm text-slate-600">
+                      <td className="px-3 py-1.5 text-center text-sm text-slate-600">
                         {user.holiday_count ?? 0}일
                       </td>
-                      <td className="px-4 py-2.5 text-center text-sm text-slate-600">
+                      <td className="px-3 py-1.5 text-center text-sm text-slate-600">
                         {user.weekend_work_days ?? 0}일
                       </td>
-                      <td className="px-4 py-2.5 text-center text-sm text-slate-600">
+                      <td className="px-3 py-1.5 text-center text-sm text-slate-600">
                         {user.individual_meals ?? 0}회
                       </td>
-                      <td className="px-4 py-2.5 text-center text-sm text-slate-600">
+                      <td className="px-3 py-1.5 text-center text-sm text-slate-600">
                         {user.remote_work_days ?? 0}일
                       </td>
-                      <td className="px-4 py-2.5 text-right text-sm font-medium text-sky-600">
+                      <td className="px-3 py-1.5 text-right text-sm font-medium text-sky-600">
                         {formatCurrency(user.total_allowance)}
                       </td>
-                      <td className="px-4 py-2.5 text-right text-sm font-medium text-[#a855f7]">
+                      <td className="px-3 py-1.5 text-right text-sm font-medium text-[#a855f7]">
                         {formatCurrency(user.total_used)}
                       </td>
                       <td
                         className={cn(
-                          "px-4 py-2.5 text-right text-sm font-semibold",
-                          balance >= 0 ? "text-emerald-600" : "text-rose-600"
+                          "px-3 py-1.5 text-right text-sm font-semibold",
+                          balance >= 0 ? "text-emerald-600" : "text-rose-600",
                         )}
                       >
                         {formatCurrency(balance)}
                       </td>
-                      <td className="px-3 py-2.5 text-center">
+                      <td className="px-3 py-1.5 text-center">
                         {renderInputCheckStatus(user.user_id)}
                       </td>
-                      <td className="px-2 py-2.5 text-center">
+                      <td className="px-2 py-1.5 text-center">
                         <button
                           onClick={() =>
-                            handleToggleSettlement(user.user_id, user.is_settled)
+                            handleToggleSettlement(
+                              user.user_id,
+                              user.is_settled,
+                            )
                           }
                           disabled={toggleSettlementMutation.isPending}
                           className={cn(
@@ -779,8 +848,8 @@ export default function UsersPage() {
                                 user.user_id
                               ? "bg-slate-100 text-slate-500"
                               : user.is_settled
-                              ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                                : "bg-slate-100 text-slate-600 hover:bg-slate-200",
                           )}
                         >
                           {toggleSettlementMutation.isPending &&
@@ -803,7 +872,7 @@ export default function UsersPage() {
                           )}
                         </button>
                       </td>
-                      <td className="px-1 py-2.5 text-center">
+                      <td className="px-1 py-1.5 text-center">
                         {user.email ? (
                           <button
                             onClick={() => {
@@ -817,7 +886,8 @@ export default function UsersPage() {
                             title="정산 요청 보내기"
                           >
                             {sendNotifyMutation.isPending &&
-                            sendNotifyMutation.variables?.userId === user.user_id ? (
+                            sendNotifyMutation.variables?.userId ===
+                              user.user_id ? (
                               <Loader2 className="h-3.5 w-3.5 animate-spin" />
                             ) : (
                               <Send className="h-3.5 w-3.5" />
@@ -836,10 +906,12 @@ export default function UsersPage() {
                           </Tooltip>
                         )}
                       </td>
-                      <td className="px-4 py-2.5 text-center">
+                      <td className="px-3 py-1.5 text-center">
                         {user.has_excel_file ? (
                           <button
-                            onClick={() => handleDownloadExcel(user.user_id, user.full_name)}
+                            onClick={() =>
+                              handleDownloadExcel(user.user_id, user.full_name)
+                            }
                             disabled={downloadingUserId === user.user_id}
                             className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-emerald-600 transition-colors hover:bg-emerald-50"
                           >
@@ -853,9 +925,11 @@ export default function UsersPage() {
                           <span className="text-slate-300">-</span>
                         )}
                       </td>
-                      <td className="px-1 py-2.5 text-center">
+                      <td className="px-1 py-1.5 text-center">
                         <button
-                          onClick={() => handleDeleteUser(user.user_id, user.full_name)}
+                          onClick={() =>
+                            handleDeleteUser(user.user_id, user.full_name)
+                          }
                           disabled={deleteUserMutation.isPending}
                           className="inline-flex h-6 w-6 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
                         >
@@ -918,11 +992,19 @@ export default function UsersPage() {
                 <Input
                   id="fullName"
                   placeholder="홍길동"
-                  className={errors.fullName ? "border-red-500 focus-visible:ring-red-500" : ""}
-                  {...register("fullName", { required: "이름을 입력해주세요." })}
+                  className={
+                    errors.fullName
+                      ? "border-red-500 focus-visible:ring-red-500"
+                      : ""
+                  }
+                  {...register("fullName", {
+                    required: "이름을 입력해주세요.",
+                  })}
                 />
                 {errors.fullName && (
-                  <p className="text-sm text-red-500">{errors.fullName.message}</p>
+                  <p className="text-sm text-red-500">
+                    {errors.fullName.message}
+                  </p>
                 )}
               </div>
               <div className="space-y-2">
@@ -930,11 +1012,19 @@ export default function UsersPage() {
                 <Input
                   id="loginId"
                   placeholder="hong123"
-                  className={errors.loginId ? "border-red-500 focus-visible:ring-red-500" : ""}
-                  {...register("loginId", { required: "아이디를 입력해주세요." })}
+                  className={
+                    errors.loginId
+                      ? "border-red-500 focus-visible:ring-red-500"
+                      : ""
+                  }
+                  {...register("loginId", {
+                    required: "아이디를 입력해주세요.",
+                  })}
                 />
                 {errors.loginId && (
-                  <p className="text-sm text-red-500">{errors.loginId.message}</p>
+                  <p className="text-sm text-red-500">
+                    {errors.loginId.message}
+                  </p>
                 )}
               </div>
               <div className="space-y-2">
@@ -943,11 +1033,19 @@ export default function UsersPage() {
                   id="password"
                   type="password"
                   placeholder="••••••••"
-                  className={errors.password ? "border-red-500 focus-visible:ring-red-500" : ""}
-                  {...register("password", { required: "비밀번호를 입력해주세요." })}
+                  className={
+                    errors.password
+                      ? "border-red-500 focus-visible:ring-red-500"
+                      : ""
+                  }
+                  {...register("password", {
+                    required: "비밀번호를 입력해주세요.",
+                  })}
                 />
                 {errors.password && (
-                  <p className="text-sm text-red-500">{errors.password.message}</p>
+                  <p className="text-sm text-red-500">
+                    {errors.password.message}
+                  </p>
                 )}
               </div>
               <div className="space-y-2">
@@ -956,7 +1054,11 @@ export default function UsersPage() {
                   id="email"
                   type="email"
                   placeholder="hong@example.com"
-                  className={errors.email ? "border-red-500 focus-visible:ring-red-500" : ""}
+                  className={
+                    errors.email
+                      ? "border-red-500 focus-visible:ring-red-500"
+                      : ""
+                  }
                   {...register("email", {
                     pattern: {
                       value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
@@ -980,10 +1082,7 @@ export default function UsersPage() {
               >
                 취소
               </Button>
-              <Button
-                type="submit"
-                disabled={createUserMutation.isPending}
-              >
+              <Button type="submit" disabled={createUserMutation.isPending}>
                 {createUserMutation.isPending ? "추가 중..." : "추가"}
               </Button>
             </div>

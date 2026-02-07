@@ -1,6 +1,5 @@
 "use client";
 
-export const dynamic = "force-dynamic";
 
 import { BottomNavigation } from "@/components/BottomNavigation";
 import GreetingSection from "@/components/dashboard/GreetingSection";
@@ -41,9 +40,16 @@ export default function DashboardPage() {
 
   const router = useRouter();
 
-  // Zustand stores
-  const { formData, selectedDate: drawerSelectedDate, closeDrawer, resetForm } = useMealDrawerStore();
-  const { userId, userName, isLoggedIn, hydrate, hasHydrated } = useUserStore();
+  // Zustand stores (개별 selector로 불필요 리렌더 방지)
+  const formData = useMealDrawerStore((s) => s.formData);
+  const drawerSelectedDate = useMealDrawerStore((s) => s.selectedDate);
+  const closeDrawer = useMealDrawerStore((s) => s.closeDrawer);
+  const resetForm = useMealDrawerStore((s) => s.resetForm);
+  const userId = useUserStore((s) => s.userId);
+  const userName = useUserStore((s) => s.userName);
+  const isLoggedIn = useUserStore((s) => s.isLoggedIn);
+  const hydrate = useUserStore((s) => s.hydrate);
+  const hasHydrated = useUserStore((s) => s.hasHydrated);
 
   // TanStack Query hooks 사용
   const { data: mealData = [] } = useMealData(userName || "", currentMonth, currentYear);

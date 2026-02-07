@@ -2,6 +2,7 @@ export const queryKeys = {
   // Members
   members: {
     all: ["members"] as const,
+    active: ["members", { excludeStatus: true }] as const,
     detail: (id: string) => ["members", id] as const,
   },
 
@@ -77,5 +78,63 @@ export const queryKeys = {
   // Monthly Drinks
   monthly: {
     all: ["monthly"] as const,
+  },
+
+  // Organizations
+  organizations: {
+    all: ["organizations"] as const,
+    detail: (id: string) => ["organizations", id] as const,
+    tree: (id: string) => ["organizations", id, "tree"] as const,
+  },
+
+  // Divisions
+  divisions: {
+    all: ["divisions"] as const,
+    byOrg: (orgId: string) => ["divisions", "org", orgId] as const,
+  },
+
+  // Teams
+  teams: {
+    all: ["teams"] as const,
+    byOrg: (orgId: string) => ["teams", "org", orgId] as const,
+  },
+
+  // Budget Allocations
+  budgetAllocations: {
+    all: ["budgetAllocations"] as const,
+    byPeriod: (period: string) => ["budgetAllocations", "period", period] as const,
+    byPeriodAndType: (period: string, type: string) =>
+      ["budgetAllocations", "period", period, "type", type] as const,
+    detail: (id: string) => ["budgetAllocations", id] as const,
+  },
+
+  // Budget Summary
+  budgetSummary: {
+    all: ["budgetSummary"] as const,
+    byPeriod: (period: string) => ["budgetSummary", "period", period] as const,
+    byPeriodAndType: (period: string, type: string) =>
+      ["budgetSummary", "period", period, "type", type] as const,
+  },
+
+  // Member Statuses
+  memberStatuses: {
+    all: ["memberStatuses"] as const,
+    active: ["memberStatuses", "active"] as const,
+    list: (filters?: Record<string, string>) =>
+      ["memberStatuses", "list", filters] as const,
+    history: (memberId: string) =>
+      ["memberStatuses", "history", memberId] as const,
+  },
+
+  // Usage Records
+  usageRecords: {
+    all: ["usageRecords"] as const,
+    byPeriod: (period: string) => ["usageRecords", "period", period] as const,
+    byMember: (memberId: string) => ["usageRecords", "member", memberId] as const,
+    detail: (id: string) => ["usageRecords", id] as const,
+    auditLogs: (recordId?: string) =>
+      recordId
+        ? ["usageRecords", "auditLogs", recordId] as const
+        : ["usageRecords", "auditLogs"] as const,
   },
 };

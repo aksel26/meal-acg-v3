@@ -4,7 +4,9 @@ import React, { useEffect, useState } from "react";
 import Header from "../components/Header";
 import { motion, AnimatePresence } from "motion/react";
 import { usePathname } from "next/navigation";
-import Snowfall from "react-snowfall";
+import dynamic from "next/dynamic";
+
+const Snowfall = dynamic(() => import("react-snowfall"), { ssr: false });
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const [images, setImages] = useState<HTMLImageElement[]>([]);

@@ -2,17 +2,8 @@
 
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
-import React, { useState } from "react";
+import React from "react";
 import { motion } from "motion/react";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@repo/ui/src/alert-dialog";
-import { Button } from "@repo/ui/src/button";
 import HomeIcon from "@/public/icons/home.png";
 import LunchIcon from "@/public/icons/lunch.png";
 import MonthlyIcon from "@/public/icons/monthly.png";
@@ -20,8 +11,6 @@ import PointsIcon from "@/public/icons/payer.png";
 import DNAIcon from "@/public/icons/dna.png";
 
 export function BottomNavigation() {
-  const [showComingSoonModal, setShowComingSoonModal] = useState(false);
-
   const navItems = [
     {
       id: "dashboard",
@@ -56,8 +45,6 @@ export function BottomNavigation() {
   const handleNavigation = (id: string) => {
     if (id === "workDNA") {
       window.open("https://workdna.netlify.app/", "_blank");
-    } else if (id === "points") {
-      setShowComingSoonModal(true);
     } else {
       router.push(`/${id}`);
     }
@@ -140,30 +127,6 @@ export function BottomNavigation() {
 
       {/* Home Indicator Safe Area */}
       <div className="h-5" />
-
-      {/* Coming Soon Modal */}
-      <AlertDialog open={showComingSoonModal} onOpenChange={setShowComingSoonModal}>
-        <AlertDialogContent className="max-w-xs rounded-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-center text-lg">
-              🚧 준비중입니다
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-center text-sm text-gray-600">
-              복지포인트 기능은 현재 개발 중입니다.
-              <br />
-              조금만 기다려주세요!
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="justify-center">
-            <Button
-              onClick={() => setShowComingSoonModal(false)}
-              className="w-full"
-            >
-              확인
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </nav>
   );
 }

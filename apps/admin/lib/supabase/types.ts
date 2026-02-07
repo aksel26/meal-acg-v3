@@ -21,6 +21,79 @@ export type MonthlyAllowancesJson = {
 export type Database = {
   public: {
     Tables: {
+      budget_allocations: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          member_id: string
+          period: string
+          total_amount: number
+          type: Database["public"]["Enums"]["budget_type"]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          member_id: string
+          period: string
+          total_amount?: number
+          type: Database["public"]["Enums"]["budget_type"]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          member_id?: string
+          period?: string
+          total_amount?: number
+          type?: Database["public"]["Enums"]["budget_type"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_allocations_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      divisions: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          organization_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          organization_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          organization_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "divisions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       global_settings: {
         Row: {
           created_at: string | null
@@ -60,6 +133,125 @@ export type Database = {
           created_at?: string | null
           description?: string
           holiday_date?: string
+        }
+        Relationships: []
+      }
+      lunch_fixed_schedules: {
+        Row: {
+          created_at: string | null
+          day_of_week: number
+          id: string
+          label: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          day_of_week: number
+          id?: string
+          label?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          day_of_week?: number
+          id?: string
+          label?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lunch_fixed_schedules_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lunch_group_members: {
+        Row: {
+          assigned_at: string | null
+          group_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          group_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          group_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lunch_group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "lunch_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lunch_group_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lunch_group_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          max_members_per_group: number
+          total_groups: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          max_members_per_group?: number
+          total_groups?: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          max_members_per_group?: number
+          total_groups?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      lunch_groups: {
+        Row: {
+          created_at: string | null
+          group_number: number
+          id: string
+          max_slots: number | null
+          updated_at: string | null
+          week_start_date: string
+        }
+        Insert: {
+          created_at?: string | null
+          group_number: number
+          id?: string
+          max_slots?: number | null
+          updated_at?: string | null
+          week_start_date: string
+        }
+        Update: {
+          created_at?: string | null
+          group_number?: number
+          id?: string
+          max_slots?: number | null
+          updated_at?: string | null
+          week_start_date?: string
         }
         Relationships: []
       }
@@ -135,38 +327,335 @@ export type Database = {
           },
         ]
       }
+      member_statuses: {
+        Row: {
+          id: string
+          member_id: string
+          status: Database["public"]["Enums"]["member_status_type"]
+          start_date: string
+          end_date: string | null
+          note: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          member_id: string
+          status: Database["public"]["Enums"]["member_status_type"]
+          start_date: string
+          end_date?: string | null
+          note?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          member_id?: string
+          status?: Database["public"]["Enums"]["member_status_type"]
+          start_date?: string
+          end_date?: string | null
+          note?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_statuses_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       members: {
         Row: {
           created_at: string | null
+          division_id: string | null
           email: string | null
           full_name: string
           id: string
           login_id: string
+          member_role: Database["public"]["Enums"]["member_role"]
+          organization_id: string | null
           password: string
           role: string | null
+          team_id: string | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
+          division_id?: string | null
           email?: string | null
           full_name: string
           id?: string
           login_id: string
+          member_role?: Database["public"]["Enums"]["member_role"]
+          organization_id?: string | null
           password: string
           role?: string | null
+          team_id?: string | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
+          division_id?: string | null
           email?: string | null
           full_name?: string
           id?: string
           login_id?: string
+          member_role?: Database["public"]["Enums"]["member_role"]
+          organization_id?: string | null
           password?: string
           role?: string | null
+          team_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "members_division_id_fkey"
+            columns: ["division_id"]
+            isOneToOne: false
+            referencedRelation: "divisions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      monthly_allowances: {
+        Row: {
+          id: string
+          user_id: string | null
+          year: number
+          month: number
+          allowance_amount: number
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          year: number
+          month: number
+          allowance_amount?: number
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          year?: number
+          month?: number
+          allowance_amount?: number
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monthly_allowances_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      monthly_drink_applications: {
+        Row: {
+          created_at: string | null
+          drink: string | null
+          id: string
+          memo: string | null
+          month: number
+          updated_at: string | null
+          user_id: string
+          year: number
+        }
+        Insert: {
+          created_at?: string | null
+          drink?: string | null
+          id?: string
+          memo?: string | null
+          month: number
+          updated_at?: string | null
+          user_id: string
+          year: number
+        }
+        Update: {
+          created_at?: string | null
+          drink?: string | null
+          id?: string
+          memo?: string | null
+          month?: number
+          updated_at?: string | null
+          user_id?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monthly_drink_applications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      monthly_drink_settings: {
+        Row: {
+          id: string
+          year: number
+          month: number
+          drink_options: Json
+          pickup_persons: Json
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          year: number
+          month: number
+          drink_options?: Json
+          pickup_persons?: Json
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          year?: number
+          month?: number
+          drink_options?: Json
+          pickup_persons?: Json
+          created_at?: string | null
           updated_at?: string | null
         }
         Relationships: []
+      }
+      organizations: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      restaurants: {
+        Row: {
+          address: string | null
+          business_number: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          business_number?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          business_number?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurants_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      settlement_status: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_settled: boolean | null
+          month: number
+          notes: string | null
+          settled_at: string | null
+          settled_by: string | null
+          updated_at: string | null
+          user_id: string
+          year: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_settled?: boolean | null
+          month: number
+          notes?: string | null
+          settled_at?: string | null
+          settled_by?: string | null
+          updated_at?: string | null
+          user_id: string
+          year: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_settled?: boolean | null
+          month?: number
+          notes?: string | null
+          settled_at?: string | null
+          settled_by?: string | null
+          updated_at?: string | null
+          user_id?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "settlement_status_settled_by_fkey"
+            columns: ["settled_by"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "settlement_status_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sync_queue: {
         Row: {
@@ -207,236 +696,248 @@ export type Database = {
         }
         Relationships: []
       }
-      monthly_allowances: {
+      teams: {
         Row: {
-          id: string
-          user_id: string
-          year: number
-          month: number
-          allowance_amount: number
           created_at: string | null
+          division_id: string | null
+          id: string
+          name: string
+          organization_id: string
           updated_at: string | null
         }
         Insert: {
-          id?: string
-          user_id: string
-          year: number
-          month: number
-          allowance_amount?: number
           created_at?: string | null
+          division_id?: string | null
+          id?: string
+          name: string
+          organization_id: string
           updated_at?: string | null
         }
         Update: {
-          id?: string
-          user_id?: string
-          year?: number
-          month?: number
-          allowance_amount?: number
           created_at?: string | null
+          division_id?: string | null
+          id?: string
+          name?: string
+          organization_id?: string
           updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "monthly_allowances_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "teams_division_id_fkey"
+            columns: ["division_id"]
             isOneToOne: false
-            referencedRelation: "members"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      lunch_groups: {
-        Row: {
-          id: string
-          group_number: number
-          week_start_date: string
-          max_slots: number
-          created_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          group_number: number
-          week_start_date: string
-          max_slots?: number
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          group_number?: number
-          week_start_date?: string
-          max_slots?: number
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      lunch_group_members: {
-        Row: {
-          id: string
-          group_id: string
-          user_id: string
-          assigned_at: string | null
-        }
-        Insert: {
-          id?: string
-          group_id: string
-          user_id: string
-          assigned_at?: string | null
-        }
-        Update: {
-          id?: string
-          group_id?: string
-          user_id?: string
-          assigned_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "lunch_group_members_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "lunch_groups"
+            referencedRelation: "divisions"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "lunch_group_members_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "teams_organization_id_fkey"
+            columns: ["organization_id"]
             isOneToOne: false
-            referencedRelation: "members"
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
-      lunch_fixed_schedules: {
+      usage_record_audit_logs: {
         Row: {
+          action: string
+          changed_at: string | null
+          changed_by: string
           id: string
-          day_of_week: number
-          user_id: string | null
-          label: string | null
-          created_at: string | null
+          new_data: Json | null
+          previous_data: Json | null
+          usage_record_id: string
         }
         Insert: {
+          action: string
+          changed_at?: string | null
+          changed_by: string
           id?: string
-          day_of_week: number
-          user_id?: string | null
-          label?: string | null
-          created_at?: string | null
+          new_data?: Json | null
+          previous_data?: Json | null
+          usage_record_id: string
         }
         Update: {
+          action?: string
+          changed_at?: string | null
+          changed_by?: string
           id?: string
-          day_of_week?: number
-          user_id?: string | null
-          label?: string | null
-          created_at?: string | null
+          new_data?: Json | null
+          previous_data?: Json | null
+          usage_record_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "lunch_fixed_schedules_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "usage_record_audit_logs_changed_by_fkey"
+            columns: ["changed_by"]
             isOneToOne: false
             referencedRelation: "members"
             referencedColumns: ["id"]
-          }
+          },
+          {
+            foreignKeyName: "usage_record_audit_logs_usage_record_id_fkey"
+            columns: ["usage_record_id"]
+            isOneToOne: false
+            referencedRelation: "usage_records"
+            referencedColumns: ["id"]
+          },
         ]
       }
-      lunch_group_settings: {
+      usage_records: {
         Row: {
-          id: string
-          max_members_per_group: number
-          total_groups: number
+          allocation_id: string
+          amount: number
+          companions: string[] | null
           created_at: string | null
+          description: string
+          id: string
+          is_reviewed: boolean | null
+          last_modified_at: string | null
+          last_modified_by: string | null
+          member_id: string
+          receipt_url: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          type: Database["public"]["Enums"]["budget_type"]
           updated_at: string | null
+          used_at: string
         }
         Insert: {
-          id?: string
-          max_members_per_group?: number
-          total_groups?: number
+          allocation_id: string
+          amount: number
+          companions?: string[] | null
           created_at?: string | null
+          description: string
+          id?: string
+          is_reviewed?: boolean | null
+          last_modified_at?: string | null
+          last_modified_by?: string | null
+          member_id: string
+          receipt_url?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          type: Database["public"]["Enums"]["budget_type"]
           updated_at?: string | null
+          used_at: string
         }
         Update: {
-          id?: string
-          max_members_per_group?: number
-          total_groups?: number
+          allocation_id?: string
+          amount?: number
+          companions?: string[] | null
           created_at?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      monthly_drink_settings: {
-        Row: {
-          id: string
-          year: number
-          month: number
-          drink_options: string[] | null
-          pickup_persons: string[] | null
-          created_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
+          description?: string
           id?: string
-          year: number
-          month: number
-          drink_options?: string[] | null
-          pickup_persons?: string[] | null
-          created_at?: string | null
+          is_reviewed?: boolean | null
+          last_modified_at?: string | null
+          last_modified_by?: string | null
+          member_id?: string
+          receipt_url?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          type?: Database["public"]["Enums"]["budget_type"]
           updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          year?: number
-          month?: number
-          drink_options?: string[] | null
-          pickup_persons?: string[] | null
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      monthly_drink_applications: {
-        Row: {
-          id: string
-          user_id: string
-          year: number
-          month: number
-          drink: string | null
-          memo: string | null
-          created_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          year: number
-          month: number
-          drink?: string | null
-          memo?: string | null
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          year?: number
-          month?: number
-          drink?: string | null
-          memo?: string | null
-          created_at?: string | null
-          updated_at?: string | null
+          used_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "monthly_drink_applications_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "usage_records_allocation_id_fkey"
+            columns: ["allocation_id"]
+            isOneToOne: false
+            referencedRelation: "budget_allocations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usage_records_allocation_id_fkey"
+            columns: ["allocation_id"]
+            isOneToOne: false
+            referencedRelation: "budget_summary"
+            referencedColumns: ["allocation_id"]
+          },
+          {
+            foreignKeyName: "usage_records_member_id_fkey"
+            columns: ["member_id"]
             isOneToOne: false
             referencedRelation: "members"
             referencedColumns: ["id"]
-          }
+          },
+          {
+            foreignKeyName: "usage_records_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usage_records_last_modified_by_fkey"
+            columns: ["last_modified_by"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
     Views: {
+      member_current_status: {
+        Row: {
+          member_id: string | null
+          full_name: string | null
+          member_role: Database["public"]["Enums"]["member_role"] | null
+          email: string | null
+          team_id: string | null
+          division_id: string | null
+          team_name: string | null
+          division_name: string | null
+          status_id: string | null
+          current_status: Database["public"]["Enums"]["member_status_type"] | null
+          status_start_date: string | null
+          status_end_date: string | null
+          status_note: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "members_division_id_fkey"
+            columns: ["division_id"]
+            isOneToOne: false
+            referencedRelation: "divisions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_summary: {
+        Row: {
+          allocation_id: string | null
+          description: string | null
+          division_name: string | null
+          member_id: string | null
+          member_name: string | null
+          member_role: Database["public"]["Enums"]["member_role"] | null
+          period: string | null
+          remaining_amount: number | null
+          reviewed_count: number | null
+          team_name: string | null
+          total_amount: number | null
+          type: Database["public"]["Enums"]["budget_type"] | null
+          usage_count: number | null
+          used_amount: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_allocations_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_monthly_stats: {
         Row: {
           actual_work_days: number | null
@@ -466,6 +967,16 @@ export type Database = {
           user_id: string
         }[]
       }
+      calculate_activity_budget: {
+        Args: {
+          p_additional_count?: number
+          p_additional_per_amount?: number
+          p_base_amount?: number
+          p_member_id: string
+          p_per_member_amount?: number
+        }
+        Returns: number
+      }
       get_user_monthly_stats: {
         Args: { p_month: number; p_user_id?: string; p_year: number }
         Returns: {
@@ -480,9 +991,32 @@ export type Database = {
           work_days: number
         }[]
       }
+      toggle_review_status: {
+        Args: { p_reviewer_id: string; p_usage_record_id: string }
+        Returns: {
+          allocation_id: string
+          amount: number
+          companions: string[] | null
+          created_at: string | null
+          description: string
+          id: string
+          is_reviewed: boolean | null
+          last_modified_at: string | null
+          last_modified_by: string | null
+          member_id: string
+          receipt_url: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          type: Database["public"]["Enums"]["budget_type"]
+          updated_at: string | null
+          used_at: string
+        }
+      }
     }
     Enums: {
-      [_ in never]: never
+      budget_type: "복지포인트" | "활동비"
+      member_role: "본부장" | "팀장" | "팀원"
+      member_status_type: "육아휴직" | "병가" | "재택근무" | "파견" | "휴직" | "퇴사"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -490,8 +1024,12 @@ export type Database = {
   }
 }
 
-export type Tables<T extends keyof Database["public"]["Tables"]> =
-  Database["public"]["Tables"][T]["Row"]
+export type Tables<T extends keyof Database["public"]["Tables"] | keyof Database["public"]["Views"]> =
+  T extends keyof Database["public"]["Tables"]
+    ? Database["public"]["Tables"][T]["Row"]
+    : T extends keyof Database["public"]["Views"]
+      ? Database["public"]["Views"][T]["Row"]
+      : never
 
 export type TablesInsert<T extends keyof Database["public"]["Tables"]> =
   Database["public"]["Tables"][T]["Insert"]
@@ -501,6 +1039,9 @@ export type TablesUpdate<T extends keyof Database["public"]["Tables"]> =
 
 export type Views<T extends keyof Database["public"]["Views"]> =
   Database["public"]["Views"][T]["Row"]
+
+export type Enums<T extends keyof Database["public"]["Enums"]> =
+  Database["public"]["Enums"][T]
 
 // Convenience types
 export type Member = Tables<"members">
@@ -523,6 +1064,29 @@ export type LunchFixedSchedule = Tables<"lunch_fixed_schedules">
 export type LunchGroupSettings = Tables<"lunch_group_settings">
 export type MonthlyDrinkSettings = Tables<"monthly_drink_settings">
 export type MonthlyDrinkApplication = Tables<"monthly_drink_applications">
+
+// New types for points management
+export type Organization = Tables<"organizations">
+export type OrganizationInsert = TablesInsert<"organizations">
+export type Division = Tables<"divisions">
+export type DivisionInsert = TablesInsert<"divisions">
+export type Team = Tables<"teams">
+export type TeamInsert = TablesInsert<"teams">
+export type BudgetAllocation = Tables<"budget_allocations">
+export type BudgetAllocationInsert = TablesInsert<"budget_allocations">
+export type BudgetAllocationUpdate = TablesUpdate<"budget_allocations">
+export type UsageRecord = Tables<"usage_records">
+export type UsageRecordInsert = TablesInsert<"usage_records">
+export type UsageRecordUpdate = TablesUpdate<"usage_records">
+export type UsageRecordAuditLog = Tables<"usage_record_audit_logs">
+export type BudgetSummary = Views<"budget_summary">
+export type BudgetType = Enums<"budget_type">
+export type MemberRole = Enums<"member_role">
+export type MemberStatusType = Enums<"member_status_type">
+export type MemberStatus = Tables<"member_statuses">
+export type MemberStatusInsert = TablesInsert<"member_statuses">
+export type MemberStatusUpdate = TablesUpdate<"member_statuses">
+export type MemberCurrentStatus = Views<"member_current_status">
 
 // Extended types with relations
 export interface LunchGroupWithMembers extends LunchGroup {

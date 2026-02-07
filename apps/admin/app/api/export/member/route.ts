@@ -342,6 +342,7 @@ export async function GET(request: NextRequest) {
       const specialNote = isHoliday ? holidayDesc : null;
 
       const log = logMap.get(dateStr);
+      const isExcludedAttendance = log?.attendance?.includes("개별") || log?.attendance?.includes("재택") || log?.attendance?.includes("연차") || log?.attendance?.includes("휴무") || log?.attendance?.includes("반차");
 
       const row = detailSheet.getRow(rowNum);
       row.values = [
@@ -352,16 +353,16 @@ export async function GET(request: NextRequest) {
         workType, // E: 업무일 구분
         specialNote, // F: 특이 사항
         log?.attendance || null, // G: 근태
-        log?.lunch_store || null, // H: 중식 상호명
-        log?.lunch_amount || null, // I: 중식 금액
+        isExcludedAttendance ? null : (log?.lunch_store || null), // H: 중식 상호명
+        isExcludedAttendance ? null : (log?.lunch_amount || null), // I: 중식 금액
         null, // J: 알림용
-        log?.lunch_payer || null, // K: 중식 비고
-        log?.dinner_store || null, // L: 석식 상호명
-        log?.dinner_amount || null, // M: 석식 금액
-        log?.dinner_payer || null, // N: 석식 비고
-        log?.breakfast_store || null, // O: 조식 상호명
-        log?.breakfast_amount || null, // P: 조식 금액
-        log?.breakfast_payer || null, // Q: 조식 비고
+        isExcludedAttendance ? null : (log?.lunch_payer || null), // K: 중식 비고
+        isExcludedAttendance ? null : (log?.dinner_store || null), // L: 석식 상호명
+        isExcludedAttendance ? null : (log?.dinner_amount || null), // M: 석식 금액
+        isExcludedAttendance ? null : (log?.dinner_payer || null), // N: 석식 비고
+        isExcludedAttendance ? null : (log?.breakfast_store || null), // O: 조식 상호명
+        isExcludedAttendance ? null : (log?.breakfast_amount || null), // P: 조식 금액
+        isExcludedAttendance ? null : (log?.breakfast_payer || null), // Q: 조식 비고
       ];
 
       // 금액 포맷 (I=9, M=13, P=16)

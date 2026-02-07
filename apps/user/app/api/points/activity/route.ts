@@ -81,22 +81,24 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 활동비 권한 확인
-    const permission = await verifyActivityPermission(supabase, memberId);
+    // 권한 확인 + 요약 조회 병렬 실행
+    const halfYearPeriod = toHalfYearPeriod(period);
+    const [permission, summaryResult] = await Promise.all([
+      verifyActivityPermission(supabase, memberId),
+      supabase
+        .from("budget_summary")
+        .select("*")
+        .eq("member_id", memberId)
+        .eq("type", "활동비")
+        .eq("period", halfYearPeriod)
+        .maybeSingle(),
+    ]);
+
     if (!permission.allowed) {
       return permission.error!;
     }
 
-    // budget_summary 뷰에서 해당 멤버의 활동비 요약 조회
-    const halfYearPeriod = toHalfYearPeriod(period);
-    const { data: summary, error: summaryError } = await supabase
-      .from("budget_summary")
-      .select("*")
-      .eq("member_id", memberId)
-      .eq("type", "활동비")
-      .eq("period", halfYearPeriod)
-      .maybeSingle();
-
+    const { data: summary, error: summaryError } = summaryResult;
     if (summaryError) {
       console.error("활동비 요약 조회 오류:", summaryError);
       return NextResponse.json(
@@ -105,7 +107,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 해당 allocation의 사용내역 조회
+    // 해당 allocation의 사용내역 조회 (선택 월 기준 필터)
+    const monthStart = `${period}-01`;
+    const nextMonth = new Date(`${period}-01T00:00:00`);
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    const monthEnd = nextMonth.toISOString().slice(0, 10);
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let records: Record<string, any>[] = [];
     if (summary?.allocation_id) {
@@ -120,6 +127,8 @@ export async function GET(request: NextRequest) {
         `
         )
         .eq("allocation_id", summary.allocation_id)
+        .gte("used_at", monthStart)
+        .lt("used_at", monthEnd)
         .order("used_at", { ascending: false });
 
       if (recordsError) {

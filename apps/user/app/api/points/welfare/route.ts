@@ -55,7 +55,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 해당 allocation의 사용내역 조회
+    // 해당 allocation의 사용내역 조회 (선택 월 기준 필터)
+    const monthStart = `${period}-01`;
+    const nextMonth = new Date(`${period}-01T00:00:00`);
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    const monthEnd = nextMonth.toISOString().slice(0, 10);
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let records: Record<string, any>[] = [];
     if (summary?.allocation_id) {
@@ -70,6 +75,8 @@ export async function GET(request: NextRequest) {
         `
         )
         .eq("allocation_id", summary.allocation_id)
+        .gte("used_at", monthStart)
+        .lt("used_at", monthEnd)
         .order("used_at", { ascending: false });
 
       if (recordsError) {

@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
 
+// "YYYY-MM" → "YYYY-H1" or "YYYY-H2", "YYYY-H1"/"YYYY-H2"는 그대로
+function toHalfYearPeriod(period: string): string {
+  if (period.includes("H")) return period;
+  const parts = period.split("-");
+  const half = parseInt(parts[1] ?? "1", 10) <= 6 ? "H1" : "H2";
+  return `${parts[0]}-${half}`;
+}
+
 // GET: 조직 전체 예산 현황 조회 (읽기 전용)
 export async function GET(request: NextRequest) {
   try {
@@ -73,11 +81,12 @@ export async function GET(request: NextRequest) {
     }
 
     // budget_summary 뷰에서 조직 내 모든 멤버의 예산 요약 조회
+    const halfYearPeriod = toHalfYearPeriod(period);
     let query = supabase
       .from("budget_summary")
       .select("*")
       .in("member_id", memberIds)
-      .eq("period", period);
+      .eq("period", halfYearPeriod);
 
     // type 필터 적용 (선택적)
     if (type === "복지포인트" || type === "활동비") {

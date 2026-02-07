@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -21,6 +21,7 @@ import {
 import { queryKeys } from "@/lib/query-keys";
 import { useAuth } from "@/hooks/useAuth";
 import { useActiveStatusMembers } from "@/hooks/useActiveStatusMembers";
+import { STATUS_COLORS, SETTLEMENT_EXCLUDED_STATUSES } from "@/lib/constants";
 import { cn } from "@repo/ui/lib/utils";
 
 interface DashboardStats {
@@ -67,19 +68,24 @@ interface MemberSpendingData {
 }
 
 
-const STATUS_COLORS: Record<string, string> = {
-  육아휴직: "bg-pink-50 text-pink-700 border-pink-200",
-  병가: "bg-red-50 text-red-700 border-red-200",
-  재택근무: "bg-cyan-50 text-cyan-700 border-cyan-200",
-  파견: "bg-indigo-50 text-indigo-700 border-indigo-200",
-  휴직: "bg-amber-50 text-amber-700 border-amber-200",
-  퇴사: "bg-slate-100 text-slate-500 border-slate-300",
-};
-
 const getWeekStartDate = (date: dayjs.Dayjs) => {
   const day = date.day();
   const diff = day === 0 ? -6 : 1 - day;
   return date.add(diff, "day").format("YYYY-MM-DD");
+};
+
+const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat("ko-KR").format(amount);
+};
+
+const formatCurrencyShort = (amount: number) => {
+  if (amount >= 10000000) {
+    return `${(amount / 10000000).toFixed(1)}천만`;
+  }
+  if (amount >= 10000) {
+    return `${(amount / 10000).toFixed(1)}만`;
+  }
+  return formatCurrency(amount);
 };
 
 export default function DashboardPage() {
@@ -141,11 +147,14 @@ export default function DashboardPage() {
   const statusMemberCount = statusMembers?.length || 0;
 
   // 정산 제외 대상 (특이사항 인원 중 정산 불필요한 상태)
-  const SETTLEMENT_EXCLUDED_STATUSES = new Set(["육아휴직", "병가", "파견", "휴직", "퇴사"]);
-  const excludedMemberNames = new Set(
-    statusMembers
-      ?.filter((m) => m.current_status && SETTLEMENT_EXCLUDED_STATUSES.has(m.current_status))
-      .map((m) => m.full_name) || []
+  const excludedMemberNames = useMemo(
+    () =>
+      new Set(
+        statusMembers
+          ?.filter((m) => m.current_status && SETTLEMENT_EXCLUDED_STATUSES.has(m.current_status))
+          .map((m) => m.full_name) || []
+      ),
+    [statusMembers]
   );
 
   const { data: settlement } = useQuery<SettlementData>({
@@ -185,22 +194,14 @@ export default function DashboardPage() {
   });
 
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("ko-KR").format(amount);
-  };
-
-  const formatCurrencyShort = (amount: number) => {
-    if (amount >= 10000000) {
-      return `${(amount / 10000000).toFixed(1)}천만`;
-    }
-    if (amount >= 10000) {
-      return `${(amount / 10000).toFixed(1)}만`;
-    }
-    return formatCurrency(amount);
-  };
-
-  const years = Array.from({ length: 5 }, (_, i) => currentDate.year() - 2 + i);
-  const months = Array.from({ length: 12 }, (_, i) => i + 1);
+  const years = useMemo(
+    () => Array.from({ length: 5 }, (_, i) => currentDate.year() - 2 + i),
+    [currentDate]
+  );
+  const months = useMemo(
+    () => Array.from({ length: 12 }, (_, i) => i + 1),
+    []
+  );
 
   const usageRate = stats?.totalAllowance
     ? ((stats.totalUsed || 0) / stats.totalAllowance) * 100

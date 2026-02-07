@@ -70,6 +70,14 @@ interface InputCheckResult {
   missingCount?: number;
 }
 
+const formatCurrency = (amount: number | null) => {
+  if (amount === null || amount === undefined) return "-";
+  return new Intl.NumberFormat("ko-KR").format(amount);
+};
+
+const YEARS_RANGE = 5;
+const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
+
 export default function UsersPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -461,19 +469,22 @@ export default function UsersPage() {
     return user.user_id === selectedUserId;
   });
 
-  const formatCurrency = (amount: number | null) => {
-    if (amount === null || amount === undefined) return "-";
-    return new Intl.NumberFormat("ko-KR").format(amount);
-  };
+  const years = useMemo(
+    () => Array.from({ length: YEARS_RANGE }, (_, i) => currentDate.year() - 2 + i),
+    [currentDate],
+  );
 
-  const years = Array.from({ length: 5 }, (_, i) => currentDate.year() - 2 + i);
-  const months = Array.from({ length: 12 }, (_, i) => i + 1);
-
-  // Summary stats
-  const totalUsers = users?.length || 0;
-  const settledUsers = users?.filter((u) => u.is_settled).length || 0;
-  const totalUsed =
-    users?.reduce((sum, u) => sum + (u.total_used || 0), 0) || 0;
+  // Summary stats (js-combine-iterations: single pass)
+  const { totalUsers, settledUsers, totalUsed } = useMemo(() => {
+    if (!users) return { totalUsers: 0, settledUsers: 0, totalUsed: 0 };
+    let settled = 0;
+    let used = 0;
+    for (const u of users) {
+      if (u.is_settled) settled++;
+      used += u.total_used || 0;
+    }
+    return { totalUsers: users.length, settledUsers: settled, totalUsed: used };
+  }, [users]);
 
   // 입력완료 상태 렌더링
   const renderInputCheckStatus = (userId: string) => {
@@ -623,7 +634,7 @@ export default function UsersPage() {
           </button>
           {isMonthOpen && (
             <div className="absolute left-0 top-full z-50 mt-2 grid w-48 grid-cols-4 gap-1 rounded-lg bg-white p-2 shadow-lg ring-1 ring-slate-200/60">
-              {months.map((month) => (
+              {MONTHS.map((month) => (
                 <button
                   key={month}
                   onClick={() => {

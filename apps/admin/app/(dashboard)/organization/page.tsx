@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, memo } from "react";
 import {
   Building2,
   ChevronDown,
@@ -54,28 +54,7 @@ import {
 } from "@/hooks/useOrganizationMutations";
 import { Checkbox } from "@repo/ui/src/checkbox";
 import { useActiveStatusMembers } from "@/hooks/useActiveStatusMembers";
-
-// ── Role badge color helper ──
-
-function roleBadgeStyle(role: string) {
-  switch (role) {
-    case "본부장":
-      return "bg-purple-50 text-purple-700 border-purple-200";
-    case "팀장":
-      return "bg-blue-50 text-blue-700 border-blue-200";
-    default:
-      return "bg-slate-50 text-slate-600 border-slate-200";
-  }
-}
-
-const STATUS_COLORS: Record<string, string> = {
-  육아휴직: "bg-pink-50 text-pink-700 border-pink-200",
-  병가: "bg-red-50 text-red-700 border-red-200",
-  재택근무: "bg-cyan-50 text-cyan-700 border-cyan-200",
-  파견: "bg-indigo-50 text-indigo-700 border-indigo-200",
-  휴직: "bg-amber-50 text-amber-700 border-amber-200",
-  퇴사: "bg-slate-100 text-slate-500 border-slate-300",
-};
+import { STATUS_COLORS, roleBadgeStyle } from "@/lib/constants";
 
 // ── Types for dialog state ──
 
@@ -88,7 +67,7 @@ type DialogMode =
 
 // ── Member Row Component ──
 
-function MemberRow({
+const MemberRow = memo(function MemberRow({
   member,
   onEdit,
   status,
@@ -133,7 +112,7 @@ function MemberRow({
       </button>
     </div>
   );
-}
+});
 
 // ── Team Section Component ──
 
@@ -320,7 +299,7 @@ function DivisionSection({
 
 // ── Unassigned Member Checkbox Row Component ──
 
-function UnassignedMemberRow({
+const UnassignedMemberRow = memo(function UnassignedMemberRow({
   member,
   checked,
   onToggle,
@@ -362,7 +341,7 @@ function UnassignedMemberRow({
       )}
     </label>
   );
-}
+});
 
 // ── Main Page Component ──
 

@@ -35,15 +35,7 @@ import {
 import { queryKeys } from "@/lib/query-keys";
 import { useActiveStatusMembers } from "@/hooks/useActiveStatusMembers";
 import type { Member } from "@/lib/supabase/types";
-
-const STATUS_COLORS: Record<string, string> = {
-  육아휴직: "bg-pink-50 text-pink-700 border-pink-200",
-  병가: "bg-red-50 text-red-700 border-red-200",
-  재택근무: "bg-cyan-50 text-cyan-700 border-cyan-200",
-  파견: "bg-indigo-50 text-indigo-700 border-indigo-200",
-  휴직: "bg-amber-50 text-amber-700 border-amber-200",
-  퇴사: "bg-slate-100 text-slate-500 border-slate-300",
-};
+import { STATUS_COLORS } from "@/lib/constants";
 
 interface MonthlyData {
   applications: {

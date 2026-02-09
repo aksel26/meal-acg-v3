@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
 import {
   useMealDrawerStore,
   NO_MEAL_SUPPORT_ATTENDANCE,
@@ -67,12 +66,9 @@ export function AttendanceStep({ onSubmit, isSubmitting }: AttendanceStepProps) 
           const isSelected = selectedValue === option.value;
 
           return (
-            <motion.button
+            <button
               key={option.value}
               type="button"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05, duration: 0.25 }}
               onClick={() => handleSelect(option.value)}
               className={`flex items-center gap-3 py-3.5 px-4 rounded-xl border-2 transition-all duration-200 text-left ${
                 isSelected
@@ -82,61 +78,53 @@ export function AttendanceStep({ onSubmit, isSubmitting }: AttendanceStepProps) 
             >
               <span className="text-lg">{config?.emoji}</span>
               <span className="text-sm font-medium">{config?.shortLabel}</span>
-            </motion.button>
+            </button>
           );
         })}
       </div>
 
       {/* 식대 미지원 메시지 및 저장 버튼 */}
-      <AnimatePresence>
-        {showSaveButton && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3 }}
-            className="space-y-3 pt-2"
+      {showSaveButton && (
+        <div className="space-y-3 pt-2">
+          {isNoMealSupport && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+              <p className="text-sm text-amber-800 font-medium">
+                {attendanceConfig[selectedValue]?.shortLabel} 시에는 식대가 지원되지 않습니다.
+              </p>
+              <p className="text-xs text-amber-600 mt-1">
+                근태 정보만 저장됩니다.
+              </p>
+            </div>
+          )}
+
+          {isIndividualMeal && (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <p className="text-sm text-blue-800 font-medium">
+                개별식사로 기록됩니다.
+              </p>
+              <p className="text-xs text-blue-600 mt-1">
+                식대 입력 없이 저장됩니다.
+              </p>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={isSubmitting}
+            className="w-full py-4 px-4 rounded-xl bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isNoMealSupport && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                <p className="text-sm text-amber-800 font-medium">
-                  {attendanceConfig[selectedValue]?.shortLabel} 시에는 식대가 지원되지 않습니다.
-                </p>
-                <p className="text-xs text-amber-600 mt-1">
-                  근태 정보만 저장됩니다.
-                </p>
+            {isSubmitting ? (
+              <div className="flex items-center justify-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                저장 중...
               </div>
+            ) : (
+              "저장하기"
             )}
-
-            {isIndividualMeal && (
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                <p className="text-sm text-blue-800 font-medium">
-                  개별식사로 기록됩니다.
-                </p>
-                <p className="text-xs text-blue-600 mt-1">
-                  식대 입력 없이 저장됩니다.
-                </p>
-              </div>
-            )}
-
-            <motion.button
-              type="button"
-              onClick={handleSave}
-              disabled={isSubmitting}
-              className="w-full py-4 px-4 rounded-xl bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? (
-                <div className="flex items-center justify-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
-                  저장 중...
-                </div>
-              ) : (
-                "저장하기"
-              )}
-            </motion.button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

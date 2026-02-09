@@ -81,6 +81,8 @@ interface UserFormData {
   loginId: string;
   password: string;
   email: string;
+  memberRole: string;
+  internMonths: string;
 }
 
 type SortKey = "member_role" | "team_name" | "current_status";
@@ -161,10 +163,14 @@ export default function MemberStatusPage() {
     handleSubmit: handleFormSubmit,
     reset: resetAddForm,
     setError: setAddFormError,
+    watch: watchAddForm,
+    setValue: setAddFormValue,
     formState: { errors: addFormErrors },
   } = useForm<UserFormData>({
-    defaultValues: { fullName: "", loginId: "", password: "", email: "" },
+    defaultValues: { fullName: "", loginId: "", password: "", email: "", memberRole: "팀원", internMonths: "" },
   });
+
+  const watchedMemberRole = watchAddForm("memberRole");
 
   const createUserMutation = useMutation({
     mutationFn: async (data: {
@@ -172,6 +178,8 @@ export default function MemberStatusPage() {
       loginId: string;
       password: string;
       email?: string;
+      memberRole?: string;
+      internMonths?: string;
     }) => {
       const response = await fetch("/api/members", {
         method: "POST",
@@ -756,6 +764,45 @@ export default function MemberStatusPage() {
                   </p>
                 )}
               </div>
+              <div className="space-y-2">
+                <Label>역할</Label>
+                <Select
+                  value={watchedMemberRole}
+                  onValueChange={(val) => {
+                    setAddFormValue("memberRole", val);
+                    if (val !== "인턴") setAddFormValue("internMonths", "");
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="역할 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="팀원">팀원</SelectItem>
+                    <SelectItem value="인턴">인턴</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {watchedMemberRole === "인턴" && (
+                <div className="space-y-2">
+                  <Label htmlFor="addInternMonths">인턴 기간 (개월)</Label>
+                  <Input
+                    id="addInternMonths"
+                    type="number"
+                    min={1}
+                    max={6}
+                    placeholder="1~6"
+                    {...register("internMonths", {
+                      min: { value: 1, message: "1 이상 입력해주세요." },
+                      max: { value: 6, message: "6 이하로 입력해주세요." },
+                    })}
+                  />
+                  {addFormErrors.internMonths && (
+                    <p className="text-sm text-red-500">
+                      {addFormErrors.internMonths.message}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
             <div className="flex justify-end gap-2">
               <Button

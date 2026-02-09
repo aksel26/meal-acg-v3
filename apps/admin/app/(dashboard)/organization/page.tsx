@@ -132,7 +132,7 @@ function TeamSection({
   const [isOpen, setIsOpen] = useState(true);
   const members = useMemo(() => {
     const raw = team.members || [];
-    const roleOrder: Record<string, number> = { 본부장: 0, 팀장: 1, 팀원: 2 };
+    const roleOrder: Record<string, number> = { 본부장: 0, 팀장: 1, 팀원: 2, 인턴: 3 };
     return [...raw].sort(
       (a, b) => (roleOrder[a.member_role] ?? 9) - (roleOrder[b.member_role] ?? 9),
     );
@@ -376,6 +376,7 @@ export default function OrganizationPage() {
   const [formDivisionId, setFormDivisionId] = useState<string>("");
   const [formTeamId, setFormTeamId] = useState<string>("");
   const [formRole, setFormRole] = useState<string>("");
+  const [formInternMonths, setFormInternMonths] = useState<string>("");
 
   // Batch assignment state
   const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set());
@@ -433,6 +434,7 @@ export default function OrganizationPage() {
       case "editMember":
         setFormTeamId(mode.member.team_id || "");
         setFormRole(mode.member.member_role || "팀원");
+        setFormInternMonths(mode.member.intern_months ? String(mode.member.intern_months) : "");
         break;
     }
   };
@@ -443,6 +445,7 @@ export default function OrganizationPage() {
     setFormDivisionId("");
     setFormTeamId("");
     setFormRole("");
+    setFormInternMonths("");
   };
 
   const handleSubmitDialog = () => {
@@ -507,11 +510,15 @@ export default function OrganizationPage() {
 
       case "editMember": {
         const editTeamId = formTeamId && formTeamId !== "none" ? formTeamId : null;
+        const internMonths = formRole === "인턴" && formInternMonths
+          ? parseInt(formInternMonths, 10)
+          : null;
         updateMemberOrgMutation.mutate(
           {
             id: dialogMode.member.id,
             team_id: editTeamId,
-            member_role: (formRole as "본부장" | "팀장" | "팀원") || "팀원",
+            member_role: (formRole as "본부장" | "팀장" | "팀원" | "인턴") || "팀원",
+            intern_months: internMonths,
           },
           { onSuccess: closeDialog }
         );
@@ -926,17 +933,37 @@ export default function OrganizationPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>역할</Label>
-                  <Select value={formRole} onValueChange={setFormRole}>
+                  <Select
+                    value={formRole}
+                    onValueChange={(val) => {
+                      setFormRole(val);
+                      if (val !== "인턴") setFormInternMonths("");
+                    }}
+                  >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="역할 선택" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="팀원">팀원</SelectItem>
+                      <SelectItem value="인턴">인턴</SelectItem>
                       <SelectItem value="팀장">팀장</SelectItem>
                       <SelectItem value="본부장">본부장</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
+                {formRole === "인턴" && (
+                  <div className="space-y-2">
+                    <Label>인턴 기간 (개월)</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={6}
+                      placeholder="1~6"
+                      value={formInternMonths}
+                      onChange={(e) => setFormInternMonths(e.target.value)}
+                    />
+                  </div>
+                )}
               </>
             )}
           </div>

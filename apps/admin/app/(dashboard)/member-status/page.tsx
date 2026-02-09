@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { cn } from "@repo/ui/lib/utils";
 import { Button } from "@repo/ui/src/button";
@@ -18,6 +19,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -32,9 +34,11 @@ import {
 import { SearchableDropdown } from "@repo/ui/src/searchable-dropdown";
 import {
   AlertTriangle,
+  ArrowUpDown,
   History,
   Loader2,
   Pencil,
+  Plus,
   Trash2,
   Users,
 } from "lucide-react";
@@ -69,7 +73,18 @@ const STATUS_TYPES: MemberStatusType[] = [
 interface MemberOption {
   id: string;
   full_name: string;
+  note: string | null;
 }
+
+interface UserFormData {
+  fullName: string;
+  loginId: string;
+  password: string;
+  email: string;
+}
+
+type SortKey = "member_role" | "team_name" | "current_status";
+type SortDir = "asc" | "desc";
 
 // ── Main Page ──
 
@@ -81,7 +96,12 @@ export default function MemberStatusPage() {
   const [statusFilter, setStatusFilter] = useState("전체");
   const [isClearing, setIsClearing] = useState(false);
 
+  // Sort state
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
+
   // Dialog states
+  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -135,7 +155,107 @@ export default function MemberStatusPage() {
   const updateStatus = useUpdateMemberStatus();
   const deleteStatus = useDeleteMemberStatus();
 
+  // Add member form
+  const {
+    register,
+    handleSubmit: handleFormSubmit,
+    reset: resetAddForm,
+    setError: setAddFormError,
+    formState: { errors: addFormErrors },
+  } = useForm<UserFormData>({
+    defaultValues: { fullName: "", loginId: "", password: "", email: "" },
+  });
+
+  const createUserMutation = useMutation({
+    mutationFn: async (data: {
+      fullName: string;
+      loginId: string;
+      password: string;
+      email?: string;
+    }) => {
+      const response = await fetch("/api/members", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to create user");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.memberStatuses.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.members.all,
+      });
+      toast.success("인원이 추가되었습니다.");
+      setIsAddMemberOpen(false);
+      resetAddForm();
+    },
+    onError: (error: Error) => {
+      if (error.message === "Login ID already exists") {
+        setAddFormError("loginId", { message: "이미 존재하는 아이디입니다." });
+      } else {
+        toast.error("인원 추가에 실패했습니다.");
+      }
+    },
+  });
+
+  const onSubmitAddMember = (data: UserFormData) => {
+    createUserMutation.mutate(data);
+  };
+
+  // Member note map (id → note)
+  const noteMap = useMemo(() => {
+    const map = new Map<string, string>();
+    allMembers?.forEach((m) => {
+      if (m.note) map.set(m.id, m.note);
+    });
+    return map;
+  }, [allMembers]);
+
+  const updateNoteMutation = useMutation({
+    mutationFn: async ({ id, note }: { id: string; note: string }) => {
+      const res = await fetch(`/api/members/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ note }),
+      });
+      if (!res.ok) throw new Error("Failed to update note");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.members.all });
+    },
+    onError: () => {
+      toast.error("비고 저장에 실패했습니다.");
+    },
+  });
+
   const members: MemberCurrentStatus[] = membersData ?? [];
+
+  // Sort
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  };
+
+  const sortedMembers = useMemo(() => {
+    if (!sortKey) return members;
+    return [...members].sort((a, b) => {
+      const aVal = (a[sortKey] ?? "") as string;
+      const bVal = (b[sortKey] ?? "") as string;
+      const cmp = aVal.localeCompare(bVal, "ko");
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+  }, [members, sortKey, sortDir]);
 
   // Stats (필터와 무관하게 전체 기준)
   const allStatusMembers: MemberCurrentStatus[] = allMembersStatus ?? [];
@@ -311,7 +431,7 @@ export default function MemberStatusPage() {
           className="w-44"
         />
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="h-9 w-32 text-sm">
+          <SelectTrigger className="h-10 w-32 text-sm">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -324,6 +444,15 @@ export default function MemberStatusPage() {
             ))}
           </SelectContent>
         </Select>
+
+        <Button
+          onClick={() => setIsAddMemberOpen(true)}
+          size="sm"
+          className="gap-1.5"
+        >
+          <Plus className="h-4 w-4" />
+          인원 추가
+        </Button>
 
         <div className="ml-auto flex items-center gap-5 text-sm">
           <div className="flex items-center gap-1.5">
@@ -388,20 +517,41 @@ export default function MemberStatusPage() {
                   <TableHead className="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                     이메일
                   </TableHead>
-                  <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    역할
+                  <TableHead
+                    className="cursor-pointer select-none text-center text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-800"
+                    onClick={() => handleSort("member_role")}
+                  >
+                    <span className="inline-flex items-center gap-1">
+                      역할
+                      <ArrowUpDown className={cn("h-3 w-3", sortKey === "member_role" ? "text-[#135bec]" : "text-slate-300")} />
+                    </span>
                   </TableHead>
                   <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                     본부
                   </TableHead>
-                  <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    팀
+                  <TableHead
+                    className="cursor-pointer select-none text-center text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-800"
+                    onClick={() => handleSort("team_name")}
+                  >
+                    <span className="inline-flex items-center gap-1">
+                      팀
+                      <ArrowUpDown className={cn("h-3 w-3", sortKey === "team_name" ? "text-[#135bec]" : "text-slate-300")} />
+                    </span>
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer select-none text-center text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-800"
+                    onClick={() => handleSort("current_status")}
+                  >
+                    <span className="inline-flex items-center gap-1">
+                      특이사항
+                      <ArrowUpDown className={cn("h-3 w-3", sortKey === "current_status" ? "text-[#135bec]" : "text-slate-300")} />
+                    </span>
                   </TableHead>
                   <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    특이사항
+                    기간(일자)
                   </TableHead>
-                  <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    기간
+                  <TableHead className="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    메모
                   </TableHead>
                   <TableHead className="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                     비고
@@ -412,7 +562,7 @@ export default function MemberStatusPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {members.map((row) => {
+                {sortedMembers.map((row) => {
                   const displayStatus = row.current_status || "정상";
                   const colorClass =
                     STATUS_COLORS[displayStatus] || STATUS_COLORS["정상"];
@@ -453,11 +603,31 @@ export default function MemberStatusPage() {
                       </TableCell>
                       <TableCell className="text-center text-sm text-slate-600">
                         {row.status_start_date
-                          ? `${row.status_start_date} ~ ${row.status_end_date || "진행중"}`
+                          ? row.current_status === "퇴사"
+                            ? row.status_start_date
+                            : `${row.status_start_date} ~ ${row.status_end_date || "진행중"}`
                           : "-"}
                       </TableCell>
                       <TableCell className="max-w-[200px] truncate text-sm text-slate-600">
                         {row.status_note || "-"}
+                      </TableCell>
+                      <TableCell className="min-w-[150px]">
+                        <input
+                          key={`${row.member_id}-${noteMap.get(row.member_id!) || ""}`}
+                          defaultValue={noteMap.get(row.member_id!) || ""}
+                          onBlur={(e) => {
+                            const newVal = e.target.value.trim();
+                            const oldVal = noteMap.get(row.member_id!) || "";
+                            if (newVal !== oldVal && row.member_id) {
+                              updateNoteMutation.mutate({ id: row.member_id, note: newVal });
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                          }}
+                          className="w-full rounded border-0 bg-transparent px-1.5 py-0.5 text-sm text-slate-600 outline-none focus:bg-white focus:ring-1 focus:ring-slate-300"
+                          placeholder="-"
+                        />
                       </TableCell>
                       <TableCell className="text-center">
                         {row.current_status === "퇴사" && (
@@ -485,6 +655,126 @@ export default function MemberStatusPage() {
           </div>
         )}
       </div>
+
+      {/* ── Add Member Dialog ── */}
+      <Dialog
+        open={isAddMemberOpen}
+        onOpenChange={(open) => {
+          setIsAddMemberOpen(open);
+          if (!open) resetAddForm();
+        }}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>인원 추가</DialogTitle>
+            <DialogDescription>새 인원 정보를 입력하세요.</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleFormSubmit(onSubmitAddMember)}>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="addFullName">이름</Label>
+                <Input
+                  id="addFullName"
+                  placeholder="홍길동"
+                  className={
+                    addFormErrors.fullName
+                      ? "border-red-500 focus-visible:ring-red-500"
+                      : ""
+                  }
+                  {...register("fullName", {
+                    required: "이름을 입력해주세요.",
+                  })}
+                />
+                {addFormErrors.fullName && (
+                  <p className="text-sm text-red-500">
+                    {addFormErrors.fullName.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="addLoginId">아이디</Label>
+                <Input
+                  id="addLoginId"
+                  placeholder="hong123"
+                  className={
+                    addFormErrors.loginId
+                      ? "border-red-500 focus-visible:ring-red-500"
+                      : ""
+                  }
+                  {...register("loginId", {
+                    required: "아이디를 입력해주세요.",
+                  })}
+                />
+                {addFormErrors.loginId && (
+                  <p className="text-sm text-red-500">
+                    {addFormErrors.loginId.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="addPassword">비밀번호</Label>
+                <Input
+                  id="addPassword"
+                  type="password"
+                  placeholder="••••••••"
+                  className={
+                    addFormErrors.password
+                      ? "border-red-500 focus-visible:ring-red-500"
+                      : ""
+                  }
+                  {...register("password", {
+                    required: "비밀번호를 입력해주세요.",
+                  })}
+                />
+                {addFormErrors.password && (
+                  <p className="text-sm text-red-500">
+                    {addFormErrors.password.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="addEmail">이메일 (선택)</Label>
+                <Input
+                  id="addEmail"
+                  type="email"
+                  placeholder="hong@example.com"
+                  className={
+                    addFormErrors.email
+                      ? "border-red-500 focus-visible:ring-red-500"
+                      : ""
+                  }
+                  {...register("email", {
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message: "올바른 이메일 형식이 아닙니다.",
+                    },
+                  })}
+                />
+                {addFormErrors.email && (
+                  <p className="text-sm text-red-500">
+                    {addFormErrors.email.message}
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsAddMemberOpen(false);
+                  resetAddForm();
+                }}
+              >
+                취소
+              </Button>
+              <Button type="submit" disabled={createUserMutation.isPending}>
+                {createUserMutation.isPending ? "추가 중..." : "추가"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Create Dialog ── */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
@@ -538,23 +828,39 @@ export default function MemberStatusPage() {
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label>시작일</Label>
-              <Input
-                type="date"
-                value={formStartDate}
-                onChange={(e) => setFormStartDate(e.target.value)}
-              />
-            </div>
+            {formStatus === "퇴사" ? (
+              <div className="space-y-2">
+                <Label>퇴사일</Label>
+                <Input
+                  type="date"
+                  value={formStartDate}
+                  onChange={(e) => {
+                    setFormStartDate(e.target.value);
+                    setFormEndDate(e.target.value);
+                  }}
+                />
+              </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label>시작일</Label>
+                  <Input
+                    type="date"
+                    value={formStartDate}
+                    onChange={(e) => setFormStartDate(e.target.value)}
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <Label>종료일 (미입력 시 진행중)</Label>
-              <Input
-                type="date"
-                value={formEndDate}
-                onChange={(e) => setFormEndDate(e.target.value)}
-              />
-            </div>
+                <div className="space-y-2">
+                  <Label>종료일 (미입력 시 진행중)</Label>
+                  <Input
+                    type="date"
+                    value={formEndDate}
+                    onChange={(e) => setFormEndDate(e.target.value)}
+                  />
+                </div>
+              </>
+            )}
 
             <div className="space-y-2">
               <Label>비고</Label>
@@ -621,23 +927,39 @@ export default function MemberStatusPage() {
 
             {formStatus !== "정상" && (
               <>
-                <div className="space-y-2">
-                  <Label>시작일</Label>
-                  <Input
-                    type="date"
-                    value={formStartDate}
-                    onChange={(e) => setFormStartDate(e.target.value)}
-                  />
-                </div>
+                {formStatus === "퇴사" ? (
+                  <div className="space-y-2">
+                    <Label>퇴사일</Label>
+                    <Input
+                      type="date"
+                      value={formStartDate}
+                      onChange={(e) => {
+                        setFormStartDate(e.target.value);
+                        setFormEndDate(e.target.value);
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <Label>시작일</Label>
+                      <Input
+                        type="date"
+                        value={formStartDate}
+                        onChange={(e) => setFormStartDate(e.target.value)}
+                      />
+                    </div>
 
-                <div className="space-y-2">
-                  <Label>종료일 (미입력 시 진행중)</Label>
-                  <Input
-                    type="date"
-                    value={formEndDate}
-                    onChange={(e) => setFormEndDate(e.target.value)}
-                  />
-                </div>
+                    <div className="space-y-2">
+                      <Label>종료일 (미입력 시 진행중)</Label>
+                      <Input
+                        type="date"
+                        value={formEndDate}
+                        onChange={(e) => setFormEndDate(e.target.value)}
+                      />
+                    </div>
+                  </>
+                )}
 
                 <div className="space-y-2">
                   <Label>비고</Label>
@@ -783,7 +1105,9 @@ export default function MemberStatusPage() {
                         </Badge>
                         <div className="flex items-center gap-1">
                           <span className="text-xs text-slate-400">
-                            {record.start_date} ~ {record.end_date || "진행중"}
+                            {record.status === "퇴사"
+                              ? record.start_date
+                              : `${record.start_date} ~ ${record.end_date || "진행중"}`}
                           </span>
                           <button
                             onClick={() => handleHistoryEditOpen(record)}

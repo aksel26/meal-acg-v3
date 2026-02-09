@@ -169,7 +169,7 @@ export default function HolidaysPage() {
             value={selectedYear.toString()}
             onValueChange={(value) => setSelectedYear(parseInt(value))}
           >
-            <SelectTrigger className="w-32">
+            <SelectTrigger className="h-10 w-32">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

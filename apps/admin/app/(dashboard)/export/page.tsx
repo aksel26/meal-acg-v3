@@ -104,7 +104,7 @@ export default function ExportPage() {
                   value={selectedYear.toString()}
                   onValueChange={(value) => setSelectedYear(parseInt(value))}
                 >
-                  <SelectTrigger className="w-28">
+                  <SelectTrigger className="h-10 w-28">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -120,7 +120,7 @@ export default function ExportPage() {
                   value={selectedHalf}
                   onValueChange={(value) => setSelectedHalf(value as HalfYear)}
                 >
-                  <SelectTrigger className="w-28">
+                  <SelectTrigger className="h-10 w-28">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

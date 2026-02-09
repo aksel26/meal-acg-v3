@@ -78,6 +78,7 @@ interface Member {
   team_name: string | null;
   team_id: string | null;
   division_id: string | null;
+  note: string | null;
 }
 
 // ── Role Badge Helper ──
@@ -176,6 +177,15 @@ export default function BudgetPage() {
     return Array.from(map.values());
   }, [summaryItems]);
 
+  // Member note map (id → note)
+  const memberNoteMap = useMemo(() => {
+    const map = new Map<string, string>();
+    members?.forEach((m) => {
+      if (m.note) map.set(m.id, m.note);
+    });
+    return map;
+  }, [members]);
+
   // 특이사항 인원 ID Set
   const statusMemberIds = useMemo(() => {
     return new Set(
@@ -225,13 +235,12 @@ export default function BudgetPage() {
     );
     const pncTeamId = pncLeader?.team_id;
 
-    // P&C팀 외 팀원급 인원 수 (특이사항 인원 제외, 팀 배정된 멤버만)
+    // 전체 팀원급 인원 수 (P&C팀 포함, 특이사항 인원 제외, 팀 배정된 멤버만)
     const pncExtraCount = pncTeamId
       ? members.filter(
           (m) =>
             m.member_role === "팀원" &&
             m.team_id &&
-            m.team_id !== pncTeamId &&
             !statusMemberIds.has(m.id),
         ).length
       : 0;
@@ -243,15 +252,32 @@ export default function BudgetPage() {
       const isPnC = !!(pncTeamId && leader.team_id === pncTeamId);
 
       let amount: number;
+      let basis: string;
       if (leader.member_role === "본부장") {
         amount = memberCount * leaderRate;
+        basis = `${formatCurrency(leaderRate)}원 × ${memberCount}명`;
       } else if (isPnC) {
         amount = memberCount * managerRate + pncExtraCount * pncExtraRate;
+        const parts: string[] = [];
+        parts.push(`본인 ${formatCurrency(managerRate)}`);
+        if (memberCount > 1) {
+          parts.push(`${formatCurrency(managerRate)} × ${memberCount - 1}명`);
+        }
+        if (pncExtraCount > 0) {
+          parts.push(`${formatCurrency(pncExtraRate)} × ${pncExtraCount}명 (팀장 미만)`);
+        }
+        basis = parts.join(" + ");
       } else {
         amount = memberCount * managerRate;
+        const parts: string[] = [];
+        parts.push(`본인 ${formatCurrency(managerRate)}`);
+        if (memberCount > 1) {
+          parts.push(`${formatCurrency(managerRate)} × ${memberCount - 1}명`);
+        }
+        basis = parts.join(" + ");
       }
 
-      return { ...leader, memberCount, amount, isPnC, pncExtraCount };
+      return { ...leader, memberCount, amount, isPnC, pncExtraCount, basis };
     });
   }, [members, leaderMembers, calcLeaderRate, calcManagerRate, calcPncExtraRate, statusMemberIds]);
 
@@ -448,7 +474,7 @@ export default function BudgetPage() {
           <Label className="text-sm font-medium text-slate-700">기간</Label>
           <div className="flex items-center gap-2">
             <Select value={periodYear} onValueChange={setPeriodYear}>
-              <SelectTrigger className="w-28">
+              <SelectTrigger className="h-10 w-28">
                 <SelectValue placeholder="연도" />
               </SelectTrigger>
               <SelectContent>
@@ -462,7 +488,7 @@ export default function BudgetPage() {
               </SelectContent>
             </Select>
             <Select value={periodHalf} onValueChange={setPeriodHalf}>
-              <SelectTrigger className="w-28">
+              <SelectTrigger className="h-10 w-28">
                 <SelectValue placeholder="반기" />
               </SelectTrigger>
               <SelectContent>
@@ -476,7 +502,7 @@ export default function BudgetPage() {
         <div className="space-y-1.5">
           <Label className="text-sm font-medium text-slate-700">구분 필터</Label>
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="h-10 w-40">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -559,16 +585,23 @@ export default function BudgetPage() {
                   <TableHead className="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                     팀
                   </TableHead>
+                  <TableHead className="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    활동비 기준
+                  </TableHead>
                   <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
                     활동비
                   </TableHead>
                   <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
                     복지포인트
                   </TableHead>
+                  <TableHead className="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    비고
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {memberRows.map((row, index) => {
+                  const preview = activityPreview.find((p) => p.id === row.member_id);
                   return (
                     <TableRow
                       key={row.member_id}
@@ -594,6 +627,9 @@ export default function BudgetPage() {
                       <TableCell className="text-sm text-slate-600">
                         {row.team_name || "-"}
                       </TableCell>
+                      <TableCell className="text-[11px] text-slate-500">
+                        {preview?.basis || "-"}
+                      </TableCell>
                       <TableCell className="text-right">
                         {row.activity ? (
                           <button
@@ -617,6 +653,9 @@ export default function BudgetPage() {
                         ) : (
                           <span className="text-sm text-slate-300">-</span>
                         )}
+                      </TableCell>
+                      <TableCell className="text-sm text-slate-500">
+                        {memberNoteMap.get(row.member_id) || "-"}
                       </TableCell>
                     </TableRow>
                   );
@@ -885,6 +924,7 @@ export default function BudgetPage() {
                         <th className="px-2 py-2 text-center font-medium">직급</th>
                         <th className="px-2 py-2 text-left font-medium">팀</th>
                         <th className="px-2 py-2 text-center font-medium">인원</th>
+                        <th className="px-2 py-2 text-left font-medium">활동비 기준</th>
                         <th className="px-3 py-2 text-right font-medium">계산액</th>
                       </tr>
                     </thead>
@@ -925,6 +965,9 @@ export default function BudgetPage() {
                                 ? `${row.memberCount}+${row.pncExtraCount}`
                                 : row.memberCount}
                             </td>
+                            <td className="px-2 py-2 text-left text-[11px] text-slate-500">
+                              {isExcluded ? "-" : row.basis}
+                            </td>
                             <td className="px-3 py-2 text-right tabular-nums font-medium">
                               {isExcluded
                                 ? "0원"
@@ -936,7 +979,7 @@ export default function BudgetPage() {
                     </tbody>
                     <tfoot>
                       <tr className="border-t border-slate-300 bg-slate-50 font-semibold">
-                        <td colSpan={4} className="px-3 py-2 text-right text-slate-600">
+                        <td colSpan={5} className="px-3 py-2 text-right text-slate-600">
                           합계
                         </td>
                         <td className="px-3 py-2 text-right tabular-nums text-slate-900">

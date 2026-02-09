@@ -75,7 +75,7 @@ export function extractMemberNameFromFileName(fileName: string): string {
   return fileName.replace(/\.xlsx$/i, "").trim();
 }
 
-export function parseExcelFile(buffer: ArrayBuffer, fileName: string, filterCurrentMonth = true): ParseResult {
+export function parseExcelFile(buffer: ArrayBuffer, fileName: string, filterCurrentMonth = false): ParseResult {
   const memberName = extractMemberNameFromFileName(fileName);
   const errors: string[] = [];
   const records: MealRecord[] = [];

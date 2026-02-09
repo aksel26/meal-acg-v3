@@ -760,71 +760,70 @@ export default function OrganizationPage() {
                     </Badge>
                   </div>
                   {unassignedMembers.length > 0 && (
-                    <label className="flex cursor-pointer items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700">
-                      <Checkbox
-                        checked={
-                          selectedMemberIds.size === unassignedMembers.length &&
-                          unassignedMembers.length > 0
-                        }
-                        onCheckedChange={toggleAllMembers}
-                      />
-                      전체 선택
-                    </label>
+                    <div className="flex items-center gap-2">
+                      {selectedMemberIds.size > 0 && (
+                        <>
+                          <span className="shrink-0 text-xs font-medium text-orange-700">
+                            {selectedMemberIds.size}명
+                          </span>
+                          <Select value={batchTeamId} onValueChange={setBatchTeamId}>
+                            <SelectTrigger className="h-7 w-32 text-xs">
+                              <SelectValue placeholder="팀 선택" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {allTeams.map((team) => {
+                                const divName = divisions.find(
+                                  (d) => d.id === team.division_id
+                                )?.name;
+                                return (
+                                  <SelectItem key={team.id} value={team.id}>
+                                    {divName ? `${divName} > ` : ""}
+                                    {team.name}
+                                  </SelectItem>
+                                );
+                              })}
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            size="sm"
+                            className="h-7 shrink-0 px-2.5 text-xs"
+                            onClick={handleBatchAssign}
+                            disabled={batchAssignMutation.isPending}
+                          >
+                            {batchAssignMutation.isPending ? (
+                              <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                            ) : null}
+                            배정
+                          </Button>
+                          <div className="h-4 w-px bg-orange-200" />
+                        </>
+                      )}
+                      <label className="flex cursor-pointer items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700">
+                        <Checkbox
+                          checked={
+                            selectedMemberIds.size === unassignedMembers.length &&
+                            unassignedMembers.length > 0
+                          }
+                          onCheckedChange={toggleAllMembers}
+                        />
+                        전체 선택
+                      </label>
+                    </div>
                   )}
                 </div>
 
                 {unassignedMembers.length > 0 ? (
-                  <>
-                    <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2">
-                      {unassignedMembers.map((member) => (
-                        <UnassignedMemberRow
-                          key={member.id}
-                          member={member}
-                          checked={selectedMemberIds.has(member.id)}
-                          onToggle={toggleMember}
-                          status={statusMap.get(member.id)}
-                        />
-                      ))}
-                    </div>
-
-                    {/* Batch assign bar */}
-                    {selectedMemberIds.size > 0 && (
-                      <div className="flex items-center gap-2 border-t border-orange-100 bg-orange-50/50 px-4 py-3">
-                        <span className="shrink-0 text-xs font-medium text-orange-700">
-                          {selectedMemberIds.size}명 선택
-                        </span>
-                        <Select value={batchTeamId} onValueChange={setBatchTeamId}>
-                          <SelectTrigger className="h-8 flex-1 text-xs">
-                            <SelectValue placeholder="배정할 팀 선택" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {allTeams.map((team) => {
-                              const divName = divisions.find(
-                                (d) => d.id === team.division_id
-                              )?.name;
-                              return (
-                                <SelectItem key={team.id} value={team.id}>
-                                  {divName ? `${divName} > ` : ""}
-                                  {team.name}
-                                </SelectItem>
-                              );
-                            })}
-                          </SelectContent>
-                        </Select>
-                        <Button
-                          size="sm"
-                          className="h-8 shrink-0 text-xs"
-                          onClick={handleBatchAssign}
-                          disabled={batchAssignMutation.isPending}
-                        >
-                          {batchAssignMutation.isPending ? (
-                            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                          ) : null}
-                          배정
-                        </Button>
-                      </div>
-                    )}
-                  </>
+                  <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2">
+                    {unassignedMembers.map((member) => (
+                      <UnassignedMemberRow
+                        key={member.id}
+                        member={member}
+                        checked={selectedMemberIds.has(member.id)}
+                        onToggle={toggleMember}
+                        status={statusMap.get(member.id)}
+                      />
+                    ))}
+                  </div>
                 ) : (
                   <div className="flex flex-1 items-center justify-center text-sm text-slate-400">
                     모든 멤버가 팀에 배정되었습니다

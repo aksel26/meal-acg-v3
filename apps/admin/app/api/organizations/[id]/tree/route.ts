@@ -43,11 +43,11 @@ export async function GET(
       return NextResponse.json({ error: "Failed to fetch organization tree" }, { status: 500 });
     }
 
-    // Fetch members not assigned to any team
+    // Fetch members not assigned to any team (including those with no organization_id)
     const { data: unassigned } = await supabase
       .from("members")
       .select("id, full_name, member_role, email, team_id, division_id")
-      .eq("organization_id", id)
+      .or(`organization_id.eq.${id},organization_id.is.null`)
       .is("team_id", null)
       .order("full_name");
 

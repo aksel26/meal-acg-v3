@@ -21,6 +21,13 @@ import {
   TableHeader,
   TableRow,
 } from "@repo/ui/src/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@repo/ui/src/dialog";
 import { toast } from "sonner";
 import {
   Upload,
@@ -53,6 +60,10 @@ export default function ImportPage() {
   const [uploadedFiles, setUploadedFiles] = useState<FileUploadState[]>([]);
   const [overwrite, setOverwrite] = useState(false);
   const [selectedPreview, setSelectedPreview] = useState<string | null>(null);
+  const [isResultOpen, setIsResultOpen] = useState(false);
+  const [importResults, setImportResults] = useState<
+    { fileName: string; inserted: number; updated: number; skipped: number }[]
+  >([]);
 
   // 멤버 목록 조회
   const { data: members = [], isLoading: membersLoading } = useQuery<Member[]>({
@@ -189,10 +200,10 @@ export default function ImportPage() {
   };
 
   // 단일 파일 Import
-  const importFile = async (fileState: FileUploadState) => {
+  const importFile = async (fileState: FileUploadState, showResultDialog = true) => {
     if (!fileState.matchedMember) {
       toast.error("멤버 매칭이 필요합니다.");
-      return;
+      return null;
     }
 
     setUploadedFiles((prev) =>
@@ -222,11 +233,27 @@ export default function ImportPage() {
         await queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
         await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
 
-        toast.success(
-          `${fileState.memberName}: ${result.inserted}건 추가, ${result.updated}건 업데이트, ${result.skipped}건 건너뜀`
-        );
+        if (showResultDialog) {
+          setImportResults([
+            {
+              fileName: fileState.file.name,
+              inserted: result.inserted,
+              updated: result.updated,
+              skipped: result.skipped,
+            },
+          ]);
+          setIsResultOpen(true);
+        }
+
+        return {
+          fileName: fileState.file.name,
+          inserted: result.inserted as number,
+          updated: result.updated as number,
+          skipped: result.skipped as number,
+        };
       } else {
         toast.error(`${fileState.memberName}: 일부 오류 발생`);
+        return null;
       }
     } catch {
       setUploadedFiles((prev) =>
@@ -235,6 +262,7 @@ export default function ImportPage() {
         )
       );
       toast.error(`${fileState.memberName}: Import 실패`);
+      return null;
     }
   };
 
@@ -244,8 +272,13 @@ export default function ImportPage() {
       (f) => f.status === "pending" && f.matchedMember && f.records.length > 0
     );
 
+    const results: { fileName: string; inserted: number; updated: number; skipped: number }[] = [];
+
     for (const file of filesToImport) {
-      await importFile(file);
+      const result = await importFile(file, false);
+      if (result) {
+        results.push(result);
+      }
     }
 
     // 관련 쿼리 무효화하여 최신 데이터 반영
@@ -253,8 +286,11 @@ export default function ImportPage() {
     await queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
     await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
 
-    // 전체 작업 완료 알림
-    toast.success(`가져오기 작업이 완료되었습니다. (${filesToImport.length}개 파일)`);
+    // 결과 Dialog 표시
+    if (results.length > 0) {
+      setImportResults(results);
+      setIsResultOpen(true);
+    }
   };
 
   // 통계
@@ -567,6 +603,52 @@ export default function ImportPage() {
           </Card>
         </div>
       </div>
+
+      {/* Import 결과 Dialog */}
+      <Dialog open={isResultOpen} onOpenChange={setIsResultOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Import 결과</DialogTitle>
+          </DialogHeader>
+          <div className="border rounded-lg overflow-hidden max-h-[300px] overflow-y-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="sticky top-0 bg-white z-10">파일명</TableHead>
+                  <TableHead className="sticky top-0 bg-white z-10 text-right">추가</TableHead>
+                  <TableHead className="sticky top-0 bg-white z-10 text-right">업데이트</TableHead>
+                  <TableHead className="sticky top-0 bg-white z-10 text-right">건너뜀</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {importResults.map((r) => (
+                  <TableRow key={r.fileName}>
+                    <TableCell className="text-xs truncate max-w-[160px]">
+                      {r.fileName}
+                    </TableCell>
+                    <TableCell className="text-right text-xs">
+                      {r.inserted}
+                    </TableCell>
+                    <TableCell className="text-right text-xs">
+                      {r.updated}
+                    </TableCell>
+                    <TableCell className="text-right text-xs">
+                      {r.skipped}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <p className="text-sm text-gray-600">
+            총 {importResults.reduce((sum, r) => sum + r.inserted, 0)}건 추가,{" "}
+            {importResults.reduce((sum, r) => sum + r.updated, 0)}건 업데이트
+          </p>
+          <DialogFooter>
+            <Button onClick={() => setIsResultOpen(false)}>확인</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

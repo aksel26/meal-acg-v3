@@ -377,6 +377,7 @@ export type Database = {
           id: string
           login_id: string
           member_role: Database["public"]["Enums"]["member_role"]
+          note: string | null
           organization_id: string | null
           password: string
           role: string | null
@@ -391,6 +392,7 @@ export type Database = {
           id?: string
           login_id: string
           member_role?: Database["public"]["Enums"]["member_role"]
+          note?: string | null
           organization_id?: string | null
           password: string
           role?: string | null
@@ -405,6 +407,7 @@ export type Database = {
           id?: string
           login_id?: string
           member_role?: Database["public"]["Enums"]["member_role"]
+          note?: string | null
           organization_id?: string | null
           password?: string
           role?: string | null

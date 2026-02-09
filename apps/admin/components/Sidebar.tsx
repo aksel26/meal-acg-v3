@@ -23,6 +23,7 @@ import {
   PiggyBank,
   ClipboardCheck,
   UserCheck,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -56,7 +57,7 @@ const navigation: NavigationItem[] = [
     name: "식대 관리",
     icon: Utensils,
     items: [
-      { name: "사용현황 (인원별)", href: "/users", icon: Users },
+      { name: "사용현황 (인원별)", href: "/meal-status", icon: Users },
       { name: "식대 입력", href: "/calendar", icon: Calendar },
       { name: "식대 기본금 설정", href: "/settings", icon: Settings },
       { name: "엑셀 가져오기", href: "/import", icon: Upload },
@@ -79,6 +80,7 @@ const navigation: NavigationItem[] = [
     items: [
       { name: "예산 할당", href: "/budget", icon: PiggyBank },
       { name: "사용내역 검토", href: "/review", icon: ClipboardCheck },
+      { name: "사용 내역 조회", href: "/points-overview", icon: BarChart3 },
     ],
   },
   {

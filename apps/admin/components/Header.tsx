@@ -9,7 +9,7 @@ dayjs.locale("ko");
 
 const pageTitles: Record<string, { title: string; subtitle: string }> = {
   "/": { title: "대시보드", subtitle: "식대 관리 현황을 한눈에 확인하세요" },
-  "/users": { title: "식대관리 - 사용현황 (인원별)", subtitle: "팀원별 식대 사용 현황 및 정산 관리" },
+  "/meal-status": { title: "식대관리 - 사용현황 (인원별)", subtitle: "팀원별 식대 사용 현황 및 정산 관리" },
   "/calendar": { title: "식대 입력", subtitle: "일별 식대 기록을 관리합니다" },
   "/monthly": { title: "Monthly 음료", subtitle: "월별 음료 신청 현황 관리" },
   "/lunch-groups": { title: "점심조 관리", subtitle: "점심조 구성 및 배정 관리" },
@@ -21,6 +21,7 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
   "/member-status": { title: "조직원 현황", subtitle: "멤버별 상태(휴직, 파견, 퇴사 등) 이력을 관리합니다" },
   "/budget": { title: "예산 할당 관리", subtitle: "기간별 복지포인트 및 활동비를 멤버에게 할당합니다" },
   "/review": { title: "사용내역 검토", subtitle: "멤버들의 포인트 사용내역을 검토하고 관리합니다" },
+  "/points-overview": { title: "사용 내역 조회", subtitle: "전체 조직원의 포인트 사용 내역을 조회합니다" },
 };
 
 export default function Header() {
@@ -38,7 +39,7 @@ export default function Header() {
       </div> */}
 
       {/* Left - Page Title & Search */}
-      <div className="flex flex-1 gap-1 md:px-4 flex-col">
+      <div className="flex flex-1 gap-1 md:px-2 flex-col">
         <h2 className="text-xl font-semibold tracking-tight text-slate-800 md:block">
           {pageInfo.title}
         </h2>

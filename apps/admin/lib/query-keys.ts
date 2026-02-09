@@ -126,6 +126,11 @@ export const queryKeys = {
       ["memberStatuses", "history", memberId] as const,
   },
 
+  // Points Overview
+  pointsOverview: {
+    byPeriod: (period: string) => ["pointsOverview", period] as const,
+  },
+
   // Usage Records
   usageRecords: {
     all: ["usageRecords"] as const,

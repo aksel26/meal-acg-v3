@@ -79,6 +79,7 @@ interface Member {
   team_id: string | null;
   division_id: string | null;
   note: string | null;
+  intern_months: number | null;
 }
 
 // ── Role Badge Helper ──
@@ -89,6 +90,8 @@ function roleBadgeStyle(role: string) {
       return "bg-purple-50 text-purple-700 border-purple-200";
     case "팀장":
       return "bg-blue-50 text-blue-700 border-blue-200";
+    case "인턴":
+      return "bg-emerald-50 text-emerald-700 border-emerald-200";
     default:
       return "bg-slate-50 text-slate-600 border-slate-200";
   }
@@ -120,7 +123,6 @@ export default function BudgetPage() {
   const [editDescription, setEditDescription] = useState("");
 
   const [isBulkOpen, setIsBulkOpen] = useState(false);
-  const [bulkType, setBulkType] = useState("복지포인트");
   const [bulkAmount, setBulkAmount] = useState("");
   const [bulkDescription, setBulkDescription] = useState("");
 
@@ -193,19 +195,13 @@ export default function BudgetPage() {
     );
   }, [statusMembers]);
 
-  // 일괄 할당 대상 인원 수
+  // 복지포인트 할당 대상 인원 수 (전체 멤버, 특이사항 제외)
   const bulkTargetCount = useMemo(() => {
     if (!members) return 0;
-    const base =
-      bulkType === "복지포인트"
-        ? members
-        : members.filter(
-            (m) => m.member_role === "팀장" || m.member_role === "본부장",
-          );
-    return base.filter((m) => !statusMemberIds.has(m.id)).length;
-  }, [members, bulkType, statusMemberIds]);
+    return members.filter((m) => !statusMemberIds.has(m.id)).length;
+  }, [members, statusMemberIds]);
 
-  // Leaders for auto-calculate
+  // Leaders for auto-calculate (인턴은 팀장 금액에 포함)
   const leaderMembers = useMemo(() => {
     if (!members) return [];
     return members.filter(
@@ -220,11 +216,21 @@ export default function BudgetPage() {
     const managerRate = parseInt(calcManagerRate) || 0;
     const pncExtraRate = parseInt(calcPncExtraRate) || 0;
 
-    // team_id별 멤버 수 집계
+    // team_id별 멤버 수 집계 (인턴 제외)
     const teamCounts = new Map<string, number>();
     members.forEach((m) => {
-      if (m.team_id)
+      if (m.team_id && m.member_role !== "인턴")
         teamCounts.set(m.team_id, (teamCounts.get(m.team_id) || 0) + 1);
+    });
+
+    // team_id별 인턴 목록 집계
+    const teamInterns = new Map<string, Member[]>();
+    members.forEach((m) => {
+      if (m.team_id && m.member_role === "인턴" && !statusMemberIds.has(m.id)) {
+        const list = teamInterns.get(m.team_id) || [];
+        list.push(m);
+        teamInterns.set(m.team_id, list);
+      }
     });
 
     // P&C팀 식별
@@ -235,11 +241,11 @@ export default function BudgetPage() {
     );
     const pncTeamId = pncLeader?.team_id;
 
-    // 전체 팀원급 인원 수 (P&C팀 포함, 특이사항 인원 제외, 팀 배정된 멤버만)
+    // 전체 팀원급+인턴 인원 수 (특이사항 인원 제외, 팀 배정된 멤버만)
     const pncExtraCount = pncTeamId
       ? members.filter(
           (m) =>
-            m.member_role === "팀원" &&
+            (m.member_role === "팀원" || m.member_role === "인턴") &&
             m.team_id &&
             !statusMemberIds.has(m.id),
         ).length
@@ -250,6 +256,13 @@ export default function BudgetPage() {
         ? (teamCounts.get(leader.team_id) || 1)
         : 1;
       const isPnC = !!(pncTeamId && leader.team_id === pncTeamId);
+      const interns = leader.team_id ? (teamInterns.get(leader.team_id) || []) : [];
+
+      // 인턴 활동비 합산
+      const internAmount = interns.reduce((sum, intern) => {
+        const months = intern.intern_months || 1;
+        return sum + Math.round(managerRate / 6 * months);
+      }, 0);
 
       let amount: number;
       let basis: string;
@@ -264,7 +277,7 @@ export default function BudgetPage() {
           parts.push(`${formatCurrency(managerRate)} × ${memberCount - 1}명`);
         }
         if (pncExtraCount > 0) {
-          parts.push(`${formatCurrency(pncExtraRate)} × ${pncExtraCount}명 (팀장 미만)`);
+          parts.push(`${formatCurrency(pncExtraRate)} × ${pncExtraCount}명 (팀원+인턴)`);
         }
         basis = parts.join(" + ");
       } else {
@@ -277,7 +290,17 @@ export default function BudgetPage() {
         basis = parts.join(" + ");
       }
 
-      return { ...leader, memberCount, amount, isPnC, pncExtraCount, basis };
+      // 인턴 금액 합산
+      if (internAmount > 0) {
+        amount += internAmount;
+        const internParts = interns.map((intern) => {
+          const months = intern.intern_months || 1;
+          return `인턴 ${intern.full_name} ${formatCurrency(managerRate)}/6×${months}개월`;
+        });
+        basis += " + " + internParts.join(" + ");
+      }
+
+      return { ...leader, memberCount, amount, isPnC, pncExtraCount, basis, internCount: interns.length };
     });
   }, [members, leaderMembers, calcLeaderRate, calcManagerRate, calcPncExtraRate, statusMemberIds]);
 
@@ -292,6 +315,20 @@ export default function BudgetPage() {
   // Stats
   const totalAllocated = useMemo(
     () => summaryItems.reduce((sum, item) => sum + (item.total_amount || 0), 0),
+    [summaryItems],
+  );
+  const welfareAllocated = useMemo(
+    () =>
+      summaryItems
+        .filter((item) => item.type === "복지포인트")
+        .reduce((sum, item) => sum + (item.total_amount || 0), 0),
+    [summaryItems],
+  );
+  const activityAllocated = useMemo(
+    () =>
+      summaryItems
+        .filter((item) => item.type === "활동비")
+        .reduce((sum, item) => sum + (item.total_amount || 0), 0),
     [summaryItems],
   );
   const welfareRemaining = useMemo(
@@ -343,7 +380,6 @@ export default function BudgetPage() {
   // ── Bulk Handlers ──
 
   const handleBulkOpen = () => {
-    setBulkType("복지포인트");
     setBulkAmount("");
     setBulkDescription("");
     setIsBulkOpen(true);
@@ -364,22 +400,9 @@ export default function BudgetPage() {
       return;
     }
 
-    // Welfare: all members. Activity: only leaders. 특이사항 인원은 할당액 0.
-    const targetMembers =
-      bulkType === "복지포인트"
-        ? members
-        : members.filter(
-            (m) => m.member_role === "팀장" || m.member_role === "본부장",
-          );
-
-    if (targetMembers.length === 0) {
-      toast.error("대상 멤버가 없습니다.");
-      return;
-    }
-
-    const allocations = targetMembers.map((m) => ({
+    const allocations = members.map((m) => ({
       member_id: m.id,
-      type: bulkType,
+      type: "복지포인트" as const,
       period,
       total_amount: statusMemberIds.has(m.id) ? 0 : amount,
       description: bulkDescription || undefined,
@@ -445,24 +468,30 @@ export default function BudgetPage() {
           </div>
           <div className="h-4 w-px bg-slate-200" />
           <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-500">복지포인트 잔액</span>
-            <span className={cn(
-              "text-lg font-semibold tabular-nums",
-              welfareRemaining < 0 ? "text-rose-600" : "text-slate-800",
-            )}>
-              {(welfareRemaining / 10000).toFixed(1)}
+            <span className="text-sm text-slate-500">복지포인트</span>
+            <span className="text-lg font-semibold tabular-nums text-slate-800">
+              {(welfareAllocated / 10000).toFixed(1)}
               <span className="ml-0.5 text-sm font-normal text-slate-400">만원</span>
+            </span>
+            <span className={cn(
+              "text-xs tabular-nums",
+              welfareRemaining < 0 ? "text-rose-500" : "text-slate-400",
+            )}>
+              (잔액 {(welfareRemaining / 10000).toFixed(1)}만원)
             </span>
           </div>
           <div className="h-4 w-px bg-slate-200" />
           <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-500">활동비 잔액</span>
-            <span className={cn(
-              "text-lg font-semibold tabular-nums",
-              activityRemaining < 0 ? "text-rose-600" : "text-slate-800",
-            )}>
-              {(activityRemaining / 10000).toFixed(1)}
+            <span className="text-sm text-slate-500">활동비</span>
+            <span className="text-lg font-semibold tabular-nums text-slate-800">
+              {(activityAllocated / 10000).toFixed(1)}
               <span className="ml-0.5 text-sm font-normal text-slate-400">만원</span>
+            </span>
+            <span className={cn(
+              "text-xs tabular-nums",
+              activityRemaining < 0 ? "text-rose-500" : "text-slate-400",
+            )}>
+              (잔액 {(activityRemaining / 10000).toFixed(1)}만원)
             </span>
           </div>
         </div>
@@ -521,7 +550,7 @@ export default function BudgetPage() {
             disabled={!period}
           >
             <ListPlus className="h-4 w-4" />
-            일괄 할당
+            복지포인트 할당
           </Button>
           <Button
             onClick={handleCalcOpen}
@@ -565,7 +594,7 @@ export default function BudgetPage() {
               할당된 예산이 없습니다
             </p>
             <p className="mt-1 text-sm text-slate-400">
-              &quot;일괄 할당&quot; 버튼으로 예산을 할당해보세요
+              &quot;복지포인트 할당&quot; 버튼으로 예산을 할당해보세요
             </p>
           </div>
         ) : (
@@ -725,28 +754,10 @@ export default function BudgetPage() {
       <Dialog open={isBulkOpen} onOpenChange={setIsBulkOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>일괄 예산 할당</DialogTitle>
+            <DialogTitle>복지포인트 할당</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label>유형</Label>
-              <Select value={bulkType} onValueChange={setBulkType}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="복지포인트">복지포인트</SelectItem>
-                  <SelectItem value="활동비">활동비</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-slate-500">
-                {bulkType === "복지포인트"
-                  ? "전체 멤버에게 할당됩니다."
-                  : "팀장/본부장에게만 할당됩니다."}
-              </p>
-            </div>
-
             <div className="space-y-2">
               <Label htmlFor="bulk-amount">할당액 (1인당)</Label>
               <Input
@@ -777,7 +788,6 @@ export default function BudgetPage() {
                   대상 인원:{" "}
                   <span className="font-semibold text-slate-700">
                     {bulkTargetCount}명
-                    {bulkType === "복지포인트" ? "" : " (팀장/본부장)"}
                   </span>
                 </p>
                 {bulkAmount && (
@@ -815,7 +825,7 @@ export default function BudgetPage() {
                   할당 중...
                 </>
               ) : (
-                "일괄 할당"
+                "할당"
               )}
             </Button>
           </DialogFooter>
@@ -885,7 +895,7 @@ export default function BudgetPage() {
                     className="bg-slate-50"
                   />
                   <p className="text-[11px] text-slate-400">
-                    P&C팀 외 팀원급 (자동)
+                    P&C팀 외 팀원급+인턴 (자동)
                   </p>
                 </div>
                 <div className="space-y-1.5">
@@ -924,7 +934,6 @@ export default function BudgetPage() {
                         <th className="px-2 py-2 text-center font-medium">직급</th>
                         <th className="px-2 py-2 text-left font-medium">팀</th>
                         <th className="px-2 py-2 text-center font-medium">인원</th>
-                        <th className="px-2 py-2 text-left font-medium">활동비 기준</th>
                         <th className="px-3 py-2 text-right font-medium">계산액</th>
                       </tr>
                     </thead>
@@ -964,9 +973,9 @@ export default function BudgetPage() {
                               {row.isPnC
                                 ? `${row.memberCount}+${row.pncExtraCount}`
                                 : row.memberCount}
-                            </td>
-                            <td className="px-2 py-2 text-left text-[11px] text-slate-500">
-                              {isExcluded ? "-" : row.basis}
+                              {row.internCount > 0 && (
+                                <span className="ml-0.5 text-emerald-600">+{row.internCount}인턴</span>
+                              )}
                             </td>
                             <td className="px-3 py-2 text-right tabular-nums font-medium">
                               {isExcluded
@@ -979,7 +988,7 @@ export default function BudgetPage() {
                     </tbody>
                     <tfoot>
                       <tr className="border-t border-slate-300 bg-slate-50 font-semibold">
-                        <td colSpan={5} className="px-3 py-2 text-right text-slate-600">
+                        <td colSpan={4} className="px-3 py-2 text-right text-slate-600">
                           합계
                         </td>
                         <td className="px-3 py-2 text-right tabular-nums text-slate-900">

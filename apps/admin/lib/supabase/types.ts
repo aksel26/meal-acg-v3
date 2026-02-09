@@ -375,6 +375,7 @@ export type Database = {
           email: string | null
           full_name: string
           id: string
+          intern_months: number | null
           login_id: string
           member_role: Database["public"]["Enums"]["member_role"]
           note: string | null
@@ -390,6 +391,7 @@ export type Database = {
           email?: string | null
           full_name: string
           id?: string
+          intern_months?: number | null
           login_id: string
           member_role?: Database["public"]["Enums"]["member_role"]
           note?: string | null
@@ -405,6 +407,7 @@ export type Database = {
           email?: string | null
           full_name?: string
           id?: string
+          intern_months?: number | null
           login_id?: string
           member_role?: Database["public"]["Enums"]["member_role"]
           note?: string | null
@@ -1018,7 +1021,7 @@ export type Database = {
     }
     Enums: {
       budget_type: "복지포인트" | "활동비"
-      member_role: "본부장" | "팀장" | "팀원"
+      member_role: "본부장" | "팀장" | "팀원" | "인턴"
       member_status_type: "육아휴직" | "병가" | "재택근무" | "파견" | "휴직" | "퇴사"
     }
     CompositeTypes: {

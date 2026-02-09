@@ -189,16 +189,18 @@ export function useUpdateMemberOrg() {
       team_id,
       division_id,
       member_role,
+      intern_months,
     }: {
       id: string;
       team_id?: string | null;
       division_id?: string | null;
-      member_role?: "본부장" | "팀장" | "팀원";
+      member_role?: "본부장" | "팀장" | "팀원" | "인턴";
+      intern_months?: number | null;
     }) => {
       const res = await fetch(`/api/members/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ team_id, division_id, member_role }),
+        body: JSON.stringify({ team_id, division_id, member_role, intern_months }),
       });
       if (!res.ok) {
         const error = await res.json();

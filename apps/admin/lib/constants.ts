@@ -25,6 +25,8 @@ export function roleBadgeStyle(role: string) {
       return "bg-purple-50 text-purple-700 border-purple-200";
     case "팀장":
       return "bg-blue-50 text-blue-700 border-blue-200";
+    case "인턴":
+      return "bg-emerald-50 text-emerald-700 border-emerald-200";
     default:
       return "bg-slate-50 text-slate-600 border-slate-200";
   }

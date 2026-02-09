@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     const supabase = createServiceClient();
     const body = await request.json();
 
-    const { loginId, password, fullName, role = "user", email } = body;
+    const { loginId, password, fullName, role = "user", email, memberRole, internMonths } = body;
 
     if (!loginId || !password || !fullName) {
       return NextResponse.json(
@@ -74,6 +74,8 @@ export async function POST(request: NextRequest) {
         full_name: fullName,
         role,
         email: email || null,
+        member_role: memberRole || "팀원",
+        intern_months: memberRole === "인턴" && internMonths ? parseInt(internMonths, 10) : null,
       })
       .select()
       .single();

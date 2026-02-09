@@ -20,8 +20,8 @@ export default function DashboardLayout({
         <Header />
 
         {/* Content with nice padding and scroll */}
-        <div className="z-10 flex-1 overflow-y-auto scroll-smooth p-4 md:p-6 lg:p-8">
-          <div className="mx-auto max-w-7xl">
+        <div className="z-10 flex-1 overflow-y-auto scroll-smooth px-6 py-4">
+          <div className="md:px-2">
             {children}
           </div>
         </div>

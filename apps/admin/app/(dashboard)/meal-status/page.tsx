@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
 import dayjs from "dayjs";
 import {
   ChevronDown,
@@ -12,7 +11,6 @@ import {
   X,
   Loader2,
   Trash2,
-  Plus,
   Send,
   AlertTriangle,
   RefreshCw,
@@ -21,16 +19,7 @@ import { queryKeys } from "@/lib/query-keys";
 import { toast } from "sonner";
 import { cn } from "@repo/ui/lib/utils";
 import { Button } from "@repo/ui/src/button";
-import { Input } from "@repo/ui/src/input";
-import { Label } from "@repo/ui/src/label";
 import { SearchableDropdown } from "@repo/ui/src/searchable-dropdown";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@repo/ui/src/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui/src/tooltip";
 import { useActiveStatusMembers } from "@/hooks/useActiveStatusMembers";
 
@@ -49,13 +38,6 @@ interface UserStats {
   balance: number;
   has_excel_file: boolean;
   is_settled: boolean;
-}
-
-interface UserFormData {
-  fullName: string;
-  loginId: string;
-  password: string;
-  email: string;
 }
 
 type InputCheckStatus =
@@ -97,14 +79,13 @@ export default function UsersPage() {
       const params = new URLSearchParams(searchParams.toString());
       params.set("year", String(year));
       params.set("month", String(month));
-      router.replace(`/users?${params.toString()}`);
+      router.replace(`/meal-status?${params.toString()}`);
     },
     [router, searchParams],
   );
   const [selectedUserId, setSelectedUserId] = useState("");
   const [isYearOpen, setIsYearOpen] = useState(false);
   const [isMonthOpen, setIsMonthOpen] = useState(false);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [downloadingUserId, setDownloadingUserId] = useState<string | null>(
     null,
   );
@@ -177,21 +158,6 @@ export default function UsersPage() {
       );
     }
   }, []);
-
-  const {
-    register,
-    handleSubmit,
-    reset,
-    setError,
-    formState: { errors },
-  } = useForm<UserFormData>({
-    defaultValues: {
-      fullName: "",
-      loginId: "",
-      password: "",
-      email: "",
-    },
-  });
 
   const handleUserClick = (userId: string) => {
     router.push(
@@ -356,44 +322,6 @@ export default function UsersPage() {
     }
   };
 
-  const createUserMutation = useMutation({
-    mutationFn: async (data: {
-      fullName: string;
-      loginId: string;
-      password: string;
-      email?: string;
-    }) => {
-      const response = await fetch("/api/members", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to create user");
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.stats.monthly(selectedYear, selectedMonth),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.members.all,
-      });
-      toast.success("사용자가 추가되었습니다.");
-      setIsAddDialogOpen(false);
-      reset();
-    },
-    onError: (error: Error) => {
-      if (error.message === "Login ID already exists") {
-        setError("loginId", { message: "이미 존재하는 아이디입니다." });
-      } else {
-        toast.error("사용자 추가에 실패했습니다.");
-      }
-    },
-  });
-
   const sendNotifyMutation = useMutation({
     mutationFn: async ({
       userId,
@@ -429,10 +357,6 @@ export default function UsersPage() {
       toast.error(error.message || "정산 요청 발송에 실패했습니다.");
     },
   });
-
-  const onSubmitUser = (data: UserFormData) => {
-    createUserMutation.mutate(data);
-  };
 
   const handleDownloadExcel = async (userId: string, fullName: string) => {
     try {
@@ -691,15 +615,6 @@ export default function UsersPage() {
           )}
         </Button>
 
-        {/* Add User Button */}
-        <Button
-          onClick={() => setIsAddDialogOpen(true)}
-          size="sm"
-          className="gap-1.5"
-        >
-          <Plus className="h-4 w-4" />
-          추가
-        </Button>
       </div>
 
       {/* Users Table */}
@@ -970,125 +885,6 @@ export default function UsersPage() {
         />
       )}
 
-      {/* Add User Dialog */}
-      <Dialog
-        open={isAddDialogOpen}
-        onOpenChange={(open) => {
-          setIsAddDialogOpen(open);
-          if (!open) {
-            reset();
-          }
-        }}
-      >
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>사용자 추가</DialogTitle>
-            <DialogDescription>새 사용자 정보를 입력하세요.</DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit(onSubmitUser)}>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="fullName">이름</Label>
-                <Input
-                  id="fullName"
-                  placeholder="홍길동"
-                  className={
-                    errors.fullName
-                      ? "border-red-500 focus-visible:ring-red-500"
-                      : ""
-                  }
-                  {...register("fullName", {
-                    required: "이름을 입력해주세요.",
-                  })}
-                />
-                {errors.fullName && (
-                  <p className="text-sm text-red-500">
-                    {errors.fullName.message}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="loginId">아이디</Label>
-                <Input
-                  id="loginId"
-                  placeholder="hong123"
-                  className={
-                    errors.loginId
-                      ? "border-red-500 focus-visible:ring-red-500"
-                      : ""
-                  }
-                  {...register("loginId", {
-                    required: "아이디를 입력해주세요.",
-                  })}
-                />
-                {errors.loginId && (
-                  <p className="text-sm text-red-500">
-                    {errors.loginId.message}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">비밀번호</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  className={
-                    errors.password
-                      ? "border-red-500 focus-visible:ring-red-500"
-                      : ""
-                  }
-                  {...register("password", {
-                    required: "비밀번호를 입력해주세요.",
-                  })}
-                />
-                {errors.password && (
-                  <p className="text-sm text-red-500">
-                    {errors.password.message}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">이메일 (선택)</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="hong@example.com"
-                  className={
-                    errors.email
-                      ? "border-red-500 focus-visible:ring-red-500"
-                      : ""
-                  }
-                  {...register("email", {
-                    pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: "올바른 이메일 형식이 아닙니다.",
-                    },
-                  })}
-                />
-                {errors.email && (
-                  <p className="text-sm text-red-500">{errors.email.message}</p>
-                )}
-              </div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setIsAddDialogOpen(false);
-                  reset();
-                }}
-              >
-                취소
-              </Button>
-              <Button type="submit" disabled={createUserMutation.isPending}>
-                {createUserMutation.isPending ? "추가 중..." : "추가"}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

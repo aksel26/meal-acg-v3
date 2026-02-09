@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "next/navigation";
 import { cn } from "@repo/ui/lib/utils";
 import { Card, CardContent } from "@repo/ui/src/card";
 import { Button } from "@repo/ui/src/button";
@@ -15,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/src/select";
+import { SearchableDropdown } from "@repo/ui/src/searchable-dropdown";
 import {
   Dialog,
   DialogContent,
@@ -139,6 +141,7 @@ function formatDateTime(dateStr: string) {
 
 export default function ReviewPage() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
 
   // Filter state
   const currentYear = new Date().getFullYear();
@@ -147,7 +150,7 @@ export default function ReviewPage() {
   const [periodHalf, setPeriodHalf] = useState(currentHalf);
   const period = `${periodYear}-${periodHalf}`;
   const [typeFilter, setTypeFilter] = useState("전체");
-  const [memberFilter, setMemberFilter] = useState("전체");
+  const [memberFilter, setMemberFilter] = useState(searchParams.get("member") || "전체");
   const [reviewFilter, setReviewFilter] = useState("전체");
 
   // Dialog states
@@ -311,7 +314,7 @@ export default function ReviewPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Select value={periodYear} onValueChange={setPeriodYear}>
-            <SelectTrigger className="h-9 w-24 text-sm">
+            <SelectTrigger className="h-10 w-24 bg-white text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -323,7 +326,7 @@ export default function ReviewPage() {
             </SelectContent>
           </Select>
           <Select value={periodHalf} onValueChange={setPeriodHalf}>
-            <SelectTrigger className="h-9 w-24 text-sm">
+            <SelectTrigger className="h-10 w-24 bg-white text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -332,7 +335,7 @@ export default function ReviewPage() {
             </SelectContent>
           </Select>
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="h-9 w-32 text-sm">
+            <SelectTrigger className="h-10 w-32 bg-white text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -341,21 +344,21 @@ export default function ReviewPage() {
               <SelectItem value="활동비">활동비</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={memberFilter} onValueChange={setMemberFilter}>
-            <SelectTrigger className="h-9 w-36 text-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="전체">멤버 전체</SelectItem>
-              {members?.map((member) => (
-                <SelectItem key={member.id} value={member.id}>
-                  {member.full_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <SearchableDropdown
+            items={members || []}
+            value={memberFilter !== "전체" ? memberFilter : undefined}
+            getItemKey={(m) => m.id}
+            getItemLabel={(m) => m.full_name}
+            onSelect={(m) => setMemberFilter(m.id)}
+            onClear={() => setMemberFilter("전체")}
+            placeholder="멤버 전체"
+            searchPlaceholder="이름 검색..."
+            emptyText="검색 결과가 없습니다"
+            allowClear
+            className="w-44"
+          />
           <Select value={reviewFilter} onValueChange={setReviewFilter}>
-            <SelectTrigger className="h-9 w-32 text-sm">
+            <SelectTrigger className="h-10 w-32 bg-white text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

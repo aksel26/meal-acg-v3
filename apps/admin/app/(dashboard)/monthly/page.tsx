@@ -291,6 +291,19 @@ export default function MonthlyPage() {
           </span>
         </div>
 
+        {activeStatusMembers && activeStatusMembers.length > 0 && (
+          <>
+            <div className="h-4 w-px bg-slate-200" />
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-slate-500">특이사항</span>
+              <span className="text-base font-semibold tabular-nums text-amber-600">
+                {activeStatusMembers.length}
+                <span className="text-sm font-normal">명</span>
+              </span>
+            </div>
+          </>
+        )}
+
         <div className="h-4 w-px bg-slate-200" />
 
         {/* Pickup Persons */}

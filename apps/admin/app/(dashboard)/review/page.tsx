@@ -437,7 +437,7 @@ function ReviewPageContent() {
                     비고
                   </TableHead>
                   <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    검토
+                    P&C팀 확인
                   </TableHead>
                   <TableHead className="w-24 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                     액션

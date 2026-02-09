@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@repo/ui/lib/utils";
@@ -140,6 +140,14 @@ function formatDateTime(dateStr: string) {
 // ── Main Page ──
 
 export default function ReviewPage() {
+  return (
+    <Suspense>
+      <ReviewPageContent />
+    </Suspense>
+  );
+}
+
+function ReviewPageContent() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
 

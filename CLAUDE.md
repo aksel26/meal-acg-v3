@@ -52,7 +52,7 @@ packages/
 - **Styling:** Tailwind CSS 4, Motion (animations), Radix UI
 - **State:** Zustand (client), TanStack React Query (server)
 - **Backend:**
-  - user app: Firebase Admin SDK, Google APIs (Sheets, Calendar, Drive), Gemini AI
+  - user app: Supabase, Google APIs (Sheets, Calendar), Gemini AI (receipt scanning)
   - admin app: Supabase (SSR client with RLS, service client for admin ops)
 - **Build:** Turborepo, pnpm
 
@@ -84,10 +84,17 @@ useMealDrawerStore()  // UI state
 - `@repo/ui`: Radix-based components (Button, Dialog, Drawer, etc.)
 - `@repo/utils`: KST timezone date utilities (formatDate, getToday, etc.)
 
+### Tailwind CSS 4
+Uses CSS-first config (`@import "tailwindcss"` + `@import "@repo/tailwind-config"`). No `tailwind.config.ts` — custom theme in `packages/tailwind-config/shared-styles.css` using `@theme` directive.
+
 ### Supabase (Admin App)
 - Browser client: `lib/supabase/client.ts` - createBrowserClient with typed Database
 - Server client: `lib/supabase/server.ts` - createServerClient with cookies
 - Service client: bypasses RLS for admin operations
+
+### Authentication
+- **Admin app:** Cookie-based session (`admin-session`), middleware protection, `requireAdmin()` in API routes
+- **User app:** Zustand store with localStorage persistence, no middleware protection
 
 ## Code Standards
 
@@ -157,6 +164,13 @@ GEMINI_API_KEY=
 
 ## Gotchas
 
+### Excel 라이브러리
+- **Import/parsing:** `xlsx` package (`lib/excel-parser.ts`)
+- **Export/generation:** `exceljs` package
+
+### Motion (Animations)
+Package is `motion` (v12), NOT `framer-motion`. Import: `import { motion, AnimatePresence } from "motion/react"`
+
 ### 누락 체크 로직 (`/api/stats/incomplete-users`)
 입력 누락 판별 시 **제외되는 조건**:
 - 개별식사, 연차, 휴무, 휴가, 반차, 재택
@@ -164,3 +178,9 @@ GEMINI_API_KEY=
 
 ### 시간대
 모든 날짜는 KST 기준. `@repo/utils`의 dayjs 유틸리티 사용 필수
+
+### Build 설정
+Both apps set `ignoreBuildErrors: true` (TS) and `ignoreDuringBuilds: true` (ESLint) in next.config. **Always run `pnpm check-types` and `pnpm lint` manually** — build won't catch errors.
+
+### Testing
+No test framework configured. No unit/integration tests exist.

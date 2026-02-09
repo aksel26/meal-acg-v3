@@ -379,7 +379,7 @@ export default function Points() {
           className="mb-6"
         >
           <div className="card-premium relative overflow-hidden">
-            <div className="relative px-4 pt-4 pb-3">
+            <div className="relative px-4 pt-4 pb-5">
               {/* Header */}
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">

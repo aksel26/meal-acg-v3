@@ -10,7 +10,6 @@ import {
   Check,
   X,
   Loader2,
-  Trash2,
   Send,
   AlertTriangle,
   RefreshCw,
@@ -298,37 +297,6 @@ function UsersPageContent() {
     });
   };
 
-  const deleteUserMutation = useMutation({
-    mutationFn: async (userId: string) => {
-      const response = await fetch(`/api/members/${userId}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error("Failed to delete user");
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.stats.monthly(selectedYear, selectedMonth),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.members.all,
-      });
-      toast.success("사용자가 삭제되었습니다.");
-    },
-    onError: () => {
-      toast.error("사용자 삭제에 실패했습니다.");
-    },
-  });
-
-  const handleDeleteUser = (userId: string, userName: string) => {
-    if (
-      window.confirm(
-        `"${userName}" 사용자를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`,
-      )
-    ) {
-      deleteUserMutation.mutate(userId);
-    }
-  };
 
   const sendNotifyMutation = useMutation({
     mutationFn: async ({
@@ -677,16 +645,13 @@ function UsersPageContent() {
                 <th className="w-12 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                   파일
                 </th>
-                <th className="w-14 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  삭제
-                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {isLoading ? (
                 Array.from({ length: 8 }).map((_, index) => (
                   <tr key={index}>
-                    {Array.from({ length: 15 }).map((_, cellIndex) => (
+                    {Array.from({ length: 14 }).map((_, cellIndex) => (
                       <td key={cellIndex} className="px-3 py-1.5">
                         <div className="h-4 w-full animate-pulse rounded bg-slate-100" />
                       </td>
@@ -847,22 +812,6 @@ function UsersPageContent() {
                         ) : (
                           <span className="text-slate-300">-</span>
                         )}
-                      </td>
-                      <td className="px-1 py-1.5 text-center">
-                        <button
-                          onClick={() =>
-                            handleDeleteUser(user.user_id, user.full_name)
-                          }
-                          disabled={deleteUserMutation.isPending}
-                          className="inline-flex h-6 w-6 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
-                        >
-                          {deleteUserMutation.isPending &&
-                          deleteUserMutation.variables === user.user_id ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-3.5 w-3.5" />
-                          )}
-                        </button>
                       </td>
                     </tr>
                   );

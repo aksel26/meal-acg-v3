@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
+import { HIDDEN_MEMBER_NAMES } from "@/lib/constants";
 
 // GET /api/stats/settlement - 정산 현황 통계
 export async function GET(request: NextRequest) {
@@ -31,17 +32,22 @@ export async function GET(request: NextRequest) {
       throw settlementError;
     }
 
+    // 숨김 대상 제외
+    const visibleMembers = members?.filter(
+      (m) => !HIDDEN_MEMBER_NAMES.has(m.full_name)
+    ) || [];
+
     // 정산 완료된 user_id Set
     const settledUserIds = new Set(
       settlements?.filter((s) => s.is_settled).map((s) => s.user_id) || []
     );
 
     // 정산 완료/미정산 멤버 분류
-    const settledMembers = members?.filter((m) => settledUserIds.has(m.id)) || [];
-    const unsettledMembers = members?.filter((m) => !settledUserIds.has(m.id)) || [];
+    const settledMembers = visibleMembers.filter((m) => settledUserIds.has(m.id));
+    const unsettledMembers = visibleMembers.filter((m) => !settledUserIds.has(m.id));
 
     return NextResponse.json({
-      totalMembers: members?.length || 0,
+      totalMembers: visibleMembers.length,
       settledCount: settledMembers.length,
       unsettledCount: unsettledMembers.length,
       settledMembers,

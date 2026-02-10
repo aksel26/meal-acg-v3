@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
+import { HIDDEN_MEMBER_NAMES } from "@/lib/constants";
 
 // GET /api/budget-summary - Query budget_summary view
 export async function GET(request: NextRequest) {
@@ -35,7 +36,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(data);
+    const filtered = (data || []).filter(
+      (row: any) => !HIDDEN_MEMBER_NAMES.has(row.member_name)
+    );
+    return NextResponse.json(filtered);
   } catch (error) {
     console.error("Budget summary API error:", error);
     if (error instanceof Error && error.message === "Unauthorized") {

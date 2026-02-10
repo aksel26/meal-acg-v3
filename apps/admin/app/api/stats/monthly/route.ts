@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
+import { HIDDEN_MEMBER_NAMES } from "@/lib/constants";
 import type { MonthlyAllowancesJson } from "@/lib/supabase/types";
 
 // GET /api/stats/monthly - Get monthly stats per user
@@ -113,7 +114,10 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json(transformedData);
+    const filtered = transformedData.filter(
+      (u: any) => !HIDDEN_MEMBER_NAMES.has(u.full_name)
+    );
+    return NextResponse.json(filtered);
   } catch (error) {
     console.error("Stats API error:", error);
     if (error instanceof Error && error.message === "Unauthorized") {

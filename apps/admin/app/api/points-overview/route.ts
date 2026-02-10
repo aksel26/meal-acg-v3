@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
+import { HIDDEN_MEMBER_NAMES } from "@/lib/constants";
 
 function halfYearToDateRange(period: string): { start: string; end: string } | null {
   const match = period.match(/^(\d{4})-H([12])$/);
@@ -151,13 +152,15 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const members = Array.from(memberMap.values()).sort((a, b) => {
-      const roleOrder: Record<string, number> = { "본부장": 0, "팀장": 1, "팀원": 2 };
-      const ra = roleOrder[a.member_role] ?? 3;
-      const rb = roleOrder[b.member_role] ?? 3;
-      if (ra !== rb) return ra - rb;
-      return a.member_name.localeCompare(b.member_name, "ko");
-    });
+    const members = Array.from(memberMap.values())
+      .filter((m) => !HIDDEN_MEMBER_NAMES.has(m.member_name))
+      .sort((a, b) => {
+        const roleOrder: Record<string, number> = { "본부장": 0, "팀장": 1, "팀원": 2 };
+        const ra = roleOrder[a.member_role] ?? 3;
+        const rb = roleOrder[b.member_role] ?? 3;
+        if (ra !== rb) return ra - rb;
+        return a.member_name.localeCompare(b.member_name, "ko");
+      });
 
     return NextResponse.json({ members });
   } catch (error) {

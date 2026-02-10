@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
+import { applyRoleOverride } from "@/lib/constants";
 
 // GET /api/members - List all members
 export async function GET(request: NextRequest) {
@@ -34,11 +35,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Failed to fetch members" }, { status: 500 });
     }
 
-    // Flatten teams join → team_name
-    const result = (data || []).map(({ teams, ...rest }) => ({
-      ...rest,
-      team_name: (teams as { name: string } | null)?.name ?? null,
-    }));
+    // Flatten teams join → team_name, apply role overrides
+    const result = (data || []).map(({ teams, ...rest }) =>
+      applyRoleOverride({
+        ...rest,
+        team_name: (teams as { name: string } | null)?.name ?? null,
+      })
+    );
 
     return NextResponse.json(result);
   } catch (error) {

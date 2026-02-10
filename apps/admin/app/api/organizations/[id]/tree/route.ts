@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
+import { applyRoleOverride } from "@/lib/constants";
 
 // GET /api/organizations/[id]/tree - Get full organization tree with divisions > teams > members
 export async function GET(
@@ -51,7 +52,25 @@ export async function GET(
       .is("team_id", null)
       .order("full_name");
 
-    return NextResponse.json({ ...data, unassignedMembers: unassigned || [] });
+    // Apply role overrides to all nested members
+    const applyToMembers = (members: any[]) => members.map(applyRoleOverride);
+    const result = {
+      ...data,
+      divisions: (data.divisions || []).map((div: any) => ({
+        ...div,
+        teams: (div.teams || []).map((team: any) => ({
+          ...team,
+          members: applyToMembers(team.members || []),
+        })),
+      })),
+      teams: (data.teams || []).map((team: any) => ({
+        ...team,
+        members: applyToMembers(team.members || []),
+      })),
+      unassignedMembers: applyToMembers(unassigned || []),
+    };
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Organization tree API error:", error);
     if (error instanceof Error && error.message === "Unauthorized") {

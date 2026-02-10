@@ -21,6 +21,8 @@ export const SETTLEMENT_EXCLUDED_STATUSES = new Set([
 /** 직책별 배지 색상 */
 export function roleBadgeStyle(role: string) {
   switch (role) {
+    case "대표":
+      return "bg-rose-50 text-rose-700 border-rose-200";
     case "본부장":
       return "bg-purple-50 text-purple-700 border-purple-200";
     case "팀장":
@@ -30,4 +32,22 @@ export function roleBadgeStyle(role: string) {
     default:
       return "bg-slate-50 text-slate-600 border-slate-200";
   }
+}
+
+/** 특정 멤버 직급 하드코딩 오버라이드 */
+const ROLE_OVERRIDES: Record<string, string> = {
+  "정진우": "대표",
+};
+
+/** 포인트/식대 관리 페이지에서 숨길 멤버 */
+export const HIDDEN_MEMBER_NAMES = new Set(["정진우"]);
+
+export function applyRoleOverride<T extends { full_name?: string; member_role?: string | null }>(
+  member: T
+): T {
+  const override = member.full_name ? ROLE_OVERRIDES[member.full_name] : undefined;
+  if (override && member.member_role !== undefined) {
+    return { ...member, member_role: override };
+  }
+  return member;
 }

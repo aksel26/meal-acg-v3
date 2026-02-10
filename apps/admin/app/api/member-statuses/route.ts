@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
+import { applyRoleOverride } from "@/lib/constants";
 
 // GET /api/member-statuses - List members with current status
 export async function GET(request: NextRequest) {
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(data);
+    return NextResponse.json((data || []).map(applyRoleOverride));
   } catch (error) {
     console.error("Member statuses API error:", error);
     if (error instanceof Error && error.message === "Unauthorized") {

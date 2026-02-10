@@ -19,6 +19,12 @@ export async function PUT(
 
     const updateData: Record<string, unknown> = {};
 
+    if (body.full_name !== undefined) {
+      updateData.full_name = body.full_name;
+    }
+    if (body.email !== undefined) {
+      updateData.email = body.email || null;
+    }
     if (body.team_id !== undefined) {
       updateData.team_id = body.team_id || null;
     }

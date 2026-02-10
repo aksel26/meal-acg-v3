@@ -634,13 +634,16 @@ export default function OrganizationPage() {
       {/* Quick Stats + Actions */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-4 text-sm text-slate-500">
+          {/* [HIDDEN] 본부 요약 — 본부 기능 재활성화 시 주석 해제
           <span>본부 <strong className="text-slate-800">{totalDivisions}</strong></span>
           <span className="text-slate-300">|</span>
+          */}
           <span>팀 <strong className="text-slate-800">{totalTeams}</strong></span>
           <span className="text-slate-300">|</span>
           <span>멤버 <strong className="text-slate-800">{totalMembers}</strong></span>
         </div>
         <div className="ml-auto flex items-center gap-2">
+          {/* [HIDDEN] 본부 추가 버튼 — 본부 기능 재활성화 시 주석 해제
           <Button
             onClick={() => openDialog({ type: "createDivision" })}
             size="sm"
@@ -650,6 +653,7 @@ export default function OrganizationPage() {
             <Plus className="h-4 w-4" />
             본부 추가
           </Button>
+          */}
           <Button
             onClick={() => openDialog({ type: "createTeam" })}
             size="sm"
@@ -947,7 +951,9 @@ export default function OrganizationPage() {
                       <SelectItem value="팀원">팀원</SelectItem>
                       <SelectItem value="인턴">인턴</SelectItem>
                       <SelectItem value="팀장">팀장</SelectItem>
+                      {/* [HIDDEN] 본부장 역할 — 본부장 직책 재활성화 시 주석 해제
                       <SelectItem value="본부장">본부장</SelectItem>
+                      */}
                     </SelectContent>
                   </Select>
                 </div>

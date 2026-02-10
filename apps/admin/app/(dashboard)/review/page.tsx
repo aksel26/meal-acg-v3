@@ -25,14 +25,6 @@ import {
   DialogTitle,
 } from "@repo/ui/src/dialog";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@repo/ui/src/table";
-import {
   Drawer,
   DrawerContent,
   DrawerHeader,
@@ -50,6 +42,7 @@ import {
   ClipboardList,
   History,
   AlertTriangle,
+  Download,
 } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
 import { useAuth } from "@/hooks/useAuth";
@@ -175,6 +168,9 @@ function ReviewPageContent() {
   const [deletingRecord, setDeletingRecord] = useState<UsageRecord | null>(
     null
   );
+
+  // Export
+  const [isExporting, setIsExporting] = useState(false);
 
   // Audit log drawer
   const [isAuditOpen, setIsAuditOpen] = useState(false);
@@ -316,6 +312,39 @@ function ReviewPageContent() {
     setIsAuditOpen(true);
   };
 
+  // ── Export ──
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const params = new URLSearchParams();
+      if (queryFilters.period) params.set("period", queryFilters.period);
+      if (queryFilters.type) params.set("type", queryFilters.type);
+      if (queryFilters.member_id)
+        params.set("member_id", queryFilters.member_id);
+      if (queryFilters.is_reviewed)
+        params.set("is_reviewed", queryFilters.is_reviewed);
+
+      const res = await fetch(`/api/export/usage-records?${params}`);
+      if (!res.ok) throw new Error("Export failed");
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "복포활동비_사용내역.xlsx";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success("엑셀 파일이 다운로드되었습니다.");
+    } catch {
+      toast.error("엑셀 내보내기에 실패했습니다.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="flex h-[calc(100vh-10rem)] flex-col gap-6">
       {/* Filter Bar + Stats */}
@@ -384,6 +413,20 @@ function ReviewPageContent() {
             <span>검토 {reviewedCount}/{totalCount}</span>
             <span className="text-slate-300">·</span>
             <span>{(totalAmount / 10000).toFixed(1)}만원</span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="ml-2 h-8 gap-1.5 text-xs"
+              onClick={handleExport}
+              disabled={isExporting}
+            >
+              {isExporting ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Download className="h-3.5 w-3.5" />
+              )}
+              엑셀
+            </Button>
           </div>
         )}
       </div>
@@ -415,48 +458,54 @@ function ReviewPageContent() {
           </div>
         ) : (
           <div className="h-full overflow-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-slate-50 [&>th]:h-8 [&>th]:px-2 [&>th]:py-0">
-                  <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <table className="w-full text-[13px]">
+              <thead className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50/95 backdrop-blur-sm">
+                <tr>
+                  <th className="w-[44px] whitespace-nowrap px-2 py-2 text-center text-xs font-semibold text-slate-400">
+                    No.
+                  </th>
+                  <th className="w-[88px] whitespace-nowrap px-3 py-2 text-center text-xs font-semibold text-slate-500">
                     날짜
-                  </TableHead>
-                  <TableHead className="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  </th>
+                  <th className="w-[72px] whitespace-nowrap px-3 py-2 text-left text-xs font-semibold text-slate-500">
                     이름
-                  </TableHead>
-                  <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  </th>
+                  <th className="w-[80px] whitespace-nowrap px-3 py-2 text-center text-xs font-semibold text-slate-500">
                     유형
-                  </TableHead>
-                  <TableHead className="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  </th>
+                  <th className="min-w-[120px] whitespace-nowrap px-3 py-2 text-left text-xs font-semibold text-slate-500">
                     사용처
-                  </TableHead>
-                  <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  </th>
+                  <th className="w-[88px] whitespace-nowrap px-3 py-2 text-right text-xs font-semibold text-slate-500">
                     금액
-                  </TableHead>
-                  <TableHead className="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  </th>
+                  <th className="min-w-[80px] whitespace-nowrap px-3 py-2 text-left text-xs font-semibold text-slate-500">
                     비고
-                  </TableHead>
-                  <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  </th>
+                  <th className="w-[130px] whitespace-nowrap px-3 py-2 text-center text-xs font-semibold text-slate-500">
                     P&C팀 확인
-                  </TableHead>
-                  <TableHead className="w-24 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  </th>
+                  <th className="w-[88px] whitespace-nowrap px-3 py-2 text-center text-xs font-semibold text-slate-500">
                     액션
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {records.map((record) => (
-                  <TableRow
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {records.map((record, index) => (
+                  <tr
                     key={record.id}
-                    className="transition-colors hover:bg-slate-50/50 [&>td]:px-2 [&>td]:py-1"
+                    className="transition-colors hover:bg-slate-50/60"
                   >
-                    <TableCell className="text-center text-sm text-slate-600">
+                    <td className="whitespace-nowrap px-2 py-1 text-center tabular-nums text-slate-400">
+                      {index + 1}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-1 text-center tabular-nums text-slate-500">
                       {formatDate(record.used_at)}
-                    </TableCell>
-                    <TableCell className="text-sm font-medium text-slate-900">
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-1 font-medium text-slate-900">
                       {record.members?.full_name || "-"}
-                    </TableCell>
-                    <TableCell className="text-center">
+                    </td>
+                    <td className="px-3 py-1 text-center">
                       <Badge
                         variant="outline"
                         className={cn(
@@ -466,17 +515,17 @@ function ReviewPageContent() {
                       >
                         {record.type}
                       </Badge>
-                    </TableCell>
-                    <TableCell className="max-w-[200px] truncate text-sm text-slate-600">
+                    </td>
+                    <td className="max-w-[240px] truncate px-3 py-1 text-slate-600">
                       {record.description || "-"}
-                    </TableCell>
-                    <TableCell className="text-right text-sm font-medium text-slate-900">
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-1 text-right tabular-nums font-medium text-slate-900">
                       {formatCurrency(record.amount)}
-                    </TableCell>
-                    <TableCell className="max-w-[150px] truncate text-sm text-slate-600">
-                      {record.notes || <span className="text-slate-300">-</span>}
-                    </TableCell>
-                    <TableCell className="text-center">
+                    </td>
+                    <td className="max-w-[180px] truncate px-3 py-1 text-slate-400">
+                      {record.notes || "-"}
+                    </td>
+                    <td className="px-3 py-1 text-center">
                       <div className="flex items-center justify-center gap-1">
                         <button
                           onClick={() => handleToggleReview(record)}
@@ -492,20 +541,20 @@ function ReviewPageContent() {
                           }
                         >
                           {record.is_reviewed ? (
-                            <CheckCircle2 className="h-4 w-4" />
+                            <CheckCircle2 className="h-3.5 w-3.5" />
                           ) : (
-                            <Circle className="h-4 w-4" />
+                            <Circle className="h-3.5 w-3.5" />
                           )}
                         </button>
                         {record.is_reviewed && record.reviewed_at && (
-                          <span className="text-[11px] tabular-nums text-slate-400">
-                            {record.reviewed_at.slice(0, 10)}
+                          <span className="text-[10px] tabular-nums text-slate-400">
+                            {record.reviewed_at.slice(5, 10)}
                           </span>
                         )}
                       </div>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex items-center justify-center gap-0.5">
+                    </td>
+                    <td className="px-3 py-1 text-center">
+                      <div className="flex items-center justify-center gap-0">
                         <button
                           onClick={() => handleAuditOpen(record.id)}
                           className="inline-flex h-6 w-6 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
@@ -528,11 +577,11 @@ function ReviewPageContent() {
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </td>
+                  </tr>
                 ))}
-              </TableBody>
-            </Table>
+              </tbody>
+            </table>
           </div>
         )}
       </div>

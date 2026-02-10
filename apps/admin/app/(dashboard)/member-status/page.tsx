@@ -74,6 +74,9 @@ interface MemberOption {
   id: string;
   full_name: string;
   note: string | null;
+  email: string | null;
+  member_role: string | null;
+  intern_months: number | null;
 }
 
 interface UserFormData {
@@ -104,9 +107,19 @@ export default function MemberStatusPage() {
 
   // Dialog states
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const [isEditMemberOpen, setIsEditMemberOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+
+  // Edit member state
+  const [editingMember, setEditingMember] = useState<{
+    id: string;
+    full_name: string;
+    email: string;
+    member_role: string;
+    intern_months: string;
+  } | null>(null);
 
   // History modal
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -124,6 +137,7 @@ export default function MemberStatusPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingItem, setDeletingItem] = useState<{
     id: string;
+    memberId?: string;
     name: string;
     status: string;
   } | null>(null);
@@ -156,6 +170,31 @@ export default function MemberStatusPage() {
   const createStatus = useCreateMemberStatus();
   const updateStatus = useUpdateMemberStatus();
   const deleteStatus = useDeleteMemberStatus();
+
+  const deleteMemberMutation = useMutation({
+    mutationFn: async (memberId: string) => {
+      const res = await fetch(`/api/members/${memberId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to delete member");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.members.all });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.memberStatuses.all,
+      });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
+      toast.success("멤버가 삭제되었습니다.");
+    },
+    onError: () => {
+      toast.error("멤버 삭제에 실패했습니다.");
+    },
+  });
 
   // Add member form
   const {
@@ -199,6 +238,8 @@ export default function MemberStatusPage() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.members.all,
       });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
       toast.success("인원이 추가되었습니다.");
       setIsAddMemberOpen(false);
       resetAddForm();
@@ -242,6 +283,72 @@ export default function MemberStatusPage() {
       toast.error("비고 저장에 실패했습니다.");
     },
   });
+
+  const updateMemberMutation = useMutation({
+    mutationFn: async (data: {
+      id: string;
+      full_name: string;
+      email?: string;
+      member_role: string;
+      intern_months?: number | null;
+    }) => {
+      const res = await fetch(`/api/members/${data.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          full_name: data.full_name,
+          email: data.email || null,
+          member_role: data.member_role,
+          intern_months:
+            data.member_role === "인턴" && data.intern_months
+              ? data.intern_months
+              : null,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to update member");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.members.all });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.memberStatuses.all,
+      });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
+      toast.success("인원 정보가 수정되었습니다.");
+      setIsEditMemberOpen(false);
+      setEditingMember(null);
+    },
+    onError: () => {
+      toast.error("인원 정보 수정에 실패했습니다.");
+    },
+  });
+
+  const handleEditMemberOpen = (row: MemberCurrentStatus) => {
+    const member = allMembers?.find((m) => m.id === row.member_id);
+    setEditingMember({
+      id: row.member_id || "",
+      full_name: row.full_name || "",
+      email: row.email || "",
+      member_role: member?.member_role || row.member_role || "팀원",
+      intern_months: member?.intern_months?.toString() || "",
+    });
+    setIsEditMemberOpen(true);
+  };
+
+  const handleEditMemberSubmit = () => {
+    if (!editingMember || !editingMember.full_name.trim()) return;
+    updateMemberMutation.mutate({
+      id: editingMember.id,
+      full_name: editingMember.full_name.trim(),
+      email: editingMember.email,
+      member_role: editingMember.member_role,
+      intern_months:
+        editingMember.member_role === "인턴" && editingMember.intern_months
+          ? parseInt(editingMember.intern_months, 10)
+          : null,
+    });
+  };
 
   const members: MemberCurrentStatus[] = membersData ?? [];
 
@@ -364,12 +471,15 @@ export default function MemberStatusPage() {
 
   const handleDeleteConfirm = () => {
     if (!deletingItem) return;
-    deleteStatus.mutate(deletingItem.id, {
-      onSuccess: () => {
-        setIsDeleteOpen(false);
-        setDeletingItem(null);
-      },
-    });
+    const onSuccess = () => {
+      setIsDeleteOpen(false);
+      setDeletingItem(null);
+    };
+    if (deletingItem.memberId) {
+      deleteMemberMutation.mutate(deletingItem.memberId, { onSuccess });
+    } else {
+      deleteStatus.mutate(deletingItem.id, { onSuccess });
+    }
   };
 
   // ── Status Cell Click Handler ──
@@ -580,7 +690,16 @@ export default function MemberStatusPage() {
                       className="transition-colors hover:bg-slate-50/50 [&>td]:px-3 [&>td]:py-1.5"
                     >
                       <TableCell className="pl-6 text-sm font-medium text-slate-900 w-24 text-center">
-                        {row.full_name}
+                        <span className="group/name inline-flex items-center gap-1">
+                          {row.full_name}
+                          <button
+                            onClick={() => handleEditMemberOpen(row)}
+                            className="inline-flex h-5 w-5 items-center justify-center rounded text-slate-300 opacity-0 transition-all group-hover/name:opacity-100 hover:bg-[#135bec]/10 hover:text-[#135bec]"
+                            title="인원 정보 수정"
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </button>
+                        </span>
                       </TableCell>
                       <TableCell className="text-sm text-slate-500">
                         {row.email || "-"}
@@ -643,13 +762,14 @@ export default function MemberStatusPage() {
                             onClick={() => {
                               setDeletingItem({
                                 id: row.status_id!,
+                                memberId: row.member_id!,
                                 name: row.full_name || "",
                                 status: "퇴사",
                               });
                               setIsDeleteOpen(true);
                             }}
                             className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
-                            title="퇴사 기록 삭제"
+                            title="멤버 삭제"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
@@ -1059,14 +1179,18 @@ export default function MemberStatusPage() {
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>특이사항 삭제</DialogTitle>
+            <DialogTitle>
+              {deletingItem?.memberId ? "멤버 삭제" : "특이사항 삭제"}
+            </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-3 py-2">
             <div className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 p-3">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
               <p className="text-sm text-rose-700">
-                이 작업은 되돌릴 수 없습니다. 해당 특이사항 기록이 삭제됩니다.
+                {deletingItem?.memberId
+                  ? "이 작업은 되돌릴 수 없습니다. 해당 멤버와 관련 데이터가 삭제됩니다."
+                  : "이 작업은 되돌릴 수 없습니다. 해당 특이사항 기록이 삭제됩니다."}
               </p>
             </div>
 
@@ -1091,15 +1215,131 @@ export default function MemberStatusPage() {
             <Button
               variant="destructive"
               onClick={handleDeleteConfirm}
-              disabled={deleteStatus.isPending}
+              disabled={deleteStatus.isPending || deleteMemberMutation.isPending}
             >
-              {deleteStatus.isPending ? (
+              {deleteStatus.isPending || deleteMemberMutation.isPending ? (
                 <>
                   <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
                   삭제 중...
                 </>
               ) : (
                 "삭제"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Edit Member Dialog ── */}
+      <Dialog
+        open={isEditMemberOpen}
+        onOpenChange={(open) => {
+          setIsEditMemberOpen(open);
+          if (!open) setEditingMember(null);
+        }}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>인원 정보 수정</DialogTitle>
+            <DialogDescription>인원의 기본 정보를 수정합니다.</DialogDescription>
+          </DialogHeader>
+          {editingMember && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="editFullName">이름</Label>
+                <Input
+                  id="editFullName"
+                  value={editingMember.full_name}
+                  onChange={(e) =>
+                    setEditingMember({
+                      ...editingMember,
+                      full_name: e.target.value,
+                    })
+                  }
+                  placeholder="홍길동"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="editEmail">이메일 (선택)</Label>
+                <Input
+                  id="editEmail"
+                  type="email"
+                  value={editingMember.email}
+                  onChange={(e) =>
+                    setEditingMember({
+                      ...editingMember,
+                      email: e.target.value,
+                    })
+                  }
+                  placeholder="hong@example.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>역할</Label>
+                <Select
+                  value={editingMember.member_role}
+                  onValueChange={(val) =>
+                    setEditingMember({
+                      ...editingMember,
+                      member_role: val,
+                      intern_months: val !== "인턴" ? "" : editingMember.intern_months,
+                    })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="역할 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="팀원">팀원</SelectItem>
+                    <SelectItem value="인턴">인턴</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {editingMember.member_role === "인턴" && (
+                <div className="space-y-2">
+                  <Label htmlFor="editInternMonths">인턴 기간 (개월)</Label>
+                  <Input
+                    id="editInternMonths"
+                    type="number"
+                    min={1}
+                    max={6}
+                    value={editingMember.intern_months}
+                    onChange={(e) =>
+                      setEditingMember({
+                        ...editingMember,
+                        intern_months: e.target.value,
+                      })
+                    }
+                    placeholder="1~6"
+                  />
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsEditMemberOpen(false);
+                setEditingMember(null);
+              }}
+            >
+              취소
+            </Button>
+            <Button
+              onClick={handleEditMemberSubmit}
+              disabled={
+                updateMemberMutation.isPending ||
+                !editingMember?.full_name.trim()
+              }
+            >
+              {updateMemberMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                  저장 중...
+                </>
+              ) : (
+                "저장"
               )}
             </Button>
           </DialogFooter>

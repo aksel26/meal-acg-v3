@@ -211,6 +211,7 @@ export function useUpdateMemberOrg() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.organizations.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.members.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.memberStatuses.all });
       toast.success("멤버 정보가 수정되었습니다.");
     },
     onError: (error: Error) => {
@@ -249,6 +250,7 @@ export function useBatchAssignMembers() {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.organizations.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.members.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.memberStatuses.all });
       toast.success(`${variables.memberIds.length}명이 팀에 배정되었습니다.`);
     },
     onError: (error: Error) => {

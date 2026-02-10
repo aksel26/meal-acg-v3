@@ -846,6 +846,7 @@ export default function BudgetPage() {
                 직책별 단가 설정
               </Label>
               <div className="grid grid-cols-2 gap-3">
+                {/* [HIDDEN] 본부장 단가 — 본부장 직책 재활성화 시 주석 해제
                 <div className="space-y-1.5">
                   <Label
                     htmlFor="calc-leader-rate"
@@ -861,6 +862,7 @@ export default function BudgetPage() {
                     min={0}
                   />
                 </div>
+                */}
                 <div className="space-y-1.5">
                   <Label
                     htmlFor="calc-manager-rate"

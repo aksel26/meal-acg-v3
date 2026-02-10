@@ -4,6 +4,13 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import { toast } from "sonner";
 
+/** 특이사항 변경 시 관련 쿼리 일괄 무효화 (대시보드 총 인원, 통계 등) */
+function invalidateStatusRelated(queryClient: ReturnType<typeof useQueryClient>) {
+  queryClient.invalidateQueries({ queryKey: queryKeys.memberStatuses.all });
+  queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+  queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
+}
+
 // ── Create Member Status ──
 
 export function useCreateMemberStatus() {
@@ -29,7 +36,7 @@ export function useCreateMemberStatus() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.memberStatuses.all });
+      invalidateStatusRelated(queryClient);
       toast.success("특이사항이 등록되었습니다.");
     },
     onError: (error: Error) => {
@@ -66,7 +73,7 @@ export function useUpdateMemberStatus() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.memberStatuses.all });
+      invalidateStatusRelated(queryClient);
       toast.success("특이사항이 수정되었습니다.");
     },
     onError: (error: Error) => {
@@ -92,7 +99,7 @@ export function useDeleteMemberStatus() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.memberStatuses.all });
+      invalidateStatusRelated(queryClient);
       toast.success("특이사항이 삭제되었습니다.");
     },
     onError: (error: Error) => {

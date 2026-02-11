@@ -15,6 +15,7 @@ interface AddUsageInput {
   companions?: string[];
   receipt_url?: string;
   notes?: string;
+  delay_reason?: string;
 }
 
 interface UpdateUsageInput {
@@ -27,6 +28,7 @@ interface UpdateUsageInput {
   companions?: string[];
   receipt_url?: string;
   notes?: string;
+  delay_reason?: string;
 }
 
 interface DeleteUsageInput {

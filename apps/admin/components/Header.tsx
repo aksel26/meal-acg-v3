@@ -22,6 +22,7 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
   "/budget": { title: "예산 할당 관리", subtitle: "기간별 복지포인트 및 활동비를 멤버에게 할당합니다" },
   "/review": { title: "사용내역 검토", subtitle: "멤버들의 포인트 사용내역을 검토하고 관리합니다" },
   "/points-overview": { title: "사용 내역 조회", subtitle: "전체 조직원의 포인트 사용 내역을 조회합니다" },
+  "/notifications": { title: "알림 관리", subtitle: "푸시 알림 발송 및 구독 현황" },
 };
 
 export default function Header() {

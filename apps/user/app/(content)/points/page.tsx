@@ -47,6 +47,8 @@ interface WelfarePoint {
   used: boolean;
   confirmed: boolean;
   notes?: string;
+  delay_reason?: string;
+  proxy_payers?: string[];
 }
 
 function BudgetRow({
@@ -258,6 +260,7 @@ export default function Points() {
     used: true,
     confirmed: record.is_reviewed,
     notes: record.notes || "",
+    delay_reason: record.delay_reason || "",
   });
 
   const handleEditPoint = (record: UsageRecord) => {
@@ -293,6 +296,7 @@ export default function Points() {
         used_at: editingPoint.date,
         companions: [],
         notes: editingPoint.notes || "",
+        delay_reason: editingPoint.delay_reason || "",
       });
     } else {
       await updateMutation.mutateAsync({
@@ -303,7 +307,27 @@ export default function Points() {
         description: editingPoint.vendor,
         used_at: editingPoint.date,
         notes: editingPoint.notes || "",
+        delay_reason: editingPoint.delay_reason || "",
       });
+    }
+
+    // Fire-and-forget: 대신 결제 푸시 알림
+    const proxyPayers = editingPoint.proxy_payers || [];
+    if (proxyPayers.length > 0 && currentMemberId) {
+      const payer = editingPoint.notes || userName || "누군가";
+      const vendor = editingPoint.vendor || "어딘가";
+      fetch("/api/notifications/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          senderId: currentMemberId,
+          names: proxyPayers,
+          title: "복지포인트 대리결제 알림",
+          body: `${payer}님이 ${vendor}에서 대신 결제했습니다. 본인 사용분을 입력해주세요.`,
+          url: "/points",
+          tag: `proxy-payment-${Date.now()}`,
+        }),
+      }).catch(console.error);
     }
 
     toast.success(
@@ -348,7 +372,8 @@ export default function Points() {
       amount: 0,
       used: false,
       confirmed: false,
-      notes: "",
+      notes: userName || "",
+      proxy_payers: [],
     };
     setEditingPoint(newPoint);
     setIsNewPoint(true);

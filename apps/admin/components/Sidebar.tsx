@@ -24,6 +24,7 @@ import {
   ClipboardCheck,
   UserCheck,
   BarChart3,
+  Bell,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -82,6 +83,11 @@ const navigation: NavigationItem[] = [
       { name: "사용내역 검토", href: "/review", icon: ClipboardCheck },
       { name: "사용 내역 조회", href: "/points-overview", icon: BarChart3 },
     ],
+  },
+  {
+    name: "알림 관리",
+    href: "/notifications",
+    icon: Bell,
   },
   {
     name: "설정",

@@ -24,8 +24,11 @@ import {
 } from "@repo/ui/src/alert-dialog";
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { AutoCompleteInput } from "@repo/ui/src/autocomplete-input";
 import { ReceiptScanner } from "../ReceiptScanner";
 import { ReceiptScanResult } from "@/lib/types/receipt-types";
+import { useUsers } from "@/hooks/useUsers";
+import { useUserStore } from "@/stores/userStore";
 import { toast } from "@repo/ui/src/sonner";
 import { X, ChevronLeft, Check, Pencil } from "lucide-react";
 
@@ -40,18 +43,21 @@ interface WelfarePoint {
   used: boolean;
   confirmed: boolean;
   notes?: string;
+  delay_reason?: string;
+  proxy_payers?: string[];
 }
 
-type StepId = "scan" | "type" | "vendor" | "notes" | "amount";
+type StepId = "scan" | "type" | "vendor" | "notes" | "proxy" | "amount";
 
-const STEP_ORDER_NEW: StepId[] = ["scan", "type", "vendor", "notes", "amount"];
-const STEP_ORDER_EDIT: StepId[] = ["type", "vendor", "notes", "amount"];
+const STEP_ORDER_NEW: StepId[] = ["scan", "type", "vendor", "notes", "proxy", "amount"];
+const STEP_ORDER_EDIT: StepId[] = ["type", "vendor", "notes", "proxy", "amount"];
 
 const STEP_LABELS: Record<StepId, string> = {
   scan: "영수증",
   type: "유형",
   vendor: "사용처",
-  notes: "비고",
+  notes: "결제자",
+  proxy: "대신 결제",
   amount: "금액·날짜",
 };
 
@@ -137,6 +143,16 @@ export function EditPointDialog({
   const vendorInputRef = useRef<HTMLInputElement>(null);
   const notesInputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
+  const proxyInputRef = useRef<HTMLInputElement>(null);
+
+  // Users for autocomplete
+  const { users, fetchUsers } = useUsers();
+  const { userName } = useUserStore();
+  const [proxySearchValue, setProxySearchValue] = useState("");
+
+  useEffect(() => {
+    if (users.length === 0) fetchUsers();
+  }, [users.length, fetchUsers]);
 
   // Dialog open/close → 스텝 초기화
   useEffect(() => {
@@ -162,6 +178,7 @@ export function EditPointDialog({
     const timer = setTimeout(() => {
       if (currentStep === "vendor") vendorInputRef.current?.focus();
       else if (currentStep === "notes") notesInputRef.current?.focus();
+      else if (currentStep === "proxy") proxyInputRef.current?.focus();
       else if (currentStep === "amount") amountInputRef.current?.focus();
     }, 350);
     return () => clearTimeout(timer);
@@ -252,10 +269,28 @@ export function EditPointDialog({
       const year = selectedDate.getFullYear();
       const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
       const day = String(selectedDate.getDate()).padStart(2, "0");
-      updatePoint({ date: `${year}-${month}-${day}` });
+      const newDate = `${year}-${month}-${day}`;
+      // 2일 이내면 delay_reason 초기화
+      const diffDays = Math.floor((new Date().getTime() - selectedDate.getTime()) / (1000 * 60 * 60 * 24));
+      if (diffDays <= 2) {
+        updatePoint({ date: newDate, delay_reason: "" });
+      } else {
+        updatePoint({ date: newDate });
+      }
       setDatePickerOpen(false);
     }
   };
+
+  // 지연 사유 필요 여부 판단 (사용일이 오늘 기준 2일 초과)
+  const needsDelayReason = (() => {
+    if (!editingPoint?.date) return false;
+    const usedDate = new Date(editingPoint.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    usedDate.setHours(0, 0, 0, 0);
+    const diffDays = Math.floor((today.getTime() - usedDate.getTime()) / (1000 * 60 * 60 * 24));
+    return diffDays > 2;
+  })();
 
   // --- Step value display ---
 
@@ -269,6 +304,10 @@ export function EditPointDialog({
         return editingPoint.vendor || "-";
       case "notes":
         return editingPoint.notes || "(없음)";
+      case "proxy":
+        return editingPoint.proxy_payers?.length
+          ? editingPoint.proxy_payers.join(", ")
+          : "(없음)";
       case "amount": {
         const d = editingPoint.date ? new Date(editingPoint.date) : null;
         const dateStr = d
@@ -412,21 +451,26 @@ export function EditPointDialog({
             className="space-y-4"
           >
             <div className="text-center space-y-1 mb-2">
-              <h3 className="text-sm font-semibold text-gray-800">비고를 입력해주세요</h3>
-              <p className="text-xs text-gray-500">선택 사항입니다</p>
+              <h3 className="text-sm font-semibold text-gray-800">결제자를 입력해주세요</h3>
+              <p className="text-xs text-gray-500">본인 결제 시 건너뛰기를 눌러주세요</p>
             </div>
-            <Input
+            <AutoCompleteInput
               ref={notesInputRef}
+              suggestions={users}
               value={editingPoint.notes || ""}
-              onChange={(e) => updatePoint({ notes: e.target.value })}
-              className="text-sm border-gray-300 h-12"
-              placeholder="동반결제자 입력 (OOO위원 결제)"
+              onValueChange={(value) => updatePoint({ notes: value })}
+              onSuggestionSelect={() => completeAndNext("notes")}
+              placeholder="결제자 이름"
+              allowFreeText={true}
+              maxSuggestions={users.length}
+              emptyText="결제자를 찾을 수 없습니다"
               onKeyDown={(e) => {
-                if (e.key === "Enter") {
+                if (e.key === "Enter" && editingPoint.notes?.trim()) {
                   e.preventDefault();
                   completeAndNext("notes");
                 }
               }}
+              className="h-12 text-sm rounded-xl border-2 border-gray-100 bg-white focus:border-gray-300 focus:ring-0 transition-all placeholder:text-gray-400"
             />
             <div className="flex gap-3">
               <button
@@ -450,6 +494,94 @@ export function EditPointDialog({
           </motion.div>
         );
 
+      case "proxy":
+        return (
+          <motion.div
+            key="proxy"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.25 }}
+            className="space-y-4"
+          >
+            <div className="text-center space-y-1 mb-2">
+              <h3 className="text-sm font-semibold text-gray-800">대신 결제한 사람</h3>
+              <p className="text-xs text-gray-500">알림을 받을 조직원을 선택해주세요</p>
+            </div>
+
+            {/* Selected proxy payers chips */}
+            {editingPoint.proxy_payers && editingPoint.proxy_payers.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {editingPoint.proxy_payers.map((name) => (
+                  <span
+                    key={name}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-sm font-medium"
+                  >
+                    {name}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        updatePoint({
+                          proxy_payers: editingPoint.proxy_payers?.filter((n) => n !== name) || [],
+                        });
+                      }}
+                      className="ml-0.5 hover:bg-blue-100 rounded-full p-0.5 transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <AutoCompleteInput
+              ref={proxyInputRef}
+              suggestions={users.filter(
+                (u) =>
+                  !(editingPoint.proxy_payers || []).includes(u) &&
+                  u !== userName
+              )}
+              value={proxySearchValue}
+              onValueChange={(value) => setProxySearchValue(value)}
+              onSuggestionSelect={(name) => {
+                updatePoint({
+                  proxy_payers: [...(editingPoint.proxy_payers || []), name],
+                });
+                setProxySearchValue("");
+              }}
+              placeholder="이름 검색"
+              allowFreeText={true}
+              maxSuggestions={users.length}
+              emptyText="조직원을 찾을 수 없습니다"
+              className="h-12 text-sm rounded-xl border-2 border-gray-100 bg-white focus:border-gray-300 focus:ring-0 transition-all placeholder:text-gray-400"
+            />
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  updatePoint({ proxy_payers: [] });
+                  setProxySearchValue("");
+                  completeAndNext("proxy");
+                }}
+                className="flex-1 py-3.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                건너뛰기
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setProxySearchValue("");
+                  completeAndNext("proxy");
+                }}
+                className="flex-1 py-3.5 rounded-xl bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors"
+              >
+                다음
+              </button>
+            </div>
+          </motion.div>
+        );
+
       case "amount":
         return (
           <motion.div
@@ -464,28 +596,6 @@ export function EditPointDialog({
               <h3 className="text-sm font-semibold text-gray-800">금액과 날짜를 입력해주세요</h3>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="amount" className="text-xs font-semibold text-gray-700">금액</Label>
-                <div className="relative">
-                  <Input
-                    ref={amountInputRef}
-                    id="amount"
-                    type="number"
-                    value={editingPoint.amount || ""}
-                    onChange={handleAmountChange}
-                    className="pr-8 text-sm border-gray-300 h-12 py-2"
-                    placeholder="금액 입력"
-                    min="0"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && editingPoint.amount > 0) {
-                        e.preventDefault();
-                        handleSave();
-                      }
-                    }}
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">원</span>
-                </div>
-              </div>
               <div className="space-y-2">
                 <Label className="text-xs font-semibold text-gray-700">날짜</Label>
                 <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
@@ -521,10 +631,43 @@ export function EditPointDialog({
                   </PopoverContent>
                 </Popover>
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="amount" className="text-xs font-semibold text-gray-700">금액</Label>
+                <div className="relative">
+                  <Input
+                    ref={amountInputRef}
+                    id="amount"
+                    type="number"
+                    value={editingPoint.amount || ""}
+                    onChange={handleAmountChange}
+                    className="pr-8 text-sm border-gray-300 h-12 py-2"
+                    placeholder="금액 입력"
+                    min="0"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && editingPoint.amount > 0 && !(needsDelayReason && !editingPoint.delay_reason?.trim())) {
+                        e.preventDefault();
+                        handleSave();
+                      }
+                    }}
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">원</span>
+                </div>
+              </div>
             </div>
+            {needsDelayReason && (
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-amber-700">지연 사유 (필수)</Label>
+                <textarea
+                  value={editingPoint.delay_reason || ""}
+                  onChange={(e) => updatePoint({ delay_reason: e.target.value })}
+                  className="flex w-full rounded-xl border border-amber-300 bg-amber-50/50 px-3 py-2.5 text-sm placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-amber-400 min-h-[72px] resize-none"
+                  placeholder="지연 사유를 입력해주세요"
+                />
+              </div>
+            )}
             <button
               type="button"
-              disabled={!editingPoint.amount || editingPoint.amount <= 0}
+              disabled={!editingPoint.amount || editingPoint.amount <= 0 || (needsDelayReason && !editingPoint.delay_reason?.trim())}
               onClick={handleSave}
               className={`w-full py-3.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
                 isNewPoint

@@ -165,6 +165,7 @@ export async function POST(request: NextRequest) {
       companions,
       receipt_url,
       notes,
+      delay_reason,
     } = body;
 
     // 필수 필드 검증
@@ -204,6 +205,7 @@ export async function POST(request: NextRequest) {
         companions: companions || [],
         receipt_url: receipt_url || null,
         notes: notes || null,
+        delay_reason: delay_reason || null,
       })
       .select()
       .single();
@@ -230,7 +232,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, member_id, amount, description, used_at, companions, receipt_url, notes } =
+    const { id, member_id, amount, description, used_at, companions, receipt_url, notes, delay_reason } =
       body;
 
     if (!id) {
@@ -290,6 +292,7 @@ export async function PUT(request: NextRequest) {
     if (companions !== undefined) updateData.companions = companions;
     if (receipt_url !== undefined) updateData.receipt_url = receipt_url;
     if (notes !== undefined) updateData.notes = notes;
+    if (delay_reason !== undefined) updateData.delay_reason = delay_reason;
 
     const { data, error } = await supabase
       .from("usage_records")

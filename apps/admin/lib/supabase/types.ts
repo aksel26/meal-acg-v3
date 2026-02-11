@@ -479,6 +479,47 @@ export type Database = {
           }
         ]
       }
+      push_subscriptions: {
+        Row: {
+          id: string
+          member_id: string
+          endpoint: string
+          p256dh: string
+          auth: string
+          user_agent: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          member_id: string
+          endpoint: string
+          p256dh: string
+          auth: string
+          user_agent?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          member_id?: string
+          endpoint?: string
+          p256dh?: string
+          auth?: string
+          user_agent?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       monthly_drink_applications: {
         Row: {
           created_at: string | null
@@ -795,6 +836,7 @@ export type Database = {
           amount: number
           companions: string[] | null
           created_at: string | null
+          delay_reason: string | null
           description: string
           id: string
           is_reviewed: boolean | null
@@ -813,6 +855,7 @@ export type Database = {
           amount: number
           companions?: string[] | null
           created_at?: string | null
+          delay_reason?: string | null
           description: string
           id?: string
           is_reviewed?: boolean | null
@@ -831,6 +874,7 @@ export type Database = {
           amount?: number
           companions?: string[] | null
           created_at?: string | null
+          delay_reason?: string | null
           description?: string
           id?: string
           is_reviewed?: boolean | null
@@ -1093,6 +1137,8 @@ export type MemberStatus = Tables<"member_statuses">
 export type MemberStatusInsert = TablesInsert<"member_statuses">
 export type MemberStatusUpdate = TablesUpdate<"member_statuses">
 export type MemberCurrentStatus = Views<"member_current_status">
+export type PushSubscription = Tables<"push_subscriptions">
+export type PushSubscriptionInsert = TablesInsert<"push_subscriptions">
 
 // Extended types with relations
 export interface LunchGroupWithMembers extends LunchGroup {

@@ -66,6 +66,7 @@ interface UsageRecord {
   used_at: string;
   companions: string[] | null;
   notes: string | null;
+  delay_reason: string | null;
   receipt_url: string | null;
   is_reviewed: boolean;
   reviewed_by: string | null;
@@ -482,6 +483,9 @@ function ReviewPageContent() {
                   <th className="min-w-[80px] whitespace-nowrap px-3 py-2 text-left text-xs font-semibold text-slate-500">
                     비고
                   </th>
+                  <th className="min-w-[100px] whitespace-nowrap px-3 py-2 text-left text-xs font-semibold text-slate-500">
+                    지연 사유
+                  </th>
                   <th className="w-[130px] whitespace-nowrap px-3 py-2 text-center text-xs font-semibold text-slate-500">
                     P&C팀 확인
                   </th>
@@ -524,6 +528,9 @@ function ReviewPageContent() {
                     </td>
                     <td className="max-w-[180px] truncate px-3 py-1 text-slate-400">
                       {record.notes || "-"}
+                    </td>
+                    <td className="max-w-[180px] truncate px-3 py-1 text-slate-400">
+                      {record.delay_reason || "-"}
                     </td>
                     <td className="px-3 py-1 text-center">
                       <div className="flex items-center justify-center gap-1">

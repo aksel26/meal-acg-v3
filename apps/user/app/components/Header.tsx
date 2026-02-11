@@ -20,7 +20,7 @@ const Header = () => {
         duration: 0.3,
         ease: [0.16, 1, 0.3, 1],
       }}
-      className="sticky top-0 z-50 px-4 pt-3"
+      className="sticky top-0 px-4 pt-3"
     >
       <div className="glass-card-elevated rounded-2xl px-5 py-3 flex justify-center items-center shadow-sm">
         <motion.div

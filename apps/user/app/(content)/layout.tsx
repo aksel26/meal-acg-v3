@@ -5,7 +5,10 @@ import Header from "../components/Header";
 import { motion, AnimatePresence } from "motion/react";
 import { usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
-
+const PushNotificationPrompt = dynamic(
+  () => import("@/components/PushNotificationPrompt"),
+  { ssr: false },
+);
 const Snowfall = dynamic(() => import("react-snowfall"), { ssr: false });
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
@@ -24,17 +27,21 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <div className="min-h-screen max-w-lg mx-auto relative">
-      {/* Background Gradient Mesh */}
-      <div className="fixed inset-0 gradient-mesh -z-10" />
+    <>
+      {/* Push Notification Prompt — 레이아웃 컨테이너 바깥에서 fixed 보장 */}
+      <PushNotificationPrompt />
 
-      {/* Decorative Background Blobs */}
-      <div className="fixed top-20 right-0 w-64 h-64 bg-[oklch(0.88_0.10_280/0.2)] rounded-full blur-3xl -z-10" />
-      <div className="fixed top-1/2 left-0 w-48 h-48 bg-[oklch(0.90_0.08_220/0.15)] rounded-full blur-3xl -z-10" />
-      <div className="fixed bottom-40 right-0 w-56 h-56 bg-[oklch(0.92_0.06_50/0.15)] rounded-full blur-3xl -z-10" />
+      <div className="min-h-screen max-w-lg mx-auto relative">
+        {/* Background Gradient Mesh */}
+        <div className="fixed inset-0 gradient-mesh -z-10" />
 
-      {/* Header */}
-      <Header />
+        {/* Decorative Background Blobs */}
+        <div className="fixed top-20 right-0 w-64 h-64 bg-[oklch(0.88_0.10_280/0.2)] rounded-full blur-3xl -z-10" />
+        <div className="fixed top-1/2 left-0 w-48 h-48 bg-[oklch(0.90_0.08_220/0.15)] rounded-full blur-3xl -z-10" />
+        <div className="fixed bottom-40 right-0 w-56 h-56 bg-[oklch(0.92_0.06_50/0.15)] rounded-full blur-3xl -z-10" />
+
+        {/* Header */}
+        <Header />
 
       {/* Main Content */}
       <main className="relative px-4 py-6">
@@ -72,6 +79,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         </AnimatePresence>
       </main>
     </div>
+    </>
   );
 };
 

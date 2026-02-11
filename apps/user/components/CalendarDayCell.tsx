@@ -1,7 +1,6 @@
 import * as React from "react";
 import { CalendarDayButton } from "@repo/ui/src/calendar";
 import Image from "next/image";
-import { motion } from "motion/react";
 import type { MealData } from "@/components/dashboard/types";
 
 // CalendarDayButton에서 day와 modifiers 타입 추출
@@ -25,6 +24,21 @@ interface CalendarDayCellProps {
   isLoading: boolean;
   onDateSelect: (date: Date) => void;
   dayButtonProps: Omit<DayButtonProps, "day" | "modifiers" | "children">;
+}
+
+function arePropsEqual(prev: CalendarDayCellProps, next: CalendarDayCellProps) {
+  return (
+    prev.day.date.getTime() === next.day.date.getTime() &&
+    prev.modifiers.selected === next.modifiers.selected &&
+    prev.modifiers.today === next.modifiers.today &&
+    prev.modifiers.outside === next.modifiers.outside &&
+    prev.mealIcon?.icon === next.mealIcon?.icon &&
+    prev.mealIcon?.label === next.mealIcon?.label &&
+    prev.mealIcon?.type === next.mealIcon?.type &&
+    prev.holiday === next.holiday &&
+    prev.isLoading === next.isLoading &&
+    prev.onDateSelect === next.onDateSelect
+  );
 }
 
 export const CalendarDayCell = React.memo(function CalendarDayCell({
@@ -92,11 +106,7 @@ export const CalendarDayCell = React.memo(function CalendarDayCell({
           {isLoading ? (
             <div className="w-5 h-5 rounded-full bg-gray-200 animate-pulse" />
           ) : mealIcon ? (
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="relative flex items-center justify-center"
-            >
+            <div className="relative flex items-center justify-center">
               <Image
                 src={mealIcon.icon}
                 alt={meal?.attendance || "meal"}
@@ -109,10 +119,10 @@ export const CalendarDayCell = React.memo(function CalendarDayCell({
                   {mealIcon.label}
                 </span>
               )}
-            </motion.div>
+            </div>
           ) : null}
         </div>
       </div>
     </CalendarDayButton>
   );
-});
+}, arePropsEqual);

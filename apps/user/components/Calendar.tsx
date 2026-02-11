@@ -165,6 +165,32 @@ export default function CalendarComponent({
 
   const calendarKey = `${currentYear}-${currentMonth}`;
 
+  const calendarComponents = React.useMemo<React.ComponentProps<typeof Calendar>["components"]>(
+    () => ({
+      DayButton: ({ children, modifiers, day, ...props }) => {
+        const meal = getMealDataForDate(day.date);
+        const mealIcon = getMealIcon(meal);
+        const holiday = getHolidayForDate(day.date);
+
+        return (
+          <CalendarDayCell
+            day={day}
+            modifiers={modifiers}
+            meal={meal}
+            mealIcon={mealIcon}
+            holiday={holiday}
+            isLoading={isLoading}
+            onDateSelect={handleDateSelect}
+            dayButtonProps={props}
+          >
+            {children}
+          </CalendarDayCell>
+        );
+      },
+    }),
+    [getMealDataForDate, getMealIcon, getHolidayForDate, isLoading, handleDateSelect]
+  );
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -229,28 +255,7 @@ export default function CalendarComponent({
                 nav: "hidden",
                 day: "relative w-full p-0 text-center min-h-[60px] sm:min-h-[72px] select-none",
               }}
-              components={{
-                DayButton: ({ children, modifiers, day, ...props }) => {
-                  const meal = getMealDataForDate(day.date);
-                  const mealIcon = getMealIcon(meal);
-                  const holiday = getHolidayForDate(day.date);
-
-                  return (
-                    <CalendarDayCell
-                      day={day}
-                      modifiers={modifiers}
-                      meal={meal}
-                      mealIcon={mealIcon}
-                      holiday={holiday}
-                      isLoading={isLoading}
-                      onDateSelect={handleDateSelect}
-                      dayButtonProps={props}
-                    >
-                      {children}
-                    </CalendarDayCell>
-                  );
-                },
-              }}
+              components={calendarComponents}
             />
           </motion.div>
         </AnimatePresence>

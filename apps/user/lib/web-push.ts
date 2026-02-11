@@ -7,7 +7,7 @@ function ensureConfigured() {
 
   const publicKey = process.env.VAPID_PUBLIC_KEY || process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   const privateKey = process.env.VAPID_PRIVATE_KEY;
-  const subject = process.env.VAPID_SUBJECT || "mailto:admin@acg.com";
+  const subject = process.env.VAPID_SUBJECT || "mailto:kevinxkim2023@gmail.com";
 
   if (!publicKey || !privateKey) {
     throw new Error("VAPID keys are not configured");

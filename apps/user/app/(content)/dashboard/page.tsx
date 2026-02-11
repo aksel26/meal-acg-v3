@@ -76,7 +76,7 @@ export default function DashboardPage() {
     }
 
     // 업데이트 알림 Dialog 표시 로직 (버전 기반)
-    const NOTICE_VERSION = "v1.3";
+    const NOTICE_VERSION = "v2.0";
     const savedVersion = localStorage.getItem("hideNoticeVersion");
 
     // 저장된 버전과 현재 버전이 다르면 (또는 저장된 버전이 없으면) 다이얼로그 표시
@@ -202,9 +202,10 @@ export default function DashboardPage() {
 
       {/* 업데이트 알림 Dialog */}
       <UpdateNotificationDialog
-        isOpen={showUpdateDialog} 
-        onClose={() => setShowUpdateDialog(false)} 
+        isOpen={showUpdateDialog}
+        onClose={() => setShowUpdateDialog(false)}
       />
+
     </React.Fragment>
   );
 }

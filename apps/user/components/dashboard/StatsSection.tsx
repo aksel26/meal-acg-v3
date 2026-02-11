@@ -12,6 +12,7 @@ import {
 import { Input } from "@repo/ui/src/input";
 import { NumberTicker } from "@repo/ui/src/number-ticker";
 import { toast } from "@repo/ui/src/sonner";
+import { Copy } from "@repo/ui/icons";
 import dayjs from "dayjs";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
@@ -320,6 +321,41 @@ function CalculationResult({
             />
           </div>
 
+          {(() => {
+            const totalOverage = Math.abs(data?.balance ?? 0);
+            const depositAmount = totalOverage - paymentAmount;
+            if (depositAmount <= 0) return null;
+            return (
+              <div className="p-3 bg-amber-50 rounded-xl border border-amber-100 space-y-1.5">
+                <p className="text-xs font-semibold text-amber-700">
+                  잔금 입금 안내
+                </p>
+                <p className="text-[11px] text-amber-600">
+                  정산금액({totalOverage.toLocaleString()}원) 중 나머지{" "}
+                  <span className="font-bold">
+                    {depositAmount.toLocaleString()}원
+                  </span>
+                  을 아래 계좌로 입금해주세요.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard
+                      .writeText("국민 005701-04-142344 ㈜에이시지알")
+                      .then(() =>
+                        toast.success("계좌 정보가 복사되었습니다."),
+                      )
+                      .catch(() => toast.error("복사에 실패했습니다."));
+                  }}
+                  className="flex items-center gap-1.5 text-[11px] font-medium text-amber-800 bg-amber-100 rounded-lg px-2.5 py-1.5 active:bg-amber-200 transition-colors"
+                >
+                  <span>국민 005701-04-142344 ㈜에이시지알</span>
+                  <Copy className="w-3 h-3 shrink-0" />
+                </button>
+              </div>
+            );
+          })()}
+
           <p className="text-sm text-gray-500">
             {month}월 점심식대 초과분을 복지포인트에서 차감합니다.
           </p>
@@ -395,6 +431,26 @@ function CalculationResult({
           )}
         </div>
       )}
+
+      {/* 계좌 복사 버튼 */}
+      <div className="relative px-5 py-3 border-t border-white/40">
+        <button
+          type="button"
+          onClick={() => {
+            navigator.clipboard
+              .writeText("국민 005701-04-142344 ㈜에이시지알")
+              .then(() => toast.success("계좌 정보가 복사되었습니다."))
+              .catch(() => toast.error("복사에 실패했습니다."));
+          }}
+          className="flex items-center justify-between w-full text-xs active:opacity-70 transition-opacity"
+        >
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] text-gray-400">입금계좌</span>
+            <span className="font-medium text-gray-600">국민 005701-04-142344 ㈜에이시지알</span>
+          </div>
+          <Copy className="w-3.5 h-3.5 text-gray-400" />
+        </button>
+      </div>
 
     </div>
   );

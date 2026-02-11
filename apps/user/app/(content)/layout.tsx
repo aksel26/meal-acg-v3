@@ -5,11 +5,11 @@ import Header from "../components/Header";
 import { motion, AnimatePresence } from "motion/react";
 import { usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
+const Snowfall = dynamic(() => import("react-snowfall"), { ssr: false });
 const PushNotificationPrompt = dynamic(
   () => import("@/components/PushNotificationPrompt"),
   { ssr: false },
 );
-const Snowfall = dynamic(() => import("react-snowfall"), { ssr: false });
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const [images, setImages] = useState<HTMLImageElement[]>([]);
@@ -28,9 +28,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <>
-      {/* Push Notification Prompt — 레이아웃 컨테이너 바깥에서 fixed 보장 */}
-      <PushNotificationPrompt />
-
       <div className="min-h-screen max-w-lg mx-auto relative">
         {/* Background Gradient Mesh */}
         <div className="fixed inset-0 gradient-mesh -z-10" />
@@ -79,6 +76,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         </AnimatePresence>
       </main>
     </div>
+    <PushNotificationPrompt />
     </>
   );
 };

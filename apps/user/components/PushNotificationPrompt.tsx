@@ -85,17 +85,23 @@ export default function PushNotificationPrompt() {
     <AnimatePresence>
       {visible && (
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20, transition: { duration: 0.3, ease: "easeInOut" } }}
-          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className={`fixed ${iosSafariWarning ? "top-0" : "top-2"} left-0 right-0 z-[60] mx-auto max-w-lg px-4 pt-4`}
+          initial={{ y: -80 }}
+          animate={{ y: 0 }}
+          exit={{ y: -80, transition: { duration: 0.4, ease: "easeIn" } }}
+          transition={{ type: "spring", stiffness: 120, damping: 14 }}
+          className={`fixed top-0 z-40 px-4 pt-4 max-xl:w-full max-xl:max-w-lg max-xl:inset-x-0 max-xl:mx-auto xl:left-[calc(50%_+_17rem)] xl:right-4 xl:max-w-md`}
         >
           <div className="rounded-2xl border border-white/30 bg-white/20 p-4 shadow-xl backdrop-blur-xl">
             {iosSafariWarning ? (
               <div className="flex items-start gap-3">
                 <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-blue-500/15 backdrop-blur-sm">
-                  <Bell className="h-5 w-5 text-blue-600" />
+                  <motion.div
+                    animate={{ rotate: [0, 15, -15, 10, -10, 5, -5, 0] }}
+                    transition={{ duration: 0.8, delay: 0.5, repeat: Infinity, repeatDelay: 1.5 }}
+                    style={{ originX: 0.5, originY: 0.15 }}
+                  >
+                    <Bell className="h-5 w-5 text-blue-600" />
+                  </motion.div>
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-semibold text-slate-900">
@@ -142,7 +148,13 @@ export default function PushNotificationPrompt() {
                     className="flex items-start gap-3"
                   >
                     <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-blue-500/15 backdrop-blur-sm">
-                      <Bell className="h-5 w-5 text-blue-600" />
+                      <motion.div
+                        animate={{ rotate: [0, 15, -15, 10, -10, 5, -5, 0] }}
+                        transition={{ duration: 0.8, delay: 0.5, repeat: Infinity, repeatDelay: 1.5 }}
+                        style={{ originX: 0.5, originY: 0.15 }}
+                      >
+                        <Bell className="h-5 w-5 text-blue-600" />
+                      </motion.div>
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-slate-900">

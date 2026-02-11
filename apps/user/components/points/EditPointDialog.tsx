@@ -270,9 +270,9 @@ export function EditPointDialog({
       const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
       const day = String(selectedDate.getDate()).padStart(2, "0");
       const newDate = `${year}-${month}-${day}`;
-      // 2일 이내면 delay_reason 초기화
+      // 1일 이내면 delay_reason 초기화
       const diffDays = Math.floor((new Date().getTime() - selectedDate.getTime()) / (1000 * 60 * 60 * 24));
-      if (diffDays <= 2) {
+      if (diffDays <= 1) {
         updatePoint({ date: newDate, delay_reason: "" });
       } else {
         updatePoint({ date: newDate });
@@ -281,7 +281,7 @@ export function EditPointDialog({
     }
   };
 
-  // 지연 사유 필요 여부 판단 (사용일이 오늘 기준 2일 초과)
+  // 지연 사유 필요 여부 판단 (사용일이 오늘 기준 1일 초과)
   const needsDelayReason = (() => {
     if (!editingPoint?.date) return false;
     const usedDate = new Date(editingPoint.date);
@@ -289,7 +289,7 @@ export function EditPointDialog({
     today.setHours(0, 0, 0, 0);
     usedDate.setHours(0, 0, 0, 0);
     const diffDays = Math.floor((today.getTime() - usedDate.getTime()) / (1000 * 60 * 60 * 24));
-    return diffDays > 2;
+    return diffDays > 1;
   })();
 
   // --- Step value display ---

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
 
-// GET: 특정 allocation의 사용내역 조회 (팀장/본부장만)
+// GET: 특정 allocation의 사용내역 조회 (읽기 전용 — 모든 사용자 접근 가능)
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -28,27 +28,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { error: "DB not configured" },
         { status: 500 }
-      );
-    }
-
-    // 요청자 권한 확인 (팀장/본부장만)
-    const { data: member, error: memberError } = await supabase
-      .from("members")
-      .select("id, member_role")
-      .eq("id", memberId)
-      .single();
-
-    if (memberError || !member) {
-      return NextResponse.json(
-        { error: "멤버 정보를 찾을 수 없습니다." },
-        { status: 404 }
-      );
-    }
-
-    if (member.member_role === "팀원") {
-      return NextResponse.json(
-        { error: "활동비는 팀장 이상만 조회할 수 있습니다." },
-        { status: 403 }
       );
     }
 

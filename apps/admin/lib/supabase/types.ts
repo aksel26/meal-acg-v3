@@ -836,6 +836,7 @@ export type Database = {
           amount: number
           companions: string[] | null
           created_at: string | null
+          delay_reason: string | null
           description: string
           id: string
           is_reviewed: boolean | null
@@ -854,6 +855,7 @@ export type Database = {
           amount: number
           companions?: string[] | null
           created_at?: string | null
+          delay_reason?: string | null
           description: string
           id?: string
           is_reviewed?: boolean | null
@@ -872,6 +874,7 @@ export type Database = {
           amount?: number
           companions?: string[] | null
           created_at?: string | null
+          delay_reason?: string | null
           description?: string
           id?: string
           is_reviewed?: boolean | null

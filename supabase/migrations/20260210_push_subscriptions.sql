@@ -14,3 +14,7 @@ CREATE TABLE public.push_subscriptions (
 CREATE INDEX idx_push_subscriptions_member_id ON public.push_subscriptions(member_id);
 
 ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
+
+-- service client만 접근 가능 (anon/authenticated 직접 접근 차단)
+CREATE POLICY "Deny direct access" ON public.push_subscriptions
+  FOR ALL USING (false);

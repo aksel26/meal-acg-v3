@@ -213,6 +213,9 @@ importers:
       utils:
         specifier: workspace:*
         version: link:../../packages/utils
+      web-push:
+        specifier: ^3.6.7
+        version: 3.6.7
       zustand:
         specifier: ^5.0.8
         version: 5.0.8(@types/react@19.1.0)(react@19.1.0)
@@ -241,6 +244,9 @@ importers:
       '@types/react-dom':
         specifier: ^19.1.1
         version: 19.1.1(@types/react@19.1.0)
+      '@types/web-push':
+        specifier: ^3.6.4
+        version: 3.6.4
       autoprefixer:
         specifier: ^10.4.20
         version: 10.4.20(postcss@8.5.3)

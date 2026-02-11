@@ -838,14 +838,19 @@ export type Database = {
           created_at: string | null
           delay_reason: string | null
           description: string
+          first_reviewed_at: string | null
+          first_reviewed_by: string | null
           id: string
           is_reviewed: boolean | null
           last_modified_at: string | null
           last_modified_by: string | null
           member_id: string
           receipt_url: string | null
+          review_status: number
           reviewed_at: string | null
           reviewed_by: string | null
+          second_reviewed_at: string | null
+          second_reviewed_by: string | null
           type: Database["public"]["Enums"]["budget_type"]
           updated_at: string | null
           used_at: string
@@ -857,14 +862,19 @@ export type Database = {
           created_at?: string | null
           delay_reason?: string | null
           description: string
+          first_reviewed_at?: string | null
+          first_reviewed_by?: string | null
           id?: string
           is_reviewed?: boolean | null
           last_modified_at?: string | null
           last_modified_by?: string | null
           member_id: string
           receipt_url?: string | null
+          review_status?: number
           reviewed_at?: string | null
           reviewed_by?: string | null
+          second_reviewed_at?: string | null
+          second_reviewed_by?: string | null
           type: Database["public"]["Enums"]["budget_type"]
           updated_at?: string | null
           used_at: string
@@ -876,14 +886,19 @@ export type Database = {
           created_at?: string | null
           delay_reason?: string | null
           description?: string
+          first_reviewed_at?: string | null
+          first_reviewed_by?: string | null
           id?: string
           is_reviewed?: boolean | null
           last_modified_at?: string | null
           last_modified_by?: string | null
           member_id?: string
           receipt_url?: string | null
+          review_status?: number
           reviewed_at?: string | null
           reviewed_by?: string | null
+          second_reviewed_at?: string | null
+          second_reviewed_by?: string | null
           type?: Database["public"]["Enums"]["budget_type"]
           updated_at?: string | null
           used_at?: string
@@ -904,6 +919,13 @@ export type Database = {
             referencedColumns: ["allocation_id"]
           },
           {
+            foreignKeyName: "usage_records_first_reviewed_by_fkey"
+            columns: ["first_reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "usage_records_member_id_fkey"
             columns: ["member_id"]
             isOneToOne: false
@@ -913,6 +935,13 @@ export type Database = {
           {
             foreignKeyName: "usage_records_reviewed_by_fkey"
             columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usage_records_second_reviewed_by_fkey"
+            columns: ["second_reviewed_by"]
             isOneToOne: false
             referencedRelation: "members"
             referencedColumns: ["id"]
@@ -1061,6 +1090,58 @@ export type Database = {
           updated_at: string | null
           used_at: string
         }
+      }
+      advance_review_status: {
+        Args: { p_usage_record_id: string; p_reviewer_id: string }
+        Returns: {
+          allocation_id: string
+          amount: number
+          companions: string[] | null
+          created_at: string | null
+          description: string
+          first_reviewed_at: string | null
+          first_reviewed_by: string | null
+          id: string
+          is_reviewed: boolean | null
+          last_modified_at: string | null
+          last_modified_by: string | null
+          member_id: string
+          receipt_url: string | null
+          review_status: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          second_reviewed_at: string | null
+          second_reviewed_by: string | null
+          type: Database["public"]["Enums"]["budget_type"]
+          updated_at: string | null
+          used_at: string
+        }[]
+      }
+      revert_review_status: {
+        Args: { p_usage_record_id: string; p_reviewer_id: string; p_target_status: number }
+        Returns: {
+          allocation_id: string
+          amount: number
+          companions: string[] | null
+          created_at: string | null
+          description: string
+          first_reviewed_at: string | null
+          first_reviewed_by: string | null
+          id: string
+          is_reviewed: boolean | null
+          last_modified_at: string | null
+          last_modified_by: string | null
+          member_id: string
+          receipt_url: string | null
+          review_status: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          second_reviewed_at: string | null
+          second_reviewed_by: string | null
+          type: Database["public"]["Enums"]["budget_type"]
+          updated_at: string | null
+          used_at: string
+        }[]
       }
     }
     Enums: {

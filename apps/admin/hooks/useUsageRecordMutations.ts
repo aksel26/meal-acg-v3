@@ -4,9 +4,14 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import { toast } from "sonner";
 
-// ── Toggle Review ──
+// ── Advance Review ──
 
-export function useToggleReview() {
+const REVIEW_STATUS_LABELS: Record<number, string> = {
+  1: "1차 확인",
+  2: "최종확인완료",
+};
+
+export function useAdvanceReview() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -24,20 +29,60 @@ export function useToggleReview() {
       });
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || "Failed to toggle review");
+        throw new Error(error.error || "Failed to advance review");
       }
       return res.json();
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.usageRecords.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.budgetSummary.all });
-      const isReviewed = data?.is_reviewed;
-      toast.success(
-        isReviewed ? "검토 완료 처리되었습니다." : "미검토 상태로 변경되었습니다."
-      );
+      const record = Array.isArray(data) ? data[0] : data;
+      const status = record?.review_status ?? 0;
+      const label = REVIEW_STATUS_LABELS[status] || "확인";
+      toast.success(`${label} 처리되었습니다.`);
     },
     onError: (error: Error) => {
-      toast.error(error.message || "검토 상태 변경에 실패했습니다.");
+      toast.error(error.message || "확인 상태 변경에 실패했습니다.");
+    },
+  });
+}
+
+// ── Revert Review ──
+
+export function useRevertReview() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      reviewer_id,
+      target_status,
+    }: {
+      id: string;
+      reviewer_id: string;
+      target_status: number;
+    }) => {
+      const res = await fetch(`/api/usage-records/${id}/review`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviewer_id, target_status }),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to revert review");
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.usageRecords.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.budgetSummary.all });
+      const record = Array.isArray(data) ? data[0] : data;
+      const status = record?.review_status ?? 0;
+      const label = status === 0 ? "미확인" : REVIEW_STATUS_LABELS[status] || "확인";
+      toast.success(`${label} 상태로 되돌렸습니다.`);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "확인 상태 변경에 실패했습니다.");
     },
   });
 }

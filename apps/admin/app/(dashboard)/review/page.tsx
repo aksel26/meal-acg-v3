@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, Suspense } from "react";
+import { useState, useMemo, useRef, useEffect, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@repo/ui/lib/utils";
@@ -34,8 +34,6 @@ import {
 } from "@repo/ui/src/drawer";
 import { toast } from "sonner";
 import {
-  CheckCircle2,
-  Circle,
   Pencil,
   Trash2,
   Loader2,
@@ -48,7 +46,8 @@ import { queryKeys } from "@/lib/query-keys";
 import { useAuth } from "@/hooks/useAuth";
 import { useUsageRecords } from "@/hooks/useUsageRecords";
 import {
-  useToggleReview,
+  useAdvanceReview,
+  useRevertReview,
   useUpdateUsageRecord,
   useDeleteUsageRecord,
 } from "@/hooks/useUsageRecordMutations";
@@ -69,13 +68,24 @@ interface UsageRecord {
   delay_reason: string | null;
   receipt_url: string | null;
   is_reviewed: boolean;
+  review_status: number;
   reviewed_by: string | null;
   reviewed_at: string | null;
+  first_reviewed_by: string | null;
+  first_reviewed_at: string | null;
+  second_reviewed_by: string | null;
+  second_reviewed_at: string | null;
   created_at: string;
   members?: {
     full_name: string;
     member_role: string;
   };
+  first_reviewer?: {
+    full_name: string;
+  } | null;
+  second_reviewer?: {
+    full_name: string;
+  } | null;
 }
 
 interface AuditLog {
@@ -129,6 +139,159 @@ function formatDateTime(dateStr: string) {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function formatShortDate(dateStr: string | null) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  return `${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
+}
+
+const REVIEW_STATUS_LABELS: Record<number, string> = {
+  0: "미확인",
+  1: "1차 확인",
+  2: "최종확인완료",
+};
+
+// ── Review Step Indicator ──
+// 0=빈 체크박스, 1·2=체크박스 안 '-', 3=체크된 체크박스
+
+function ReviewStepIndicator({
+  record,
+  onAdvance,
+  onRevert,
+  isPending,
+}: {
+  record: UsageRecord;
+  onAdvance: () => void;
+  onRevert: (targetStatus: number) => void;
+  isPending: boolean;
+}) {
+  const status = record.review_status ?? 0;
+  const [revertMenuOpen, setRevertMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!revertMenuOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setRevertMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [revertMenuOpen]);
+
+  const handleClick = () => {
+    if (isPending) return;
+    if (status < 2) {
+      onAdvance();
+    } else {
+      setRevertMenuOpen(true);
+    }
+  };
+
+  const lastDate =
+    status === 2
+      ? record.reviewed_at
+      : status === 1
+        ? record.first_reviewed_at
+        : null;
+
+  const tooltipParts: string[] = [];
+  if (record.first_reviewed_at) {
+    tooltipParts.push(`1차: ${record.first_reviewer?.full_name || "-"} (${formatShortDate(record.first_reviewed_at)})`);
+  }
+  if (status === 2 && record.reviewed_at) {
+    tooltipParts.push(`최종: ${record.second_reviewer?.full_name || "-"} (${formatShortDate(record.reviewed_at)})`);
+  }
+
+  const tooltip =
+    status === 0
+      ? "미확인 - 클릭하여 1차 확인"
+      : status === 1
+        ? `1차 확인 - 클릭하여 최종확인\n${tooltipParts.join("\n")}`
+        : `최종확인완료 - 클릭하여 되돌리기\n${tooltipParts.join("\n")}`;
+
+  return (
+    <div className="relative flex items-center justify-center gap-1.5">
+      <button
+        onClick={handleClick}
+        disabled={isPending}
+        className={cn(
+          "relative flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded border-[1.5px] transition-all",
+          status === 0
+            ? "border-slate-300 bg-white hover:border-slate-400"
+            : status === 1
+              ? "border-blue-400 bg-blue-50 hover:border-blue-500"
+              : "border-emerald-500 bg-emerald-500 hover:border-emerald-600 hover:bg-emerald-600"
+        )}
+        title={tooltip}
+      >
+        {/* 0: empty */}
+        {/* 1: dash */}
+        {status === 1 && (
+          <span className="text-[11px] font-bold leading-none text-blue-500">
+            –
+          </span>
+        )}
+        {/* 2: checkmark */}
+        {status === 2 && (
+          <svg
+            className="h-3 w-3 text-white"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={3.5}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M5 13l4 4L19 7"
+            />
+          </svg>
+        )}
+      </button>
+
+      {status > 0 && (
+        <span className="text-[10px] tabular-nums text-slate-400">
+          {status === 1
+            ? "1차"
+            : lastDate
+              ? formatShortDate(lastDate)
+              : "완료"}
+        </span>
+      )}
+
+      {revertMenuOpen && (
+        <div
+          ref={menuRef}
+          className="absolute top-full z-20 mt-1 rounded-md border border-slate-200 bg-white py-1 shadow-lg"
+        >
+          {status === 2 && (
+            <button
+              className="w-full whitespace-nowrap px-3 py-1.5 text-left text-xs text-slate-600 hover:bg-slate-50"
+              onClick={() => {
+                onRevert(1);
+                setRevertMenuOpen(false);
+              }}
+            >
+              1차 확인으로 되돌리기
+            </button>
+          )}
+          <button
+            className="w-full whitespace-nowrap px-3 py-1.5 text-left text-xs text-slate-600 hover:bg-slate-50"
+            onClick={() => {
+              onRevert(0);
+              setRevertMenuOpen(false);
+            }}
+          >
+            미확인으로 되돌리기
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ── Main Page ──
@@ -185,12 +348,14 @@ function ReviewPageContent() {
       period,
       type: typeFilter !== "전체" ? typeFilter : undefined,
       member_id: memberFilter !== "전체" ? memberFilter : undefined,
-      is_reviewed:
-        reviewFilter === "검토 완료"
-          ? "true"
-          : reviewFilter === "미검토"
-            ? "false"
-            : undefined,
+      review_status:
+        reviewFilter === "최종확인완료"
+          ? "2"
+          : reviewFilter === "미확인"
+            ? "0"
+            : reviewFilter === "1차 확인"
+              ? "1"
+              : undefined,
     }),
     [period, typeFilter, memberFilter, reviewFilter]
   );
@@ -211,7 +376,8 @@ function ReviewPageContent() {
     useAuditLogs(auditRecordId);
 
   // Mutations
-  const toggleReview = useToggleReview();
+  const advanceReview = useAdvanceReview();
+  const revertReview = useRevertReview();
   const updateRecord = useUpdateUsageRecord();
   const deleteRecord = useDeleteUsageRecord();
 
@@ -230,17 +396,29 @@ function ReviewPageContent() {
 
   // Stats
   const totalCount = records.length;
-  const reviewedCount = records.filter((r) => r.is_reviewed).length;
+  const reviewedCount = records.filter((r) => r.review_status === 2).length;
   const totalAmount = records.reduce((sum, r) => sum + (r.amount || 0), 0);
 
-  // ── Review Toggle ──
+  // ── Review Handlers ──
 
-  const handleToggleReview = (record: UsageRecord) => {
+  const handleAdvanceReview = (record: UsageRecord) => {
     if (!user?.id) {
       toast.error("로그인 정보를 확인할 수 없습니다.");
       return;
     }
-    toggleReview.mutate({ id: record.id, reviewer_id: user.id });
+    advanceReview.mutate({ id: record.id, reviewer_id: user.id });
+  };
+
+  const handleRevertReview = (record: UsageRecord, targetStatus: number) => {
+    if (!user?.id) {
+      toast.error("로그인 정보를 확인할 수 없습니다.");
+      return;
+    }
+    revertReview.mutate({
+      id: record.id,
+      reviewer_id: user.id,
+      target_status: targetStatus,
+    });
   };
 
   // ── Edit Handlers ──
@@ -323,8 +501,8 @@ function ReviewPageContent() {
       if (queryFilters.type) params.set("type", queryFilters.type);
       if (queryFilters.member_id)
         params.set("member_id", queryFilters.member_id);
-      if (queryFilters.is_reviewed)
-        params.set("is_reviewed", queryFilters.is_reviewed);
+      if (queryFilters.review_status)
+        params.set("review_status", queryFilters.review_status);
 
       const res = await fetch(`/api/export/usage-records?${params}`);
       if (!res.ok) throw new Error("Export failed");
@@ -396,13 +574,14 @@ function ReviewPageContent() {
             className="w-44"
           />
           <Select value={reviewFilter} onValueChange={setReviewFilter}>
-            <SelectTrigger className="h-10 w-32 bg-white text-sm">
+            <SelectTrigger className="h-10 w-36 bg-white text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="전체">검토 전체</SelectItem>
-              <SelectItem value="검토 완료">검토 완료</SelectItem>
-              <SelectItem value="미검토">미검토</SelectItem>
+              <SelectItem value="전체">확인 전체</SelectItem>
+              <SelectItem value="미확인">미확인</SelectItem>
+              <SelectItem value="1차 확인">1차 확인</SelectItem>
+              <SelectItem value="최종확인완료">최종확인완료</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -486,7 +665,7 @@ function ReviewPageContent() {
                   <th className="min-w-[100px] whitespace-nowrap px-3 py-2 text-left text-xs font-semibold text-slate-500">
                     지연 사유
                   </th>
-                  <th className="w-[130px] whitespace-nowrap px-3 py-2 text-center text-xs font-semibold text-slate-500">
+                  <th className="w-[150px] whitespace-nowrap px-3 py-2 text-center text-xs font-semibold text-slate-500">
                     P&C팀 확인
                   </th>
                   <th className="w-[88px] whitespace-nowrap px-3 py-2 text-center text-xs font-semibold text-slate-500">
@@ -533,32 +712,16 @@ function ReviewPageContent() {
                       {record.delay_reason || "-"}
                     </td>
                     <td className="px-3 py-1 text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <button
-                          onClick={() => handleToggleReview(record)}
-                          disabled={toggleReview.isPending}
-                          className={cn(
-                            "inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-colors",
-                            record.is_reviewed
-                              ? "text-emerald-600 hover:bg-emerald-50"
-                              : "text-slate-300 hover:bg-slate-100 hover:text-slate-500"
-                          )}
-                          title={
-                            record.is_reviewed ? "검토 완료" : "미검토 - 클릭하여 검토"
-                          }
-                        >
-                          {record.is_reviewed ? (
-                            <CheckCircle2 className="h-3.5 w-3.5" />
-                          ) : (
-                            <Circle className="h-3.5 w-3.5" />
-                          )}
-                        </button>
-                        {record.is_reviewed && record.reviewed_at && (
-                          <span className="text-[10px] tabular-nums text-slate-400">
-                            {record.reviewed_at.slice(5, 10)}
-                          </span>
-                        )}
-                      </div>
+                      <ReviewStepIndicator
+                        record={record}
+                        onAdvance={() => handleAdvanceReview(record)}
+                        onRevert={(targetStatus) =>
+                          handleRevertReview(record, targetStatus)
+                        }
+                        isPending={
+                          advanceReview.isPending || revertReview.isPending
+                        }
+                      />
                     </td>
                     <td className="px-3 py-1 text-center">
                       <div className="flex items-center justify-center gap-0">
@@ -601,11 +764,11 @@ function ReviewPageContent() {
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            {editingRecord?.is_reviewed && (
+            {editingRecord && (editingRecord.review_status ?? 0) >= 1 && (
               <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
                 <p className="text-sm text-amber-700">
-                  검토 완료된 내역을 수정합니다. 변경 이력이 기록됩니다.
+                  {REVIEW_STATUS_LABELS[editingRecord.review_status] || "확인"} 상태의 내역을 수정합니다. 변경 이력이 기록됩니다.
                 </p>
               </div>
             )}

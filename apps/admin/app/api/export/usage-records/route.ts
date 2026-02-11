@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
     const period = searchParams.get("period");
     const type = searchParams.get("type");
     const memberId = searchParams.get("member_id");
-    const isReviewed = searchParams.get("is_reviewed");
+    const reviewStatus = searchParams.get("review_status");
 
     // 반기 period인 경우 추가 시트용 데이터도 조회
     const range = period ? halfYearToDateRange(period) : null;
@@ -111,8 +111,12 @@ export async function GET(request: NextRequest) {
     if (memberId) {
       rawQuery = rawQuery.eq("member_id", memberId);
     }
-    if (isReviewed !== null && isReviewed !== undefined) {
-      rawQuery = rawQuery.eq("is_reviewed", isReviewed === "true");
+    if (reviewStatus !== null && reviewStatus !== undefined) {
+      if (reviewStatus === "in_progress") {
+        rawQuery = rawQuery.in("review_status", [1, 2]);
+      } else {
+        rawQuery = rawQuery.eq("review_status", parseInt(reviewStatus, 10));
+      }
     }
 
     // ── 병렬 데이터 조회 ──
@@ -696,16 +700,15 @@ function buildRawDataSheet(workbook: ExcelJS.Workbook, records: any[]) {
     const day = usedAt.getDate();
     const dayOfWeek = DAY_NAMES[usedAt.getDay()];
 
-    const reviewedAt = record.reviewed_at
-      ? new Date(record.reviewed_at)
-          .toLocaleDateString("ko-KR", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-          })
-          .replace(/\. /g, ".")
-          .replace(/\.$/, "")
-      : "";
+    const reviewStatusVal = record.review_status ?? 0;
+    let reviewDisplay = "-";
+    if (reviewStatusVal === 1 && record.first_reviewed_at) {
+      const d = new Date(record.first_reviewed_at);
+      reviewDisplay = `1차 (${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")})`;
+    } else if (reviewStatusVal === 2 && record.reviewed_at) {
+      const d = new Date(record.reviewed_at);
+      reviewDisplay = `최종완료 (${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")})`;
+    }
 
     row.values = [
       index + 1,
@@ -717,7 +720,7 @@ function buildRawDataSheet(workbook: ExcelJS.Workbook, records: any[]) {
       record.type,
       record.description || "",
       record.amount || 0,
-      reviewedAt,
+      reviewDisplay,
       "", // K: 비고
     ];
 

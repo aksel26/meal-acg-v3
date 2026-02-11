@@ -24,13 +24,13 @@ export async function GET(request: NextRequest) {
     const period = searchParams.get("period");
     const type = searchParams.get("type");
     const memberId = searchParams.get("member_id");
-    const isReviewed = searchParams.get("is_reviewed");
+    const reviewStatus = searchParams.get("review_status");
     const allocationId = searchParams.get("allocation_id");
 
     let query = supabase
       .from("usage_records")
       .select(
-        "*, members!usage_records_member_id_fkey(id, full_name)"
+        "*, members!usage_records_member_id_fkey(id, full_name), first_reviewer:members!usage_records_first_reviewed_by_fkey(full_name), second_reviewer:members!usage_records_second_reviewed_by_fkey(full_name)"
       );
 
     if (period) {
@@ -47,8 +47,12 @@ export async function GET(request: NextRequest) {
     if (memberId) {
       query = query.eq("member_id", memberId);
     }
-    if (isReviewed !== null && isReviewed !== undefined) {
-      query = query.eq("is_reviewed", isReviewed === "true");
+    if (reviewStatus !== null && reviewStatus !== undefined) {
+      if (reviewStatus === "in_progress") {
+        query = query.in("review_status", [1, 2]);
+      } else {
+        query = query.eq("review_status", parseInt(reviewStatus, 10));
+      }
     }
     if (allocationId) {
       query = query.eq("allocation_id", allocationId);

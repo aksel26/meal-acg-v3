@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Bell, AlertCircle, Check, X, Loader2, User } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@repo/ui/lib/utils";
@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@repo/ui/src/dialog";
 import { Input } from "@repo/ui/src/input";
+import { queryKeys } from "@/lib/query-keys";
 
 interface MemberInfo {
   id: string;
@@ -52,12 +53,12 @@ const NOTIFICATION_PRESETS: Record<
     tag: "incomplete-reminder",
   },
   settlement: {
-    title: "월 정산 결과 안내",
-    body: "이번 달 식대 정산이 완료되었습니다. 앱에서 정산 내역을 확인해주세요.",
+    title: "식대 정산요청",
+    body: "이번 달 식대 정산이 완료되었습니다. 앱에서 정산 내역을 확인하고 정산을 진행해주세요.",
     tag: "settlement-result",
   },
   general: {
-    title: "",
+    title: "공지사항",
     body: "",
     tag: "general",
   },
@@ -76,6 +77,7 @@ export function PushNotifyDialog({
   selectedMembers,
   sendToAll = false,
 }: PushNotifyDialogProps) {
+  const queryClient = useQueryClient();
   const [notificationType, setNotificationType] =
     useState<NotificationType>("incomplete");
   const [title, setTitle] = useState(NOTIFICATION_PRESETS.incomplete.title);
@@ -113,6 +115,7 @@ export function PushNotifyDialog({
     },
     onSuccess: (data) => {
       setResults(data.results);
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.subscriptions });
       if (data.summary.total === 0) {
         toast.warning("푸시 구독이 등록된 사용자가 없습니다.");
       } else if (data.summary.success === data.summary.total) {
@@ -154,7 +157,6 @@ export function PushNotifyDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5 text-blue-600" />
             푸시 알림 발송
           </DialogTitle>
           <DialogDescription>

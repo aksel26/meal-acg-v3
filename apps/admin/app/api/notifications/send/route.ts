@@ -23,7 +23,7 @@ interface MemberResult {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
 
     const body: SendRequest = await request.json();
     const { memberIds, sendToAll, title, body: messageBody, url, tag } = body;
@@ -138,6 +138,20 @@ export async function POST(request: NextRequest) {
     const results = Array.from(memberResultMap.values());
     const successCount = results.filter((r) => r.success).length;
 
+    // 발송 이력 저장
+    await supabase.from("push_notification_logs").insert({
+      title,
+      body: messageBody,
+      tag,
+      send_to_all: !!sendToAll,
+      total_recipients: results.length,
+      success_count: successCount,
+      failed_count: results.length - successCount,
+      cleaned_count: expiredIds.length,
+      results: JSON.stringify(results),
+      sent_by: session.fullName,
+    });
+
     return NextResponse.json({
       success: true,
       summary: {
@@ -150,17 +164,19 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Push notification send error:", error);
-    if (error instanceof Error && error.message === "Unauthorized") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (
-      error instanceof Error &&
-      error.message === "VAPID keys are not configured"
-    ) {
-      return NextResponse.json(
-        { error: "푸시 알림이 설정되지 않았습니다" },
-        { status: 500 }
-      );
+    if (error instanceof Error) {
+      if (error.message === "Unauthorized") {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      if (error.message.includes("Forbidden")) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+      if (error.message === "VAPID keys are not configured") {
+        return NextResponse.json(
+          { error: "푸시 알림이 설정되지 않았습니다" },
+          { status: 500 }
+        );
+      }
     }
     return NextResponse.json(
       { error: "Internal server error" },

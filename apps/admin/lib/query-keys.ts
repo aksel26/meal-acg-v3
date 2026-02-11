@@ -131,6 +131,12 @@ export const queryKeys = {
     byPeriod: (period: string) => ["pointsOverview", period] as const,
   },
 
+  // Notifications
+  notifications: {
+    subscriptions: ["notifications", "subscriptions"] as const,
+    logs: ["notifications", "logs"] as const,
+  },
+
   // Usage Records
   usageRecords: {
     all: ["usageRecords"] as const,

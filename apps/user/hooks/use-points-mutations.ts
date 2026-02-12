@@ -45,13 +45,7 @@ function getEndpointPath(type: PointsType): string {
 
 function invalidatePointsQueries(queryClient: ReturnType<typeof useQueryClient>) {
   queryClient.invalidateQueries({
-    queryKey: queryKeys.points.welfare.all,
-  });
-  queryClient.invalidateQueries({
-    queryKey: queryKeys.points.activity.all,
-  });
-  queryClient.invalidateQueries({
-    queryKey: queryKeys.points.dashboard.all,
+    queryKey: queryKeys.points.all,
   });
 }
 

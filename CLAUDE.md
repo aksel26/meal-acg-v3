@@ -61,8 +61,15 @@ packages/
 ### Query Keys (Factory Pattern)
 Centralized in each app's `lib/query-keys.ts`:
 ```typescript
+// User app
 queryKeys.meals.byUserAndMonth(userName, month, year)
-queryKeys.activityPoints.usage(employeeId, month)
+queryKeys.points.activity.byPeriod(memberId, period)
+
+// Admin app
+queryKeys.stats.monthly(year, month)
+queryKeys.memberStatuses.all
+queryKeys.budgetAllocations.byPeriod(period)
+queryKeys.usageRecords.byPeriod(period)
 ```
 
 ### Data Fetching Hooks
@@ -91,6 +98,12 @@ Uses CSS-first config (`@import "tailwindcss"` + `@import "@repo/tailwind-config
 - Browser client: `lib/supabase/client.ts` - createBrowserClient with typed Database
 - Server client: `lib/supabase/server.ts` - createServerClient with cookies
 - Service client: bypasses RLS for admin operations
+- Types: `lib/supabase/types.ts` - auto-generated Database types
+
+### Supabase (User App)
+- Browser client only: `lib/supabase/client.ts` (no SSR server client)
+- Types: `lib/supabase/types.ts`
+- Meal utilities: `lib/supabase/meals.ts`
 
 ### Authentication
 - **Admin app:** Cookie-based session (`admin-session`), middleware protection, `requireAdmin()` in API routes
@@ -116,6 +129,12 @@ GOOGLE_CALENDAR_API_KEY=
 
 # Slack (settlement notifications)
 SLACK_BOT_TOKEN=
+
+# Push Notifications (VAPID / Web Push)
+VAPID_PUBLIC_KEY=
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=
+VAPID_PRIVATE_KEY=
+VAPID_SUBJECT=
 ```
 
 ### User App (`apps/user/.env.local`)
@@ -132,6 +151,9 @@ GOOGLE_SHEET_ID_WELFARE_POINTS=     # Activity/welfare points
 
 # Gemini AI (receipt scanning)
 GEMINI_API_KEY=
+
+# Push Notifications (VAPID / Web Push)
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=
 ```
 
 ## Attendance Types (근태 값)
@@ -152,15 +174,45 @@ GEMINI_API_KEY=
 ## API Patterns
 
 ### Admin App
-- `/api/stats/*` - 통계 조회 (monthly, summary, trends, settlement)
+- `/api/auth/*` - 관리자 인증 (login, logout, session)
+- `/api/seed/*` - 데이터 시딩 유틸리티
+- `/api/stats/*` - 통계 조회 (monthly, summary, trends, settlement, member-spending)
 - `/api/members/*` - 멤버 CRUD
+- `/api/member-statuses/*` - 멤버 상태 관리 (재직/퇴사 등)
 - `/api/meal-logs/*` - 식사 기록 CRUD, bulk 작업
-- `/api/export/*` - Excel 내보내기 (member, members-bulk)
+- `/api/export/*` - Excel 내보내기 (member, members-bulk, excel, usage-records)
 - `/api/import/*` - Excel 가져오기
+- `/api/budget-allocations/*` - 예산 배정 CRUD, 계산
+- `/api/budget-summary/*` - 예산 요약 조회
+- `/api/usage-records/*` - 사용 내역 관리 (review, audit-logs)
+- `/api/points-overview/*` - 포인트 현황 조회
+- `/api/organizations/*` - 조직 관리
+- `/api/divisions/*` - 본부 관리
+- `/api/teams/*` - 팀 관리
+- `/api/notifications/*` - 푸시 알림 (subscriptions, send, logs)
+- `/api/settings/*` - 설정 관리
+- `/api/holidays/*` - 공휴일 관리
+- `/api/monthly/*` - 월간 음료
+- `/api/lunch-groups/*` - 점심조 관리
 - `/api/slack/*` - Slack 정산 요청 알림
 
+### User App
+- `/api/auth/*` - 사용자 인증
+- `/api/users/*` - 사용자 정보 조회
+- `/api/meals/*` - 식사 데이터 조회/입력
+- `/api/points/*` - 포인트 관리 (welfare, activity, dashboard, members, me, lookup)
+- `/api/restaurants/*` - 식당 목록
+- `/api/scan-receipt/*` - 영수증 스캔 (Gemini AI)
+- `/api/notifications/*` - 푸시 알림
+- `/api/settings/*` - 사용자 설정
+- `/api/monthly/*` - 월간 음료 신청
+- `/api/lunch-group/*` - 점심조
+- `/api/holidays/*` - 공휴일 조회
+- `/api/google-sheets/*` - Google Sheets 연동
+- `/api/calendar/*` - 캘린더 연동
+
 ### Supabase RPC
-월별 통계는 `get_monthly_user_stats` RPC 함수로 집계 (DB 레벨 계산)
+월별 통계는 `get_user_monthly_stats` RPC 함수로 집계 (DB 레벨 계산)
 
 ## Gotchas
 
@@ -170,6 +222,10 @@ GEMINI_API_KEY=
 
 ### Motion (Animations)
 Package is `motion` (v12), NOT `framer-motion`. Import: `import { motion, AnimatePresence } from "motion/react"`
+
+### Additional Animation/UI Libraries
+- **User app:** `gsap` (scroll animations), `canvas-confetti` (celebration effects), `react-snowfall`
+- **Admin app:** `@dnd-kit/core` + `@dnd-kit/sortable` (drag & drop), `es-hangul` (Korean text utils), `sonner` (toast)
 
 ### 누락 체크 로직 (`/api/stats/incomplete-users`)
 입력 누락 판별 시 **제외되는 조건**:
@@ -184,3 +240,9 @@ Both apps set `ignoreBuildErrors: true` (TS) and `ignoreDuringBuilds: true` (ESL
 
 ### Testing
 No test framework configured. No unit/integration tests exist.
+
+### PWA (User App)
+User app is a PWA via `@ducanh2912/next-pwa`. Service worker auto-generated on build.
+
+### Push Notifications
+Both apps implement Web Push using VAPID keys. Utilities in `lib/web-push.ts` (admin) and `lib/push-notifications.ts` (user).

@@ -29,3 +29,4 @@ description: 변경된 코드를 분석하여 관심사별로 그룹화하고, �
 - 한 커밋에 너무 많은 변경 사항을 담지 마세요.
 - 모노레포 환경인 경우, 파일 경로(`apps/*`, `packages/*`)를 참고하여 스코프(Scope)를 명확히 지정하세요.
 - 모든 커밋 메시지는 한국어로 작성하되, 기술 용어는 원문을 유지합니다.
+- Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com> 내용은 추가하지 말아줘.

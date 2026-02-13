@@ -41,9 +41,11 @@ import {
   History,
   AlertTriangle,
   Download,
+  Upload,
 } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
 import { useAuth } from "@/hooks/useAuth";
+import { ImportPointsDialog } from "@/components/review/ImportPointsDialog";
 import { useUsageRecords } from "@/hooks/useUsageRecords";
 import {
   useAdvanceReview,
@@ -336,6 +338,9 @@ function ReviewPageContent() {
   // Export
   const [isExporting, setIsExporting] = useState(false);
 
+  // Import
+  const [isImportOpen, setIsImportOpen] = useState(false);
+
   // Audit log drawer
   const [isAuditOpen, setIsAuditOpen] = useState(false);
   const [auditRecordId, setAuditRecordId] = useState<string | undefined>(
@@ -605,7 +610,16 @@ function ReviewPageContent() {
               ) : (
                 <Download className="h-3.5 w-3.5" />
               )}
-              엑셀
+              다운로드
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 text-xs"
+              onClick={() => setIsImportOpen(true)}
+            >
+              <Upload className="h-3.5 w-3.5" />
+              업로드
             </Button>
           </div>
         )}
@@ -897,6 +911,9 @@ function ReviewPageContent() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ── Import Points Dialog ── */}
+      <ImportPointsDialog open={isImportOpen} onOpenChange={setIsImportOpen} />
 
       {/* ── Audit Log Drawer ── */}
       <Drawer

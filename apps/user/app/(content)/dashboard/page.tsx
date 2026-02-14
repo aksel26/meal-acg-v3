@@ -36,7 +36,6 @@ export default function DashboardPage() {
   const [currentMonth, setCurrentMonth] = useState<number>(dayjs().tz("Asia/Seoul").month() + 1);
   const [currentYear, setCurrentYear] = useState<number>(dayjs().tz("Asia/Seoul").year());
   const [calculationData, setCalculationData] = useState<CalculationData | null>(null);
-  const [showUpdateDialog, setShowUpdateDialog] = useState<boolean>(true);
 
   const router = useRouter();
 
@@ -72,22 +71,6 @@ export default function DashboardPage() {
     // 로그인 상태 확인 (hydration 완료 후)
     if (!userName && !isLoggedIn) {
       router.push("/");
-      return;
-    }
-
-    // 업데이트 알림 Dialog 표시 로직 (버전 기반)
-    const NOTICE_VERSION = "v2.0";
-    const savedVersion = localStorage.getItem("hideNoticeVersion");
-
-    // 저장된 버전과 현재 버전이 다르면 (또는 저장된 버전이 없으면) 다이얼로그 표시
-    if (savedVersion !== NOTICE_VERSION) {
-      const timer = setTimeout(() => {
-        setShowUpdateDialog(true);
-      }, 500);
-
-      return () => clearTimeout(timer);
-    } else {
-      setShowUpdateDialog(false);
     }
   }, [router, isLoggedIn, userName, hasHydrated]);
 
@@ -201,10 +184,7 @@ export default function DashboardPage() {
       <BottomNavigation />
 
       {/* 업데이트 알림 Dialog */}
-      <UpdateNotificationDialog
-        isOpen={showUpdateDialog}
-        onClose={() => setShowUpdateDialog(false)}
-      />
+      <UpdateNotificationDialog />
 
     </React.Fragment>
   );

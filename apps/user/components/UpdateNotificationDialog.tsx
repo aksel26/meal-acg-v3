@@ -9,13 +9,22 @@ import confetti from "canvas-confetti";
 // 현재 공지사항 버전 - 새 공지가 있을 때 이 값을 변경하면 다시 보지 않기 해제
 const NOTICE_VERSION = "v2.0";
 
-interface UpdateNotificationDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
+// 모듈 레벨 변수: mount/unmount/remount 사이클에서도 유지되어 중복 표시 방지
+// 페이지 새로고침 시 초기화됨
+let hasShownForVersion = "";
 
-export function UpdateNotificationDialog({ isOpen, onClose }: UpdateNotificationDialogProps) {
+export function UpdateNotificationDialog() {
+  const [isOpen, setIsOpen] = useState(false);
   const [dontShowAgain, setDontShowAgain] = useState(false);
+
+  useEffect(() => {
+    if (hasShownForVersion === NOTICE_VERSION) return;
+    const savedVersion = localStorage.getItem("hideNoticeVersion");
+    if (savedVersion !== NOTICE_VERSION) {
+      hasShownForVersion = NOTICE_VERSION;
+      setIsOpen(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -37,8 +46,8 @@ export function UpdateNotificationDialog({ isOpen, onClose }: UpdateNotification
     if (dontShowAgain) {
       localStorage.setItem("hideNoticeVersion", NOTICE_VERSION);
     }
-    onClose();
-  }, [dontShowAgain, onClose]);
+    setIsOpen(false);
+  }, [dontShowAgain]);
 
   const updateItems = [
     {

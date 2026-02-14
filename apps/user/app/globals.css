@@ -1,6 +1,17 @@
 @import "tailwindcss";
 @import "@repo/tailwind-config";
 
+/* Font weight 오버라이드 (모바일 가독성) */
+.font-medium {
+  font-weight: 400;
+}
+.font-semibold {
+  font-weight: 500;
+}
+.font-bold {
+  font-weight: 600;
+}
+
 /* Premium Soft Korean Design System */
 :root {
   /* Primary Brand Colors - Refined Blue Palette */
@@ -88,6 +99,7 @@ body {
   );
   background-attachment: fixed;
   min-height: 100dvh;
+  font-weight: 300;
 }
 
 /* Premium Card Glass Effect */

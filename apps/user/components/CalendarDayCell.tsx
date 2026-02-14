@@ -2,6 +2,7 @@ import * as React from "react";
 import { CalendarDayButton } from "@repo/ui/src/calendar";
 import Image from "next/image";
 import type { MealData } from "@/components/dashboard/types";
+import dayjs from "dayjs";
 
 // CalendarDayButton에서 day와 modifiers 타입 추출
 type DayButtonProps = React.ComponentProps<typeof CalendarDayButton>;
@@ -54,8 +55,16 @@ export const CalendarDayCell = React.memo(function CalendarDayCell({
 }: CalendarDayCellProps) {
   if (modifiers.outside) {
     return (
-      <CalendarDayButton day={day} modifiers={modifiers} {...dayButtonProps} onClick={undefined} disabled>
-        <div className="flex flex-col items-center opacity-0 pointer-events-none">{children}</div>
+      <CalendarDayButton
+        day={day}
+        modifiers={modifiers}
+        {...dayButtonProps}
+        onClick={undefined}
+        disabled
+      >
+        <div className="flex flex-col items-center opacity-0 pointer-events-none">
+          {children}
+        </div>
       </CalendarDayButton>
     );
   }
@@ -92,7 +101,7 @@ export const CalendarDayCell = React.memo(function CalendarDayCell({
             ${isSelected && !isToday ? "text-blue-600" : ""}
             ${!isToday && !isSelected && (isSunday || isHoliday) ? "text-red-500" : ""}
             ${!isToday && !isSelected && isSaturday && !isHoliday ? "text-blue-500" : ""}
-            ${!isToday && !isSelected && !isSunday && !isSaturday && !isHoliday ? "text-gray-700" : ""}
+            ${!isToday && !isSelected && !isSunday && !isSaturday && !isHoliday ? "text-gray-400" : ""}
           `}
         >
           {children}
@@ -120,6 +129,11 @@ export const CalendarDayCell = React.memo(function CalendarDayCell({
                 </span>
               )}
             </div>
+          ) : !isSunday &&
+            !isSaturday &&
+            !isHoliday &&
+            dayjs(day.date).isBefore(dayjs(), "day") ? (
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-100" />
           ) : null}
         </div>
       </div>

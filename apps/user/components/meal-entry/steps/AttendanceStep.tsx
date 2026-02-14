@@ -8,21 +8,25 @@ import {
 } from "@/stores/mealDrawerStore";
 import { attendanceOptions } from "@/lib/const/const";
 
-const attendanceConfig: Record<string, { emoji: string; shortLabel: string }> = {
-  "근무": { emoji: "💼", shortLabel: "근무" },
-  "근무(개별식사 / 식사안함)": { emoji: "🍱", shortLabel: "개별식사" },
-  "오전 반차/휴무": { emoji: "🌅", shortLabel: "오전반차" },
-  "오후 반차/휴무": { emoji: "🌆", shortLabel: "오후반차" },
-  "연차/휴무": { emoji: "🏖️", shortLabel: "연차" },
-  "재택근무": { emoji: "🏠", shortLabel: "재택" },
-};
+const attendanceConfig: Record<string, { emoji: string; shortLabel: string }> =
+  {
+    근무: { emoji: "💼", shortLabel: "근무" },
+    "근무(개별식사 / 식사안함)": { emoji: "🍱", shortLabel: "개별식사" },
+    "오전 반차/휴무": { emoji: "🌅", shortLabel: "오전반차" },
+    "오후 반차/휴무": { emoji: "🌆", shortLabel: "오후반차" },
+    "연차/휴무": { emoji: "🏖️", shortLabel: "연차" },
+    재택근무: { emoji: "🏠", shortLabel: "재택" },
+  };
 
 interface AttendanceStepProps {
   onSubmit?: () => Promise<void>;
   isSubmitting?: boolean;
 }
 
-export function AttendanceStep({ onSubmit, isSubmitting }: AttendanceStepProps) {
+export function AttendanceStep({
+  onSubmit,
+  isSubmitting,
+}: AttendanceStepProps) {
   const { formData, updateFormField, completeStep } = useMealDrawerStore();
   const currentAttendance = formData.lunch.attendance;
   const [selectedValue, setSelectedValue] = useState<string>(currentAttendance);
@@ -52,7 +56,7 @@ export function AttendanceStep({ onSubmit, isSubmitting }: AttendanceStepProps) 
   return (
     <div className="space-y-4">
       <div className="space-y-1">
-        <h3 className="text-lg font-semibold text-gray-900">
+        <h3 className="text-lg font-medium text-gray-900">
           오늘 근태는 어떤가요?
         </h3>
         <p className="text-sm text-gray-500">
@@ -89,7 +93,8 @@ export function AttendanceStep({ onSubmit, isSubmitting }: AttendanceStepProps) 
           {isNoMealSupport && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
               <p className="text-sm text-amber-800 font-medium">
-                {attendanceConfig[selectedValue]?.shortLabel} 시에는 식대가 지원되지 않습니다.
+                {attendanceConfig[selectedValue]?.shortLabel} 시에는 식대가
+                지원되지 않습니다.
               </p>
               <p className="text-xs text-amber-600 mt-1">
                 근태 정보만 저장됩니다.

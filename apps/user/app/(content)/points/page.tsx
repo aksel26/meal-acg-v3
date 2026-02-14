@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@repo/ui/src/select";
 import { NumberTicker } from "@repo/ui/src/number-ticker";
-import { Check, ListFilter, Plus } from "@repo/ui/icons";
+import { Check, ChevronRight, ListFilter, Plus } from "@repo/ui/icons";
 import {
   Popover,
   PopoverContent,
@@ -155,6 +155,7 @@ export default function Points() {
     "all",
   );
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isActivityViewOpen, setIsActivityViewOpen] = useState(false);
 
   // Zustand store에서 사용자 정보 가져오기
   const { userName, memberId, memberRole, setMemberInfo } = useUserStore();
@@ -403,7 +404,10 @@ export default function Points() {
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
           className="mb-6"
         >
-          <div className="card-premium relative overflow-hidden">
+          <div
+            className="card-premium relative overflow-hidden cursor-pointer active:scale-[0.99] transition-transform"
+            onClick={() => setIsActivityViewOpen(true)}
+          >
             <div className="relative px-4 pt-4 pb-5">
               {/* Header */}
               <div className="flex items-center justify-between mb-3">
@@ -411,12 +415,14 @@ export default function Points() {
                   <h1 className="text-base font-semibold text-gray-900">
                     복지포인트{isManager ? " · 활동비" : ""}
                   </h1>
-                  <PointsGuideDialog />
+                  <span onClick={(e) => e.stopPropagation()}>
+                    <PointsGuideDialog />
+                  </span>
                 </div>
-                <ActivityViewDialog
-                  memberId={currentMemberId}
-                  period={selectedMonth}
-                />
+                <span className="flex items-center gap-0.5 text-xs text-gray-400">
+                  팀별 활동비 내역
+                  <ChevronRight className="w-4 h-4" />
+                </span>
               </div>
 
               {welfareError && (
@@ -452,6 +458,12 @@ export default function Points() {
               )}
             </div>
           </div>
+          <ActivityViewDialog
+            memberId={currentMemberId}
+            period={selectedMonth}
+            open={isActivityViewOpen}
+            onOpenChange={setIsActivityViewOpen}
+          />
         </motion.div>
       )}
 

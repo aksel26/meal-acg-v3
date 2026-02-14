@@ -5,15 +5,10 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from "@repo/ui/src/sheet";
 import { Button } from "@repo/ui/src/button";
 import { ScrollArea } from "@repo/ui/src/scroll-area";
-import {
-  ChevronDown,
-  Eye,
-  Receipt,
-} from "@repo/ui/icons";
+import { ChevronDown, Receipt } from "@repo/ui/icons";
 import React, { useState, useMemo } from "react";
 import {
   Select,
@@ -29,6 +24,7 @@ import {
   type BudgetSummary,
 } from "@/hooks/use-points-data";
 import { motion, AnimatePresence } from "motion/react";
+import Image from "next/image";
 
 const Skeleton = ({ className }: { className?: string }) => (
   <div className={`animate-pulse bg-gray-200 rounded ${className}`} />
@@ -54,8 +50,17 @@ const getCurrentHalfYearLabel = (): string => {
   return currentMonth >= 7 ? "하반기" : "상반기";
 };
 
-// 트랙 색상 팔레트
-const HORSE_COLORS = [
+// 팀별 비행기 아이콘 매핑
+const TEAM_ICON_MAP: Record<string, string> = {
+  "Assessment 1팀": "/images/planes/plane-icon-as-1.webp",
+  "Assessment 2팀": "/images/planes/plane-icon-as-2.webp",
+  "HR 운영팀": "/images/planes/plane-icon-op.webp",
+  "People & Culture 팀": "/images/planes/plane-icon-pc.webp",
+  "HR Tech팀": "/images/planes/plane-icon-tech.webp",
+};
+
+// 범례 색상 팔레트 (기존)
+const LEGEND_COLORS = [
   "#2563eb", // blue
   "#dc2626", // red
   "#16a34a", // green
@@ -68,9 +73,16 @@ const HORSE_COLORS = [
   "#0d9488", // teal
 ];
 
+const DEFAULT_ICON = TEAM_ICON_MAP["Assessment 1팀"]!;
+
+function getTeamIcon(teamName: string | null): string {
+  if (!teamName) return DEFAULT_ICON;
+  return TEAM_ICON_MAP[teamName] ?? DEFAULT_ICON;
+}
+
 // 겹침 방지를 위한 y축 오프셋 계산
 function computeYOffsets(
-  sortedSummaries: Array<{ percent: number }>
+  sortedSummaries: Array<{ percent: number }>,
 ): number[] {
   const offsets = new Array(sortedSummaries.length).fill(0);
   const OVERLAP_THRESHOLD = 14; // % 기준 겹침 판별
@@ -79,7 +91,7 @@ function computeYOffsets(
     const prevPercent = sortedSummaries[i - 1]!.percent;
     const currPercent = sortedSummaries[i]!.percent;
     if (Math.abs(currPercent - prevPercent) < OVERLAP_THRESHOLD) {
-      // 이전 말과 반대 방향으로 오프셋
+      // 이전 비행기와 반대 방향으로 오프셋
       offsets[i] = offsets[i - 1] === 0 ? -36 : offsets[i - 1] === -36 ? 36 : 0;
     }
   }
@@ -89,11 +101,15 @@ function computeYOffsets(
 interface ActivityViewDialogProps {
   memberId: string | null;
   period: string; // "YYYY-MM"
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export function ActivityViewDialog({
   memberId,
   period,
+  open,
+  onOpenChange,
 }: ActivityViewDialogProps) {
   const [selectedMonth, setSelectedMonth] = useState<string>(period);
   const [expandedAllocId, setExpandedAllocId] = useState<string | null>(null);
@@ -107,8 +123,11 @@ export function ActivityViewDialog({
   } = usePointsDashboard(memberId, period, "활동비");
 
   // 펼쳐진 직원의 사용내역 조회
-  const { data: usageRecords, isLoading: usageLoading } =
-    useAllocationRecords(memberId, expandedAllocId, selectedMonth);
+  const { data: usageRecords, isLoading: usageLoading } = useAllocationRecords(
+    memberId,
+    expandedAllocId,
+    selectedMonth,
+  );
 
   const months = getCurrentHalfYearMonths();
   const currentHalfYear = getCurrentHalfYearLabel();
@@ -123,7 +142,7 @@ export function ActivityViewDialog({
         ...s,
         percent: Math.min(
           100,
-          Math.round((s.used_amount / s.total_amount) * 100)
+          Math.round((s.used_amount / s.total_amount) * 100),
         ),
       }))
       .sort((a, b) => a.percent - b.percent);
@@ -132,17 +151,17 @@ export function ActivityViewDialog({
   // 트랙 y축 오프셋 계산
   const yOffsets = useMemo(
     () => computeYOffsets(filteredSummaries),
-    [filteredSummaries]
+    [filteredSummaries],
   );
 
   // 조직 전체 합계 (필터링된 멤버만)
   const totalBudget = filteredSummaries.reduce(
     (sum, s) => sum + s.total_amount,
-    0
+    0,
   );
   const totalUsed = filteredSummaries.reduce(
     (sum, s) => sum + s.used_amount,
-    0
+    0,
   );
 
   const toggleExpand = (allocId: string) => {
@@ -150,18 +169,10 @@ export function ActivityViewDialog({
   };
 
   return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8">
-          <Eye className="w-3.5 h-3.5" />
-          전체 조회
-        </Button>
-      </SheetTrigger>
+    <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-lg flex flex-col">
         <SheetHeader className="space-y-3 pb-4 border-b border-gray-100">
-          <SheetTitle className="text-lg font-bold">
-            활동비 현황
-          </SheetTitle>
+          <SheetTitle className="text-lg font-bold">활동비 현황</SheetTitle>
 
           {/* 기간 & 요약 */}
           <div className="flex items-center justify-between">
@@ -170,7 +181,8 @@ export function ActivityViewDialog({
             </span>
             {!isLoading && filteredSummaries.length > 0 && (
               <span className="text-xs text-gray-400">
-                총 {totalUsed.toLocaleString()} / {totalBudget.toLocaleString()}원 사용
+                총 {totalUsed.toLocaleString()} / {totalBudget.toLocaleString()}
+                원 사용
               </span>
             )}
           </div>
@@ -187,7 +199,10 @@ export function ActivityViewDialog({
             {isLoading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="rounded-xl bg-white border border-gray-100 p-4 space-y-3">
+                  <div
+                    key={i}
+                    className="rounded-xl bg-white border border-gray-100 p-4 space-y-3"
+                  >
                     <div className="flex items-center justify-between">
                       <Skeleton className="h-5 w-20" />
                       <Skeleton className="h-4 w-24" />
@@ -220,7 +235,10 @@ export function ActivityViewDialog({
                   <span className="text-xs font-medium text-gray-500">
                     사용 내역
                   </span>
-                  <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                  <Select
+                    value={selectedMonth}
+                    onValueChange={setSelectedMonth}
+                  >
                     <SelectTrigger className="w-auto min-w-[90px] h-8 text-xs border-gray-200">
                       <SelectValue placeholder="월 선택" />
                     </SelectTrigger>
@@ -240,7 +258,7 @@ export function ActivityViewDialog({
                     <LegendRow
                       key={summary.allocation_id}
                       summary={summary}
-                      color={HORSE_COLORS[idx % HORSE_COLORS.length]!}
+                      color={LEGEND_COLORS[idx % LEGEND_COLORS.length]!}
                       isExpanded={expandedAllocId === summary.allocation_id}
                       onToggle={() => toggleExpand(summary.allocation_id)}
                       usageRecords={usageRecords || []}
@@ -277,129 +295,106 @@ interface RaceTrackProps {
   onHoverChange: (idx: number | null) => void;
 }
 
-function RaceTrack({ summaries, yOffsets, hoveredIdx, onHoverChange }: RaceTrackProps) {
-  const [arrivedSet, setArrivedSet] = useState<Set<number>>(new Set());
-
+function RaceTrack({
+  summaries,
+  yOffsets,
+  hoveredIdx,
+  onHoverChange,
+}: RaceTrackProps) {
   return (
-    <div className="rounded-xl bg-white border border-gray-100 p-4">
-      {/* 트랙 영역 */}
-      <div className="relative h-40 mx-2">
-        {/* 트랙 배경 (잔디) */}
-        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-12 rounded-full bg-gradient-to-r from-emerald-50 via-emerald-100/60 to-emerald-50 border border-emerald-200/50" />
+    <div className="rounded-xl overflow-hidden">
+      {/* 비행기 트랙 영역 */}
+      <div className="relative h-48">
+        {/* 배경 이미지 (지구본 + 하늘) */}
+        <Image
+          src="/images/planes/background.webp"
+          alt=""
+          fill
+          className="object-cover"
+          priority
+        />
+        {/* 가장자리 부드러운 페이드 */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "linear-gradient(to bottom, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.6) 25%, rgba(255,255,255,0) 50%, rgba(255,255,255,0) 80%, rgba(255,255,255,0.5) 100%)",
+          }}
+        />
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "linear-gradient(to right, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 15%, rgba(255,255,255,0) 85%, rgba(255,255,255,0.7) 100%)",
+          }}
+        />
 
-        {/* 레인 마커 (점선) */}
+        {/* 퍼센트 가이드라인 */}
         {[25, 50, 75].map((tick) => (
           <div
             key={tick}
-            className="absolute top-1/2 -translate-y-1/2 h-8 border-l border-dashed border-emerald-300/40"
+            className="absolute top-4 bottom-4 border-l border-dashed border-white/20"
             style={{ left: `${tick}%` }}
           />
         ))}
 
-        {/* 출발선 */}
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 h-12 w-0.5 bg-gray-300 rounded-full" />
-
-        {/* 결승선 */}
-        <div className="absolute right-0 top-1/2 -translate-y-[60%] text-4xl leading-none -rotate-12">
-          🏁
-        </div>
-
-        {/* 말 이모지 레이어 */}
+        {/* 비행기 레이어 */}
         {summaries.map((s, idx) => (
           <motion.div
             key={s.allocation_id}
             className="absolute top-1/2 -translate-y-1/2 cursor-pointer select-none"
             style={{
               marginTop: yOffsets[idx],
-              zIndex: hoveredIdx === idx ? 10 : 5,
+              zIndex: hoveredIdx === idx ? 20 : 5,
             }}
-            initial={{ left: "0%" }}
-            animate={{ left: `${Math.min(s.percent, 95)}%` }}
+            initial={{ left: "-10%" }}
+            animate={{ left: `${Math.min(s.percent, 92)}%` }}
             transition={{
-              duration: 1.2,
-              delay: idx * 0.08,
+              duration: 1.4,
+              delay: idx * 0.1,
               ease: [0.25, 0.46, 0.45, 0.94],
             }}
-            onAnimationComplete={() =>
-              setArrivedSet((prev) => new Set(prev).add(idx))
-            }
             onMouseEnter={() => onHoverChange(idx)}
             onMouseLeave={() => onHoverChange(null)}
-            onTouchStart={() =>
-              onHoverChange(hoveredIdx === idx ? null : idx)
-            }
+            onTouchStart={() => onHoverChange(hoveredIdx === idx ? null : idx)}
           >
-            <motion.span
-              className="text-5xl leading-none inline-block -scale-x-100 origin-bottom"
-              animate={
-                arrivedSet.has(idx)
-                  ? { y: 0, rotate: 0, scale: hoveredIdx === idx ? 1.35 : 1 }
-                  : { y: [0, -6, 0], rotate: [0, -3, 0], scale: hoveredIdx === idx ? 1.35 : 1 }
-              }
-              transition={
-                arrivedSet.has(idx)
-                  ? { duration: 0.2 }
-                  : {
-                      duration: 0.25 + idx * 0.03,
-                      repeat: Infinity,
-                      repeatType: "loop",
-                      ease: "easeInOut",
-                      scale: { duration: 0.2, repeat: 0 },
-                    }
-              }
-            >
-              🐴
-            </motion.span>
-          </motion.div>
-        ))}
-
-        {/* 이름 태그 레이어 (말 이모지보다 항상 위) */}
-        {summaries.map((s, idx) => (
-          <motion.div
-            key={`label-${s.allocation_id}`}
-            className="absolute top-1/2 -translate-y-1/2 pointer-events-none"
-            style={{
-              marginTop: yOffsets[idx],
-              zIndex: hoveredIdx === idx ? 30 : 20,
-            }}
-            initial={{ left: "0%" }}
-            animate={{ left: `${Math.min(s.percent, 95)}%` }}
-            transition={{
-              duration: 1.2,
-              delay: idx * 0.08,
-              ease: [0.25, 0.46, 0.45, 0.94],
-            }}
-          >
-            {/* 이름 라벨 */}
-            <span
-              className="absolute left-1/2 -translate-x-1/2 -top-6 whitespace-nowrap text-[10px] font-bold text-white px-1.5 py-0.5 rounded transition-opacity duration-150"
-              style={{
-                backgroundColor: HORSE_COLORS[idx % HORSE_COLORS.length] + (hoveredIdx === idx ? "" : "80"),
-                opacity: hoveredIdx !== null && hoveredIdx !== idx ? 0 : 1,
+            <motion.div
+              animate={{
+                y: [0, -6, 0],
+                rotate: [-1, 1.5, -1],
+                scale: hoveredIdx === idx ? 1.25 : 1,
+              }}
+              transition={{
+                y: {
+                  duration: 2.5 + idx * 0.3,
+                  repeat: Infinity,
+                  repeatType: "loop",
+                  ease: "easeInOut",
+                },
+                rotate: {
+                  duration: 3 + idx * 0.2,
+                  repeat: Infinity,
+                  repeatType: "loop",
+                  ease: "easeInOut",
+                },
+                scale: { duration: 0.2 },
               }}
             >
-              {s.member_name}
-            </span>
-            {/* 툴팁 */}
-            <AnimatePresence>
-              {hoveredIdx === idx && (
-                <motion.div
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 4 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute left-1/2 -translate-x-1/2 -top-14 whitespace-nowrap bg-gray-900 text-white text-[10px] px-2 py-1 rounded-md shadow-lg"
-                >
-                  {s.percent}%
-                </motion.div>
-              )}
-            </AnimatePresence>
+              <Image
+                src={getTeamIcon(s.team_name)}
+                alt={s.team_name ?? "team"}
+                width={65}
+                height={65}
+                className="drop-shadow-lg"
+                style={{ filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.15))" }}
+              />
+            </motion.div>
           </motion.div>
         ))}
       </div>
 
       {/* 축 라벨 */}
-      <div className="flex justify-between mt-1 mx-2 text-[10px] text-gray-400 font-medium">
+      <div className="flex justify-between px-4 py-1.5 bg-white/80 text-[10px] text-gray-400 font-medium">
         <span>0%</span>
         <span>25%</span>
         <span>50%</span>
@@ -444,7 +439,8 @@ function LegendRow({
 
   return (
     <div
-      className={`rounded-xl bg-white border overflow-hidden transition-all ${isHovered ? "border-gray-300 shadow-sm" : "border-gray-100"}`}
+      className={`rounded-xl bg-white border overflow-hidden transition-all ${isHovered ? "shadow-sm" : "border-gray-100"}`}
+      style={isHovered ? { borderColor: color } : undefined}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
@@ -478,7 +474,8 @@ function LegendRow({
 
         {/* 금액 */}
         <span className="text-xs text-gray-400 shrink-0">
-          {summary.used_amount.toLocaleString()} / {summary.total_amount.toLocaleString()}원
+          {summary.used_amount.toLocaleString()} /{" "}
+          {summary.total_amount.toLocaleString()}원
         </span>
 
         <ChevronDown

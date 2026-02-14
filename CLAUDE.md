@@ -1,10 +1,10 @@
-# CLAUDE.md
+# CLAUDE.md (English)
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
 
-Meal ACG v3 - 기업용 식대 관리 애플리케이션 (Enterprise meal expense management application)
+Meal ACG v3 - Enterprise meal expense management application
 
 ## Development Commands
 
@@ -12,7 +12,7 @@ Meal ACG v3 - 기업용 식대 관리 애플리케이션 (Enterprise meal expens
 # Install dependencies
 pnpm install
 
-# Development
+# Dev servers
 pnpm dev          # Start all dev servers (user:3000, admin:3001)
 pnpm dev:user     # Start only user app (port 3000)
 pnpm dev:admin    # Start only admin app (port 3001)
@@ -22,7 +22,7 @@ pnpm build        # Build entire monorepo
 pnpm build:user   # Build only user app
 pnpm build:admin  # Build only admin app
 
-# Code Quality
+# Code quality
 pnpm lint         # ESLint (max warnings = 0)
 pnpm check-types  # TypeScript type checking
 pnpm format       # Prettier formatting
@@ -53,7 +53,7 @@ packages/
 - **State:** Zustand (client), TanStack React Query (server)
 - **Backend:**
   - user app: Supabase, Google APIs (Sheets, Calendar), Gemini AI (receipt scanning)
-  - admin app: Supabase (SSR client with RLS, service client for admin ops)
+  - admin app: Supabase (SSR client + RLS, service client for admin ops)
 - **Build:** Turborepo, pnpm
 
 ## Key Patterns
@@ -73,7 +73,7 @@ queryKeys.usageRecords.byPeriod(period)
 ```
 
 ### Data Fetching Hooks
-Custom hooks in `hooks/` wrap React Query with proper typing:
+Custom hooks in `hooks/` wrapping React Query with proper typing:
 ```typescript
 // Pattern: use-{resource}.ts or use-{resource}-{action}.ts
 useMealData(userName, month, year)
@@ -81,10 +81,14 @@ useMealSubmit()  // mutation hook
 ```
 
 ### Zustand Stores
-Persist middleware for user session, located in `stores/`:
+Located in each app's `stores/`:
 ```typescript
-useUserStore()    // Auth state with localStorage sync
+// User app
+useUserStore()        // Auth state with localStorage persistence
 useMealDrawerStore()  // UI state
+
+// Admin app
+useAuthStore()        // Admin session state
 ```
 
 ### Shared Packages
@@ -94,9 +98,11 @@ useMealDrawerStore()  // UI state
 ### Tailwind CSS 4
 Uses CSS-first config (`@import "tailwindcss"` + `@import "@repo/tailwind-config"`). No `tailwind.config.ts` — custom theme in `packages/tailwind-config/shared-styles.css` using `@theme` directive.
 
+**Override gotcha:** `@theme { --font-weight-medium: 400; }` does NOT override Tailwind's built-in utility classes. To override utilities like `font-medium`, use direct unlayered CSS in `globals.css` (e.g., `.font-medium { font-weight: 400; }`). Unlayered CSS beats Tailwind v4's `@layer utilities`.
+
 ### Supabase (Admin App)
 - Browser client: `lib/supabase/client.ts` - createBrowserClient with typed Database
-- Server client: `lib/supabase/server.ts` - createServerClient with cookies
+- Server client: `lib/supabase/server.ts` - cookie-based createServerClient
 - Service client: bypasses RLS for admin operations
 - Types: `lib/supabase/types.ts` - auto-generated Database types
 
@@ -117,125 +123,60 @@ Uses CSS-first config (`@import "tailwindcss"` + `@import "@repo/tailwind-config
 
 ## Environment Variables
 
-### Admin App (`apps/admin/.env.local`)
-```bash
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=      # For admin operations bypassing RLS
+Each app's `.env.local` contains required keys:
 
-# Google Calendar (holiday sync)
-GOOGLE_CALENDAR_API_KEY=
+- Admin: `apps/admin/.env.local` — Supabase, Google Calendar API, Slack bot token, VAPID keys
+- User: `apps/user/.env.local` — Supabase, Google Sheets credentials, Gemini API, VAPID public key
 
-# Slack (settlement notifications)
-SLACK_BOT_TOKEN=
+## Attendance Types
 
-# Push Notifications (VAPID / Web Push)
-VAPID_PUBLIC_KEY=
-NEXT_PUBLIC_VAPID_PUBLIC_KEY=
-VAPID_PRIVATE_KEY=
-VAPID_SUBJECT=
-```
+Values stored in `meal_logs.attendance` column:
 
-### User App (`apps/user/.env.local`)
-```bash
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=
-SUPABASE_SERVICE_ROLE_KEY=
+| Value | Description | Meal Calculation |
+|-------|-------------|-----------------|
+| `근무` | Regular work | Included |
+| `근무(개별식사 / 식사안함)` | Individual meal | **Excluded** |
+| `재택근무` | Remote work | **Excluded** |
+| `연차/휴무` | Annual leave | **Excluded** |
+| `오전 반차/휴무` | Morning half-day | **Excluded** |
+| `오후 반차/휴무` | Afternoon half-day | **Excluded** |
 
-# Google Sheets
-GOOGLE_PRIVATE_KEY=
-GOOGLE_CLIENT_EMAIL=
-GOOGLE_SHEET_ID=                    # Monthly drinks
-GOOGLE_SHEET_ID_WELFARE_POINTS=     # Activity/welfare points
-
-# Gemini AI (receipt scanning)
-GEMINI_API_KEY=
-
-# Push Notifications (VAPID / Web Push)
-NEXT_PUBLIC_VAPID_PUBLIC_KEY=
-```
-
-## Attendance Types (근태 값)
-
-`meal_logs.attendance` 컬럼에 저장되는 값들:
-
-| 값 | 설명 | 식대 계산 |
-|----|------|----------|
-| `근무` | 일반 출근 | 포함 |
-| `근무(개별식사 / 식사안함)` | 개별 식사 | **제외** |
-| `재택근무` | 재택 | **제외** |
-| `연차/휴무` | 연차/휴무 | **제외** |
-| `오전 반차/휴무` | 오전 반차 | **제외** |
-| `오후 반차/휴무` | 오후 반차 | **제외** |
-
-**사용가능액 공식:** `일일단가 × (근무일 - 휴일 - 재택 - 개별 + 주말근무)`
+**Available amount formula:** `daily rate × (work days - holidays - remote - individual + weekend work)`
 
 ## API Patterns
 
-### Admin App
-- `/api/auth/*` - 관리자 인증 (login, logout, session)
-- `/api/seed/*` - 데이터 시딩 유틸리티
-- `/api/stats/*` - 통계 조회 (monthly, summary, trends, settlement, member-spending)
-- `/api/members/*` - 멤버 CRUD
-- `/api/member-statuses/*` - 멤버 상태 관리 (재직/퇴사 등)
-- `/api/meal-logs/*` - 식사 기록 CRUD, bulk 작업
-- `/api/export/*` - Excel 내보내기 (member, members-bulk, excel, usage-records)
-- `/api/import/*` - Excel 가져오기
-- `/api/budget-allocations/*` - 예산 배정 CRUD, 계산
-- `/api/budget-summary/*` - 예산 요약 조회
-- `/api/usage-records/*` - 사용 내역 관리 (review, audit-logs)
-- `/api/points-overview/*` - 포인트 현황 조회
-- `/api/organizations/*` - 조직 관리
-- `/api/divisions/*` - 본부 관리
-- `/api/teams/*` - 팀 관리
-- `/api/notifications/*` - 푸시 알림 (subscriptions, send, logs)
-- `/api/settings/*` - 설정 관리
-- `/api/holidays/*` - 공휴일 관리
-- `/api/monthly/*` - 월간 음료
-- `/api/lunch-groups/*` - 점심조 관리
-- `/api/slack/*` - Slack 정산 요청 알림
+API routes follow REST conventions in `app/api/` for each app:
 
-### User App
-- `/api/auth/*` - 사용자 인증
-- `/api/users/*` - 사용자 정보 조회
-- `/api/meals/*` - 식사 데이터 조회/입력
-- `/api/points/*` - 포인트 관리 (welfare, activity, dashboard, members, me, lookup)
-- `/api/restaurants/*` - 식당 목록
-- `/api/scan-receipt/*` - 영수증 스캔 (Gemini AI)
-- `/api/notifications/*` - 푸시 알림
-- `/api/settings/*` - 사용자 설정
-- `/api/monthly/*` - 월간 음료 신청
-- `/api/lunch-group/*` - 점심조
-- `/api/holidays/*` - 공휴일 조회
-- `/api/google-sheets/*` - Google Sheets 연동
-- `/api/calendar/*` - 캘린더 연동
+- **Admin**: auth, members, member-statuses, meal-logs, stats, export/import (Excel), budget-allocations, budget-summary, usage-records, points-overview, organizations/divisions/teams, notifications, settings, holidays, monthly, lunch-groups, settlement, slack
+- **User**: auth, users, meals, points (welfare/activity/dashboard/lookup), restaurants, scan-receipt (Gemini AI), notifications, settings, monthly, lunch-group, holidays, google-sheets, calendar
 
 ### Supabase RPC
-월별 통계는 `get_user_monthly_stats` RPC 함수로 집계 (DB 레벨 계산)
+Monthly statistics are aggregated via `get_user_monthly_stats` RPC function (DB-level calculation)
 
 ## Gotchas
 
-### Excel 라이브러리
+### Excel Libraries
 - **Import/parsing:** `xlsx` package (`lib/excel-parser.ts`)
 - **Export/generation:** `exceljs` package
 
 ### Motion (Animations)
 Package is `motion` (v12), NOT `framer-motion`. Import: `import { motion, AnimatePresence } from "motion/react"`
 
+**User app layout:** Uses `AnimatePresence mode="wait" key={pathname}` for page transitions, causing full mount/unmount on navigation. Combined with `reactStrictMode: true`, components may mount multiple times. Use module-level variables (not React state) to deduplicate one-time effects like notification dialogs.
+
 ### Additional Animation/UI Libraries
 - **User app:** `gsap` (scroll animations), `canvas-confetti` (celebration effects), `react-snowfall`
 - **Admin app:** `@dnd-kit/core` + `@dnd-kit/sortable` (drag & drop), `es-hangul` (Korean text utils), `sonner` (toast)
 
-### 누락 체크 로직 (`/api/stats/incomplete-users`)
-입력 누락 판별 시 **제외되는 조건**:
-- 개별식사, 연차, 휴무, 휴가, 반차, 재택
-- 근태가 '근무' 또는 '출근'이면 식사 입력 없어도 완료 처리
+### Incomplete Entry Check (`/api/stats/incomplete-users`)
+Conditions **excluded** from missing entry detection:
+- Individual meal, annual leave, day off, vacation, half-day, remote work
+- If attendance is '근무' or '출근', treated as complete even without meal entry
 
-### 시간대
-모든 날짜는 KST 기준. `@repo/utils`의 dayjs 유틸리티 사용 필수
+### Timezone
+All dates are KST-based. Must use `@repo/utils` dayjs utilities.
 
-### Build 설정
+### Build Config
 Both apps set `ignoreBuildErrors: true` (TS) and `ignoreDuringBuilds: true` (ESLint) in next.config. **Always run `pnpm check-types` and `pnpm lint` manually** — build won't catch errors.
 
 ### Testing

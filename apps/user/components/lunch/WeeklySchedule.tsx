@@ -79,16 +79,12 @@ const WeeklySchedule = ({ isLoading }: WeeklyScheduleProps) => {
     }`}>
       {daysWithData.map((day) => {
         const dayData = schedulesByDay[day.value] ?? { members: [], labels: [] };
-        const totalItems = dayData.members.length + dayData.labels.length;
 
         return (
           <Popover key={day.value}>
             <PopoverTrigger asChild>
               <button className="w-full rounded-xl p-2.5 text-center transition-colors group bg-gray-50 hover:bg-gray-100">
-                <p className="text-[10px] text-gray-400 mb-0.5">{day.label}</p>
-                <p className="text-[11px] font-medium text-gray-700">
-                  {totalItems}명
-                </p>
+                <p className="text-xs font-medium text-gray-700">{day.label}</p>
               </button>
             </PopoverTrigger>
             <PopoverContent className="w-64 p-0 rounded-xl border border-gray-100 shadow-lg" align="center">

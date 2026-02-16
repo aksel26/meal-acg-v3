@@ -1,7 +1,6 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Bell, Search, Calendar as CalendarIcon, Menu } from "lucide-react";
 import dayjs from "dayjs";
 import "dayjs/locale/ko";
 
@@ -15,8 +14,8 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
   "/lunch-groups": { title: "점심조 관리", subtitle: "점심조 구성 및 배정 관리" },
   "/holidays": { title: "공휴일 관리", subtitle: "공휴일 및 휴무일 설정" },
   "/settings": { title: "식대 기본금 설정", subtitle: "월별 지원금 및 시스템 설정" },
-  "/export": { title: "엑셀 내보내기", subtitle: "데이터 다운로드 및 보고서 생성" },
-  "/import": { title: "엑셀 가져오기", subtitle: "데이터 업로드" },
+  "/export": { title: "엑셀 내보내기", subtitle: "식대 데이터를 엑셀 파일로 내보냅니다. 원본 양식과 동일한 형식으로 생성됩니다." },
+  "/import": { title: "식대 데이터 Import", subtitle: "Excel 파일에서 식대 데이터를 가져옵니다." },
   "/organization": { title: "조직 구성 관리", subtitle: "조직의 본부, 팀, 멤버를 관리합니다" },
   "/member-status": { title: "조직원 현황", subtitle: "멤버별 상태(휴직, 파견, 퇴사 등) 이력을 관리합니다" },
   "/budget": { title: "예산 할당 관리", subtitle: "기간별 복지포인트 및 활동비를 멤버에게 할당합니다" },
@@ -28,13 +27,12 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
 export default function Header() {
   const pathname = usePathname();
   const pageInfo = pageTitles[pathname] ?? pageTitles["/"] ?? { title: "대시보드", subtitle: "" };
-  const today = dayjs();
-  console.log("🔍 ~ Header ~ apps/admin/components/Header.tsx:39 ~ pageInfo:", pageInfo);
+
   return (
     <header className="z-10 flex w-full items-center justify-between px-6 py-4">
       {/* Mobile menu button */}
       {/* <div className="flex items-center gap-4 lg:hidden">
-        <button className="flex items-center justify-center rounded-lg p-2 text-slate-500 hover:bg-white/50">
+        <button className="flex items-center justify-center rounded-md p-2 text-slate-500 hover:bg-white/50">
           <Menu className="h-5 w-5" />
         </button>
       </div> */}
@@ -52,7 +50,7 @@ export default function Header() {
           <input
             type="text"
             placeholder="검색..."
-            className="h-10 w-full rounded-xl border-none bg-white/60 pl-10 pr-4 text-sm text-slate-700 shadow-sm ring-1 ring-white/60 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#135bec]/20"
+            className="h-10 w-full rounded-lg border-none bg-white/60 pl-10 pr-4 text-sm text-slate-700 shadow-sm ring-1 ring-white/60 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#135bec]/20"
           />
         </div> */}
       </div>

@@ -48,7 +48,7 @@ function LoginForm() {
   };
 
   return (
-    <div className="rounded-2xl border border-slate-800/50 bg-slate-800/50 p-8 shadow-2xl backdrop-blur-xl">
+    <div className="rounded-xl border border-slate-800/50 bg-slate-800/50 p-8 shadow-2xl backdrop-blur-xl">
       <div className="mb-6 text-center">
         <h2 className="text-xl font-bold text-white">로그인</h2>
         <p className="mt-1 text-sm text-slate-400">
@@ -73,7 +73,7 @@ function LoginForm() {
             onChange={(e) => setLoginId(e.target.value)}
             required
             disabled={isLoading}
-            className="w-full rounded-xl border border-slate-700 bg-slate-900/50 px-4 py-3 text-white placeholder:text-slate-500 transition-all focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20 disabled:opacity-50"
+            className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-3 text-white placeholder:text-slate-500 transition-all focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20 disabled:opacity-50"
           />
         </div>
 
@@ -94,7 +94,7 @@ function LoginForm() {
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={isLoading}
-              className="w-full rounded-xl border border-slate-700 bg-slate-900/50 px-4 py-3 pr-12 text-white placeholder:text-slate-500 transition-all focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20 disabled:opacity-50"
+              className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-3 pr-12 text-white placeholder:text-slate-500 transition-all focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20 disabled:opacity-50"
             />
             <button
               type="button"
@@ -114,7 +114,7 @@ function LoginForm() {
         <button
           type="submit"
           disabled={isLoading}
-          className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-amber-500/25 transition-all hover:from-amber-400 hover:to-amber-500 hover:shadow-amber-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="group flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-amber-500/25 transition-all hover:from-amber-400 hover:to-amber-500 hover:shadow-amber-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? (
             <>
@@ -135,7 +135,7 @@ function LoginForm() {
 
 function LoginFormSkeleton() {
   return (
-    <div className="rounded-2xl border border-slate-800/50 bg-slate-800/50 p-8 shadow-2xl backdrop-blur-xl">
+    <div className="rounded-xl border border-slate-800/50 bg-slate-800/50 p-8 shadow-2xl backdrop-blur-xl">
       <div className="mb-6 text-center">
         <div className="mx-auto h-6 w-20 animate-pulse rounded bg-slate-700" />
         <div className="mx-auto mt-2 h-4 w-40 animate-pulse rounded bg-slate-700" />
@@ -143,13 +143,13 @@ function LoginFormSkeleton() {
       <div className="space-y-5">
         <div className="space-y-2">
           <div className="h-4 w-12 animate-pulse rounded bg-slate-700" />
-          <div className="h-12 w-full animate-pulse rounded-xl bg-slate-700" />
+          <div className="h-12 w-full animate-pulse rounded-lg bg-slate-700" />
         </div>
         <div className="space-y-2">
           <div className="h-4 w-16 animate-pulse rounded bg-slate-700" />
-          <div className="h-12 w-full animate-pulse rounded-xl bg-slate-700" />
+          <div className="h-12 w-full animate-pulse rounded-lg bg-slate-700" />
         </div>
-        <div className="h-12 w-full animate-pulse rounded-xl bg-slate-700" />
+        <div className="h-12 w-full animate-pulse rounded-lg bg-slate-700" />
       </div>
     </div>
   );

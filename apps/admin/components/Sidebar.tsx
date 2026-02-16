@@ -92,24 +92,28 @@ const navigation: NavigationItem[] = [
   {
     name: "설정",
     icon: Cog,
-    items: [
-      { name: "공휴일 관리", href: "/holidays", icon: CalendarDays },
-    ],
+    items: [{ name: "공휴일 관리", href: "/holidays", icon: CalendarDays }],
   },
 ];
 
-function NavItemComponent({ item, isActive }: { item: NavItem; isActive: boolean }) {
+function NavItemComponent({
+  item,
+  isActive,
+}: {
+  item: NavItem;
+  isActive: boolean;
+}) {
   return (
     <Link
       href={item.href}
       className={cn(
-        "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+        "group flex items-center gap-2.5 rounded-md px-3 py-2 text-xs font-medium transition-colors",
         isActive
-          ? "bg-[#135bec]/10 text-[#135bec]"
-          : "text-slate-500 hover:bg-white/50 hover:text-slate-900"
+          ? "bg-blue-50 text-blue-600"
+          : "text-slate-500 hover:bg-slate-100 hover:text-slate-900",
       )}
     >
-      <item.icon className="h-5 w-5 flex-shrink-0" />
+      <item.icon className="h-4 w-4 flex-shrink-0" />
       <span>{item.name}</span>
     </Link>
   );
@@ -124,7 +128,8 @@ function NavGroupComponent({
 }) {
   const hasActiveItem = group.items.some(
     (item) =>
-      pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
+      pathname === item.href ||
+      (item.href !== "/" && pathname.startsWith(item.href)),
   );
   const [isOpen, setIsOpen] = useState(hasActiveItem);
 
@@ -134,19 +139,19 @@ function NavGroupComponent({
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+          "flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-xs font-medium transition-colors",
           hasActiveItem
-            ? "text-[#135bec]"
-            : "text-slate-500 hover:bg-white/50 hover:text-slate-900"
+            ? "text-blue-600"
+            : "text-slate-500 hover:bg-slate-100 hover:text-slate-900",
         )}
       >
-        <group.icon className="h-5 w-5 flex-shrink-0" />
+        <group.icon className="h-4 w-4 flex-shrink-0" />
         <span className="flex-1 text-left">{group.name}</span>
         <ChevronDown
           className={cn(
             "h-4 w-4 transition-transform duration-200",
             isOpen ? "rotate-180" : "",
-            hasActiveItem ? "text-[#135bec]/60" : "text-slate-400"
+            hasActiveItem ? "text-blue-400" : "text-slate-400",
           )}
         />
       </button>
@@ -154,7 +159,7 @@ function NavGroupComponent({
       <div
         className={cn(
           "space-y-1 overflow-hidden pl-4 transition-all duration-200",
-          isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+          isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0",
         )}
       >
         {group.items.map((item) => {
@@ -166,13 +171,13 @@ function NavGroupComponent({
               key={item.name}
               href={item.href}
               className={cn(
-                "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors",
+                "flex items-center gap-2 rounded-md px-3 py-1.5 text-xs transition-colors",
                 isActive
-                  ? "bg-[#135bec]/10 text-[#135bec]"
-                  : "text-slate-500 hover:bg-white/50 hover:text-slate-900"
+                  ? "bg-blue-50 text-blue-600"
+                  : "text-slate-500 hover:bg-slate-100 hover:text-slate-900",
               )}
             >
-              <item.icon className="h-4 w-4 flex-shrink-0" />
+              <item.icon className="h-3.5 w-3.5 flex-shrink-0" />
               <span>{item.name}</span>
             </Link>
           );
@@ -187,12 +192,12 @@ export default function Sidebar() {
   const { user, logout } = useAuth();
 
   return (
-    <aside className="glass-sidebar z-20 flex w-64 flex-col justify-between px-4 py-6">
+    <aside className="z-20 flex w-56 flex-col justify-between border-r border-slate-200 bg-white px-3 py-5">
       {/* Top section */}
       <div className="flex flex-col gap-6">
         {/* Logo Area */}
         <Link href="/" className="flex items-center gap-3 px-2">
-          <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#b8d0ff] to-[#ffc39a] text-white shadow-lg">
+          <div className="relative flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 text-white">
             <Image
               src="/acg_ci_white.png"
               alt="ACG Logo"
@@ -201,8 +206,8 @@ export default function Sidebar() {
               className="h-3 w-8"
             />
           </div>
-          <h1 className="text-lg font-medium tracking-tight text-slate-900">
-            식대 관리 Admin
+          <h1 className="text-base font-medium tracking-tight text-slate-900">
+            비용 관리 Admin
           </h1>
         </Link>
 
@@ -211,30 +216,40 @@ export default function Sidebar() {
           {navigation.map((item) => {
             if (isNavGroup(item)) {
               return (
-                <NavGroupComponent key={item.name} group={item} pathname={pathname} />
+                <NavGroupComponent
+                  key={item.name}
+                  group={item}
+                  pathname={pathname}
+                />
               );
             }
             const isActive =
               pathname === item.href ||
               (item.href !== "/" && pathname.startsWith(item.href));
-            return <NavItemComponent key={item.name} item={item} isActive={isActive} />;
+            return (
+              <NavItemComponent
+                key={item.name}
+                item={item}
+                isActive={isActive}
+              />
+            );
           })}
         </nav>
       </div>
 
       {/* User Profile Bottom */}
       <div className="flex flex-col gap-4">
-        <div className="relative h-[1px] w-full bg-gradient-to-r from-transparent via-slate-300 to-transparent" />
+        <div className="h-[1px] w-full bg-slate-200" />
 
-        <div className="flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-white/60">
-          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-gradient-to-br from-[#135bec] to-[#a855f7] text-sm font-bold text-white shadow-sm">
+        <div className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-slate-100">
+          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-blue-600 text-sm font-bold text-white">
             {user?.fullName?.charAt(0) || "A"}
           </div>
           <div className="flex flex-col">
-            <p className="text-sm font-bold text-slate-900">
+            <p className="text-xs font-bold text-slate-900">
               {user?.fullName || "Admin"}
             </p>
-            <p className="text-xs text-slate-500">
+            <p className="text-[11px] text-slate-500">
               {user?.role === "admin" ? "관리자" : "사용자"}
             </p>
           </div>
@@ -242,7 +257,7 @@ export default function Sidebar() {
 
         <button
           onClick={logout}
-          className="flex w-full items-center justify-start gap-2 rounded-xl bg-white/40 px-4 py-3 text-sm font-medium text-slate-500 transition-all hover:bg-rose-50 hover:text-rose-600"
+          className="flex w-full items-center justify-start gap-2 rounded-lg border border-slate-200 px-3 py-2.5 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
         >
           <LogOut className="h-4 w-4" />
           <span>로그아웃</span>

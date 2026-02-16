@@ -18,19 +18,19 @@
   --color-primary-50: oklch(0.97 0.01 250);
   --color-primary-100: oklch(0.93 0.03 250);
   --color-primary-200: oklch(0.87 0.06 250);
-  --color-primary-300: oklch(0.78 0.10 250);
+  --color-primary-300: oklch(0.78 0.1 250);
   --color-primary-400: oklch(0.68 0.15 250);
-  --color-primary-500: oklch(0.55 0.20 250);
+  --color-primary-500: oklch(0.55 0.2 250);
   --color-primary-600: oklch(0.48 0.22 250);
-  --color-primary-700: oklch(0.40 0.20 250);
+  --color-primary-700: oklch(0.4 0.2 250);
   --color-primary-800: oklch(0.33 0.16 250);
   --color-primary-900: oklch(0.28 0.12 250);
 
   /* Accent Colors - Warm Coral & Gold */
   --color-accent-coral: oklch(0.72 0.18 25);
-  --color-accent-peach: oklch(0.88 0.10 50);
-  --color-accent-gold: oklch(0.80 0.12 85);
-  --color-accent-mint: oklch(0.85 0.10 165);
+  --color-accent-peach: oklch(0.88 0.1 50);
+  --color-accent-gold: oklch(0.8 0.12 85);
+  --color-accent-mint: oklch(0.85 0.1 165);
 
   /* Neutral Tones - Warm Grays */
   --color-neutral-50: oklch(0.985 0.002 250);
@@ -41,7 +41,7 @@
   --color-neutral-500: oklch(0.555 0.015 250);
   --color-neutral-600: oklch(0.445 0.015 250);
   --color-neutral-700: oklch(0.365 0.012 250);
-  --color-neutral-800: oklch(0.285 0.010 250);
+  --color-neutral-800: oklch(0.285 0.01 250);
   --color-neutral-900: oklch(0.215 0.008 250);
 
   /* Glassmorphism */
@@ -53,7 +53,7 @@
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.10);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
   --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.12);
   --shadow-glow: 0 0 40px rgba(79, 70, 229, 0.15);
 
@@ -92,7 +92,8 @@ html {
 }
 
 body {
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     oklch(0.97 0.015 250) 0%,
     oklch(0.96 0.02 280) 50%,
     oklch(0.97 0.015 220) 100%
@@ -116,78 +117,99 @@ body {
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  box-shadow:
+    var(--shadow-lg),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
 }
 
 /* Premium Gradient Backgrounds */
 .gradient-primary {
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     oklch(0.58 0.22 255) 0%,
     oklch(0.52 0.24 280) 100%
   );
 }
 
 .gradient-soft {
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     oklch(0.95 0.02 250) 0%,
     oklch(0.93 0.03 280) 100%
   );
 }
 
 .gradient-warm {
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     oklch(0.92 0.06 30) 0%,
-    oklch(0.90 0.08 50) 100%
+    oklch(0.9 0.08 50) 100%
   );
 }
 
 .gradient-cool {
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     oklch(0.93 0.05 220) 0%,
     oklch(0.91 0.06 200) 100%
   );
 }
 
 .gradient-success {
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     oklch(0.75 0.18 145) 0%,
-    oklch(0.70 0.20 160) 100%
+    oklch(0.7 0.2 160) 100%
   );
 }
 
 .gradient-mesh {
   background:
-    radial-gradient(ellipse at 20% 0%, oklch(0.92 0.06 280 / 0.4) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 100%, oklch(0.92 0.05 220 / 0.3) 0%, transparent 50%),
-    radial-gradient(ellipse at 0% 50%, oklch(0.94 0.04 50 / 0.2) 0%, transparent 50%),
+    radial-gradient(
+      ellipse at 20% 0%,
+      oklch(0.92 0.06 280 / 0.4) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 80% 100%,
+      oklch(0.92 0.05 220 / 0.3) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 0% 50%,
+      oklch(0.94 0.04 50 / 0.2) 0%,
+      transparent 50%
+    ),
     linear-gradient(135deg, oklch(0.98 0.01 250) 0%, oklch(0.96 0.02 280) 100%);
 }
 
 /* Premium Buttons */
 .btn-primary {
-  background: linear-gradient(135deg,
-    oklch(0.55 0.20 250) 0%,
+  background: linear-gradient(
+    135deg,
+    oklch(0.55 0.2 250) 0%,
     oklch(0.48 0.22 270) 100%
   );
   color: white;
   font-weight: 500;
   padding: 0.875rem 1.5rem;
   border-radius: var(--radius-xl);
-  box-shadow: 0 4px 14px oklch(0.55 0.20 250 / 0.35);
+  box-shadow: 0 4px 14px oklch(0.55 0.2 250 / 0.35);
   transition: all 0.3s var(--ease-out-expo);
   position: relative;
   overflow: hidden;
 }
 
 .btn-primary::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg,
-    oklch(0.60 0.18 250) 0%,
+  background: linear-gradient(
+    135deg,
+    oklch(0.6 0.18 250) 0%,
     oklch(0.52 0.22 270) 100%
   );
   opacity: 0;
@@ -196,7 +218,7 @@ body {
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px oklch(0.55 0.20 250 / 0.45);
+  box-shadow: 0 8px 24px oklch(0.55 0.2 250 / 0.45);
 }
 
 .btn-primary:hover::before {
@@ -210,7 +232,7 @@ body {
 .btn-secondary {
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(12px);
-  border: 1px solid oklch(0.90 0.02 250);
+  border: 1px solid oklch(0.9 0.02 250);
   color: oklch(0.35 0.08 250);
   font-weight: 500;
   padding: 0.875rem 1.5rem;
@@ -237,7 +259,7 @@ body {
 }
 
 .input-premium::placeholder {
-  color: oklch(0.60 0.01 250);
+  color: oklch(0.6 0.01 250);
 }
 
 .input-premium:focus {
@@ -254,7 +276,7 @@ body {
   -webkit-backdrop-filter: blur(20px);
   border-radius: var(--radius-2xl);
   border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: var(--shadow-md);
+  /* box-shadow: var(--shadow-md); */
   transition: all 0.4s var(--ease-out-expo);
 }
 
@@ -273,7 +295,8 @@ body {
 
 /* Stats Cards */
 .stat-card {
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     rgba(255, 255, 255, 0.9) 0%,
     rgba(255, 255, 255, 0.7) 100%
   );
@@ -291,15 +314,17 @@ body {
 }
 
 .stat-card-primary {
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     oklch(0.55 0.18 250) 0%,
-    oklch(0.48 0.20 270) 100%
+    oklch(0.48 0.2 270) 100%
   );
   color: white;
 }
 
 .stat-card-success {
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     oklch(0.72 0.16 155) 0%,
     oklch(0.65 0.18 165) 100%
   );
@@ -307,17 +332,19 @@ body {
 }
 
 .stat-card-warning {
-  background: linear-gradient(135deg,
-    oklch(0.80 0.14 75) 0%,
+  background: linear-gradient(
+    135deg,
+    oklch(0.8 0.14 75) 0%,
     oklch(0.75 0.16 65) 100%
   );
-  color: oklch(0.30 0.08 60);
+  color: oklch(0.3 0.08 60);
 }
 
 .stat-card-danger {
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     oklch(0.68 0.18 25) 0%,
-    oklch(0.62 0.20 15) 100%
+    oklch(0.62 0.2 15) 100%
   );
   color: white;
 }
@@ -335,23 +362,25 @@ body {
 }
 
 .nav-item-active {
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     oklch(0.94 0.04 250) 0%,
     oklch(0.92 0.05 270) 100%
   );
 }
 
 .nav-item-active::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -2px;
   left: 50%;
   transform: translateX(-50%);
   width: 24px;
   height: 3px;
-  background: linear-gradient(90deg,
-    oklch(0.55 0.20 250) 0%,
-    oklch(0.50 0.22 270) 100%
+  background: linear-gradient(
+    90deg,
+    oklch(0.55 0.2 250) 0%,
+    oklch(0.5 0.22 270) 100%
   );
   border-radius: var(--radius-full);
 }
@@ -367,17 +396,19 @@ body {
 }
 
 .calendar-day-selected {
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     oklch(0.94 0.05 250) 0%,
     oklch(0.92 0.06 270) 100%
   );
-  box-shadow: 0 2px 8px oklch(0.55 0.20 250 / 0.15);
+  box-shadow: 0 2px 8px oklch(0.55 0.2 250 / 0.15);
 }
 
 .calendar-day-today {
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     oklch(0.45 0.18 250) 0%,
-    oklch(0.40 0.20 270) 100%
+    oklch(0.4 0.2 270) 100%
   );
   color: white;
   font-weight: 600;
@@ -400,29 +431,33 @@ body {
 }
 
 .meal-card-breakfast {
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     oklch(0.95 0.06 55) 0%,
     oklch(0.92 0.08 45) 100%
   );
 }
 
 .meal-card-lunch {
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     oklch(0.94 0.05 250) 0%,
     oklch(0.91 0.07 260) 100%
   );
 }
 
 .meal-card-dinner {
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     oklch(0.93 0.06 280) 0%,
-    oklch(0.90 0.08 290) 100%
+    oklch(0.9 0.08 290) 100%
   );
 }
 
 /* Notice Banner */
 .notice-banner {
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     oklch(0.94 0.06 250) 0%,
     oklch(0.91 0.08 270) 100%
   );
@@ -460,11 +495,12 @@ body {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: linear-gradient(135deg,
-    oklch(0.55 0.20 250) 0%,
+  background: linear-gradient(
+    135deg,
+    oklch(0.55 0.2 250) 0%,
     oklch(0.48 0.22 270) 100%
   );
-  box-shadow: 0 6px 20px oklch(0.55 0.20 250 / 0.4);
+  box-shadow: 0 6px 20px oklch(0.55 0.2 250 / 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -474,7 +510,7 @@ body {
 
 .fab:hover {
   transform: scale(1.1);
-  box-shadow: 0 8px 28px oklch(0.55 0.20 250 / 0.5);
+  box-shadow: 0 8px 28px oklch(0.55 0.2 250 / 0.5);
 }
 
 .fab:active {
@@ -498,7 +534,7 @@ body {
 
 .badge-success {
   background: oklch(0.92 0.06 155);
-  color: oklch(0.40 0.15 155);
+  color: oklch(0.4 0.15 155);
 }
 
 .badge-warning {
@@ -554,12 +590,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: oklch(0.80 0.01 250);
+  background: oklch(0.8 0.01 250);
   border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.70 0.02 250);
+  background: oklch(0.7 0.02 250);
 }
 
 /* Focus Ring */
@@ -622,7 +658,8 @@ body {
 }
 
 @keyframes float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
   50% {
@@ -667,7 +704,7 @@ body {
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: oklch(0.50 0.01 250);
+  color: oklch(0.5 0.01 250);
 }
 
 /* Utility Classes */
@@ -683,9 +720,10 @@ body {
 
 .divider {
   height: 1px;
-  background: linear-gradient(90deg,
+  background: linear-gradient(
+    90deg,
     transparent 0%,
-    oklch(0.90 0.01 250) 50%,
+    oklch(0.9 0.01 250) 50%,
     transparent 100%
   );
 }

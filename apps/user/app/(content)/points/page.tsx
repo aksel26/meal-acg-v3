@@ -11,11 +11,7 @@ import {
 } from "@repo/ui/src/select";
 import { NumberTicker } from "@repo/ui/src/number-ticker";
 import { Check, ChevronRight, ListFilter, Plus } from "@repo/ui/icons";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@repo/ui/src/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/src/popover";
 import { motion } from "motion/react";
 import React, { useState, useEffect, useMemo } from "react";
 import NoDataIcon from "@/public/icons/noData.png";
@@ -419,7 +415,7 @@ export default function Points() {
                     <PointsGuideDialog />
                   </span>
                 </div>
-                <span className="flex items-center gap-0.5 text-xs text-gray-400">
+                <span className="flex items-center gap-0.5 text-sm text-blue-500/100">
                   팀별 활동비 내역
                   <ChevronRight className="w-4 h-4" />
                 </span>
@@ -542,8 +538,7 @@ export default function Points() {
             className="w-full py-3 bg-white rounded-xl text-sm font-medium text-blue-600 flex items-center justify-center gap-2 active:bg-gray-50 transition-colors"
             onClick={handleAddNewPoint}
           >
-            <Plus className="w-4 h-4" />
-            새 내역 추가
+            <Plus className="w-4 h-4" />새 내역 추가
           </button>
 
           {isLoading ? (
@@ -606,7 +601,8 @@ export default function Points() {
                     <div className="flex items-center justify-between mt-1.5">
                       <div className="flex items-center gap-2 text-xs text-gray-400">
                         <span>
-                          {d.month() + 1}.{String(d.date()).padStart(2, "0")} ({dow})
+                          {d.month() + 1}.{String(d.date()).padStart(2, "0")} (
+                          {dow})
                         </span>
                         <span
                           className={`px-1.5 py-px rounded text-[10px] font-medium ${
@@ -624,11 +620,15 @@ export default function Points() {
                           확인
                         </span>
                       ) : (
-                        <span className="text-[11px] text-gray-300">미확인</span>
+                        <span className="text-[11px] text-gray-300">
+                          미확인
+                        </span>
                       )}
                     </div>
                     {record.notes && (
-                      <p className="text-xs text-gray-400 mt-1">{record.notes}</p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {record.notes}
+                      </p>
                     )}
                   </div>
                 );

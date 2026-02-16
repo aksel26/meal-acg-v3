@@ -1,9 +1,8 @@
 "use client";
 import { BottomNavigation } from "@/components/BottomNavigation";
-const GachaMachine = dynamic(
-  () => import("@/components/lunch/GachaMachine"),
-  { ssr: false },
-);
+const GachaMachine = dynamic(() => import("@/components/lunch/GachaMachine"), {
+  ssr: false,
+});
 import LunchGroupList from "@/components/lunch/LunchGroupList";
 import { useLunchGroup } from "@/hooks/useLunchGroup";
 import { useUsers } from "@/hooks/useUsers";
@@ -103,7 +102,7 @@ const Lunch = () => {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-4 overflow-hidden"
+        className="bg-white rounded-2xl border border-gray-100 mb-4 overflow-hidden"
       >
         {/* 상단 헤더 */}
         <div className="px-5 py-4 border-b border-gray-50">

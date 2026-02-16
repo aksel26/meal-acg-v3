@@ -1,12 +1,12 @@
 /** 특이사항 상태별 배지 색상 */
 export const STATUS_COLORS: Record<string, string> = {
-  정상: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  육아휴직: "bg-pink-50 text-pink-700 border-pink-200",
-  병가: "bg-red-50 text-red-700 border-red-200",
-  재택근무: "bg-cyan-50 text-cyan-700 border-cyan-200",
-  파견: "bg-indigo-50 text-indigo-700 border-indigo-200",
-  휴직: "bg-amber-50 text-amber-700 border-amber-200",
-  퇴사: "bg-slate-100 text-slate-500 border-slate-300",
+  정상: "bg-emerald-50 text-emerald-600",
+  육아휴직: "bg-violet-100 text-violet-700",
+  병가: "bg-rose-100 text-rose-700",
+  재택근무: "bg-sky-100 text-sky-700",
+  파견: "bg-amber-100 text-amber-700",
+  휴직: "bg-orange-100 text-orange-700",
+  퇴사: "bg-slate-100 text-slate-400",
 };
 
 /** 정산 제외 대상 상태 */

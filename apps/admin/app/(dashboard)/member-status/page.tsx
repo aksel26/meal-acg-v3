@@ -3,10 +3,12 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@repo/ui/src/sonner";
 import { cn } from "@repo/ui/lib/utils";
 import { Button } from "@repo/ui/src/button";
 import { Input } from "@repo/ui/src/input";
+import { Textarea } from "@repo/ui/src/textarea";
+import { DatePicker } from "@repo/ui/src/date-picker";
 import { Label } from "@repo/ui/src/label";
 import { Badge } from "@repo/ui/src/badge";
 import {
@@ -35,6 +37,8 @@ import { SearchableDropdown } from "@repo/ui/src/searchable-dropdown";
 import {
   AlertTriangle,
   ArrowUpDown,
+  Eye,
+  EyeOff,
   History,
   Loader2,
   Pencil,
@@ -107,6 +111,7 @@ export default function MemberStatusPage() {
 
   // Dialog states
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [isEditMemberOpen, setIsEditMemberOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -206,7 +211,14 @@ export default function MemberStatusPage() {
     setValue: setAddFormValue,
     formState: { errors: addFormErrors },
   } = useForm<UserFormData>({
-    defaultValues: { fullName: "", loginId: "", password: "", email: "", memberRole: "팀원", internMonths: "" },
+    defaultValues: {
+      fullName: "",
+      loginId: "",
+      password: "",
+      email: "",
+      memberRole: "팀원",
+      internMonths: "",
+    },
   });
 
   const watchedMemberRole = watchAddForm("memberRole");
@@ -534,7 +546,7 @@ export default function MemberStatusPage() {
   return (
     <div className="flex h-[calc(100vh-10rem)] flex-col gap-6">
       {/* Filter Bar + Stats */}
-      <div className="relative z-20 flex flex-wrap items-center gap-x-6 gap-y-3 rounded-xl border border-slate-200/60 bg-white/50 px-5 py-3 backdrop-blur-sm">
+      <div className="relative z-20 flex flex-wrap items-center gap-x-6 gap-y-3 rounded-lg bg-white px-5 py-3">
         <SearchableDropdown
           items={allMembers ?? []}
           value={allMembers?.find((m) => m.full_name === searchInput)?.id ?? ""}
@@ -602,9 +614,9 @@ export default function MemberStatusPage() {
       </div>
 
       {/* Main Table */}
-      <div className="glass-panel min-h-0 flex-1 overflow-hidden rounded-2xl">
+      <div className="glass-panel min-h-0 flex-1 overflow-hidden rounded-xl">
         {isLoading ? (
-          <div className="divide-y divide-slate-100">
+          <div>
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="flex items-center gap-4 px-6 py-3">
                 {Array.from({ length: 8 }).map((_, j) => (
@@ -641,7 +653,14 @@ export default function MemberStatusPage() {
                   >
                     <span className="inline-flex items-center gap-1">
                       역할
-                      <ArrowUpDown className={cn("h-3 w-3", sortKey === "member_role" ? "text-[#135bec]" : "text-slate-300")} />
+                      <ArrowUpDown
+                        className={cn(
+                          "h-3 w-3",
+                          sortKey === "member_role"
+                            ? "text-[#135bec]"
+                            : "text-slate-300",
+                        )}
+                      />
                     </span>
                   </TableHead>
                   <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -653,7 +672,14 @@ export default function MemberStatusPage() {
                   >
                     <span className="inline-flex items-center gap-1">
                       팀
-                      <ArrowUpDown className={cn("h-3 w-3", sortKey === "team_name" ? "text-[#135bec]" : "text-slate-300")} />
+                      <ArrowUpDown
+                        className={cn(
+                          "h-3 w-3",
+                          sortKey === "team_name"
+                            ? "text-[#135bec]"
+                            : "text-slate-300",
+                        )}
+                      />
                     </span>
                   </TableHead>
                   <TableHead
@@ -662,7 +688,14 @@ export default function MemberStatusPage() {
                   >
                     <span className="inline-flex items-center gap-1">
                       특이사항
-                      <ArrowUpDown className={cn("h-3 w-3", sortKey === "current_status" ? "text-[#135bec]" : "text-slate-300")} />
+                      <ArrowUpDown
+                        className={cn(
+                          "h-3 w-3",
+                          sortKey === "current_status"
+                            ? "text-[#135bec]"
+                            : "text-slate-300",
+                        )}
+                      />
                     </span>
                   </TableHead>
                   <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -679,7 +712,7 @@ export default function MemberStatusPage() {
                   </TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody className="divide-y divide-slate-100/60">
                 {sortedMembers.map((row) => {
                   const displayStatus = row.current_status || "정상";
                   const colorClass =
@@ -715,9 +748,8 @@ export default function MemberStatusPage() {
                       </TableCell>
                       <TableCell className="text-center">
                         <Badge
-                          variant="outline"
                           className={cn(
-                            "cursor-pointer px-2 py-0.5 text-[11px] transition-all hover:ring-2 hover:ring-offset-1",
+                            "cursor-pointer border-0 px-2 py-0.5 text-[11px] transition-all hover:ring-2 hover:ring-offset-1",
                             colorClass,
                             row.current_status
                               ? "hover:ring-slate-300"
@@ -746,11 +778,15 @@ export default function MemberStatusPage() {
                             const newVal = e.target.value.trim();
                             const oldVal = noteMap.get(row.member_id!) || "";
                             if (newVal !== oldVal && row.member_id) {
-                              updateNoteMutation.mutate({ id: row.member_id, note: newVal });
+                              updateNoteMutation.mutate({
+                                id: row.member_id,
+                                note: newVal,
+                              });
                             }
                           }}
                           onKeyDown={(e) => {
-                            if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                            if (e.key === "Enter")
+                              (e.target as HTMLInputElement).blur();
                           }}
                           className="w-full rounded border-0 bg-transparent px-1.5 py-0.5 text-sm text-slate-600 outline-none focus:bg-white focus:ring-1 focus:ring-slate-300"
                           placeholder="-"
@@ -768,7 +804,7 @@ export default function MemberStatusPage() {
                               });
                               setIsDeleteOpen(true);
                             }}
-                            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                            className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
                             title="멤버 삭제"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -841,19 +877,32 @@ export default function MemberStatusPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="addPassword">비밀번호</Label>
-                <Input
-                  id="addPassword"
-                  type="password"
-                  placeholder="••••••••"
-                  className={
-                    addFormErrors.password
-                      ? "border-red-500 focus-visible:ring-red-500"
-                      : ""
-                  }
-                  {...register("password", {
-                    required: "비밀번호를 입력해주세요.",
-                  })}
-                />
+                <div className="relative">
+                  <Input
+                    id="addPassword"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    className={
+                      addFormErrors.password
+                        ? "border-red-500 focus-visible:ring-red-500 pr-10"
+                        : "pr-10"
+                    }
+                    {...register("password", {
+                      required: "비밀번호를 입력해주세요.",
+                    })}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
                 {addFormErrors.password && (
                   <p className="text-sm text-red-500">
                     {addFormErrors.password.message}
@@ -893,7 +942,7 @@ export default function MemberStatusPage() {
                     if (val !== "인턴") setAddFormValue("internMonths", "");
                   }}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="border border-slate-200 w-full">
                     <SelectValue placeholder="역할 선택" />
                   </SelectTrigger>
                   <SelectContent>
@@ -982,7 +1031,7 @@ export default function MemberStatusPage() {
             <div className="space-y-2">
               <Label>특이사항</Label>
               <Select value={formStatus} onValueChange={setFormStatus}>
-                <SelectTrigger>
+                <SelectTrigger className="border border-slate-200 w-full">
                   <SelectValue placeholder="특이사항 선택" />
                 </SelectTrigger>
                 <SelectContent>
@@ -998,32 +1047,32 @@ export default function MemberStatusPage() {
             {formStatus === "퇴사" ? (
               <div className="space-y-2">
                 <Label>퇴사일</Label>
-                <Input
-                  type="date"
+                <DatePicker
                   value={formStartDate}
-                  onChange={(e) => {
-                    setFormStartDate(e.target.value);
-                    setFormEndDate(e.target.value);
+                  onChange={(val) => {
+                    setFormStartDate(val);
+                    setFormEndDate(val);
                   }}
+                  placeholder="퇴사일 선택"
                 />
               </div>
             ) : (
               <>
                 <div className="space-y-2">
                   <Label>시작일</Label>
-                  <Input
-                    type="date"
+                  <DatePicker
                     value={formStartDate}
-                    onChange={(e) => setFormStartDate(e.target.value)}
+                    onChange={(val) => setFormStartDate(val)}
+                    placeholder="시작일 선택"
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label>종료일 (미입력 시 진행중)</Label>
-                  <Input
-                    type="date"
+                  <DatePicker
                     value={formEndDate}
-                    onChange={(e) => setFormEndDate(e.target.value)}
+                    onChange={(val) => setFormEndDate(val)}
+                    placeholder="종료일 선택"
                   />
                 </div>
               </>
@@ -1031,12 +1080,11 @@ export default function MemberStatusPage() {
 
             <div className="space-y-2">
               <Label>비고</Label>
-              <textarea
+              <Textarea
                 value={formNote}
                 onChange={(e) => setFormNote(e.target.value)}
                 placeholder="특이사항을 입력하세요"
                 rows={2}
-                className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               />
             </div>
           </div>
@@ -1078,7 +1126,7 @@ export default function MemberStatusPage() {
             <div className="space-y-2">
               <Label>특이사항</Label>
               <Select value={formStatus} onValueChange={setFormStatus}>
-                <SelectTrigger>
+                <SelectTrigger className="border border-slate-200 w-full">
                   <SelectValue placeholder="특이사항 선택" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1097,32 +1145,32 @@ export default function MemberStatusPage() {
                 {formStatus === "퇴사" ? (
                   <div className="space-y-2">
                     <Label>퇴사일</Label>
-                    <Input
-                      type="date"
+                    <DatePicker
                       value={formStartDate}
-                      onChange={(e) => {
-                        setFormStartDate(e.target.value);
-                        setFormEndDate(e.target.value);
+                      onChange={(val) => {
+                        setFormStartDate(val);
+                        setFormEndDate(val);
                       }}
+                      placeholder="퇴사일 선택"
                     />
                   </div>
                 ) : (
                   <>
                     <div className="space-y-2">
                       <Label>시작일</Label>
-                      <Input
-                        type="date"
+                      <DatePicker
                         value={formStartDate}
-                        onChange={(e) => setFormStartDate(e.target.value)}
+                        onChange={(val) => setFormStartDate(val)}
+                        placeholder="시작일 선택"
                       />
                     </div>
 
                     <div className="space-y-2">
                       <Label>종료일 (미입력 시 진행중)</Label>
-                      <Input
-                        type="date"
+                      <DatePicker
                         value={formEndDate}
-                        onChange={(e) => setFormEndDate(e.target.value)}
+                        onChange={(val) => setFormEndDate(val)}
+                        placeholder="종료일 선택"
                       />
                     </div>
                   </>
@@ -1130,19 +1178,18 @@ export default function MemberStatusPage() {
 
                 <div className="space-y-2">
                   <Label>비고</Label>
-                  <textarea
+                  <Textarea
                     value={formNote}
                     onChange={(e) => setFormNote(e.target.value)}
                     placeholder="특이사항을 입력하세요"
                     rows={2}
-                    className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   />
                 </div>
               </>
             )}
 
             {formStatus === "정상" && (
-              <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
+              <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
                 <p className="text-sm text-amber-700">
                   정상으로 변경하면 현재 특이사항 기록이 삭제됩니다.
@@ -1185,7 +1232,7 @@ export default function MemberStatusPage() {
           </DialogHeader>
 
           <div className="space-y-3 py-2">
-            <div className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 p-3">
+            <div className="flex items-start gap-2 rounded-md border border-rose-200 bg-rose-50 p-3">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
               <p className="text-sm text-rose-700">
                 {deletingItem?.memberId
@@ -1195,7 +1242,7 @@ export default function MemberStatusPage() {
             </div>
 
             {deletingItem && (
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-1">
+              <div className="rounded-md border border-slate-200 bg-slate-50 p-3 space-y-1">
                 <p className="text-sm text-slate-600">
                   <span className="font-medium text-slate-700">이름:</span>{" "}
                   {deletingItem.name}
@@ -1215,7 +1262,9 @@ export default function MemberStatusPage() {
             <Button
               variant="destructive"
               onClick={handleDeleteConfirm}
-              disabled={deleteStatus.isPending || deleteMemberMutation.isPending}
+              disabled={
+                deleteStatus.isPending || deleteMemberMutation.isPending
+              }
             >
               {deleteStatus.isPending || deleteMemberMutation.isPending ? (
                 <>
@@ -1241,7 +1290,9 @@ export default function MemberStatusPage() {
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>인원 정보 수정</DialogTitle>
-            <DialogDescription>인원의 기본 정보를 수정합니다.</DialogDescription>
+            <DialogDescription>
+              인원의 기본 정보를 수정합니다.
+            </DialogDescription>
           </DialogHeader>
           {editingMember && (
             <div className="space-y-4 py-4">
@@ -1282,7 +1333,8 @@ export default function MemberStatusPage() {
                     setEditingMember({
                       ...editingMember,
                       member_role: val,
-                      intern_months: val !== "인턴" ? "" : editingMember.intern_months,
+                      intern_months:
+                        val !== "인턴" ? "" : editingMember.intern_months,
                     })
                   }
                 >
@@ -1357,7 +1409,7 @@ export default function MemberStatusPage() {
             {isHistoryLoading ? (
               <div className="space-y-3">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="space-y-2 rounded-lg border p-3">
+                  <div key={i} className="space-y-2 rounded-md border p-3">
                     <div className="h-4 w-24 animate-pulse rounded bg-slate-100" />
                     <div className="h-3 w-full animate-pulse rounded bg-slate-100" />
                   </div>
@@ -1381,12 +1433,14 @@ export default function MemberStatusPage() {
                   return (
                     <div
                       key={record.id}
-                      className="rounded-lg border border-slate-200 bg-white p-3"
+                      className="rounded-md border border-slate-200 bg-white p-3"
                     >
                       <div className="flex items-center justify-between">
                         <Badge
-                          variant="outline"
-                          className={cn("px-2 py-0.5 text-[11px]", colorClass)}
+                          className={cn(
+                            "border-0 px-2 py-0.5 text-[11px]",
+                            colorClass,
+                          )}
                         >
                           {record.status}
                         </Badge>

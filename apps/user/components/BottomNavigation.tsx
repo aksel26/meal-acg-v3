@@ -51,7 +51,12 @@ export function BottomNavigation() {
   };
 
   return (
-    <nav className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-lg z-50 px-4 pb-2">
+    <motion.nav
+      initial={{ y: 100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ type: "spring", stiffness: 300, damping: 25, delay: 0.3 }}
+      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg z-50 px-4 pb-2"
+    >
       {/* Glass Background */}
       <div className="glass-card-elevated rounded-2xl px-2 py-1.5 shadow-xl">
         <div className="flex justify-around items-center pb-safe">
@@ -64,37 +69,18 @@ export function BottomNavigation() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.92 }}
                 onClick={() => handleNavigation(item.id)}
-                className="relative flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-colors duration-200"
+                className="relative flex flex-col items-center justify-center py-2 px-3 rounded-xl"
               >
                 {/* Active Background */}
                 {isActive && (
-                  <motion.div
-                    layoutId="activeNavTab"
-                    className="absolute inset-0 bg-gradient-to-br from-[oklch(0.94_0.05_250)] to-[oklch(0.91_0.07_270)] rounded-xl"
-                    transition={{
-                      type: "spring",
-                      bounce: 0.2,
-                      duration: 0.6,
-                    }}
-                  />
-                )}
-
-                {/* Active Indicator Line */}
-                {isActive && (
-                  <motion.div
-                    layoutId="activeNavIndicator"
-                    className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-6 h-1 bg-gradient-to-r from-[oklch(0.55_0.18_250)] to-[oklch(0.50_0.20_270)] rounded-full"
-                    transition={{
-                      type: "spring",
-                      bounce: 0.3,
-                      duration: 0.5,
-                    }}
-                  />
+                  <div className="absolute inset-0 bg-gradient-to-br from-[oklch(0.94_0.05_250)] to-[oklch(0.91_0.07_270)] rounded-xl" />
                 )}
 
                 {/* Icon */}
                 <motion.div
-                  animate={isActive ? { scale: 1.1, y: -1 } : { scale: 1, y: 0 }}
+                  animate={
+                    isActive ? { scale: 1.1, y: -1 } : { scale: 1, y: 0 }
+                  }
                   transition={{ duration: 0.2 }}
                   className="relative z-10 mb-0.5"
                 >
@@ -127,6 +113,6 @@ export function BottomNavigation() {
 
       {/* Home Indicator Safe Area */}
       <div className="h-5" />
-    </nav>
+    </motion.nav>
   );
 }

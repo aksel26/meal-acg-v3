@@ -14,7 +14,7 @@ import { Button } from "@repo/ui/src/button";
 import { Badge } from "@repo/ui/src/badge";
 import { Checkbox } from "@repo/ui/src/checkbox";
 import { cn } from "@repo/ui/lib/utils";
-import { toast } from "sonner";
+import { toast } from "@repo/ui/src/sonner";
 import {
   Upload,
   FileSpreadsheet,
@@ -54,9 +54,9 @@ interface ImportPointsDialogProps {
 function typeBadgeStyle(type: string) {
   switch (type) {
     case "복지포인트":
-      return "bg-emerald-50 text-emerald-700 border-emerald-200";
+      return "bg-blue-50/60 text-blue-600 border-transparent";
     case "활동비":
-      return "bg-amber-50 text-amber-700 border-amber-200";
+      return "bg-amber-50 text-amber-500 border-transparent";
     default:
       return "bg-slate-50 text-slate-600 border-slate-200";
   }
@@ -288,7 +288,7 @@ export function ImportPointsDialog({
             <div
               {...getRootProps()}
               className={cn(
-                "border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all",
+                "border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-all",
                 isDragActive
                   ? "border-blue-400 bg-blue-50"
                   : "border-slate-300 hover:border-slate-400 hover:bg-slate-50"
@@ -309,7 +309,7 @@ export function ImportPointsDialog({
                 </>
               )}
             </div>
-            <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3">
               <p className="text-xs font-medium text-slate-500 mb-1">
                 엑셀 컬럼 형식 (&quot;Raw data&quot; 시트)
               </p>
@@ -355,14 +355,14 @@ export function ImportPointsDialog({
             </div>
 
             {parseErrors.length > 0 && (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-2">
+              <div className="rounded-md border border-amber-200 bg-amber-50 p-2">
                 <p className="text-xs font-medium text-amber-700">
                   파싱 경고: {parseErrors.join(", ")}
                 </p>
               </div>
             )}
 
-            <div className="flex-1 min-h-0 overflow-auto rounded-lg border border-slate-200">
+            <div className="flex-1 min-h-0 overflow-auto rounded-md border border-slate-200">
               <table className="w-full text-[12px]">
                 <thead className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50">
                   <tr>
@@ -529,7 +529,7 @@ export function ImportPointsDialog({
             <div className="space-y-4 py-2">
               <div
                 className={cn(
-                  "flex items-start gap-3 rounded-lg border p-4",
+                  "flex items-start gap-3 rounded-md border p-4",
                   importResult.success
                     ? "border-emerald-200 bg-emerald-50"
                     : "border-rose-200 bg-rose-50"
@@ -570,7 +570,7 @@ export function ImportPointsDialog({
               </div>
 
               {importResult.errors.length > 0 && (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                <div className="rounded-md border border-amber-200 bg-amber-50 p-3">
                   <p className="text-sm font-medium text-amber-700 mb-2">
                     오류 목록 ({importResult.errors.length}건)
                   </p>

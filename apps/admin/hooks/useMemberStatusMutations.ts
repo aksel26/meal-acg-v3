@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
-import { toast } from "sonner";
+import { toast } from "@repo/ui/src/sonner";
 
 /** 특이사항 변경 시 관련 쿼리 일괄 무효화 (대시보드 총 인원, 통계 등) */
 function invalidateStatusRelated(queryClient: ReturnType<typeof useQueryClient>) {

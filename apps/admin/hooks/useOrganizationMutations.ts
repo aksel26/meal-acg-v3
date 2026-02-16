@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
-import { toast } from "sonner";
+import { toast } from "@repo/ui/src/sonner";
 
 // ── Division Mutations ──
 

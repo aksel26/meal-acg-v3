@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Send, AlertCircle, Check, X, Loader2, Mail, User } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@repo/ui/src/sonner";
 import { cn } from "@repo/ui/lib/utils";
 import { Button } from "@repo/ui/src/button";
 import {
@@ -128,7 +128,7 @@ export function SlackNotifyDialog({
 
           {/* Warning for users without email */}
           {usersWithoutEmail.length > 0 && (
-            <div className="rounded-lg bg-amber-50 p-3">
+            <div className="rounded-md bg-amber-50 p-3">
               <div className="flex items-start gap-2">
                 <AlertCircle className="h-4 w-4 mt-0.5 text-amber-600" />
                 <div className="flex-1">
@@ -144,7 +144,7 @@ export function SlackNotifyDialog({
           )}
 
           {/* User list or results */}
-          <div className="max-h-60 overflow-y-auto rounded-lg border border-slate-200">
+          <div className="max-h-60 overflow-y-auto rounded-md border border-slate-200">
             {results ? (
               // Results view
               <div className="divide-y divide-slate-100">

@@ -9,7 +9,7 @@ import {
   FileSpreadsheet,
   Archive,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@repo/ui/src/sonner";
 import { Button } from "@repo/ui/src/button";
 import {
   Dialog,
@@ -229,7 +229,7 @@ export function ExportProgressDialog({
           </div>
 
           {/* Member list with status */}
-          <div className="max-h-60 overflow-y-auto rounded-lg border border-slate-200">
+          <div className="max-h-60 overflow-y-auto rounded-md border border-slate-200">
             <div className="divide-y divide-slate-100">
               {exportStates.map((state) => (
                 <div
@@ -247,7 +247,7 @@ export function ExportProgressDialog({
 
           {/* Summary when completed */}
           {isCompleted && (
-            <div className="rounded-lg bg-slate-50 p-3">
+            <div className="rounded-md bg-slate-50 p-3">
               <div className="flex items-center gap-4 text-sm">
                 {successCount > 0 && (
                   <span className="flex items-center gap-1 text-emerald-600">

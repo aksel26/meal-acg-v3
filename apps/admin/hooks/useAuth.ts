@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores/authStore";
-import { toast } from "sonner";
+import { toast } from "@repo/ui/src/sonner";
 
 export function useAuth() {
   const router = useRouter();

@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Calendar } from "@repo/ui/src/calendar";
 import { ko } from "date-fns/locale";
-import { toast } from "sonner";
+import { toast } from "@repo/ui/src/sonner";
 import {
   Save,
   ChevronLeft,
@@ -197,7 +197,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-8">
       {/* 일일 식대 단가 설정 */}
-      <section className="glass-panel rounded-2xl p-6">
+      <section className="glass-panel rounded-xl p-6">
         <div className="mb-5 border-b border-slate-100 pb-4">
           <h2 className="text-lg font-bold text-slate-900">일일 식대 단가</h2>
           <p className="mt-1 text-sm text-slate-500">
@@ -206,7 +206,7 @@ export default function SettingsPage() {
         </div>
 
         {isLoading ? (
-          <div className="h-12 w-48 animate-pulse rounded-xl bg-slate-100" />
+          <div className="h-12 w-48 animate-pulse rounded-lg bg-slate-100" />
         ) : (
           <div className="flex flex-wrap items-end gap-4">
             <div className="flex-1 min-w-[200px] max-w-xs">
@@ -226,7 +226,7 @@ export default function SettingsPage() {
                   }
                   min={0}
                   step={1000}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 pr-12 text-lg font-semibold text-slate-900 transition-all focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 pr-12 text-lg font-semibold text-slate-900 transition-all focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
                 />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-400">
                   원/일
@@ -238,7 +238,7 @@ export default function SettingsPage() {
               onClick={handleSave}
               disabled={!hasChanges || updateMutation.isPending}
               className={cn(
-                "flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition-all",
+                "flex items-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold transition-all",
                 hasChanges
                   ? "bg-[#135bec]/5 text-[#135bec] hover:bg-[#135bec]/10"
                   : "cursor-not-allowed bg-slate-100 text-slate-400",
@@ -254,7 +254,7 @@ export default function SettingsPage() {
       {/* 월별 지원금 계산 & 연간 현황 */}
       <div className="grid grid-cols-12 gap-6">
         {/* 월별 지원금 계산 */}
-        <section className="col-span-6 glass-panel rounded-2xl p-6">
+        <section className="col-span-6 glass-panel rounded-xl p-6">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
             <div>
               <h2 className="text-lg font-bold text-slate-900">
@@ -266,10 +266,10 @@ export default function SettingsPage() {
             </div>
 
             {/* 월 선택 */}
-            <div className="flex items-center gap-1 rounded-xl bg-[#135bec]/5 p-1">
+            <div className="flex items-center gap-1 rounded-lg bg-[#135bec]/5 p-1">
               <button
                 onClick={handlePrevMonth}
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-[#135bec] transition-colors hover:bg-[#135bec]/10"
+                className="flex h-9 w-9 items-center justify-center rounded-md text-[#135bec] transition-colors hover:bg-[#135bec]/10"
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
@@ -278,7 +278,7 @@ export default function SettingsPage() {
               </span>
               <button
                 onClick={handleNextMonth}
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-[#135bec] transition-colors hover:bg-[#135bec]/10"
+                className="flex h-9 w-9 items-center justify-center rounded-md text-[#135bec] transition-colors hover:bg-[#135bec]/10"
               >
                 <ChevronRight className="h-5 w-5" />
               </button>
@@ -311,7 +311,7 @@ export default function SettingsPage() {
                   );
                   return isWeekend || isHoliday;
                 }}
-                className="rounded-xl"
+                className="rounded-lg"
               />
 
               {workdaysData?.holidays && workdaysData.holidays.length > 0 && (
@@ -319,7 +319,7 @@ export default function SettingsPage() {
                   {workdaysData.holidays.map((holiday) => (
                     <div
                       key={holiday.date}
-                      className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm"
+                      className="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2 text-sm"
                     >
                       <span className="text-slate-500">{holiday.date}</span>
                       <span className="text-slate-600">
@@ -338,14 +338,14 @@ export default function SettingsPage() {
                   {[...Array(4)].map((_, i) => (
                     <div
                       key={i}
-                      className="h-14 animate-pulse rounded-xl bg-slate-100"
+                      className="h-14 animate-pulse rounded-lg bg-slate-100"
                     />
                   ))}
                 </div>
               ) : (
                 <>
                   {/* 계산 공식 시각화 */}
-                  <div className="rounded-xl bg-slate-50 p-4">
+                  <div className="rounded-lg bg-slate-50 p-4">
                     <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
                       근무일 계산
                     </div>
@@ -371,7 +371,7 @@ export default function SettingsPage() {
                         <div className="text-xs text-slate-400">공휴일</div>
                       </div>
                       <Equal className="h-4 w-4 text-slate-300" />
-                      <div className="text-center rounded-lg bg-white px-3 py-1 shadow-sm ring-1 ring-slate-200">
+                      <div className="text-center rounded-md bg-white px-3 py-1 shadow-sm ring-1 ring-slate-200">
                         <div className="font-bold text-slate-900">
                           {workdaysData?.actualWorkdays || 0}
                         </div>
@@ -381,7 +381,7 @@ export default function SettingsPage() {
                   </div>
 
                   {/* 지원금 계산 */}
-                  <div className="rounded-xl bg-[#135bec]/5 p-4">
+                  <div className="rounded-lg bg-[#135bec]/5 p-4">
                     <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-[#135bec]/60">
                       총 지원금
                     </div>
@@ -401,7 +401,7 @@ export default function SettingsPage() {
                   {savedMonthData && (
                     <div
                       className={cn(
-                        "flex items-center justify-between rounded-xl p-4",
+                        "flex items-center justify-between rounded-lg p-4",
                         needsUpdate ? "bg-orange-50" : "bg-slate-50",
                       )}
                     >
@@ -436,7 +436,7 @@ export default function SettingsPage() {
                       !workdaysData?.actualWorkdays
                     }
                     className={cn(
-                      "flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold transition-all",
+                      "flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold transition-all",
                       workdaysData?.actualWorkdays
                         ? "bg-[#135bec]/5 text-[#135bec] hover:bg-[#135bec]/10"
                         : "cursor-not-allowed bg-slate-100 text-slate-400",
@@ -454,7 +454,7 @@ export default function SettingsPage() {
         </section>
 
         {/* 연간 현황 */}
-        <section className="col-span-6 glass-panel rounded-2xl p-6">
+        <section className="col-span-6 glass-panel rounded-xl p-6">
           <div className="mb-5 border-b border-slate-100 pb-4">
             <h2 className="text-lg font-bold text-slate-900">
               {currentYear}년 현황
@@ -475,9 +475,9 @@ export default function SettingsPage() {
                   key={month}
                   onClick={() => setCurrentMonth(month)}
                   className={cn(
-                    "relative rounded-xl p-3 text-center transition-all",
+                    "relative rounded-lg p-3 text-center transition-all",
                     isCurrentMonth
-                      ? "bg-[#135bec]/5 text-[#135bec] shadow-lg ring-1 ring-[#135bec]/20"
+                      ? "bg-[#135bec]/5 text-[#135bec] ring-1 ring-[#135bec]/20"
                       : isSaved
                         ? "bg-slate-50 text-slate-900 hover:bg-slate-100"
                         : "bg-white text-slate-400 ring-1 ring-slate-100 hover:ring-slate-200",
@@ -504,7 +504,7 @@ export default function SettingsPage() {
 
           {savedAllowances?.data &&
             Object.keys(savedAllowances.data).length > 0 && (
-              <div className="mt-6 rounded-xl bg-slate-50 px-4 py-4">
+              <div className="mt-6 rounded-lg bg-slate-50 px-4 py-4">
                 <div className="text-sm font-medium text-slate-500 mb-1">
                   연간 총 지원금
                 </div>

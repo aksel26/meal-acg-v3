@@ -24,12 +24,12 @@ import {
 } from "@repo/ui/src/dialog";
 import { Skeleton } from "@repo/ui/src/skeleton";
 import { SearchableDropdown } from "@repo/ui/src/searchable-dropdown";
-import { toast } from "sonner";
+import { DatePicker } from "@repo/ui/src/date-picker";
+import { toast } from "@repo/ui/src/sonner";
 import {
   ChevronLeft,
   ChevronRight,
   Trash2,
-  Search,
   X,
   ListPlus,
 } from "lucide-react";
@@ -54,13 +54,20 @@ interface MealFormData {
 /** 폼 UI 값 → DB 저장 값 매핑 */
 const mapFormValueToAttendance = (formValue: string): string | null => {
   switch (formValue) {
-    case "출근": return "근무";
-    case "개별식사": return "근무(개별식사 / 식사안함)";
-    case "재택": return "재택근무";
-    case "휴가": return "연차/휴무";
-    case "오전반차": return "오전 반차/휴무";
-    case "오후반차": return "오후 반차/휴무";
-    default: return formValue || null;
+    case "출근":
+      return "근무";
+    case "개별식사":
+      return "근무(개별식사 / 식사안함)";
+    case "재택":
+      return "재택근무";
+    case "휴가":
+      return "연차/휴무";
+    case "오전반차":
+      return "오전 반차/휴무";
+    case "오후반차":
+      return "오후 반차/휴무";
+    default:
+      return formValue || null;
   }
 };
 
@@ -110,7 +117,6 @@ function CalendarPageContent() {
   const [editingLog, setEditingLog] = useState<MealLog | null>(null);
   const [formData, setFormData] = useState<MealFormData>(initialFormData);
 
-
   // 일괄 입력 관련 state
   const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
   const [bulkExcludedIds, setBulkExcludedIds] = useState<string[]>([]);
@@ -151,10 +157,13 @@ function CalendarPageContent() {
 
   // Fetch holidays for current month
   const { data: holidays } = useQuery<Holiday[]>({
-    queryKey: queryKeys.holidays.byMonth(currentDate.year(), currentDate.month() + 1),
+    queryKey: queryKeys.holidays.byMonth(
+      currentDate.year(),
+      currentDate.month() + 1,
+    ),
     queryFn: async () => {
       const response = await fetch(
-        `/api/holidays?year=${currentDate.year()}&month=${currentDate.month() + 1}`
+        `/api/holidays?year=${currentDate.year()}&month=${currentDate.month() + 1}`,
       );
       if (!response.ok) throw new Error("Failed to fetch holidays");
       return response.json();
@@ -169,7 +178,6 @@ function CalendarPageContent() {
     });
     return map;
   }, [holidays]);
-
 
   // Fetch meal logs for selected user and month
   const { data: mealLogs, isLoading: isLoadingLogs } = useQuery<MealLog[]>({
@@ -347,7 +355,7 @@ function CalendarPageContent() {
     setBulkExcludedIds((prev) =>
       prev.includes(memberId)
         ? prev.filter((id) => id !== memberId)
-        : [...prev, memberId]
+        : [...prev, memberId],
     );
   };
 
@@ -398,7 +406,12 @@ function CalendarPageContent() {
         // 재택 관련
         if (value.includes("재택") || value.includes("홈")) return "재택";
         // 휴가/연차 관련
-        if (value.includes("휴가") || value.includes("연차") || value === "휴무") return "휴가";
+        if (
+          value.includes("휴가") ||
+          value.includes("연차") ||
+          value === "휴무"
+        )
+          return "휴가";
         // 오전반차
         if (value.includes("오전") && value.includes("반차")) return "오전반차";
         // 오후반차
@@ -487,7 +500,7 @@ function CalendarPageContent() {
       </div>
 
       {/* Calendar */}
-      <Card className="glass-panel border-0">
+      <Card className="glass-panel border-0 shadow-none">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>{currentDate.format("YYYY년 M월")}</CardTitle>
@@ -496,15 +509,15 @@ function CalendarPageContent() {
                 variant="outline"
                 size="sm"
                 onClick={() => setIsBulkDialogOpen(true)}
-                className="gap-1.5"
+                className="gap-1.5 h-9"
               >
                 <ListPlus className="h-4 w-4" />
                 일괄 입력
               </Button>
-              <Button variant="outline" size="icon" onClick={handlePrevMonth}>
+              <Button variant="outline" size="icon" className="h-9 w-9" onClick={handlePrevMonth}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="icon" onClick={handleNextMonth}>
+              <Button variant="outline" size="icon" className="h-9 w-9" onClick={handleNextMonth}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -549,27 +562,57 @@ function CalendarPageContent() {
                 attendance: string | null | undefined,
               ) => {
                 if (!attendance)
-                  return { bg: "bg-gray-100", text: "text-gray-600", border: "border-gray-200" };
+                  return {
+                    bg: "bg-gray-100",
+                    text: "text-gray-600",
+                    border: "border-gray-200",
+                  };
                 const lower = attendance.toLowerCase();
                 if (lower.includes("출근") || lower.includes("근무")) {
-                  return { bg: "bg-emerald-100", text: "text-emerald-700", border: "border-emerald-300" };
+                  return {
+                    bg: "bg-emerald-100",
+                    text: "text-emerald-700",
+                    border: "border-emerald-300",
+                  };
                 }
                 if (lower.includes("재택") || lower.includes("홈")) {
-                  return { bg: "bg-amber-100", text: "text-amber-700", border: "border-amber-300" };
+                  return {
+                    bg: "bg-amber-100",
+                    text: "text-amber-700",
+                    border: "border-amber-300",
+                  };
                 }
                 if (lower.includes("휴가") || lower.includes("연차")) {
-                  return { bg: "bg-sky-100", text: "text-sky-700", border: "border-sky-300" };
+                  return {
+                    bg: "bg-sky-100",
+                    text: "text-sky-700",
+                    border: "border-sky-300",
+                  };
                 }
                 if (lower.includes("반차")) {
-                  return { bg: "bg-violet-100", text: "text-violet-700", border: "border-violet-300" };
+                  return {
+                    bg: "bg-violet-100",
+                    text: "text-violet-700",
+                    border: "border-violet-300",
+                  };
                 }
                 if (lower.includes("개별")) {
-                  return { bg: "bg-slate-100", text: "text-slate-600", border: "border-slate-300" };
+                  return {
+                    bg: "bg-slate-100",
+                    text: "text-slate-600",
+                    border: "border-slate-300",
+                  };
                 }
-                return { bg: "bg-gray-100", text: "text-gray-600", border: "border-gray-200" };
+                return {
+                  bg: "bg-gray-100",
+                  text: "text-gray-600",
+                  border: "border-gray-200",
+                };
               };
 
-              const attendanceStyle = mealLog?.attendance ? getAttendanceStyle(mealLog.attendance) : null;
+              const attendanceStyle = mealLog?.attendance
+                ? getAttendanceStyle(mealLog.attendance)
+                : null;
 
               const hasBreakfast =
                 mealLog?.breakfast_amount && mealLog.breakfast_amount > 0;
@@ -594,10 +637,13 @@ function CalendarPageContent() {
 
               // hover 테두리 스타일
               const getHoverClass = () => {
-                const scaleEffect = "hover:scale-[1.03] hover:shadow-md hover:z-10";
+                const scaleEffect =
+                  "hover:scale-[1.03] hover:shadow-md hover:z-10";
                 if (isHoliday) return `hover:bg-rose-100/80 ${scaleEffect}`;
-                if (dayOfWeek === 0) return `hover:border-rose-400 ${scaleEffect}`;
-                if (dayOfWeek === 6) return `hover:border-blue-400 ${scaleEffect}`;
+                if (dayOfWeek === 0)
+                  return `hover:border-rose-400 ${scaleEffect}`;
+                if (dayOfWeek === 6)
+                  return `hover:border-blue-400 ${scaleEffect}`;
                 return `hover:border-slate-300 ${scaleEffect}`;
               };
 
@@ -605,7 +651,7 @@ function CalendarPageContent() {
                 <div
                   key={day}
                   onClick={() => handleDateClick(dateStr)}
-                  className={`h-24 rounded-lg p-2 cursor-pointer transition-all duration-150 ${
+                  className={`h-24 rounded-md p-2 cursor-pointer transition-all duration-150 ${
                     isHoliday
                       ? "bg-rose-50/80 border-0"
                       : isWeekend
@@ -627,7 +673,10 @@ function CalendarPageContent() {
                       {day}
                     </span>
                     {isHoliday && (
-                      <span className="text-[8px] text-rose-400 truncate max-w-[50px] leading-none" title={holidayName}>
+                      <span
+                        className="text-[8px] text-rose-400 truncate max-w-[50px] leading-none"
+                        title={holidayName}
+                      >
                         {holidayName}
                       </span>
                     )}
@@ -650,14 +699,18 @@ function CalendarPageContent() {
                       )}
 
                       {/* 연차, 휴무, 재택이 아닐 때만 금액/식사 정보 표시 */}
-                      {!["연차", "휴무", "재택", "휴가"].some(
-                        (type) => mealLog.attendance?.includes(type)
+                      {!["연차", "휴무", "재택", "휴가"].some((type) =>
+                        mealLog.attendance?.includes(type),
                       ) && (
                         <>
                           {/* 총 금액 - 0원도 표시 */}
-                          <div className={`text-xs font-bold ${
-                            (mealLog.total_amount || 0) > 0 ? "text-emerald-600" : "text-slate-400"
-                          }`}>
+                          <div
+                            className={`text-xs font-bold ${
+                              (mealLog.total_amount || 0) > 0
+                                ? "text-emerald-600"
+                                : "text-slate-400"
+                            }`}
+                          >
                             {formatAmount(mealLog.total_amount || 0)}원
                           </div>
 
@@ -700,11 +753,9 @@ function CalendarPageContent() {
                   <Label className="text-xs font-medium text-slate-500 mb-2 block">
                     날짜
                   </Label>
-                  <Input
-                    type="date"
+                  <DatePicker
                     value={bulkDate}
-                    onChange={(e) => setBulkDate(e.target.value)}
-                    className="h-10"
+                    onChange={(val) => setBulkDate(val)}
                   />
                 </div>
                 <div>
@@ -714,7 +765,9 @@ function CalendarPageContent() {
                   <Input
                     type="number"
                     value={bulkAmount || ""}
-                    onChange={(e) => setBulkAmount(parseInt(e.target.value) || 0)}
+                    onChange={(e) =>
+                      setBulkAmount(parseInt(e.target.value) || 0)
+                    }
                     placeholder="0"
                     className="h-10"
                   />
@@ -754,28 +807,33 @@ function CalendarPageContent() {
                 근태
               </Label>
               <div className="flex flex-wrap gap-1.5">
-                {["출근", "개별식사", "재택", "휴가", "오전반차", "오후반차"].map(
-                  (value) => {
-                    const isSelected = bulkAttendance === value;
-                    return (
-                      <button
-                        key={value}
-                        type="button"
-                        onClick={() => setBulkAttendance(value)}
-                        className={`
-                          px-3 py-1.5 rounded-md text-sm transition-colors
+                {[
+                  "출근",
+                  "개별식사",
+                  "재택",
+                  "휴가",
+                  "오전반차",
+                  "오후반차",
+                ].map((value) => {
+                  const isSelected = bulkAttendance === value;
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setBulkAttendance(value)}
+                      className={`
+                          px-3 py-1.5 rounded text-sm transition-colors
                           ${
                             isSelected
                               ? "bg-slate-900 text-white"
                               : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                           }
                         `}
-                      >
-                        {value}
-                      </button>
-                    );
-                  }
-                )}
+                    >
+                      {value}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -806,16 +864,15 @@ function CalendarPageContent() {
               <Label className="text-xs font-medium text-slate-500 mb-2.5 block">
                 제외할 멤버 선택
               </Label>
-              <div className="relative mb-3">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <div className="mb-3">
                 <Input
                   value={bulkSearchQuery}
                   onChange={(e) => setBulkSearchQuery(e.target.value)}
                   placeholder="이름 또는 초성 검색..."
-                  className="pl-9 h-10"
+                  className="h-9"
                 />
               </div>
-              <div className="max-h-48 overflow-y-auto border rounded-lg divide-y divide-slate-100">
+              <div className="max-h-48 overflow-y-auto rounded-md">
                 {bulkFilteredMembers.map((member) => {
                   const isExcluded = bulkExcludedIds.includes(member.id);
                   return (
@@ -897,38 +954,43 @@ function CalendarPageContent() {
                 근태
               </Label>
               <div className="flex flex-wrap gap-1.5">
-                {["출근", "개별식사", "재택", "휴가", "오전반차", "오후반차"].map(
-                  (value) => {
-                    const isSelected = formData.attendance === value;
-                    return (
-                      <button
-                        key={value}
-                        type="button"
-                        onClick={() =>
-                          setFormData({
-                            ...formData,
-                            attendance: isSelected ? "" : value,
-                          })
-                        }
-                        className={`
-                        px-3 py-1.5 rounded-md text-sm transition-colors
+                {[
+                  "출근",
+                  "개별식사",
+                  "재택",
+                  "휴가",
+                  "오전반차",
+                  "오후반차",
+                ].map((value) => {
+                  const isSelected = formData.attendance === value;
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() =>
+                        setFormData({
+                          ...formData,
+                          attendance: isSelected ? "" : value,
+                        })
+                      }
+                      className={`
+                        px-3 py-1.5 rounded text-sm transition-colors
                         ${
                           isSelected
                             ? "bg-slate-900 text-white"
                             : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                         }
                       `}
-                      >
-                        {value}
-                      </button>
-                    );
-                  },
-                )}
+                    >
+                      {value}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
             {/* Meals */}
-            <div className="divide-y divide-slate-100">
+            <div>
               {/* Breakfast */}
               <div className="px-6 py-4">
                 <div className="flex items-center justify-between mb-3">

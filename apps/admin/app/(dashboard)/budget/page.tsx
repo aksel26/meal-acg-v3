@@ -29,7 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from "@repo/ui/src/table";
-import { toast } from "sonner";
+import { toast } from "@repo/ui/src/sonner";
 import {
   Loader2,
   Wallet,
@@ -458,7 +458,7 @@ export default function BudgetPage() {
     <div className="flex h-[calc(100vh-10rem)] flex-col gap-6">
       {/* Quick Stats */}
       {period && summaryItems.length > 0 && (
-        <div className="flex items-center gap-6 rounded-xl border border-slate-200/60 bg-white/50 px-6 py-3 backdrop-blur-sm">
+        <div className="flex items-center gap-6 rounded-lg bg-white px-6 py-3">
           <div className="flex items-center gap-2">
             <span className="text-sm text-slate-500">총 할당액</span>
             <span className="text-lg font-semibold tabular-nums text-slate-800">
@@ -503,7 +503,7 @@ export default function BudgetPage() {
           <Label className="text-sm font-medium text-slate-700">기간</Label>
           <div className="flex items-center gap-2">
             <Select value={periodYear} onValueChange={setPeriodYear}>
-              <SelectTrigger className="h-10 w-28">
+              <SelectTrigger className="h-10 w-28 bg-white">
                 <SelectValue placeholder="연도" />
               </SelectTrigger>
               <SelectContent>
@@ -517,7 +517,7 @@ export default function BudgetPage() {
               </SelectContent>
             </Select>
             <Select value={periodHalf} onValueChange={setPeriodHalf}>
-              <SelectTrigger className="h-10 w-28">
+              <SelectTrigger className="h-10 w-28 bg-white">
                 <SelectValue placeholder="반기" />
               </SelectTrigger>
               <SelectContent>
@@ -531,7 +531,7 @@ export default function BudgetPage() {
         <div className="space-y-1.5">
           <Label className="text-sm font-medium text-slate-700">구분 필터</Label>
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="h-10 w-40">
+            <SelectTrigger className="h-10 w-40 bg-white">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -566,7 +566,7 @@ export default function BudgetPage() {
       </div>
 
       {/* Main Table */}
-      <div className="glass-panel min-h-0 flex-1 overflow-hidden rounded-2xl">
+      <div className="glass-panel min-h-0 flex-1 overflow-hidden rounded-xl">
         {!period ? (
           <div className="py-16 text-center">
             <Wallet className="mx-auto h-12 w-12 text-slate-300" />
@@ -575,7 +575,7 @@ export default function BudgetPage() {
             </p>
           </div>
         ) : isLoading ? (
-          <div className="divide-y divide-slate-100">
+          <div>
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="flex items-center gap-4 px-6 py-3">
                 {Array.from({ length: 9 }).map((_, j) => (
@@ -628,7 +628,7 @@ export default function BudgetPage() {
                   </TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody className="divide-y divide-slate-100/60">
                 {memberRows.map((row, index) => {
                   const preview = activityPreview.find((p) => p.id === row.member_id);
                   return (
@@ -724,7 +724,7 @@ export default function BudgetPage() {
                 onChange={(e) => setEditDescription(e.target.value)}
                 placeholder="설명을 입력하세요 (선택)"
                 rows={3}
-                className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                className="flex w-full rounded border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               />
             </div>
           </div>
@@ -778,7 +778,7 @@ export default function BudgetPage() {
                 onChange={(e) => setBulkDescription(e.target.value)}
                 placeholder="설명을 입력하세요 (선택)"
                 rows={2}
-                className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                className="flex w-full rounded border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               />
             </div>
 
@@ -923,7 +923,7 @@ export default function BudgetPage() {
               <Label className="text-sm font-semibold text-slate-700">
                 미리보기
               </Label>
-              <div className="max-h-56 overflow-auto rounded-lg border border-slate-200">
+              <div className="max-h-56 overflow-auto rounded-md">
                 {activityPreview.length === 0 ? (
                   <p className="p-4 text-center text-sm text-slate-400">
                     대상 멤버가 없습니다
@@ -931,7 +931,7 @@ export default function BudgetPage() {
                 ) : (
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-slate-200 bg-slate-50 text-xs text-slate-500">
+                      <tr className="bg-slate-50 text-xs text-slate-500">
                         <th className="px-3 py-2 text-left font-medium">이름</th>
                         <th className="px-2 py-2 text-center font-medium">직급</th>
                         <th className="px-2 py-2 text-left font-medium">팀</th>
@@ -939,7 +939,7 @@ export default function BudgetPage() {
                         <th className="px-3 py-2 text-right font-medium">계산액</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody>
                       {activityPreview.map((row) => {
                         const isExcluded = statusMemberIds.has(row.id);
                         return (
@@ -989,7 +989,7 @@ export default function BudgetPage() {
                       })}
                     </tbody>
                     <tfoot>
-                      <tr className="border-t border-slate-300 bg-slate-50 font-semibold">
+                      <tr className="bg-slate-50 font-semibold">
                         <td colSpan={4} className="px-3 py-2 text-right text-slate-600">
                           합계
                         </td>

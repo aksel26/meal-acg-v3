@@ -24,7 +24,7 @@ import { Input } from "@repo/ui/src/input";
 import { Label } from "@repo/ui/src/label";
 import { Checkbox } from "@repo/ui/src/checkbox";
 import { SearchableDropdown } from "@repo/ui/src/searchable-dropdown";
-import { toast } from "sonner";
+import { toast } from "@repo/ui/src/sonner";
 import {
   Save,
   Users,
@@ -82,7 +82,7 @@ function DraggableMemberInList({
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all ${
+      className={`flex items-center gap-2 px-3 py-2 rounded-md border transition-all ${
         isDragging
           ? "opacity-50 border-[#135bec] bg-[#135bec]/10 shadow-lg z-50"
           : isSelected
@@ -137,7 +137,7 @@ function DraggableMemberInGroup({
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all ${
+      className={`flex items-center gap-2 px-3 py-2 rounded-md border transition-all ${
         isDragging
           ? "opacity-50 border-[#135bec] bg-[#135bec]/10 shadow-lg z-50"
           : "bg-[#135bec]/5 border-[#135bec]/20"
@@ -189,7 +189,7 @@ function DroppableGroup({
   return (
     <div
       ref={setNodeRef}
-      className={`p-4 rounded-xl border-2 bg-white min-h-[180px] transition-all ${
+      className={`p-4 rounded-lg border-2 bg-white min-h-[180px] transition-all ${
         isOver && !isFull
           ? "border-[#135bec] bg-[#135bec]/5 scale-[1.02]"
           : isOver && isFull
@@ -201,7 +201,7 @@ function DroppableGroup({
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <span
-            className="w-7 h-7 flex items-center justify-center text-[#135bec] text-sm font-bold rounded-lg bg-[#135bec]/5"
+            className="w-7 h-7 flex items-center justify-center text-[#135bec] text-sm font-bold rounded-md bg-[#135bec]/5"
           >
             {groupNumber}
           </span>
@@ -232,7 +232,7 @@ function DroppableUnassigned({ children }: { children: React.ReactNode }) {
   return (
     <div
       ref={setNodeRef}
-      className={`space-y-1 max-h-[300px] overflow-y-auto p-1 rounded-lg transition-all ${
+      className={`space-y-1 max-h-[300px] overflow-y-auto p-1 rounded-md transition-all ${
         isOver ? "bg-[#135bec]/10 ring-2 ring-[#135bec]/40" : ""
       }`}
     >
@@ -572,7 +572,7 @@ export default function LunchGroupsPage() {
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <div className="px-4 py-2 bg-[#135bec]/5 rounded-lg text-sm font-medium text-[#135bec]">
+            <div className="px-4 py-2 bg-[#135bec]/5 rounded-md text-sm font-medium text-[#135bec]">
               {dayjs(weekStartDate).format("YYYY.MM.DD")} 주차
             </div>
             <Button
@@ -614,7 +614,7 @@ export default function LunchGroupsPage() {
                   </div>
                   <div>
                     <Label className="text-xs">총 조 개수 (자동 계산)</Label>
-                    <div className="mt-1 h-10 flex items-center px-3 bg-slate-100 rounded-md text-sm font-medium">
+                    <div className="mt-1 h-10 flex items-center px-3 bg-slate-100 rounded text-sm font-medium">
                       {totalGroups}개
                     </div>
                   </div>
@@ -691,7 +691,7 @@ export default function LunchGroupsPage() {
                 />
 
                 {/* 전체 선택 */}
-                <div className="flex items-center gap-2 py-2 border-b">
+                <div className="flex items-center gap-2 py-2">
                   <Checkbox
                     checked={
                       selectedMemberIds.size === unassignedMembers.length &&
@@ -827,7 +827,7 @@ export default function LunchGroupsPage() {
                             {Array.from({ length: emptySlots }).map((_, i) => (
                               <div
                                 key={`empty-${i}`}
-                                className="px-3 py-2 border-2 border-dashed border-slate-200 rounded-lg text-sm text-slate-400 text-center"
+                                className="px-3 py-2 border-2 border-dashed border-slate-200 rounded-md text-sm text-slate-400 text-center"
                               >
                                 드래그하여 배정
                               </div>
@@ -847,7 +847,7 @@ export default function LunchGroupsPage() {
       {/* 드래그 오버레이 */}
       <DragOverlay>
         {activeMember && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[#135bec] bg-[#135bec]/10 shadow-xl">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-md border border-[#135bec] bg-[#135bec]/10 shadow-xl">
             <GripVertical className="w-3 h-3 text-[#135bec] flex-shrink-0" />
             <span className="text-sm font-medium text-[#135bec]">
               {activeMember.full_name}

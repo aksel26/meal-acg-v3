@@ -14,7 +14,7 @@ import {
   UserX,
   Users,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@repo/ui/src/sonner";
 import { cn } from "@repo/ui/lib/utils";
 import { Button } from "@repo/ui/src/button";
 import { Input } from "@repo/ui/src/input";
@@ -28,6 +28,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@repo/ui/src/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@repo/ui/src/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -78,7 +88,7 @@ const MemberRow = memo(function MemberRow({
 }) {
   return (
     <div className={cn(
-      "group flex items-center justify-between rounded-lg px-3 py-2 transition-colors hover:bg-slate-50",
+      "group flex items-center justify-between rounded-md px-3 py-2 transition-colors hover:bg-slate-50",
       status && "opacity-50"
     )}>
       <div className="flex items-center gap-3">
@@ -105,7 +115,7 @@ const MemberRow = memo(function MemberRow({
       </div>
       <button
         onClick={() => onEdit(member)}
-        className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 opacity-0 transition-all hover:bg-white hover:text-[#135bec] group-hover:opacity-100"
+        className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-400 opacity-0 transition-all hover:bg-white hover:text-[#135bec] group-hover:opacity-100"
         title="멤버 편집"
       >
         <Edit2 className="h-3.5 w-3.5" />
@@ -139,7 +149,7 @@ function TeamSection({
   }, [team.members]);
 
   return (
-    <div className="rounded-xl border border-slate-100 bg-white">
+    <div className="rounded-lg bg-white">
       <div className="flex items-center justify-between px-4 py-3">
         <button
           onClick={() => setIsOpen(!isOpen)}
@@ -163,14 +173,14 @@ function TeamSection({
         <div className="flex items-center gap-1">
           <button
             onClick={() => onEditTeam(team)}
-            className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-[#135bec]"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-[#135bec]"
             title="팀 편집"
           >
             <Edit2 className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={() => onDeleteTeam(team)}
-            className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500"
             title="팀 삭제"
           >
             <Trash2 className="h-3.5 w-3.5" />
@@ -225,7 +235,7 @@ function DivisionSection({
   const teams = division.teams || [];
 
   return (
-    <div className="glass-panel overflow-hidden rounded-2xl">
+    <div className="glass-panel overflow-hidden rounded-xl">
       <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
         <button
           onClick={() => setIsOpen(!isOpen)}
@@ -250,7 +260,7 @@ function DivisionSection({
         <div className="flex items-center gap-1">
           <button
             onClick={() => onAddTeam(division.id)}
-            className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium text-[#135bec] transition-colors hover:bg-[#135bec]/10"
+            className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium text-[#135bec] transition-colors hover:bg-[#135bec]/10"
             title="팀 추가"
           >
             <Plus className="h-3.5 w-3.5" />
@@ -258,14 +268,14 @@ function DivisionSection({
           </button>
           <button
             onClick={() => onEditDivision(division)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-[#135bec]"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-[#135bec]"
             title="본부 편집"
           >
             <Edit2 className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={() => onDeleteDivision(division)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500"
             title="본부 삭제"
           >
             <Trash2 className="h-3.5 w-3.5" />
@@ -312,7 +322,7 @@ const UnassignedMemberRow = memo(function UnassignedMemberRow({
 }) {
   return (
     <label className={cn(
-      "flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-orange-50/50",
+      "flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 transition-colors hover:bg-orange-50/50",
       status && "opacity-50"
     )}>
       <Checkbox
@@ -377,6 +387,9 @@ export default function OrganizationPage() {
   const [formTeamId, setFormTeamId] = useState<string>("");
   const [formRole, setFormRole] = useState<string>("");
   const [formInternMonths, setFormInternMonths] = useState<string>("");
+
+  // 삭제 확인 Dialog
+  const [deleteConfirm, setDeleteConfirm] = useState<{ type: "division" | "team"; id: string; message: string } | null>(null);
 
   // Batch assignment state
   const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set());
@@ -530,23 +543,27 @@ export default function OrganizationPage() {
   const handleDeleteDivision = (division: OrgDivision) => {
     const teamCount = (division.teams || []).length;
     const message = teamCount > 0
-      ? `"${division.name}" 본부에 ${teamCount}개의 팀이 있습니다.\n삭제하시겠습니까?`
+      ? `"${division.name}" 본부에 ${teamCount}개의 팀이 있습니다. 삭제하시겠습니까?`
       : `"${division.name}" 본부를 삭제하시겠습니까?`;
-
-    if (window.confirm(message)) {
-      deleteDivisionMutation.mutate(division.id);
-    }
+    setDeleteConfirm({ type: "division", id: division.id, message });
   };
 
   const handleDeleteTeam = (team: OrgTeam) => {
     const memberCount = (team.members || []).length;
     const message = memberCount > 0
-      ? `"${team.name}" 팀에 ${memberCount}명의 멤버가 있습니다.\n삭제하시겠습니까?`
+      ? `"${team.name}" 팀에 ${memberCount}명의 멤버가 있습니다. 삭제하시겠습니까?`
       : `"${team.name}" 팀을 삭제하시겠습니까?`;
+    setDeleteConfirm({ type: "team", id: team.id, message });
+  };
 
-    if (window.confirm(message)) {
-      deleteTeamMutation.mutate(team.id);
+  const handleDeleteConfirm = () => {
+    if (!deleteConfirm) return;
+    if (deleteConfirm.type === "division") {
+      deleteDivisionMutation.mutate(deleteConfirm.id);
+    } else {
+      deleteTeamMutation.mutate(deleteConfirm.id);
     }
+    setDeleteConfirm(null);
   };
 
   // ── Batch assignment handlers ──
@@ -676,7 +693,7 @@ export default function OrganizationPage() {
 
       {/* Empty State */}
       {!isLoading && !orgTree && (
-        <div className="glass-panel rounded-2xl py-16 text-center">
+        <div className="glass-panel rounded-xl py-16 text-center">
           <Building2 className="mx-auto h-12 w-12 text-slate-300" />
           <p className="mt-4 text-lg font-medium text-slate-600">
             등록된 조직이 없습니다
@@ -711,7 +728,7 @@ export default function OrganizationPage() {
           {(directTeams.length > 0 || unassignedMembers.length > 0) && (
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               {/* Direct Teams */}
-              <div className="glass-panel overflow-hidden rounded-2xl">
+              <div className="glass-panel overflow-hidden rounded-xl">
                 <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
                   <div className="flex items-center gap-2.5">
                     <FolderTree className="h-4.5 w-4.5 text-slate-400" />
@@ -727,7 +744,7 @@ export default function OrganizationPage() {
                   </div>
                   <button
                     onClick={() => openDialog({ type: "createTeam" })}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium text-[#135bec] transition-colors hover:bg-[#135bec]/10"
+                    className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium text-[#135bec] transition-colors hover:bg-[#135bec]/10"
                   >
                     <Plus className="h-3.5 w-3.5" />
                     팀 추가
@@ -756,7 +773,7 @@ export default function OrganizationPage() {
               </div>
 
               {/* Unassigned Members */}
-              <div className="glass-panel flex flex-col overflow-hidden rounded-2xl border-orange-200/50">
+              <div className="glass-panel flex flex-col overflow-hidden rounded-xl border-orange-200/50">
                 <div className="flex items-center justify-between border-b border-orange-100 px-5 py-4">
                   <div className="flex items-center gap-2.5">
                     <UserX className="h-4.5 w-4.5 text-orange-500" />
@@ -993,6 +1010,24 @@ export default function OrganizationPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 삭제 확인 */}
+      <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
+        <AlertDialogContent className="max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>삭제 확인</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteConfirm?.message}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm}>
+              삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

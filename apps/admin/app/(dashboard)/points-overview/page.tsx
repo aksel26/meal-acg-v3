@@ -116,7 +116,7 @@ export default function PointsOverviewPage() {
           <Label className="text-sm font-medium text-slate-700">기간</Label>
           <div className="flex items-center gap-2">
             <Select value={periodYear} onValueChange={setPeriodYear}>
-              <SelectTrigger className="h-10 w-28">
+              <SelectTrigger className="h-10 w-28 bg-white">
                 <SelectValue placeholder="연도" />
               </SelectTrigger>
               <SelectContent>
@@ -130,7 +130,7 @@ export default function PointsOverviewPage() {
               </SelectContent>
             </Select>
             <Select value={periodHalf} onValueChange={setPeriodHalf}>
-              <SelectTrigger className="h-10 w-28">
+              <SelectTrigger className="h-10 w-28 bg-white">
                 <SelectValue placeholder="반기" />
               </SelectTrigger>
               <SelectContent>
@@ -149,7 +149,7 @@ export default function PointsOverviewPage() {
       </div>
 
       {/* Main Table */}
-      <div className="glass-panel min-h-0 flex-1 overflow-hidden rounded-2xl">
+      <div className="glass-panel min-h-0 flex-1 overflow-hidden rounded-xl">
         {!period ? (
           <div className="py-16 text-center">
             <Wallet className="mx-auto h-12 w-12 text-slate-300" />
@@ -179,82 +179,77 @@ export default function PointsOverviewPage() {
                 <TableRow className="bg-slate-50 [&>th]:bg-slate-50 [&>th]:h-9 [&>th]:px-2 [&>th]:py-0">
                   <TableHead
                     rowSpan={2}
-                    className="w-12 border-r border-slate-200 text-center text-xs font-semibold text-slate-500"
+                    className="w-12 text-center text-xs font-semibold text-slate-500"
                   >
                     No
                   </TableHead>
                   <TableHead
                     rowSpan={2}
-                    className="border-r border-slate-200 text-center text-xs font-semibold text-slate-500"
+                    className="text-center text-xs font-semibold text-slate-500"
                   >
                     구분
                   </TableHead>
                   <TableHead
                     rowSpan={2}
-                    className="border-r border-slate-200 text-center text-xs font-semibold text-slate-500"
+                    className="text-center text-xs font-semibold text-slate-500"
                   >
                     이름
                   </TableHead>
                   <TableHead
                     colSpan={2}
-                    className="border-r border-slate-200 text-center text-xs font-semibold text-slate-500"
+                    className="text-center text-xs font-semibold text-slate-500"
                   >
                     사용 가능액
                   </TableHead>
                   <TableHead
                     colSpan={2}
-                    className="border-r border-slate-200 text-center text-xs font-semibold text-slate-500"
+                    className="text-center text-xs font-semibold text-slate-500"
                   >
                     잔여액
                   </TableHead>
                   <TableHead
                     colSpan={2}
-                    className="border-r border-slate-200 text-center text-xs font-semibold text-slate-500"
+                    className="text-center text-xs font-semibold text-slate-500"
                   >
                     사용 금액
                   </TableHead>
                   <TableHead
                     colSpan={months.length}
-                    className="border-r border-slate-200 text-center text-xs font-semibold text-blue-600"
+                    className="text-center text-xs font-semibold text-amber-500"
                   >
                     활동비 월별
                   </TableHead>
                   <TableHead
                     colSpan={months.length}
-                    className="text-center text-xs font-semibold text-emerald-600"
+                    className="text-center text-xs font-semibold text-blue-400"
                   >
                     복지포인트 월별
                   </TableHead>
                 </TableRow>
                 {/* 두 번째 행: 세부 열 */}
                 <TableRow className="bg-slate-50/80 [&>th]:bg-slate-50/80 [&>th]:h-8 [&>th]:px-2 [&>th]:py-0">
-                  <TableHead className="border-r border-slate-100 text-center text-[11px] font-medium text-blue-500">
+                  <TableHead className="text-center text-[11px] font-medium text-amber-500">
                     활동비
                   </TableHead>
-                  <TableHead className="border-r border-slate-200 text-center text-[11px] font-medium text-emerald-500">
+                  <TableHead className="text-center text-[11px] font-medium text-blue-400">
                     복지
                   </TableHead>
-                  <TableHead className="border-r border-slate-100 text-center text-[11px] font-medium text-blue-500">
+                  <TableHead className="text-center text-[11px] font-medium text-amber-500">
                     활동비
                   </TableHead>
-                  <TableHead className="border-r border-slate-200 text-center text-[11px] font-medium text-emerald-500">
+                  <TableHead className="text-center text-[11px] font-medium text-blue-400">
                     복지
                   </TableHead>
-                  <TableHead className="border-r border-slate-100 text-center text-[11px] font-medium text-blue-500">
+                  <TableHead className="text-center text-[11px] font-medium text-amber-500">
                     활동비
                   </TableHead>
-                  <TableHead className="border-r border-slate-200 text-center text-[11px] font-medium text-emerald-500">
+                  <TableHead className="text-center text-[11px] font-medium text-blue-400">
                     복지
                   </TableHead>
                   {months.map((mo) => (
                     <TableHead
                       key={`activity-${mo}`}
-                      className={cn(
-                        "text-center text-[11px] font-medium text-blue-500",
-                        mo === months[months.length - 1]
-                          ? "border-r border-slate-200"
-                          : "border-r border-slate-100",
-                      )}
+                      className="text-center text-[11px] font-medium text-amber-500"
                     >
                       {mo}월
                     </TableHead>
@@ -262,7 +257,7 @@ export default function PointsOverviewPage() {
                   {months.map((mo) => (
                     <TableHead
                       key={`welfare-${mo}`}
-                      className="border-r border-slate-100 text-center text-[11px] font-medium text-emerald-500 last:border-r-0"
+                      className="text-center text-[11px] font-medium text-blue-400"
                     >
                       {mo}월
                     </TableHead>
@@ -275,10 +270,10 @@ export default function PointsOverviewPage() {
                     key={row.member_id}
                     className="transition-colors hover:bg-slate-50/50 [&>td]:px-2 [&>td]:py-1.5"
                   >
-                    <TableCell className="border-r border-slate-100 text-center text-xs text-slate-400">
+                    <TableCell className="text-center text-xs text-slate-400">
                       {index + 1}
                     </TableCell>
-                    <TableCell className="border-r border-slate-100 text-center">
+                    <TableCell className="text-center">
                       <Badge
                         variant="outline"
                         className={cn(
@@ -289,7 +284,7 @@ export default function PointsOverviewPage() {
                         {row.member_role}
                       </Badge>
                     </TableCell>
-                    <TableCell className="border-r border-slate-100 text-center text-sm font-medium whitespace-nowrap">
+                    <TableCell className="text-center text-sm font-medium whitespace-nowrap">
                       <Link
                         href={`/review?member=${row.member_id}`}
                         className="text-slate-900 hover:text-[#135bec] hover:underline"
@@ -298,16 +293,16 @@ export default function PointsOverviewPage() {
                       </Link>
                     </TableCell>
                     {/* 사용 가능액 */}
-                    <TableCell className="border-r border-slate-100 text-right text-xs tabular-nums text-slate-700">
+                    <TableCell className="text-right text-xs tabular-nums text-slate-700">
                       {formatCurrency(row.activity.total_amount)}
                     </TableCell>
-                    <TableCell className="border-r border-slate-200 text-right text-xs tabular-nums text-slate-700">
+                    <TableCell className="text-right text-xs tabular-nums text-slate-700">
                       {formatCurrency(row.welfare.total_amount)}
                     </TableCell>
                     {/* 잔여액 */}
                     <TableCell
                       className={cn(
-                        "border-r border-slate-100 text-right text-xs tabular-nums",
+                        "text-right text-xs tabular-nums",
                         row.activity.remaining_amount < 0
                           ? "text-rose-600 font-medium"
                           : "text-slate-700",
@@ -317,7 +312,7 @@ export default function PointsOverviewPage() {
                     </TableCell>
                     <TableCell
                       className={cn(
-                        "border-r border-slate-200 text-right text-xs tabular-nums",
+                        "text-right text-xs tabular-nums",
                         row.welfare.remaining_amount < 0
                           ? "text-rose-600 font-medium"
                           : "text-slate-700",
@@ -326,10 +321,10 @@ export default function PointsOverviewPage() {
                       {formatCurrency(row.welfare.remaining_amount)}
                     </TableCell>
                     {/* 사용 금액 */}
-                    <TableCell className="border-r border-slate-100 text-right text-xs tabular-nums text-slate-700">
+                    <TableCell className="text-right text-xs tabular-nums text-slate-700">
                       {formatCurrency(row.activity.used_amount)}
                     </TableCell>
-                    <TableCell className="border-r border-slate-200 text-right text-xs tabular-nums text-slate-700">
+                    <TableCell className="text-right text-xs tabular-nums text-slate-700">
                       {formatCurrency(row.welfare.used_amount)}
                     </TableCell>
                     {/* 활동비 월별 */}
@@ -338,9 +333,6 @@ export default function PointsOverviewPage() {
                         key={`activity-${mo}`}
                         className={cn(
                           "text-right text-xs tabular-nums",
-                          mo === months[months.length - 1]
-                            ? "border-r border-slate-200"
-                            : "border-r border-slate-100",
                           row.activity.monthly[mo]
                             ? "text-slate-700"
                             : "text-slate-300",
@@ -356,7 +348,7 @@ export default function PointsOverviewPage() {
                       <TableCell
                         key={`welfare-${mo}`}
                         className={cn(
-                          "border-r border-slate-100 text-right text-xs tabular-nums last:border-r-0",
+                          "text-right text-xs tabular-nums",
                           row.welfare.monthly[mo]
                             ? "text-slate-700"
                             : "text-slate-300",
@@ -370,40 +362,35 @@ export default function PointsOverviewPage() {
                   </TableRow>
                 ))}
                 {/* 합계 행 */}
-                <TableRow className="border-t-2 border-slate-300 bg-slate-50 font-semibold [&>td]:px-2 [&>td]:py-2">
+                <TableRow className="bg-slate-50 font-semibold [&>td]:px-2 [&>td]:py-2">
                   <TableCell
                     colSpan={3}
-                    className="border-r border-slate-100 text-center text-xs text-slate-600"
+                    className="text-center text-xs text-slate-600"
                   >
                     합계
                   </TableCell>
-                  <TableCell className="border-r border-slate-100 text-right text-xs tabular-nums text-slate-800">
+                  <TableCell className="text-right text-xs tabular-nums text-slate-800">
                     {formatCurrency(totals.activity.total)}
                   </TableCell>
-                  <TableCell className="border-r border-slate-200 text-right text-xs tabular-nums text-slate-800">
+                  <TableCell className="text-right text-xs tabular-nums text-slate-800">
                     {formatCurrency(totals.welfare.total)}
                   </TableCell>
-                  <TableCell className="border-r border-slate-100 text-right text-xs tabular-nums text-slate-800">
+                  <TableCell className="text-right text-xs tabular-nums text-slate-800">
                     {formatCurrency(totals.activity.remaining)}
                   </TableCell>
-                  <TableCell className="border-r border-slate-200 text-right text-xs tabular-nums text-slate-800">
+                  <TableCell className="text-right text-xs tabular-nums text-slate-800">
                     {formatCurrency(totals.welfare.remaining)}
                   </TableCell>
-                  <TableCell className="border-r border-slate-100 text-right text-xs tabular-nums text-slate-800">
+                  <TableCell className="text-right text-xs tabular-nums text-slate-800">
                     {formatCurrency(totals.activity.used)}
                   </TableCell>
-                  <TableCell className="border-r border-slate-200 text-right text-xs tabular-nums text-slate-800">
+                  <TableCell className="text-right text-xs tabular-nums text-slate-800">
                     {formatCurrency(totals.welfare.used)}
                   </TableCell>
                   {months.map((mo) => (
                     <TableCell
                       key={`total-activity-${mo}`}
-                      className={cn(
-                        "text-right text-xs tabular-nums text-slate-800",
-                        mo === months[months.length - 1]
-                          ? "border-r border-slate-200"
-                          : "border-r border-slate-100",
-                      )}
+                      className="text-right text-xs tabular-nums text-slate-800"
                     >
                       {totals.activity.monthly[mo]
                         ? totals.activity.monthly[mo].toLocaleString()
@@ -413,7 +400,7 @@ export default function PointsOverviewPage() {
                   {months.map((mo) => (
                     <TableCell
                       key={`total-welfare-${mo}`}
-                      className="border-r border-slate-100 text-right text-xs tabular-nums text-slate-800 last:border-r-0"
+                      className="text-right text-xs tabular-nums text-slate-800"
                     >
                       {totals.welfare.monthly[mo]
                         ? totals.welfare.monthly[mo].toLocaleString()

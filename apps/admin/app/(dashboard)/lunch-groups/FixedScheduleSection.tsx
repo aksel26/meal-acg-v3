@@ -12,7 +12,7 @@ import {
 import { Button } from "@repo/ui/src/button";
 import { Input } from "@repo/ui/src/input";
 import { Combobox } from "@repo/ui/src/combobox";
-import { toast } from "sonner";
+import { toast } from "@repo/ui/src/sonner";
 import { Calendar, Save, User, Tag, Plus, X } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
 import type { Member, LunchFixedScheduleWithMember } from "@/lib/supabase/types";
@@ -220,10 +220,10 @@ export default function FixedScheduleSection({ members }: FixedScheduleSectionPr
           const isAddingLabel = addingLabelDay === day.value;
 
           return (
-            <div key={day.value} className="border rounded-lg p-3">
+            <div key={day.value} className="border rounded-md p-3">
               {/* 요일 헤더 */}
               <div className="flex items-center justify-between mb-2">
-                <span className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg text-sm font-bold">
+                <span className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-md text-sm font-bold">
                   {day.label}
                 </span>
                 <div className="flex gap-1">

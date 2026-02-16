@@ -32,7 +32,7 @@ import {
   DrawerDescription,
   DrawerFooter,
 } from "@repo/ui/src/drawer";
-import { toast } from "sonner";
+import { toast } from "@repo/ui/src/sonner";
 import {
   Pencil,
   Trash2,
@@ -115,9 +115,9 @@ interface Member {
 function typeBadgeStyle(type: string) {
   switch (type) {
     case "복지포인트":
-      return "bg-emerald-50 text-emerald-700 border-emerald-200";
+      return "bg-blue-50/60 text-blue-600 border-transparent";
     case "활동비":
-      return "bg-amber-50 text-amber-700 border-amber-200";
+      return "bg-amber-50 text-amber-500 border-transparent";
     default:
       return "bg-slate-50 text-slate-600 border-slate-200";
   }
@@ -268,7 +268,7 @@ function ReviewStepIndicator({
       {revertMenuOpen && (
         <div
           ref={menuRef}
-          className="absolute top-full z-20 mt-1 rounded-md border border-slate-200 bg-white py-1 shadow-lg"
+          className="absolute top-full z-20 mt-1 rounded border border-slate-200 bg-white py-1 shadow-lg"
         >
           {status === 2 && (
             <button
@@ -626,9 +626,9 @@ function ReviewPageContent() {
       </div>
 
       {/* Main Table */}
-      <div className="glass-panel min-h-0 flex-1 overflow-hidden rounded-2xl">
+      <div className="glass-panel min-h-0 flex-1 overflow-hidden rounded-xl">
         {isLoading ? (
-          <div className="divide-y divide-slate-100">
+          <div>
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="flex items-center gap-4 px-6 py-3">
                 {Array.from({ length: 8 }).map((_, j) => (
@@ -653,7 +653,7 @@ function ReviewPageContent() {
         ) : (
           <div className="h-full overflow-auto">
             <table className="w-full text-[13px]">
-              <thead className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50/95 backdrop-blur-sm">
+              <thead className="sticky top-0 z-10 bg-slate-50">
                 <tr>
                   <th className="w-[44px] whitespace-nowrap px-2 py-2 text-center text-xs font-semibold text-slate-400">
                     No.
@@ -687,7 +687,7 @@ function ReviewPageContent() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody>
                 {records.map((record, index) => (
                   <tr
                     key={record.id}
@@ -741,21 +741,21 @@ function ReviewPageContent() {
                       <div className="flex items-center justify-center gap-0">
                         <button
                           onClick={() => handleAuditOpen(record.id)}
-                          className="inline-flex h-6 w-6 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+                          className="inline-flex h-6 w-6 items-center justify-center rounded text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
                           title="변경 이력"
                         >
                           <History className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={() => handleEditClick(record)}
-                          className="inline-flex h-6 w-6 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-[#135bec]/10 hover:text-[#135bec]"
+                          className="inline-flex h-6 w-6 items-center justify-center rounded text-slate-400 transition-colors hover:bg-[#135bec]/10 hover:text-[#135bec]"
                           title="수정"
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={() => handleDeleteClick(record)}
-                          className="inline-flex h-6 w-6 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                          className="inline-flex h-6 w-6 items-center justify-center rounded text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
                           title="삭제"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -779,7 +779,7 @@ function ReviewPageContent() {
 
           <div className="space-y-4 py-2">
             {editingRecord && (editingRecord.review_status ?? 0) >= 1 && (
-              <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
+              <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
                 <p className="text-sm text-amber-700">
                   {REVIEW_STATUS_LABELS[editingRecord.review_status] || "확인"} 상태의 내역을 수정합니다. 변경 이력이 기록됩니다.
@@ -807,7 +807,7 @@ function ReviewPageContent() {
                 onChange={(e) => setEditDescription(e.target.value)}
                 placeholder="사용처를 입력하세요"
                 rows={2}
-                className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                className="flex w-full rounded border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               />
             </div>
 
@@ -861,7 +861,7 @@ function ReviewPageContent() {
           </DialogHeader>
 
           <div className="space-y-3 py-2">
-            <div className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 p-3">
+            <div className="flex items-start gap-2 rounded-md border border-rose-200 bg-rose-50 p-3">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
               <p className="text-sm text-rose-700">
                 이 작업은 되돌릴 수 없습니다. 삭제 이력이 기록됩니다.
@@ -933,7 +933,7 @@ function ReviewPageContent() {
             {isAuditLoading ? (
               <div className="space-y-3">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="space-y-2 rounded-lg border p-3">
+                  <div key={i} className="space-y-2 rounded-md border p-3">
                     <div className="h-4 w-24 animate-pulse rounded bg-slate-100" />
                     <div className="h-3 w-full animate-pulse rounded bg-slate-100" />
                     <div className="h-3 w-3/4 animate-pulse rounded bg-slate-100" />
@@ -952,7 +952,7 @@ function ReviewPageContent() {
                 {auditLogs.map((log) => (
                   <div
                     key={log.id}
-                    className="rounded-lg border border-slate-200 bg-white p-3"
+                    className="rounded-md border border-slate-200 bg-white p-3"
                   >
                     <div className="flex items-center justify-between">
                       <Badge

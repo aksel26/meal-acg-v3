@@ -23,7 +23,7 @@ export function MemberChip({ member }: MemberChipProps) {
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all cursor-grab active:cursor-grabbing ${
+      className={`flex items-center gap-2 px-3 py-2 rounded-md border transition-all cursor-grab active:cursor-grabbing ${
         isDragging
           ? "opacity-50 border-blue-300 bg-blue-50"
           : "bg-gray-50 border-gray-100 hover:border-gray-200 hover:bg-gray-100"

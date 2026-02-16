@@ -28,7 +28,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@repo/ui/src/dialog";
-import { toast } from "sonner";
+import { toast } from "@repo/ui/src/sonner";
 import {
   Upload,
   FileSpreadsheet,
@@ -307,14 +307,6 @@ export default function ImportPage() {
 
   return (
     <div className="space-y-6">
-      {/* 헤더 */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">식대 데이터 Import</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Excel 파일에서 식대 데이터를 가져옵니다.
-        </p>
-      </div>
-
       <div className="grid grid-cols-12 gap-6">
         {/* 왼쪽: 업로드 영역 */}
         <div className="col-span-5 space-y-4">
@@ -332,7 +324,7 @@ export default function ImportPage() {
             <CardContent>
               <div
                 {...getRootProps()}
-                className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
+                className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all ${
                   isDragActive
                     ? "border-blue-400 bg-blue-50"
                     : "border-gray-300 hover:border-gray-400 hover:bg-gray-50"
@@ -401,7 +393,7 @@ export default function ImportPage() {
                 {uploadedFiles.map((fileState) => (
                   <div
                     key={fileState.file.name}
-                    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                    className={`flex items-center gap-3 p-3 rounded-md border cursor-pointer transition-all ${
                       selectedPreview === fileState.file.name
                         ? "border-blue-400 bg-blue-50"
                         : "border-gray-200 hover:border-gray-300"
@@ -500,7 +492,7 @@ export default function ImportPage() {
             </CardHeader>
             <CardContent>
               {selectedFile ? (
-                <div className="border rounded-lg overflow-hidden">
+                <div className="border rounded-md overflow-hidden">
                   <div className="max-h-[500px] overflow-auto">
                     <Table>
                       <TableHeader>
@@ -585,7 +577,7 @@ export default function ImportPage() {
 
               {/* 파싱 에러 표시 */}
               {selectedFile && selectedFile.errors.length > 0 && (
-                <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md">
                   <p className="text-sm font-medium text-amber-700 mb-2">
                     파싱 경고 ({selectedFile.errors.length}건)
                   </p>
@@ -610,7 +602,7 @@ export default function ImportPage() {
           <DialogHeader>
             <DialogTitle>Import 결과</DialogTitle>
           </DialogHeader>
-          <div className="border rounded-lg overflow-hidden max-h-[300px] overflow-y-auto">
+          <div className="border rounded-md overflow-hidden max-h-[300px] overflow-y-auto">
             <Table>
               <TableHeader>
                 <TableRow>

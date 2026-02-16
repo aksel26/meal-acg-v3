@@ -21,8 +21,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@repo/ui/src/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@repo/ui/src/alert-dialog";
 import { SearchableDropdown } from "@repo/ui/src/searchable-dropdown";
-import { toast } from "sonner";
+import { toast } from "@repo/ui/src/sonner";
 import {
   ChevronLeft,
   ChevronRight,
@@ -71,6 +81,9 @@ export default function MonthlyPage() {
     MonthlyData["applications"][0] | null
   >(null);
   const [selectedDrink, setSelectedDrink] = useState("");
+
+  // 삭제 확인 Dialog
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   // 설정 편집용 state
   const [editDrinkOptions, setEditDrinkOptions] = useState<string[]>([]);
@@ -264,7 +277,7 @@ export default function MonthlyPage() {
   return (
     <div className="space-y-6">
       {/* Top Bar */}
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-xl border border-slate-200/60 bg-white/50 px-5 py-3 backdrop-blur-sm">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-lg bg-white px-5 py-3">
         {/* Month Selector */}
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handlePrevMonth}>
@@ -319,7 +332,7 @@ export default function MonthlyPage() {
         {/* Settings */}
         <button
           onClick={handleOpenSettings}
-          className="ml-auto flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+          className="ml-auto flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
           title="설정"
         >
           <Settings className="h-4 w-4" />
@@ -335,7 +348,7 @@ export default function MonthlyPage() {
             .map(([drink, count]) => (
               <div
                 key={drink}
-                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/60 px-2.5 py-1 text-xs"
+                className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2.5 py-1 text-xs"
               >
                 <span className="text-slate-600">{drink}</span>
                 <span className="font-semibold tabular-nums text-slate-800">
@@ -383,7 +396,7 @@ export default function MonthlyPage() {
               {Array.from({ length: 5 }).map((_, i) => (
                 <div
                   key={i}
-                  className="h-10 bg-slate-100 rounded-lg animate-pulse"
+                  className="h-10 bg-slate-100 rounded-md animate-pulse"
                 />
               ))}
             </div>
@@ -392,14 +405,14 @@ export default function MonthlyPage() {
               {selectedUserId ? "해당 사용자의 신청 내역이 없습니다" : "신청 내역이 없습니다"}
             </div>
           ) : (
-            <div className="divide-y divide-slate-100">
+            <div>
               {filteredApplications.map((app) => {
                 const memberStatus = statusMap.get(app.userId);
                 return (
                   <div
                     key={app.id}
                     className={cn(
-                      "flex items-center justify-between py-2 -mx-4 px-4 rounded-lg transition-colors",
+                      "flex items-center justify-between py-2 -mx-4 px-4 rounded-md transition-colors",
                       memberStatus
                         ? "opacity-50 cursor-default"
                         : "hover:bg-slate-50 cursor-pointer"
@@ -450,11 +463,7 @@ export default function MonthlyPage() {
                           className="h-8 w-8 text-slate-400 hover:text-red-500"
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (
-                              confirm(`${app.name}님의 신청을 삭제하시겠습니까?`)
-                            ) {
-                              deleteMutation.mutate(app.id);
-                            }
+                            setDeleteTarget({ id: app.id, name: app.name });
                           }}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -481,7 +490,7 @@ export default function MonthlyPage() {
               <button
                 key={drink}
                 onClick={() => setSelectedDrink(drink)}
-                className={`px-4 py-3 rounded-xl border text-left text-sm font-medium transition-all ${
+                className={`px-4 py-3 rounded-lg border text-left text-sm font-medium transition-all ${
                   selectedDrink === drink
                     ? "border-slate-900 bg-slate-900 text-white"
                     : "border-slate-200 hover:border-slate-300 text-slate-700"
@@ -641,6 +650,29 @@ export default function MonthlyPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* 신청 삭제 확인 */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent className="max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>신청 삭제</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget?.name}님의 신청을 삭제하시겠습니까?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteTarget) deleteMutation.mutate(deleteTarget.id);
+                setDeleteTarget(null);
+              }}
+            >
+              삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

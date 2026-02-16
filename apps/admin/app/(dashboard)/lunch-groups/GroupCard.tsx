@@ -22,7 +22,7 @@ export function GroupCard({ groupNumber, memberIds, members }: GroupCardProps) {
   return (
     <div
       ref={setNodeRef}
-      className={`p-4 rounded-xl border-2 transition-all min-h-[160px] ${
+      className={`p-4 rounded-lg border-2 transition-all min-h-[160px] ${
         isOver
           ? "border-blue-400 bg-blue-50"
           : "border-gray-200 bg-white hover:border-gray-300"
@@ -31,7 +31,7 @@ export function GroupCard({ groupNumber, memberIds, members }: GroupCardProps) {
       {/* 조 번호 헤더 */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <span className="w-7 h-7 flex items-center justify-center bg-gray-900 text-white text-sm font-bold rounded-lg">
+          <span className="w-7 h-7 flex items-center justify-center bg-gray-900 text-white text-sm font-bold rounded-md">
             {groupNumber}
           </span>
           <span className="text-sm font-medium text-gray-600">조</span>

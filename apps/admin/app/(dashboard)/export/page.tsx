@@ -18,12 +18,8 @@ import {
   SelectValue,
 } from "@repo/ui/src/select";
 import { Button } from "@repo/ui/src/button";
-import { toast } from "sonner";
-import {
-  Download,
-  FileSpreadsheet,
-  CheckCircle2,
-} from "lucide-react";
+import { toast } from "@repo/ui/src/sonner";
+import { Download, FileSpreadsheet, CheckCircle2 } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
 import type { Member } from "@/lib/supabase/types";
 import { cn } from "@repo/ui/lib/utils";
@@ -36,7 +32,7 @@ export default function ExportPage() {
   const [selectedYear, setSelectedYear] = useState(currentDate.year());
   // 현재 월 기준으로 상반기/하반기 자동 선택
   const [selectedHalf, setSelectedHalf] = useState<HalfYear>(
-    currentDate.month() < 6 ? "H1" : "H2"
+    currentDate.month() < 6 ? "H1" : "H2",
   );
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
@@ -66,7 +62,7 @@ export default function ExportPage() {
     setSelectedMemberIds((prev) =>
       prev.includes(memberId)
         ? prev.filter((id) => id !== memberId)
-        : [...prev, memberId]
+        : [...prev, memberId],
     );
   };
 
@@ -82,14 +78,6 @@ export default function ExportPage() {
 
   return (
     <div className="space-y-6">
-      {/* 헤더 */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">엑셀 내보내기</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          식대 데이터를 엑셀 파일로 내보냅니다. 원본 양식과 동일한 형식으로 생성됩니다.
-        </p>
-      </div>
-
       <div className="grid grid-cols-12 gap-6">
         {/* 왼쪽: 설정 및 내보내기 정보 */}
         <div className="col-span-5 space-y-4">
@@ -120,7 +108,7 @@ export default function ExportPage() {
                   value={selectedHalf}
                   onValueChange={(value) => setSelectedHalf(value as HalfYear)}
                 >
-                  <SelectTrigger className="h-10 w-28">
+                  <SelectTrigger className="h-10 w-38">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -139,7 +127,7 @@ export default function ExportPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-start gap-3 p-3 bg-sky-50 rounded-lg">
+                <div className="flex items-start gap-3 p-3 bg-sky-50 rounded-md">
                   <FileSpreadsheet className="h-6 w-6 text-sky-600 flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="font-medium text-sky-900 text-sm">
@@ -152,10 +140,18 @@ export default function ExportPage() {
                 </div>
 
                 <div className="text-sm text-gray-600">
-                  <p className="font-medium text-gray-900 mb-1">생성되는 시트</p>
+                  <p className="font-medium text-gray-900 mb-1">
+                    생성되는 시트
+                  </p>
                   <ul className="space-y-1 text-xs">
-                    <li>• <span className="font-medium">통계:</span> 기간별 요약 정보</li>
-                    <li>• <span className="font-medium">내역:</span> 날짜별 조식/중식/석식 데이터</li>
+                    <li>
+                      • <span className="font-medium">통계:</span> 기간별 요약
+                      정보
+                    </li>
+                    <li>
+                      • <span className="font-medium">내역:</span> 날짜별
+                      조식/중식/석식 데이터
+                    </li>
                   </ul>
                 </div>
 
@@ -191,11 +187,16 @@ export default function ExportPage() {
                 <div>
                   <CardTitle className="text-base">멤버 선택</CardTitle>
                   <CardDescription>
-                    내보낼 멤버를 선택하세요 ({selectedMemberIds.length}/{members.length}명 선택)
+                    내보낼 멤버를 선택하세요 ({selectedMemberIds.length}/
+                    {members.length}명 선택)
                   </CardDescription>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={selectAllMembers}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={selectAllMembers}
+                  >
                     전체 선택
                   </Button>
                   <Button variant="outline" size="sm" onClick={clearSelection}>
@@ -213,10 +214,10 @@ export default function ExportPage() {
                       key={member.id}
                       onClick={() => toggleMemberSelection(member.id)}
                       className={cn(
-                        "flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all",
+                        "flex items-center gap-2 p-2 rounded-md border cursor-pointer transition-all",
                         isSelected
                           ? "border-[#135bec] bg-[#135bec]/10"
-                          : "border-gray-200 hover:border-gray-300"
+                          : "border-gray-200 hover:border-gray-300",
                       )}
                     >
                       {isSelected ? (
@@ -224,7 +225,9 @@ export default function ExportPage() {
                       ) : (
                         <div className="h-4 w-4 rounded-full border border-gray-300 flex-shrink-0" />
                       )}
-                      <span className="text-sm truncate">{member.full_name}</span>
+                      <span className="text-sm truncate">
+                        {member.full_name}
+                      </span>
                     </div>
                   );
                 })}

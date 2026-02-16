@@ -61,17 +61,17 @@ export const AllHistoryDialog = ({ isOpen, onClose }: AllHistoryDialogProps) => 
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-auto p-0 bg-white rounded-3xl shadow-2xl max-h-[85vh] overflow-hidden border-0">
         {/* Header */}
-        <div className="bg-gradient-to-br from-stone-900 to-stone-800 p-6 text-white">
+        <div className="p-6">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-center">
+            <DialogTitle className="text-xl font-bold text-center text-gray-900">
               전체 신청 현황
             </DialogTitle>
-            <DialogDescription className="text-stone-300 text-center mt-2">
+            <DialogDescription className="text-gray-500 text-center mt-2">
               {isLoading ? (
-                <span className="inline-block w-24 h-4 bg-stone-700 rounded animate-pulse" />
+                <span className="inline-block w-24 h-4 bg-gray-200 rounded animate-pulse" />
               ) : (
                 <>
-                  <span className="text-white font-semibold">
+                  <span className="text-gray-900 font-semibold">
                     {completedCount}
                   </span>
                   /{applications.length}명 신청 완료
@@ -82,7 +82,7 @@ export const AllHistoryDialog = ({ isOpen, onClose }: AllHistoryDialogProps) => 
 
           {/* Progress bar */}
           {!isLoading && applications.length > 0 && (
-            <div className="mt-4 h-2 bg-stone-700 rounded-full overflow-hidden">
+            <div className="mt-4 h-2 bg-gray-100 rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{

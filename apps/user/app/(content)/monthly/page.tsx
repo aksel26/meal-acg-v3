@@ -70,29 +70,27 @@ const MonthlyDrink = () => {
     <div className=" bg-white rounded-xl pb-12">
       {/* Header */}
       <header className="px-5 pt-10 pb-5">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-gray-400 text-xs font-medium tracking-wide">
-              Monthly Coffee
-            </p>
-            <h1 className="text-xl font-bold text-gray-900 mt-0.5">
-              이번 달 음료
-            </h1>
-          </div>
-          <button
-            onClick={() => setIsAllHistoryDialogOpen(true)}
-            className="text-gray-400 text-sm hover:text-gray-600 transition-colors"
-          >
-            전체보기
-          </button>
+        <div>
+          <p className="text-gray-400 text-xs font-medium tracking-wide">
+            Monthly Coffee
+          </p>
+          <h1 className="text-xl font-bold text-gray-900 mt-0.5">
+            이번 달 음료
+          </h1>
         </div>
       </header>
 
       {/* Status */}
       <div className="px-5 mb-5">
         <div className="flex gap-3">
-          <div className="flex-1 bg-gray-50 rounded-xl p-4">
-            <p className="text-[11px] text-gray-400 font-medium">신청현황</p>
+          <button
+            onClick={() => setIsAllHistoryDialogOpen(true)}
+            className="flex-1 bg-gray-50 rounded-xl p-4 text-left transition-colors hover:bg-gray-100 active:bg-gray-100"
+          >
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] text-gray-400 font-medium">신청현황</p>
+              <p className="text-[10px] text-gray-400">전체보기 &rsaquo;</p>
+            </div>
             <p className="text-xl font-bold text-gray-900 mt-1">
               {isLoading ? (
                 <span className="inline-block w-10 h-6 bg-gray-200 rounded animate-pulse" />
@@ -105,7 +103,7 @@ const MonthlyDrink = () => {
                 </>
               )}
             </p>
-          </div>
+          </button>
           <div className="flex-1 bg-gray-50 rounded-xl p-4">
             <p className="text-[11px] text-gray-400 font-medium">픽업담당</p>
             <p className="text-sm font-semibold text-gray-900 mt-1.5 truncate">

@@ -31,10 +31,12 @@ function AlertDialogOverlay({ className, ...props }: React.ComponentProps<typeof
   );
 }
 
-function AlertDialogContent({ className, ...props }: React.ComponentProps<typeof AlertDialogPrimitive.Content>) {
+function AlertDialogContent({ className, children, ...props }: React.ComponentProps<typeof AlertDialogPrimitive.Content>) {
+  const closeRef = React.useRef<HTMLButtonElement>(null);
+
   return (
     <AlertDialogPortal>
-      <AlertDialogOverlay />
+      <AlertDialogOverlay onClick={() => closeRef.current?.click()} />
       <AlertDialogPrimitive.Content
         data-slot="alert-dialog-content"
         className={cn(
@@ -48,7 +50,10 @@ function AlertDialogContent({ className, ...props }: React.ComponentProps<typeof
           className
         )}
         {...props}
-      />
+      >
+        {children}
+        <AlertDialogPrimitive.Cancel ref={closeRef} className="hidden" aria-hidden tabIndex={-1} />
+      </AlertDialogPrimitive.Content>
     </AlertDialogPortal>
   );
 }

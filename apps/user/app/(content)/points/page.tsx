@@ -611,8 +611,8 @@ export default function Points() {
                         <span
                           className={`px-1.5 py-px rounded text-[10px] font-medium ${
                             isActivity
-                              ? "bg-amber-50 text-amber-600"
-                              : "bg-blue-50 text-blue-600"
+                              ? "bg-amber-50 text-amber-500"
+                              : "bg-blue-50/60 text-blue-600"
                           }`}
                         >
                           {record.type}

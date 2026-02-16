@@ -64,7 +64,12 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 const myFont = localFont({
-  src: "../fonts/NanumSquareNeo-Variable.ttf", // 'app/fonts/' 폴더의 폰트 파일 경로
+  src: [
+    { path: "../fonts/NanumSquareRoundL.ttf", weight: "300" },
+    { path: "../fonts/NanumSquareRoundR.ttf", weight: "400" },
+    { path: "../fonts/NanumSquareRoundB.ttf", weight: "700" },
+    { path: "../fonts/NanumSquareRoundEB.ttf", weight: "800" },
+  ],
 });
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

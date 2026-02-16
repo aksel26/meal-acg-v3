@@ -1,6 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, useMemo, Suspense } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+  Suspense,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -15,7 +22,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
-import { toast } from "sonner";
+import { toast } from "@repo/ui/src/sonner";
 import { cn } from "@repo/ui/lib/utils";
 import { Button } from "@repo/ui/src/button";
 import { SearchableDropdown } from "@repo/ui/src/searchable-dropdown";
@@ -297,7 +304,6 @@ function UsersPageContent() {
     });
   };
 
-
   const sendNotifyMutation = useMutation({
     mutationFn: async ({
       userId,
@@ -306,31 +312,23 @@ function UsersPageContent() {
       userId: string;
       fullName: string;
     }) => {
-      const response = await fetch("/api/slack/notify", {
+      const response = await fetch("/api/notifications/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userIds: [userId],
-          year: selectedYear,
-          month: selectedMonth,
+          memberIds: [userId],
+          title: "식대 정산요청",
+          body: "이번 달 식대 정산이 완료되지 않았습니다. 앱에서 정산 내역을 확인하고 정산을 진행해주세요.",
+          url: "/",
+          tag: "settlement-result",
         }),
       });
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to send notification");
+        throw new Error(error.error || "알림 발송에 실패했습니다.");
       }
       const data = await response.json();
-      const result = data.results?.[0];
-      if (!result?.success) {
-        throw new Error(result?.error || "알림 발송 실패");
-      }
-      return { fullName };
-    },
-    onSuccess: (data) => {
-      toast.success(`${data.fullName}님에게 정산 요청을 보냈습니다.`);
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "정산 요청 발송에 실패했습니다.");
+      return { ...data, fullName };
     },
   });
 
@@ -370,7 +368,8 @@ function UsersPageContent() {
   });
 
   const years = useMemo(
-    () => Array.from({ length: YEARS_RANGE }, (_, i) => currentDate.year() - 2 + i),
+    () =>
+      Array.from({ length: YEARS_RANGE }, (_, i) => currentDate.year() - 2 + i),
     [currentDate],
   );
 
@@ -443,7 +442,7 @@ function UsersPageContent() {
   return (
     <div className="flex h-[calc(100vh-10rem)] flex-col gap-6">
       {/* Quick Stats */}
-      <div className="flex items-center gap-6 rounded-xl border border-slate-200/60 bg-white/50 px-6 py-3 backdrop-blur-sm">
+      <div className="flex items-center gap-6 rounded-lg bg-white px-6 py-3">
         <div className="flex items-baseline gap-1.5">
           <span className="text-sm text-slate-500">총 인원</span>
           <span className="text-lg font-semibold tabular-nums text-slate-900">
@@ -482,7 +481,7 @@ function UsersPageContent() {
               setIsYearOpen(!isYearOpen);
               setIsMonthOpen(false);
             }}
-            className="flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-slate-200/60 transition-all hover:bg-slate-50"
+            className="flex h-9 items-center gap-2 rounded-md bg-white px-3 text-sm font-medium text-slate-700 ring-1 ring-slate-200/60 transition-all hover:bg-slate-50"
           >
             {selectedYear}년
             <ChevronDown
@@ -493,7 +492,7 @@ function UsersPageContent() {
             />
           </button>
           {isYearOpen && (
-            <div className="absolute left-0 top-full z-50 mt-2 w-32 rounded-lg bg-white p-1 shadow-lg ring-1 ring-slate-200/60">
+            <div className="absolute left-0 top-full z-50 mt-2 w-32 rounded-md bg-white p-1 shadow-lg ring-1 ring-slate-200/60">
               {years.map((year) => (
                 <button
                   key={year}
@@ -502,7 +501,7 @@ function UsersPageContent() {
                     setIsYearOpen(false);
                   }}
                   className={cn(
-                    "flex w-full items-center rounded-lg px-3 py-2 text-sm transition-colors",
+                    "flex w-full items-center rounded-md px-3 py-2 text-sm transition-colors",
                     year === selectedYear
                       ? "bg-[#135bec]/10 font-medium text-[#135bec]"
                       : "text-slate-600 hover:bg-slate-50",
@@ -522,7 +521,7 @@ function UsersPageContent() {
               setIsMonthOpen(!isMonthOpen);
               setIsYearOpen(false);
             }}
-            className="flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-slate-200/60 transition-all hover:bg-slate-50"
+            className="flex h-9 items-center gap-2 rounded-md bg-white px-3 text-sm font-medium text-slate-700 ring-1 ring-slate-200/60 transition-all hover:bg-slate-50"
           >
             {selectedMonth}월
             <ChevronDown
@@ -533,7 +532,7 @@ function UsersPageContent() {
             />
           </button>
           {isMonthOpen && (
-            <div className="absolute left-0 top-full z-50 mt-2 grid w-48 grid-cols-4 gap-1 rounded-lg bg-white p-2 shadow-lg ring-1 ring-slate-200/60">
+            <div className="absolute left-0 top-full z-50 mt-2 grid w-48 grid-cols-4 gap-1 rounded-md bg-white p-2 shadow-lg ring-1 ring-slate-200/60">
               {MONTHS.map((month) => (
                 <button
                   key={month}
@@ -542,7 +541,7 @@ function UsersPageContent() {
                     setIsMonthOpen(false);
                   }}
                   className={cn(
-                    "flex items-center justify-center rounded-lg py-2 text-sm transition-colors",
+                    "flex items-center justify-center rounded-md py-2 text-sm transition-colors",
                     month === selectedMonth
                       ? "bg-[#135bec]/10 font-medium text-[#135bec]"
                       : "text-slate-600 hover:bg-slate-50",
@@ -575,7 +574,7 @@ function UsersPageContent() {
         <Button
           onClick={handleCheckAllInputs}
           size="sm"
-          className="gap-1.5"
+          className="gap-1.5 h-9"
           disabled={isCheckingInputs || !users || users.length === 0}
         >
           {isCheckingInputs ? (
@@ -590,18 +589,17 @@ function UsersPageContent() {
             </>
           )}
         </Button>
-
       </div>
 
       {/* Users Table */}
-      <div className="glass-panel min-h-0 flex-1 overflow-hidden rounded-2xl">
+      <div className="glass-panel min-h-0 flex-1 overflow-hidden rounded-xl">
         <div
           ref={tableContainerRef}
           onScroll={handleScroll}
           className="h-full overflow-auto"
         >
           <table className="w-full">
-            <thead className="sticky top-0 z-10 bg-slate-50 shadow-[0_1px_0_0_rgb(241,245,249)] [&>tr>th]:h-9 [&>tr>th]:px-3 [&>tr>th]:py-0">
+            <thead className="sticky top-0 z-10 bg-slate-50 [&>tr>th]:h-9 [&>tr>th]:px-3 [&>tr>th]:py-0">
               <tr>
                 <th className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                   No.
@@ -647,7 +645,7 @@ function UsersPageContent() {
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody>
               {isLoading ? (
                 Array.from({ length: 8 }).map((_, index) => (
                   <tr key={index}>
@@ -761,38 +759,49 @@ function UsersPageContent() {
                         </button>
                       </td>
                       <td className="px-1 py-1.5 text-center">
-                        {user.email ? (
-                          <button
-                            onClick={() => {
-                              sendNotifyMutation.mutate({
-                                userId: user.user_id,
-                                fullName: user.full_name,
-                              });
-                            }}
-                            disabled={sendNotifyMutation.isPending}
-                            className="inline-flex h-6 w-6 items-center justify-center rounded-lg text-sky-500 transition-colors hover:bg-sky-50 hover:text-sky-600"
-                            title="정산 요청 보내기"
-                          >
-                            {sendNotifyMutation.isPending &&
-                            sendNotifyMutation.variables?.userId ===
-                              user.user_id ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
-                              <Send className="h-3.5 w-3.5" />
-                            )}
-                          </button>
-                        ) : (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg text-slate-300 cursor-not-allowed">
-                                <Send className="h-3.5 w-3.5" />
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              이메일이 등록되지 않았습니다
-                            </TooltipContent>
-                          </Tooltip>
-                        )}
+                        <button
+                          onClick={async () => {
+                            try {
+                              const data = await sendNotifyMutation.mutateAsync(
+                                {
+                                  userId: user.user_id,
+                                  fullName: user.full_name,
+                                },
+                              );
+
+                              if (data.summary.total === 0) {
+                                toast.error(
+                                  `${user.full_name}님은 푸시 알림을 구독하지 않았습니다.`,
+                                );
+                              } else if (data.summary.success > 0) {
+                                toast.success(
+                                  `${user.full_name}님에게 정산 요청을 보냈습니다.`,
+                                );
+                              } else {
+                                toast.error(
+                                  `${user.full_name}님에게 알림 발송에 실패했습니다.`,
+                                );
+                              }
+                            } catch (error) {
+                              toast.error(
+                                error instanceof Error
+                                  ? error.message
+                                  : "정산 요청 발송에 실패했습니다.",
+                              );
+                            }
+                          }}
+                          disabled={sendNotifyMutation.isPending}
+                          className="inline-flex h-6 w-6 items-center justify-center rounded-md text-sky-500 transition-colors hover:bg-sky-50 hover:text-sky-600"
+                          title="정산 요청 보내기"
+                        >
+                          {sendNotifyMutation.isPending &&
+                          sendNotifyMutation.variables?.userId ===
+                            user.user_id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Send className="h-3.5 w-3.5" />
+                          )}
+                        </button>
                       </td>
                       <td className="px-3 py-1.5 text-center">
                         {user.has_excel_file ? (
@@ -801,7 +810,7 @@ function UsersPageContent() {
                               handleDownloadExcel(user.user_id, user.full_name)
                             }
                             disabled={downloadingUserId === user.user_id}
-                            className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-emerald-600 transition-colors hover:bg-emerald-50"
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-emerald-600 transition-colors hover:bg-emerald-50"
                           >
                             {downloadingUserId === user.user_id ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
@@ -841,7 +850,6 @@ function UsersPageContent() {
           }}
         />
       )}
-
     </div>
   );
 }

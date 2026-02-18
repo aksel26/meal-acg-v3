@@ -32,6 +32,11 @@ import {
   Trash2,
   X,
   ListPlus,
+  Briefcase,
+  Home,
+  Sun,
+  Clock,
+  UtensilsCrossed,
 } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
 import type { MealLog, Member, Holiday } from "@/lib/supabase/types";
@@ -557,175 +562,132 @@ function CalendarPageContent() {
               const holidayName = holidayMap.get(dateStr);
               const isHoliday = !!holidayName;
 
-              // 근태별 스타일 (배경, 텍스트, 테두리)
-              const getAttendanceStyle = (
+              // 근태별 스타일
+              const getAttendanceInfo = (
                 attendance: string | null | undefined,
               ) => {
                 if (!attendance)
-                  return {
-                    bg: "bg-gray-100",
-                    text: "text-gray-600",
-                    border: "border-gray-200",
-                  };
+                  return { Icon: Briefcase, bg: "bg-gray-100", text: "text-gray-500", label: "" };
                 const lower = attendance.toLowerCase();
-                if (lower.includes("출근") || lower.includes("근무")) {
-                  return {
-                    bg: "bg-emerald-100",
-                    text: "text-emerald-700",
-                    border: "border-emerald-300",
-                  };
-                }
-                if (lower.includes("재택") || lower.includes("홈")) {
-                  return {
-                    bg: "bg-amber-100",
-                    text: "text-amber-700",
-                    border: "border-amber-300",
-                  };
-                }
-                if (lower.includes("휴가") || lower.includes("연차")) {
-                  return {
-                    bg: "bg-sky-100",
-                    text: "text-sky-700",
-                    border: "border-sky-300",
-                  };
-                }
-                if (lower.includes("반차")) {
-                  return {
-                    bg: "bg-violet-100",
-                    text: "text-violet-700",
-                    border: "border-violet-300",
-                  };
-                }
-                if (lower.includes("개별")) {
-                  return {
-                    bg: "bg-slate-100",
-                    text: "text-slate-600",
-                    border: "border-slate-300",
-                  };
-                }
-                return {
-                  bg: "bg-gray-100",
-                  text: "text-gray-600",
-                  border: "border-gray-200",
-                };
+                if (lower.includes("개별"))
+                  return { Icon: UtensilsCrossed, bg: "bg-slate-100", text: "text-slate-500", label: "개별" };
+                if (lower.includes("출근") || lower.includes("근무"))
+                  return { Icon: Briefcase, bg: "bg-blue-50", text: "text-blue-600", label: "출근" };
+                if (lower.includes("재택") || lower.includes("홈"))
+                  return { Icon: Home, bg: "bg-amber-50", text: "text-amber-600", label: "재택" };
+                if (lower.includes("휴가") || lower.includes("연차") || lower === "휴무")
+                  return { Icon: Sun, bg: "bg-sky-50", text: "text-sky-600", label: "휴가" };
+                if (lower.includes("반차"))
+                  return { Icon: Clock, bg: "bg-violet-50", text: "text-violet-600", label: lower.includes("오전") ? "오전" : "오후" };
+                return { Icon: Briefcase, bg: "bg-gray-100", text: "text-gray-500", label: "" };
               };
 
-              const attendanceStyle = mealLog?.attendance
-                ? getAttendanceStyle(mealLog.attendance)
+              const attInfo = mealLog?.attendance
+                ? getAttendanceInfo(mealLog.attendance)
                 : null;
-
-              const hasBreakfast =
-                mealLog?.breakfast_amount && mealLog.breakfast_amount > 0;
-              const hasLunch =
-                mealLog?.lunch_amount && mealLog.lunch_amount > 0;
-              const hasDinner =
-                mealLog?.dinner_amount && mealLog.dinner_amount > 0;
 
               // 금액 포맷
               const formatAmount = (amount: number) => {
-                if (amount >= 10000) return `${(amount / 10000).toFixed(1)}만`;
                 return amount.toLocaleString();
               };
 
-              // 셀 테두리 스타일 결정
-              const getCellBorderClass = () => {
-                // 근태가 있으면 해당 색상 테두리
-                if (attendanceStyle) return attendanceStyle.border;
-                // 기본 테두리
-                return "border-slate-200";
-              };
 
-              // hover 테두리 스타일
-              const getHoverClass = () => {
-                const scaleEffect =
-                  "hover:scale-[1.03] hover:shadow-md hover:z-10";
-                if (isHoliday) return `hover:bg-rose-100/80 ${scaleEffect}`;
-                if (dayOfWeek === 0)
-                  return `hover:border-rose-400 ${scaleEffect}`;
-                if (dayOfWeek === 6)
-                  return `hover:border-blue-400 ${scaleEffect}`;
-                return `hover:border-slate-300 ${scaleEffect}`;
-              };
+              const isToday = dateStr === dayjs().format("YYYY-MM-DD");
+
+              const isNonWorkAttendance = ["연차", "휴무", "재택", "휴가"].some(
+                (type) => mealLog?.attendance?.includes(type),
+              );
 
               return (
                 <div
                   key={day}
                   onClick={() => handleDateClick(dateStr)}
-                  className={`h-24 rounded-md p-2 cursor-pointer transition-all duration-150 ${
-                    isHoliday
-                      ? "bg-rose-50/80 border-0"
-                      : isWeekend
-                        ? `bg-slate-50/60 border ${getCellBorderClass()}`
-                        : `bg-white border ${getCellBorderClass()}`
-                  } ${getHoverClass()}`}
+                  className={`h-28 flex flex-col rounded-lg p-1.5 cursor-pointer transition-all duration-150 hover:-translate-y-1 ${
+                    isToday
+                      ? "ring-2 ring-blue-500 bg-blue-50/30"
+                      : isHoliday
+                        ? "bg-rose-50/60"
+                        : isWeekend
+                          ? "bg-slate-100/60"
+                          : "bg-slate-50/50"
+                  }`}
                 >
                   {/* 날짜 헤더 */}
-                  <div className="flex items-baseline gap-1 mb-1">
+                  <div className="flex items-center gap-1 px-0.5">
                     <span
-                      className={`text-sm font-semibold leading-none ${
-                        isHoliday || dayOfWeek === 0
-                          ? "text-rose-500"
-                          : dayOfWeek === 6
-                            ? "text-blue-500"
-                            : "text-slate-700"
+                      className={`text-xs font-bold leading-none ${
+                        isToday
+                          ? "text-blue-600"
+                          : isHoliday || dayOfWeek === 0
+                            ? "text-rose-500"
+                            : dayOfWeek === 6
+                              ? "text-blue-500"
+                              : "text-slate-600"
                       }`}
                     >
                       {day}
                     </span>
                     {isHoliday && (
                       <span
-                        className="text-[8px] text-rose-400 truncate max-w-[50px] leading-none"
+                        className="text-[7px] text-rose-400 truncate max-w-[40px] leading-none"
                         title={holidayName}
                       >
                         {holidayName}
                       </span>
                     )}
+                    {isToday && (
+                      <span className="rounded-full bg-blue-500 px-1 py-px text-[7px] font-bold text-white leading-none">
+                        오늘
+                      </span>
+                    )}
                   </div>
 
-                  {isLoadingLogs && selectedUserId ? (
-                    <div className="space-y-1.5">
-                      <Skeleton className="h-4 w-10 rounded" />
-                      <Skeleton className="h-3 w-14" />
-                    </div>
-                  ) : mealLog ? (
-                    <div className="space-y-1">
-                      {/* 근태 배지 */}
-                      {mealLog.attendance && attendanceStyle && (
-                        <span
-                          className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-medium leading-none ${attendanceStyle.bg} ${attendanceStyle.text}`}
-                        >
-                          {mealLog.attendance}
-                        </span>
-                      )}
-
-                      {/* 연차, 휴무, 재택이 아닐 때만 금액/식사 정보 표시 */}
-                      {!["연차", "휴무", "재택", "휴가"].some((type) =>
-                        mealLog.attendance?.includes(type),
-                      ) && (
+                  {/* 내부 콘텐츠 영역 */}
+                  <div className="mt-0.5 flex-1 flex flex-col gap-0.5 px-0.5">
+                    {isLoadingLogs && selectedUserId ? (
+                      <div className="space-y-1">
+                        <Skeleton className="h-4 w-full rounded" />
+                        <Skeleton className="h-4 w-3/4 rounded" />
+                      </div>
+                    ) : mealLog ? (
+                      isNonWorkAttendance ? (
+                        <div className="flex h-full items-center justify-center">
+                          {attInfo && (
+                            <span className={`inline-flex items-center gap-1 rounded-md px-2 py-1 ${attInfo.bg} ${attInfo.text}`}>
+                              <attInfo.Icon className="h-4 w-4" />
+                              <span className="text-xs font-semibold">{attInfo.label}</span>
+                            </span>
+                          )}
+                        </div>
+                      ) : (
                         <>
-                          {/* 총 금액 - 0원도 표시 */}
-                          <div
-                            className={`text-xs font-bold ${
-                              (mealLog.total_amount || 0) > 0
-                                ? "text-emerald-600"
-                                : "text-slate-400"
-                            }`}
-                          >
-                            {formatAmount(mealLog.total_amount || 0)}원
-                          </div>
-
-                          {/* 식사별 문구 */}
-                          {(hasBreakfast || hasLunch || hasDinner) && (
-                            <div className="flex flex-wrap gap-x-1 text-[9px] text-slate-400">
-                              {hasBreakfast && <span>조</span>}
-                              {hasLunch && <span>중</span>}
-                              {hasDinner && <span>석</span>}
+                          {attInfo && attInfo.label !== "출근" && (
+                            <div className={`flex items-center justify-between rounded px-2 py-1 ${attInfo.bg}`}>
+                              <span className={`text-sm font-semibold ${attInfo.text}`}>{attInfo.label}</span>
                             </div>
                           )}
+                          {mealLog.breakfast_amount && mealLog.breakfast_amount > 0 ? (
+                            <div className="flex items-center justify-between rounded bg-orange-50 px-2 py-1">
+                              <span className="text-sm font-bold tabular-nums text-orange-700">{formatAmount(mealLog.breakfast_amount)}</span>
+                              <span className="text-xs font-semibold text-orange-500">조식</span>
+                            </div>
+                          ) : null}
+                          {mealLog.lunch_amount && mealLog.lunch_amount > 0 ? (
+                            <div className="flex items-center justify-between rounded bg-emerald-50 px-2 py-1">
+                              <span className="text-sm font-bold tabular-nums text-emerald-700">{formatAmount(mealLog.lunch_amount)}</span>
+                              <span className="text-xs font-semibold text-emerald-500">중식</span>
+                            </div>
+                          ) : null}
+                          {mealLog.dinner_amount && mealLog.dinner_amount > 0 ? (
+                            <div className="flex items-center justify-between rounded bg-indigo-50 px-2 py-1">
+                              <span className="text-sm font-bold tabular-nums text-indigo-700">{formatAmount(mealLog.dinner_amount)}</span>
+                              <span className="text-xs font-semibold text-indigo-500">석식</span>
+                            </div>
+                          ) : null}
                         </>
-                      )}
-                    </div>
-                  ) : null}
+                      )
+                    ) : null}
+                  </div>
                 </div>
               );
             })}

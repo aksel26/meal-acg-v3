@@ -3,13 +3,13 @@
 
 /* Font weight 오버라이드 (모바일 가독성) */
 .font-medium {
-  font-weight: 400;
-}
-.font-semibold {
   font-weight: 500;
 }
-.font-bold {
+.font-semibold {
   font-weight: 600;
+}
+.font-bold {
+  font-weight: 700;
 }
 
 /* Premium Soft Korean Design System */
@@ -86,6 +86,7 @@
 
 /* Base Styles */
 html {
+  font-size: 93.75%; /* 16px → 15px */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -100,7 +101,7 @@ body {
   );
   background-attachment: fixed;
   min-height: 100dvh;
-  font-weight: 300;
+  font-weight: 400;
 }
 
 /* Premium Card Glass Effect */

@@ -58,20 +58,8 @@
   --shadow-glass: 0 4px 30px rgba(0, 0, 0, 0.1);
 }
 
-* {
-  font-family:
-    "Pretendard Variable",
-    Pretendard,
-    -apple-system,
-    BlinkMacSystemFont,
-    system-ui,
-    Roboto,
-    "Helvetica Neue",
-    "Segoe UI",
-    "Apple SD Gothic Neo",
-    "Noto Sans KR",
-    "Malgun Gothic",
-    sans-serif;
+html {
+  font-size: 87.5%; /* 16px → 14px */
 }
 
 body {

@@ -12,6 +12,7 @@ import {
 import { NumberTicker } from "@repo/ui/src/number-ticker";
 import { Check, ChevronRight, ListFilter, Plus } from "@repo/ui/icons";
 import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/src/popover";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@repo/ui/src/tooltip";
 import { motion } from "motion/react";
 import React, { useState, useEffect, useMemo } from "react";
 import NoDataIcon from "@/public/icons/noData.png";
@@ -261,7 +262,6 @@ export default function Points() {
   });
 
   const handleEditPoint = (record: UsageRecord) => {
-    // 검토 완료된 내역은 수정 불가
     if (record.is_reviewed) return;
     setEditingPoint(toEditablePoint(record));
     setIsNewPoint(false);
@@ -580,9 +580,8 @@ export default function Points() {
                 const dow = ["일", "월", "화", "수", "목", "금", "토"][d.day()];
                 const isActivity = record.type === "활동비";
 
-                return (
+                const recordContent = (
                   <div
-                    key={record.id}
                     className={`px-4 py-3.5 ${
                       record.is_reviewed
                         ? "opacity-55"
@@ -617,7 +616,7 @@ export default function Points() {
                       {record.is_reviewed ? (
                         <span className="text-[11px] text-emerald-500 flex items-center gap-0.5">
                           <Check className="w-3 h-3" />
-                          확인
+                          P&C 확인
                         </span>
                       ) : (
                         <span className="text-[11px] text-gray-300">
@@ -631,6 +630,22 @@ export default function Points() {
                       </p>
                     )}
                   </div>
+                );
+
+                return record.is_reviewed ? (
+                  <Tooltip key={record.id}>
+                    <TooltipTrigger asChild>
+                      <div>{recordContent}</div>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="top"
+                      className="bg-gray-800 text-gray-100 max-w-60"
+                    >
+                      검토완료 항목입니다. 수정하려면 P&C에 문의 바랍니다.
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <div key={record.id}>{recordContent}</div>
                 );
               })}
             </div>

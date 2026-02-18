@@ -1,8 +1,9 @@
 "use client";
 import { BottomNavigation } from "@/components/BottomNavigation";
-const GachaMachine = dynamic(() => import("@/components/lunch/GachaMachine"), {
-  ssr: false,
-});
+const ScratchLottery = dynamic(
+  () => import("@/components/lunch/ScratchLottery"),
+  { ssr: false },
+);
 import LunchGroupList from "@/components/lunch/LunchGroupList";
 import { useLunchGroup } from "@/hooks/useLunchGroup";
 import { useUsers } from "@/hooks/useUsers";
@@ -222,7 +223,7 @@ const Lunch = () => {
         transition={{ duration: 0.4, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
       >
         <button
-          className="w-full mb-4 py-3.5 rounded-xl text-sm font-semibold text-white bg-gray-900 hover:bg-gray-800 transition-colors"
+          className="w-full mb-4 py-3.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-purple-400 via-pink-400 to-orange-300 hover:from-purple-500 hover:via-pink-500 hover:to-orange-400 transition-all"
           onClick={() => setIsLotteryOpen(true)}
         >
           점심조 뽑기
@@ -282,18 +283,18 @@ const Lunch = () => {
 
       {/* 점심조 뽑기 다이얼로그 */}
       <Dialog open={isLotteryOpen} onOpenChange={setIsLotteryOpen}>
-        <DialogContent className="max-w-4xl w-[90vw] max-h-[90vh] p-0 rounded-2xl overflow-hidden">
+        <DialogContent className="max-w-sm w-[90vw] p-0 rounded-2xl overflow-hidden">
           <DialogHeader className="px-6 py-5 border-b border-gray-100">
             <DialogTitle className="text-base font-semibold text-gray-900">
               점심조 뽑기
             </DialogTitle>
             <DialogDescription className="text-sm text-gray-500">
-              뽑기 버튼을 눌러 점심조를 뽑아주세요
+              스크래치 카드를 긁어서 배정된 조를 확인하세요
             </DialogDescription>
           </DialogHeader>
 
-          <div className="p-6 max-h-[70vh] overflow-y-auto flex items-center justify-center">
-            <GachaMachine />
+          <div className="px-6 py-4 flex items-center justify-center">
+            <ScratchLottery />
           </div>
 
           <DialogFooter className="px-6 py-4 border-t border-gray-100 bg-gray-50">

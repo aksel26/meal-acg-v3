@@ -128,7 +128,7 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
   // 빈 데이터 처리
   if (processedTeams.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
+      <div className="bg-white rounded-2xl p-8 text-center">
         <p className="text-sm text-gray-500 mb-1">등록된 점심조가 없습니다.</p>
         <p className="text-xs text-gray-400">관리자에게 문의해주세요.</p>
       </div>
@@ -147,10 +147,10 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
-            className={`bg-white rounded-2xl border overflow-hidden transition-all duration-200 ${
+            className={`bg-white rounded-2xl overflow-hidden transition-all duration-200 ${
               isMyTeamHighlight
-                ? "border-gray-300 shadow-sm"
-                : "border-gray-100 hover:border-gray-200"
+                ? "bg-gray-50"
+                : ""
             } ${onTeamClick ? "cursor-pointer" : ""}`}
             onClick={() =>
               onTeamClick?.(
@@ -160,7 +160,7 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
             }
           >
             {/* 헤더 */}
-            <div className={`px-4 py-3 border-b ${isMyTeamHighlight ? "bg-gray-50 border-gray-100" : "border-gray-50"}`}>
+            <div className={`px-4 py-3 ${isMyTeamHighlight ? "bg-gray-100/50" : ""}`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
@@ -175,7 +175,7 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
                   </span>
                 </div>
                 {isMyTeamHighlight && (
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-600">
+                  <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-orange-300 text-white">
                     내 조
                   </span>
                 )}
@@ -197,9 +197,9 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
                     return (
                       <div
                         key={`empty-${memberIndex}`}
-                        className="flex items-center gap-2 p-2 rounded-lg border border-dashed border-gray-200 bg-gray-50/50"
+                        className="flex items-center gap-2 p-2 rounded-lg bg-gray-50/50"
                       >
-                        <div className="w-6 h-6 rounded-full border border-dashed border-gray-300 flex items-center justify-center">
+                        <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">
                           <span className="text-[10px] text-gray-400">?</span>
                         </div>
                         <span className="text-xs text-gray-400 italic">빈 자리</span>
@@ -213,7 +213,7 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
                       key={`${member}-${memberIndex}`}
                       className={`flex items-center gap-2 p-2 rounded-lg ${
                         isMe
-                          ? "bg-gray-100 border border-gray-200"
+                          ? "bg-gray-100"
                           : "bg-gray-50"
                       }`}
                     >

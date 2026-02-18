@@ -2,9 +2,10 @@
 
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { toast } from "@repo/ui/src/sonner";
+import { toast } from "sonner";
 import Image from "next/image";
 import { Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 
 function LoginForm() {
   const router = useRouter();
@@ -48,44 +49,67 @@ function LoginForm() {
   };
 
   return (
-    <div className="rounded-xl border border-slate-800/50 bg-slate-800/50 p-8 shadow-2xl backdrop-blur-xl">
-      <div className="mb-6 text-center">
-        <h2 className="text-xl font-bold text-white">로그인</h2>
-        <p className="mt-1 text-sm text-slate-400">
-          관리자 계정으로 로그인하세요
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      className="w-full bg-white p-10 rounded-2xl shadow-xl border border-slate-100"
+    >
+      <div className="mb-8 text-center">
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.2, duration: 0.4 }}
+          className="flex justify-center mb-6"
+        >
+          <Image
+            src="/acg_ci_gray.png"
+            alt="ACG Logo"
+            width={100}
+            height={40}
+            quality={100}
+          />
+        </motion.div>
+        <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+          로그인
+        </h2>
+        <p className="mt-2 text-sm text-slate-500 font-medium">
+          관리자 계정으로 접속해주세요
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-6">
         {/* Login ID Field */}
         <div className="space-y-2">
           <label
             htmlFor="loginId"
-            className="block text-sm font-medium text-slate-300"
+            className="block text-sm font-semibold text-slate-700 ml-1"
           >
             아이디
           </label>
-          <input
-            id="loginId"
-            type="text"
-            placeholder="아이디를 입력하세요"
-            value={loginId}
-            onChange={(e) => setLoginId(e.target.value)}
-            required
-            disabled={isLoading}
-            className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-3 text-white placeholder:text-slate-500 transition-all focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20 disabled:opacity-50"
-          />
+          <motion.div whileFocus={{ scale: 1.01 }} className="relative">
+            <input
+              id="loginId"
+              type="text"
+              placeholder="아이디를 입력하세요"
+              value={loginId}
+              onChange={(e) => setLoginId(e.target.value)}
+              required
+              disabled={isLoading}
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-slate-900 placeholder:text-slate-400 transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+          </motion.div>
         </div>
 
         {/* Password Field */}
         <div className="space-y-2">
           <label
             htmlFor="password"
-            className="block text-sm font-medium text-slate-300"
+            className="block text-sm font-semibold text-slate-700 ml-1"
           >
             비밀번호
           </label>
-          <div className="relative">
+          <motion.div whileFocus={{ scale: 1.01 }} className="relative">
             <input
               id="password"
               type={showPassword ? "text" : "password"}
@@ -94,119 +118,116 @@ function LoginForm() {
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={isLoading}
-              className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-3 pr-12 text-white placeholder:text-slate-500 transition-all focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20 disabled:opacity-50"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-12 text-slate-900 placeholder:text-slate-400 transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 transition-colors hover:text-slate-300"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-600 focus:outline-none"
             >
-              {showPassword ? (
-                <EyeOff className="h-5 w-5" />
-              ) : (
-                <Eye className="h-5 w-5" />
-              )}
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={showPassword ? "hide" : "show"}
+                  initial={{ opacity: 0, rotate: -90, scale: 0.5 }}
+                  animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                  exit={{ opacity: 0, rotate: 90, scale: 0.5 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </motion.div>
+              </AnimatePresence>
             </button>
-          </div>
+          </motion.div>
         </div>
 
         {/* Submit Button */}
-        <button
+        <motion.button
           type="submit"
           disabled={isLoading}
-          className="group flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-amber-500/25 transition-all hover:from-amber-400 hover:to-amber-500 hover:shadow-amber-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="group relative w-full overflow-hidden rounded-xl bg-indigo-600 px-4 py-4 text-sm font-bold text-white shadow-lg shadow-indigo-600/25 transition-all hover:bg-indigo-500 hover:shadow-indigo-600/40 disabled:opacity-70 disabled:cursor-not-allowed"
         >
-          {isLoading ? (
-            <>
-              <Loader2 className="h-5 w-5 animate-spin" />
-              로그인 중...
-            </>
-          ) : (
-            <>
-              로그인
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </>
-          )}
-        </button>
+          <span className="relative z-10 flex items-center justify-center gap-2">
+            {isLoading ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" />
+                로그인 중...
+              </>
+            ) : (
+              <>
+                로그인
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </>
+            )}
+          </span>
+        </motion.button>
       </form>
-    </div>
+
+      <div className="mt-8 text-center">
+        <p className="text-xs text-slate-400">
+          문제가 있으신가요?{" "}
+          <a
+            href="#"
+            className="font-medium text-indigo-600 hover:text-indigo-500 hover:underline decoration-2 underline-offset-2 transition-colors"
+          >
+            관리자에게 문의하기
+          </a>
+        </p>
+      </div>
+    </motion.div>
   );
 }
 
 function LoginFormSkeleton() {
   return (
-    <div className="rounded-xl border border-slate-800/50 bg-slate-800/50 p-8 shadow-2xl backdrop-blur-xl">
-      <div className="mb-6 text-center">
-        <div className="mx-auto h-6 w-20 animate-pulse rounded bg-slate-700" />
-        <div className="mx-auto mt-2 h-4 w-40 animate-pulse rounded bg-slate-700" />
+    <div className="w-full bg-white p-10 rounded-2xl shadow-xl border border-slate-100">
+      <div className="mb-8 text-center">
+        <div className="mx-auto h-10 w-24 animate-pulse rounded bg-slate-100" />
+        <div className="mx-auto mt-4 h-8 w-32 animate-pulse rounded bg-slate-100" />
+        <div className="mx-auto mt-2 h-4 w-48 animate-pulse rounded bg-slate-100" />
       </div>
-      <div className="space-y-5">
+      <div className="space-y-6">
         <div className="space-y-2">
-          <div className="h-4 w-12 animate-pulse rounded bg-slate-700" />
-          <div className="h-12 w-full animate-pulse rounded-lg bg-slate-700" />
+          <div className="h-4 w-12 animate-pulse rounded bg-slate-100" />
+          <div className="h-12 w-full animate-pulse rounded-xl bg-slate-100" />
         </div>
         <div className="space-y-2">
-          <div className="h-4 w-16 animate-pulse rounded bg-slate-700" />
-          <div className="h-12 w-full animate-pulse rounded-lg bg-slate-700" />
+          <div className="h-4 w-16 animate-pulse rounded bg-slate-100" />
+          <div className="h-12 w-full animate-pulse rounded-xl bg-slate-100" />
         </div>
-        <div className="h-12 w-full animate-pulse rounded-lg bg-slate-700" />
+        <div className="h-12 w-full animate-pulse rounded-xl bg-slate-100" />
       </div>
+      <div className="mt-8 mx-auto h-4 w-32 animate-pulse rounded bg-slate-100" />
     </div>
   );
 }
 
 export default function LoginPage() {
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-900 px-4">
-      {/* Background Pattern */}
-      <div className="pointer-events-none absolute inset-0">
-        {/* Gradient Orbs */}
-        <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-amber-500/20 blur-3xl" />
-        <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-sky-500/20 blur-3xl" />
-        <div className="absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-500/10 blur-2xl" />
-
-        {/* Grid Pattern */}
-        <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage: `
-              linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
-            `,
-            backgroundSize: "64px 64px",
-          }}
-        />
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+      {/* Animated Pastel Gradient Background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-[20%] -left-[10%] w-[70%] h-[70%] rounded-full bg-blue-100/40 blur-[100px] animate-pulse" />
+        <div className="absolute top-[20%] -right-[10%] w-[60%] h-[60%] rounded-full bg-purple-100/40 blur-[100px] animate-pulse delay-700" />
+        <div className="absolute -bottom-[20%] left-[20%] w-[60%] h-[60%] rounded-full bg-pink-100/40 blur-[100px] animate-pulse delay-1000" />
       </div>
 
-      {/* Login Card */}
-      <div className="relative z-10 w-full max-w-md">
-        {/* Logo */}
-        <div className="mb-8 flex flex-col items-center gap-y-3">
-            <Image
-              src="/acg_ci_white.png"
-              alt="ACG Logo"
-              width={80}
-              height={32}
-              // className="h-8 w-8"
-            />
-          <h1 className="text-2xl font-bold tracking-tight text-white">
-            
-          </h1>
-          <p className="text-md text-slate-400">식대 관리 Admin</p>
-        </div>
-
-        {/* Form with Suspense */}
+      {/* Login Container */}
+      <div className="relative z-10 w-full max-w-[420px] px-4">
         <Suspense fallback={<LoginFormSkeleton />}>
           <LoginForm />
         </Suspense>
 
-        {/* Footer */}
-        <p className="mt-6 text-center text-xs text-slate-500">
-          문제가 있으신가요?{" "}
-          <a href="#" className="text-amber-500 hover:text-amber-400">
-            관리자에게 문의
-          </a>
-        </p>
+        <div className="mt-8 text-center">
+          <p className="text-xs text-slate-300 font-medium">
+            © 2026 Meal Management System. All rights reserved.
+          </p>
+        </div>
       </div>
     </div>
   );

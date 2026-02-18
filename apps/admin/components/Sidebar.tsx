@@ -107,7 +107,7 @@ function NavItemComponent({
     <Link
       href={item.href}
       className={cn(
-        "group flex items-center gap-2.5 rounded-md px-3 py-2 text-xs font-medium transition-colors",
+        "group flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors",
         isActive
           ? "bg-blue-50 text-blue-600"
           : "text-slate-500 hover:bg-slate-100 hover:text-slate-900",
@@ -139,7 +139,7 @@ function NavGroupComponent({
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-xs font-medium transition-colors",
+          "flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors",
           hasActiveItem
             ? "text-blue-600"
             : "text-slate-500 hover:bg-slate-100 hover:text-slate-900",
@@ -171,7 +171,7 @@ function NavGroupComponent({
               key={item.name}
               href={item.href}
               className={cn(
-                "flex items-center gap-2 rounded-md px-3 py-1.5 text-xs transition-colors",
+                "flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors",
                 isActive
                   ? "bg-blue-50 text-blue-600"
                   : "text-slate-500 hover:bg-slate-100 hover:text-slate-900",
@@ -194,19 +194,17 @@ export default function Sidebar() {
   return (
     <aside className="z-20 flex w-56 flex-col justify-between border-r border-slate-200 bg-white px-3 py-5">
       {/* Top section */}
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4 ">
         {/* Logo Area */}
-        <Link href="/" className="flex items-center gap-3 px-2">
-          <div className="relative flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 text-white">
-            <Image
-              src="/acg_ci_white.png"
-              alt="ACG Logo"
-              width={40}
-              height={32}
-              className="h-3 w-8"
-            />
-          </div>
-          <h1 className="text-base font-medium tracking-tight text-slate-900">
+        <Link href="/" className="flex flex-col items-center gap-3 px-2 py-1">
+          <Image
+            src="/acg_ci_gray.png"
+            alt="ACG Logo"
+            width={100}
+            height={40}
+            className="h-6 w-auto"
+          />
+          <h1 className="text-sm font-medium tracking-tight text-slate-900">
             비용 관리 Admin
           </h1>
         </Link>

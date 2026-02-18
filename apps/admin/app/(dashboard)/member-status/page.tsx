@@ -652,7 +652,7 @@ export default function MemberStatusPage() {
                     onClick={() => handleSort("member_role")}
                   >
                     <span className="inline-flex items-center gap-1">
-                      역할
+                      직급
                       <ArrowUpDown
                         className={cn(
                           "h-3 w-3",
@@ -663,11 +663,11 @@ export default function MemberStatusPage() {
                       />
                     </span>
                   </TableHead>
-                  <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <TableHead className="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                     본부
                   </TableHead>
                   <TableHead
-                    className="cursor-pointer select-none text-center text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-800"
+                    className="cursor-pointer select-none text-left text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-800"
                     onClick={() => handleSort("team_name")}
                   >
                     <span className="inline-flex items-center gap-1">
@@ -722,28 +722,44 @@ export default function MemberStatusPage() {
                       key={`${row.member_id}-${row.status_id || "normal"}`}
                       className="transition-colors hover:bg-slate-50/50 [&>td]:px-3 [&>td]:py-1.5"
                     >
-                      <TableCell className="pl-6 text-sm font-medium text-slate-900 w-24 text-center">
-                        <span className="group/name inline-flex items-center gap-1">
+                      <TableCell className="pl-6 text-sm font-medium w-24 text-center">
+                        <button
+                          onClick={() => handleEditMemberOpen(row)}
+                          className="text-blue-600 hover:text-blue-800 hover:underline"
+                          title="인원 정보 수정"
+                        >
                           {row.full_name}
-                          <button
-                            onClick={() => handleEditMemberOpen(row)}
-                            className="inline-flex h-5 w-5 items-center justify-center rounded text-slate-300 opacity-0 transition-all group-hover/name:opacity-100 hover:bg-[#135bec]/10 hover:text-[#135bec]"
-                            title="인원 정보 수정"
-                          >
-                            <Pencil className="h-3 w-3" />
-                          </button>
-                        </span>
+                        </button>
                       </TableCell>
                       <TableCell className="text-sm text-slate-500">
                         {row.email || "-"}
                       </TableCell>
-                      <TableCell className="text-center text-sm text-slate-600">
-                        {row.member_role || "-"}
+                      <TableCell className="text-center text-sm">
+                        {row.member_role ? (
+                          <Badge
+                            className={cn(
+                              "border-0 px-2 py-0.5 text-[11px] font-medium",
+                              (row.member_role as string) === "대표"
+                                ? "bg-rose-100 text-rose-700"
+                                : row.member_role === "본부장"
+                                  ? "bg-purple-100 text-purple-700"
+                                  : row.member_role === "팀장"
+                                    ? "bg-blue-100 text-blue-700"
+                                    : row.member_role === "인턴"
+                                      ? "bg-amber-100 text-amber-700"
+                                      : "bg-slate-100 text-slate-600",
+                            )}
+                          >
+                            {row.member_role}
+                          </Badge>
+                        ) : (
+                          "-"
+                        )}
                       </TableCell>
-                      <TableCell className="text-center text-sm text-slate-600">
+                      <TableCell className="text-left text-sm text-slate-600">
                         {row.division_name || "-"}
                       </TableCell>
-                      <TableCell className="text-center text-sm text-slate-600">
+                      <TableCell className="text-left text-sm text-slate-600">
                         {row.team_name || "-"}
                       </TableCell>
                       <TableCell className="text-center">
@@ -934,7 +950,7 @@ export default function MemberStatusPage() {
                 )}
               </div>
               <div className="space-y-2">
-                <Label>역할</Label>
+                <Label>직급</Label>
                 <Select
                   value={watchedMemberRole}
                   onValueChange={(val) => {
@@ -943,7 +959,7 @@ export default function MemberStatusPage() {
                   }}
                 >
                   <SelectTrigger className="border border-slate-200 w-full">
-                    <SelectValue placeholder="역할 선택" />
+                    <SelectValue placeholder="직급 선택" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="팀원">팀원</SelectItem>
@@ -1326,7 +1342,7 @@ export default function MemberStatusPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>역할</Label>
+                <Label>직급</Label>
                 <Select
                   value={editingMember.member_role}
                   onValueChange={(val) =>
@@ -1338,8 +1354,8 @@ export default function MemberStatusPage() {
                     })
                   }
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="역할 선택" />
+                  <SelectTrigger className="border border-slate-200 w-full">
+                    <SelectValue placeholder="직급 선택" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="팀원">팀원</SelectItem>

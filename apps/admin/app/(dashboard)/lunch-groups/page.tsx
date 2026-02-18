@@ -26,7 +26,6 @@ import { Checkbox } from "@repo/ui/src/checkbox";
 import { SearchableDropdown } from "@repo/ui/src/searchable-dropdown";
 import { toast } from "@repo/ui/src/sonner";
 import {
-  Save,
   Users,
   Settings,
   ChevronLeft,
@@ -36,6 +35,7 @@ import {
   Table,
   GripVertical,
   X,
+  RefreshCw,
 } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
 import type {
@@ -278,7 +278,7 @@ export default function LunchGroupsPage() {
   });
 
   // 기존 배정 조회
-  const { data: existingGroups } = useQuery<LunchGroupWithMembers[]>({
+  const { data: existingGroups, isFetching: isGroupsFetching } = useQuery<LunchGroupWithMembers[]>({
     queryKey: queryKeys.lunchGroups.byWeek(weekStartDate),
     queryFn: async () => {
       const response = await fetch(
@@ -330,12 +330,23 @@ export default function LunchGroupsPage() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.lunchGroups.byWeek(weekStartDate),
       });
-      toast.success("점심조가 저장되었습니다.");
-    },
-    onError: () => {
-      toast.error("저장 중 오류가 발생했습니다.");
     },
   });
+
+  // 조 변경 후 자동 저장 + toast
+  const autoSaveGroups = useCallback(
+    (newGroups: GroupState[], successMsg: string) => {
+      setGroups(newGroups);
+      saveMutation.mutate(
+        { weekStartDate, groups: newGroups },
+        {
+          onSuccess: () => toast.success(successMsg),
+          onError: () => toast.error("저장 중 오류가 발생했습니다."),
+        },
+      );
+    },
+    [weekStartDate, saveMutation],
+  );
 
   // 참여 가능 인원 (제외 인원 빼기)
   const availableMembers = useMemo(() => {
@@ -471,15 +482,18 @@ export default function LunchGroupsPage() {
 
       const memberId = active.id as string;
       const overId = over.id as string;
+      const memberName =
+        members.find((m) => m.id === memberId)?.full_name ?? "";
+      const wasAssigned = groups.some((g) => g.memberIds.includes(memberId));
 
       // 참여인원 목록으로 드롭 (조에서 제거)
       if (overId === "unassigned") {
-        setGroups((prev) =>
-          prev.map((g) => ({
-            ...g,
-            memberIds: g.memberIds.filter((id) => id !== memberId),
-          })),
-        );
+        if (!wasAssigned) return;
+        const newGroups = groups.map((g) => ({
+          ...g,
+          memberIds: g.memberIds.filter((id) => id !== memberId),
+        }));
+        autoSaveGroups(newGroups, `${memberName}님이 조에서 제외되었습니다.`);
         return;
       }
 
@@ -500,46 +514,47 @@ export default function LunchGroupsPage() {
         }
 
         // 다른 조에서 제거하고 새 조에 추가
-        setGroups((prev) =>
-          prev.map((g) => {
-            if (g.groupNumber === groupNumber) {
-              return {
-                ...g,
-                memberIds: [
-                  ...g.memberIds.filter((id) => id !== memberId),
-                  memberId,
-                ],
-              };
-            }
+        const newGroups = groups.map((g) => {
+          if (g.groupNumber === groupNumber) {
             return {
               ...g,
-              memberIds: g.memberIds.filter((id) => id !== memberId),
+              memberIds: [
+                ...g.memberIds.filter((id) => id !== memberId),
+                memberId,
+              ],
             };
-          }),
+          }
+          return {
+            ...g,
+            memberIds: g.memberIds.filter((id) => id !== memberId),
+          };
+        });
+        autoSaveGroups(
+          newGroups,
+          `${memberName}님이 ${groupNumber}조에 배정되었습니다.`,
         );
       }
     },
-    [groups],
+    [groups, members, autoSaveGroups],
   );
 
-  // 조에서 멤버 제거
+  // 조에서 멤버 제거 (X 버튼)
   const handleRemoveFromGroup = useCallback(
     (groupNumber: number, memberId: string) => {
-      setGroups((prev) =>
-        prev.map((g) =>
-          g.groupNumber === groupNumber
-            ? { ...g, memberIds: g.memberIds.filter((id) => id !== memberId) }
-            : g,
-        ),
+      const memberName =
+        members.find((m) => m.id === memberId)?.full_name ?? "";
+      const newGroups = groups.map((g) =>
+        g.groupNumber === groupNumber
+          ? { ...g, memberIds: g.memberIds.filter((id) => id !== memberId) }
+          : g,
+      );
+      autoSaveGroups(
+        newGroups,
+        `${memberName}님이 ${groupNumber}조에서 제외되었습니다.`,
       );
     },
-    [],
+    [groups, members, autoSaveGroups],
   );
-
-  // 저장
-  const handleSave = () => {
-    saveMutation.mutate({ weekStartDate, groups });
-  };
 
   // 드래그 중인 멤버
   const activeMember = activeDragId
@@ -768,16 +783,24 @@ export default function LunchGroupsPage() {
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base">조 테이블</CardTitle>
-                  {isTableCreated && (
+                  <div className="flex items-center gap-2">
+                    {saveMutation.isPending && (
+                      <span className="text-xs text-slate-400">저장 중...</span>
+                    )}
                     <Button
-                      onClick={handleSave}
-                      disabled={saveMutation.isPending}
-                      className="bg-[#135bec]/5 text-[#135bec] hover:bg-[#135bec]/10"
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 bg-[#135bec]/5 text-[#135bec] border-[#135bec]/20 hover:bg-[#135bec]/10 hover:border-[#135bec]/30"
+                      disabled={isGroupsFetching}
+                      onClick={() => {
+                        queryClient.invalidateQueries({
+                          queryKey: queryKeys.lunchGroups.byWeek(weekStartDate),
+                        });
+                      }}
                     >
-                      <Save className="w-4 h-4 mr-2" />
-                      {saveMutation.isPending ? "저장 중..." : "저장"}
+                      <RefreshCw className={`h-4 w-4 ${isGroupsFetching ? "animate-spin" : ""}`} />
                     </Button>
-                  )}
+                  </div>
                 </div>
                 <CardDescription>
                   유저들이 뽑기를 하면 해당 조에 자동으로 배정됩니다.

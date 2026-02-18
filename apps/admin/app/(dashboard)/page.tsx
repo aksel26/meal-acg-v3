@@ -84,10 +84,10 @@ const formatCurrency = (amount: number) => {
 
 const formatCurrencyShort = (amount: number) => {
   if (amount >= 10000000) {
-    return `${(amount / 10000000).toFixed(1)}천만`;
+    return <>{(amount / 10000000).toFixed(1)}<span className="text-xs text-slate-500">천만</span></>;
   }
   if (amount >= 10000) {
-    return `${(amount / 10000).toFixed(1)}만`;
+    return <>{(amount / 10000).toFixed(1)}<span className="text-xs text-slate-500">만</span></>;
   }
   return formatCurrency(amount);
 };
@@ -645,7 +645,7 @@ function DashboardPageContent() {
             <div className="flex items-end justify-between">
               <p className="text-sm font-medium text-slate-500">사용률</p>
               <p className="text-3xl font-bold tabular-nums text-slate-900">
-                {usageRate.toFixed(0)}%
+                {usageRate.toFixed(0)}<span className="text-lg text-slate-500">%</span>
               </p>
             </div>
             <div className="mt-3">
@@ -710,7 +710,7 @@ function DashboardPageContent() {
                 </span>
               </p>
               <p className="text-3xl font-bold tabular-nums text-slate-900">
-                {welfareUsageRate.toFixed(0)}%
+                {welfareUsageRate.toFixed(0)}<span className="text-lg text-slate-500">%</span>
               </p>
             </div>
             <div className="mt-3">
@@ -763,7 +763,7 @@ function DashboardPageContent() {
                 </span>
               </p>
               <p className="text-3xl font-bold tabular-nums text-slate-900">
-                {activityUsageRate.toFixed(0)}%
+                {activityUsageRate.toFixed(0)}<span className="text-lg text-slate-500">%</span>
               </p>
             </div>
             <div className="mt-3">

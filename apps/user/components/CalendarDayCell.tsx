@@ -89,7 +89,7 @@ export const CalendarDayCell = React.memo(function CalendarDayCell({
       onClick={handleDayClick}
       className={`
         relative p-0.5 sm:p-1 rounded-xl transition-all duration-200
-        ${isSelected ? "bg-blue-50 ring-2 ring-blue-200" : "hover:bg-gray-50 active:bg-gray-100"}
+        ${isSelected ? "bg-blue-50" : "hover:bg-gray-50 active:bg-gray-100"}
         touch-manipulation
       `}
     >

@@ -114,7 +114,7 @@ export function UpdateNotificationDialog() {
             <span className="font-semibold">💡 데이터 이전 안내</span>
           </p>
           <p className="text-xs text-amber-700 leading-relaxed">
-            기존 복지포인트/식대 데이터는 <span className="font-semibold">2월 19일 오후 12:50 이전</span> 내역만 이전되었습니다.
+            기존 복지포인트/식대 데이터는 <span className="font-semibold">2월 19일 오후 18:50 이전</span> 내역만 이전되었습니다.
             <br/>이후 작성한 내역이 누락되었다면 재입력 부탁드립니다.
           </p>
         </div>

@@ -150,65 +150,62 @@ export function AllUsageRecordsDialog({
         </DialogHeader>
 
         {/* Filters - Single Row */}
-        <div className="flex items-center gap-3 px-6 pb-3">
-          {/* Group 1: Period, Type, Member Search */}
-          <div className="flex items-center gap-1.5 flex-1 min-w-0">
-            {/* Month Select */}
-            <Select value={period} onValueChange={setPeriod}>
-              <SelectTrigger className="h-9 w-20 border border-gray-300 rounded-xl text-xs">
-                <SelectValue placeholder="기간" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체</SelectItem>
-                {months.map((m) => (
-                  <SelectItem key={m.value} value={m.value}>
-                    {m.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <div className="flex items-center gap-1.5 px-6 pb-3">
+          {/* Month Select */}
+          <Select value={period} onValueChange={setPeriod}>
+            <SelectTrigger className="data-[size=default]:h-9 w-[72px] shrink-0 border border-gray-300 rounded-xl text-xs bg-white">
+              <SelectValue placeholder="기간" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">전체</SelectItem>
+              {months.map((m) => (
+                <SelectItem key={m.value} value={m.value}>
+                  {m.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-            {/* Type Filter */}
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="h-9 w-20 border border-gray-300 rounded-xl text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체</SelectItem>
-                <SelectItem value="복지포인트">복지</SelectItem>
-                <SelectItem value="활동비">활동</SelectItem>
-              </SelectContent>
-            </Select>
+          {/* Type Filter */}
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="data-[size=default]:h-9 w-[72px] shrink-0 border border-gray-300 rounded-xl text-xs bg-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">전체</SelectItem>
+              <SelectItem value="복지포인트">복지</SelectItem>
+              <SelectItem value="활동비">활동</SelectItem>
+            </SelectContent>
+          </Select>
 
-            {/* Member Autocomplete */}
-            <div className="relative flex-1 min-w-0">
-              <AutoCompleteInput
-                suggestions={memberNames}
-                value={memberSearchValue}
-                onValueChange={setMemberSearchValue}
-                onSuggestionSelect={handleMemberSelect}
-                placeholder="조직원"
-                allowFreeText={true}
-                maxSuggestions={memberNames.length}
-                emptyText="조직원을 찾을 수 없습니다"
-                className="h-9 text-xs rounded-xl border border-gray-300 bg-white focus:border-gray-400 focus:ring-0 transition-all placeholder:text-gray-400"
-              />
-              {memberFilter && (
-                <button
-                  onClick={handleMemberClear}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
+          {/* Member Autocomplete */}
+          <div className="relative flex-1 min-w-0">
+            <AutoCompleteInput
+              suggestions={memberNames}
+              value={memberSearchValue}
+              onValueChange={setMemberSearchValue}
+              onSuggestionSelect={handleMemberSelect}
+              placeholder="조직원"
+              allowFreeText={true}
+              maxSuggestions={memberNames.length}
+              emptyText="조직원을 찾을 수 없습니다"
+              className="h-9 text-xs rounded-xl border border-gray-300 bg-white"
+            />
+            {memberFilter && (
+              <button
+                onClick={handleMemberClear}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs"
+              >
+                ✕
+              </button>
+            )}
           </div>
 
-          {/* Group 2: Review Status Filter */}
+          {/* Review Status Filter */}
           <div className="flex gap-1 shrink-0">
             <button
               onClick={() => setReviewStatus("all")}
-              className={`px-3 py-1.5 text-xs rounded-lg transition-all whitespace-nowrap ${
+              className={`h-9 px-3 text-xs rounded-xl transition-all whitespace-nowrap ${
                 reviewStatus === "all"
                   ? "bg-gray-900 text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -218,7 +215,7 @@ export function AllUsageRecordsDialog({
             </button>
             <button
               onClick={() => setReviewStatus("0")}
-              className={`px-3 py-1.5 text-xs rounded-lg transition-all whitespace-nowrap ${
+              className={`h-9 px-3 text-xs rounded-xl transition-all whitespace-nowrap ${
                 reviewStatus === "0"
                   ? "bg-gray-900 text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -228,7 +225,7 @@ export function AllUsageRecordsDialog({
             </button>
             <button
               onClick={() => setReviewStatus("3")}
-              className={`px-3 py-1.5 text-xs rounded-lg transition-all whitespace-nowrap ${
+              className={`h-9 px-3 text-xs rounded-xl transition-all whitespace-nowrap ${
                 reviewStatus === "3"
                   ? "bg-gray-900 text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"

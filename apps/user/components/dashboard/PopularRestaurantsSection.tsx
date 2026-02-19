@@ -52,7 +52,26 @@ export default function PopularRestaurantsSection() {
   }
 
   if (popularRestaurants.length === 0) {
-    return null;
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="mb-6"
+      >
+        <div className="card-premium p-5 text-center relative overflow-hidden">
+          {/* Decorative Elements */}
+          <div className="absolute -top-12 -right-12 w-32 h-32 bg-[oklch(0.95_0.12_80/0.4)] rounded-full blur-3xl" />
+          <div className="absolute -bottom-8 -left-8 w-24 h-24 bg-[oklch(0.92_0.08_60/0.3)] rounded-full blur-2xl" />
+
+          <div className="relative flex flex-col items-center justify-center gap-2">
+            <Image src="/icons/onigiri.png" alt="restaurant" width={32} height={32} className="opacity-50" />
+            <h3 className="text-sm font-semibold text-gray-800">ACG 인기 음식점 랭킹</h3>
+            <p className="text-xs text-gray-500">아직 등록된 음식점이 없습니다</p>
+          </div>
+        </div>
+      </motion.div>
+    );
   }
 
   return (
@@ -62,11 +81,17 @@ export default function PopularRestaurantsSection() {
       transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
       className="mb-6"
     >
-      <motion.div
-        className={`card-premium p-5 relative overflow-hidden ${hasMore ? "cursor-pointer active:scale-[0.99]" : ""}`}
+      <motion.button
+        type="button"
+        className={`card-premium p-5 relative overflow-hidden w-full text-left ${
+          hasMore ? "cursor-pointer active:scale-[0.99]" : "cursor-default"
+        }`}
         onClick={handleToggle}
         whileTap={hasMore ? { scale: 0.99 } : undefined}
         transition={{ duration: 0.15 }}
+        disabled={!hasMore}
+        aria-expanded={hasMore ? showAll : undefined}
+        aria-label={hasMore ? (showAll ? "음식점 랭킹 접기" : "음식점 랭킹 더보기") : undefined}
       >
         {/* Decorative Elements */}
         <div className="absolute -top-12 -right-12 w-32 h-32 bg-[oklch(0.95_0.12_80/0.4)] rounded-full blur-3xl" />
@@ -120,7 +145,7 @@ export default function PopularRestaurantsSection() {
             ))}
           </AnimatePresence>
         </motion.div>
-      </motion.div>
+      </motion.button>
     </motion.div>
   );
 }

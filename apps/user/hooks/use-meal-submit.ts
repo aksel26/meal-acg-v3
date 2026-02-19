@@ -95,6 +95,11 @@ export function useMealSubmit() {
         });
       }
 
+      // 인기 음식점 랭킹 쿼리 무효화 (음식점이 변경되면 랭킹도 영향)
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.restaurants.popular()
+      });
+
       console.log("Submit result:", data);
     },
     onError: (error, variables, context) => {

@@ -91,6 +91,11 @@ export function useMealDelete() {
         });
       }
 
+      // 인기 음식점 랭킹 쿼리 무효화 (음식점이 삭제되면 랭킹도 영향)
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.restaurants.popular()
+      });
+
       console.log("Delete result:", data);
     },
     onError: (error, _variables, context) => {

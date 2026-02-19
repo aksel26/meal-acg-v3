@@ -90,6 +90,7 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  overflow-x: hidden; /* PWA: 가로 스크롤 방지 */
 }
 
 body {
@@ -102,6 +103,9 @@ body {
   background-attachment: fixed;
   min-height: 100dvh;
   font-weight: 400;
+  overflow-x: hidden; /* PWA: 가로 스크롤 방지 */
+  position: relative; /* 가로 스크롤 방지 보조 */
+  width: 100%;
 }
 
 /* Premium Card Glass Effect */

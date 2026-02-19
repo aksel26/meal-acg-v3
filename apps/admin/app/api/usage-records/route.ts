@@ -58,7 +58,9 @@ export async function GET(request: NextRequest) {
       query = query.eq("allocation_id", allocationId);
     }
 
-    const { data, error } = await query.order("created_at", { ascending: false });
+    const { data, error } = await query
+      .order("no", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false });
 
     if (error) {
       console.error("Error fetching usage records:", error);

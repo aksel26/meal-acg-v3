@@ -9,6 +9,7 @@ interface ImportRecord {
   used_at: string;
   notes: string | null;
   pnc_check: string | null;
+  no: number | null;
 }
 
 interface ImportRequest {
@@ -80,6 +81,7 @@ export async function POST(request: Request): Promise<NextResponse<ImportResult>
       used_at: string;
       notes: string | null;
       pnc_check: string | null;
+      no: number | null;
       period: string;
     }[] = [];
 
@@ -102,6 +104,7 @@ export async function POST(request: Request): Promise<NextResponse<ImportResult>
         used_at: record.used_at,
         notes: record.notes,
         pnc_check: record.pnc_check,
+        no: record.no ?? null,
         period,
       });
     }
@@ -153,6 +156,7 @@ export async function POST(request: Request): Promise<NextResponse<ImportResult>
       amount: number;
       used_at: string;
       notes: string | null;
+      no?: number | null;
       review_status: number;
       is_reviewed?: boolean;
       reviewed_at?: string;
@@ -184,6 +188,7 @@ export async function POST(request: Request): Promise<NextResponse<ImportResult>
           amount: r.amount,
           used_at: r.used_at,
           notes: r.notes,
+          no: r.no ?? null,
           review_status: 2,
           is_reviewed: true,
           reviewed_at: reviewedAt,
@@ -202,6 +207,7 @@ export async function POST(request: Request): Promise<NextResponse<ImportResult>
           amount: r.amount,
           used_at: r.used_at,
           notes: r.notes,
+          no: r.no ?? null,
           review_status: 0,
         });
       }
@@ -217,23 +223,42 @@ export async function POST(request: Request): Promise<NextResponse<ImportResult>
       });
     }
 
-    // 5. batch insert usage_records
+    // 5. 엑셀 내 중복 제거: 아래 행(나중 인덱스)이 우선
+    const dedupeMap = new Map<string, (typeof toInsert)[0]>();
+    for (const record of toInsert) {
+      const dedupeKey = `${record.member_id}|${record.used_at}|${record.type}|${record.description}`;
+      dedupeMap.set(dedupeKey, record);
+    }
+    const finalInsert = [...dedupeMap.values()];
+
+    // 6. 기존 DB 레코드 삭제 (덮어쓰기)
+    for (const r of finalInsert) {
+      await supabase
+        .from("usage_records")
+        .delete()
+        .eq("member_id", r.member_id)
+        .eq("used_at", r.used_at)
+        .eq("type", r.type)
+        .eq("description", r.description);
+    }
+
+    // 7. batch insert usage_records
     const { data: insertedRecords, error: insertError } = await supabase
       .from("usage_records")
-      .insert(toInsert)
+      .insert(finalInsert)
       .select("id");
 
     if (insertError) {
       return NextResponse.json(
-        { success: false, inserted: 0, failed: toInsert.length, errors: [...errors, `등록 실패: ${insertError.message}`], summary: [] },
+        { success: false, inserted: 0, failed: finalInsert.length, errors: [...errors, `등록 실패: ${insertError.message}`], summary: [] },
         { status: 500 }
       );
     }
 
-    // 6. audit log batch insert
+    // 8. audit log batch insert
     if (insertedRecords && insertedRecords.length > 0) {
       const auditLogs = insertedRecords.map((rec, idx) => {
-        const src = toInsert[idx];
+        const src = finalInsert[idx];
         return {
           usage_record_id: rec.id,
           action: "IMPORT",

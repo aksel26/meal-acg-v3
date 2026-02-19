@@ -215,6 +215,7 @@ export function ImportPointsDialog({
     setIsImporting(true);
 
     const selectedRows = [...selectedIndices]
+      .sort((a, b) => a - b)
       .map((i) => parsedRows[i])
       .filter((row): row is PointsUsageRow => !!row && getRowStatus(row) === "valid");
 
@@ -226,6 +227,7 @@ export function ImportPointsDialog({
       used_at: row.usedAt,
       notes: row.notes,
       pnc_check: row.pncCheck,
+      no: row.no ?? null,
     }));
 
     try {

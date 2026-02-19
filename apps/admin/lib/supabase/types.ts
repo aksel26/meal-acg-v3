@@ -845,6 +845,7 @@ export type Database = {
           last_modified_at: string | null
           last_modified_by: string | null
           member_id: string
+          no: number | null
           receipt_url: string | null
           review_status: number
           reviewed_at: string | null
@@ -869,6 +870,7 @@ export type Database = {
           last_modified_at?: string | null
           last_modified_by?: string | null
           member_id: string
+          no?: number | null
           receipt_url?: string | null
           review_status?: number
           reviewed_at?: string | null
@@ -893,6 +895,7 @@ export type Database = {
           last_modified_at?: string | null
           last_modified_by?: string | null
           member_id?: string
+          no?: number | null
           receipt_url?: string | null
           review_status?: number
           reviewed_at?: string | null

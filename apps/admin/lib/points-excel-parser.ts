@@ -2,6 +2,7 @@ import * as XLSX from "xlsx";
 
 export interface PointsUsageRow {
   rowIndex: number;
+  no: number | null;
   name: string;
   year: number;
   month: number;
@@ -29,6 +30,7 @@ export interface PointsParseResult {
 // A=0(No.), B=1(이름), C=2(연도), D=3(월), E=4(일), F=5(요일),
 // G=6(활동비/복지포인트 유형), H=7(사유), I=8(금액), J=9(P&C팀 확인), K=10(타인 카드 사용 시)
 const COLUMNS = {
+  NO: 0,          // A
   NAME: 1,        // B
   YEAR: 2,        // C
   MONTH: 3,       // D
@@ -118,6 +120,21 @@ export function parsePointsExcelFile(buffer: ArrayBuffer): PointsParseResult {
 
       const validationErrors: string[] = [];
 
+      // No. (컬럼 A) - Excel 시트의 순서번호
+      const noRaw = row[COLUMNS.NO];
+      let no: number | null = null;
+      if (typeof noRaw === "number") {
+        no = noRaw;
+      } else if (noRaw) {
+        const parsed = parseInt(String(noRaw), 10);
+        no = isNaN(parsed) ? null : parsed;
+      }
+
+      // 디버깅: No 값 로깅 (첫 5개 행만)
+      if (i - DATA_START_ROW < 5) {
+        console.log(`Row ${i - DATA_START_ROW + 1}: noRaw=${noRaw}, no=${no}`);
+      }
+
       // 이름
       const name = getCellValue(row, COLUMNS.NAME);
       if (!name || name.length < 2) {
@@ -179,6 +196,7 @@ export function parsePointsExcelFile(buffer: ArrayBuffer): PointsParseResult {
 
       rows.push({
         rowIndex: i - DATA_START_ROW + 1, // 1-based from data start
+        no: no ?? null,
         name: name || "",
         year: year || 0,
         month: month || 0,

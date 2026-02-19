@@ -1,263 +1,266 @@
-import { HolidayData, useHolidays } from "@/hooks/useHolidays";
+/* eslint-disable react/prop-types */
 import * as React from "react";
-import { Calendar, CalendarDayButton } from "@repo/ui/src/calendar";
-import Image from "next/image";
+import { Calendar } from "@repo/ui/src/calendar";
 import dayjs from "dayjs";
-// import { Calendar, CalendarDayButton } from "./calendar";
-// import { useHolidays, type HolidayData } from "./hooks/useHolidays";
+import "dayjs/locale/ko";
+import { motion, AnimatePresence, PanInfo } from "motion/react";
+import { useHolidays } from "@/hooks/useHolidays";
+import { MealData } from "@/components/dashboard/types";
+import { CalendarDayCell } from "./CalendarDayCell";
+
+dayjs.locale("ko");
+
+const EMPTY_MEAL_DATA: MealData[] = [];
 
 interface Calendar21Props {
   onDateSelect?: (date: Date | undefined) => void;
   selectedDate?: Date;
   onMonthChange?: (month: number, year: number) => void;
-  mealData?: Array<{
-    date: string;
-    attendance: string;
-    breakfast?: any;
-    dinner?: any;
-  }>;
-  holidayData?: HolidayData[];
+  mealData?: MealData[];
   isLoading?: boolean;
-  // react-query를 사용하므로 onHolidayFetch는 더 이상 필요하지 않음
 }
 
-export default function CalendarComponent({ onDateSelect, selectedDate, onMonthChange, mealData = [], holidayData: externalHolidayData = [], isLoading = false }: Calendar21Props) {
+export default function CalendarComponent({
+  onDateSelect,
+  selectedDate,
+  onMonthChange,
+  mealData = EMPTY_MEAL_DATA,
+  isLoading = false,
+}: Calendar21Props) {
   const [date, setDate] = React.useState<Date | undefined>(selectedDate || new Date());
   const [currentMonth, setCurrentMonth] = React.useState<number>((selectedDate || new Date()).getMonth() + 1);
   const [currentYear, setCurrentYear] = React.useState<number>((selectedDate || new Date()).getFullYear());
   const [displayDate, setDisplayDate] = React.useState<Date>(selectedDate || new Date());
+  const [direction, setDirection] = React.useState<number>(0);
 
-  // React Query로 공휴일 데이터 가져오기
-  const { data: queryHolidayData, isLoading: holidayLoading, error: holidayError } = useHolidays(currentMonth, currentYear);
+  // 공휴일 데이터 가져오기
+  const { data: holidayData = [] } = useHolidays(currentMonth, currentYear);
 
-  // 외부에서 전달된 데이터가 있으면 그것을 사용하고, 없으면 React Query 데이터 사용
-  const holidayData = externalHolidayData.length > 0 ? externalHolidayData : queryHolidayData || [];
+  const getMealDataForDate = React.useCallback(
+    (targetDate: Date) => {
+      const dateString = dayjs(targetDate).format("YYYY-MM-DD");
+      return mealData.find((meal) => meal.date === dateString);
+    },
+    [mealData]
+  );
 
-  const getMealDataForDate = (targetDate: Date) => {
-    const dateString = dayjs(targetDate).format("YYYY-MM-DD");
-    return mealData.find((meal) => meal.date === dateString);
-  };
+  // 공휴일 확인
+  const getHolidayForDate = React.useCallback(
+    (targetDate: Date): string | null => {
+      const dateString = dayjs(targetDate).format("YYYY-MM-DD");
+      const holidayInfo = holidayData.find((holiday) => holiday.date === dateString);
+      return holidayInfo?.name || null;
+    },
+    [holidayData]
+  );
 
-  const getHolidayForDate = (targetDate: Date): string => {
-    const dateString = dayjs(targetDate).format("YYYY-MM-DD");
-    const holidayInfo = holidayData.find((holiday) => holiday.date === dateString);
-    return holidayInfo?.name || "";
-  };
+  // 식사 아이콘 결정 로직
+  const getMealIcon = React.useCallback(
+    (meal: ReturnType<typeof getMealDataForDate>) => {
+      if (!meal) return null;
 
-  const getAttendanceIcon = (meal: any, holiday: string): { icons: string[]; color: string; isImage: boolean } => {
-    // 공휴일이 있으면 공휴일 이름을 텍스트로 표시
-    if (holiday) {
-      return {
-        icons: [holiday],
-        color: "text-red-600",
-        isImage: false,
-      };
-    }
+      const attendance = meal.attendance || "";
+      const lowerAttendance = attendance.toLowerCase();
 
-    const attendance = meal?.attendance || "";
-    const lowerAttendance = attendance.toLowerCase();
-
-    // 근무 관련
-    if (lowerAttendance === "근무" || lowerAttendance.includes("출근")) {
-      return {
-        icons: ["/icons/onigiri.png"],
-        color: "text-green-600",
-        isImage: true,
-      };
-    }
-
-    // 반차 관련
-    if (lowerAttendance.includes("반차")) {
-      return {
-        icons: ["/icons/clock.png"],
-        color: "text-yellow-600",
-        isImage: true,
-      };
-    }
-
-    // 휴가/휴무 관련
-    if (lowerAttendance.includes("휴무") || lowerAttendance.includes("쉼")) {
-      return {
-        icons: ["/icons/holiday.png"],
-        color: "text-gray-600",
-        isImage: true,
-      };
-    }
-
-    // 재택근무 관련
-    if (lowerAttendance.includes("재택") || lowerAttendance.includes("홈오피스")) {
-      return {
-        icons: ["/icons/homeOffice.png"],
-        color: "text-orange-600",
-        isImage: true,
-      };
-    }
-
-    // attendance가 비어있을 때 breakfast/dinner 체크
-    if (!attendance) {
-      const icons: string[] = [];
-      // dinner가 존재하면 추가
-      if (meal?.dinner) {
-        icons.push("/icons/dinner.png");
+      if (lowerAttendance.includes("개별식사")) {
+        return { icon: "/icons/onigiri.png", label: "개별", type: "individual" };
       }
-      // breakfast가 존재하면 추가
-      if (meal?.breakfast) {
-        icons.push("/icons/breakfast.png");
+      if (lowerAttendance === "근무" || lowerAttendance.includes("출근")) {
+        return { icon: "/icons/onigiri.png", label: null, type: "work" };
+      }
+      if (lowerAttendance.includes("반차")) {
+        return { icon: "/icons/clock.png", label: null, type: "half" };
+      }
+      if (lowerAttendance.includes("연차") || lowerAttendance.includes("휴무")) {
+        return { icon: "/icons/holiday.png", label: null, type: "off" };
+      }
+      if (lowerAttendance.includes("재택")) {
+        return { icon: "/icons/homeOffice.png", label: null, type: "remote" };
       }
 
-      if (icons.length > 0) {
-        return {
-          icons,
-          color: "",
-          isImage: true,
-        };
+      // 근태 정보 없이 식사 기록만 있는 경우
+      const hasAnyMeal =
+        (meal.breakfast && (meal.breakfast.amount || meal.breakfast.store)) ||
+        (meal.lunch && (meal.lunch.amount || meal.lunch.store)) ||
+        (meal.dinner && (meal.dinner.amount || meal.dinner.store));
+
+      if (hasAnyMeal) {
+        return { icon: "/icons/onigiri.png", label: null, type: "meal" };
       }
-    }
 
-    // 기타 - 텍스트가 있으면 기본 업무 아이콘
-    if (attendance) {
-      return {
-        icons: ["/icons/onigiri.png"],
-        color: "text-gray-600",
-        isImage: true,
-      };
-    }
-
-    return { icons: [], color: "", isImage: false };
-  };
-
-  const handleDateSelect = (newDate: Date | undefined) => {
-    setDate(newDate);
-    onDateSelect?.(newDate);
-
-    // Check if month changed when selecting a date
-    if (newDate) {
-      const newMonth = newDate.getMonth() + 1;
-      const newYear = newDate.getFullYear();
-      if (newMonth !== currentMonth || newYear !== currentYear) {
-        setCurrentMonth(newMonth);
-        setCurrentYear(newYear);
-        onMonthChange?.(newMonth, newYear);
+      if (attendance) {
+        return { icon: "/icons/onigiri.png", label: null, type: "work" };
       }
-    }
-  };
 
-  const handleNextClick = () => {
-    const nextMonth = new Date(displayDate.getFullYear(), displayDate.getMonth() + 1, 1);
-    setDisplayDate(nextMonth);
-    const month = nextMonth.getMonth() + 1;
-    const year = nextMonth.getFullYear();
-    setCurrentMonth(month);
-    setCurrentYear(year);
-    onMonthChange?.(month, year);
-  };
+      return null;
+    },
+    []
+  );
 
-  const handlePrevClick = () => {
-    const prevMonth = new Date(displayDate.getFullYear(), displayDate.getMonth() - 1, 1);
-    setDisplayDate(prevMonth);
-    const month = prevMonth.getMonth() + 1;
-    const year = prevMonth.getFullYear();
-    setCurrentMonth(month);
-    setCurrentYear(year);
-    onMonthChange?.(month, year);
-  };
+  const handleDateSelect = React.useCallback(
+    (newDate: Date | undefined) => {
+      setDate(newDate);
+      onDateSelect?.(newDate);
 
-  // 에러 로깅
+      if (newDate) {
+        const newMonth = newDate.getMonth() + 1;
+        const newYear = newDate.getFullYear();
+        if (newMonth !== currentMonth || newYear !== currentYear) {
+          setCurrentMonth(newMonth);
+          setCurrentYear(newYear);
+        }
+      }
+    },
+    [onDateSelect, currentMonth, currentYear]
+  );
+
+  const handleNextClick = React.useCallback(() => {
+    setDirection(1);
+    setDisplayDate((prev) => {
+      const nextMonth = new Date(prev.getFullYear(), prev.getMonth() + 1, 1);
+      const month = nextMonth.getMonth() + 1;
+      const year = nextMonth.getFullYear();
+      setCurrentMonth(month);
+      setCurrentYear(year);
+      return nextMonth;
+    });
+  }, []);
+
+  const handlePrevClick = React.useCallback(() => {
+    setDirection(-1);
+    setDisplayDate((prev) => {
+      const prevMonth = new Date(prev.getFullYear(), prev.getMonth() - 1, 1);
+      const month = prevMonth.getMonth() + 1;
+      const year = prevMonth.getFullYear();
+      setCurrentMonth(month);
+      setCurrentYear(year);
+      return prevMonth;
+    });
+  }, []);
+
+  // 스와이프 핸들러
+  const handleDragEnd = React.useCallback(
+    (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+      const threshold = 50;
+      if (info.offset.x > threshold) {
+        handlePrevClick();
+      } else if (info.offset.x < -threshold) {
+        handleNextClick();
+      }
+    },
+    [handlePrevClick, handleNextClick]
+  );
+
+  // 초기 렌더링 여부 추적
+  const isInitialMount = React.useRef(true);
+
+  // currentMonth/currentYear가 변경되면 부모에게 알림 (렌더링 후, 초기 렌더링 제외)
   React.useEffect(() => {
-    if (holidayError) {
-      console.error("Holiday fetch error:", holidayError);
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
     }
-  }, [holidayError]);
+    onMonthChange?.(currentMonth, currentYear);
+  }, [currentMonth, currentYear, onMonthChange]);
+
+  const calendarKey = `${currentYear}-${currentMonth}`;
+
+  const calendarComponents = React.useMemo<React.ComponentProps<typeof Calendar>["components"]>(
+    () => ({
+      DayButton: ({ children, modifiers, day, ...props }) => {
+        const meal = getMealDataForDate(day.date);
+        const mealIcon = getMealIcon(meal);
+        const holiday = getHolidayForDate(day.date);
+
+        return (
+          <CalendarDayCell
+            day={day}
+            modifiers={modifiers}
+            meal={meal}
+            mealIcon={mealIcon}
+            holiday={holiday}
+            isLoading={isLoading}
+            onDateSelect={handleDateSelect}
+            dayButtonProps={props}
+          >
+            {children}
+          </CalendarDayCell>
+        );
+      },
+    }),
+    [getMealDataForDate, getMealIcon, getHolidayForDate, isLoading, handleDateSelect]
+  );
 
   return (
-    <Calendar
-      mode="single"
-      selected={date}
-      onSelect={handleDateSelect}
-      numberOfMonths={1}
-      month={displayDate}
-      onNextClick={handleNextClick}
-      onPrevClick={handlePrevClick}
-      captionLayout="dropdown"
-      className=" bg-white rounded-lg w-full min-h-[550px]"
-      formatters={{
-        formatMonthDropdown: (date) => {
-          return date.toLocaleString("default", { month: "long" });
-        },
-      }}
-      components={{
-        YearsDropdown: ({ value }) => {
-          return <div className="p-2 text-sm sm:text-base">{value ?? new Date().getFullYear()}</div>;
-        },
-        MonthsDropdown: ({ value }) => {
-          return <div className="p-2 text-sm sm:text-base">{Number(value ?? new Date().getMonth()) + 1}월</div>;
-        },
-        DayButton: ({ children, modifiers, day, ...props }) => {
-          if (modifiers.outside) {
-            return (
-              <CalendarDayButton day={day} modifiers={modifiers} {...props} onClick={undefined} disabled>
-                <div className="flex flex-col items-center opacity-0 pointer-events-none">{children}</div>
-              </CalendarDayButton>
-            );
-          }
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.2 }}
+      className="card-premium p-3 sm:p-4 overflow-hidden touch-pan-y"
+    >
+      {/* 월 표시 헤더 */}
+      <div className="flex items-center justify-between mb-3 px-1">
+        <button
+          onClick={handlePrevClick}
+          className="p-2 -ml-2 rounded-xl hover:bg-gray-100 active:bg-gray-200 transition-colors touch-manipulation"
+          aria-label="이전 달"
+        >
+          <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
 
-          const meal = getMealDataForDate(day.date);
-          const holiday = getHolidayForDate(day.date);
-          const { icons, isImage } = getAttendanceIcon(meal, holiday);
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-xl sm:text-2xl font-bold text-gray-900">{currentMonth}월</span>
+          <span className="text-sm text-gray-400">{currentYear}</span>
+        </div>
 
-          const isSelected = modifiers.selected;
-          const isToday = modifiers.today;
+        <button
+          onClick={handleNextClick}
+          className="p-2 -mr-2 rounded-xl hover:bg-gray-100 active:bg-gray-200 transition-colors touch-manipulation"
+          aria-label="다음 달"
+        >
+          <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
 
-          return (
-            <CalendarDayButton day={day} modifiers={modifiers} {...props} className={`${isSelected ? `bg-blue-50!` : ""} hover:bg-blue-50/40! hover:text-blue-800! `}>
-              <div className={`rounded-md flex flex-col  space-y-1 items-center relative py-1.5 transition duration-200`}>
-                <span className={`text-[11px] sm:text-sm ${isToday ? "bg-[#0a2165] text-gray-50 px-1.5 py-0.5 rounded-sm" : isSelected ? "text-blue-600" : ""}`}>{children}</span>
+      {/* 스와이프 가능한 캘린더 영역 */}
+      <motion.div
+        drag="x"
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.1}
+        onDragEnd={handleDragEnd}
+        className="cursor-grab active:cursor-grabbing"
+      >
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={calendarKey}
+            initial={{ opacity: 0, x: direction * 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: direction * -30 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+          >
+            <Calendar
+              mode="single"
+              selected={date}
+              onSelect={handleDateSelect}
+              numberOfMonths={1}
+              month={displayDate}
+              captionLayout="label"
+              className="w-full"
+              classNames={{
+                month_caption: "hidden",
+                nav: "hidden",
+                day: "relative w-full p-0 text-center min-h-[60px] sm:min-h-[72px] select-none",
+              }}
+              components={calendarComponents}
+            />
+          </motion.div>
+        </AnimatePresence>
+      </motion.div>
 
-                {/* icon wrapper */}
-                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center relative ${isSelected ? "bg-blue-100" : ""}`}>
-                  {isLoading || holidayLoading ? (
-                    <div className="w-4 h-4 bg-gray-200 rounded animate-pulse"></div>
-                  ) : holidayError ? (
-                    <span className="text-xs text-red-500" title="공휴일 정보를 불러올 수 없습니다">
-                      ⚠️
-                    </span>
-                  ) : icons.length > 0 ? (
-                    isImage ? (
-                      <div className="relative w-full h-full flex items-center justify-center">
-                        {icons.map((icon, index) => (
-                          <div
-                            key={index}
-                            className={`absolute transition-all duration-300 ${
-                              icons.length > 1
-                                ? index === 0
-                                  ? "-translate-x-1 -translate-y-1 z-10" // 첫 번째 아이콘 (위/왼쪽)
-                                  : "translate-x-1 translate-y-1 z-0 opacity-80" // 두 번째 아이콘 (아래/오른쪽)
-                                : ""
-                            }`}
-                          >
-                            <Image
-                              src={icon}
-                              alt={holiday || meal?.attendance || "icon"}
-                              width={25}
-                              height={25}
-                              title={holiday || meal?.attendance}
-                            />
-                          </div>
-                        ))}
-                        {meal?.attendance?.includes("개별식사") && <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 text-blue-400 text-[10px]!">개별</div>}
-                      </div>
-                    ) : (
-                      <span className={`${holiday !== "" ? "text-[10px] sm:text-[10px] text-red-600 truncate font-medium text-center leading-tight" : "text-lg"}`} title={holiday || meal?.attendance}>
-                        {icons[0]}
-                      </span>
-                    )
-                  ) : null}
-                </div>
-              </div>
-            </CalendarDayButton>
-          );
-        },
-      }}
-    />
+    </motion.div>
   );
 }

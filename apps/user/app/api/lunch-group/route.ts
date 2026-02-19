@@ -1,130 +1,137 @@
-export const runtime = "nodejs"; // 또는 'nodejs'
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-import { sheets } from "@/lib/google-config";
+import { createServiceClient } from "@/lib/supabase/client";
 import { NextResponse } from "next/server";
+import dayjs from "dayjs";
+
+// 현재 주의 월요일 날짜 계산
+function getWeekStartDate(date: dayjs.Dayjs = dayjs()): string {
+  const day = date.day();
+  // 일요일(0)이면 -6, 그 외에는 1 - day
+  const diff = day === 0 ? -6 : 1 - day;
+  return date.add(diff, "day").format("YYYY-MM-DD");
+}
+
+// 다음 주 월요일 날짜 계산
+function getNextWeekStartDate(date: dayjs.Dayjs = dayjs()): string {
+  const currentWeekStart = getWeekStartDate(date);
+  return dayjs(currentWeekStart).add(7, "day").format("YYYY-MM-DD");
+}
 
 export async function GET() {
   try {
-    // 1. 메타데이터와 값 데이터 모두 가져오기
-
-    const [valuesResponse, gridResponse] = await Promise.all([
-      sheets.spreadsheets.values.get({
-        spreadsheetId: process.env.GOOGLE_SHEET_ID,
-        range: "점심조!A1:Z",
-      }),
-      sheets.spreadsheets.get({
-        spreadsheetId: process.env.GOOGLE_SHEET_ID,
-        ranges: ["점심조!B7:Z30"], // B7부터 색칠된 셀 탐색
-        includeGridData: true,
-      }),
-    ]);
-
-    const { values } = valuesResponse.data;
-
-    if (!values || values.length < 4) {
-      throw new Error(
-        "Invalid data format: values are missing or insufficient."
-      );
+    const supabase = createServiceClient();
+    if (!supabase) {
+      throw new Error("Supabase 클라이언트를 초기화할 수 없습니다.");
     }
 
-    const [totalMembers, membersPerGroup, prevDate, nextDate] = values[3];
-    const mondayMember = values[3][5];
-    const fridayMember = values[4][5];
+    const weekStartDate = getWeekStartDate();
+    const nextWeekStartDate = getNextWeekStartDate();
 
-    // 2. B7부터 색칠된 셀 탐색 및 행별 색칠된 셀 개수 계산
-    const gridData = gridResponse.data.sheets?.[0]?.data?.[0];
-    const coloredCells: Array<{ row: number; col: number }> = [];
-    const coloredCellsByRow: Map<number, number> = new Map(); // 각 행의 색칠된 셀 개수
+    // 1. 점심조 설정 조회
+    const { data: settings, error: settingsError } = await supabase
+      .from("lunch_group_settings")
+      .select("*")
+      .single();
 
-    if (gridData?.rowData) {
-      gridData.rowData.forEach((row: any, rowIndex: number) => {
-        let coloredCellsInRow = 0;
-        row.values?.forEach((cell: any, colIndex: number) => {
-          const backgroundColor = cell.userEnteredFormat?.backgroundColor;
-          // 흰색이 아닌 색상이 있는 셀 찾기
-          if (
-            backgroundColor &&
-            !(
-              backgroundColor.red === 1 &&
-              backgroundColor.green === 1 &&
-              backgroundColor.blue === 1
-            )
-          ) {
-            const actualRow = rowIndex + 7; // B7부터 시작이므로 7을 더함
-            const actualCol = colIndex + 2; // B열부터 시작이므로 2를 더함 (A=1, B=2)
-
-            coloredCells.push({
-              row: actualRow,
-              col: actualCol,
-            });
-            coloredCellsInRow++;
-          }
-        });
-
-        if (coloredCellsInRow > 0) {
-          coloredCellsByRow.set(rowIndex + 7, coloredCellsInRow);
-        }
-      });
+    if (settingsError && settingsError.code !== "PGRST116") {
+      console.error("Settings error:", settingsError);
     }
 
-    // 3. 그룹 정보 처리 - 색칠된 셀 개수에 맞춰 person 배열 조정
-    console.log("values:", values);
-    console.log("coloredCellsByRow:", coloredCellsByRow);
+    const membersPerGroup = settings?.max_members_per_group || 4;
 
-    const groups = values.slice(6).map((group: any, groupIndex: number) => {
-      const groupRow = groupIndex + 7; // 실제 스프레드시트 행 번호 (7행부터 시작)
-      const coloredCellCount = coloredCellsByRow.get(groupRow) || 0;
+    // 2. 현재 주차 점심조 조회 (멤버 정보 포함)
+    const { data: lunchGroups, error: groupsError } = await supabase
+      .from("lunch_groups")
+      .select(`
+        *,
+        lunch_group_members (
+          id,
+          user_id,
+          assigned_at,
+          members (
+            id,
+            full_name
+          )
+        )
+      `)
+      .eq("week_start_date", weekStartDate)
+      .order("group_number", { ascending: true });
 
-      // 기존 person 데이터 (B열부터)
-      const existingPersons = group.slice(1) || [];
+    if (groupsError) {
+      throw new Error(`점심조 조회 실패: ${groupsError.message}`);
+    }
 
-      // 색칠된 셀 개수만큼 배열 생성
-      const adjustedPersons: string[] = [];
-      for (let i = 0; i < coloredCellCount; i++) {
-        if (i < existingPersons.length && existingPersons[i]) {
-          // 값이 있으면 그대로 추가
-          adjustedPersons.push(existingPersons[i]);
+    // 3. 고정 스케줄 조회 (월요일=1, 금요일=5)
+    const { data: fixedSchedules, error: schedulesError } = await supabase
+      .from("lunch_fixed_schedules")
+      .select(`
+        day_of_week,
+        members (
+          full_name
+        )
+      `)
+      .in("day_of_week", [1, 5]);
+
+    if (schedulesError) {
+      console.error("Fixed schedules error:", schedulesError);
+    }
+
+    // 월요일/금요일 담당자 추출
+    const mondayMembers = fixedSchedules
+      ?.filter((s) => s.day_of_week === 1)
+      .map((s) => (s.members as { full_name: string })?.full_name)
+      .filter(Boolean) || [];
+
+    const fridayMembers = fixedSchedules
+      ?.filter((s) => s.day_of_week === 5)
+      .map((s) => (s.members as { full_name: string })?.full_name)
+      .filter(Boolean) || [];
+
+    // 4. 응답 데이터 구성
+    const groups = (lunchGroups || []).map((group) => {
+      const members = group.lunch_group_members || [];
+      const maxSlots = group.max_slots || membersPerGroup;
+
+      // person 배열: 배정된 멤버 이름 + 빈 슬롯
+      const person: string[] = [];
+      for (let i = 0; i < maxSlots; i++) {
+        const member = members[i];
+        if (member && member.members) {
+          person.push((member.members as { full_name: string }).full_name);
         } else {
-          // 값이 없으면 빈 문자열 추가
-          adjustedPersons.push("");
+          person.push("");
         }
       }
 
-      console.log(
-        `그룹 ${group[0]}: 색칠된 셀 ${coloredCellCount}개, 조정된 person:`,
-        adjustedPersons
-      );
-
       return {
-        groupNumber: group[0],
-        person: adjustedPersons,
+        groupNumber: String(group.group_number),
+        person,
       };
     });
 
-    console.log(
-      `B7부터 색칠된 셀 ${coloredCells.length}개 발견:`,
-      coloredCells
-    );
+    // 총 멤버 수 계산
+    const totalMembers = groups.reduce((acc, g) => acc + g.person.length, 0);
 
     return NextResponse.json(
       {
         success: true,
         message: "점심조 조회 성공",
         result: {
-          totalMembers,
-          membersPerGroup,
-          prevDate,
-          nextDate,
+          totalMembers: String(totalMembers),
+          membersPerGroup: String(membersPerGroup),
+          prevDate: weekStartDate,
+          nextDate: nextWeekStartDate,
           groups,
-          mondayMember,
-          fridayMember,
-          coloredCells, // 색칠된 셀 정보 추가
+          mondayMember: mondayMembers.join(", ") || "",
+          fridayMember: fridayMembers.join(", ") || "",
         },
       },
       { status: 200 }
     );
   } catch (err) {
+    console.error("Lunch group API error:", err);
     return NextResponse.json(
       {
         success: false,

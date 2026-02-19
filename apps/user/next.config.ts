@@ -11,6 +11,7 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   experimental: {
+    optimizePackageImports: ["lucide-react", "recharts", "date-fns"],
     turbo: {
       rules: {
         "*.svg": {

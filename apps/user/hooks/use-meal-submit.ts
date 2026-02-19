@@ -4,6 +4,7 @@ import { toast } from "@repo/ui/src/sonner";
 
 interface MealSubmitData {
   userName: string;
+  userId?: string;
   date: string;
   breakfast: {
     store: string;
@@ -85,6 +86,18 @@ export function useMealSubmit() {
       // 계산 데이터도 무효화 (식사 금액이 바뀌면 계산도 영향을 받음)
       queryClient.invalidateQueries({
         queryKey: queryKeys.calculation.byUserAndMonth(variables.userName, month, year)
+      });
+
+      // 식대 통계 쿼리 무효화 (userId 기반)
+      if (variables.userId) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.mealStats.byUserAndMonth(variables.userId, month, year)
+        });
+      }
+
+      // 인기 음식점 랭킹 쿼리 무효화 (음식점이 변경되면 랭킹도 영향)
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.restaurants.popular()
       });
 
       console.log("Submit result:", data);

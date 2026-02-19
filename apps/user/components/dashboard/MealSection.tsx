@@ -1,6 +1,8 @@
 "use client";
 
+import { useMemo } from "react";
 import { motion } from "motion/react";
+import dayjs from "dayjs";
 import CalendarComponent from "@/components/Calendar";
 import { MealCards } from "@/components/MealCards";
 import { MealData } from "./types";
@@ -21,18 +23,22 @@ export default function MealSection({
 }: MealSectionProps) {
   const { openDrawer, openDrawerForEdit, openDrawerForHolidayEdit } = useMealDrawerStore();
 
+  // 선택된 날짜의 기존 meal 데이터 찾기
+  const existingMealData = useMemo(() => {
+    if (!selectedDate) return undefined;
+    const dateStr = dayjs(selectedDate).format("YYYY-MM-DD");
+    return mealData.find((meal) => meal.date === dateStr);
+  }, [selectedDate, mealData]);
+
   const handleAddMeal = (mealType: "breakfast" | "lunch" | "dinner") => {
-    console.log("Opening drawer for add meal:", { mealType, selectedDate });
-    openDrawer(mealType, selectedDate);
+    openDrawer(mealType, selectedDate, existingMealData);
   };
 
   const handleEditMeal = (mealType: "breakfast" | "lunch" | "dinner", mealInfo: MealData) => {
-    console.log("Opening drawer for edit meal:", { mealType, mealInfo, selectedDate });
     openDrawerForEdit(mealType, mealInfo, selectedDate);
   };
 
   const handleHolidayAttendanceEdit = (mealInfo: MealData) => {
-    console.log("Opening drawer for holiday edit:", { mealInfo, selectedDate });
     openDrawerForHolidayEdit(mealInfo, selectedDate);
   };
 
@@ -46,8 +52,19 @@ export default function MealSection({
         ease: [0.25, 0.46, 0.45, 0.94],
       }}
     >
-      <CalendarComponent onDateSelect={setSelectedDate} selectedDate={selectedDate} onMonthChange={handleMonthChange} mealData={mealData} />
-      <MealCards selectedDate={selectedDate} onAddMeal={handleAddMeal} onEditMeal={handleEditMeal} onHolidayEdit={handleHolidayAttendanceEdit} mealData={mealData} />
+      <CalendarComponent
+        onDateSelect={setSelectedDate}
+        selectedDate={selectedDate}
+        onMonthChange={handleMonthChange}
+        mealData={mealData}
+      />
+      <MealCards
+        selectedDate={selectedDate}
+        mealData={mealData}
+        onAddMeal={handleAddMeal}
+        onEditMeal={handleEditMeal}
+        onHolidayEdit={handleHolidayAttendanceEdit}
+      />
     </motion.div>
   );
 }

@@ -6,11 +6,14 @@ import QueryProvider from "./providers/QueryProvider"; // 위에서 생성한 Pr
 import { Analytics } from "@vercel/analytics/next";
 // import { Geist } from "next/font/google";
 import localFont from "next/font/local";
+import dayjs from "dayjs";
 
 const APP_NAME = "🍙 ACG 식대";
 const APP_DEFAULT_TITLE = "🍙 ACG 식대관리 서비스";
 const APP_TITLE_TEMPLATE = "%s - PWA App";
 const APP_DESCRIPTION = "ACG 직원을 위한 식대관리 서비스입니다.";
+import "dayjs/locale/ko";
+dayjs.locale("ko");
 
 export const metadata: Metadata = {
   applicationName: APP_NAME,
@@ -61,7 +64,12 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 const myFont = localFont({
-  src: "../fonts/NanumSquareNeo-Variable.ttf", // 'app/fonts/' 폴더의 폰트 파일 경로
+  src: [
+    { path: "../fonts/NanumSquareRoundL.ttf", weight: "300" },
+    { path: "../fonts/NanumSquareRoundR.ttf", weight: "400" },
+    { path: "../fonts/NanumSquareRoundB.ttf", weight: "700" },
+    { path: "../fonts/NanumSquareRoundEB.ttf", weight: "800" },
+  ],
 });
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

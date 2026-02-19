@@ -4,11 +4,18 @@
  */
 
 export const queryKeys = {
-  // 계산 관련 쿼리
+  // 계산 관련 쿼리 (레거시 호환용)
   calculation: {
     all: ["calculation"] as const,
     byUser: (userName: string) => ["calculation", userName] as const,
     byUserAndMonth: (userName: string, month: number, year?: number) => ["calculation", userName, month, year || new Date().getFullYear()] as const,
+  },
+
+  // 식대 통계 쿼리 (신규)
+  mealStats: {
+    all: ["mealStats"] as const,
+    byUser: (userId: string) => ["mealStats", userId] as const,
+    byUserAndMonth: (userId: string, month: number, year?: number) => ["mealStats", userId, month, year || new Date().getFullYear()] as const,
   },
 
   // 식사 데이터 관련 쿼리
@@ -36,6 +43,73 @@ export const queryKeys = {
   lunchGroup: {
     all: ["lunchGroup"] as const,
     current: ["lunchGroup", "current"] as const,
+    fixedSchedules: ["lunchGroup", "fixedSchedules"] as const,
+  },
+
+  // 전역 설정 관련 쿼리
+  settings: {
+    all: ["settings"] as const,
+  },
+
+  // 식당 관련 쿼리
+  restaurants: {
+    all: ["restaurants"] as const,
+    list: ["restaurants", "list"] as const,
+    popular: () => ["restaurants", "popular"] as const,
+  },
+
+  // 월간 음료 신청 관련 쿼리
+  monthly: {
+    all: ["monthly"] as const,
+    data: ["monthly", "data"] as const,
+  },
+
+  // 포인트 관련 쿼리 (Supabase 기반)
+  points: {
+    all: ["points"] as const,
+    welfare: {
+      all: ["points", "welfare"] as const,
+      byPeriod: (memberId: string, period: string) =>
+        ["points", "welfare", memberId, period] as const,
+    },
+    activity: {
+      all: ["points", "activity"] as const,
+      byPeriod: (memberId: string, period: string) =>
+        ["points", "activity", memberId, period] as const,
+    },
+    dashboard: {
+      all: ["points", "dashboard"] as const,
+      byPeriod: (period: string, type?: string) =>
+        ["points", "dashboard", period, type ?? "all"] as const,
+    },
+    allocationRecords: {
+      byAllocation: (
+        memberId: string,
+        allocationId: string,
+        yearMonth?: string
+      ) =>
+        [
+          "points",
+          "allocationRecords",
+          memberId,
+          allocationId,
+          yearMonth ?? "all",
+        ] as const,
+    },
+    allRecords: {
+      all: ["points", "allRecords"] as const,
+      filtered: (filters: {
+        memberId: string;
+        period?: string;
+        type?: string;
+        filterMemberId?: string;
+        reviewStatus?: string;
+        limit?: number;
+        offset?: number;
+      }) => ["points", "allRecords", filters] as const,
+    },
+    me: ["points", "me"] as const,
+    members: ["points", "members"] as const,
   },
 } as const;
 

@@ -26,12 +26,18 @@ interface MealDataResponse {
   data: MealData[];
 }
 
-async function fetchMealData(userName: string, month: number, year: number): Promise<MealData[]> {
+async function fetchMealData(
+  userName: string,
+  month: number,
+  year: number,
+): Promise<MealData[]> {
   if (!userName) {
     throw new Error("User name is required");
   }
 
-  const response = await fetch(`/api/calendar/meals?month=${month}&year=${year}&name=${encodeURIComponent(userName)}`);
+  const response = await fetch(
+    `/api/calendar/meals?month=${month}&year=${year}&name=${encodeURIComponent(userName)}`,
+  );
 
   if (!response.ok) {
     const errorData = await response.json();
@@ -39,6 +45,7 @@ async function fetchMealData(userName: string, month: number, year: number): Pro
   }
 
   const result: MealDataResponse = await response.json();
+  console.log("result: ", result);
   return result.data || [];
 }
 
@@ -54,10 +61,13 @@ export function useMealData(userName: string, month: number, year: number) {
 
 // 특정 날짜의 식사 데이터만 조회하는 hook (필요한 경우)
 export function useMealDataByDate(userName: string, date: string) {
+  console.log("date:☺️ ", date);
   return useQuery({
     queryKey: queryKeys.meals.byUserAndDate(userName, date),
     queryFn: async () => {
-      const response = await fetch(`/api/calendar/meals?date=${date}&name=${encodeURIComponent(userName)}`);
+      const response = await fetch(
+        `/api/calendar/meals?date=${date}&name=${encodeURIComponent(userName)}`,
+      );
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "식사 데이터 조회 실패");

@@ -1,28 +1,43 @@
 "use client";
+
 import Image from "next/image";
 import React from "react";
 import LOGO from "@/public/images/ACG_LOGO_GRAY.png";
 import { useHeaderVisibility } from "@/hooks/useHeaderVisibility";
+import { motion } from "motion/react";
 
 const Header = () => {
   const { isHeaderVisible } = useHeaderVisibility({
     threshold: 50,
     scrollDifference: 5,
   });
+
   return (
-    <header
-      className={` bg-card sticky top-0 z-50 transition-transform duration-300 ease-in-out ${isHeaderVisible ? "translate-y-0" : "-translate-y-full"}`}
+    <motion.header
+      initial={{ y: 0 }}
+      animate={{ y: isHeaderVisible ? 0 : -100 }}
+      transition={{
+        duration: 0.3,
+        ease: [0.16, 1, 0.3, 1],
+      }}
+      className="sticky top-0 px-4 pt-3"
     >
-      <div className="container mx-auto px-4 py-4 flex justify-center items-center">
-        <Image
-          src={LOGO}
-          alt="CI"
-          width={0}
-          height={0}
-          style={{ width: "50px", height: "18px" }}
-        />
+      <div className="glass-card-elevated rounded-2xl px-5 py-3 flex justify-center items-center shadow-sm">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.1 }}
+        >
+          <Image
+            src={LOGO}
+            alt="ACG Logo"
+            width={48}
+            height={16}
+            className="opacity-70 hover:opacity-100 transition-opacity duration-200"
+          />
+        </motion.div>
       </div>
-    </header>
+    </motion.header>
   );
 };
 

@@ -160,3 +160,40 @@ export function useDeleteUsageRecord() {
     },
   });
 }
+
+// ── Bulk Delete Usage Records ──
+
+export function useDeleteUsageRecords() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      ids,
+      modified_by,
+    }: {
+      ids: string[];
+      modified_by: string;
+    }) => {
+      await Promise.all(
+        ids.map(async (id) => {
+          const params = new URLSearchParams();
+          if (modified_by) params.set("modified_by", modified_by);
+          const res = await fetch(`/api/usage-records/${id}?${params}`, {
+            method: "DELETE",
+          });
+          if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.error || `Failed to delete record ${id}`);
+          }
+        })
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.usageRecords.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.budgetSummary.all });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "일부 내역 삭제에 실패했습니다.");
+    },
+  });
+}

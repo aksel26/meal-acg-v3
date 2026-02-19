@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/src/select";
+import { Checkbox } from "@repo/ui/src/checkbox";
 import { SearchableDropdown } from "@repo/ui/src/searchable-dropdown";
 import {
   Dialog,
@@ -52,6 +53,7 @@ import {
   useRevertReview,
   useUpdateUsageRecord,
   useDeleteUsageRecord,
+  useDeleteUsageRecords,
 } from "@/hooks/useUsageRecordMutations";
 import { useAuditLogs } from "@/hooks/useAuditLogs";
 
@@ -69,6 +71,7 @@ interface UsageRecord {
   notes: string | null;
   delay_reason: string | null;
   receipt_url: string | null;
+  no: number | null;
   is_reviewed: boolean;
   review_status: number;
   reviewed_by: string | null;
@@ -108,6 +111,14 @@ interface Member {
   full_name: string;
   member_role: string;
   team_name: string | null;
+}
+
+interface FieldChange {
+  fieldKey: string;
+  label: string;
+  oldValue: string;
+  newValue: string;
+  isNew: boolean;
 }
 
 // ── Helpers ──
@@ -154,6 +165,98 @@ const REVIEW_STATUS_LABELS: Record<number, string> = {
   1: "1차 확인",
   2: "최종확인완료",
 };
+
+const FIELD_LABELS: Record<string, string> = {
+  type: "유형",
+  description: "설명/사용처",
+  amount: "금액",
+  used_at: "사용일",
+  notes: "비고",
+  companions: "동반자",
+  delay_reason: "지연 사유",
+  receipt_url: "영수증",
+  no: "번호",
+  review_status: "검토 상태",
+  is_reviewed: "검토 여부",
+  first_reviewed_at: "1차 검토일시",
+  first_reviewed_by: "1차 검토자",
+  second_reviewed_at: "2차 검토일시",
+  second_reviewed_by: "2차 검토자",
+  reviewed_at: "검토일시",
+  reviewed_by: "검토자",
+  last_modified_at: "마지막 수정일시",
+  last_modified_by: "마지막 수정자",
+};
+
+function formatFieldValue(key: string, value: unknown): string {
+  if (value === null || value === undefined) return "-";
+
+  // Date fields
+  if (key.includes("_at") || key === "used_at") {
+    return formatDateTime(String(value));
+  }
+
+  // Amount (currency)
+  if (key === "amount") {
+    return `${Number(value).toLocaleString()}원`;
+  }
+
+  // Boolean
+  if (typeof value === "boolean") {
+    return value ? "예" : "아니오";
+  }
+
+  // Review status enum
+  if (key === "review_status") {
+    const statusMap: Record<number, string> = {
+      0: "미검토",
+      1: "1차 검토",
+      2: "최종 검토",
+    };
+    return statusMap[Number(value)] || String(value);
+  }
+
+  // Arrays (companions)
+  if (Array.isArray(value)) {
+    return value.join(", ");
+  }
+
+  return String(value);
+}
+
+function getFieldChanges(
+  previous: Record<string, unknown> | null,
+  current: Record<string, unknown> | null
+): FieldChange[] {
+  if (!current) return [];
+
+  const changes: FieldChange[] = [];
+  const allKeys = new Set([
+    ...Object.keys(previous || {}),
+    ...Object.keys(current),
+  ]);
+
+  for (const key of allKeys) {
+    const oldVal = previous?.[key];
+    const newVal = current[key];
+
+    // Skip if values are the same
+    if (JSON.stringify(oldVal) === JSON.stringify(newVal)) continue;
+
+    // Skip internal/system fields that users don't need to see
+    if (key.includes("_id") || key === "id") continue;
+
+    changes.push({
+      fieldKey: key,
+      label: FIELD_LABELS[key] || key,
+      oldValue: formatFieldValue(key, oldVal),
+      newValue: formatFieldValue(key, newVal),
+      isNew: oldVal === undefined || oldVal === null,
+    });
+  }
+
+  return changes;
+}
 
 // ── Review Step Indicator ──
 // 0=빈 체크박스, 1·2=체크박스 안 '-', 3=체크된 체크박스
@@ -296,6 +399,33 @@ function ReviewStepIndicator({
   );
 }
 
+// ── Field Change Display Component ──
+
+function FieldChangeDisplay({ change }: { change: FieldChange }) {
+  return (
+    <div className="flex items-start gap-3 py-1.5 first:pt-0">
+      <span className="min-w-[80px] text-xs text-slate-400">
+        {change.label}
+      </span>
+      <div className="flex-1 text-xs">
+        {change.isNew ? (
+          <span className="text-slate-900">{change.newValue}</span>
+        ) : (
+          <div className="flex items-center gap-2">
+            <span className="text-slate-400 line-through">
+              {change.oldValue}
+            </span>
+            <span className="text-slate-300">→</span>
+            <span className="text-slate-900">
+              {change.newValue}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Main Page ──
 
 export default function ReviewPage() {
@@ -347,6 +477,10 @@ function ReviewPageContent() {
     undefined
   );
 
+  // Bulk selection
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
+
   // Build query filters
   const queryFilters = useMemo(
     () => ({
@@ -385,6 +519,7 @@ function ReviewPageContent() {
   const revertReview = useRevertReview();
   const updateRecord = useUpdateUsageRecord();
   const deleteRecord = useDeleteUsageRecord();
+  const deleteMany = useDeleteUsageRecords();
 
   // Derived data
   const records: UsageRecord[] = useMemo(() => {
@@ -403,6 +538,25 @@ function ReviewPageContent() {
   const totalCount = records.length;
   const reviewedCount = records.filter((r) => r.review_status === 2).length;
   const totalAmount = records.reduce((sum, r) => sum + (r.amount || 0), 0);
+
+  // Reset selection when filters change
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [periodYear, periodHalf, typeFilter, memberFilter, reviewFilter]);
+
+  // ── Bulk Delete Handlers ──
+
+  const handleBulkDeleteConfirm = async () => {
+    await deleteMany.mutateAsync(
+      { ids: Array.from(selectedIds), modified_by: user?.id || "" },
+      {
+        onSuccess: () => {
+          setSelectedIds(new Set());
+          setIsBulkDeleteOpen(false);
+        },
+      }
+    );
+  };
 
   // ── Review Handlers ──
 
@@ -591,39 +745,67 @@ function ReviewPageContent() {
           </Select>
         </div>
 
-        {records.length > 0 && (
-          <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
-            <span>{totalCount}건</span>
-            <span className="text-slate-300">·</span>
-            <span>검토 {reviewedCount}/{totalCount}</span>
-            <span className="text-slate-300">·</span>
-            <span>{(totalAmount / 10000).toFixed(1)}만원</span>
-            <Button
-              variant="outline"
-              size="sm"
-              className="ml-2 h-8 gap-1.5 text-xs"
-              onClick={handleExport}
-              disabled={isExporting}
-            >
-              {isExporting ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Download className="h-3.5 w-3.5" />
-              )}
-              다운로드
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 gap-1.5 text-xs"
-              onClick={() => setIsImportOpen(true)}
-            >
-              <Upload className="h-3.5 w-3.5" />
-              업로드
-            </Button>
-          </div>
-        )}
+        <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
+          {records.length > 0 && (
+            <>
+              <span>{totalCount}건</span>
+              <span className="text-slate-300">·</span>
+              <span>검토 {reviewedCount}/{totalCount}</span>
+              <span className="text-slate-300">·</span>
+              <span>{(totalAmount / 10000).toFixed(1)}만원</span>
+            </>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            className={records.length > 0 ? "ml-2 h-10 gap-1.5 text-xs" : "h-10 gap-1.5 text-xs"}
+            onClick={handleExport}
+            disabled={isExporting || records.length === 0}
+          >
+            {isExporting ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Download className="h-3.5 w-3.5" />
+            )}
+            다운로드
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-10 gap-1.5 text-xs"
+            onClick={() => setIsImportOpen(true)}
+          >
+            <Upload className="h-3.5 w-3.5" />
+            업로드
+          </Button>
+        </div>
       </div>
+
+      {/* Bulk Action Bar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2">
+          <span className="text-sm font-medium text-rose-700">
+            {selectedIds.size}개 선택됨
+          </span>
+          <Button
+            variant="destructive"
+            size="sm"
+            className="h-7 text-xs"
+            onClick={() => setIsBulkDeleteOpen(true)}
+          >
+            <Trash2 className="mr-1 h-3.5 w-3.5" />
+            선택 삭제
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs text-slate-600"
+            onClick={() => setSelectedIds(new Set())}
+          >
+            선택 해제
+          </Button>
+        </div>
+      )}
 
       {/* Main Table */}
       <div className="glass-panel min-h-0 flex-1 overflow-hidden rounded-xl">
@@ -655,6 +837,27 @@ function ReviewPageContent() {
             <table className="w-full text-[13px]">
               <thead className="sticky top-0 z-10 bg-slate-50">
                 <tr>
+                  <th className="w-[36px] whitespace-nowrap px-2 py-2 text-center">
+                    <Checkbox
+                      checked={
+                        records.length > 0 &&
+                        selectedIds.size === records.length
+                      }
+                      data-state={
+                        selectedIds.size > 0 &&
+                        selectedIds.size < records.length
+                          ? "indeterminate"
+                          : undefined
+                      }
+                      onCheckedChange={(checked) => {
+                        setSelectedIds(
+                          checked
+                            ? new Set(records.map((r) => r.id))
+                            : new Set()
+                        );
+                      }}
+                    />
+                  </th>
                   <th className="w-[44px] whitespace-nowrap px-2 py-2 text-center text-xs font-semibold text-slate-400">
                     No.
                   </th>
@@ -691,10 +894,26 @@ function ReviewPageContent() {
                 {records.map((record, index) => (
                   <tr
                     key={record.id}
-                    className="transition-colors hover:bg-slate-50/60"
+                    className={cn(
+                      "transition-colors hover:bg-slate-50/60",
+                      selectedIds.has(record.id) && "bg-rose-50/40"
+                    )}
                   >
+                    <td className="px-2 py-1 text-center">
+                      <Checkbox
+                        checked={selectedIds.has(record.id)}
+                        onCheckedChange={(checked) => {
+                          setSelectedIds((prev) => {
+                            const next = new Set(prev);
+                            if (checked) next.add(record.id);
+                            else next.delete(record.id);
+                            return next;
+                          });
+                        }}
+                      />
+                    </td>
                     <td className="whitespace-nowrap px-2 py-1 text-center tabular-nums text-slate-400">
-                      {index + 1}
+                      {record.no !== null ? record.no - 1 : "-"}
                     </td>
                     <td className="whitespace-nowrap px-3 py-1 text-center tabular-nums text-slate-500">
                       {formatDate(record.used_at)}
@@ -912,6 +1131,48 @@ function ReviewPageContent() {
         </DialogContent>
       </Dialog>
 
+      {/* ── Bulk Delete Confirm Dialog ── */}
+      <Dialog open={isBulkDeleteOpen} onOpenChange={setIsBulkDeleteOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>선택한 내역 삭제</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3 py-2">
+            <div className="flex items-start gap-2 rounded-md border border-rose-200 bg-rose-50 p-3">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
+              <p className="text-sm text-rose-700">
+                선택한 <span className="font-semibold">{selectedIds.size}개</span> 항목을 삭제합니다. 이 작업은 되돌릴 수 없습니다.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsBulkDeleteOpen(false)}
+              disabled={deleteMany.isPending}
+            >
+              취소
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleBulkDeleteConfirm}
+              disabled={deleteMany.isPending}
+            >
+              {deleteMany.isPending ? (
+                <>
+                  <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                  삭제 중...
+                </>
+              ) : (
+                "삭제"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* ── Import Points Dialog ── */}
       <ImportPointsDialog open={isImportOpen} onOpenChange={setIsImportOpen} />
 
@@ -978,27 +1239,71 @@ function ReviewPageContent() {
                       {log.members?.full_name || log.changed_by}
                     </p>
 
-                    {log.previous_data && (
-                      <div className="mt-2">
-                        <p className="text-xs font-medium text-slate-500">
-                          이전 데이터:
-                        </p>
-                        <pre className="mt-1 max-h-32 overflow-auto rounded bg-slate-50 p-2 text-xs text-slate-600">
-                          {JSON.stringify(log.previous_data, null, 2)}
-                        </pre>
+                    {/* DELETE 액션: 삭제된 내역 표시 */}
+                    {log.action === "DELETE" && log.previous_data && (
+                      <div className="mt-3 border-t pt-3">
+                        <p className="mb-2 text-xs font-medium text-slate-500">삭제된 내역</p>
+                        <div className="space-y-1.5">
+                          {Object.entries(log.previous_data).map(([key, value]) => {
+                            if (key.includes("_id") || key === "id") return null;
+                            return (
+                              <div key={key} className="flex items-start gap-3">
+                                <span className="min-w-[80px] text-xs text-slate-400">
+                                  {FIELD_LABELS[key] || key}
+                                </span>
+                                <span className="flex-1 text-xs text-slate-600">
+                                  {formatFieldValue(key, value)}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     )}
 
-                    {log.new_data && (
-                      <div className="mt-2">
-                        <p className="text-xs font-medium text-slate-500">
-                          변경 데이터:
-                        </p>
-                        <pre className="mt-1 max-h-32 overflow-auto rounded bg-slate-50 p-2 text-xs text-slate-600">
-                          {JSON.stringify(log.new_data, null, 2)}
-                        </pre>
-                      </div>
-                    )}
+                    {/* IMPORT/UPDATE 액션: 변경 내역 표시 */}
+                    {log.action !== "DELETE" && (() => {
+                      const changes = getFieldChanges(log.previous_data, log.new_data);
+
+                      if (changes.length === 0) {
+                        // IMPORT 액션이고 previous_data가 없으면 추가된 내역 표시
+                        if (log.action === "IMPORT" && log.new_data) {
+                          return (
+                            <div className="mt-3 border-t pt-3">
+                              <p className="mb-2 text-xs font-medium text-slate-500">추가된 내역</p>
+                              <div className="space-y-1.5">
+                                {Object.entries(log.new_data).map(([key, value]) => {
+                                  if (key.includes("_id") || key === "id") return null;
+                                  return (
+                                    <div key={key} className="flex items-start gap-3">
+                                      <span className="min-w-[80px] text-xs text-slate-400">
+                                        {FIELD_LABELS[key] || key}
+                                      </span>
+                                      <span className="flex-1 text-xs text-slate-900">
+                                        {formatFieldValue(key, value)}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }
+
+                      // 변경된 필드가 있으면 표시
+                      return (
+                        <div className="mt-3 border-t pt-3">
+                          <p className="mb-2 text-xs font-medium text-slate-500">변경 내역</p>
+                          <div className="space-y-1.5">
+                            {changes.map((change) => (
+                              <FieldChangeDisplay key={change.fieldKey} change={change} />
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 ))}
               </div>

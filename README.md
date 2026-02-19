@@ -61,8 +61,8 @@ meal-v3/
 
 ### Prerequisites
 
-- Node.js 20+
-- pnpm 9+
+- Node.js 18+
+- pnpm 8+
 
 ### Installation
 
@@ -90,6 +90,13 @@ pnpm build:user   # 사용자 앱만
 pnpm build:admin  # 어드민 앱만
 ```
 
+### Production
+
+```bash
+pnpm start:user   # 프로덕션 사용자 앱 시작 (빌드 후)
+pnpm start:admin  # 프로덕션 어드민 앱 시작 (빌드 후)
+```
+
 ### Code Quality
 
 ```bash
@@ -108,11 +115,12 @@ pnpm format       # Prettier 포매팅
 |------|------|
 | 식사 기록 | 조식/중식/석식 금액 및 가게 입력, 캘린더 기반 조회 |
 | 영수증 스캔 | Gemini AI로 영수증 자동 인식 |
-| 복지포인트 | 잔액 조회, 사용 내역 등록/수정 |
+| 복지포인트 | 잔액 조회, 사용 내역 등록/수정, 전체 내역 조회 (무한 스크롤) |
 | 활동비 | 팀장/본부장 전용 활동비 관리 및 팀별 현황 |
+| 인기 음식점 | ACG 전체 인기 음식점 Top 10 랭킹 (누적 통계) |
 | 대리결제 알림 | 대리결제 시 Web Push 알림 발송 |
 | 점심조 | 주간 점심조 배정 및 조회 |
-| PWA | 모바일 앱 설치 지원 |
+| PWA | 모바일 앱 설치 지원, 가로 스크롤 방지 |
 
 ### Admin App
 
@@ -120,8 +128,8 @@ pnpm format       # Prettier 포매팅
 |------|------|
 | 대시보드 | 월별 통계, 사용 트렌드, 인기 가게 |
 | 예산 관리 | 복지포인트/활동비 예산 할당 및 조회 |
-| 사용 내역 | 전체 사용 내역 조회, 검토 상태 관리 |
-| Excel Import | Excel 파일에서 식사 기록 가져오기 |
+| 사용 내역 검토 | 전체 내역 조회, 검토 상태 관리, 일괄 삭제, Audit log |
+| Excel Import | 복지포인트 Excel 가져오기 (중복 자동 제거, 기존 데이터 덮어쓰기) |
 | Excel Export | 개인별/전체 정산 Excel 내보내기 |
 | 정산 처리 | 월별 정산 완료 처리 |
 | Slack 알림 | 미정산자에게 정산 요청 발송 |
@@ -191,6 +199,36 @@ usePointsActivity(memberId, period)  // 활동비 조회
 
 - **User 앱:** Zustand + localStorage 기반 세션 (이름으로 식별)
 - **Admin 앱:** 쿠키 기반 세션 + 미들웨어 보호 + `requireAdmin()` 가드
+
+## Database
+
+### Supabase RPC Functions
+
+DB 레벨에서 복잡한 집계/쿼리를 처리하는 RPC 함수:
+
+| 함수명 | 설명 |
+|--------|------|
+| `get_user_monthly_stats` | 월별 식사 통계 집계 |
+| `get_popular_restaurants` | 전체 meal_logs 기준 인기 음식점 Top 10 |
+
+### Migrations
+
+마이그레이션 파일은 `supabase/migrations/` 디렉토리에 저장:
+- 네이밍: `YYYYMMDD_description.sql`
+- 예시: `20260219_add_no_to_usage_records.sql`
+
+**로컬 개발 워크플로우** (Supabase CLI):
+```bash
+supabase start                    # 로컬 Supabase 인스턴스 시작
+supabase db reset                 # DB 초기화 및 모든 migration 적용
+supabase migration new <name>     # 새 migration 파일 생성
+supabase db push                  # 원격에 migration 적용
+```
+
+**타입 생성:**
+```bash
+supabase gen types typescript --project-id <id> > apps/admin/lib/supabase/types.ts
+```
 
 ## Attendance Types
 

@@ -22,6 +22,10 @@ pnpm build        # Build entire monorepo
 pnpm build:user   # Build only user app
 pnpm build:admin  # Build only admin app
 
+# Production
+pnpm start:user   # Start production user app (after build)
+pnpm start:admin  # Start production admin app (after build)
+
 # Code quality
 pnpm lint         # ESLint (max warnings = 0)
 pnpm check-types  # TypeScript type checking
@@ -72,13 +76,47 @@ queryKeys.budgetAllocations.byPeriod(period)
 queryKeys.usageRecords.byPeriod(period)
 ```
 
+### Query Invalidation Pattern
+**Critical:** When mutating data, invalidate related queries to refresh UI. Common patterns:
+
+```typescript
+// Member mutations (add/delete/edit)
+queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
+queryClient.invalidateQueries({ queryKey: queryKeys.members.all });
+queryClient.invalidateQueries({ queryKey: queryKeys.memberStatuses.all });
+
+// Member status changes (퇴사 등)
+queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
+queryClient.invalidateQueries({ queryKey: queryKeys.memberStatuses.all });
+
+// Organization mutations (team/division assignment)
+queryClient.invalidateQueries({ queryKey: queryKeys.memberStatuses.all });
+// ↑ member_current_status is a VIEW that joins teams/divisions
+
+// Usage records mutations
+queryClient.invalidateQueries({ queryKey: queryKeys.usageRecords.all });
+queryClient.invalidateQueries({ queryKey: queryKeys.budgetSummary.all });
+```
+
+**Key insight:** `member_current_status` is a Supabase **VIEW** (not table) that joins `members + member_statuses + teams + divisions`. Always invalidate `memberStatuses.all` when updating any of these entities.
+
 ### Data Fetching Hooks
 Custom hooks in `hooks/` wrapping React Query with proper typing:
 ```typescript
 // Pattern: use-{resource}.ts or use-{resource}-{action}.ts
-useMealData(userName, month, year)
-useMealSubmit()  // mutation hook
+useMealData(userName, month, year)       // query hook
+useMealSubmit()                          // mutation hook
+useDeleteUsageRecords()                  // bulk mutation hook
+useAllUsageRecords(filters)              // infinite query hook
 ```
+
+**Common patterns:**
+- **Single resource:** `use-{resource}.ts` (e.g., `use-meal-data.ts`)
+- **Mutation:** `use-{resource}-{action}.ts` (e.g., `use-meal-submit.ts`)
+- **Bulk operations:** `useDelete{Resources}` (plural, accepts `ids: string[]`)
+- **Infinite scroll:** Use `useInfiniteQuery` with `limit`/`offset` params
 
 ### Zustand Stores
 Located in each app's `stores/`:
@@ -150,14 +188,51 @@ API routes follow REST conventions in `app/api/` for each app:
 - **Admin**: auth, members, member-statuses, meal-logs, stats, export/import (Excel), budget-allocations, budget-summary, usage-records, points-overview, organizations/divisions/teams, notifications, settings, holidays, monthly, lunch-groups, settlement, slack
 - **User**: auth, users, meals, points (welfare/activity/dashboard/lookup), restaurants, scan-receipt (Gemini AI), notifications, settings, monthly, lunch-group, holidays, google-sheets, calendar
 
-### Supabase RPC
-Monthly statistics are aggregated via `get_user_monthly_stats` RPC function (DB-level calculation)
+### Database Migrations
+Migrations live in `supabase/migrations/` with naming convention `YYYYMMDD_description.sql`:
+```
+20260219_add_no_to_usage_records.sql
+20260219_get_popular_restaurants_rpc.sql
+```
+
+When adding schema changes:
+1. Create migration file with descriptive name
+2. Update `apps/admin/lib/supabase/types.ts` (auto-generated types)
+3. Run type generation: `supabase gen types typescript --project-id <id> > apps/admin/lib/supabase/types.ts`
+
+**Local Supabase workflow** (if using Supabase CLI):
+```bash
+supabase start                    # Start local Supabase instance
+supabase db reset                 # Reset DB and apply all migrations
+supabase migration new <name>     # Create new migration file
+supabase db push                  # Apply pending migrations to remote
+```
+
+### Supabase RPC Functions
+Use RPC functions for complex aggregations/queries that benefit from DB-level processing:
+
+**Existing RPC functions:**
+- `get_user_monthly_stats`: Monthly meal statistics aggregation
+- `get_popular_restaurants`: Top 10 restaurants by visit count across all meal_logs
+
+**When to use RPC vs API route:**
+- ✅ RPC: Complex joins, aggregations, statistics (performance-critical)
+- ❌ API route: Simple CRUD, business logic, external API calls
 
 ## Gotchas
 
 ### Excel Libraries
-- **Import/parsing:** `xlsx` package (`lib/excel-parser.ts`)
+- **Import/parsing:** `xlsx` package (`lib/excel-parser.ts`, `lib/points-excel-parser.ts`)
 - **Export/generation:** `exceljs` package
+
+**Import pattern (Points usage):**
+1. Parse Excel → validate rows → return `PointsUsageRow[]`
+2. API endpoint handles deduplication (last row wins within Excel)
+3. Overwrite existing DB records matching `(member_id, used_at, type, description)`
+4. Insert non-duplicate rows
+5. Log to `audit_logs` table
+
+**Deduplication key:** `${member_id}|${used_at}|${type}|${description}`
 
 ### Motion (Animations)
 Package is `motion` (v12), NOT `framer-motion`. Import: `import { motion, AnimatePresence } from "motion/react"`

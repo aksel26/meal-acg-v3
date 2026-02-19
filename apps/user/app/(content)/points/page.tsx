@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@repo/ui/src/select";
 import { NumberTicker } from "@repo/ui/src/number-ticker";
-import { Check, ChevronRight, ListFilter, Plus } from "@repo/ui/icons";
+import { Check, ChevronRight, Eye, ListFilter, Plus } from "@repo/ui/icons";
 import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/src/popover";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@repo/ui/src/tooltip";
 import { motion } from "motion/react";
@@ -20,6 +20,7 @@ import Image from "next/image";
 import { EditPointDialog } from "@/components/points/EditPointDialog";
 import { ActivityViewDialog } from "../../../components/points/ActivityViewDialog";
 import { PointsGuideDialog } from "@/components/points/PointsGuideDialog";
+import { AllUsageRecordsDialog } from "@/components/points/AllUsageRecordsDialog";
 import {
   useMemberIdLookup,
   usePointsWelfare,
@@ -153,6 +154,7 @@ export default function Points() {
   );
   const [isDeleting, setIsDeleting] = useState(false);
   const [isActivityViewOpen, setIsActivityViewOpen] = useState(false);
+  const [isAllRecordsOpen, setIsAllRecordsOpen] = useState(false);
 
   // Zustand store에서 사용자 정보 가져오기
   const { userName, memberId, memberRole, setMemberInfo } = useUserStore();
@@ -466,7 +468,16 @@ export default function Points() {
       {/* Points List */}
       <div>
         <div className="mb-3 flex justify-between items-center">
-          <h2 className="text-md font-semibold text-gray-900">사용 내역</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-md font-semibold text-gray-900">사용 내역</h2>
+            <button
+              onClick={() => setIsAllRecordsOpen(true)}
+              className="flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-blue-50 hover:text-blue-700 active:scale-95 transition-all duration-200 text-xs text-gray-600"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>전체 내역</span>
+            </button>
+          </div>
           <div className="flex gap-2">
             <Select
               value={sortOrder}
@@ -663,6 +674,13 @@ export default function Points() {
         isNewPoint={isNewPoint}
         isDeleting={isDeleting}
         isManager={isManager}
+      />
+
+      {/* All Usage Records Dialog */}
+      <AllUsageRecordsDialog
+        open={isAllRecordsOpen}
+        onOpenChange={setIsAllRecordsOpen}
+        memberId={currentMemberId}
       />
 
       {/* Bottom Navigation */}

@@ -96,6 +96,18 @@ export const queryKeys = {
           yearMonth ?? "all",
         ] as const,
     },
+    allRecords: {
+      all: ["points", "allRecords"] as const,
+      filtered: (filters: {
+        memberId: string;
+        period?: string;
+        type?: string;
+        filterMemberId?: string;
+        reviewStatus?: string;
+        limit?: number;
+        offset?: number;
+      }) => ["points", "allRecords", filters] as const,
+    },
     me: ["points", "me"] as const,
     members: ["points", "members"] as const,
   },

@@ -34,6 +34,7 @@ import {
   TableRow,
 } from "@repo/ui/src/table";
 import { SearchableDropdown } from "@repo/ui/src/searchable-dropdown";
+import { Checkbox } from "@repo/ui/src/checkbox";
 import {
   AlertTriangle,
   ArrowUpDown,
@@ -81,6 +82,7 @@ interface MemberOption {
   email: string | null;
   member_role: string | null;
   intern_months: number | null;
+  role: string | null;
 }
 
 interface UserFormData {
@@ -90,6 +92,7 @@ interface UserFormData {
   email: string;
   memberRole: string;
   internMonths: string;
+  role: string;
 }
 
 type SortKey = "member_role" | "team_name" | "current_status";
@@ -124,6 +127,7 @@ export default function MemberStatusPage() {
     email: string;
     member_role: string;
     intern_months: string;
+    role: string;
   } | null>(null);
 
   // History modal
@@ -218,10 +222,12 @@ export default function MemberStatusPage() {
       email: "",
       memberRole: "팀원",
       internMonths: "",
+      role: "user",
     },
   });
 
   const watchedMemberRole = watchAddForm("memberRole");
+  const watchedRole = watchAddForm("role");
 
   const createUserMutation = useMutation({
     mutationFn: async (data: {
@@ -231,6 +237,7 @@ export default function MemberStatusPage() {
       email?: string;
       memberRole?: string;
       internMonths?: string;
+      role?: string;
     }) => {
       const response = await fetch("/api/members", {
         method: "POST",
@@ -278,6 +285,15 @@ export default function MemberStatusPage() {
     return map;
   }, [allMembers]);
 
+  // Admin member IDs
+  const adminIds = useMemo(() => {
+    const set = new Set<string>();
+    allMembers?.forEach((m) => {
+      if (m.role === "admin") set.add(m.id);
+    });
+    return set;
+  }, [allMembers]);
+
   const updateNoteMutation = useMutation({
     mutationFn: async ({ id, note }: { id: string; note: string }) => {
       const res = await fetch(`/api/members/${id}`, {
@@ -303,6 +319,7 @@ export default function MemberStatusPage() {
       email?: string;
       member_role: string;
       intern_months?: number | null;
+      role?: string;
     }) => {
       const res = await fetch(`/api/members/${data.id}`, {
         method: "PUT",
@@ -315,6 +332,7 @@ export default function MemberStatusPage() {
             data.member_role === "인턴" && data.intern_months
               ? data.intern_months
               : null,
+          role: data.role,
         }),
       });
       if (!res.ok) throw new Error("Failed to update member");
@@ -344,6 +362,7 @@ export default function MemberStatusPage() {
       email: row.email || "",
       member_role: member?.member_role || row.member_role || "팀원",
       intern_months: member?.intern_months?.toString() || "",
+      role: member?.role || "user",
     });
     setIsEditMemberOpen(true);
   };
@@ -359,6 +378,7 @@ export default function MemberStatusPage() {
         editingMember.member_role === "인턴" && editingMember.intern_months
           ? parseInt(editingMember.intern_months, 10)
           : null,
+      role: editingMember.role,
     });
   };
 
@@ -644,6 +664,9 @@ export default function MemberStatusPage() {
                   <TableHead className="pl-6 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 w-24 text-center">
                     이름
                   </TableHead>
+                  <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500 w-16">
+                    권한
+                  </TableHead>
                   <TableHead className="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                     이메일
                   </TableHead>
@@ -730,6 +753,15 @@ export default function MemberStatusPage() {
                         >
                           {row.full_name}
                         </button>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {row.member_id && adminIds.has(row.member_id) ? (
+                          <Badge className="border-0 bg-indigo-100 text-indigo-700 px-1.5 py-0.5 text-[10px] font-medium">
+                            관리자
+                          </Badge>
+                        ) : (
+                          <span className="text-[11px] text-slate-400">일반</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-sm text-slate-500">
                         {row.email || "-"}
@@ -988,6 +1020,15 @@ export default function MemberStatusPage() {
                   )}
                 </div>
               )}
+              <label className="flex w-full items-center justify-between rounded-md border border-slate-200 px-3 py-2.5 cursor-pointer hover:bg-slate-50 transition-colors">
+                <span className="text-sm font-medium">관리자 권한</span>
+                <Checkbox
+                  checked={watchedRole === "admin"}
+                  onCheckedChange={(checked) =>
+                    setAddFormValue("role", checked ? "admin" : "user")
+                  }
+                />
+              </label>
             </div>
             <div className="flex justify-end gap-2">
               <Button
@@ -1382,6 +1423,18 @@ export default function MemberStatusPage() {
                   />
                 </div>
               )}
+              <label className="flex w-full items-center justify-between rounded-md border border-slate-200 px-3 py-2.5 cursor-pointer hover:bg-slate-50 transition-colors">
+                <span className="text-sm font-medium">관리자 권한</span>
+                <Checkbox
+                  checked={editingMember.role === "admin"}
+                  onCheckedChange={(checked) =>
+                    setEditingMember({
+                      ...editingMember,
+                      role: checked ? "admin" : "user",
+                    })
+                  }
+                />
+              </label>
             </div>
           )}
           <DialogFooter>

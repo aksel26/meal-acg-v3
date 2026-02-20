@@ -862,7 +862,10 @@ function ReviewPageContent() {
                     No.
                   </th>
                   <th className="w-[88px] whitespace-nowrap px-3 py-2 text-center text-xs font-semibold text-slate-500">
-                    날짜
+                    사용날짜
+                  </th>
+                  <th className="w-[88px] whitespace-nowrap px-3 py-2 text-center text-xs font-semibold text-slate-500">
+                    입력날짜
                   </th>
                   <th className="w-[72px] whitespace-nowrap px-3 py-2 text-left text-xs font-semibold text-slate-500">
                     이름
@@ -913,10 +916,13 @@ function ReviewPageContent() {
                       />
                     </td>
                     <td className="whitespace-nowrap px-2 py-1 text-center tabular-nums text-slate-400">
-                      {record.no !== null ? record.no - 1 : "-"}
+                      {record.no}
                     </td>
                     <td className="whitespace-nowrap px-3 py-1 text-center tabular-nums text-slate-500">
                       {formatDate(record.used_at)}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-1 text-center tabular-nums text-slate-400">
+                      {formatDate(record.created_at)}
                     </td>
                     <td className="whitespace-nowrap px-3 py-1 font-medium text-slate-900">
                       {record.members?.full_name || "-"}

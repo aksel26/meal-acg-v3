@@ -15,6 +15,8 @@ interface MealStatsData {
   halfDayDeduction?: number; // 반차 차감액
   totalDeduction?: number; // 총 차감액
   dailyAllowance?: number; // 일일 지원금
+  weekendWorkCount?: number; // 주말 근무 일수
+  weekendWorkAddition?: number; // 주말 근무 가산액
 }
 
 interface MealStatsResponse {

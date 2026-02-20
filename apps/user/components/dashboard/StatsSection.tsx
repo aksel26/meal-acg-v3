@@ -393,9 +393,20 @@ function CalculationResult({
         </div>
       </div>
 
-      {/* 차감 정보 (있을 경우) */}
-      {(data.totalDeduction ?? 0) > 0 && (
+      {/* 차감/가산 정보 (있을 경우) */}
+      {((data.totalDeduction ?? 0) > 0 || (data.weekendWorkCount ?? 0) > 0) && (
         <div className="relative px-5 py-3 bg-white/30 border-t border-white/40 space-y-1.5">
+          {/* 주말 근무 가산 */}
+          {(data.weekendWorkCount ?? 0) > 0 && (
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-500">
+                주말근무 {data.weekendWorkCount}일
+              </span>
+              <span className="font-medium text-blue-600">
+                +{formatCurrency(data.weekendWorkAddition || 0)}원
+              </span>
+            </div>
+          )}
           {/* 개별식사 차감 */}
           {(data.individualMealCount ?? 0) > 0 && (
             <div className="flex items-center justify-between text-xs">

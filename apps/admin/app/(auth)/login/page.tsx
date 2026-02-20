@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from "@repo/ui/src/sonner";
 import Image from "next/image";
 import { Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";

@@ -43,6 +43,9 @@ export async function PUT(
     if (body.intern_months !== undefined) {
       updateData.intern_months = body.intern_months;
     }
+    if (body.role !== undefined) {
+      updateData.role = body.role;
+    }
 
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ error: "No fields to update" }, { status: 400 });

@@ -25,8 +25,24 @@ import {
   UserCheck,
   BarChart3,
   Bell,
+  Eye,
+  EyeOff,
+  KeyRound,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
+import { Button } from "@repo/ui/src/button";
+import { Input } from "@repo/ui/src/input";
+import { Label } from "@repo/ui/src/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@repo/ui/src/dialog";
+import { toast } from "@repo/ui/src/sonner";
 import { useAuth } from "@/hooks/useAuth";
 import Image from "next/image";
 
@@ -191,6 +207,67 @@ export default function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
 
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+
+  const resetPasswordForm = () => {
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setShowCurrentPassword(false);
+    setShowNewPassword(false);
+    setPasswordError("");
+  };
+
+  const handlePasswordChange = async () => {
+    setPasswordError("");
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordError("모든 필드를 입력해주세요.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError("새 비밀번호가 일치하지 않습니다.");
+      return;
+    }
+
+    if (newPassword.length < 4) {
+      setPasswordError("새 비밀번호는 4자 이상이어야 합니다.");
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      const res = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setPasswordError(data.error || "비밀번호 변경에 실패했습니다.");
+        return;
+      }
+
+      toast.success("비밀번호가 변경되었습니다.");
+      setIsPasswordDialogOpen(false);
+      resetPasswordForm();
+    } catch {
+      setPasswordError("비밀번호 변경 중 오류가 발생했습니다.");
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   return (
     <aside className="z-20 flex w-56 flex-col justify-between border-r border-slate-200 bg-white px-3 py-5">
       {/* Top section */}
@@ -239,11 +316,15 @@ export default function Sidebar() {
       <div className="flex flex-col gap-4">
         <div className="h-[1px] w-full bg-slate-200" />
 
-        <div className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-slate-100">
+        <button
+          type="button"
+          onClick={() => setIsPasswordDialogOpen(true)}
+          className="flex w-full cursor-pointer items-center gap-3 rounded-lg p-2 transition-colors hover:bg-slate-100"
+        >
           <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-blue-600 text-sm font-bold text-white">
             {user?.fullName?.charAt(0) || "A"}
           </div>
-          <div className="flex flex-col">
+          <div className="flex flex-col items-start">
             <p className="text-xs font-bold text-slate-900">
               {user?.fullName || "Admin"}
             </p>
@@ -251,7 +332,7 @@ export default function Sidebar() {
               {user?.role === "admin" ? "관리자" : "사용자"}
             </p>
           </div>
-        </div>
+        </button>
 
         <button
           onClick={logout}
@@ -261,6 +342,114 @@ export default function Sidebar() {
           <span>로그아웃</span>
         </button>
       </div>
+
+      {/* Password Change Dialog */}
+      <Dialog
+        open={isPasswordDialogOpen}
+        onOpenChange={(open) => {
+          setIsPasswordDialogOpen(open);
+          if (!open) resetPasswordForm();
+        }}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="h-4 w-4" />
+              비밀번호 변경
+            </DialogTitle>
+            <DialogDescription>
+              현재 비밀번호를 확인한 후 새 비밀번호로 변경합니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="currentPassword">현재 비밀번호</Label>
+              <div className="relative">
+                <Input
+                  id="currentPassword"
+                  type={showCurrentPassword ? "text" : "password"}
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  {showCurrentPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">새 비밀번호</Label>
+              <div className="relative">
+                <Input
+                  id="newPassword"
+                  type={showNewPassword ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  {showNewPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">새 비밀번호 확인</Label>
+              <Input
+                id="confirmPassword"
+                type={showNewPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+              />
+            </div>
+            {passwordError && (
+              <p className="text-sm text-red-500">{passwordError}</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsPasswordDialogOpen(false);
+                resetPasswordForm();
+              }}
+            >
+              취소
+            </Button>
+            <Button
+              onClick={handlePasswordChange}
+              disabled={isChangingPassword}
+            >
+              {isChangingPassword ? (
+                <>
+                  <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                  변경 중...
+                </>
+              ) : (
+                "변경"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </aside>
   );
 }

@@ -102,6 +102,8 @@ queryClient.invalidateQueries({ queryKey: queryKeys.budgetSummary.all });
 
 **Key insight:** `member_current_status` is a Supabase **VIEW** (not table) that joins `members + member_statuses + teams + divisions`. Always invalidate `memberStatuses.all` when updating any of these entities.
 
+**Note:** This VIEW does not include `role` (admin/user). To check member roles, query `members` table directly or cross-reference via `allMembers` query.
+
 ### Data Fetching Hooks
 Custom hooks in `hooks/` wrapping React Query with proper typing:
 ```typescript
@@ -132,6 +134,8 @@ useAuthStore()        // Admin session state
 ### Shared Packages
 - `@repo/ui`: Radix-based components (Button, Dialog, Drawer, etc.)
 - `@repo/utils`: KST timezone date utilities (formatDate, getToday, etc.)
+
+**Import convention:** Always use `@repo/ui/src/{component}` (e.g., `import { toast } from "@repo/ui/src/sonner"`), not direct package imports like `from "sonner"`.
 
 ### Tailwind CSS 4
 Uses CSS-first config (`@import "tailwindcss"` + `@import "@repo/tailwind-config"`). No `tailwind.config.ts` — custom theme in `packages/tailwind-config/shared-styles.css` using `@theme` directive.
@@ -242,6 +246,9 @@ Package is `motion` (v12), NOT `framer-motion`. Import: `import { motion, Animat
 ### Additional Animation/UI Libraries
 - **User app:** `gsap` (scroll animations), `canvas-confetti` (celebration effects), `react-snowfall`
 - **Admin app:** `@dnd-kit/core` + `@dnd-kit/sortable` (drag & drop), `es-hangul` (Korean text utils), `sonner` (toast)
+
+### Radix UI Component Nesting
+Radix primitives (Checkbox, Switch, Select) render as `<button>` internally. Wrapping them in `<button>` causes hydration errors. Use `<label>` or `<div>` instead for clickable containers.
 
 ### Incomplete Entry Check (`/api/stats/incomplete-users`)
 Conditions **excluded** from missing entry detection:

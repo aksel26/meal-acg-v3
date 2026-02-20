@@ -32,6 +32,12 @@ function isHalfDayOff(attendance: string | null): boolean {
   return attendance.includes("반차");
 }
 
+// 평일 여부 체크
+function isWeekday(entryDate: string): boolean {
+  const day = dayjs(entryDate).day();
+  return day !== 0 && day !== 6;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -82,7 +88,7 @@ export async function GET(request: NextRequest) {
 
     const { data: mealLogs, error: mealError } = await supabase
       .from("meal_logs")
-      .select("lunch_amount, attendance")
+      .select("lunch_amount, attendance, entry_date")
       .eq("user_id", userId)
       .gte("entry_date", startDate)
       .lte("entry_date", endDate);
@@ -103,20 +109,27 @@ export async function GET(request: NextRequest) {
 
     const mealCount = mealLogs?.length ?? 0;
 
-    // 개별식사 수 계산
+    // 개별식사 수 계산 (평일만 — 주말은 base에 미포함이므로 차감 불필요)
     const individualMealCount = mealLogs?.filter(
-      (log) => log.attendance === INDIVIDUAL_MEAL_ATTENDANCE
+      (log) => log.attendance === INDIVIDUAL_MEAL_ATTENDANCE && isWeekday(log.entry_date)
     ).length ?? 0;
 
-    // 연차/재택/휴무 수 계산 (반차 제외)
+    // 연차/재택/휴무 수 계산 (반차 제외, 평일만)
     const noMealFullDayCount = mealLogs?.filter(
-      (log) => isNoMealAttendance(log.attendance) && !isHalfDayOff(log.attendance)
+      (log) => isNoMealAttendance(log.attendance) && !isHalfDayOff(log.attendance) && isWeekday(log.entry_date)
     ).length ?? 0;
 
-    // 반차 수 계산
+    // 반차 수 계산 (평일만)
     const halfDayOffCount = mealLogs?.filter(
-      (log) => isHalfDayOff(log.attendance)
+      (log) => isHalfDayOff(log.attendance) && isWeekday(log.entry_date)
     ).length ?? 0;
+
+    // 주말 실제 근무일 수 계산 (attendance가 명시적으로 '근무'인 경우만)
+    const weekendWorkCount = mealLogs?.filter((log) => {
+      const day = dayjs(log.entry_date).day(); // 0=일, 6=토
+      const isWeekend = day === 0 || day === 6;
+      return isWeekend && log.attendance === "근무";
+    }).length ?? 0;
 
     // 개별식사 차감액 계산 (개별식사 수 × 일일 지원금)
     const individualMealDeduction = individualMealCount * dailyAllowance;
@@ -130,8 +143,11 @@ export async function GET(request: NextRequest) {
     // 총 차감액 (공휴일은 Admin에서 월별 지원금 저장 시 이미 제외됨)
     const totalDeduction = individualMealDeduction + noMealDeduction + halfDayDeduction;
 
-    // 실제 사용가능 금액 = 월별 지원금 - 총 차감액
-    const effectiveAllowance = allowanceAmount - totalDeduction;
+    // 주말 근무 가산액
+    const weekendWorkAddition = weekendWorkCount * dailyAllowance;
+
+    // 실제 사용가능 금액 = 월별 지원금 - 총 차감액 + 주말 근무 가산액
+    const effectiveAllowance = allowanceAmount - totalDeduction + weekendWorkAddition;
 
     // 잔액 = 실제 사용가능 금액 - 총 사용액
     const balance = effectiveAllowance - totalUsed;
@@ -152,6 +168,8 @@ export async function GET(request: NextRequest) {
         halfDayDeduction, // 반차 차감액
         totalDeduction, // 총 차감액
         dailyAllowance,
+        weekendWorkCount, // 주말 근무 일수
+        weekendWorkAddition, // 주말 근무 가산액
       },
     });
   } catch (error) {

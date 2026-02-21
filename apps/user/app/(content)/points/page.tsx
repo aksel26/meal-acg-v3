@@ -1,7 +1,5 @@
 "use client";
 
-import { BottomNavigation } from "@/components/BottomNavigation";
-
 import {
   Select,
   SelectContent,
@@ -683,8 +681,6 @@ export default function Points() {
         memberId={currentMemberId}
       />
 
-      {/* Bottom Navigation */}
-      <BottomNavigation />
     </React.Fragment>
   );
 }

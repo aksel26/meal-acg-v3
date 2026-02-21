@@ -1,6 +1,5 @@
 "use client";
 
-import { BottomNavigation } from "@/components/BottomNavigation";
 import { Badge } from "@repo/ui/src/badge";
 import { Card, CardContent } from "@repo/ui/src/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/src/select";
@@ -200,7 +199,6 @@ export default function PointsDashboard() {
         )}
       </div>
 
-      <BottomNavigation />
     </React.Fragment>
   );
 }

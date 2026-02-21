@@ -1,5 +1,4 @@
 "use client";
-import { BottomNavigation } from "@/components/BottomNavigation";
 import { Button } from "@repo/ui/src/button";
 import { useEffect, useState } from "react";
 import { useMonthlyData } from "@/hooks/useMonthlyData";
@@ -217,9 +216,6 @@ const MonthlyDrink = () => {
               })}
         </div>
       </div>
-
-      {/* Bottom Navigation */}
-      <BottomNavigation />
 
       {/* Confirm Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

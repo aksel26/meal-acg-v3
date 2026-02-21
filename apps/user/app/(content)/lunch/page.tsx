@@ -1,5 +1,4 @@
 "use client";
-import { BottomNavigation } from "@/components/BottomNavigation";
 const ScratchLottery = dynamic(
   () => import("@/components/lunch/ScratchLottery"),
   { ssr: false },
@@ -278,8 +277,6 @@ const Lunch = () => {
           />
         )}
       </motion.div>
-
-      <BottomNavigation />
 
       {/* 점심조 뽑기 다이얼로그 */}
       <Dialog open={isLotteryOpen} onOpenChange={setIsLotteryOpen}>

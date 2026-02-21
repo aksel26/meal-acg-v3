@@ -1,7 +1,6 @@
 "use client";
 
 
-import { BottomNavigation } from "@/components/BottomNavigation";
 import GreetingSection from "@/components/dashboard/GreetingSection";
 import MealSection from "@/components/dashboard/MealSection";
 import PopularRestaurantsSection from "@/components/dashboard/PopularRestaurantsSection";
@@ -181,8 +180,6 @@ export default function DashboardPage() {
       >
         <Footer />
       </motion.div>
-      <BottomNavigation />
-
       {/* 업데이트 알림 Dialog */}
       <UpdateNotificationDialog />
 

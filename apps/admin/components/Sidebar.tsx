@@ -29,6 +29,8 @@ import {
   EyeOff,
   KeyRound,
   Loader2,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import { Button } from "@repo/ui/src/button";
@@ -43,6 +45,11 @@ import {
   DialogTitle,
 } from "@repo/ui/src/dialog";
 import { toast } from "@repo/ui/src/sonner";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@repo/ui/src/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import Image from "next/image";
 
@@ -115,32 +122,55 @@ const navigation: NavigationItem[] = [
 function NavItemComponent({
   item,
   isActive,
+  collapsed,
 }: {
   item: NavItem;
   isActive: boolean;
+  collapsed: boolean;
 }) {
-  return (
+  const link = (
     <Link
       href={item.href}
       className={cn(
-        "group flex items-center gap-2.5 rounded-xl px-4 py-3 text-sm transition-colors",
+        "group flex items-center rounded-xl text-sm transition-colors",
+        collapsed ? "justify-center px-0 py-3" : "gap-2.5 px-4 py-3",
         isActive
           ? "bg-white font-semibold text-slate-900"
           : "font-medium text-slate-400 hover:bg-white/60 hover:text-slate-600",
       )}
     >
-      <item.icon className="h-4 w-4 flex-shrink-0" />
-      <span>{item.name}</span>
+      <item.icon
+        className={cn(
+          "flex-shrink-0 transition-all",
+          collapsed ? "h-5 w-5" : "h-4 w-4",
+        )}
+      />
+      {!collapsed && <span>{item.name}</span>}
     </Link>
   );
+
+  if (collapsed) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{link}</TooltipTrigger>
+        <TooltipContent side="right" sideOffset={8}>
+          {item.name}
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return link;
 }
 
 function NavGroupComponent({
   group,
   pathname,
+  collapsed,
 }: {
   group: NavGroup;
   pathname: string;
+  collapsed: boolean;
 }) {
   const hasActiveItem = group.items.some(
     (item) =>
@@ -149,32 +179,56 @@ function NavGroupComponent({
   );
   const [isOpen, setIsOpen] = useState(hasActiveItem);
 
+  const parentButton = (
+    <button
+      type="button"
+      onClick={() => setIsOpen(!isOpen)}
+      className={cn(
+        "flex w-full items-center rounded-xl text-sm transition-colors",
+        collapsed ? "justify-center px-0 py-3" : "gap-2.5 px-4 py-3",
+        hasActiveItem
+          ? "font-semibold text-slate-900"
+          : "font-medium text-slate-400 hover:bg-white/60 hover:text-slate-600",
+      )}
+    >
+      <group.icon
+        className={cn(
+          "flex-shrink-0 transition-all",
+          collapsed ? "h-5 w-5" : "h-4 w-4",
+        )}
+      />
+      {!collapsed && (
+        <>
+          <span className="flex-1 text-left">{group.name}</span>
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 transition-transform duration-200",
+              isOpen ? "rotate-180" : "",
+              hasActiveItem ? "text-slate-500" : "text-slate-400",
+            )}
+          />
+        </>
+      )}
+    </button>
+  );
+
   return (
     <div className="space-y-1">
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className={cn(
-          "flex w-full items-center gap-2.5 rounded-xl px-4 py-3 text-sm transition-colors",
-          hasActiveItem
-            ? "font-semibold text-slate-900"
-            : "font-medium text-slate-400 hover:bg-white/60 hover:text-slate-600",
-        )}
-      >
-        <group.icon className="h-4 w-4 flex-shrink-0" />
-        <span className="flex-1 text-left">{group.name}</span>
-        <ChevronDown
-          className={cn(
-            "h-4 w-4 transition-transform duration-200",
-            isOpen ? "rotate-180" : "",
-            hasActiveItem ? "text-slate-500" : "text-slate-400",
-          )}
-        />
-      </button>
+      {collapsed ? (
+        <Tooltip>
+          <TooltipTrigger asChild>{parentButton}</TooltipTrigger>
+          <TooltipContent side="right" sideOffset={8}>
+            {group.name}
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        parentButton
+      )}
 
       <div
         className={cn(
-          "space-y-1 overflow-hidden pl-4 transition-all duration-200",
+          "space-y-1 overflow-hidden transition-all duration-200",
+          collapsed ? "pl-0" : "pl-4",
           isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0",
         )}
       >
@@ -182,21 +236,42 @@ function NavGroupComponent({
           const isActive =
             pathname === item.href ||
             (item.href !== "/" && pathname.startsWith(item.href));
-          return (
+          const childLink = (
             <Link
               key={item.name}
               href={item.href}
               className={cn(
-                "flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm transition-colors",
+                "flex items-center rounded-xl text-sm transition-colors",
+                collapsed
+                  ? "justify-center px-0 py-2.5"
+                  : "gap-2 px-4 py-2.5",
                 isActive
                   ? "bg-white font-bold text-slate-900"
                   : "font-medium text-slate-400 hover:bg-white/60 hover:text-slate-600",
               )}
             >
-              <item.icon className="h-3.5 w-3.5 flex-shrink-0" />
-              <span>{item.name}</span>
+              <item.icon
+                className={cn(
+                  "flex-shrink-0 transition-all",
+                  collapsed ? "h-4.5 w-4.5" : "h-3.5 w-3.5",
+                )}
+              />
+              {!collapsed && <span>{item.name}</span>}
             </Link>
           );
+
+          if (collapsed) {
+            return (
+              <Tooltip key={item.name}>
+                <TooltipTrigger asChild>{childLink}</TooltipTrigger>
+                <TooltipContent side="right" sideOffset={8}>
+                  {item.name}
+                </TooltipContent>
+              </Tooltip>
+            );
+          }
+
+          return <span key={item.name}>{childLink}</span>;
         })}
       </div>
     </div>
@@ -207,6 +282,7 @@ export default function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
 
+  const [collapsed, setCollapsed] = useState(false);
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -269,25 +345,57 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="glass-sidebar z-20 flex w-56 flex-col justify-between py-5">
+    <aside
+      className={cn(
+        "glass-sidebar z-20 flex flex-col justify-between py-5 transition-all duration-300",
+        collapsed ? "w-16" : "w-56",
+      )}
+    >
       {/* Top section */}
-      <div className="flex flex-col gap-4 ">
-        {/* Logo Area */}
-        <Link href="/" className="flex flex-col items-center gap-3 px-2 py-1">
-          <Image
-            src="/acg_ci_gray.png"
-            alt="ACG Logo"
-            width={100}
-            height={40}
-            className="h-6 w-auto"
-          />
-          <h1 className="text-sm font-medium tracking-tight text-slate-900">
-            비용 관리 Admin
-          </h1>
-        </Link>
+      <div className="flex flex-col gap-4">
+        {/* Logo Area + Toggle */}
+        <div className="relative flex flex-col items-center px-2">
+          <Link
+            href="/"
+            className={cn(
+              "flex flex-col items-center gap-3 py-1",
+              collapsed && "gap-0",
+            )}
+          >
+            <Image
+              src="/acg_ci_gray.png"
+              alt="ACG Logo"
+              width={100}
+              height={40}
+              className={cn(
+                "w-auto transition-all duration-300",
+                collapsed ? "h-5" : "h-6",
+              )}
+            />
+            {!collapsed && (
+              <h1 className="text-sm font-medium tracking-tight text-slate-900">
+                비용 관리 Admin
+              </h1>
+            )}
+          </Link>
+          <button
+            type="button"
+            onClick={() => setCollapsed(!collapsed)}
+            className={cn(
+              "flex items-center justify-center rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/60 hover:text-slate-600",
+              collapsed ? "mt-2" : "absolute right-0 top-0",
+            )}
+          >
+            {collapsed ? (
+              <PanelLeftOpen className="h-5 w-5" />
+            ) : (
+              <PanelLeftClose className="h-4 w-4" />
+            )}
+          </button>
+        </div>
 
         {/* Navigation */}
-        <nav className="flex flex-col gap-1">
+        <nav className={cn("flex flex-col gap-1", collapsed ? "px-2" : "")}>
           {navigation.map((item) => {
             if (isNavGroup(item)) {
               return (
@@ -295,6 +403,7 @@ export default function Sidebar() {
                   key={item.name}
                   group={item}
                   pathname={pathname}
+                  collapsed={collapsed}
                 />
               );
             }
@@ -306,6 +415,7 @@ export default function Sidebar() {
                 key={item.name}
                 item={item}
                 isActive={isActive}
+                collapsed={collapsed}
               />
             );
           })}
@@ -313,34 +423,69 @@ export default function Sidebar() {
       </div>
 
       {/* User Profile Bottom */}
-      <div className="flex flex-col gap-4">
+      <div className={cn("flex flex-col gap-4", collapsed ? "px-2" : "")}>
         <div className="h-[1px] w-full bg-slate-200/50" />
 
-        <button
-          type="button"
-          onClick={() => setIsPasswordDialogOpen(true)}
-          className="flex w-full cursor-pointer items-center gap-3 rounded-lg p-2 transition-colors hover:bg-white/60"
-        >
-          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-blue-600 text-sm font-bold text-white">
-            {user?.fullName?.charAt(0) || "A"}
-          </div>
-          <div className="flex flex-col items-start">
-            <p className="text-xs font-bold text-slate-900">
+        {collapsed ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => setIsPasswordDialogOpen(true)}
+                className="flex w-full cursor-pointer items-center justify-center rounded-lg p-2 transition-colors hover:bg-white/60"
+              >
+                <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-blue-600 text-xs font-bold text-white">
+                  {user?.fullName?.charAt(0) || "A"}
+                </div>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={8}>
               {user?.fullName || "Admin"}
-            </p>
-            <p className="text-[11px] text-slate-500">
-              {user?.role === "admin" ? "관리자" : "사용자"}
-            </p>
-          </div>
-        </button>
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsPasswordDialogOpen(true)}
+            className="flex w-full cursor-pointer items-center gap-3 rounded-lg p-2 transition-colors hover:bg-white/60"
+          >
+            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-blue-600 text-sm font-bold text-white">
+              {user?.fullName?.charAt(0) || "A"}
+            </div>
+            <div className="flex flex-col items-start">
+              <p className="text-xs font-bold text-slate-900">
+                {user?.fullName || "Admin"}
+              </p>
+              <p className="text-[11px] text-slate-500">
+                {user?.role === "admin" ? "관리자" : "사용자"}
+              </p>
+            </div>
+          </button>
+        )}
 
-        <button
-          onClick={logout}
-          className="flex w-full items-center justify-start gap-2 rounded-lg border border-slate-200/50 px-4 py-3.5 text-xs font-medium text-slate-500 transition-colors hover:bg-white/60 hover:text-slate-700"
-        >
-          <LogOut className="h-4 w-4" />
-          <span>로그아웃</span>
-        </button>
+        {collapsed ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={logout}
+                className="flex w-full items-center justify-center rounded-lg border border-slate-200/50 py-3 text-xs font-medium text-slate-500 transition-colors hover:bg-white/60 hover:text-slate-700"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={8}>
+              로그아웃
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <button
+            onClick={logout}
+            className="flex w-full items-center justify-start gap-2 rounded-lg border border-slate-200/50 px-4 py-3.5 text-xs font-medium text-slate-500 transition-colors hover:bg-white/60 hover:text-slate-700"
+          >
+            <LogOut className="h-4 w-4" />
+            <span>로그아웃</span>
+          </button>
+        )}
       </div>
 
       {/* Password Change Dialog */}

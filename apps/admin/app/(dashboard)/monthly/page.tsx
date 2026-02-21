@@ -83,7 +83,10 @@ export default function MonthlyPage() {
   const [selectedDrink, setSelectedDrink] = useState("");
 
   // 삭제 확인 Dialog
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   // 설정 편집용 state
   const [editDrinkOptions, setEditDrinkOptions] = useState<string[]>([]);
@@ -207,14 +210,16 @@ export default function MonthlyPage() {
   const filteredApplications = useMemo(() => {
     if (!monthlyData?.applications) return [];
     if (!selectedUserId) return monthlyData.applications;
-    return monthlyData.applications.filter((app) => app.userId === selectedUserId);
+    return monthlyData.applications.filter(
+      (app) => app.userId === selectedUserId,
+    );
   }, [monthlyData?.applications, selectedUserId]);
 
   // 픽업 담당자 선택에 사용할 멤버 (이미 추가된 담당자 제외)
   const availableMembersForPickup = useMemo(() => {
     if (!members) return [];
     return members.filter(
-      (member) => !editPickupPersons.includes(member.full_name)
+      (member) => !editPickupPersons.includes(member.full_name),
     );
   }, [members, editPickupPersons]);
 
@@ -277,16 +282,26 @@ export default function MonthlyPage() {
   return (
     <div className="space-y-6">
       {/* Top Bar */}
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-lg bg-white px-5 py-3">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-lg bg-white py-3">
         {/* Month Selector */}
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handlePrevMonth}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={handlePrevMonth}
+          >
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <span className="min-w-[7rem] text-center text-base font-semibold text-slate-800">
             {currentDate.format("YYYY년 M월")}
           </span>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleNextMonth}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={handleNextMonth}
+          >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
@@ -342,7 +357,9 @@ export default function MonthlyPage() {
       {/* Drink Stats */}
       {Object.keys(drinkStats).length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="mr-1 text-xs font-medium text-slate-400">음료별</span>
+          <span className="mr-1 text-xs font-medium text-slate-400">
+            음료별
+          </span>
           {Object.entries(drinkStats)
             .sort(([, a], [, b]) => b - a)
             .map(([drink, count]) => (
@@ -367,7 +384,7 @@ export default function MonthlyPage() {
       )}
 
       {/* Applications List */}
-      <Card className="glass-panel border-0">
+      <Card className="glass-panel ">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -387,6 +404,7 @@ export default function MonthlyPage() {
               searchPlaceholder="이름 또는 초성 검색..."
               emptyText="검색 결과가 없습니다"
               allowClear
+              className="h-10"
             />
           </div>
         </CardHeader>
@@ -402,7 +420,9 @@ export default function MonthlyPage() {
             </div>
           ) : filteredApplications.length === 0 ? (
             <div className="text-center py-12 text-slate-500">
-              {selectedUserId ? "해당 사용자의 신청 내역이 없습니다" : "신청 내역이 없습니다"}
+              {selectedUserId
+                ? "해당 사용자의 신청 내역이 없습니다"
+                : "신청 내역이 없습니다"}
             </div>
           ) : (
             <div>
@@ -415,7 +435,7 @@ export default function MonthlyPage() {
                       "flex items-center justify-between py-2 -mx-4 px-4 rounded-md transition-colors",
                       memberStatus
                         ? "opacity-50 cursor-default"
-                        : "hover:bg-slate-50 cursor-pointer"
+                        : "hover:bg-slate-50 cursor-pointer",
                     )}
                     onClick={() => !memberStatus && handleEditClick(app)}
                   >
@@ -433,12 +453,17 @@ export default function MonthlyPage() {
                       )}
                       <div>
                         <div className="flex items-center gap-1.5">
-                          <p className="font-medium text-sm text-slate-900">{app.name}</p>
+                          <p className="font-medium text-sm text-slate-900">
+                            {app.name}
+                          </p>
                           {memberStatus && (
-                            <span className={cn(
-                              "inline-flex items-center rounded-full border px-1.5 py-0.5 text-[10px] font-medium",
-                              STATUS_COLORS[memberStatus] || "bg-slate-100 text-slate-500 border-slate-300"
-                            )}>
+                            <span
+                              className={cn(
+                                "inline-flex items-center rounded-full border px-1.5 py-0.5 text-[10px] font-medium",
+                                STATUS_COLORS[memberStatus] ||
+                                  "bg-slate-100 text-slate-500 border-slate-300",
+                              )}
+                            >
                               {memberStatus}
                             </span>
                           )}
@@ -615,13 +640,16 @@ export default function MonthlyPage() {
                 getItemKey={(m) => m.id}
                 getItemLabel={(m) => m.full_name}
                 onSelect={(member) => {
-                  setEditPickupPersons([...editPickupPersons, member.full_name]);
+                  setEditPickupPersons([
+                    ...editPickupPersons,
+                    member.full_name,
+                  ]);
                 }}
                 renderItem={(member, isHighlighted) => (
                   <div
                     className={cn(
                       "flex items-center gap-2 px-4 py-2.5",
-                      isHighlighted && "bg-violet-50"
+                      isHighlighted && "bg-violet-50",
                     )}
                   >
                     <div className="w-7 h-7 bg-violet-100 rounded-full flex items-center justify-center text-xs font-medium text-violet-700">
@@ -633,6 +661,7 @@ export default function MonthlyPage() {
                 placeholder="담당자 추가..."
                 searchPlaceholder="이름 또는 자음 검색 (예: ㄱㅎㅁ)"
                 emptyText="검색 결과가 없습니다"
+                className="h-10"
               />
             </div>
           </div>
@@ -652,7 +681,10 @@ export default function MonthlyPage() {
       </Dialog>
 
       {/* 신청 삭제 확인 */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+      >
         <AlertDialogContent className="max-w-sm">
           <AlertDialogHeader>
             <AlertDialogTitle>신청 삭제</AlertDialogTitle>

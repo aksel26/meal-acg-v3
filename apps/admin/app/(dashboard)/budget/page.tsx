@@ -191,7 +191,7 @@ export default function BudgetPage() {
   // 특이사항 인원 ID Set
   const statusMemberIds = useMemo(() => {
     return new Set(
-      (statusMembers || []).map((m) => m.member_id).filter(Boolean)
+      (statusMembers || []).map((m) => m.member_id).filter(Boolean),
     );
   }, [statusMembers]);
 
@@ -253,15 +253,17 @@ export default function BudgetPage() {
 
     return leaderMembers.map((leader) => {
       const memberCount = leader.team_id
-        ? (teamCounts.get(leader.team_id) || 1)
+        ? teamCounts.get(leader.team_id) || 1
         : 1;
       const isPnC = !!(pncTeamId && leader.team_id === pncTeamId);
-      const interns = leader.team_id ? (teamInterns.get(leader.team_id) || []) : [];
+      const interns = leader.team_id
+        ? teamInterns.get(leader.team_id) || []
+        : [];
 
       // 인턴 활동비 합산
       const internAmount = interns.reduce((sum, intern) => {
         const months = intern.intern_months || 1;
-        return sum + Math.round(managerRate / 6 * months);
+        return sum + Math.round((managerRate / 6) * months);
       }, 0);
 
       let amount: number;
@@ -277,7 +279,9 @@ export default function BudgetPage() {
           parts.push(`${formatCurrency(managerRate)} × ${memberCount - 1}명`);
         }
         if (pncExtraCount > 0) {
-          parts.push(`${formatCurrency(pncExtraRate)} × ${pncExtraCount}명 (팀원+인턴)`);
+          parts.push(
+            `${formatCurrency(pncExtraRate)} × ${pncExtraCount}명 (팀원+인턴)`,
+          );
         }
         basis = parts.join(" + ");
       } else {
@@ -300,9 +304,24 @@ export default function BudgetPage() {
         basis += " + " + internParts.join(" + ");
       }
 
-      return { ...leader, memberCount, amount, isPnC, pncExtraCount, basis, internCount: interns.length };
+      return {
+        ...leader,
+        memberCount,
+        amount,
+        isPnC,
+        pncExtraCount,
+        basis,
+        internCount: interns.length,
+      };
     });
-  }, [members, leaderMembers, calcLeaderRate, calcManagerRate, calcPncExtraRate, statusMemberIds]);
+  }, [
+    members,
+    leaderMembers,
+    calcLeaderRate,
+    calcManagerRate,
+    calcPncExtraRate,
+    statusMemberIds,
+  ]);
 
   const activityPreviewTotal = useMemo(
     () =>
@@ -458,12 +477,14 @@ export default function BudgetPage() {
     <div className="flex h-[calc(100vh-10rem)] flex-col gap-6">
       {/* Quick Stats */}
       {period && summaryItems.length > 0 && (
-        <div className="flex items-center gap-6 rounded-lg bg-white px-6 py-3">
+        <div className="flex items-center gap-5 rounded-xl border border-slate-200 bg-white px-5 py-3">
           <div className="flex items-center gap-2">
             <span className="text-sm text-slate-500">총 할당액</span>
             <span className="text-lg font-semibold tabular-nums text-slate-800">
               {(totalAllocated / 10000).toFixed(1)}
-              <span className="ml-0.5 text-sm font-normal text-slate-400">만원</span>
+              <span className="ml-0.5 text-sm font-normal text-slate-400">
+                만원
+              </span>
             </span>
           </div>
           <div className="h-4 w-px bg-slate-200" />
@@ -471,12 +492,16 @@ export default function BudgetPage() {
             <span className="text-sm text-slate-500">복지포인트</span>
             <span className="text-lg font-semibold tabular-nums text-slate-800">
               {(welfareAllocated / 10000).toFixed(1)}
-              <span className="ml-0.5 text-sm font-normal text-slate-400">만원</span>
+              <span className="ml-0.5 text-sm font-normal text-slate-400">
+                만원
+              </span>
             </span>
-            <span className={cn(
-              "text-xs tabular-nums",
-              welfareRemaining < 0 ? "text-rose-500" : "text-slate-400",
-            )}>
+            <span
+              className={cn(
+                "text-xs tabular-nums",
+                welfareRemaining < 0 ? "text-rose-500" : "text-slate-400",
+              )}
+            >
               (잔액 {(welfareRemaining / 10000).toFixed(1)}만원)
             </span>
           </div>
@@ -485,12 +510,16 @@ export default function BudgetPage() {
             <span className="text-sm text-slate-500">활동비</span>
             <span className="text-lg font-semibold tabular-nums text-slate-800">
               {(activityAllocated / 10000).toFixed(1)}
-              <span className="ml-0.5 text-sm font-normal text-slate-400">만원</span>
+              <span className="ml-0.5 text-sm font-normal text-slate-400">
+                만원
+              </span>
             </span>
-            <span className={cn(
-              "text-xs tabular-nums",
-              activityRemaining < 0 ? "text-rose-500" : "text-slate-400",
-            )}>
+            <span
+              className={cn(
+                "text-xs tabular-nums",
+                activityRemaining < 0 ? "text-rose-500" : "text-slate-400",
+              )}
+            >
               (잔액 {(activityRemaining / 10000).toFixed(1)}만원)
             </span>
           </div>
@@ -529,7 +558,9 @@ export default function BudgetPage() {
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-sm font-medium text-slate-700">구분 필터</Label>
+          <Label className="text-sm font-medium text-slate-700">
+            구분 필터
+          </Label>
           <Select value={typeFilter} onValueChange={setTypeFilter}>
             <SelectTrigger className="h-10 w-40 bg-white">
               <SelectValue />
@@ -566,7 +597,7 @@ export default function BudgetPage() {
       </div>
 
       {/* Main Table */}
-      <div className="glass-panel min-h-0 flex-1 overflow-hidden rounded-xl">
+      <div className="min-h-0 flex-1 overflow-hidden rounded-xl bg-white">
         {!period ? (
           <div className="py-16 text-center">
             <Wallet className="mx-auto h-12 w-12 text-slate-300" />
@@ -630,7 +661,9 @@ export default function BudgetPage() {
               </TableHeader>
               <TableBody className="divide-y divide-slate-100/60">
                 {memberRows.map((row, index) => {
-                  const preview = activityPreview.find((p) => p.id === row.member_id);
+                  const preview = activityPreview.find(
+                    (p) => p.id === row.member_id,
+                  );
                   return (
                     <TableRow
                       key={row.member_id}
@@ -699,9 +732,7 @@ export default function BudgetPage() {
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>
-              {editingItem?.member_name} - 예산 수정
-            </DialogTitle>
+            <DialogTitle>{editingItem?.member_name} - 예산 수정</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
@@ -815,10 +846,7 @@ export default function BudgetPage() {
             <Button variant="outline" onClick={() => setIsBulkOpen(false)}>
               취소
             </Button>
-            <Button
-              onClick={handleBulkSave}
-              disabled={bulkUpsert.isPending}
-            >
+            <Button onClick={handleBulkSave} disabled={bulkUpsert.isPending}>
               {bulkUpsert.isPending ? (
                 <>
                   <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
@@ -932,11 +960,19 @@ export default function BudgetPage() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-slate-50 text-xs text-slate-500">
-                        <th className="px-3 py-2 text-left font-medium">이름</th>
-                        <th className="px-2 py-2 text-center font-medium">직급</th>
+                        <th className="px-3 py-2 text-left font-medium">
+                          이름
+                        </th>
+                        <th className="px-2 py-2 text-center font-medium">
+                          직급
+                        </th>
                         <th className="px-2 py-2 text-left font-medium">팀</th>
-                        <th className="px-2 py-2 text-center font-medium">인원</th>
-                        <th className="px-3 py-2 text-right font-medium">계산액</th>
+                        <th className="px-2 py-2 text-center font-medium">
+                          인원
+                        </th>
+                        <th className="px-3 py-2 text-right font-medium">
+                          계산액
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -976,13 +1012,13 @@ export default function BudgetPage() {
                                 ? `${row.memberCount}+${row.pncExtraCount}`
                                 : row.memberCount}
                               {row.internCount > 0 && (
-                                <span className="ml-0.5 text-emerald-600">+{row.internCount}인턴</span>
+                                <span className="ml-0.5 text-emerald-600">
+                                  +{row.internCount}인턴
+                                </span>
                               )}
                             </td>
                             <td className="px-3 py-2 text-right tabular-nums font-medium">
-                              {isExcluded
-                                ? "0원"
-                                : formatCurrency(row.amount)}
+                              {isExcluded ? "0원" : formatCurrency(row.amount)}
                             </td>
                           </tr>
                         );
@@ -990,7 +1026,10 @@ export default function BudgetPage() {
                     </tbody>
                     <tfoot>
                       <tr className="bg-slate-50 font-semibold">
-                        <td colSpan={4} className="px-3 py-2 text-right text-slate-600">
+                        <td
+                          colSpan={4}
+                          className="px-3 py-2 text-right text-slate-600"
+                        >
                           합계
                         </td>
                         <td className="px-3 py-2 text-right tabular-nums text-slate-900">

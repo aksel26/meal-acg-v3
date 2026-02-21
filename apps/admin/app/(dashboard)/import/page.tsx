@@ -40,7 +40,11 @@ import {
   Loader2,
 } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
-import { parseExcelFile, type MealRecord, type ParseResult } from "@/lib/excel-parser";
+import {
+  parseExcelFile,
+  type MealRecord,
+  type ParseResult,
+} from "@/lib/excel-parser";
 import type { Member } from "@/lib/supabase/types";
 
 interface FileUploadState extends ParseResult {
@@ -100,11 +104,11 @@ export default function ImportPage() {
         members.find(
           (m) =>
             m.full_name === name ||
-            m.full_name.replace(/\s/g, "") === name.replace(/\s/g, "")
+            m.full_name.replace(/\s/g, "") === name.replace(/\s/g, ""),
         ) || null
       );
     },
-    [members]
+    [members],
   );
 
   // members 데이터가 로드되면 매칭되지 않은 파일들 재매칭
@@ -121,15 +125,15 @@ export default function ImportPage() {
         if (fileState.matchedMember) return fileState;
         // 유니코드 정규화 (NFC) 적용하여 매칭
         const normalizedMemberName = fileState.memberName.normalize("NFC");
-        const matchedMember = members.find(
-          (m) => {
+        const matchedMember =
+          members.find((m) => {
             const normalizedFullName = m.full_name.normalize("NFC");
             return (
               normalizedFullName === normalizedMemberName ||
-              normalizedFullName.replace(/\s/g, "") === normalizedMemberName.replace(/\s/g, "")
+              normalizedFullName.replace(/\s/g, "") ===
+                normalizedMemberName.replace(/\s/g, "")
             );
-          }
-        ) || null;
+          }) || null;
         return { ...fileState, matchedMember };
       });
     });
@@ -158,15 +162,15 @@ export default function ImportPage() {
           // 유니코드 정규화 (NFC) 적용
           const normalizedMemberName = parseResult.memberName.normalize("NFC");
           // members를 직접 참조하여 매칭
-          const matchedMember = members.find(
-            (m) => {
+          const matchedMember =
+            members.find((m) => {
               const normalizedFullName = m.full_name.normalize("NFC");
               return (
                 normalizedFullName === normalizedMemberName ||
-                normalizedFullName.replace(/\s/g, "") === normalizedMemberName.replace(/\s/g, "")
+                normalizedFullName.replace(/\s/g, "") ===
+                  normalizedMemberName.replace(/\s/g, "")
               );
-            }
-          ) || null;
+            }) || null;
           newFiles.push({
             ...parseResult,
             file,
@@ -180,13 +184,15 @@ export default function ImportPage() {
 
       setUploadedFiles((prev) => [...prev, ...newFiles]);
     },
-    [uploadedFiles, members]
+    [uploadedFiles, members],
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
+        ".xlsx",
+      ],
     },
     multiple: true,
   });
@@ -200,7 +206,10 @@ export default function ImportPage() {
   };
 
   // 단일 파일 Import
-  const importFile = async (fileState: FileUploadState, showResultDialog = true) => {
+  const importFile = async (
+    fileState: FileUploadState,
+    showResultDialog = true,
+  ) => {
     if (!fileState.matchedMember) {
       toast.error("멤버 매칭이 필요합니다.");
       return null;
@@ -208,8 +217,8 @@ export default function ImportPage() {
 
     setUploadedFiles((prev) =>
       prev.map((f) =>
-        f.file.name === fileState.file.name ? { ...f, status: "importing" } : f
-      )
+        f.file.name === fileState.file.name ? { ...f, status: "importing" } : f,
+      ),
     );
 
     try {
@@ -223,13 +232,15 @@ export default function ImportPage() {
         prev.map((f) =>
           f.file.name === fileState.file.name
             ? { ...f, status: result.success ? "success" : "error", result }
-            : f
-        )
+            : f,
+        ),
       );
 
       if (result.success) {
         // 관련 쿼리 무효화
-        await queryClient.invalidateQueries({ queryKey: queryKeys.mealLogs.all });
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.mealLogs.all,
+        });
         await queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
         await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
 
@@ -258,8 +269,8 @@ export default function ImportPage() {
     } catch {
       setUploadedFiles((prev) =>
         prev.map((f) =>
-          f.file.name === fileState.file.name ? { ...f, status: "error" } : f
-        )
+          f.file.name === fileState.file.name ? { ...f, status: "error" } : f,
+        ),
       );
       toast.error(`${fileState.memberName}: Import 실패`);
       return null;
@@ -269,10 +280,15 @@ export default function ImportPage() {
   // 전체 Import
   const importAll = async () => {
     const filesToImport = uploadedFiles.filter(
-      (f) => f.status === "pending" && f.matchedMember && f.records.length > 0
+      (f) => f.status === "pending" && f.matchedMember && f.records.length > 0,
     );
 
-    const results: { fileName: string; inserted: number; updated: number; skipped: number }[] = [];
+    const results: {
+      fileName: string;
+      inserted: number;
+      updated: number;
+      skipped: number;
+    }[] = [];
 
     for (const file of filesToImport) {
       const result = await importFile(file, false);
@@ -303,7 +319,9 @@ export default function ImportPage() {
       .length,
   };
 
-  const selectedFile = uploadedFiles.find((f) => f.file.name === selectedPreview);
+  const selectedFile = uploadedFiles.find(
+    (f) => f.file.name === selectedPreview,
+  );
 
   return (
     <div className="space-y-6">
@@ -311,7 +329,7 @@ export default function ImportPage() {
         {/* 왼쪽: 업로드 영역 */}
         <div className="col-span-5 space-y-4">
           {/* 드롭존 */}
-          <Card className="glass-panel border-0">
+          <Card className="glass-panel border border-gray-100 shadow-none">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <Upload className="w-4 h-4" />
@@ -333,7 +351,9 @@ export default function ImportPage() {
                 <input {...getInputProps()} />
                 <FileSpreadsheet className="w-12 h-12 mx-auto text-gray-400 mb-3" />
                 {isDragActive ? (
-                  <p className="text-blue-600 font-medium">파일을 여기에 놓으세요</p>
+                  <p className="text-blue-600 font-medium">
+                    파일을 여기에 놓으세요
+                  </p>
                 ) : (
                   <>
                     <p className="text-gray-600 font-medium">
@@ -349,7 +369,7 @@ export default function ImportPage() {
           </Card>
 
           {/* 옵션 */}
-          <Card className="glass-panel border-0">
+          <Card className="glass-panel border border-gray-100 shadow-none">
             <CardContent className="pt-4">
               <div className="flex items-center space-x-2">
                 <Checkbox
@@ -369,7 +389,7 @@ export default function ImportPage() {
 
           {/* 파일 목록 */}
           {uploadedFiles.length > 0 && (
-            <Card className="glass-panel border-0">
+            <Card className="glass-panel border border-gray-100 shadow-none">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base">
@@ -481,7 +501,7 @@ export default function ImportPage() {
 
         {/* 오른쪽: 미리보기 */}
         <div className="col-span-7">
-          <Card className="glass-panel border-0 h-full">
+          <Card className="glass-panel border border-gray-100 shadow-none h-full">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">데이터 미리보기</CardTitle>
               <CardDescription>
@@ -505,64 +525,71 @@ export default function ImportPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {selectedFile.records.slice(0, 50).map((record, idx) => (
-                          <TableRow key={idx}>
-                            <TableCell className="font-medium text-xs">
-                              {record.date}
-                            </TableCell>
-                            <TableCell className="text-xs">
-                              {record.attendance || "-"}
-                            </TableCell>
-                            <TableCell className="text-xs">
-                              {record.breakfast_store ? (
-                                <span>
-                                  {record.breakfast_store}
-                                  {record.breakfast_amount && (
-                                    <span className="text-gray-500 ml-1">
-                                      ({record.breakfast_amount.toLocaleString()}원)
-                                    </span>
-                                  )}
-                                </span>
-                              ) : (
-                                "-"
-                              )}
-                            </TableCell>
-                            <TableCell className="text-xs">
-                              {record.lunch_store ? (
-                                <span>
-                                  {record.lunch_store}
-                                  {record.lunch_amount && (
-                                    <span className="text-gray-500 ml-1">
-                                      ({record.lunch_amount.toLocaleString()}원)
-                                    </span>
-                                  )}
-                                </span>
-                              ) : (
-                                "-"
-                              )}
-                            </TableCell>
-                            <TableCell className="text-xs">
-                              {record.dinner_store ? (
-                                <span>
-                                  {record.dinner_store}
-                                  {record.dinner_amount && (
-                                    <span className="text-gray-500 ml-1">
-                                      ({record.dinner_amount.toLocaleString()}원)
-                                    </span>
-                                  )}
-                                </span>
-                              ) : (
-                                "-"
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                        {selectedFile.records
+                          .slice(0, 50)
+                          .map((record, idx) => (
+                            <TableRow key={idx}>
+                              <TableCell className="font-medium text-xs">
+                                {record.date}
+                              </TableCell>
+                              <TableCell className="text-xs">
+                                {record.attendance || "-"}
+                              </TableCell>
+                              <TableCell className="text-xs">
+                                {record.breakfast_store ? (
+                                  <span>
+                                    {record.breakfast_store}
+                                    {record.breakfast_amount && (
+                                      <span className="text-gray-500 ml-1">
+                                        (
+                                        {record.breakfast_amount.toLocaleString()}
+                                        원)
+                                      </span>
+                                    )}
+                                  </span>
+                                ) : (
+                                  "-"
+                                )}
+                              </TableCell>
+                              <TableCell className="text-xs">
+                                {record.lunch_store ? (
+                                  <span>
+                                    {record.lunch_store}
+                                    {record.lunch_amount && (
+                                      <span className="text-gray-500 ml-1">
+                                        ({record.lunch_amount.toLocaleString()}
+                                        원)
+                                      </span>
+                                    )}
+                                  </span>
+                                ) : (
+                                  "-"
+                                )}
+                              </TableCell>
+                              <TableCell className="text-xs">
+                                {record.dinner_store ? (
+                                  <span>
+                                    {record.dinner_store}
+                                    {record.dinner_amount && (
+                                      <span className="text-gray-500 ml-1">
+                                        ({record.dinner_amount.toLocaleString()}
+                                        원)
+                                      </span>
+                                    )}
+                                  </span>
+                                ) : (
+                                  "-"
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
                       </TableBody>
                     </Table>
                   </div>
                   {selectedFile.records.length > 50 && (
                     <div className="p-2 text-center text-xs text-gray-400 border-t">
-                      처음 50건만 표시됩니다. 전체 {selectedFile.records.length}건
+                      처음 50건만 표시됩니다. 전체 {selectedFile.records.length}
+                      건
                     </div>
                   )}
                 </div>
@@ -606,10 +633,18 @@ export default function ImportPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="sticky top-0 bg-white z-10">파일명</TableHead>
-                  <TableHead className="sticky top-0 bg-white z-10 text-right">추가</TableHead>
-                  <TableHead className="sticky top-0 bg-white z-10 text-right">업데이트</TableHead>
-                  <TableHead className="sticky top-0 bg-white z-10 text-right">건너뜀</TableHead>
+                  <TableHead className="sticky top-0 bg-white z-10">
+                    파일명
+                  </TableHead>
+                  <TableHead className="sticky top-0 bg-white z-10 text-right">
+                    추가
+                  </TableHead>
+                  <TableHead className="sticky top-0 bg-white z-10 text-right">
+                    업데이트
+                  </TableHead>
+                  <TableHead className="sticky top-0 bg-white z-10 text-right">
+                    건너뜀
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

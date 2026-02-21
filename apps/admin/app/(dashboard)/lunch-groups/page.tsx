@@ -200,9 +200,7 @@ function DroppableGroup({
       {/* 조 번호 헤더 */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <span
-            className="w-7 h-7 flex items-center justify-center text-[#135bec] text-sm font-bold rounded-md bg-[#135bec]/5"
-          >
+          <span className="w-7 h-7 flex items-center justify-center text-[#135bec] text-sm font-bold rounded-md bg-[#135bec]/5">
             {groupNumber}
           </span>
           <span className="text-sm font-medium text-slate-600">조</span>
@@ -278,7 +276,9 @@ export default function LunchGroupsPage() {
   });
 
   // 기존 배정 조회
-  const { data: existingGroups, isFetching: isGroupsFetching } = useQuery<LunchGroupWithMembers[]>({
+  const { data: existingGroups, isFetching: isGroupsFetching } = useQuery<
+    LunchGroupWithMembers[]
+  >({
     queryKey: queryKeys.lunchGroups.byWeek(weekStartDate),
     queryFn: async () => {
       const response = await fetch(
@@ -605,7 +605,7 @@ export default function LunchGroupsPage() {
           {/* 왼쪽: 설정 & 인원 목록 */}
           <div className="col-span-5 space-y-4">
             {/* 설정 카드 */}
-            <Card className="glass-panel border-0">
+            <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Settings className="w-4 h-4" />
@@ -651,7 +651,7 @@ export default function LunchGroupsPage() {
             </Card>
 
             {/* 인원 목록 카드 */}
-            <Card className="glass-panel border-0">
+            <Card className="glass-panel">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base flex items-center gap-2">
@@ -744,7 +744,7 @@ export default function LunchGroupsPage() {
 
             {/* 제외된 인원 */}
             {excludedMemberIds.size > 0 && (
-              <Card className="glass-panel border-0">
+              <Card className="glass-panel">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base text-slate-500">
                     제외된 인원 ({excludedMemberIds.size}명)
@@ -779,7 +779,7 @@ export default function LunchGroupsPage() {
 
           {/* 오른쪽: 조 테이블 */}
           <div className="col-span-7">
-            <Card className="glass-panel border-0">
+            <Card className="glass-panel">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base">조 테이블</CardTitle>
@@ -798,7 +798,9 @@ export default function LunchGroupsPage() {
                         });
                       }}
                     >
-                      <RefreshCw className={`h-4 w-4 ${isGroupsFetching ? "animate-spin" : ""}`} />
+                      <RefreshCw
+                        className={`h-4 w-4 ${isGroupsFetching ? "animate-spin" : ""}`}
+                      />
                     </Button>
                   </div>
                 </div>

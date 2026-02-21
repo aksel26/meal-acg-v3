@@ -198,6 +198,9 @@ export default function MemberStatusPage() {
       });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.budgetAllocations.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.budgetSummary.all });
+      queryClient.invalidateQueries({ queryKey: ["organizations", "tree"] });
       toast.success("멤버가 삭제되었습니다.");
     },
     onError: () => {
@@ -259,6 +262,9 @@ export default function MemberStatusPage() {
       });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.budgetAllocations.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.budgetSummary.all });
+      queryClient.invalidateQueries({ queryKey: ["organizations", "tree"] });
       toast.success("인원이 추가되었습니다.");
       setIsAddMemberOpen(false);
       resetAddForm();

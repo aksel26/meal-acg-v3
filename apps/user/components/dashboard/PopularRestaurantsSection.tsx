@@ -34,7 +34,7 @@ export default function PopularRestaurantsSection() {
         transition={{ duration: 0.3 }}
         className="mb-6"
       >
-        <div className="card-premium p-5 relative overflow-hidden">
+        <div className="card-premium rounded-2xl p-5 relative overflow-hidden">
           <div className="flex items-center gap-2 mb-4">
             <div className="skeleton h-5 w-32 rounded" />
           </div>
@@ -83,7 +83,7 @@ export default function PopularRestaurantsSection() {
     >
       <motion.button
         type="button"
-        className={`card-premium p-5 relative overflow-hidden w-full text-left ${
+        className={`card-premium rounded-2xl p-5 relative overflow-hidden w-full text-left ${
           hasMore ? "cursor-pointer active:scale-[0.99]" : "cursor-default"
         }`}
         onClick={handleToggle}

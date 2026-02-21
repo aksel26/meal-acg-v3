@@ -56,7 +56,7 @@ export function MealCards({
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="bg-white rounded-2xl border border-gray-100 p-6 text-center mt-4"
+        className="card-premium p-6 text-center mt-4"
       >
         <p className="text-sm text-gray-400">날짜를 선택해주세요</p>
       </motion.div>
@@ -134,7 +134,7 @@ export function MealCards({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="bg-white rounded-2xl border border-gray-100 p-5 mt-4"
+        className="card-premium p-5 mt-4"
       >
         <div className="text-center py-6">
           <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-3">
@@ -173,7 +173,7 @@ export function MealCards({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="bg-white rounded-2xl border border-gray-100 p-5 mt-4"
+        className="card-premium p-5 mt-4"
       >
         <div className="flex items-center justify-between mb-4">
           <span className="text-sm font-medium text-gray-900">
@@ -201,7 +201,7 @@ export function MealCards({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="bg-white rounded-2xl border border-gray-100 p-5 mt-4"
+        className="card-premium p-5 mt-4"
       >
         <div className="flex items-center justify-between mb-4">
           <span className="text-sm font-medium text-gray-900">
@@ -229,7 +229,7 @@ export function MealCards({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="bg-white rounded-2xl border border-gray-100 p-5 mt-4"
+        className="card-premium p-5 mt-4"
       >
         <div className="flex items-center justify-between mb-4">
           <span className="text-sm font-medium text-gray-900">
@@ -260,7 +260,7 @@ export function MealCards({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="bg-white rounded-2xl border border-gray-100 p-4 mt-4"
+      className="card-premium p-4 mt-4"
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-3 px-1">

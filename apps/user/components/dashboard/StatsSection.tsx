@@ -100,7 +100,7 @@ function CalculationResult({
 
   if (isLoading) {
     return (
-      <div className="card-premium p-5 relative overflow-hidden">
+      <div className="card-premium rounded-2xl p-5 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-[oklch(0.92_0.06_200/0.25)] rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
         <div className="space-y-4 relative">
           <div className="flex justify-between items-center">
@@ -119,7 +119,7 @@ function CalculationResult({
 
   if (error) {
     return (
-      <div className="card-premium p-6 text-center relative overflow-hidden">
+      <div className="card-premium rounded-2xl p-6 text-center relative overflow-hidden">
         <p className="text-sm text-gray-500 mb-3">{error.message}</p>
         <Button
           onClick={() => refetch()}
@@ -159,7 +159,7 @@ function CalculationResult({
     data.balance >= 0 && data.balance < data.allowanceAmount * 0.2;
 
   return (
-    <div className="card-premium relative">
+    <div className="card-premium rounded-2xl relative">
       {/* Decorative Elements */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-[oklch(0.92_0.06_200/0.25)] rounded-full blur-2xl -translate-y-1/2 translate-x-1/4" />
       <div className="absolute bottom-0 left-0 w-24 h-24 bg-[oklch(0.90_0.08_250/0.2)] rounded-full blur-2xl translate-y-1/2 -translate-x-1/4" />
@@ -228,7 +228,7 @@ function CalculationResult({
                   ? "bg-gradient-to-r from-red-400 to-red-500"
                   : isLowBalance
                     ? "bg-gradient-to-r from-amber-400 to-amber-500"
-                    : "bg-gradient-to-r from-gray-600 to-gray-800"
+                    : "bg-gradient-to-r from-[oklch(0.55_0.18_250)] to-[oklch(0.48_0.20_270)]"
               }`}
             >
               {/* 글로우 효과 */}
@@ -477,7 +477,7 @@ export default function StatsSection({
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.5, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
       className="mb-6"
     >
       <CalculationResult

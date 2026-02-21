@@ -164,9 +164,9 @@ const ScratchLottery: React.FC = () => {
           animate={{ opacity: 1 }}
           className="flex flex-col items-center gap-4"
         >
-          <div className="w-[300px] h-[200px] bg-rose-50 rounded-2xl flex flex-col items-center justify-center gap-3">
+          <div className="w-[300px] h-[200px] bg-red-50 rounded-2xl flex flex-col items-center justify-center gap-3">
             <svg
-              className="w-10 h-10 text-rose-300"
+              className="w-10 h-10 text-red-300"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -178,7 +178,7 @@ const ScratchLottery: React.FC = () => {
                 d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
               />
             </svg>
-            <p className="text-sm text-rose-500 font-medium text-center px-4">
+            <p className="text-sm text-red-500 font-medium text-center px-4">
               {errorMessage}
             </p>
           </div>

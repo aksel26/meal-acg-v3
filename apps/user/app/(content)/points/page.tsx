@@ -130,7 +130,7 @@ function BudgetRow({
                 ? "bg-gradient-to-r from-red-400 to-red-500"
                 : isLow
                   ? "bg-gradient-to-r from-amber-400 to-amber-500"
-                  : "bg-gradient-to-r from-gray-600 to-gray-800"
+                  : "bg-gradient-to-r from-[oklch(0.55_0.18_250)] to-[oklch(0.48_0.20_270)]"
             }`}
           />
         </div>
@@ -546,7 +546,7 @@ export default function Points() {
         <div className="space-y-3">
           {/* Add New Point */}
           <button
-            className="w-full py-3 bg-white rounded-xl text-sm font-medium text-blue-600 flex items-center justify-center gap-2 active:bg-gray-50 transition-colors"
+            className="w-full py-3 bg-white rounded-xl text-sm font-medium text-blue-600 flex items-center justify-center gap-2 border border-dashed border-blue-200 hover:border-blue-300 hover:bg-blue-50/30 active:bg-blue-50 transition-colors"
             onClick={handleAddNewPoint}
           >
             <Plus className="w-4 h-4" />새 내역 추가
@@ -630,7 +630,7 @@ export default function Points() {
                           P&C 확인
                         </span>
                       ) : (
-                        <span className="text-[11px] text-gray-300">
+                        <span className="text-[11px] text-gray-400">
                           미확인
                         </span>
                       )}

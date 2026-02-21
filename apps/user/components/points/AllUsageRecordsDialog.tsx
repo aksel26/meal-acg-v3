@@ -18,7 +18,7 @@ import {
 import { Button } from "@repo/ui/src/button";
 import { ScrollArea } from "@repo/ui/src/scroll-area";
 import { AutoCompleteInput } from "@repo/ui/src/autocomplete-input";
-import { Check, Loader2 } from "@repo/ui/icons";
+import { Check, Loader2, X } from "@repo/ui/icons";
 import { motion } from "motion/react";
 import { useState, useMemo, useEffect } from "react";
 import dayjs from "dayjs";
@@ -196,7 +196,7 @@ export function AllUsageRecordsDialog({
                 onClick={handleMemberClear}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs"
               >
-                ✕
+                <X className="w-3 h-3" />
               </button>
             )}
           </div>
@@ -207,7 +207,7 @@ export function AllUsageRecordsDialog({
               onClick={() => setReviewStatus("all")}
               className={`h-9 px-3 text-xs rounded-xl transition-all whitespace-nowrap ${
                 reviewStatus === "all"
-                  ? "bg-gray-900 text-white"
+                  ? "bg-blue-600 text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
@@ -217,7 +217,7 @@ export function AllUsageRecordsDialog({
               onClick={() => setReviewStatus("0")}
               className={`h-9 px-3 text-xs rounded-xl transition-all whitespace-nowrap ${
                 reviewStatus === "0"
-                  ? "bg-gray-900 text-white"
+                  ? "bg-blue-600 text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
@@ -227,7 +227,7 @@ export function AllUsageRecordsDialog({
               onClick={() => setReviewStatus("3")}
               className={`h-9 px-3 text-xs rounded-xl transition-all whitespace-nowrap ${
                 reviewStatus === "3"
-                  ? "bg-gray-900 text-white"
+                  ? "bg-blue-600 text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >

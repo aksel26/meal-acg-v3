@@ -123,7 +123,7 @@ function NavItemComponent({
     <Link
       href={item.href}
       className={cn(
-        "group flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-colors",
+        "group flex items-center gap-2.5 rounded-xl px-4 py-3 text-sm transition-colors",
         isActive
           ? "bg-white font-semibold text-slate-900"
           : "font-medium text-slate-400 hover:bg-white/60 hover:text-slate-600",
@@ -155,7 +155,7 @@ function NavGroupComponent({
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors",
+          "flex w-full items-center gap-2.5 rounded-xl px-4 py-3 text-sm transition-colors",
           hasActiveItem
             ? "font-semibold text-slate-900"
             : "font-medium text-slate-400 hover:bg-white/60 hover:text-slate-600",
@@ -187,7 +187,7 @@ function NavGroupComponent({
               key={item.name}
               href={item.href}
               className={cn(
-                "flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors",
+                "flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm transition-colors",
                 isActive
                   ? "bg-white font-bold text-slate-900"
                   : "font-medium text-slate-400 hover:bg-white/60 hover:text-slate-600",
@@ -336,7 +336,7 @@ export default function Sidebar() {
 
         <button
           onClick={logout}
-          className="flex w-full items-center justify-start gap-2 rounded-lg border border-slate-200/50 px-3 py-2.5 text-xs font-medium text-slate-500 transition-colors hover:bg-white/60 hover:text-slate-700"
+          className="flex w-full items-center justify-start gap-2 rounded-lg border border-slate-200/50 px-4 py-3.5 text-xs font-medium text-slate-500 transition-colors hover:bg-white/60 hover:text-slate-700"
         >
           <LogOut className="h-4 w-4" />
           <span>로그아웃</span>

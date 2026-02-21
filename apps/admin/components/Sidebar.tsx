@@ -123,7 +123,7 @@ function NavItemComponent({
     <Link
       href={item.href}
       className={cn(
-        "group flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors",
+        "group flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-colors",
         isActive
           ? "bg-white font-semibold text-slate-900"
           : "font-medium text-slate-400 hover:bg-white/60 hover:text-slate-600",

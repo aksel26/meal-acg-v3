@@ -89,15 +89,26 @@ export const CalendarDayCell = React.memo(function CalendarDayCell({
       onClick={handleDayClick}
       className={`
         relative p-0.5 sm:p-1 rounded-xl transition-all duration-200
-        ${isSelected ? "bg-blue-50" : "hover:bg-gray-50 active:bg-gray-100"}
+        ${isSelected ? "" : "hover:bg-gray-50 active:bg-gray-100"}
         touch-manipulation
       `}
+      style={
+        isSelected
+          ? {
+              background:
+                "radial-gradient(circle, oklch(0.92 0.05 250) 10%, transparent 50%)",
+            }
+          : undefined
+      }
     >
+      {isToday && (
+        <span className="absolute top-1 left-2.5 w-1.5 h-1.5 rounded-full bg-[oklch(0.45_0.2_250)]" />
+      )}
       <div className="flex flex-col items-center gap-0.5 sm:gap-1 py-1 sm:py-1.5 min-h-[60px] sm:min-h-[72px]">
         <span
           className={`
             text-xs sm:text-sm font-semibold transition-all duration-200 leading-none
-            ${isToday ? "bg-gray-900 text-white px-1.5 py-0.5 rounded-md" : ""}
+            ${isToday ? "text-[oklch(0.45_0.2_250)] font-bold" : ""}
             ${isSelected && !isToday ? "text-blue-600" : ""}
             ${!isToday && !isSelected && (isSunday || isHoliday) ? "text-red-500" : ""}
             ${!isToday && !isSelected && isSaturday && !isHoliday ? "text-blue-500" : ""}

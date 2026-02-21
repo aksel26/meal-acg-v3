@@ -17,7 +17,8 @@ import { DRINKS } from "@/lib/const/const";
 const MonthlyDrink = () => {
   const [selectedDrink, setSelectedDrink] = useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
-  const [isAllHistoryDialogOpen, setIsAllHistoryDialogOpen] = useState<boolean>(false);
+  const [isAllHistoryDialogOpen, setIsAllHistoryDialogOpen] =
+    useState<boolean>(false);
 
   const { data, isLoading } = useMonthlyData();
   const { mutateAsync: assignDrink, isPending: isAssigning } = useAssignDrink();
@@ -25,7 +26,9 @@ const MonthlyDrink = () => {
   const drinkOptions = data?.drinkOptions || [];
   const pickupPersons = data?.pickupPersons || [];
 
-  const availableDrinks = drinkOptions.filter((option) => option.available).map((option) => option.name);
+  const availableDrinks = drinkOptions
+    .filter((option) => option.available)
+    .map((option) => option.name);
   const displayDrinks = availableDrinks.length > 0 ? availableDrinks : DRINKS;
 
   const [currentUserName, setCurrentUserName] = useState<string>("");
@@ -57,7 +60,9 @@ const MonthlyDrink = () => {
       setSelectedDrink("");
       // TanStack Query의 onSuccess에서 자동으로 데이터 무효화됨
     } catch (error) {
-      alert(`음료 선택 중 오류가 발생했습니다: ${error instanceof Error ? error.message : "알 수 없는 오류"}`);
+      alert(
+        `음료 선택 중 오류가 발생했습니다: ${error instanceof Error ? error.message : "알 수 없는 오류"}`,
+      );
     }
   };
 
@@ -81,7 +86,7 @@ const MonthlyDrink = () => {
       </header>
 
       {/* Status */}
-      <div className="px-5 mb-5">
+      <div className="mb-5">
         <div className="flex gap-3">
           <button
             onClick={() => setIsAllHistoryDialogOpen(true)}

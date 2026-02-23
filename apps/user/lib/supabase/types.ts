@@ -354,6 +354,35 @@ export type Database = {
           }
         ]
       }
+      lunch_group_excluded_members: {
+        Row: {
+          id: string
+          member_id: string
+          week_start_date: string
+          excluded_at: string | null
+        }
+        Insert: {
+          id?: string
+          member_id: string
+          week_start_date: string
+          excluded_at?: string | null
+        }
+        Update: {
+          id?: string
+          member_id?: string
+          week_start_date?: string
+          excluded_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lunch_group_excluded_members_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       lunch_groups: {
         Row: {
           id: string
@@ -908,6 +937,7 @@ export type LunchGroupMember = Tables<"lunch_group_members">
 export type LunchGroupMemberInsert = TablesInsert<"lunch_group_members">
 export type LunchFixedSchedule = Tables<"lunch_fixed_schedules">
 export type LunchGroupSettings = Tables<"lunch_group_settings">
+export type LunchGroupExcludedMember = Tables<"lunch_group_excluded_members">
 export type MonthlyDrinkSettings = Tables<"monthly_drink_settings">
 export type MonthlyDrinkApplication = Tables<"monthly_drink_applications">
 export type PushSubscription = Tables<"push_subscriptions">

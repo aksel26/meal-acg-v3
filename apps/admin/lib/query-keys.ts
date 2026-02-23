@@ -73,6 +73,8 @@ export const queryKeys = {
       ["lunchGroups", "week", weekStartDate] as const,
     settings: ["lunchGroups", "settings"] as const,
     fixedSchedules: ["lunchGroups", "fixedSchedules"] as const,
+    excludedMembers: (weekStartDate: string) =>
+      ["lunchGroups", "excludedMembers", weekStartDate] as const,
   },
 
   // Monthly Drinks

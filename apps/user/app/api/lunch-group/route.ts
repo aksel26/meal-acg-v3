@@ -89,7 +89,21 @@ export async function GET() {
       .map((s) => (s.members as { full_name: string })?.full_name)
       .filter(Boolean) || [];
 
-    // 4. 응답 데이터 구성
+    // 4. 제외 인원 조회 (주차별)
+    const { data: excludedRows, error: excludedError } = await supabase
+      .from("lunch_group_excluded_members")
+      .select("member_id, members(full_name)")
+      .eq("week_start_date", weekStartDate);
+
+    if (excludedError) {
+      console.error("Excluded members error:", excludedError);
+    }
+
+    const excludedMembers = (excludedRows || [])
+      .map((row) => (row.members as { full_name: string })?.full_name)
+      .filter(Boolean);
+
+    // 5. 응답 데이터 구성
     const groups = (lunchGroups || []).map((group) => {
       const members = group.lunch_group_members || [];
       const maxSlots = group.max_slots || membersPerGroup;
@@ -126,6 +140,7 @@ export async function GET() {
           groups,
           mondayMember: mondayMembers.join(", ") || "",
           fridayMember: fridayMembers.join(", ") || "",
+          excludedMembers,
         },
       },
       { status: 200 }

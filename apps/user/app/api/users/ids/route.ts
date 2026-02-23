@@ -12,10 +12,11 @@ export async function GET() {
       );
     }
 
-    // members 테이블에서 사용자 이름 조회
+    // member_current_status VIEW에서 정상 인원만 조회 (휴직/퇴사 등 제외)
     const { data: members, error } = await supabase
-      .from("members")
+      .from("member_current_status" as any)
       .select("full_name")
+      .is("current_status", null)
       .order("full_name", { ascending: true });
 
     if (error) {
@@ -27,7 +28,7 @@ export async function GET() {
     }
 
     // full_name 배열로 변환
-    const userNames = members
+    const userNames = (members as unknown as { full_name: string }[] | null)
       ?.map((member) => member.full_name)
       .filter((name): name is string => !!name) || [];
 

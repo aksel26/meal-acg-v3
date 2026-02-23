@@ -577,6 +577,7 @@ export default function LunchGroupsPage() {
   const handleRestoreMember = useCallback(
     (memberId: string) => {
       restoreMutation.mutate(memberId, {
+        onSuccess: () => toast.success("제외가 해제되었습니다."),
         onError: () => toast.error("복원 처리 중 오류가 발생했습니다."),
       });
     },

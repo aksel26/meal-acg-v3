@@ -488,7 +488,7 @@ function CalendarPageContent() {
   return (
     <div className="space-y-6">
       {/* User Selection with Search */}
-      <div className="flex items-center gap-4">
+      <div className="flex gap-1 flex-col">
         <Label>사용자 선택</Label>
         <SearchableDropdown<Member>
           items={members ?? []}
@@ -501,12 +501,13 @@ function CalendarPageContent() {
           searchPlaceholder="이름 또는 초성 검색..."
           emptyText="검색 결과가 없습니다"
           allowClear
+          className="h-10 w-44"
         />
       </div>
 
       {/* Calendar */}
-      <Card className="glass-panel border-0 shadow-none">
-        <CardHeader>
+      <Card className="border-0 shadow-none">
+        <CardHeader className="p-0">
           <div className="flex items-center justify-between">
             <CardTitle>{currentDate.format("YYYY년 M월")}</CardTitle>
             <div className="flex items-center gap-2">
@@ -519,10 +520,20 @@ function CalendarPageContent() {
                 <ListPlus className="h-4 w-4" />
                 일괄 입력
               </Button>
-              <Button variant="outline" size="icon" className="h-9 w-9" onClick={handlePrevMonth}>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9"
+                onClick={handlePrevMonth}
+              >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="icon" className="h-9 w-9" onClick={handleNextMonth}>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9"
+                onClick={handleNextMonth}
+              >
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -531,7 +542,7 @@ function CalendarPageContent() {
             날짜를 클릭하여 식대 정보를 입력하세요
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {/* Day headers */}
           <div className="grid grid-cols-7 gap-1 mb-2">
             {["일", "월", "화", "수", "목", "금", "토"].map((day, i) => (
@@ -567,19 +578,58 @@ function CalendarPageContent() {
                 attendance: string | null | undefined,
               ) => {
                 if (!attendance)
-                  return { Icon: Briefcase, bg: "bg-gray-100", text: "text-gray-500", label: "" };
+                  return {
+                    Icon: Briefcase,
+                    bg: "bg-gray-100",
+                    text: "text-gray-500",
+                    label: "",
+                  };
                 const lower = attendance.toLowerCase();
                 if (lower.includes("개별"))
-                  return { Icon: UtensilsCrossed, bg: "bg-slate-100", text: "text-slate-500", label: "개별" };
+                  return {
+                    Icon: UtensilsCrossed,
+                    bg: "bg-slate-100",
+                    text: "text-slate-500",
+                    label: "개별",
+                  };
                 if (lower.includes("출근") || lower.includes("근무"))
-                  return { Icon: Briefcase, bg: "bg-blue-50", text: "text-blue-600", label: "출근" };
+                  return {
+                    Icon: Briefcase,
+                    bg: "bg-blue-50",
+                    text: "text-blue-600",
+                    label: "출근",
+                  };
                 if (lower.includes("재택") || lower.includes("홈"))
-                  return { Icon: Home, bg: "bg-amber-50", text: "text-amber-600", label: "재택" };
-                if (lower.includes("휴가") || lower.includes("연차") || lower === "휴무")
-                  return { Icon: Sun, bg: "bg-sky-50", text: "text-sky-600", label: "휴가" };
+                  return {
+                    Icon: Home,
+                    bg: "bg-amber-50",
+                    text: "text-amber-600",
+                    label: "재택",
+                  };
+                if (
+                  lower.includes("휴가") ||
+                  lower.includes("연차") ||
+                  lower === "휴무"
+                )
+                  return {
+                    Icon: Sun,
+                    bg: "bg-sky-50",
+                    text: "text-sky-600",
+                    label: "휴가",
+                  };
                 if (lower.includes("반차"))
-                  return { Icon: Clock, bg: "bg-violet-50", text: "text-violet-600", label: lower.includes("오전") ? "오전" : "오후" };
-                return { Icon: Briefcase, bg: "bg-gray-100", text: "text-gray-500", label: "" };
+                  return {
+                    Icon: Clock,
+                    bg: "bg-violet-50",
+                    text: "text-violet-600",
+                    label: lower.includes("오전") ? "오전" : "오후",
+                  };
+                return {
+                  Icon: Briefcase,
+                  bg: "bg-gray-100",
+                  text: "text-gray-500",
+                  label: "",
+                };
               };
 
               const attInfo = mealLog?.attendance
@@ -590,7 +640,6 @@ function CalendarPageContent() {
               const formatAmount = (amount: number) => {
                 return amount.toLocaleString();
               };
-
 
               const isToday = dateStr === dayjs().format("YYYY-MM-DD");
 
@@ -653,35 +702,59 @@ function CalendarPageContent() {
                       isNonWorkAttendance ? (
                         <div className="flex h-full items-center justify-center">
                           {attInfo && (
-                            <span className={`inline-flex items-center gap-1 rounded-md px-2 py-1 ${attInfo.bg} ${attInfo.text}`}>
+                            <span
+                              className={`inline-flex items-center gap-1 rounded-md px-2 py-1 ${attInfo.bg} ${attInfo.text}`}
+                            >
                               <attInfo.Icon className="h-4 w-4" />
-                              <span className="text-xs font-semibold">{attInfo.label}</span>
+                              <span className="text-xs font-semibold">
+                                {attInfo.label}
+                              </span>
                             </span>
                           )}
                         </div>
                       ) : (
                         <>
                           {attInfo && attInfo.label !== "출근" && (
-                            <div className={`flex items-center justify-between rounded px-2 py-1 ${attInfo.bg}`}>
-                              <span className={`text-sm font-semibold ${attInfo.text}`}>{attInfo.label}</span>
+                            <div
+                              className={`flex items-center justify-between rounded px-2 py-1 ${attInfo.bg}`}
+                            >
+                              <span
+                                className={`text-sm font-semibold ${attInfo.text}`}
+                              >
+                                {attInfo.label}
+                              </span>
                             </div>
                           )}
-                          {mealLog.breakfast_amount && mealLog.breakfast_amount > 0 ? (
+                          {mealLog.breakfast_amount &&
+                          mealLog.breakfast_amount > 0 ? (
                             <div className="flex items-center justify-between rounded bg-orange-50 px-2 py-1">
-                              <span className="text-sm font-bold tabular-nums text-orange-700">{formatAmount(mealLog.breakfast_amount)}</span>
-                              <span className="text-xs font-semibold text-orange-500">조식</span>
+                              <span className="text-sm font-bold tabular-nums text-orange-700">
+                                {formatAmount(mealLog.breakfast_amount)}
+                              </span>
+                              <span className="text-xs font-semibold text-orange-500">
+                                조식
+                              </span>
                             </div>
                           ) : null}
                           {mealLog.lunch_amount && mealLog.lunch_amount > 0 ? (
                             <div className="flex items-center justify-between rounded bg-emerald-50 px-2 py-1">
-                              <span className="text-sm font-bold tabular-nums text-emerald-700">{formatAmount(mealLog.lunch_amount)}</span>
-                              <span className="text-xs font-semibold text-emerald-500">중식</span>
+                              <span className="text-sm font-bold tabular-nums text-emerald-700">
+                                {formatAmount(mealLog.lunch_amount)}
+                              </span>
+                              <span className="text-xs font-semibold text-emerald-500">
+                                중식
+                              </span>
                             </div>
                           ) : null}
-                          {mealLog.dinner_amount && mealLog.dinner_amount > 0 ? (
+                          {mealLog.dinner_amount &&
+                          mealLog.dinner_amount > 0 ? (
                             <div className="flex items-center justify-between rounded bg-indigo-50 px-2 py-1">
-                              <span className="text-sm font-bold tabular-nums text-indigo-700">{formatAmount(mealLog.dinner_amount)}</span>
-                              <span className="text-xs font-semibold text-indigo-500">석식</span>
+                              <span className="text-sm font-bold tabular-nums text-indigo-700">
+                                {formatAmount(mealLog.dinner_amount)}
+                              </span>
+                              <span className="text-xs font-semibold text-indigo-500">
+                                석식
+                              </span>
                             </div>
                           ) : null}
                         </>

@@ -442,7 +442,7 @@ function UsersPageContent() {
   return (
     <div className="flex h-[calc(100vh-10rem)] flex-col gap-6">
       {/* Quick Stats */}
-      <div className="flex items-center gap-6 rounded-lg bg-white px-6 py-3">
+      <div className="flex items-center gap-5 rounded-xl border border-slate-200 bg-white px-5 py-3">
         <div className="flex items-baseline gap-1.5">
           <span className="text-sm text-slate-500">총 인원</span>
           <span className="text-lg font-semibold tabular-nums text-slate-900">
@@ -567,6 +567,7 @@ function UsersPageContent() {
             searchPlaceholder="이름 또는 초성 검색..."
             emptyText="검색 결과가 없습니다"
             allowClear
+            className="h-10"
           />
         </div>
 
@@ -592,7 +593,7 @@ function UsersPageContent() {
       </div>
 
       {/* Users Table */}
-      <div className="glass-panel min-h-0 flex-1 overflow-hidden rounded-xl">
+      <div className="min-h-0 flex-1 overflow-hidden rounded-xl bg-white">
         <div
           ref={tableContainerRef}
           onScroll={handleScroll}

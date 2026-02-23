@@ -30,7 +30,7 @@ import { ReceiptScanResult } from "@/lib/types/receipt-types";
 import { useUsers } from "@/hooks/useUsers";
 import { useUserStore } from "@/stores/userStore";
 import { toast } from "@repo/ui/src/sonner";
-import { X, ChevronLeft, Check, Pencil } from "lucide-react";
+import { X, ChevronLeft, Check, Pencil } from "@repo/ui/icons";
 
 // --- Types ---
 

@@ -198,6 +198,11 @@ export default function MemberStatusPage() {
       });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.budgetAllocations.all,
+      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.budgetSummary.all });
+      queryClient.invalidateQueries({ queryKey: ["organizations", "tree"] });
       toast.success("멤버가 삭제되었습니다.");
     },
     onError: () => {
@@ -259,6 +264,11 @@ export default function MemberStatusPage() {
       });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.budgetAllocations.all,
+      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.budgetSummary.all });
+      queryClient.invalidateQueries({ queryKey: ["organizations", "tree"] });
       toast.success("인원이 추가되었습니다.");
       setIsAddMemberOpen(false);
       resetAddForm();
@@ -566,7 +576,7 @@ export default function MemberStatusPage() {
   return (
     <div className="flex h-[calc(100vh-10rem)] flex-col gap-6">
       {/* Filter Bar + Stats */}
-      <div className="relative z-20 flex flex-wrap items-center gap-x-6 gap-y-3 rounded-lg bg-white px-5 py-3">
+      <div className="relative z-20 flex flex-wrap items-center gap-x-6 gap-y-3 py-3">
         <SearchableDropdown
           items={allMembers ?? []}
           value={allMembers?.find((m) => m.full_name === searchInput)?.id ?? ""}
@@ -578,7 +588,7 @@ export default function MemberStatusPage() {
           searchPlaceholder="이름 검색 (초성 가능)"
           emptyText="검색 결과가 없습니다"
           allowClear
-          className="w-44"
+          className="w-44 h-10"
         />
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="h-10 w-32 text-sm">
@@ -598,7 +608,7 @@ export default function MemberStatusPage() {
         <Button
           onClick={() => setIsAddMemberOpen(true)}
           size="sm"
-          className="gap-1.5"
+          className="gap-1.5 h-10"
         >
           <Plus className="h-4 w-4" />
           인원 추가
@@ -634,7 +644,7 @@ export default function MemberStatusPage() {
       </div>
 
       {/* Main Table */}
-      <div className="glass-panel min-h-0 flex-1 overflow-hidden rounded-xl">
+      <div className="min-h-0 flex-1 overflow-hidden rounded-xl bg-white">
         {isLoading ? (
           <div>
             {Array.from({ length: 8 }).map((_, i) => (
@@ -760,7 +770,9 @@ export default function MemberStatusPage() {
                             관리자
                           </Badge>
                         ) : (
-                          <span className="text-[11px] text-slate-400">일반</span>
+                          <span className="text-[11px] text-slate-400">
+                            일반
+                          </span>
                         )}
                       </TableCell>
                       <TableCell className="text-sm text-slate-500">

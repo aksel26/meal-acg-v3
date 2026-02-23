@@ -1,5 +1,4 @@
 "use client";
-import { BottomNavigation } from "@/components/BottomNavigation";
 const ScratchLottery = dynamic(
   () => import("@/components/lunch/ScratchLottery"),
   { ssr: false },
@@ -28,12 +27,12 @@ const WeeklySchedule = dynamic(
     loading: () => (
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-gray-50 rounded-xl p-3">
-          <div className="w-12 h-3 bg-gray-200 rounded animate-pulse mb-2"></div>
-          <div className="w-16 h-3 bg-gray-100 rounded animate-pulse"></div>
+          <div className="w-12 h-3 skeleton rounded mb-2"></div>
+          <div className="w-16 h-3 skeleton rounded"></div>
         </div>
         <div className="bg-gray-50 rounded-xl p-3">
-          <div className="w-12 h-3 bg-gray-200 rounded animate-pulse mb-2"></div>
-          <div className="w-16 h-3 bg-gray-100 rounded animate-pulse"></div>
+          <div className="w-12 h-3 skeleton rounded mb-2"></div>
+          <div className="w-16 h-3 skeleton rounded"></div>
         </div>
       </div>
     ),
@@ -103,7 +102,7 @@ const Lunch = () => {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        className="bg-white rounded-2xl border border-gray-100 mb-4 overflow-hidden"
+        className="card-premium rounded-2xl mb-4 overflow-hidden"
       >
         {/* 상단 헤더 */}
         <div className="px-5 py-4 border-b border-gray-50">
@@ -242,7 +241,7 @@ const Lunch = () => {
             {Array.from({ length: 4 }, (_, index) => (
               <div
                 key={index}
-                className="bg-white rounded-2xl border border-gray-100 p-4"
+                className="card-premium rounded-2xl p-4"
               >
                 <div className="flex items-center gap-3 mb-3">
                   <div className="skeleton h-6 w-12 rounded-lg" />
@@ -263,7 +262,7 @@ const Lunch = () => {
             ))}
           </div>
         ) : error ? (
-          <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
+          <div className="card-premium rounded-2xl p-8 text-center">
             <p className="text-sm text-red-500 mb-1">
               데이터를 불러오는데 실패했습니다
             </p>
@@ -278,8 +277,6 @@ const Lunch = () => {
           />
         )}
       </motion.div>
-
-      <BottomNavigation />
 
       {/* 점심조 뽑기 다이얼로그 */}
       <Dialog open={isLotteryOpen} onOpenChange={setIsLotteryOpen}>

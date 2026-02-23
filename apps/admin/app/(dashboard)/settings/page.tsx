@@ -197,7 +197,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-8">
       {/* 일일 식대 단가 설정 */}
-      <section className="glass-panel rounded-xl p-6">
+      <section className="glass-panel rounded-xl border border-slate-200 p-6">
         <div className="mb-5 border-b border-slate-100 pb-4">
           <h2 className="text-lg font-bold text-slate-900">일일 식대 단가</h2>
           <p className="mt-1 text-sm text-slate-500">
@@ -254,7 +254,7 @@ export default function SettingsPage() {
       {/* 월별 지원금 계산 & 연간 현황 */}
       <div className="grid grid-cols-12 gap-6">
         {/* 월별 지원금 계산 */}
-        <section className="col-span-6 glass-panel rounded-xl p-6">
+        <section className="col-span-6 glass-panel rounded-xl border border-slate-200 p-6">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
             <div>
               <h2 className="text-lg font-bold text-slate-900">
@@ -454,7 +454,7 @@ export default function SettingsPage() {
         </section>
 
         {/* 연간 현황 */}
-        <section className="col-span-6 glass-panel rounded-xl p-6">
+        <section className="col-span-6 glass-panel rounded-xl border border-slate-200 p-6">
           <div className="mb-5 border-b border-slate-100 pb-4">
             <h2 className="text-lg font-bold text-slate-900">
               {currentYear}년 현황

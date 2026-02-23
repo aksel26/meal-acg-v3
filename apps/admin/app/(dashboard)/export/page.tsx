@@ -82,7 +82,7 @@ export default function ExportPage() {
         {/* 왼쪽: 설정 및 내보내기 정보 */}
         <div className="col-span-5 space-y-4">
           {/* 기간 선택 */}
-          <Card className="glass-panel border-0">
+          <Card className="glass-panel border border-slate-200 shadow-none">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">기준 기간</CardTitle>
             </CardHeader>
@@ -121,7 +121,7 @@ export default function ExportPage() {
           </Card>
 
           {/* 내보내기 정보 */}
-          <Card className="glass-panel border-0">
+          <Card className="glass-panel border border-slate-200 shadow-none">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">내보내기 정보</CardTitle>
             </CardHeader>
@@ -181,7 +181,7 @@ export default function ExportPage() {
 
         {/* 오른쪽: 멤버 선택 */}
         <div className="col-span-7">
-          <Card className="glass-panel border-0 h-full">
+          <Card className="glass-panel border border-slate-200 shadow-none h-full">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div>

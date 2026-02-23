@@ -63,7 +63,14 @@ html {
 }
 
 body {
-  background: var(--color-background-light);
+  background: linear-gradient(
+    135deg,
+    #e8ecf3 0%,
+    #ececf1 30%,
+    #e9f1ec 60%,
+    #e8ecf3 100%
+  );
+  background-attachment: fixed;
   min-height: 100vh;
   color: var(--color-slate-800);
   -webkit-font-smoothing: antialiased;
@@ -94,18 +101,21 @@ body {
   background: #ffffff;
 }
 
+/* Card shadow 전역 제거 */
+.bg-card {
+  box-shadow: none;
+}
+
 /* BentoAdmin Glass Panel */
 .glass-panel {
   background: #ffffff;
-  box-shadow: none;
+  border-radius: 12px;
+  border: 1px solid #f0f0f0;
 }
 
 /* BentoAdmin Glass Sidebar */
 .glass-sidebar {
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-right: 1px solid rgba(255, 255, 255, 0.6);
+  background: transparent;
 }
 
 .gradient-text {
@@ -155,27 +165,11 @@ body {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.nav-item::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 0;
-  background: var(--color-primary-bento);
-  border-radius: 0 2px 2px 0;
-  transition: height 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.nav-item.active::before,
-.nav-item:hover::before {
-  height: 60%;
-}
-
 .nav-item.active {
-  background: rgba(19, 91, 236, 0.1);
-  color: var(--color-primary-bento);
+  background: #ffffff;
+  color: var(--color-slate-900);
+  border-radius: 8px;
+  font-weight: 700;
 }
 
 /* Badge animations */
@@ -199,7 +193,7 @@ body {
 }
 
 .table-row-interactive:hover {
-  background: rgba(255, 255, 255, 0.4);
+  background: #f8fafc;
 }
 
 /* Button hover glow */

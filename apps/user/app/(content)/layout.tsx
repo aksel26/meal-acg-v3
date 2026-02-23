@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Header from "../components/Header";
+import { BottomNavigation } from "@/components/BottomNavigation";
 import { motion, AnimatePresence } from "motion/react";
 import { usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -75,6 +76,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           </motion.div>
         </AnimatePresence>
       </main>
+      <BottomNavigation />
     </div>
     <PushNotificationPrompt />
     </>

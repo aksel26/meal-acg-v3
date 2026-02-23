@@ -5,22 +5,42 @@ import { cn } from "../lib/utils";
 import { Search, X, Check, ChevronDown } from "lucide-react";
 
 // 한글 초성 배열
-const CHOSUNG = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+const CHOSUNG = [
+  "ㄱ",
+  "ㄲ",
+  "ㄴ",
+  "ㄷ",
+  "ㄸ",
+  "ㄹ",
+  "ㅁ",
+  "ㅂ",
+  "ㅃ",
+  "ㅅ",
+  "ㅆ",
+  "ㅇ",
+  "ㅈ",
+  "ㅉ",
+  "ㅊ",
+  "ㅋ",
+  "ㅌ",
+  "ㅍ",
+  "ㅎ",
+];
 
 // 문자열에서 초성 추출
 function getChosung(str: string): string {
   return str
-    .split('')
+    .split("")
     .map((char) => {
       const code = char.charCodeAt(0);
       // 한글 음절 범위 (가 ~ 힣)
-      if (code >= 0xAC00 && code <= 0xD7A3) {
-        const chosungIndex = Math.floor((code - 0xAC00) / 588);
+      if (code >= 0xac00 && code <= 0xd7a3) {
+        const chosungIndex = Math.floor((code - 0xac00) / 588);
         return CHOSUNG[chosungIndex];
       }
       return char;
     })
-    .join('');
+    .join("");
 }
 
 // 초성 검색 매칭 확인
@@ -34,7 +54,7 @@ function matchesChosung(text: string, query: string): boolean {
   if (lowerText.includes(lowerQuery)) return true;
 
   // 초성 매칭: 검색어가 초성으로만 구성된 경우
-  const isChosungOnly = query.split('').every((char) => CHOSUNG.includes(char));
+  const isChosungOnly = query.split("").every((char) => CHOSUNG.includes(char));
   if (isChosungOnly) {
     const textChosung = getChosung(text);
     return textChosung.includes(query);
@@ -169,7 +189,7 @@ function SearchableDropdown<T>({
       case "ArrowDown":
         e.preventDefault();
         setHighlightedIndex((prev) =>
-          Math.min(prev + 1, filteredItems.length - 1)
+          Math.min(prev + 1, filteredItems.length - 1),
         );
         break;
       case "ArrowUp":
@@ -200,7 +220,7 @@ function SearchableDropdown<T>({
     <div
       className={cn(
         "flex items-center justify-between px-3 py-2.5 cursor-pointer transition-colors",
-        isHighlighted ? "bg-blue-50" : "hover:bg-slate-50"
+        isHighlighted ? "bg-blue-50" : "hover:bg-slate-50",
       )}
     >
       <span className="text-sm">{getItemLabel(item)}</span>
@@ -244,7 +264,7 @@ function SearchableDropdown<T>({
           <span
             className={cn(
               "flex-1 text-sm truncate",
-              selectedItem ? "text-slate-900" : "text-slate-400"
+              selectedItem ? "text-slate-900" : "text-slate-400",
             )}
           >
             {selectedItem ? getItemLabel(selectedItem) : placeholder}
@@ -253,7 +273,7 @@ function SearchableDropdown<T>({
         {allowClear && selectedItem && !isOpen ? (
           <button
             onClick={handleClear}
-            className="p-1 hover:bg-slate-100 rounded"
+            className="p-1  hover:bg-slate-100 rounded"
             aria-label="Clear selection"
           >
             <X className="w-3.5 h-3.5 text-slate-400" />
@@ -262,7 +282,7 @@ function SearchableDropdown<T>({
           <ChevronDown
             className={cn(
               "w-4 h-4 text-slate-400 transition-transform",
-              isOpen && "rotate-180"
+              isOpen && "rotate-180",
             )}
           />
         )}

@@ -1,5 +1,4 @@
 "use client";
-import { BottomNavigation } from "@/components/BottomNavigation";
 import { Button } from "@repo/ui/src/button";
 import { useEffect, useState } from "react";
 import { useMonthlyData } from "@/hooks/useMonthlyData";
@@ -13,11 +12,13 @@ import {
 } from "@repo/ui/src/dialog";
 import { AllHistoryDialog } from "@/components/monthly/AllHistoryDialog";
 import { DRINKS } from "@/lib/const/const";
+import { motion } from "motion/react";
 
 const MonthlyDrink = () => {
   const [selectedDrink, setSelectedDrink] = useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
-  const [isAllHistoryDialogOpen, setIsAllHistoryDialogOpen] = useState<boolean>(false);
+  const [isAllHistoryDialogOpen, setIsAllHistoryDialogOpen] =
+    useState<boolean>(false);
 
   const { data, isLoading } = useMonthlyData();
   const { mutateAsync: assignDrink, isPending: isAssigning } = useAssignDrink();
@@ -25,7 +26,9 @@ const MonthlyDrink = () => {
   const drinkOptions = data?.drinkOptions || [];
   const pickupPersons = data?.pickupPersons || [];
 
-  const availableDrinks = drinkOptions.filter((option) => option.available).map((option) => option.name);
+  const availableDrinks = drinkOptions
+    .filter((option) => option.available)
+    .map((option) => option.name);
   const displayDrinks = availableDrinks.length > 0 ? availableDrinks : DRINKS;
 
   const [currentUserName, setCurrentUserName] = useState<string>("");
@@ -57,7 +60,9 @@ const MonthlyDrink = () => {
       setSelectedDrink("");
       // TanStack Query의 onSuccess에서 자동으로 데이터 무효화됨
     } catch (error) {
-      alert(`음료 선택 중 오류가 발생했습니다: ${error instanceof Error ? error.message : "알 수 없는 오류"}`);
+      alert(
+        `음료 선택 중 오류가 발생했습니다: ${error instanceof Error ? error.message : "알 수 없는 오류"}`,
+      );
     }
   };
 
@@ -67,14 +72,14 @@ const MonthlyDrink = () => {
   const totalCount = data?.totalMembers || 0;
 
   return (
-    <div className=" bg-white rounded-xl pb-12">
+    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }} className="card-premium rounded-2xl pb-12">
       {/* Header */}
       <header className="px-5 pt-10 pb-5">
         <div>
-          <p className="text-gray-400 text-xs font-medium tracking-wide">
+          <p className="text-[11px] text-gray-400 font-medium uppercase tracking-widest">
             Monthly Coffee
           </p>
-          <h1 className="text-xl font-bold text-gray-900 mt-0.5">
+          <h1 className="text-xl font-bold text-gray-900 mt-0.5 tracking-tight">
             이번 달 음료
           </h1>
         </div>
@@ -85,7 +90,7 @@ const MonthlyDrink = () => {
         <div className="flex gap-3">
           <button
             onClick={() => setIsAllHistoryDialogOpen(true)}
-            className="flex-1 bg-gray-50 rounded-xl p-4 text-left transition-colors hover:bg-gray-100 active:bg-gray-100"
+            className="flex-1 card-premium rounded-2xl p-4 text-left transition-colors active:scale-[0.98]"
           >
             <div className="flex items-center justify-between">
               <p className="text-[11px] text-gray-400 font-medium">신청현황</p>
@@ -93,7 +98,7 @@ const MonthlyDrink = () => {
             </div>
             <p className="text-xl font-bold text-gray-900 mt-1">
               {isLoading ? (
-                <span className="inline-block w-10 h-6 bg-gray-200 rounded animate-pulse" />
+                <span className="skeleton inline-block w-10 h-6" />
               ) : (
                 <>
                   {completedCount}
@@ -104,11 +109,11 @@ const MonthlyDrink = () => {
               )}
             </p>
           </button>
-          <div className="flex-1 bg-gray-50 rounded-xl p-4">
+          <div className="flex-1 card-premium rounded-2xl p-4">
             <p className="text-[11px] text-gray-400 font-medium">픽업담당</p>
             <p className="text-sm font-semibold text-gray-900 mt-1.5 truncate">
               {isLoading ? (
-                <span className="inline-block w-14 h-5 bg-gray-200 rounded animate-pulse" />
+                <span className="skeleton inline-block w-14 h-5" />
               ) : pickupPersons.length > 0 ? (
                 pickupPersons.map((p) => p.name).join(", ")
               ) : (
@@ -123,20 +128,20 @@ const MonthlyDrink = () => {
       {currentUserName && (
         <div className="px-5 mb-5">
           {isLoading ? (
-            <div className="bg-gray-50 rounded-xl p-4">
-              <div className="h-4 w-16 bg-gray-200 rounded animate-pulse mb-2" />
-              <div className="h-5 w-32 bg-gray-200 rounded animate-pulse" />
+            <div className="card-premium rounded-2xl p-4">
+              <div className="skeleton h-4 w-16 mb-2" />
+              <div className="skeleton h-5 w-32" />
             </div>
           ) : myDrink ? (
-            <div className="bg-gray-900 rounded-xl p-4">
+            <div className="rounded-2xl p-4 bg-gradient-to-br from-[oklch(0.55_0.2_250)] to-[oklch(0.48_0.22_270)]">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-500 text-[11px] font-medium">
+                  <p className="text-white/60 text-[11px] font-medium">
                     내 선택
                   </p>
                   <p className="text-white font-semibold mt-0.5">{myDrink}</p>
                 </div>
-                <div className="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
+                <div className="w-6 h-6 bg-white/25 rounded-full flex items-center justify-center">
                   <svg
                     className="w-3.5 h-3.5 text-white"
                     fill="currentColor"
@@ -152,8 +157,8 @@ const MonthlyDrink = () => {
               </div>
             </div>
           ) : (
-            <div className="border border-dashed border-gray-200 rounded-xl p-4">
-              <p className="text-gray-400 text-[11px] font-medium">내 선택</p>
+            <div className="border border-dashed border-[oklch(0.78_0.1_250)] rounded-2xl p-4 bg-[oklch(0.97_0.01_250)]">
+              <p className="text-[oklch(0.55_0.2_250)] text-[11px] font-medium">내 선택</p>
               <p className="text-gray-400 text-sm mt-0.5">
                 아래에서 음료를 선택해주세요
               </p>
@@ -164,13 +169,13 @@ const MonthlyDrink = () => {
 
       {/* Drink Options */}
       <div className="px-5">
-        <p className="text-[11px] text-gray-400 font-medium mb-2">음료 선택</p>
+        <p className="text-[11px] text-gray-400 font-medium mb-3 mt-1">음료 선택</p>
         <div className="space-y-3">
           {isLoading
             ? Array.from({ length: 6 }).map((_, index) => (
                 <div
                   key={index}
-                  className="h-12 bg-gray-50 rounded-xl animate-pulse"
+                  className="skeleton h-12 rounded-xl"
                 />
               ))
             : displayDrinks.map((drink) => {
@@ -186,16 +191,16 @@ const MonthlyDrink = () => {
                     }}
                     className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
                       isMyDrink
-                        ? "bg-gray-900 text-white"
+                        ? "bg-gradient-to-r from-[oklch(0.55_0.2_250)] to-[oklch(0.48_0.22_270)] text-white shadow-sm"
                         : isNoSelection
                           ? "bg-gray-100 text-gray-400"
-                          : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                          : "bg-white/80 text-gray-700 hover:bg-white border border-white/60"
                     }`}
                   >
                     <span className="text-sm font-medium">{drink}</span>
                     {isMyDrink && (
                       <svg
-                        className="w-4 h-4 text-emerald-400"
+                        className="w-4 h-4 text-white"
                         fill="currentColor"
                         viewBox="0 0 20 20"
                       >
@@ -211,9 +216,6 @@ const MonthlyDrink = () => {
               })}
         </div>
       </div>
-
-      {/* Bottom Navigation */}
-      <BottomNavigation />
 
       {/* Confirm Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -240,7 +242,7 @@ const MonthlyDrink = () => {
             <Button
               onClick={handleDrinkAssign}
               disabled={isAssigning}
-              className="flex-1 h-11 bg-gray-900 hover:bg-gray-800 text-white font-semibold rounded-xl disabled:opacity-50"
+              className="flex-1 h-11 bg-gradient-to-r from-[oklch(0.55_0.2_250)] to-[oklch(0.48_0.22_270)] hover:from-[oklch(0.58_0.2_250)] hover:to-[oklch(0.52_0.22_270)] text-white font-semibold rounded-xl disabled:opacity-50"
             >
               {isAssigning ? "저장 중..." : "확인"}
             </Button>
@@ -252,7 +254,7 @@ const MonthlyDrink = () => {
         isOpen={isAllHistoryDialogOpen}
         onClose={() => setIsAllHistoryDialogOpen(false)}
       />
-    </div>
+    </motion.div>
   );
 };
 

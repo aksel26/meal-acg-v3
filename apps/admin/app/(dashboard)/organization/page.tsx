@@ -773,7 +773,7 @@ export default function OrganizationPage() {
               </div>
 
               {/* Unassigned Members */}
-              <div className="glass-panel flex flex-col overflow-hidden rounded-xl border-orange-200/50">
+              <div className="glass-panel flex flex-col overflow-hidden rounded-xl">
                 <div className="flex items-center justify-between border-b border-orange-100 px-5 py-4">
                   <div className="flex items-center gap-2.5">
                     <UserX className="h-4.5 w-4.5 text-orange-500" />

@@ -128,7 +128,7 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
   // 빈 데이터 처리
   if (processedTeams.length === 0) {
     return (
-      <div className="bg-white rounded-2xl p-8 text-center">
+      <div className="card-premium rounded-2xl p-8 text-center">
         <p className="text-sm text-gray-500 mb-1">등록된 점심조가 없습니다.</p>
         <p className="text-xs text-gray-400">관리자에게 문의해주세요.</p>
       </div>
@@ -147,9 +147,9 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
-            className={`bg-white rounded-2xl overflow-hidden transition-all duration-200 ${
+            className={`card-premium rounded-2xl overflow-hidden transition-all duration-200 ${
               isMyTeamHighlight
-                ? "bg-gray-50"
+                ? "ring-1 ring-[oklch(0.68_0.15_250)/0.4]"
                 : ""
             } ${onTeamClick ? "cursor-pointer" : ""}`}
             onClick={() =>
@@ -160,12 +160,12 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
             }
           >
             {/* 헤더 */}
-            <div className={`px-4 py-3 ${isMyTeamHighlight ? "bg-gray-100/50" : ""}`}>
+            <div className={`px-4 py-3`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
                     isMyTeamHighlight
-                      ? "bg-gray-800 text-white"
+                      ? "bg-[oklch(0.45_0.18_250)] text-white"
                       : "bg-gray-100 text-gray-700"
                   }`}>
                     {team.name}
@@ -213,14 +213,14 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
                       key={`${member}-${memberIndex}`}
                       className={`flex items-center gap-2 p-2 rounded-lg ${
                         isMe
-                          ? "bg-gray-100"
+                          ? "bg-[oklch(0.94_0.05_250)]"
                           : "bg-gray-50"
                       }`}
                     >
                       <div
                         className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
                           isMe
-                            ? "bg-gray-700 text-white"
+                            ? "bg-[oklch(0.55_0.2_250)] text-white"
                             : "bg-gray-200 text-gray-600"
                         }`}
                       >

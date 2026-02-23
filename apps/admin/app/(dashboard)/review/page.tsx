@@ -226,7 +226,7 @@ function formatFieldValue(key: string, value: unknown): string {
 
 function getFieldChanges(
   previous: Record<string, unknown> | null,
-  current: Record<string, unknown> | null
+  current: Record<string, unknown> | null,
 ): FieldChange[] {
   if (!current) return [];
 
@@ -305,10 +305,14 @@ function ReviewStepIndicator({
 
   const tooltipParts: string[] = [];
   if (record.first_reviewed_at) {
-    tooltipParts.push(`1차: ${record.first_reviewer?.full_name || "-"} (${formatShortDate(record.first_reviewed_at)})`);
+    tooltipParts.push(
+      `1차: ${record.first_reviewer?.full_name || "-"} (${formatShortDate(record.first_reviewed_at)})`,
+    );
   }
   if (status === 2 && record.reviewed_at) {
-    tooltipParts.push(`최종: ${record.second_reviewer?.full_name || "-"} (${formatShortDate(record.reviewed_at)})`);
+    tooltipParts.push(
+      `최종: ${record.second_reviewer?.full_name || "-"} (${formatShortDate(record.reviewed_at)})`,
+    );
   }
 
   const tooltip =
@@ -329,7 +333,7 @@ function ReviewStepIndicator({
             ? "border-slate-300 bg-white hover:border-slate-400"
             : status === 1
               ? "border-blue-400 bg-blue-50 hover:border-blue-500"
-              : "border-emerald-500 bg-emerald-500 hover:border-emerald-600 hover:bg-emerald-600"
+              : "border-emerald-500 bg-emerald-500 hover:border-emerald-600 hover:bg-emerald-600",
         )}
         title={tooltip}
       >
@@ -360,11 +364,7 @@ function ReviewStepIndicator({
 
       {status > 0 && (
         <span className="text-[10px] tabular-nums text-slate-400">
-          {status === 1
-            ? "1차"
-            : lastDate
-              ? formatShortDate(lastDate)
-              : "완료"}
+          {status === 1 ? "1차" : lastDate ? formatShortDate(lastDate) : "완료"}
         </span>
       )}
 
@@ -416,9 +416,7 @@ function FieldChangeDisplay({ change }: { change: FieldChange }) {
               {change.oldValue}
             </span>
             <span className="text-slate-300">→</span>
-            <span className="text-slate-900">
-              {change.newValue}
-            </span>
+            <span className="text-slate-900">{change.newValue}</span>
           </div>
         )}
       </div>
@@ -447,7 +445,9 @@ function ReviewPageContent() {
   const [periodHalf, setPeriodHalf] = useState(currentHalf);
   const period = `${periodYear}-${periodHalf}`;
   const [typeFilter, setTypeFilter] = useState("전체");
-  const [memberFilter, setMemberFilter] = useState(searchParams.get("member") || "전체");
+  const [memberFilter, setMemberFilter] = useState(
+    searchParams.get("member") || "전체",
+  );
   const [reviewFilter, setReviewFilter] = useState("전체");
 
   // Dialog states
@@ -462,7 +462,7 @@ function ReviewPageContent() {
   // Delete confirm
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [deletingRecord, setDeletingRecord] = useState<UsageRecord | null>(
-    null
+    null,
   );
 
   // Export
@@ -474,7 +474,7 @@ function ReviewPageContent() {
   // Audit log drawer
   const [isAuditOpen, setIsAuditOpen] = useState(false);
   const [auditRecordId, setAuditRecordId] = useState<string | undefined>(
-    undefined
+    undefined,
   );
 
   // Bulk selection
@@ -496,7 +496,7 @@ function ReviewPageContent() {
               ? "1"
               : undefined,
     }),
-    [period, typeFilter, memberFilter, reviewFilter]
+    [period, typeFilter, memberFilter, reviewFilter],
   );
 
   // Queries
@@ -554,7 +554,7 @@ function ReviewPageContent() {
           setSelectedIds(new Set());
           setIsBulkDeleteOpen(false);
         },
-      }
+      },
     );
   };
 
@@ -616,7 +616,7 @@ function ReviewPageContent() {
           setIsEditOpen(false);
           setEditingRecord(null);
         },
-      }
+      },
     );
   };
 
@@ -639,7 +639,7 @@ function ReviewPageContent() {
           setIsDeleteOpen(false);
           setDeletingRecord(null);
         },
-      }
+      },
     );
   };
 
@@ -730,7 +730,7 @@ function ReviewPageContent() {
             searchPlaceholder="이름 검색..."
             emptyText="검색 결과가 없습니다"
             allowClear
-            className="w-44"
+            className="w-44 h-10"
           />
           <Select value={reviewFilter} onValueChange={setReviewFilter}>
             <SelectTrigger className="h-10 w-36 bg-white text-sm">
@@ -750,7 +750,9 @@ function ReviewPageContent() {
             <>
               <span>{totalCount}건</span>
               <span className="text-slate-300">·</span>
-              <span>검토 {reviewedCount}/{totalCount}</span>
+              <span>
+                검토 {reviewedCount}/{totalCount}
+              </span>
               <span className="text-slate-300">·</span>
               <span>{(totalAmount / 10000).toFixed(1)}만원</span>
             </>
@@ -758,7 +760,11 @@ function ReviewPageContent() {
           <Button
             variant="outline"
             size="sm"
-            className={records.length > 0 ? "ml-2 h-10 gap-1.5 text-xs" : "h-10 gap-1.5 text-xs"}
+            className={
+              records.length > 0
+                ? "ml-2 h-10 gap-1.5 text-xs"
+                : "h-10 gap-1.5 text-xs"
+            }
             onClick={handleExport}
             disabled={isExporting || records.length === 0}
           >
@@ -808,7 +814,7 @@ function ReviewPageContent() {
       )}
 
       {/* Main Table */}
-      <div className="glass-panel min-h-0 flex-1 overflow-hidden rounded-xl">
+      <div className="min-h-0 flex-1 overflow-hidden rounded-xl bg-white">
         {isLoading ? (
           <div>
             {Array.from({ length: 8 }).map((_, i) => (
@@ -853,7 +859,7 @@ function ReviewPageContent() {
                         setSelectedIds(
                           checked
                             ? new Set(records.map((r) => r.id))
-                            : new Set()
+                            : new Set(),
                         );
                       }}
                     />
@@ -899,7 +905,7 @@ function ReviewPageContent() {
                     key={record.id}
                     className={cn(
                       "transition-colors hover:bg-slate-50/60",
-                      selectedIds.has(record.id) && "bg-rose-50/40"
+                      selectedIds.has(record.id) && "bg-rose-50/40",
                     )}
                   >
                     <td className="px-2 py-1 text-center">
@@ -932,7 +938,7 @@ function ReviewPageContent() {
                         variant="outline"
                         className={cn(
                           "text-[11px] px-1.5 py-0",
-                          typeBadgeStyle(record.type)
+                          typeBadgeStyle(record.type),
                         )}
                       >
                         {record.type}
@@ -1007,7 +1013,8 @@ function ReviewPageContent() {
               <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
                 <p className="text-sm text-amber-700">
-                  {REVIEW_STATUS_LABELS[editingRecord.review_status] || "확인"} 상태의 내역을 수정합니다. 변경 이력이 기록됩니다.
+                  {REVIEW_STATUS_LABELS[editingRecord.review_status] || "확인"}{" "}
+                  상태의 내역을 수정합니다. 변경 이력이 기록됩니다.
                 </p>
               </div>
             )}
@@ -1061,10 +1068,7 @@ function ReviewPageContent() {
             <Button variant="outline" onClick={() => setIsEditOpen(false)}>
               취소
             </Button>
-            <Button
-              onClick={handleEditSave}
-              disabled={updateRecord.isPending}
-            >
+            <Button onClick={handleEditSave} disabled={updateRecord.isPending}>
               {updateRecord.isPending ? (
                 <>
                   <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
@@ -1101,9 +1105,7 @@ function ReviewPageContent() {
                     {deletingRecord.members?.full_name || "-"}
                   </p>
                   <p className="text-sm text-slate-600">
-                    <span className="font-medium text-slate-700">
-                      사용처:
-                    </span>{" "}
+                    <span className="font-medium text-slate-700">사용처:</span>{" "}
                     {deletingRecord.description || "-"}
                   </p>
                   <p className="text-sm text-slate-600">
@@ -1148,7 +1150,9 @@ function ReviewPageContent() {
             <div className="flex items-start gap-2 rounded-md border border-rose-200 bg-rose-50 p-3">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
               <p className="text-sm text-rose-700">
-                선택한 <span className="font-semibold">{selectedIds.size}개</span> 항목을 삭제합니다. 이 작업은 되돌릴 수 없습니다.
+                선택한{" "}
+                <span className="font-semibold">{selectedIds.size}개</span>{" "}
+                항목을 삭제합니다. 이 작업은 되돌릴 수 없습니다.
               </p>
             </div>
           </div>
@@ -1228,7 +1232,7 @@ function ReviewPageContent() {
                           "text-[11px] px-1.5 py-0",
                           log.action === "DELETE"
                             ? "border-rose-200 bg-rose-50 text-rose-700"
-                            : "border-sky-200 bg-sky-50 text-sky-700"
+                            : "border-sky-200 bg-sky-50 text-sky-700",
                         )}
                       >
                         {log.action}
@@ -1248,68 +1252,93 @@ function ReviewPageContent() {
                     {/* DELETE 액션: 삭제된 내역 표시 */}
                     {log.action === "DELETE" && log.previous_data && (
                       <div className="mt-3 border-t pt-3">
-                        <p className="mb-2 text-xs font-medium text-slate-500">삭제된 내역</p>
+                        <p className="mb-2 text-xs font-medium text-slate-500">
+                          삭제된 내역
+                        </p>
                         <div className="space-y-1.5">
-                          {Object.entries(log.previous_data).map(([key, value]) => {
-                            if (key.includes("_id") || key === "id") return null;
-                            return (
-                              <div key={key} className="flex items-start gap-3">
-                                <span className="min-w-[80px] text-xs text-slate-400">
-                                  {FIELD_LABELS[key] || key}
-                                </span>
-                                <span className="flex-1 text-xs text-slate-600">
-                                  {formatFieldValue(key, value)}
-                                </span>
-                              </div>
-                            );
-                          })}
+                          {Object.entries(log.previous_data).map(
+                            ([key, value]) => {
+                              if (key.includes("_id") || key === "id")
+                                return null;
+                              return (
+                                <div
+                                  key={key}
+                                  className="flex items-start gap-3"
+                                >
+                                  <span className="min-w-[80px] text-xs text-slate-400">
+                                    {FIELD_LABELS[key] || key}
+                                  </span>
+                                  <span className="flex-1 text-xs text-slate-600">
+                                    {formatFieldValue(key, value)}
+                                  </span>
+                                </div>
+                              );
+                            },
+                          )}
                         </div>
                       </div>
                     )}
 
                     {/* IMPORT/UPDATE 액션: 변경 내역 표시 */}
-                    {log.action !== "DELETE" && (() => {
-                      const changes = getFieldChanges(log.previous_data, log.new_data);
+                    {log.action !== "DELETE" &&
+                      (() => {
+                        const changes = getFieldChanges(
+                          log.previous_data,
+                          log.new_data,
+                        );
 
-                      if (changes.length === 0) {
-                        // IMPORT 액션이고 previous_data가 없으면 추가된 내역 표시
-                        if (log.action === "IMPORT" && log.new_data) {
-                          return (
-                            <div className="mt-3 border-t pt-3">
-                              <p className="mb-2 text-xs font-medium text-slate-500">추가된 내역</p>
-                              <div className="space-y-1.5">
-                                {Object.entries(log.new_data).map(([key, value]) => {
-                                  if (key.includes("_id") || key === "id") return null;
-                                  return (
-                                    <div key={key} className="flex items-start gap-3">
-                                      <span className="min-w-[80px] text-xs text-slate-400">
-                                        {FIELD_LABELS[key] || key}
-                                      </span>
-                                      <span className="flex-1 text-xs text-slate-900">
-                                        {formatFieldValue(key, value)}
-                                      </span>
-                                    </div>
-                                  );
-                                })}
+                        if (changes.length === 0) {
+                          // IMPORT 액션이고 previous_data가 없으면 추가된 내역 표시
+                          if (log.action === "IMPORT" && log.new_data) {
+                            return (
+                              <div className="mt-3 border-t pt-3">
+                                <p className="mb-2 text-xs font-medium text-slate-500">
+                                  추가된 내역
+                                </p>
+                                <div className="space-y-1.5">
+                                  {Object.entries(log.new_data).map(
+                                    ([key, value]) => {
+                                      if (key.includes("_id") || key === "id")
+                                        return null;
+                                      return (
+                                        <div
+                                          key={key}
+                                          className="flex items-start gap-3"
+                                        >
+                                          <span className="min-w-[80px] text-xs text-slate-400">
+                                            {FIELD_LABELS[key] || key}
+                                          </span>
+                                          <span className="flex-1 text-xs text-slate-900">
+                                            {formatFieldValue(key, value)}
+                                          </span>
+                                        </div>
+                                      );
+                                    },
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          );
+                            );
+                          }
+                          return null;
                         }
-                        return null;
-                      }
 
-                      // 변경된 필드가 있으면 표시
-                      return (
-                        <div className="mt-3 border-t pt-3">
-                          <p className="mb-2 text-xs font-medium text-slate-500">변경 내역</p>
-                          <div className="space-y-1.5">
-                            {changes.map((change) => (
-                              <FieldChangeDisplay key={change.fieldKey} change={change} />
-                            ))}
+                        // 변경된 필드가 있으면 표시
+                        return (
+                          <div className="mt-3 border-t pt-3">
+                            <p className="mb-2 text-xs font-medium text-slate-500">
+                              변경 내역
+                            </p>
+                            <div className="space-y-1.5">
+                              {changes.map((change) => (
+                                <FieldChangeDisplay
+                                  key={change.fieldKey}
+                                  change={change}
+                                />
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })()}
+                        );
+                      })()}
                   </div>
                 ))}
               </div>

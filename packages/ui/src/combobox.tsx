@@ -70,7 +70,7 @@ export function Combobox({
           role="combobox"
           aria-expanded={open}
           disabled={disabled}
-          className={cn("w-full justify-between", className)}
+          className={cn("w-full h-[35px] justify-between border-slate-200", className)}
         >
           <span
             className={cn(

@@ -27,7 +27,7 @@ export default function GreetingSection({ userName }: GreetingSectionProps) {
       }}
       className="mb-6"
     >
-      <div className="card-premium p-5 relative overflow-hidden">
+      <div className="card-premium rounded-2xl p-5 relative overflow-hidden">
         {/* Decorative gradient blob */}
         <div className="absolute -top-10 -right-10 w-32 h-32 bg-[oklch(0.88_0.10_250/0.4)] rounded-full blur-2xl" />
         <div className="absolute -bottom-8 -left-8 w-24 h-24 bg-[oklch(0.90_0.08_200/0.3)] rounded-full blur-2xl" />

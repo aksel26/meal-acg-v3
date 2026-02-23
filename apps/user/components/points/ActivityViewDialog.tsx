@@ -27,7 +27,7 @@ import { motion, AnimatePresence } from "motion/react";
 import Image from "next/image";
 
 const Skeleton = ({ className }: { className?: string }) => (
-  <div className={`animate-pulse bg-gray-200 rounded ${className}`} />
+  <div className={`skeleton ${className ?? ""}`} />
 );
 
 // 현재 상반기/하반기에 해당하는 월들을 반환
@@ -59,19 +59,30 @@ const TEAM_ICON_MAP: Record<string, string> = {
   "HR Tech팀": "/images/planes/plane-icon-tech.webp",
 };
 
-// 범례 색상 팔레트 (기존)
-const LEGEND_COLORS = [
+// 멤버별 고정 색상
+const MEMBER_COLOR_MAP: Record<string, string> = {
+  "김현해": "#9333ea", // purple
+  "한미희": "#ca8a04", // yellow
+  "권동균": "#16a34a", // green
+  "윤이나": "#dc2626", // red
+};
+
+// 고정 색상이 없는 멤버용 팔레트
+const FALLBACK_COLORS = [
   "#2563eb", // blue
-  "#dc2626", // red
-  "#16a34a", // green
   "#d97706", // amber
-  "#9333ea", // purple
   "#0891b2", // cyan
   "#e11d48", // rose
   "#4f46e5", // indigo
-  "#ca8a04", // yellow
   "#0d9488", // teal
 ];
+
+function getMemberColor(name: string, fallbackIdx: number): string {
+  return MEMBER_COLOR_MAP[name] ?? FALLBACK_COLORS[fallbackIdx % FALLBACK_COLORS.length]!;
+}
+
+// 활동비 미배정자 (잘못된 allocation 레코드 존재)
+const EXCLUDED_NAMES = new Set(["김영만"]);
 
 const DEFAULT_ICON = TEAM_ICON_MAP["Assessment 1팀"]!;
 
@@ -133,11 +144,11 @@ export function ActivityViewDialog({
   const currentHalfYear = getCurrentHalfYearLabel();
   const selectedYear = dayjs().year();
 
-  // 0원 멤버 필터링 + 사용률순 정렬
+  // 0원 멤버 및 미배정자 필터링 + 사용률순 정렬
   const filteredSummaries = useMemo(() => {
     if (!summaries) return [];
     return summaries
-      .filter((s) => s.total_amount > 0)
+      .filter((s) => s.total_amount > 0 && !EXCLUDED_NAMES.has(s.member_name))
       .map((s) => ({
         ...s,
         percent: Math.min(
@@ -254,11 +265,13 @@ export function ActivityViewDialog({
 
                 {/* 범례 + 상세 목록 */}
                 <div className="space-y-1.5 px-2">
-                  {filteredSummaries.map((summary, idx) => (
+                  {filteredSummaries.map((summary, idx) => {
+                    const fallbackIdx = MEMBER_COLOR_MAP[summary.member_name] ? 0 : filteredSummaries.slice(0, idx).filter((s) => !MEMBER_COLOR_MAP[s.member_name]).length;
+                    return (
                     <LegendRow
                       key={summary.allocation_id}
                       summary={summary}
-                      color={LEGEND_COLORS[idx % LEGEND_COLORS.length]!}
+                      color={getMemberColor(summary.member_name, fallbackIdx)}
                       isExpanded={expandedAllocId === summary.allocation_id}
                       onToggle={() => toggleExpand(summary.allocation_id)}
                       usageRecords={usageRecords || []}
@@ -267,7 +280,8 @@ export function ActivityViewDialog({
                       onMouseEnter={() => setHoveredIdx(idx)}
                       onMouseLeave={() => setHoveredIdx(null)}
                     />
-                  ))}
+                    );
+                  })}
                 </div>
               </>
             )}

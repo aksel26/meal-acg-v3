@@ -28,7 +28,7 @@ const getDrinkInfo = (drink: string) => {
     return { icon: "🧊", gradient: "from-sky-50 to-blue-100" };
   if (drink.includes("HOT"))
     return { icon: "🔥", gradient: "from-orange-50 to-red-100" };
-  return { icon: "☕", gradient: "from-stone-50 to-stone-100" };
+  return { icon: "☕", gradient: "from-gray-50 to-gray-100" };
 };
 
 export const AllHistoryDialog = ({ isOpen, onClose }: AllHistoryDialogProps) => {
@@ -68,7 +68,7 @@ export const AllHistoryDialog = ({ isOpen, onClose }: AllHistoryDialogProps) => 
             </DialogTitle>
             <DialogDescription className="text-gray-500 text-center mt-2">
               {isLoading ? (
-                <span className="inline-block w-24 h-4 bg-gray-200 rounded animate-pulse" />
+                <span className="skeleton inline-block w-24 h-4" />
               ) : (
                 <>
                   <span className="text-gray-900 font-semibold">
@@ -89,7 +89,7 @@ export const AllHistoryDialog = ({ isOpen, onClose }: AllHistoryDialogProps) => 
                   width: `${(completedCount / applications.length) * 100}%`,
                 }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
-                className="h-full bg-gradient-to-r from-emerald-400 to-green-400 rounded-full"
+                className="h-full bg-gradient-to-r from-[oklch(0.55_0.18_250)] to-[oklch(0.48_0.20_270)] rounded-full"
               />
             </div>
           )}
@@ -109,7 +109,7 @@ export const AllHistoryDialog = ({ isOpen, onClose }: AllHistoryDialogProps) => 
                 {Array.from({ length: 4 }).map((_, i) => (
                   <div
                     key={i}
-                    className="h-16 bg-stone-100 rounded-2xl animate-pulse"
+                    className="skeleton h-16 rounded-2xl"
                   />
                 ))}
               </motion.div>
@@ -121,7 +121,7 @@ export const AllHistoryDialog = ({ isOpen, onClose }: AllHistoryDialogProps) => 
                 className="flex flex-col items-center justify-center py-12"
               >
                 <span className="text-4xl mb-3">😢</span>
-                <p className="text-stone-500">오류가 발생했습니다</p>
+                <p className="text-gray-500">오류가 발생했습니다</p>
               </motion.div>
             ) : applications.length === 0 ? (
               <motion.div
@@ -131,7 +131,7 @@ export const AllHistoryDialog = ({ isOpen, onClose }: AllHistoryDialogProps) => 
                 className="flex flex-col items-center justify-center py-12"
               >
                 <span className="text-4xl mb-3">☕</span>
-                <p className="text-stone-500">아직 신청 내역이 없습니다</p>
+                <p className="text-gray-500">아직 신청 내역이 없습니다</p>
               </motion.div>
             ) : (
               <motion.div
@@ -156,10 +156,10 @@ export const AllHistoryDialog = ({ isOpen, onClose }: AllHistoryDialogProps) => 
                         >
                           <span className="text-lg">{info.icon}</span>
                         </div>
-                        <span className="text-sm font-semibold text-stone-800">
+                        <span className="text-sm font-semibold text-gray-800">
                           {drink}
                         </span>
-                        <span className="text-xs text-stone-400 font-medium bg-stone-100 px-2 py-0.5 rounded-full">
+                        <span className="text-xs text-gray-400 font-medium bg-gray-100 px-2 py-0.5 rounded-full">
                           {users.length}명
                         </span>
                       </div>
@@ -174,13 +174,13 @@ export const AllHistoryDialog = ({ isOpen, onClose }: AllHistoryDialogProps) => 
                             transition={{
                               delay: groupIndex * 0.05 + userIndex * 0.02,
                             }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-stone-50 hover:bg-stone-100 rounded-full border border-stone-100 transition-colors"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 rounded-full border border-gray-200 transition-colors"
                           >
-                            <span className="text-sm font-medium text-stone-700">
+                            <span className="text-sm font-medium text-gray-700">
                               {user.name}
                             </span>
                             {user.memo && (
-                              <span className="text-xs text-stone-400">
+                              <span className="text-xs text-gray-400">
                                 ({user.memo})
                               </span>
                             )}
@@ -196,11 +196,11 @@ export const AllHistoryDialog = ({ isOpen, onClose }: AllHistoryDialogProps) => 
         </div>
 
         {/* Footer */}
-        <DialogFooter className="p-4 border-t border-stone-100">
+        <DialogFooter className="p-4 border-t border-gray-100">
           <Button
             variant="ghost"
             onClick={onClose}
-            className="w-full h-12 text-stone-600 hover:text-stone-900 hover:bg-stone-50 font-medium rounded-xl"
+            className="w-full h-12 text-gray-600 hover:text-gray-900 hover:bg-gray-50 font-medium rounded-xl"
           >
             닫기
           </Button>

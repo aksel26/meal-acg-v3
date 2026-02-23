@@ -91,6 +91,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to create member" }, { status: 500 });
     }
 
+    // 현재 반기에 대해 복지포인트 + 활동비 budget_allocations 자동 생성
+    const now = new Date();
+    const currentHalf = now.getMonth() < 6 ? "H1" : "H2";
+    const period = `${now.getFullYear()}-${currentHalf}`;
+
+    for (const type of ["복지포인트", "활동비"] as const) {
+      const { error: allocError } = await supabase
+        .from("budget_allocations")
+        .insert({ member_id: data.id, type, period, total_amount: 0 });
+      if (allocError) {
+        console.error(`Error creating ${type} allocation:`, allocError);
+      }
+    }
+
     return NextResponse.json(data, { status: 201 });
   } catch (error) {
     console.error("Members API error:", error);

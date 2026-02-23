@@ -149,7 +149,7 @@ export default function PointsOverviewPage() {
       </div>
 
       {/* Main Table */}
-      <div className="glass-panel min-h-0 flex-1 overflow-hidden rounded-xl">
+      <div className="min-h-0 flex-1 overflow-hidden rounded-xl bg-white">
         {!period ? (
           <div className="py-16 text-center">
             <Wallet className="mx-auto h-12 w-12 text-slate-300" />

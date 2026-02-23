@@ -196,7 +196,7 @@ export default function CalendarComponent({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.2 }}
-      className="card-premium p-3 sm:p-4 overflow-hidden touch-pan-y"
+      className="card-premium rounded-2xl p-3 sm:p-4 overflow-hidden touch-pan-y"
     >
       {/* 월 표시 헤더 */}
       <div className="flex items-center justify-between mb-3 px-1">

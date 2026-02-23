@@ -36,7 +36,25 @@ import {
   GripVertical,
   X,
   RefreshCw,
+  RotateCcw,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@repo/ui/src/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@repo/ui/src/tooltip";
 import { queryKeys } from "@/lib/query-keys";
 import type {
   Member,
@@ -330,6 +348,29 @@ export default function LunchGroupsPage() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.lunchGroups.byWeek(weekStartDate),
       });
+    },
+  });
+
+  // 리셋 mutation
+  const resetMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch(
+        `/api/lunch-groups?weekStartDate=${weekStartDate}`,
+        { method: "DELETE" },
+      );
+      if (!response.ok) throw new Error("Failed to reset");
+      return response.json();
+    },
+    onSuccess: () => {
+      setGroups([]);
+      setIsTableCreated(false);
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.lunchGroups.byWeek(weekStartDate),
+      });
+      toast.success("조 테이블이 초기화되었습니다.");
+    },
+    onError: () => {
+      toast.error("초기화 중 오류가 발생했습니다.");
     },
   });
 
@@ -785,6 +826,44 @@ export default function LunchGroupsPage() {
                     {saveMutation.isPending && (
                       <span className="text-xs text-slate-400">저장 중...</span>
                     )}
+                    <TooltipProvider>
+                      <Tooltip>
+                        <AlertDialog>
+                          <TooltipTrigger asChild>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-8 w-8 bg-red-50 text-red-500 border-red-200 hover:bg-red-100 hover:border-red-300"
+                                disabled={!isTableCreated || resetMutation.isPending}
+                              >
+                                <RotateCcw className={`h-4 w-4 ${resetMutation.isPending ? "animate-spin" : ""}`} />
+                              </Button>
+                            </AlertDialogTrigger>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>조 테이블 초기화</p>
+                          </TooltipContent>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>조 테이블 초기화</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                {dayjs(weekStartDate).format("YYYY.MM.DD")} 주차의 모든 조 배정이 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>취소</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => resetMutation.mutate()}
+                                className="bg-red-500 hover:bg-red-600"
+                              >
+                                초기화
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </Tooltip>
+                    </TooltipProvider>
                     <Button
                       variant="outline"
                       size="icon"

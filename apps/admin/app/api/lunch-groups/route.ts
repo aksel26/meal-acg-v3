@@ -37,6 +37,33 @@ export async function GET(request: Request) {
   return NextResponse.json(groups as LunchGroupWithMembers[]);
 }
 
+// DELETE: 해당 주차의 점심조 전체 삭제
+export async function DELETE(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const weekStartDate = searchParams.get("weekStartDate");
+
+  if (!weekStartDate) {
+    return NextResponse.json(
+      { error: "weekStartDate is required" },
+      { status: 400 }
+    );
+  }
+
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("lunch_groups")
+    .delete()
+    .eq("week_start_date", weekStartDate);
+
+  if (error) {
+    console.error("Error deleting lunch groups:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true });
+}
+
 // POST: 점심조 생성/저장
 export async function POST(request: Request) {
   const body = await request.json();

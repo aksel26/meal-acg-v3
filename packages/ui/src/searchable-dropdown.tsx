@@ -241,9 +241,11 @@ function SearchableDropdown<T>({
         aria-expanded={isOpen}
         aria-haspopup="listbox"
         className={cn(
-          "flex items-center w-full h-full px-3 rounded-lg bg-white cursor-pointer transition-colors shadow-none border border-slate-200",
-          disabled ? "bg-slate-100 cursor-not-allowed opacity-60" : "",
-          isOpen && "ring-1 ring-blue-100",
+          "flex items-center w-full h-10 px-3 rounded-lg bg-white cursor-pointer transition-colors shadow-none border border-slate-200",
+          disabled
+            ? "bg-slate-100 cursor-not-allowed opacity-60"
+            : "",
+          isOpen && "ring-1 ring-blue-100"
         )}
       >
         <Search className="w-4 h-4 text-slate-400 mr-2 flex-shrink-0" />

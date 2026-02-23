@@ -491,10 +491,38 @@ export default function LunchGroupsPage() {
     toast.success(`${selectedMemberIds.size}명이 제외되었습니다.`);
   }, [selectedMemberIds]);
 
-  // 뽑기 요청하기 (알림 전송 - 실제 구현은 추후)
-  const handleSendLotteryRequest = useCallback(() => {
-    toast.success(`${selectedMemberIds.size}명에게 뽑기 요청을 전송했습니다.`);
-    setSelectedMemberIds(new Set());
+  // 뽑기 요청하기 (알림 전송)
+  const handleSendLotteryRequest = useCallback(async () => {
+    if (selectedMemberIds.size === 0) return;
+
+    try {
+      const res = await fetch("/api/notifications/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          memberIds: Array.from(selectedMemberIds),
+          title: "점심조 뽑기",
+          body: "점심조 뽑기가 시작되었습니다! 앱에서 참여하세요.",
+          url: "/lunch",
+          tag: "lunch-lottery",
+        }),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        toast.error(result.error || "뽑기 요청 전송에 실패했습니다.");
+        return;
+      }
+
+      const { summary } = result;
+      toast.success(
+        `${summary.total}명에게 뽑기 요청을 전송했습니다. (성공: ${summary.success}, 실패: ${summary.failed})`
+      );
+      setSelectedMemberIds(new Set());
+    } catch {
+      toast.error("뽑기 요청 전송 중 오류가 발생했습니다.");
+    }
   }, [selectedMemberIds]);
 
   // 제외 인원 복원

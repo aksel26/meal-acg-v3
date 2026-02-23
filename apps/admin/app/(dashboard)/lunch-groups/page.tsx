@@ -395,17 +395,15 @@ export default function LunchGroupsPage() {
       }),
     );
 
-    setGroups(newGroups);
     setIsTableCreated(true);
 
-    if (remainder > 0) {
-      toast.success(
-        `${totalGroups}개 조 생성 (${remainder}개 조는 ${maxPerGroup + 1}명)`,
-      );
-    } else {
-      toast.success(`${totalGroups}개 조 테이블이 생성되었습니다.`);
-    }
-  }, [totalGroups, maxPerGroup, remainder]);
+    const successMsg =
+      remainder > 0
+        ? `${totalGroups}개 조 생성 (${remainder}개 조는 ${maxPerGroup + 1}명)`
+        : `${totalGroups}개 조 테이블이 생성되었습니다.`;
+
+    autoSaveGroups(newGroups, successMsg);
+  }, [totalGroups, maxPerGroup, remainder, autoSaveGroups]);
 
   // 이미 조에 배정된 멤버 ID 집합
   const assignedMemberIds = useMemo(() => {

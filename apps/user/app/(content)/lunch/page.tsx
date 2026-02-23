@@ -54,6 +54,12 @@ const Lunch = () => {
     }
   }, [fetchUsers]);
 
+  // 제외 대상 여부 계산
+  const isExcluded = useMemo(() => {
+    if (!userName || !lunchGroupData?.excludedMembers) return false;
+    return lunchGroupData.excludedMembers.includes(userName);
+  }, [userName, lunchGroupData?.excludedMembers]);
+
   // 유효한 그룹 수 계산 (memoized)
   const validGroupCount = useMemo(() => {
     if (!lunchGroupData?.groups) return 0;
@@ -70,8 +76,8 @@ const Lunch = () => {
     if (!allUsers || allUsers.length === 0 || !lunchGroupData?.groups)
       return [];
 
-    // 제외할 인원 목록
-    const excludedMembers = new Set(["정진우", "장문경", "이서현"]);
+    // 제외할 인원 목록 (DB에서 조회)
+    const excludedMembers = new Set(lunchGroupData?.excludedMembers || []);
 
     // 모든 점심조에 배정된 멤버들 수집
     const assignedMembers = new Set<string>();
@@ -222,10 +228,15 @@ const Lunch = () => {
         transition={{ duration: 0.4, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
       >
         <button
-          className="w-full mb-4 py-3.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-purple-400 via-pink-400 to-orange-300 hover:from-purple-500 hover:via-pink-500 hover:to-orange-400 transition-all"
-          onClick={() => setIsLotteryOpen(true)}
+          className={`w-full mb-4 py-3.5 rounded-xl text-sm font-semibold transition-all ${
+            isExcluded
+              ? "text-gray-400 bg-gray-100 cursor-not-allowed"
+              : "text-white bg-gradient-to-r from-purple-400 via-pink-400 to-orange-300 hover:from-purple-500 hover:via-pink-500 hover:to-orange-400"
+          }`}
+          onClick={() => !isExcluded && setIsLotteryOpen(true)}
+          disabled={isExcluded}
         >
-          점심조 뽑기
+          {isExcluded ? "이번주 점심조 배정 대상이 아닙니다" : "점심조 뽑기"}
         </button>
       </motion.div>
 

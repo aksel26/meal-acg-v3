@@ -14,6 +14,7 @@ export interface LunchGroupData {
   groups: LunchGroup[];
   mondayMember: string;
   fridayMember: string;
+  excludedMembers?: string[];
 }
 
 interface LunchGroupResponse {

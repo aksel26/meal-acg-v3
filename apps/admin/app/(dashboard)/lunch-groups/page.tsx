@@ -260,9 +260,6 @@ function DroppableUnassigned({ children }: { children: React.ReactNode }) {
 export default function LunchGroupsPage() {
   const queryClient = useQueryClient();
   const [currentWeek, setCurrentWeek] = useState(dayjs());
-  const [excludedMemberIds, setExcludedMemberIds] = useState<Set<string>>(
-    new Set(),
-  );
   const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(
     new Set(),
   );
@@ -272,6 +269,23 @@ export default function LunchGroupsPage() {
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
 
   const weekStartDate = getWeekStartDate(currentWeek);
+
+  // 제외 인원 조회 (DB) - 주차별
+  const { data: excludedMembersData = [] } = useQuery<
+    { id: string; member_id: string; week_start_date: string; excluded_at: string | null; members: { id: string; full_name: string } | null }[]
+  >({
+    queryKey: queryKeys.lunchGroups.excludedMembers(weekStartDate),
+    queryFn: async () => {
+      const response = await fetch(`/api/lunch-groups/excluded-members?weekStartDate=${weekStartDate}`);
+      if (!response.ok) throw new Error("Failed to fetch excluded members");
+      return response.json();
+    },
+  });
+
+  const excludedMemberIds = useMemo(
+    () => new Set(excludedMembersData.map((e) => e.member_id)),
+    [excludedMembersData],
+  );
 
   // 멤버 목록 조회 (특이사항 인원 제외)
   const { data: members = [] } = useQuery<Member[]>({
@@ -480,16 +494,34 @@ export default function LunchGroupsPage() {
     }
   }, [unassignedMembers, selectedMemberIds.size]);
 
-  // 인원 제외하기
+  // 인원 제외하기 mutation
+  const excludeMutation = useMutation({
+    mutationFn: async (memberIds: string[]) => {
+      const response = await fetch("/api/lunch-groups/excluded-members", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberIds, weekStartDate }),
+      });
+      if (!response.ok) throw new Error("Failed to exclude members");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.lunchGroups.excludedMembers(weekStartDate),
+      });
+    },
+  });
+
   const handleExcludeMembers = useCallback(() => {
-    setExcludedMemberIds((prev) => {
-      const next = new Set(prev);
-      selectedMemberIds.forEach((id) => next.add(id));
-      return next;
+    const ids = Array.from(selectedMemberIds);
+    excludeMutation.mutate(ids, {
+      onSuccess: () => {
+        toast.success(`${ids.length}명이 제외되었습니다.`);
+        setSelectedMemberIds(new Set());
+      },
+      onError: () => toast.error("제외 처리 중 오류가 발생했습니다."),
     });
-    setSelectedMemberIds(new Set());
-    toast.success(`${selectedMemberIds.size}명이 제외되었습니다.`);
-  }, [selectedMemberIds]);
+  }, [selectedMemberIds, excludeMutation]);
 
   // 뽑기 요청하기 (알림 전송)
   const handleSendLotteryRequest = useCallback(async () => {
@@ -525,14 +557,31 @@ export default function LunchGroupsPage() {
     }
   }, [selectedMemberIds]);
 
-  // 제외 인원 복원
-  const handleRestoreMember = useCallback((memberId: string) => {
-    setExcludedMemberIds((prev) => {
-      const next = new Set(prev);
-      next.delete(memberId);
-      return next;
-    });
-  }, []);
+  // 제외 인원 복원 mutation
+  const restoreMutation = useMutation({
+    mutationFn: async (memberId: string) => {
+      const response = await fetch(
+        `/api/lunch-groups/excluded-members?memberId=${memberId}&weekStartDate=${weekStartDate}`,
+        { method: "DELETE" },
+      );
+      if (!response.ok) throw new Error("Failed to restore member");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.lunchGroups.excludedMembers(weekStartDate),
+      });
+    },
+  });
+
+  const handleRestoreMember = useCallback(
+    (memberId: string) => {
+      restoreMutation.mutate(memberId, {
+        onError: () => toast.error("복원 처리 중 오류가 발생했습니다."),
+      });
+    },
+    [restoreMutation],
+  );
 
   // 드래그 시작
   const handleDragStart = useCallback((event: DragStartEvent) => {

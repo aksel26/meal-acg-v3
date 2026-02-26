@@ -7,8 +7,8 @@ import { toast } from "@repo/ui/src/sonner";
 // ── Advance Review ──
 
 const REVIEW_STATUS_LABELS: Record<number, string> = {
-  1: "1차 확인",
-  2: "최종확인완료",
+  1: "P&C확인완료",
+  2: "최종확인",
 };
 
 export function useAdvanceReview() {

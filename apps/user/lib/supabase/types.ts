@@ -684,12 +684,19 @@ export type Database = {
           description: string
           id: string
           is_reviewed: boolean | null
+          review_status: number
           last_modified_at: string | null
           last_modified_by: string | null
           member_id: string
+          no: number | null
           receipt_url: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          first_reviewed_by: string | null
+          first_reviewed_at: string | null
+          second_reviewed_by: string | null
+          second_reviewed_at: string | null
+          notes: string | null
           type: Database["public"]["Enums"]["budget_type"]
           updated_at: string | null
           used_at: string
@@ -703,6 +710,7 @@ export type Database = {
           description: string
           id?: string
           is_reviewed?: boolean | null
+          review_status?: number
           last_modified_at?: string | null
           last_modified_by?: string | null
           member_id: string
@@ -722,6 +730,7 @@ export type Database = {
           description?: string
           id?: string
           is_reviewed?: boolean | null
+          review_status?: number
           last_modified_at?: string | null
           last_modified_by?: string | null
           member_id?: string

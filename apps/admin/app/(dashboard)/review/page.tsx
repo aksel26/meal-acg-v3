@@ -364,7 +364,7 @@ function ReviewStepIndicator({
 
       {status > 0 && (
         <span className="text-[10px] tabular-nums text-slate-400">
-          {status === 1 ? "P&C" : lastDate ? formatShortDate(lastDate) : "완료"}
+          {lastDate ? formatShortDate(lastDate) : status === 1 ? "P&C" : "완료"}
         </span>
       )}
 

@@ -13,6 +13,7 @@ export interface AllRecordItem {
   description: string;
   used_at: string;
   is_reviewed: boolean;
+  review_status: number;
   notes: string | null;
   delay_reason: string | null;
   created_at: string;

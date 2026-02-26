@@ -256,13 +256,13 @@ export default function Points() {
     vendor: record.description,
     amount: record.amount,
     used: true,
-    confirmed: record.is_reviewed,
+    confirmed: (record.review_status ?? 0) >= 1,
     notes: record.notes || "",
     delay_reason: record.delay_reason || "",
   });
 
   const handleEditPoint = (record: UsageRecord) => {
-    if (record.is_reviewed) return;
+    if ((record.review_status ?? 0) >= 1) return;
     setEditingPoint(toEditablePoint(record));
     setIsNewPoint(false);
     setIsEditDialogOpen(true);
@@ -589,12 +589,17 @@ export default function Points() {
                 const dow = ["일", "월", "화", "수", "목", "금", "토"][d.day()];
                 const isActivity = record.type === "활동비";
 
+                const reviewStatus = record.review_status ?? 0;
+                const isLocked = reviewStatus >= 1;
+
                 const recordContent = (
                   <div
                     className={`px-4 py-3.5 ${
-                      record.is_reviewed
+                      reviewStatus === 2
                         ? "opacity-55"
-                        : "cursor-pointer active:bg-gray-50"
+                        : isLocked
+                          ? "opacity-75"
+                          : "cursor-pointer active:bg-gray-50"
                     } transition-colors`}
                     onClick={() => handleEditPoint(record)}
                   >
@@ -622,16 +627,28 @@ export default function Points() {
                           {record.type}
                         </span>
                       </div>
-                      {record.is_reviewed ? (
-                        <span className="text-[11px] text-emerald-500 flex items-center gap-0.5">
-                          <Check className="w-3 h-3" />
-                          P&C 확인
+                      <div className="flex items-center gap-1.5">
+                        <span className={`flex items-center gap-1 ${
+                          reviewStatus >= 1 ? "text-blue-500" : "text-gray-300"
+                        }`}>
+                          <span className={`inline-block w-[7px] h-[7px] rounded-full border ${
+                            reviewStatus >= 1
+                              ? "bg-blue-500 border-blue-500"
+                              : "bg-transparent border-gray-300"
+                          }`} />
+                          <span className="text-[10px]">P&C</span>
                         </span>
-                      ) : (
-                        <span className="text-[11px] text-gray-400">
-                          미확인
+                        <span className={`flex items-center gap-1 ${
+                          reviewStatus >= 2 ? "text-emerald-500" : "text-gray-300"
+                        }`}>
+                          <span className={`inline-block w-[7px] h-[7px] rounded-full border ${
+                            reviewStatus >= 2
+                              ? "bg-emerald-500 border-emerald-500"
+                              : "bg-transparent border-gray-300"
+                          }`} />
+                          <span className="text-[10px]">최종</span>
                         </span>
-                      )}
+                      </div>
                     </div>
                     {record.notes && (
                       <p className="text-xs text-gray-400 mt-1">
@@ -641,7 +658,7 @@ export default function Points() {
                   </div>
                 );
 
-                return record.is_reviewed ? (
+                return isLocked ? (
                   <Tooltip key={record.id}>
                     <TooltipTrigger asChild>
                       <div>{recordContent}</div>
@@ -650,7 +667,9 @@ export default function Points() {
                       side="top"
                       className="bg-gray-800 text-gray-100 max-w-60"
                     >
-                      검토완료 항목입니다. 수정하려면 P&C에 문의 바랍니다.
+                      {reviewStatus === 2
+                        ? "최종확인 완료 항목입니다. 수정하려면 P&C에 문의 바랍니다."
+                        : "P&C 확인완료 항목입니다. 수정하려면 P&C에 문의 바랍니다."}
                     </TooltipContent>
                   </Tooltip>
                 ) : (

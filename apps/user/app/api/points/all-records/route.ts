@@ -112,10 +112,9 @@ export async function GET(request: NextRequest) {
 
     // review_status 필터
     if (reviewStatus && reviewStatus !== "all") {
-      if (reviewStatus === "0") {
-        query = query.eq("is_reviewed", false);
-      } else if (reviewStatus === "3") {
-        query = query.eq("is_reviewed", true);
+      const statusNum = parseInt(reviewStatus, 10);
+      if (!isNaN(statusNum)) {
+        query = query.eq("review_status", statusNum);
       }
     }
 
@@ -151,6 +150,7 @@ export async function GET(request: NextRequest) {
         description: rec.description,
         used_at: rec.used_at,
         is_reviewed: rec.is_reviewed,
+        review_status: rec.review_status ?? 0,
         notes: rec.notes || null,
         delay_reason: rec.delay_reason || null,
         created_at: rec.created_at,

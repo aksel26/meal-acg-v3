@@ -194,7 +194,7 @@ export async function PUT(request: NextRequest) {
     // 검토 완료 여부 확인
     const { data: existing, error: fetchError } = await supabase
       .from("usage_records")
-      .select("id, is_reviewed")
+      .select("id, is_reviewed, review_status")
       .eq("id", id)
       .single();
 
@@ -205,9 +205,9 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    if (existing.is_reviewed) {
+    if ((existing.review_status ?? 0) >= 1) {
       return NextResponse.json(
-        { error: "검토 완료된 내역은 수정할 수 없습니다." },
+        { error: "P&C 확인된 내역은 수정할 수 없습니다. P&C에 문의 바랍니다." },
         { status: 403 }
       );
     }
@@ -279,7 +279,7 @@ export async function DELETE(request: NextRequest) {
     // 검토 완료 여부 확인
     const { data: existing, error: fetchError } = await supabase
       .from("usage_records")
-      .select("id, is_reviewed, member_id")
+      .select("id, is_reviewed, review_status, member_id")
       .eq("id", id)
       .single();
 
@@ -290,9 +290,9 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    if (existing.is_reviewed) {
+    if ((existing.review_status ?? 0) >= 1) {
       return NextResponse.json(
-        { error: "검토 완료된 내역은 삭제할 수 없습니다." },
+        { error: "P&C 확인된 내역은 삭제할 수 없습니다. P&C에 문의 바랍니다." },
         { status: 403 }
       );
     }

@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
 // POST /api/members - Create a new member
 export async function POST(request: NextRequest) {
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
     const supabase = createServiceClient();
     const body = await request.json();
 
@@ -69,6 +69,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 관리자의 organization_id 조회하여 신규 멤버에 자동 할당
+    const { data: adminMember } = await supabase
+      .from("members")
+      .select("organization_id")
+      .eq("id", session.userId)
+      .single();
+
     const { data, error } = await supabase
       .from("members")
       .insert({
@@ -79,6 +86,7 @@ export async function POST(request: NextRequest) {
         email: email || null,
         member_role: memberRole || "팀원",
         intern_months: memberRole === "인턴" && internMonths ? parseInt(internMonths, 10) : null,
+        organization_id: adminMember?.organization_id || null,
       })
       .select()
       .single();

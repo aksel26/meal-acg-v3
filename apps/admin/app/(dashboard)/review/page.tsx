@@ -162,8 +162,8 @@ function formatShortDate(dateStr: string | null) {
 
 const REVIEW_STATUS_LABELS: Record<number, string> = {
   0: "미확인",
-  1: "1차 확인",
-  2: "최종확인완료",
+  1: "P&C확인완료",
+  2: "최종확인",
 };
 
 const FIELD_LABELS: Record<string, string> = {
@@ -209,9 +209,9 @@ function formatFieldValue(key: string, value: unknown): string {
   // Review status enum
   if (key === "review_status") {
     const statusMap: Record<number, string> = {
-      0: "미검토",
-      1: "1차 검토",
-      2: "최종 검토",
+      0: "미확인",
+      1: "P&C확인완료",
+      2: "최종확인",
     };
     return statusMap[Number(value)] || String(value);
   }
@@ -317,10 +317,10 @@ function ReviewStepIndicator({
 
   const tooltip =
     status === 0
-      ? "미확인 - 클릭하여 1차 확인"
+      ? "미확인 - 클릭하여 P&C확인"
       : status === 1
-        ? `1차 확인 - 클릭하여 최종확인\n${tooltipParts.join("\n")}`
-        : `최종확인완료 - 클릭하여 되돌리기\n${tooltipParts.join("\n")}`;
+        ? `P&C확인완료 - 클릭하여 최종확인\n${tooltipParts.join("\n")}`
+        : `최종확인 - 클릭하여 되돌리기\n${tooltipParts.join("\n")}`;
 
   return (
     <div className="relative flex items-center justify-center gap-1.5">
@@ -364,7 +364,7 @@ function ReviewStepIndicator({
 
       {status > 0 && (
         <span className="text-[10px] tabular-nums text-slate-400">
-          {status === 1 ? "1차" : lastDate ? formatShortDate(lastDate) : "완료"}
+          {lastDate ? formatShortDate(lastDate) : status === 1 ? "P&C" : "완료"}
         </span>
       )}
 
@@ -381,7 +381,7 @@ function ReviewStepIndicator({
                 setRevertMenuOpen(false);
               }}
             >
-              1차 확인으로 되돌리기
+              P&C확인으로 되돌리기
             </button>
           )}
           <button
@@ -488,11 +488,11 @@ function ReviewPageContent() {
       type: typeFilter !== "전체" ? typeFilter : undefined,
       member_id: memberFilter !== "전체" ? memberFilter : undefined,
       review_status:
-        reviewFilter === "최종확인완료"
+        reviewFilter === "최종확인"
           ? "2"
           : reviewFilter === "미확인"
             ? "0"
-            : reviewFilter === "1차 확인"
+            : reviewFilter === "P&C확인완료"
               ? "1"
               : undefined,
     }),
@@ -739,8 +739,8 @@ function ReviewPageContent() {
             <SelectContent>
               <SelectItem value="전체">확인 전체</SelectItem>
               <SelectItem value="미확인">미확인</SelectItem>
-              <SelectItem value="1차 확인">1차 확인</SelectItem>
-              <SelectItem value="최종확인완료">최종확인완료</SelectItem>
+              <SelectItem value="P&C확인완료">P&C확인완료</SelectItem>
+              <SelectItem value="최종확인">최종확인</SelectItem>
             </SelectContent>
           </Select>
         </div>

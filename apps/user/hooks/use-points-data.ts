@@ -41,6 +41,7 @@ export interface UsageRecord {
   notes: string | null;
   delay_reason: string | null;
   is_reviewed: boolean;
+  review_status: number;
   reviewed_by: string | null;
   reviewed_at: string | null;
   created_at: string;

@@ -203,36 +203,24 @@ export function AllUsageRecordsDialog({
 
           {/* Review Status Filter */}
           <div className="flex gap-1 shrink-0">
-            <button
-              onClick={() => setReviewStatus("all")}
-              className={`h-9 px-3 text-xs rounded-xl transition-all whitespace-nowrap ${
-                reviewStatus === "all"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              전체
-            </button>
-            <button
-              onClick={() => setReviewStatus("0")}
-              className={`h-9 px-3 text-xs rounded-xl transition-all whitespace-nowrap ${
-                reviewStatus === "0"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              미확인
-            </button>
-            <button
-              onClick={() => setReviewStatus("3")}
-              className={`h-9 px-3 text-xs rounded-xl transition-all whitespace-nowrap ${
-                reviewStatus === "3"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              완료
-            </button>
+            {[
+              { value: "all", label: "전체" },
+              { value: "0", label: "미확인" },
+              { value: "1", label: "P&C" },
+              { value: "2", label: "최종" },
+            ].map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setReviewStatus(opt.value)}
+                className={`h-9 px-3 text-xs rounded-xl transition-all whitespace-nowrap ${
+                  reviewStatus === opt.value
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -310,12 +298,28 @@ export function AllUsageRecordsDialog({
                         </div>
                       </div>
                     </div>
-                    {record.is_reviewed && (
-                      <div className="mt-2 flex items-center gap-1 text-emerald-500">
-                        <Check className="w-3 h-3" />
-                        <span className="text-[10px]">P&C 확인</span>
-                      </div>
-                    )}
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className={`flex items-center gap-1 ${
+                        (record.review_status ?? 0) >= 1 ? "text-blue-500" : "text-gray-300"
+                      }`}>
+                        <span className={`inline-block w-[6px] h-[6px] rounded-full border ${
+                          (record.review_status ?? 0) >= 1
+                            ? "bg-blue-500 border-blue-500"
+                            : "bg-transparent border-gray-300"
+                        }`} />
+                        <span className="text-[10px]">P&C</span>
+                      </span>
+                      <span className={`flex items-center gap-1 ${
+                        (record.review_status ?? 0) >= 2 ? "text-emerald-500" : "text-gray-300"
+                      }`}>
+                        <span className={`inline-block w-[6px] h-[6px] rounded-full border ${
+                          (record.review_status ?? 0) >= 2
+                            ? "bg-emerald-500 border-emerald-500"
+                            : "bg-transparent border-gray-300"
+                        }`} />
+                        <span className="text-[10px]">최종</span>
+                      </span>
+                    </div>
                   </motion.div>
                 ))}
                 {hasMore && (

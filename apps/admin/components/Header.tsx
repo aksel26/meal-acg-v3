@@ -52,6 +52,10 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
     title: "사용 내역 조회",
     subtitle: "전체 조직원의 포인트 사용 내역을 조회합니다",
   },
+  "/dayoffs": {
+    title: "근태 관리",
+    subtitle: "근태 등록, 승인, 통계를 관리합니다",
+  },
   "/notifications": {
     title: "알림 관리",
     subtitle: "푸시 알림 발송 및 구독 현황",

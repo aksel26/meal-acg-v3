@@ -1,12 +1,3 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
-
-// 월별 지원금 타입: { "2026": { "1": { allowance: 220000, workdays: 22 }, ... } }
 export interface MonthlyAllowanceData {
   allowance: number;
   workdays: number;
@@ -18,7 +9,40 @@ export type MonthlyAllowancesJson = {
   };
 }
 
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
 export type Database = {
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       budget_allocations: {
@@ -57,8 +81,168 @@ export type Database = {
             foreignKeyName: "budget_allocations_member_id_fkey"
             columns: ["member_id"]
             isOneToOne: false
+            referencedRelation: "member_current_status"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "budget_allocations_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
             referencedRelation: "members"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_allocations_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "user_monthly_stats"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      dayoffs: {
+        Row: {
+          approved_at: string | null
+          approver_id: string | null
+          author_id: string
+          cc_member_ids: string[] | null
+          created_at: string
+          id: string
+          is_deleted: boolean
+          last_editor_id: string | null
+          late_hour: string | null
+          late_minute: string | null
+          leave_date: string
+          leave_type_id: number
+          reason: string | null
+          target_id: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approver_id?: string | null
+          author_id: string
+          cc_member_ids?: string[] | null
+          created_at?: string
+          id?: string
+          is_deleted?: boolean
+          last_editor_id?: string | null
+          late_hour?: string | null
+          late_minute?: string | null
+          leave_date: string
+          leave_type_id: number
+          reason?: string | null
+          target_id: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approver_id?: string | null
+          author_id?: string
+          cc_member_ids?: string[] | null
+          created_at?: string
+          id?: string
+          is_deleted?: boolean
+          last_editor_id?: string | null
+          late_hour?: string | null
+          late_minute?: string | null
+          leave_date?: string
+          leave_type_id?: number
+          reason?: string | null
+          target_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dayoffs_approver_id_fkey"
+            columns: ["approver_id"]
+            isOneToOne: false
+            referencedRelation: "member_current_status"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "dayoffs_approver_id_fkey"
+            columns: ["approver_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dayoffs_approver_id_fkey"
+            columns: ["approver_id"]
+            isOneToOne: false
+            referencedRelation: "user_monthly_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "dayoffs_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "member_current_status"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "dayoffs_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dayoffs_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "user_monthly_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "dayoffs_last_editor_id_fkey"
+            columns: ["last_editor_id"]
+            isOneToOne: false
+            referencedRelation: "member_current_status"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "dayoffs_last_editor_id_fkey"
+            columns: ["last_editor_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dayoffs_last_editor_id_fkey"
+            columns: ["last_editor_id"]
+            isOneToOne: false
+            referencedRelation: "user_monthly_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "dayoffs_leave_type_id_fkey"
+            columns: ["leave_type_id"]
+            isOneToOne: false
+            referencedRelation: "leave_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dayoffs_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "member_current_status"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "dayoffs_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dayoffs_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "user_monthly_stats"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -99,22 +283,22 @@ export type Database = {
           created_at: string | null
           daily_allowance: number
           id: number
+          monthly_allowances: Json | null
           updated_at: string | null
-          monthly_allowances: MonthlyAllowancesJson | null
         }
         Insert: {
           created_at?: string | null
           daily_allowance?: number
           id?: number
+          monthly_allowances?: Json | null
           updated_at?: string | null
-          monthly_allowances?: MonthlyAllowancesJson | null
         }
         Update: {
           created_at?: string | null
           daily_allowance?: number
           id?: number
+          monthly_allowances?: Json | null
           updated_at?: string | null
-          monthly_allowances?: MonthlyAllowancesJson | null
         }
         Relationships: []
       }
@@ -136,34 +320,35 @@ export type Database = {
         }
         Relationships: []
       }
-      lunch_group_excluded_members: {
+      leave_types: {
         Row: {
-          id: string
-          member_id: string
-          week_start_date: string
-          excluded_at: string | null
+          category: string
+          created_at: string
+          duration_type: string
+          id: number
+          include_in_stats: boolean
+          name: string
+          sort_order: number
         }
         Insert: {
-          id?: string
-          member_id: string
-          week_start_date: string
-          excluded_at?: string | null
+          category: string
+          created_at?: string
+          duration_type?: string
+          id: number
+          include_in_stats?: boolean
+          name: string
+          sort_order?: number
         }
         Update: {
-          id?: string
-          member_id?: string
-          week_start_date?: string
-          excluded_at?: string | null
+          category?: string
+          created_at?: string
+          duration_type?: string
+          id?: number
+          include_in_stats?: boolean
+          name?: string
+          sort_order?: number
         }
-        Relationships: [
-          {
-            foreignKeyName: "lunch_group_excluded_members_member_id_fkey"
-            columns: ["member_id"]
-            isOneToOne: false
-            referencedRelation: "members"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       lunch_fixed_schedules: {
         Row: {
@@ -192,8 +377,65 @@ export type Database = {
             foreignKeyName: "lunch_fixed_schedules_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "member_current_status"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "lunch_fixed_schedules_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "members"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lunch_fixed_schedules_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_monthly_stats"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      lunch_group_excluded_members: {
+        Row: {
+          excluded_at: string | null
+          id: string
+          member_id: string
+          week_start_date: string
+        }
+        Insert: {
+          excluded_at?: string | null
+          id?: string
+          member_id: string
+          week_start_date: string
+        }
+        Update: {
+          excluded_at?: string | null
+          id?: string
+          member_id?: string
+          week_start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lunch_group_excluded_members_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "member_current_status"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "lunch_group_excluded_members_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lunch_group_excluded_members_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "user_monthly_stats"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -228,8 +470,22 @@ export type Database = {
             foreignKeyName: "lunch_group_members_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "member_current_status"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "lunch_group_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "members"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lunch_group_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_monthly_stats"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -344,6 +600,13 @@ export type Database = {
             foreignKeyName: "meal_logs_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "member_current_status"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "meal_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "members"
             referencedColumns: ["id"]
           },
@@ -358,33 +621,33 @@ export type Database = {
       }
       member_statuses: {
         Row: {
+          created_at: string | null
+          end_date: string | null
           id: string
           member_id: string
-          status: Database["public"]["Enums"]["member_status_type"]
-          start_date: string
-          end_date: string | null
           note: string | null
-          created_at: string | null
+          start_date: string
+          status: Database["public"]["Enums"]["member_status_type"]
           updated_at: string | null
         }
         Insert: {
+          created_at?: string | null
+          end_date?: string | null
           id?: string
           member_id: string
-          status: Database["public"]["Enums"]["member_status_type"]
-          start_date: string
-          end_date?: string | null
           note?: string | null
-          created_at?: string | null
+          start_date: string
+          status: Database["public"]["Enums"]["member_status_type"]
           updated_at?: string | null
         }
         Update: {
+          created_at?: string | null
+          end_date?: string | null
           id?: string
           member_id?: string
-          status?: Database["public"]["Enums"]["member_status_type"]
-          start_date?: string
-          end_date?: string | null
           note?: string | null
-          created_at?: string | null
+          start_date?: string
+          status?: Database["public"]["Enums"]["member_status_type"]
           updated_at?: string | null
         }
         Relationships: [
@@ -392,8 +655,22 @@ export type Database = {
             foreignKeyName: "member_statuses_member_id_fkey"
             columns: ["member_id"]
             isOneToOne: false
+            referencedRelation: "member_current_status"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "member_statuses_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
             referencedRelation: "members"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_statuses_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "user_monthly_stats"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -472,81 +749,54 @@ export type Database = {
       }
       monthly_allowances: {
         Row: {
-          id: string
-          user_id: string | null
-          year: number
-          month: number
           allowance_amount: number
           created_at: string | null
+          id: string
+          month: number
           updated_at: string | null
+          user_id: string | null
+          year: number
         }
         Insert: {
+          allowance_amount?: number
+          created_at?: string | null
           id?: string
+          month: number
+          updated_at?: string | null
           user_id?: string | null
           year: number
-          month: number
-          allowance_amount?: number
-          created_at?: string | null
-          updated_at?: string | null
         }
         Update: {
-          id?: string
-          user_id?: string | null
-          year?: number
-          month?: number
           allowance_amount?: number
           created_at?: string | null
+          id?: string
+          month?: number
           updated_at?: string | null
+          user_id?: string | null
+          year?: number
         }
         Relationships: [
           {
             foreignKeyName: "monthly_allowances_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "members"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      push_subscriptions: {
-        Row: {
-          id: string
-          member_id: string
-          endpoint: string
-          p256dh: string
-          auth: string
-          user_agent: string | null
-          created_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          member_id: string
-          endpoint: string
-          p256dh: string
-          auth: string
-          user_agent?: string | null
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          member_id?: string
-          endpoint?: string
-          p256dh?: string
-          auth?: string
-          user_agent?: string | null
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
+            referencedRelation: "member_current_status"
+            referencedColumns: ["member_id"]
+          },
           {
-            foreignKeyName: "push_subscriptions_member_id_fkey"
-            columns: ["member_id"]
+            foreignKeyName: "monthly_allowances_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "members"
             referencedColumns: ["id"]
-          }
+          },
+          {
+            foreignKeyName: "monthly_allowances_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_monthly_stats"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       monthly_drink_applications: {
@@ -585,38 +835,52 @@ export type Database = {
             foreignKeyName: "monthly_drink_applications_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "member_current_status"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "monthly_drink_applications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "members"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "monthly_drink_applications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_monthly_stats"
+            referencedColumns: ["user_id"]
           },
         ]
       }
       monthly_drink_settings: {
         Row: {
-          id: string
-          year: number
-          month: number
-          drink_options: Json
-          pickup_persons: Json
           created_at: string | null
+          drink_options: Json
+          id: string
+          month: number
+          pickup_persons: Json
           updated_at: string | null
+          year: number
         }
         Insert: {
-          id?: string
-          year: number
-          month: number
-          drink_options?: Json
-          pickup_persons?: Json
           created_at?: string | null
+          drink_options?: Json
+          id?: string
+          month: number
+          pickup_persons?: Json
           updated_at?: string | null
+          year: number
         }
         Update: {
-          id?: string
-          year?: number
-          month?: number
-          drink_options?: Json
-          pickup_persons?: Json
           created_at?: string | null
+          drink_options?: Json
+          id?: string
+          month?: number
+          pickup_persons?: Json
           updated_at?: string | null
+          year?: number
         }
         Relationships: []
       }
@@ -640,6 +904,106 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      push_notification_logs: {
+        Row: {
+          body: string
+          cleaned_count: number | null
+          created_at: string | null
+          failed_count: number | null
+          id: string
+          results: Json | null
+          send_to_all: boolean | null
+          sent_by: string
+          success_count: number | null
+          tag: string | null
+          title: string
+          total_recipients: number | null
+        }
+        Insert: {
+          body: string
+          cleaned_count?: number | null
+          created_at?: string | null
+          failed_count?: number | null
+          id?: string
+          results?: Json | null
+          send_to_all?: boolean | null
+          sent_by: string
+          success_count?: number | null
+          tag?: string | null
+          title: string
+          total_recipients?: number | null
+        }
+        Update: {
+          body?: string
+          cleaned_count?: number | null
+          created_at?: string | null
+          failed_count?: number | null
+          id?: string
+          results?: Json | null
+          send_to_all?: boolean | null
+          sent_by?: string
+          success_count?: number | null
+          tag?: string | null
+          title?: string
+          total_recipients?: number | null
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string | null
+          endpoint: string
+          id: string
+          member_id: string
+          p256dh: string
+          updated_at: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          auth: string
+          created_at?: string | null
+          endpoint: string
+          id?: string
+          member_id: string
+          p256dh: string
+          updated_at?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          auth?: string
+          created_at?: string | null
+          endpoint?: string
+          id?: string
+          member_id?: string
+          p256dh?: string
+          updated_at?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "member_current_status"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "push_subscriptions_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "push_subscriptions_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "user_monthly_stats"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       restaurants: {
         Row: {
@@ -674,8 +1038,22 @@ export type Database = {
             foreignKeyName: "restaurants_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
+            referencedRelation: "member_current_status"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "restaurants_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
             referencedRelation: "members"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "restaurants_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_monthly_stats"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -721,8 +1099,29 @@ export type Database = {
             foreignKeyName: "settlement_status_settled_by_fkey"
             columns: ["settled_by"]
             isOneToOne: false
+            referencedRelation: "member_current_status"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "settlement_status_settled_by_fkey"
+            columns: ["settled_by"]
+            isOneToOne: false
             referencedRelation: "members"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "settlement_status_settled_by_fkey"
+            columns: ["settled_by"]
+            isOneToOne: false
+            referencedRelation: "user_monthly_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "settlement_status_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "member_current_status"
+            referencedColumns: ["member_id"]
           },
           {
             foreignKeyName: "settlement_status_user_id_fkey"
@@ -730,6 +1129,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "members"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "settlement_status_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_monthly_stats"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -847,8 +1253,22 @@ export type Database = {
             foreignKeyName: "usage_record_audit_logs_changed_by_fkey"
             columns: ["changed_by"]
             isOneToOne: false
+            referencedRelation: "member_current_status"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "usage_record_audit_logs_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
             referencedRelation: "members"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usage_record_audit_logs_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "user_monthly_stats"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "usage_record_audit_logs_usage_record_id_fkey"
@@ -874,7 +1294,8 @@ export type Database = {
           last_modified_at: string | null
           last_modified_by: string | null
           member_id: string
-          no: number | null
+          no: number
+          notes: string | null
           receipt_url: string | null
           review_status: number
           reviewed_at: string | null
@@ -899,7 +1320,8 @@ export type Database = {
           last_modified_at?: string | null
           last_modified_by?: string | null
           member_id: string
-          no?: number | null
+          no?: number
+          notes?: string | null
           receipt_url?: string | null
           review_status?: number
           reviewed_at?: string | null
@@ -924,7 +1346,8 @@ export type Database = {
           last_modified_at?: string | null
           last_modified_by?: string | null
           member_id?: string
-          no?: number | null
+          no?: number
+          notes?: string | null
           receipt_url?: string | null
           review_status?: number
           reviewed_at?: string | null
@@ -954,8 +1377,50 @@ export type Database = {
             foreignKeyName: "usage_records_first_reviewed_by_fkey"
             columns: ["first_reviewed_by"]
             isOneToOne: false
+            referencedRelation: "member_current_status"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "usage_records_first_reviewed_by_fkey"
+            columns: ["first_reviewed_by"]
+            isOneToOne: false
             referencedRelation: "members"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usage_records_first_reviewed_by_fkey"
+            columns: ["first_reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "user_monthly_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "usage_records_last_modified_by_fkey"
+            columns: ["last_modified_by"]
+            isOneToOne: false
+            referencedRelation: "member_current_status"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "usage_records_last_modified_by_fkey"
+            columns: ["last_modified_by"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usage_records_last_modified_by_fkey"
+            columns: ["last_modified_by"]
+            isOneToOne: false
+            referencedRelation: "user_monthly_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "usage_records_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "member_current_status"
+            referencedColumns: ["member_id"]
           },
           {
             foreignKeyName: "usage_records_member_id_fkey"
@@ -965,11 +1430,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "usage_records_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "user_monthly_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "usage_records_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "member_current_status"
+            referencedColumns: ["member_id"]
+          },
+          {
             foreignKeyName: "usage_records_reviewed_by_fkey"
             columns: ["reviewed_by"]
             isOneToOne: false
             referencedRelation: "members"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usage_records_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "user_monthly_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "usage_records_second_reviewed_by_fkey"
+            columns: ["second_reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "member_current_status"
+            referencedColumns: ["member_id"]
           },
           {
             foreignKeyName: "usage_records_second_reviewed_by_fkey"
@@ -979,49 +1472,16 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "usage_records_last_modified_by_fkey"
-            columns: ["last_modified_by"]
+            foreignKeyName: "usage_records_second_reviewed_by_fkey"
+            columns: ["second_reviewed_by"]
             isOneToOne: false
-            referencedRelation: "members"
-            referencedColumns: ["id"]
+            referencedRelation: "user_monthly_stats"
+            referencedColumns: ["user_id"]
           },
         ]
       }
     }
     Views: {
-      member_current_status: {
-        Row: {
-          member_id: string | null
-          full_name: string | null
-          member_role: Database["public"]["Enums"]["member_role"] | null
-          email: string | null
-          team_id: string | null
-          division_id: string | null
-          team_name: string | null
-          division_name: string | null
-          status_id: string | null
-          current_status: Database["public"]["Enums"]["member_status_type"] | null
-          status_start_date: string | null
-          status_end_date: string | null
-          status_note: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "members_team_id_fkey"
-            columns: ["team_id"]
-            isOneToOne: false
-            referencedRelation: "teams"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "members_division_id_fkey"
-            columns: ["division_id"]
-            isOneToOne: false
-            referencedRelation: "divisions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       budget_summary: {
         Row: {
           allocation_id: string | null
@@ -1044,25 +1504,84 @@ export type Database = {
             foreignKeyName: "budget_allocations_member_id_fkey"
             columns: ["member_id"]
             isOneToOne: false
+            referencedRelation: "member_current_status"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "budget_allocations_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
             referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_allocations_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "user_monthly_stats"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      member_current_status: {
+        Row: {
+          current_status:
+            | Database["public"]["Enums"]["member_status_type"]
+            | null
+          division_id: string | null
+          division_name: string | null
+          email: string | null
+          full_name: string | null
+          member_id: string | null
+          member_role: Database["public"]["Enums"]["member_role"] | null
+          status_end_date: string | null
+          status_id: string | null
+          status_note: string | null
+          status_start_date: string | null
+          team_id: string | null
+          team_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "members_division_id_fkey"
+            columns: ["division_id"]
+            isOneToOne: false
+            referencedRelation: "divisions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
             referencedColumns: ["id"]
           },
         ]
       }
       user_monthly_stats: {
         Row: {
-          actual_work_days: number | null
+          annual_leave_days: number | null
           balance: number | null
           daily_allowance: number | null
+          day_off_days: number | null
           full_name: string | null
+          half_day_deduction: number | null
+          half_day_off_count: number | null
           holiday_count: number | null
+          holiday_deduction: number | null
+          individual_meal_deduction: number | null
+          individual_meals: number | null
           login_id: string | null
           month: number | null
+          no_meal_deduction: number | null
+          original_allowance: number | null
+          public_holiday_count: number | null
+          remote_work_days: number | null
           total_allowance: number | null
-          total_days: number | null
+          total_deduction: number | null
           total_used: number | null
           user_id: string | null
-          weekend_days: number | null
+          weekend_work_days: number | null
           work_days: number | null
           year: number | null
         }
@@ -1070,6 +1589,41 @@ export type Database = {
       }
     }
     Functions: {
+      advance_review_status: {
+        Args: { p_reviewer_id: string; p_usage_record_id: string }
+        Returns: {
+          allocation_id: string
+          amount: number
+          companions: string[] | null
+          created_at: string | null
+          delay_reason: string | null
+          description: string
+          first_reviewed_at: string | null
+          first_reviewed_by: string | null
+          id: string
+          is_reviewed: boolean | null
+          last_modified_at: string | null
+          last_modified_by: string | null
+          member_id: string
+          no: number
+          notes: string | null
+          receipt_url: string | null
+          review_status: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          second_reviewed_at: string | null
+          second_reviewed_by: string | null
+          type: Database["public"]["Enums"]["budget_type"]
+          updated_at: string | null
+          used_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "usage_records"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       authenticate_user: {
         Args: { p_login_id: string; p_password: string }
         Returns: {
@@ -1088,19 +1642,90 @@ export type Database = {
         }
         Returns: number
       }
+      get_dayoff_monthly_stats: {
+        Args: { p_month: number; p_year: number }
+        Returns: {
+          count: number
+          leave_type_id: number
+          leave_type_name: string
+          member_id: string
+          member_name: string
+          team_name: string
+        }[]
+      }
+      get_popular_restaurants: {
+        Args: { limit_count?: number }
+        Returns: {
+          count: number
+          name: string
+        }[]
+      }
       get_user_monthly_stats: {
         Args: { p_month: number; p_user_id?: string; p_year: number }
         Returns: {
-          actual_work_days: number
+          annual_leave_days: number
           balance: number
           daily_allowance: number
+          day_off_days: number
           full_name: string
+          half_day_deduction: number
+          half_day_off_count: number
+          holiday_count: number
+          holiday_deduction: number
+          individual_meal_deduction: number
+          individual_meals: number
           login_id: string
+          no_meal_deduction: number
+          original_allowance: number
+          public_holiday_count: number
+          remote_work_days: number
           total_allowance: number
+          total_deduction: number
           total_used: number
           user_id: string
+          weekend_work_days: number
           work_days: number
         }[]
+      }
+      normalize_restaurant_name: { Args: { name: string }; Returns: string }
+      revert_review_status: {
+        Args: {
+          p_reviewer_id: string
+          p_target_status: number
+          p_usage_record_id: string
+        }
+        Returns: {
+          allocation_id: string
+          amount: number
+          companions: string[] | null
+          created_at: string | null
+          delay_reason: string | null
+          description: string
+          first_reviewed_at: string | null
+          first_reviewed_by: string | null
+          id: string
+          is_reviewed: boolean | null
+          last_modified_at: string | null
+          last_modified_by: string | null
+          member_id: string
+          no: number
+          notes: string | null
+          receipt_url: string | null
+          review_status: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          second_reviewed_at: string | null
+          second_reviewed_by: string | null
+          type: Database["public"]["Enums"]["budget_type"]
+          updated_at: string | null
+          used_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "usage_records"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       toggle_review_status: {
         Args: { p_reviewer_id: string; p_usage_record_id: string }
@@ -1109,77 +1734,45 @@ export type Database = {
           amount: number
           companions: string[] | null
           created_at: string | null
+          delay_reason: string | null
           description: string
+          first_reviewed_at: string | null
+          first_reviewed_by: string | null
           id: string
           is_reviewed: boolean | null
           last_modified_at: string | null
           last_modified_by: string | null
           member_id: string
+          no: number
+          notes: string | null
           receipt_url: string | null
+          review_status: number
           reviewed_at: string | null
           reviewed_by: string | null
+          second_reviewed_at: string | null
+          second_reviewed_by: string | null
           type: Database["public"]["Enums"]["budget_type"]
           updated_at: string | null
           used_at: string
         }
-      }
-      advance_review_status: {
-        Args: { p_usage_record_id: string; p_reviewer_id: string }
-        Returns: {
-          allocation_id: string
-          amount: number
-          companions: string[] | null
-          created_at: string | null
-          description: string
-          first_reviewed_at: string | null
-          first_reviewed_by: string | null
-          id: string
-          is_reviewed: boolean | null
-          last_modified_at: string | null
-          last_modified_by: string | null
-          member_id: string
-          receipt_url: string | null
-          review_status: number
-          reviewed_at: string | null
-          reviewed_by: string | null
-          second_reviewed_at: string | null
-          second_reviewed_by: string | null
-          type: Database["public"]["Enums"]["budget_type"]
-          updated_at: string | null
-          used_at: string
-        }[]
-      }
-      revert_review_status: {
-        Args: { p_usage_record_id: string; p_reviewer_id: string; p_target_status: number }
-        Returns: {
-          allocation_id: string
-          amount: number
-          companions: string[] | null
-          created_at: string | null
-          description: string
-          first_reviewed_at: string | null
-          first_reviewed_by: string | null
-          id: string
-          is_reviewed: boolean | null
-          last_modified_at: string | null
-          last_modified_by: string | null
-          member_id: string
-          receipt_url: string | null
-          review_status: number
-          reviewed_at: string | null
-          reviewed_by: string | null
-          second_reviewed_at: string | null
-          second_reviewed_by: string | null
-          type: Database["public"]["Enums"]["budget_type"]
-          updated_at: string | null
-          used_at: string
-        }[]
+        SetofOptions: {
+          from: "*"
+          to: "usage_records"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
     }
     Enums: {
       budget_type: "복지포인트" | "활동비"
       member_role: "본부장" | "팀장" | "팀원" | "인턴"
-      member_status_type: "육아휴직" | "병가" | "재택근무" | "파견" | "휴직" | "퇴사"
+      member_status_type:
+        | "육아휴직"
+        | "병가"
+        | "재택근무"
+        | "파견"
+        | "휴직"
+        | "퇴사"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1187,24 +1780,142 @@ export type Database = {
   }
 }
 
-export type Tables<T extends keyof Database["public"]["Tables"] | keyof Database["public"]["Views"]> =
-  T extends keyof Database["public"]["Tables"]
-    ? Database["public"]["Tables"][T]["Row"]
-    : T extends keyof Database["public"]["Views"]
-      ? Database["public"]["Views"][T]["Row"]
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
       : never
+    : never
 
-export type TablesInsert<T extends keyof Database["public"]["Tables"]> =
-  Database["public"]["Tables"][T]["Insert"]
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
 
-export type TablesUpdate<T extends keyof Database["public"]["Tables"]> =
-  Database["public"]["Tables"][T]["Update"]
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
 
-export type Views<T extends keyof Database["public"]["Views"]> =
-  Database["public"]["Views"][T]["Row"]
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
 
-export type Enums<T extends keyof Database["public"]["Enums"]> =
-  Database["public"]["Enums"][T]
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
+  public: {
+    Enums: {
+      budget_type: ["복지포인트", "활동비"],
+      member_role: ["본부장", "팀장", "팀원", "인턴"],
+      member_status_type: [
+        "육아휴직",
+        "병가",
+        "재택근무",
+        "파견",
+        "휴직",
+        "퇴사",
+      ],
+    },
+  },
+} as const
 
 // Convenience types
 export type Member = Tables<"members">
@@ -1229,7 +1940,7 @@ export type LunchGroupExcludedMember = Tables<"lunch_group_excluded_members">
 export type MonthlyDrinkSettings = Tables<"monthly_drink_settings">
 export type MonthlyDrinkApplication = Tables<"monthly_drink_applications">
 
-// New types for points management
+// Points management types
 export type Organization = Tables<"organizations">
 export type OrganizationInsert = TablesInsert<"organizations">
 export type Division = Tables<"divisions">
@@ -1254,6 +1965,16 @@ export type MemberCurrentStatus = Views<"member_current_status">
 export type PushSubscription = Tables<"push_subscriptions">
 export type PushSubscriptionInsert = TablesInsert<"push_subscriptions">
 
+// Dayoff types
+export type Dayoff = Tables<"dayoffs">
+export type DayoffInsert = TablesInsert<"dayoffs">
+export type DayoffUpdate = TablesUpdate<"dayoffs">
+export type LeaveType = Tables<"leave_types">
+
+// Views helper
+type Views<T extends keyof Database["public"]["Views"]> =
+  Database["public"]["Views"][T]["Row"]
+
 // Extended types with relations
 export interface LunchGroupWithMembers extends LunchGroup {
   members: { user_id: string; member?: Member }[]
@@ -1269,3 +1990,4 @@ export interface AuthSession {
   fullName: string
   role: "user" | "admin"
 }
+

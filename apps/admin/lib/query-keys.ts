@@ -139,6 +139,22 @@ export const queryKeys = {
     logs: ["notifications", "logs"] as const,
   },
 
+  // Dayoffs (근태)
+  dayoffs: {
+    all: ["dayoffs"] as const,
+    byMonth: (year: number, month: number) =>
+      ["dayoffs", "month", year, month] as const,
+    byTarget: (targetId: string) => ["dayoffs", "target", targetId] as const,
+    detail: (id: string) => ["dayoffs", id] as const,
+    stats: (year: number, month: number) =>
+      ["dayoffs", "stats", year, month] as const,
+  },
+
+  // Leave Types (근태 유형)
+  leaveTypes: {
+    all: ["leaveTypes"] as const,
+  },
+
   // Usage Records
   usageRecords: {
     all: ["usageRecords"] as const,

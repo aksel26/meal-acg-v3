@@ -25,6 +25,7 @@ import {
   UserCheck,
   BarChart3,
   Bell,
+  CalendarClock,
   Eye,
   EyeOff,
   KeyRound,
@@ -106,6 +107,11 @@ const navigation: NavigationItem[] = [
       { name: "사용내역 검토", href: "/review", icon: ClipboardCheck },
       { name: "사용 내역 조회", href: "/points-overview", icon: BarChart3 },
     ],
+  },
+  {
+    name: "근태 관리",
+    href: "/dayoffs",
+    icon: CalendarClock,
   },
   {
     name: "알림 관리",

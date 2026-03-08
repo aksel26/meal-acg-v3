@@ -111,6 +111,26 @@ export const queryKeys = {
     me: ["points", "me"] as const,
     members: ["points", "members"] as const,
   },
+  // 근태 관련 쿼리
+  dayoffs: {
+    all: ["dayoffs"] as const,
+    byMonth: (year: number, month: number) =>
+      ["dayoffs", "month", year, month] as const,
+    byTarget: (targetId: string) => ["dayoffs", "target", targetId] as const,
+    detail: (id: string) => ["dayoffs", id] as const,
+  },
+
+  // 출퇴근 기록
+  attendance: {
+    all: ["attendance"] as const,
+    byDate: (memberId: string, date: string) =>
+      ["attendance", memberId, date] as const,
+  },
+
+  // 근태 유형
+  leaveTypes: {
+    all: ["leaveTypes"] as const,
+  },
 } as const;
 
 // 타입 유틸리티 함수들

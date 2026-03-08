@@ -3,18 +3,60 @@
 import { motion } from "motion/react";
 import Image from "next/image";
 import { formatDateKorean } from "utils";
+import { useUserStore } from "@/stores/userStore";
+import { useAttendance, useCheckIn, useCheckOut } from "@/hooks/use-attendance";
+import { useMemberIdLookup } from "@/hooks/use-points-data";
+import { useEffect } from "react";
+import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 interface GreetingSectionProps {
   userName: string;
 }
 
+function formatTime(isoString: string) {
+  return dayjs(isoString).tz("Asia/Seoul").format("HH:mm");
+}
+
 export default function GreetingSection({ userName }: GreetingSectionProps) {
+  const { memberId, setMemberInfo } = useUserStore();
+  const { data: memberLookup } = useMemberIdLookup(!memberId ? userName : null);
+
+  useEffect(() => {
+    if (memberLookup && !memberId) {
+      setMemberInfo(memberLookup.id, memberLookup.member_role || "팀원");
+    }
+  }, [memberLookup, memberId, setMemberInfo]);
+
+  const todayStr = dayjs().tz("Asia/Seoul").format("YYYY-MM-DD");
+  const { data: attendance, isLoading } = useAttendance(memberId, todayStr);
+  const checkInMutation = useCheckIn();
+  const checkOutMutation = useCheckOut();
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return "좋은 아침이에요";
     if (hour < 18) return "안녕하세요";
     return "좋은 저녁이에요";
   };
+
+  const handleCheckIn = () => {
+    if (!memberId) return;
+    checkInMutation.mutate(memberId);
+  };
+
+  const handleCheckOut = () => {
+    if (!memberId) return;
+    checkOutMutation.mutate(memberId);
+  };
+
+  const hasCheckedIn = !!attendance?.check_in_at;
+  const hasCheckedOut = !!attendance?.check_out_at;
+  const isMutating = checkInMutation.isPending || checkOutMutation.isPending;
 
   return (
     <motion.div
@@ -94,6 +136,60 @@ export default function GreetingSection({ userName }: GreetingSectionProps) {
             </span>
           </motion.div>
         </div>
+
+        {/* 출퇴근 버튼 영역 */}
+        {memberId && !isLoading && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="relative mt-4"
+          >
+            {!hasCheckedIn ? (
+              /* 미출근: 출근 버튼 */
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={handleCheckIn}
+                disabled={isMutating}
+                className="w-full py-3 rounded-xl font-semibold text-white text-[15px] bg-gradient-to-r from-[oklch(0.55_0.18_250)] to-[oklch(0.50_0.20_270)] shadow-md shadow-[oklch(0.55_0.18_250/0.25)] active:shadow-sm transition-shadow disabled:opacity-60"
+              >
+                {isMutating ? "처리 중..." : "출근하기"}
+              </motion.button>
+            ) : !hasCheckedOut ? (
+              /* 출근 완료: 출근 시각 표시 + 퇴근 버튼 */
+              <div className="flex items-center gap-3">
+                <div className="flex-1 flex items-center gap-2 px-4 py-3 rounded-xl bg-[oklch(0.96_0.02_150)] border border-[oklch(0.90_0.04_150)]">
+                  <div className="w-2 h-2 rounded-full bg-[oklch(0.65_0.20_150)] animate-pulse" />
+                  <span className="text-sm font-medium text-[oklch(0.35_0.06_150)]">
+                    {formatTime(attendance!.check_in_at!)} 출근
+                  </span>
+                </div>
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={handleCheckOut}
+                  disabled={isMutating}
+                  className="px-5 py-3 rounded-xl font-semibold text-[14px] text-[oklch(0.40_0.02_250)] bg-[oklch(0.95_0.01_250)] border border-[oklch(0.88_0.02_250)] active:bg-[oklch(0.92_0.01_250)] transition-colors disabled:opacity-60"
+                >
+                  {isMutating ? "..." : "퇴근"}
+                </motion.button>
+              </div>
+            ) : (
+              /* 퇴근 완료: 출퇴근 시각 표시 */
+              <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-[oklch(0.97_0.01_250)] border border-[oklch(0.92_0.02_250)]">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
+                  <circle cx="8" cy="8" r="7" stroke="oklch(0.65 0.15 150)" strokeWidth="1.5" />
+                  <path d="M5 8.5L7 10.5L11 6" stroke="oklch(0.65 0.15 150)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span className="text-sm text-[oklch(0.45_0.02_250)]">
+                  <span className="font-medium">{formatTime(attendance!.check_in_at!)}</span>
+                  {" 출근 → "}
+                  <span className="font-medium">{formatTime(attendance!.check_out_at!)}</span>
+                  {" 퇴근"}
+                </span>
+              </div>
+            )}
+          </motion.div>
+        )}
       </div>
     </motion.div>
   );

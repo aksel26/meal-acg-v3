@@ -9,8 +9,15 @@ export type JobPosting = {
   pay_rate: number;
   pay_type: "hourly" | "daily";
   headcount: number;
-  status: "open" | "closed" | "draft";
+  status: "open" | "closed" | "draft" | "in_progress" | "completed";
   description: string | null;
+  work_type: "online" | "offline";
+  shift_type: "day" | "night";
+  platform: string | null;
+  lunch_start: string | null;
+  lunch_end: string | null;
+  supervisor_id: string | null;
+  supervisor_name: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -23,6 +30,12 @@ export type Worker = {
   birth_date: string | null;
   bank_name: string | null;
   account_number: string | null;
+  gender: "male" | "female" | null;
+  experience: string | null;
+  address: string | null;
+  resident_id: string | null;
+  email: string | null;
+  warning: string | null;
   status: "registered" | "contracted" | "working" | "completed";
   note: string | null;
   created_by: string | null;
@@ -35,6 +48,15 @@ export type Assignment = {
   worker_id: string;
   job_posting_id: string;
   status: "assigned" | "working" | "completed" | "cancelled";
+  contract_status: "signed" | "confirmed" | null;
+  signature_image_path: string | null;
+  signed_at: string | null;
+  confirmed_at: string | null;
+  confirmed_by: string | null;
+  attendance_status: "checked_in" | "confirmed" | null;
+  checked_in_at: string | null;
+  attendance_confirmed_at: string | null;
+  attendance_confirmed_by: string | null;
   assigned_at: string;
   updated_at: string;
 };
@@ -60,6 +82,6 @@ export type WorkerWithAssignments = Worker & {
 };
 
 export type AssignmentWithDetails = Assignment & {
-  worker?: { name: string };
-  job_posting?: { title: string };
+  worker?: { id: string; name: string; phone: string | null; status: string };
+  job_posting?: { id: string; title: string; status: string };
 };

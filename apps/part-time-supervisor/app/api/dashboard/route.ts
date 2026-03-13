@@ -8,10 +8,10 @@ export async function GET() {
     const supabase = createServiceClient();
 
     const [openJobs, totalWorkers, workingWorkers, recentJobs] = await Promise.all([
-      supabase.from("job_postings").select("*", { count: "exact", head: true }).eq("status", "open").schema("supervisor"),
-      supabase.from("workers").select("*", { count: "exact", head: true }).schema("supervisor"),
-      supabase.from("workers").select("*", { count: "exact", head: true }).eq("status", "working").schema("supervisor"),
-      supabase.from("job_postings").select("id, title, status, headcount, created_at").order("created_at", { ascending: false }).limit(5).schema("supervisor"),
+      supabase.from("job_postings").select("*", { count: "exact", head: true }).eq("status", "open"),
+      supabase.from("workers").select("*", { count: "exact", head: true }),
+      supabase.from("workers").select("*", { count: "exact", head: true }).eq("status", "working"),
+      supabase.from("job_postings").select("id, title, status, headcount, created_at").order("created_at", { ascending: false }).limit(5),
     ]);
 
     return NextResponse.json({

@@ -28,10 +28,12 @@ import {
   CalendarClock,
   Eye,
   EyeOff,
+  HardHat,
   KeyRound,
   Loader2,
   PanelLeftClose,
   PanelLeftOpen,
+  ExternalLink,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import { Button } from "@repo/ui/src/button";
@@ -58,6 +60,7 @@ interface NavItem {
   name: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
+  external?: boolean;
 }
 
 interface NavGroup {
@@ -119,6 +122,12 @@ const navigation: NavigationItem[] = [
     icon: Bell,
   },
   {
+    name: "아르바이트 관리",
+    href: process.env.NEXT_PUBLIC_SUPERVISOR_APP_URL || "http://localhost:3002",
+    icon: HardHat,
+    external: true,
+  },
+  {
     name: "설정",
     icon: Cog,
     items: [{ name: "공휴일 관리", href: "/holidays", icon: CalendarDays }],
@@ -134,24 +143,45 @@ function NavItemComponent({
   isActive: boolean;
   collapsed: boolean;
 }) {
-  const link = (
-    <Link
-      href={item.href}
-      className={cn(
-        "group flex items-center rounded-xl text-sm transition-colors",
-        collapsed ? "justify-center px-0 py-3" : "gap-2.5 px-4 py-3",
-        isActive
-          ? "bg-white font-semibold text-slate-900"
-          : "font-medium text-slate-400 hover:bg-white/60 hover:text-slate-600",
-      )}
-    >
+  const linkClassName = cn(
+    "group flex items-center rounded-xl text-sm transition-colors",
+    collapsed ? "justify-center px-0 py-3" : "gap-2.5 px-4 py-3",
+    isActive
+      ? "bg-white font-semibold text-slate-900"
+      : "font-medium text-slate-400 hover:bg-white/60 hover:text-slate-600",
+  );
+
+  const linkContent = (
+    <>
       <item.icon
         className={cn(
           "flex-shrink-0 transition-all",
           collapsed ? "h-5 w-5" : "h-4 w-4",
         )}
       />
-      {!collapsed && <span>{item.name}</span>}
+      {!collapsed && (
+        <>
+          <span className={item.external ? "flex-1" : ""}>{item.name}</span>
+          {item.external && (
+            <ExternalLink className="h-3 w-3 text-slate-400" />
+          )}
+        </>
+      )}
+    </>
+  );
+
+  const link = item.external ? (
+    <a
+      href={item.href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={linkClassName}
+    >
+      {linkContent}
+    </a>
+  ) : (
+    <Link href={item.href} className={linkClassName}>
+      {linkContent}
     </Link>
   );
 

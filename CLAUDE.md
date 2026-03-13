@@ -16,15 +16,18 @@ pnpm install
 pnpm dev          # Start all dev servers (user:3000, admin:3001)
 pnpm dev:user     # Start only user app (port 3000)
 pnpm dev:admin    # Start only admin app (port 3001)
+pnpm dev:part-time-supervisor  # Start supervisor app (port 3002)
 
 # Build
 pnpm build        # Build entire monorepo
 pnpm build:user   # Build only user app
 pnpm build:admin  # Build only admin app
+pnpm build:part-time-supervisor  # Build supervisor app
 
 # Production
 pnpm start:user   # Start production user app (after build)
 pnpm start:admin  # Start production admin app (after build)
+pnpm start:part-time-supervisor  # Start production supervisor app (after build)
 
 # Code quality
 pnpm lint         # ESLint (max warnings = 0)
@@ -40,6 +43,7 @@ pnpm format       # Prettier formatting
 apps/
   user/              # User-facing Next.js 15 app (port 3000)
   admin/             # Admin dashboard Next.js 15 app (port 3001)
+  part-time-supervisor/ # Supervisor part-time worker management app (port 3002)
 
 packages/
   ui/                # Shared Radix UI components (@repo/ui)
@@ -269,3 +273,47 @@ User app is a PWA via `@ducanh2912/next-pwa`. Service worker auto-generated on b
 
 ### Push Notifications
 Both apps implement Web Push using VAPID keys. Utilities in `lib/web-push.ts` (admin) and `lib/push-notifications.ts` (user).
+
+## Part-Time Supervisor App
+
+Supervisor part-time worker management app (`apps/part-time-supervisor/`, port 3002).
+
+### Authentication
+SSO via admin app — middleware calls `ADMIN_APP_URL/api/auth/session` server-side with cookie forwarding. Session info passed via `x-session-user-id/name/role` request headers. `requireAuth()` in `lib/auth.ts` extracts session from these headers.
+
+### Database
+Separate `supervisor` schema in Supabase with 4 tables:
+- `job_postings` — 공고 (status: open/closed/draft)
+- `workers` — 지원자 (status: registered/contracted/working/completed)
+- `assignments` — 배정 (status: assigned/working/completed/cancelled)
+- `contract_documents` — 계약서 파일
+
+RLS policies restrict to `service_role` only. All queries use `createServiceClient()` with `.schema("supervisor")`.
+
+### Storage
+Private `contracts` bucket in Supabase Storage. Files accessed via Signed URLs (1hr expiry). Upload/download utilities in `lib/storage.ts`.
+
+### API Routes
+- `/api/auth/session` — SSO session proxy
+- `/api/dashboard` — Dashboard stats
+- `/api/job-postings`, `/api/job-postings/[id]` — Job posting CRUD
+- `/api/workers`, `/api/workers/[id]` — Worker CRUD (detail includes assignments + contracts)
+- `/api/contracts`, `/api/contracts/[id]` — Contract upload/download/delete
+- `/api/assignments`, `/api/assignments/[id]` — Assignment CRUD
+
+### Query Invalidation
+```typescript
+// Job posting mutations
+queryClient.invalidateQueries({ queryKey: queryKeys.jobPostings.all });
+queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+
+// Worker mutations
+queryClient.invalidateQueries({ queryKey: queryKeys.workers.all });
+queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+
+// Assignment mutations
+queryClient.invalidateQueries({ queryKey: queryKeys.assignments.all });
+queryClient.invalidateQueries({ queryKey: queryKeys.workers.all });
+queryClient.invalidateQueries({ queryKey: queryKeys.jobPostings.all });
+queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+```

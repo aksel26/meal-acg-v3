@@ -12,7 +12,10 @@
     "start:user": "turbo run start --filter=user",
     "build:admin": "turbo run build --filter=admin",
     "dev:admin": "turbo run dev --filter=admin",
-    "start:admin": "turbo run start --filter=admin"
+    "start:admin": "turbo run start --filter=admin",
+    "build:part-time-supervisor": "turbo run build --filter=part-time-supervisor",
+    "dev:part-time-supervisor": "turbo run dev --filter=part-time-supervisor",
+    "start:part-time-supervisor": "turbo run start --filter=part-time-supervisor"
   },
   "devDependencies": {
     "prettier": "^3.6.0",

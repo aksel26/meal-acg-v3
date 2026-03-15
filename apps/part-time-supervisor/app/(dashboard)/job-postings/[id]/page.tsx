@@ -4,13 +4,20 @@ import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useJobPosting } from "@/hooks/use-job-postings";
 import { useAssignmentsByJobPosting } from "@/hooks/use-assignments";
-import { ArrowLeft, MessageSquare, Pencil, QrCode, UserPlus } from "lucide-react";
+import { ArrowLeft, FileText, MessageSquare, Pencil, QrCode, UserPlus } from "lucide-react";
 import dayjs from "dayjs";
 import "dayjs/locale/ko";
 import AssignedWorkersTable from "@/components/job-postings/AssignedWorkersTable";
 import RegisterWorkerDialog from "@/components/job-postings/RegisterWorkerDialog";
 import SmsDialog from "@/components/job-postings/SmsDialog";
 import ContractLinkModal from "@/components/job-postings/ContractLinkModal";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@repo/ui/src/dialog";
+import { Button } from "@repo/ui/src/button";
 
 dayjs.locale("ko");
 
@@ -28,9 +35,9 @@ const payTypeLabel: Record<string, string> = { hourly: "시급", daily: "일급"
 
 function InfoItem({ label, value }: { label: string; value: string | null | undefined }) {
   return (
-    <div>
-      <dt className="text-xs font-medium text-slate-400">{label}</dt>
-      <dd className="mt-0.5 text-sm font-medium text-slate-700">{value || "-"}</dd>
+    <div className="flex items-baseline gap-2">
+      <dt className="w-16 shrink-0 text-xs text-slate-400">{label}</dt>
+      <dd className="text-sm font-medium text-slate-700">{value || "-"}</dd>
     </div>
   );
 }
@@ -41,6 +48,7 @@ export default function JobPostingDetailPage({ params }: { params: Promise<{ id:
   const [registerOpen, setRegisterOpen] = useState(false);
   const [smsOpen, setSmsOpen] = useState(false);
   const [contractLinkOpen, setContractLinkOpen] = useState(false);
+  const [descriptionOpen, setDescriptionOpen] = useState(false);
   const { data: job, isLoading } = useJobPosting(id);
   const { data: assignments, isLoading: assignmentsLoading } = useAssignmentsByJobPosting(id);
 
@@ -78,31 +86,53 @@ export default function JobPostingDetailPage({ params }: { params: Promise<{ id:
       </div>
 
       {/* Summary */}
-      <div className="rounded-xl border bg-slate-50/50 p-5">
-        <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <InfoItem label="형태" value={workTypeLabel[job.work_type]} />
-          <InfoItem label="시간대" value={shiftTypeLabel[job.shift_type]} />
+      <div className="rounded-xl border bg-slate-50/50 p-3">
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3">
+          <InfoItem
+            label="형태"
+            value={`${workTypeLabel[job.work_type] || "-"} · ${shiftTypeLabel[job.shift_type] || "-"}`}
+          />
           <InfoItem label="장소" value={job.location} />
           <InfoItem label="플랫폼" value={job.platform} />
           <InfoItem label="일자" value={`${job.start_date} ~ ${job.end_date}`} />
           <InfoItem
-            label="근무시간"
-            value={job.work_start && job.work_end ? `${job.work_start.slice(0, 5)} ~ ${job.work_end.slice(0, 5)}` : null}
-          />
-          <InfoItem
-            label="점심시간"
-            value={job.lunch_start && job.lunch_end ? `${job.lunch_start.slice(0, 5)} ~ ${job.lunch_end.slice(0, 5)}` : null}
+            label="근무/점심"
+            value={
+              job.work_start && job.work_end
+                ? `${job.work_start.slice(0, 5)}~${job.work_end.slice(0, 5)}${job.lunch_start && job.lunch_end ? ` (점심 ${job.lunch_start.slice(0, 5)}~${job.lunch_end.slice(0, 5)})` : ""}`
+                : null
+            }
           />
           <InfoItem label="급여" value={`${job.pay_rate.toLocaleString()}원 (${payTypeLabel[job.pay_type]})`} />
           <InfoItem label="모집인원" value={`${job.headcount}명`} />
         </dl>
         {job.description && (
-          <div className="mt-4 border-t pt-4">
-            <dt className="text-xs font-medium text-slate-400">내용</dt>
-            <dd className="mt-1 whitespace-pre-wrap text-sm text-slate-600">{job.description}</dd>
+          <div className="mt-2 border-t pt-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 gap-1.5 px-2 text-xs text-slate-500"
+              onClick={() => setDescriptionOpen(true)}
+            >
+              <FileText size={14} />
+              내용 보기
+            </Button>
           </div>
         )}
       </div>
+
+      {/* Description Dialog — 관리자 전용 앱, RichTextEditor로 입력된 신뢰 콘텐츠 */}
+      <Dialog open={descriptionOpen} onOpenChange={setDescriptionOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{job.title} — 내용</DialogTitle>
+          </DialogHeader>
+          <div
+            className="prose prose-sm max-w-none text-slate-700"
+            dangerouslySetInnerHTML={{ __html: job.description || "" }}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Workers Table */}
       <div>
@@ -147,20 +177,18 @@ export default function JobPostingDetailPage({ params }: { params: Promise<{ id:
         jobPostingId={id}
       />
 
-      {contractLinkOpen && (
-        <ContractLinkModal
-          jobPostingId={id}
-          onClose={() => setContractLinkOpen(false)}
-        />
-      )}
+      <ContractLinkModal
+        open={contractLinkOpen}
+        onOpenChange={setContractLinkOpen}
+        jobPostingId={id}
+      />
 
-      {smsOpen && (
-        <SmsDialog
-          assignments={assignments || []}
-          job={job}
-          onClose={() => setSmsOpen(false)}
-        />
-      )}
+      <SmsDialog
+        open={smsOpen}
+        onOpenChange={setSmsOpen}
+        assignments={assignments || []}
+        job={job}
+      />
     </div>
   );
 }

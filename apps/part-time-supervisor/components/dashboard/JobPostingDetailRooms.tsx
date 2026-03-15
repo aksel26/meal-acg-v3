@@ -30,7 +30,7 @@ export function JobPostingDetailRooms({ workers }: Props) {
         });
       }
       roomMap.get(slot.room)!.entries.push({
-        workerName: worker.name,
+        workerName: worker.name ?? "",
         startTime: slot.start_time,
         endTime: slot.end_time,
       });

@@ -4,7 +4,16 @@ import { useForm } from "react-hook-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import { toast } from "@repo/ui/src/sonner";
-import { X } from "lucide-react";
+import { Button } from "@repo/ui/src/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@repo/ui/src/dialog";
+
 import WorkerFormFields, { workerFormDefaults } from "@/components/workers/WorkerFormFields";
 import type { WorkerFormData } from "@/components/workers/WorkerFormFields";
 
@@ -23,6 +32,7 @@ export default function RegisterWorkerDialog({
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = useForm<WorkerFormData>({
     defaultValues: workerFormDefaults,
@@ -36,7 +46,7 @@ export default function RegisterWorkerDialog({
         body: JSON.stringify({
           ...data,
           email: data.email || null,
-          gender: data.gender || null,
+          gender: data.gender === "none" ? null : data.gender || null,
           birth_date: data.birth_date || null,
           bank_name: data.bank_name || null,
           account_number: data.account_number || null,
@@ -67,44 +77,40 @@ export default function RegisterWorkerDialog({
     }
   };
 
-  const handleClose = () => {
-    reset();
-    onClose();
+  const handleClose = (isOpen: boolean) => {
+    if (!isOpen) {
+      reset();
+      onClose();
+    }
   };
 
-  if (!open) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold">지원자 등록</h3>
-          <button onClick={handleClose} className="rounded-lg p-1 hover:bg-slate-100">
-            <X size={18} />
-          </button>
-        </div>
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="max-h-[85vh] p-0" style={{ maxWidth: "28rem" }}>
+        <DialogHeader className="px-6 pt-6 pb-0">
+          <DialogTitle>지원자 등록</DialogTitle>
+          <DialogDescription>새로운 지원자 정보를 입력해주세요.</DialogDescription>
+        </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <WorkerFormFields register={register} errors={errors} />
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div className="overflow-y-auto px-6 py-4" style={{ maxHeight: "calc(85vh - 10rem)" }}>
+              <WorkerFormFields register={register} errors={errors} control={control} />
+          </div>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <button
+          <DialogFooter className="border-t px-6 py-4">
+            <Button
               type="button"
-              onClick={handleClose}
-              className="rounded-lg border px-4 py-2 text-sm hover:bg-slate-50"
+              variant="outline"
+              onClick={() => handleClose(false)}
             >
               취소
-            </button>
-            <button
-              type="submit"
-              disabled={mutation.isPending}
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
-            >
+            </Button>
+            <Button type="submit" disabled={mutation.isPending}>
               {mutation.isPending ? "등록 중..." : "등록"}
-            </button>
-          </div>
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -1,8 +1,26 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { X } from "lucide-react";
 import { toast } from "@repo/ui/src/sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@repo/ui/src/dialog";
+import { Button } from "@repo/ui/src/button";
+import { Textarea } from "@repo/ui/src/textarea";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@repo/ui/src/select";
+import { Checkbox } from "@repo/ui/src/checkbox";
+import { Label } from "@repo/ui/src/label";
+import { ScrollArea } from "@repo/ui/src/scroll-area";
 import type { AssignmentWithDetails, JobPosting } from "@/lib/supabase/types";
 
 type Template = {
@@ -36,13 +54,15 @@ function getByteLength(str: string): number {
 }
 
 export default function SmsDialog({
+  open,
+  onOpenChange,
   assignments,
   job,
-  onClose,
 }: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   assignments: AssignmentWithDetails[];
   job: JobPosting;
-  onClose: () => void;
 }) {
   const templates = useMemo(() => getTemplates(job), [job]);
 
@@ -62,7 +82,7 @@ export default function SmsDialog({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(
     () => new Set(recipients.filter((r) => r.hasPhone).map((r) => r.id))
   );
-  const [templateIndex, setTemplateIndex] = useState(0);
+  const [templateIndex, setTemplateIndex] = useState("0");
   const [message, setMessage] = useState(templates[0]?.content ?? "");
 
   const selectableRecipients = recipients.filter((r) => r.hasPhone);
@@ -87,8 +107,9 @@ export default function SmsDialog({
     });
   };
 
-  const handleTemplateChange = (idx: number) => {
-    setTemplateIndex(idx);
+  const handleTemplateChange = (value: string) => {
+    setTemplateIndex(value);
+    const idx = Number(value);
     setMessage(templates[idx]?.content ?? "");
   };
 
@@ -106,85 +127,79 @@ export default function SmsDialog({
     }
     if (window.confirm(`${selectedIds.size}명에게 ${messageType}를 전송하시겠습니까?`)) {
       toast.info("SMS 전송 기능은 준비 중입니다.");
-      onClose();
+      onOpenChange(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
-        {/* Header */}
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold">SMS 전송</h3>
-          <button onClick={onClose} className="rounded-lg p-1 hover:bg-slate-100">
-            <X size={18} />
-          </button>
-        </div>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>SMS 전송</DialogTitle>
+        </DialogHeader>
 
         {/* Recipients */}
-        <div className="mb-4">
-          <div className="mb-2 flex items-center justify-between">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
             <span className="text-sm font-medium">수신자</span>
             <span className="text-xs text-slate-400">{selectedIds.size}명 선택됨</span>
           </div>
-          <div className="max-h-40 overflow-y-auto rounded-lg border">
+          <div className="rounded-lg border">
             <label className="flex cursor-pointer items-center gap-2 border-b px-3 py-2 hover:bg-slate-50">
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={allSelected}
-                onChange={toggleAll}
+                onCheckedChange={toggleAll}
                 disabled={selectableRecipients.length === 0}
-                className="rounded"
               />
               <span className="text-sm font-medium">전체 선택</span>
             </label>
-            {recipients.map((r) => (
-              <label
-                key={r.id}
-                className={`flex items-center gap-2 px-3 py-2 ${
-                  r.hasPhone ? "cursor-pointer hover:bg-slate-50" : "opacity-40"
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedIds.has(r.id)}
-                  onChange={() => toggleOne(r.id)}
-                  disabled={!r.hasPhone}
-                  className="rounded"
-                />
-                <span className="text-sm">{r.name}</span>
-                <span className="text-xs text-slate-400">
-                  {r.phone || "번호 없음"}
-                </span>
-              </label>
-            ))}
-            {recipients.length === 0 && (
-              <div className="px-3 py-4 text-center text-sm text-slate-400">
-                배정된 지원자가 없습니다.
-              </div>
-            )}
+            <ScrollArea className="max-h-40">
+              {recipients.map((r) => (
+                <label
+                  key={r.id}
+                  className={`flex items-center gap-2 px-3 py-2 ${
+                    r.hasPhone ? "cursor-pointer hover:bg-slate-50" : "opacity-40"
+                  }`}
+                >
+                  <Checkbox
+                    checked={selectedIds.has(r.id)}
+                    onCheckedChange={() => toggleOne(r.id)}
+                    disabled={!r.hasPhone}
+                  />
+                  <span className="text-sm">{r.name}</span>
+                  <span className="text-xs text-slate-400">
+                    {r.phone || "번호 없음"}
+                  </span>
+                </label>
+              ))}
+              {recipients.length === 0 && (
+                <div className="px-3 py-4 text-center text-sm text-slate-400">
+                  배정된 지원자가 없습니다.
+                </div>
+              )}
+            </ScrollArea>
           </div>
         </div>
 
         {/* Message */}
-        <div className="mb-4 space-y-2">
-          <span className="text-sm font-medium">메시지</span>
-          <select
-            value={templateIndex}
-            onChange={(e) => handleTemplateChange(Number(e.target.value))}
-            className="w-full rounded-lg border px-3 py-2 text-sm"
-          >
-            {templates.map((t, i) => (
-              <option key={i} value={i}>
-                {t.label}
-              </option>
-            ))}
-          </select>
-          <textarea
+        <div className="space-y-2">
+          <Label>메시지</Label>
+          <Select value={templateIndex} onValueChange={handleTemplateChange}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {templates.map((t, i) => (
+                <SelectItem key={i} value={String(i)}>
+                  {t.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             rows={5}
-            className="w-full rounded-lg border px-3 py-2 text-sm"
             placeholder="메시지를 입력하세요"
           />
           <div className="flex justify-end text-xs text-slate-400">
@@ -192,24 +207,13 @@ export default function SmsDialog({
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex justify-end gap-2 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg border px-4 py-2 text-sm hover:bg-slate-50"
-          >
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
             취소
-          </button>
-          <button
-            type="button"
-            onClick={handleSend}
-            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
-          >
-            전송
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+          <Button onClick={handleSend}>전송</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

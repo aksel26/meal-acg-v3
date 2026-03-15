@@ -4,6 +4,16 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useCreateWorker, useUpdateWorker } from "@/hooks/use-worker-mutations";
 import { toast } from "@repo/ui/src/sonner";
+import { Button } from "@repo/ui/src/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@repo/ui/src/dialog";
+
 import WorkerFormFields, { workerFormDefaults } from "./WorkerFormFields";
 import type { WorkerFormData } from "./WorkerFormFields";
 import type { Worker } from "@/lib/supabase/types";
@@ -20,7 +30,13 @@ export default function WorkerModal({
   const createMutation = useCreateWorker();
   const updateMutation = useUpdateWorker();
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<WorkerFormData>({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    formState: { errors },
+  } = useForm<WorkerFormData>({
     defaultValues: workerFormDefaults,
   });
 
@@ -52,7 +68,7 @@ export default function WorkerModal({
         phone: data.phone || null,
         email: data.email || null,
         birth_date: data.birth_date || null,
-        gender: (data.gender as Worker["gender"]) || null,
+        gender: (data.gender === "none" ? null : data.gender as Worker["gender"]) || null,
         address: data.address || null,
         experience: data.experience || null,
         warning: data.warning || null,
@@ -74,38 +90,48 @@ export default function WorkerModal({
     }
   };
 
-  if (!open) return null;
+  const handleClose = (isOpen: boolean) => {
+    if (!isOpen) {
+      onClose();
+    }
+  };
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
-        <h3 className="mb-4 text-lg font-semibold">
-          {existing ? "지원자 수정" : "지원자 등록"}
-        </h3>
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="max-h-[85vh] p-0" style={{ maxWidth: "28rem" }}>
+        <DialogHeader className="px-6 pt-6 pb-0">
+          <DialogTitle>{existing ? "지원자 수정" : "지원자 등록"}</DialogTitle>
+          <DialogDescription>
+            {existing ? "지원자 정보를 수정합니다." : "새로운 지원자 정보를 입력해주세요."}
+          </DialogDescription>
+        </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <WorkerFormFields register={register} errors={errors} showStatus />
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div className="overflow-y-auto px-6 py-4" style={{ maxHeight: "calc(85vh - 10rem)" }}>
+              <WorkerFormFields
+                register={register}
+                errors={errors}
+                control={control}
+                showStatus
+              />
+          </div>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <button
+          <DialogFooter className="border-t px-6 py-4">
+            <Button
               type="button"
-              onClick={onClose}
-              className="rounded-lg border px-4 py-2 text-sm hover:bg-slate-50"
+              variant="outline"
+              onClick={() => handleClose(false)}
             >
               취소
-            </button>
-            <button
-              type="submit"
-              disabled={isPending}
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
-            >
+            </Button>
+            <Button type="submit" disabled={isPending}>
               {isPending ? "저장 중..." : existing ? "수정" : "등록"}
-            </button>
-          </div>
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

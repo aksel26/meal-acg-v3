@@ -2,6 +2,35 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
 
+function parseTime(time: string): number {
+  const parts = time.split(":").map(Number);
+  return (parts[0] ?? 0) + (parts[1] ?? 0) / 60;
+}
+
+function calculateEstimatedCost(
+  payRate: number | null,
+  payType: string | null,
+  workStart: string | null,
+  workEnd: string | null,
+  lunchStart: string | null,
+  lunchEnd: string | null,
+  assigned: number
+): number {
+  if (!payRate || !payType) return 0;
+
+  if (payType === "daily") {
+    return payRate * assigned;
+  }
+
+  // hourly
+  if (!workStart || !workEnd) return 0;
+  let workHours = parseTime(workEnd) - parseTime(workStart);
+  if (lunchStart && lunchEnd) {
+    workHours -= parseTime(lunchEnd) - parseTime(lunchStart);
+  }
+  return payRate * Math.max(workHours, 0) * assigned;
+}
+
 export async function GET(request: NextRequest) {
   try {
     await requireAuth();
@@ -22,7 +51,7 @@ export async function GET(request: NextRequest) {
     const { data: jobPostings, error } = await supabase
       .from("job_postings")
       .select(
-        `id, title, location, start_date, end_date, work_start, work_end, status, headcount,
+        `id, title, location, start_date, end_date, work_start, work_end, status, headcount, pay_rate, pay_type, lunch_start, lunch_end,
         assignments(id, attendance_status, contract_status, room_slots, status, worker:workers(id, name, phone))`
       )
       .in("status", ["open", "in_progress"])
@@ -40,6 +69,7 @@ export async function GET(request: NextRequest) {
     let totalAssigned = 0;
     let totalAttendanceCompleted = 0;
     let totalContractCompleted = 0;
+    let totalEstimatedCost = 0;
 
     const mappedJobPostings = (jobPostings ?? []).map((jp) => {
       // Filter out cancelled assignments (LEFT JOIN returns all)
@@ -70,9 +100,20 @@ export async function GET(request: NextRequest) {
         assigned > 0 &&
         (notAttended / assigned >= 0.5 || notContracted / assigned >= 0.5);
 
+      const estimatedCost = calculateEstimatedCost(
+        jp.pay_rate,
+        jp.pay_type,
+        jp.work_start,
+        jp.work_end,
+        jp.lunch_start,
+        jp.lunch_end,
+        assigned
+      );
+
       totalAssigned += assigned;
       totalAttendanceCompleted += attendanceCheckedIn + attendanceConfirmed;
       totalContractCompleted += contractSigned + contractConfirmed;
+      totalEstimatedCost += estimatedCost;
 
       const workers = activeAssignments.map((a: Record<string, unknown>) => {
         const worker = a.worker as Record<string, unknown> | null;
@@ -97,6 +138,9 @@ export async function GET(request: NextRequest) {
         workEnd: jp.work_end,
         status: jp.status,
         headcount: jp.headcount,
+        payRate: jp.pay_rate,
+        payType: jp.pay_type,
+        estimatedCost,
         workers,
         stats: {
           assigned,
@@ -115,6 +159,7 @@ export async function GET(request: NextRequest) {
         totalAssigned,
         attendanceCompleted: totalAttendanceCompleted,
         contractCompleted: totalContractCompleted,
+        totalEstimatedCost,
       },
       jobPostings: mappedJobPostings,
     });

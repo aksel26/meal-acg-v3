@@ -32,6 +32,9 @@ export type DashboardJobPosting = {
     contractSigned: number;
     contractConfirmed: number;
   };
+  payRate: number;
+  payType: "hourly" | "daily";
+  estimatedCost: number;
   hasIssues: boolean;
 };
 
@@ -41,6 +44,7 @@ export type DashboardData = {
     totalAssigned: number;
     attendanceCompleted: number;
     contractCompleted: number;
+    totalEstimatedCost: number;
   };
   jobPostings: DashboardJobPosting[];
 };

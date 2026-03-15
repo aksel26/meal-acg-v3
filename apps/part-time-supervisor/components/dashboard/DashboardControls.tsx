@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { DateRangePicker } from "@repo/ui/src/date-range-picker";
 import { Button } from "@repo/ui/src/button";
 import dayjs from "dayjs";
@@ -13,30 +14,24 @@ type Props = {
 export function DashboardControls({ startDate, endDate, onChange }: Props) {
   const today = dayjs().format("YYYY-MM-DD");
 
-  const presets = [
-    {
-      label: "오늘",
-      onClick: () => onChange({ startDate: today, endDate: today }),
-    },
-    {
-      label: "이번 주",
-      onClick: () => {
-        const day = dayjs().day();
-        const diffToMonday = day === 0 ? -6 : 1 - day;
-        const monday = dayjs().add(diffToMonday, "day").format("YYYY-MM-DD");
-        const sunday = dayjs().add(diffToMonday + 6, "day").format("YYYY-MM-DD");
-        onChange({ startDate: monday, endDate: sunday });
-      },
-    },
-    {
-      label: "이번 달",
-      onClick: () => {
-        const first = dayjs().startOf("month").format("YYYY-MM-DD");
-        const last = dayjs().endOf("month").format("YYYY-MM-DD");
-        onChange({ startDate: first, endDate: last });
-      },
-    },
-  ];
+  const presets = useMemo(() => {
+    const day = dayjs().day();
+    const diffToMonday = day === 0 ? -6 : 1 - day;
+    const monday = dayjs().add(diffToMonday, "day").format("YYYY-MM-DD");
+    const sunday = dayjs().add(diffToMonday + 6, "day").format("YYYY-MM-DD");
+    const monthFirst = dayjs().startOf("month").format("YYYY-MM-DD");
+    const monthLast = dayjs().endOf("month").format("YYYY-MM-DD");
+
+    return [
+      { label: "오늘", start: today, end: today },
+      { label: "이번 주", start: monday, end: sunday },
+      { label: "이번 달", start: monthFirst, end: monthLast },
+    ];
+  }, [today]);
+
+  const activePreset = presets.find(
+    (p) => p.start === startDate && p.end === endDate
+  );
 
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -50,9 +45,9 @@ export function DashboardControls({ startDate, endDate, onChange }: Props) {
         {presets.map((preset) => (
           <Button
             key={preset.label}
-            variant="outline"
+            variant={activePreset?.label === preset.label ? "default" : "outline"}
             size="sm"
-            onClick={preset.onClick}
+            onClick={() => onChange({ startDate: preset.start, endDate: preset.end })}
           >
             {preset.label}
           </Button>

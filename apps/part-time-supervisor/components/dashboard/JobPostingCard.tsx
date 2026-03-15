@@ -15,15 +15,30 @@ function getRateColor(completed: number, total: number): string {
   return "text-red-400";
 }
 
-function getStatusLabel(status: string) {
+function getStatusConfig(status: string): { label: string; className: string } {
   switch (status) {
     case "open":
-      return "모집중";
+      return {
+        label: "모집중",
+        className: "bg-blue-500/10 text-blue-400",
+      };
     case "in_progress":
-      return "진행중";
+      return {
+        label: "진행중",
+        className: "bg-green-500/10 text-green-400",
+      };
     default:
-      return status;
+      return {
+        label: status,
+        className: "bg-slate-500/10 text-slate-400",
+      };
   }
+}
+
+function formatCostShort(cost: number): string {
+  const man = Math.floor(cost / 10000);
+  if (man > 0) return `${new Intl.NumberFormat("ko-KR").format(man)}만원`;
+  return `${new Intl.NumberFormat("ko-KR").format(cost)}원`;
 }
 
 export function JobPostingCard({ jobPosting: jp, isExpanded, onClick }: Props) {
@@ -32,6 +47,12 @@ export function JobPostingCard({ jobPosting: jp, isExpanded, onClick }: Props) {
     stats.assigned - stats.attendanceCheckedIn - stats.attendanceConfirmed;
   const notContracted =
     stats.assigned - stats.contractSigned - stats.contractConfirmed;
+
+  const statusConfig = getStatusConfig(jp.status);
+
+  const payLabel = jp.payType === "hourly"
+    ? `시급 ${new Intl.NumberFormat("ko-KR").format(jp.payRate)}원`
+    : `일급 ${new Intl.NumberFormat("ko-KR").format(jp.payRate)}원`;
 
   const miniStats = [
     {
@@ -49,26 +70,31 @@ export function JobPostingCard({ jobPosting: jp, isExpanded, onClick }: Props) {
       value: `${stats.contractConfirmed}/${stats.assigned}`,
       color: getRateColor(stats.contractConfirmed, stats.assigned),
     },
+    {
+      label: "비용",
+      value: formatCostShort(jp.estimatedCost),
+      color: "text-emerald-400",
+    },
   ];
 
   return (
     <div
-      className={`cursor-pointer rounded-xl border p-4 transition-colors hover:bg-accent/50 ${
-        jp.hasIssues ? "border-red-500" : ""
-      } ${isExpanded ? "ring-2 ring-primary" : ""}`}
+      className={`cursor-pointer rounded-xl border p-4 transition-all duration-200 hover:shadow-md hover:border-border/80 ${
+        jp.hasIssues ? "border-red-500/60" : ""
+      } ${isExpanded ? "ring-2 ring-primary shadow-sm" : ""}`}
       onClick={onClick}
     >
       <div className="mb-3 flex items-start justify-between">
-        <div>
-          <h4 className="font-semibold">{jp.title}</h4>
+        <div className="min-w-0 flex-1 pr-2">
+          <h4 className="font-semibold leading-snug">{jp.title}</h4>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            {jp.startDate} ~ {jp.endDate} · {jp.location} · {jp.workStart}-
-            {jp.workEnd}
+            {jp.startDate} ~ {jp.endDate} · {jp.location} · {jp.workStart}-{jp.workEnd}
           </p>
+          <p className="mt-0.5 text-xs text-muted-foreground/70">{payLabel}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-400">
-            {getStatusLabel(jp.status)}
+        <div className="flex shrink-0 items-center gap-2">
+          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusConfig.className}`}>
+            {statusConfig.label}
           </span>
           {isExpanded ? (
             <ChevronUp size={16} className="text-muted-foreground" />
@@ -79,14 +105,14 @@ export function JobPostingCard({ jobPosting: jp, isExpanded, onClick }: Props) {
       </div>
 
       {stats.assigned > 0 ? (
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-4 gap-2">
           {miniStats.map((s) => (
             <div
               key={s.label}
               className="rounded-lg bg-muted/50 p-2 text-center"
             >
               <div className="text-[11px] text-muted-foreground">{s.label}</div>
-              <div className={`text-lg font-semibold ${s.color}`}>
+              <div className={`tabular-nums text-sm font-semibold leading-tight mt-0.5 ${s.color}`}>
                 {s.value}
               </div>
             </div>

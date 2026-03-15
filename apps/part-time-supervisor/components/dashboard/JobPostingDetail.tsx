@@ -30,35 +30,40 @@ export function JobPostingDetail({ jobPosting }: Props) {
   }
 
   return (
-    <div className="rounded-xl border p-5">
+    <div className="rounded-xl border p-5 transition-all duration-200">
       <div className="mb-4 flex items-center justify-between">
         <h4 className="font-semibold">{jobPosting.title} — 상세 현황</h4>
-        <div className="flex gap-1">
+        <div className="flex border-b border-transparent">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+              className={`relative px-4 py-2 text-sm font-medium transition-colors duration-150 ${
                 activeTab === tab.id
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent"
+                  ? "text-foreground"
+                  : "text-muted-foreground hover:text-foreground/70"
               }`}
             >
               {tab.label}
+              {activeTab === tab.id && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-primary" />
+              )}
             </button>
           ))}
         </div>
       </div>
 
-      {activeTab === "attendance" && (
-        <JobPostingDetailAttendance workers={jobPosting.workers} />
-      )}
-      {activeTab === "contract" && (
-        <JobPostingDetailContract workers={jobPosting.workers} />
-      )}
-      {activeTab === "rooms" && (
-        <JobPostingDetailRooms workers={jobPosting.workers} />
-      )}
+      <div className="transition-opacity duration-150">
+        {activeTab === "attendance" && (
+          <JobPostingDetailAttendance workers={jobPosting.workers} />
+        )}
+        {activeTab === "contract" && (
+          <JobPostingDetailContract workers={jobPosting.workers} />
+        )}
+        {activeTab === "rooms" && (
+          <JobPostingDetailRooms workers={jobPosting.workers} />
+        )}
+      </div>
     </div>
   );
 }

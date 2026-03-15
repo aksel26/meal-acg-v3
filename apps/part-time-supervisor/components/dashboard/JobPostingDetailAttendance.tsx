@@ -54,8 +54,13 @@ export function JobPostingDetailAttendance({ workers }: Props) {
           </tr>
         </thead>
         <tbody>
-          {sorted.map((w) => (
-            <tr key={w.id} className="border-b last:border-0">
+          {sorted.map((w, idx) => (
+            <tr
+              key={w.id}
+              className={`border-b last:border-0 transition-colors hover:bg-muted/40 ${
+                idx % 2 === 0 ? "" : "bg-muted/20"
+              }`}
+            >
               <td className="px-3 py-2 font-medium">{w.name}</td>
               <td className="px-3 py-2 text-muted-foreground">{w.phone}</td>
               <td className="px-3 py-2 text-center">{getAttendanceBadge(w.attendanceStatus)}</td>

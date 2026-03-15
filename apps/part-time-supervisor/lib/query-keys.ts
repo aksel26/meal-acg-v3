@@ -1,6 +1,8 @@
 export const queryKeys = {
   dashboard: {
     all: ["dashboard"] as const,
+    byDateRange: (start: string, end: string) =>
+      ["dashboard", start, end] as const,
   },
 
   jobPostings: {
@@ -22,5 +24,12 @@ export const queryKeys = {
 
   contracts: {
     byWorker: (workerId: string) => ["contracts", workerId] as const,
+  },
+
+  roomAssignments: {
+    all: ["roomAssignments"] as const,
+    byDate: (date: string) => ["roomAssignments", date] as const,
+    byDateAndJobPosting: (date: string, jobPostingId: string) =>
+      ["roomAssignments", date, jobPostingId] as const,
   },
 };

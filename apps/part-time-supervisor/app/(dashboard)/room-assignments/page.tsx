@@ -15,8 +15,8 @@ export default function RoomAssignmentsPage() {
   const [selectedJobPostingId, setSelectedJobPostingId] = useState<
     string | null
   >(null);
-  const [startHour, setStartHour] = useState(9);
-  const [endHour, setEndHour] = useState(18);
+  const [startHour, setStartHour] = useState(8);
+  const [endHour, setEndHour] = useState(19);
 
   const { data: jobPostingsData } = useJobPostings();
   const jobPostings = useMemo(
@@ -46,15 +46,10 @@ export default function RoomAssignmentsPage() {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold">회의실 배정</h3>
-
       <div className="flex gap-4">
         <RoomAssignmentSidebar
           date={date}
           onDateChange={setDate}
-          jobPostings={jobPostings}
-          selectedJobPostingId={selectedJobPostingId}
-          onJobPostingChange={handleJobPostingChange}
           startHour={startHour}
           endHour={endHour}
           onStartHourChange={setStartHour}
@@ -62,17 +57,22 @@ export default function RoomAssignmentsPage() {
         />
 
         <div className="flex flex-1 gap-4 overflow-hidden">
-          <RoomTimetable
-            date={date}
-            startHour={startHour}
-            endHour={endHour}
-            roomAssignments={roomAssignments}
-            availableAssignments={assignments || []}
-          />
+          <div className="flex-[2] min-w-0 overflow-x-auto">
+            <RoomTimetable
+              date={date}
+              startHour={startHour}
+              endHour={endHour}
+              roomAssignments={roomAssignments}
+              availableAssignments={assignments || []}
+            />
+          </div>
 
           <WorkerSidePanel
             assignments={assignments || []}
             roomAssignments={roomAssignments}
+            jobPostings={jobPostings}
+            selectedJobPostingId={selectedJobPostingId}
+            onJobPostingChange={handleJobPostingChange}
           />
         </div>
       </div>

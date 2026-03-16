@@ -1,6 +1,6 @@
 "use client";
 
-import type { AssignmentWithDetails } from "@/lib/supabase/types";
+import type { AssignmentWithDetails, JobPosting } from "@/lib/supabase/types";
 import type { RoomAssignmentItem } from "@/hooks/use-room-assignments";
 import { getRoomById } from "@/lib/room-constants";
 import { UserCheck, AlertCircle } from "lucide-react";
@@ -8,11 +8,17 @@ import { UserCheck, AlertCircle } from "lucide-react";
 type Props = {
   assignments: AssignmentWithDetails[];
   roomAssignments: RoomAssignmentItem[];
+  jobPostings: JobPosting[];
+  selectedJobPostingId: string | null;
+  onJobPostingChange: (id: string | null) => void;
 };
 
 export default function WorkerSidePanel({
   assignments,
   roomAssignments,
+  jobPostings,
+  selectedJobPostingId,
+  onJobPostingChange,
 }: Props) {
   const workerRoomMap = new Map<string, Set<string>>();
   for (const ra of roomAssignments) {
@@ -32,7 +38,23 @@ export default function WorkerSidePanel({
   const rate = total > 0 ? Math.round((assignedCount / total) * 100) : 0;
 
   return (
-    <div className="w-64 shrink-0 space-y-3">
+    <div className="flex-1 min-w-0 space-y-3">
+      {/* 공고 선택 */}
+      <div className="rounded-xl border bg-white p-4 space-y-2">
+        <label className="block text-xs font-medium text-slate-500">공고</label>
+        <select
+          value={selectedJobPostingId || ""}
+          onChange={(e) => onJobPostingChange(e.target.value || null)}
+          className="h-9 w-full rounded-lg border bg-white px-3 text-sm"
+        >
+          <option value="">전체 공고</option>
+          {jobPostings.map((jp) => (
+            <option key={jp.id} value={jp.id}>
+              {jp.title}
+            </option>
+          ))}
+        </select>
+      </div>
       {total > 0 && (
         <div className="rounded-xl border bg-white p-3">
           <div className="mb-2 flex items-center justify-between">

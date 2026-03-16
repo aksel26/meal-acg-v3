@@ -1,15 +1,11 @@
 "use client";
 
 import { Calendar } from "@repo/ui/src/calendar";
-import type { JobPosting } from "@/lib/supabase/types";
 import dayjs from "dayjs";
 
 type Props = {
   date: string;
   onDateChange: (date: string) => void;
-  jobPostings: JobPosting[];
-  selectedJobPostingId: string | null;
-  onJobPostingChange: (id: string | null) => void;
   startHour: number;
   endHour: number;
   onStartHourChange: (hour: number) => void;
@@ -21,9 +17,6 @@ const hourOptions = Array.from({ length: 24 }, (_, i) => i);
 export default function RoomAssignmentSidebar({
   date,
   onDateChange,
-  jobPostings,
-  selectedJobPostingId,
-  onJobPostingChange,
   startHour,
   endHour,
   onStartHourChange,
@@ -45,26 +38,8 @@ export default function RoomAssignmentSidebar({
           mode="single"
           selected={selectedDate}
           onSelect={handleDateSelect}
+          className="w-full"
         />
-      </div>
-
-      {/* 공고 선택 */}
-      <div className="rounded-xl border bg-white p-4 space-y-2">
-        <label className="block text-xs font-medium text-slate-500">
-          공고
-        </label>
-        <select
-          value={selectedJobPostingId || ""}
-          onChange={(e) => onJobPostingChange(e.target.value || null)}
-          className="h-9 w-full rounded-lg border bg-white px-3 text-sm"
-        >
-          <option value="">전체 공고</option>
-          {jobPostings.map((jp) => (
-            <option key={jp.id} value={jp.id}>
-              {jp.title}
-            </option>
-          ))}
-        </select>
       </div>
 
       {/* 표시 범위 */}

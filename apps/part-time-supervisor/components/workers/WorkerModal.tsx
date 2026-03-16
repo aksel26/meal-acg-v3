@@ -100,7 +100,7 @@ export default function WorkerModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-h-[85vh] p-0" style={{ maxWidth: "28rem" }}>
+      <DialogContent className="max-h-[85vh] p-0" style={{ maxWidth: "48rem" }}>
         <DialogHeader className="px-6 pt-6 pb-0">
           <DialogTitle>{existing ? "지원자 수정" : "지원자 등록"}</DialogTitle>
           <DialogDescription>

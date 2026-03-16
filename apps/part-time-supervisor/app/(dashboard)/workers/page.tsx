@@ -16,7 +16,7 @@ export default function WorkersPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">지원자 목록</h3>
+        <div />
         <button
           onClick={() => setIsModalOpen(true)}
           className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"

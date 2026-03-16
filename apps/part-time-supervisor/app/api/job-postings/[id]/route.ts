@@ -34,7 +34,7 @@ export async function PUT(request: Request, { params }: Params) {
 
     const { data, error } = await supabase
       .from("job_postings")
-      .update(body)
+      .update({ ...body, end_date: body.start_date })
       .eq("id", id)
       .select()
       .single();

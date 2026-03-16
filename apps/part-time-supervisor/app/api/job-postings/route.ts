@@ -38,6 +38,7 @@ export async function POST(request: Request) {
       .from("job_postings")
       .insert({
         ...body,
+        end_date: body.start_date,
         created_by: session.id,
       })
       .select()

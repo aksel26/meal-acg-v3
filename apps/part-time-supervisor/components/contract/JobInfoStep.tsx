@@ -35,14 +35,13 @@ export default function JobInfoStep({
     { label: "시간대", value: shiftTypeLabel[job.shift_type] },
     { label: "장소", value: job.location },
     { label: "플랫폼", value: job.platform },
-    { label: "기간", value: `${job.start_date} ~ ${job.end_date}` },
+    { label: "검사일", value: job.start_date },
     {
       label: "근무시간",
       value: job.work_start && job.work_end ? `${job.work_start.slice(0, 5)} ~ ${job.work_end.slice(0, 5)}` : null,
     },
     { label: "급여", value: `${payTypeLabel[job.pay_type]} ${job.pay_rate.toLocaleString()}원` },
     { label: "모집인원", value: `${job.headcount}명` },
-    ...(job.description ? [{ label: "내용", value: job.description }] : []),
   ];
 
   return (

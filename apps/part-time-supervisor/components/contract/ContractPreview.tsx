@@ -11,7 +11,7 @@ export default function ContractPreview({
   job: JobPosting;
   workerName: string;
 }) {
-  const workPeriod = `${job.start_date} ~ ${job.end_date}`;
+  const workPeriod = job.start_date;
   const workTime =
     job.work_start && job.work_end
       ? `${job.work_start.slice(0, 5)} ~ ${job.work_end.slice(0, 5)}`
@@ -39,7 +39,7 @@ export default function ContractPreview({
 
       <div className="mt-5 space-y-3 border-t border-stone-200 pt-4">
         <div className="flex">
-          <span className="w-20 shrink-0 font-semibold text-stone-800">1. 근로기간</span>
+          <span className="w-20 shrink-0 font-semibold text-stone-800">1. 검사일</span>
           <span>{workPeriod}</span>
         </div>
         <div className="flex">

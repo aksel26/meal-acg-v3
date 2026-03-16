@@ -3,14 +3,12 @@ export type JobPosting = {
   title: string;
   location: string | null;
   start_date: string;
-  end_date: string;
   work_start: string | null;
   work_end: string | null;
   pay_rate: number;
   pay_type: "hourly" | "daily";
   headcount: number;
   status: "open" | "closed" | "draft" | "in_progress" | "completed";
-  description: string | null;
   work_type: "online" | "offline";
   shift_type: "day" | "night";
   platform: string | null;

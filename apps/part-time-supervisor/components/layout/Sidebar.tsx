@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Briefcase, Users, LayoutDashboard, DoorOpen } from "lucide-react";
@@ -16,10 +17,17 @@ export default function Sidebar() {
 
   return (
     <aside className="flex h-full w-60 flex-col rounded-2xl bg-slate-900 p-4 text-white">
-      <div className="mb-8 px-2 py-4">
-        <h1 className="text-lg font-bold">ACG 감독관</h1>
-        <p className="text-sm text-slate-400">아르바이트 관리</p>
-      </div>
+      <Link href="/" className="mb-8 block px-2 py-4">
+        <Image
+          src="/ACG_CI-WHITE.webp"
+          alt="ACG"
+          width={120}
+          height={40}
+          className="h-auto w-auto"
+          priority
+        />
+        <p className="mt-1 text-sm text-slate-400">아르바이트 관리</p>
+      </Link>
 
       <nav className="flex flex-1 flex-col gap-1">
         {navItems.map((item) => {

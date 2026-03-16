@@ -3,6 +3,8 @@ export const queryKeys = {
     all: ["dashboard"] as const,
     byDateRange: (start: string, end: string) =>
       ["dashboard", start, end] as const,
+    calendar: (year: number, month: number) =>
+      ["dashboard", "calendar", year, month] as const,
   },
 
   jobPostings: {

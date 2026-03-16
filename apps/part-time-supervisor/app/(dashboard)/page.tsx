@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import dayjs from "dayjs";
 import { useDashboard } from "@/hooks/use-dashboard";
-import { DashboardControls } from "@/components/dashboard/DashboardControls";
+import { useDashboardCalendar } from "@/hooks/use-dashboard-calendar";
+import { DashboardCalendar } from "@/components/dashboard/DashboardCalendar";
 import { DashboardSummary } from "@/components/dashboard/DashboardSummary";
 import { JobPostingGrid } from "@/components/dashboard/JobPostingGrid";
 
@@ -51,37 +52,83 @@ function DashboardSkeleton() {
 }
 
 export default function DashboardPage() {
-  const today = dayjs().format("YYYY-MM-DD");
-  const [dateRange, setDateRange] = useState({ startDate: today, endDate: today });
+  const today = dayjs();
+  const [dateRange, setDateRange] = useState({
+    startDate: today.format("YYYY-MM-DD"),
+    endDate: today.format("YYYY-MM-DD"),
+  });
+  const [selectedDate, setSelectedDate] = useState(today.toDate());
+  const [displayMonth, setDisplayMonth] = useState(today.toDate());
+
+  const calendarYear = displayMonth.getFullYear();
+  const calendarMonth = displayMonth.getMonth() + 1;
+  const { dayMap } = useDashboardCalendar(calendarYear, calendarMonth);
 
   const { data, isLoading } = useDashboard(dateRange.startDate, dateRange.endDate);
 
-  const dateLabel = dateRange.startDate === dateRange.endDate
-    ? dayjs(dateRange.startDate).format("M월 D일 (ddd)")
-    : `${dayjs(dateRange.startDate).format("M/D")} ~ ${dayjs(dateRange.endDate).format("M/D")}`;
+  const activePreset = useMemo(() => {
+    const d = dayjs();
+    const day = d.day();
+    const diffToMonday = day === 0 ? -6 : 1 - day;
+    const monday = d.add(diffToMonday, "day").format("YYYY-MM-DD");
+    const sunday = d.add(diffToMonday + 6, "day").format("YYYY-MM-DD");
+    const monthFirst = d.startOf("month").format("YYYY-MM-DD");
+    const monthLast = d.endOf("month").format("YYYY-MM-DD");
+    const todayStr = d.format("YYYY-MM-DD");
+
+    if (dateRange.startDate === todayStr && dateRange.endDate === todayStr) return "오늘";
+    if (dateRange.startDate === monday && dateRange.endDate === sunday) return "이번 주";
+    if (dateRange.startDate === monthFirst && dateRange.endDate === monthLast) return "이번 달";
+    return null;
+  }, [dateRange]);
+
+  const handleDateSelect = useCallback((date: Date) => {
+    setSelectedDate(date);
+    const formatted = dayjs(date).format("YYYY-MM-DD");
+    setDateRange({ startDate: formatted, endDate: formatted });
+  }, []);
+
+  const handlePreset = useCallback(
+    (range: { startDate: string; endDate: string }) => {
+      setDateRange(range);
+      setSelectedDate(dayjs(range.startDate).toDate());
+    },
+    []
+  );
+
+  const dateLabel =
+    dateRange.startDate === dateRange.endDate
+      ? dayjs(dateRange.startDate).format("M월 D일 (ddd)")
+      : `${dayjs(dateRange.startDate).format("M/D")} ~ ${dayjs(dateRange.endDate).format("M/D")}`;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight">대시보드</h1>
-          <p className="text-sm text-muted-foreground">{dateLabel} 기준 현황</p>
-        </div>
-        <DashboardControls
-          startDate={dateRange.startDate}
-          endDate={dateRange.endDate}
-          onChange={setDateRange}
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[420px_1fr]">
+      {/* 좌측: 캘린더 */}
+      <div className="rounded-xl border bg-card">
+        <DashboardCalendar
+          dayMap={dayMap}
+          selectedDate={selectedDate}
+          displayMonth={displayMonth}
+          onDisplayMonthChange={setDisplayMonth}
+          onDateSelect={handleDateSelect}
+          onPreset={handlePreset}
+          activePreset={activePreset}
         />
       </div>
 
-      {isLoading ? (
-        <DashboardSkeleton />
-      ) : data ? (
-        <>
-          <DashboardSummary summary={data.summary} />
-          <JobPostingGrid jobPostings={data.jobPostings} />
-        </>
-      ) : null}
+      {/* 우측: 요약 + 공고 현황 */}
+      <div className="space-y-6 min-w-0">
+        <p className="text-sm text-muted-foreground">{dateLabel} 기준 현황</p>
+
+        {isLoading ? (
+          <DashboardSkeleton />
+        ) : data ? (
+          <>
+            <DashboardSummary summary={data.summary} />
+            <JobPostingGrid jobPostings={data.jobPostings} />
+          </>
+        ) : null}
+      </div>
     </div>
   );
 }

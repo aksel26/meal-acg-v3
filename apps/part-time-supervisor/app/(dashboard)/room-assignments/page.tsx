@@ -22,7 +22,7 @@ export default function RoomAssignmentsPage() {
   const jobPostings = useMemo(
     () =>
       (jobPostingsData || []).filter(
-        (jp) => jp.status === "open" || jp.status === "in_progress"
+        (jp) => jp.status !== "closed" && jp.status !== "completed"
       ),
     [jobPostingsData]
   );

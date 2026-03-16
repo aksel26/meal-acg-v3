@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
         `id, title, location, start_date, end_date, work_start, work_end, status, headcount, pay_rate, pay_type, lunch_start, lunch_end,
         assignments(id, attendance_status, contract_status, room_slots, status, worker:workers(id, name, phone))`
       )
-      .in("status", ["open", "in_progress"])
+      .in("status", ["draft", "open", "in_progress"])
       .lte("start_date", endDate)
       .gte("end_date", startDate);
 

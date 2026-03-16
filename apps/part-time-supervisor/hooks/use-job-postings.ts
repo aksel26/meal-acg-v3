@@ -22,8 +22,9 @@ export function useJobPostings(status?: string) {
 
 export function useJobPosting(id: string | null) {
   return useQuery<JobPosting>({
-    queryKey: queryKeys.jobPostings.detail(id!),
+    queryKey: queryKeys.jobPostings.detail(id ?? ""),
     queryFn: async () => {
+      if (!id) throw new Error("No id provided");
       const res = await fetch(`/api/job-postings/${id}`);
       if (!res.ok) throw new Error("Failed to fetch");
       return res.json();

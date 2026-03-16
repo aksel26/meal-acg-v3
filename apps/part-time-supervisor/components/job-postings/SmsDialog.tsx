@@ -36,7 +36,7 @@ function getTemplates(job: JobPosting): Template[] {
     },
     {
       label: "근무 안내",
-      content: `[${job.title}] 근무 안내드립니다. 일시: ${job.start_date} ~ ${job.end_date}, 장소: ${job.location || "(미정)"}. 확인 부탁드립니다.`,
+      content: `[${job.title}] 근무 안내드립니다. 검사일: ${job.start_date}, 장소: ${job.location || "(미정)"}. 확인 부탁드립니다.`,
     },
     {
       label: "일정 변경",

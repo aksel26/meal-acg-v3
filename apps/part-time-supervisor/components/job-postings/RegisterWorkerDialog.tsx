@@ -86,7 +86,7 @@ export default function RegisterWorkerDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-h-[85vh] p-0" style={{ maxWidth: "28rem" }}>
+      <DialogContent className="max-h-[85vh] p-0" style={{ maxWidth: "48rem" }}>
         <DialogHeader className="px-6 pt-6 pb-0">
           <DialogTitle>지원자 등록</DialogTitle>
           <DialogDescription>새로운 지원자 정보를 입력해주세요.</DialogDescription>

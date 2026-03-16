@@ -4,20 +4,24 @@ import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useJobPosting } from "@/hooks/use-job-postings";
 import { useAssignmentsByJobPosting } from "@/hooks/use-assignments";
-import { ArrowLeft, FileText, MessageSquare, Pencil, QrCode, UserPlus } from "lucide-react";
+import { ArrowLeft, Download, MessageSquare, Pencil, QrCode, UserPlus } from "lucide-react";
+import { generateContractListExcel, getContractFileName } from "@/lib/excel-export";
 import dayjs from "dayjs";
 import "dayjs/locale/ko";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@repo/ui/src/alert-dialog";
 import AssignedWorkersTable from "@/components/job-postings/AssignedWorkersTable";
 import RegisterWorkerDialog from "@/components/job-postings/RegisterWorkerDialog";
 import SmsDialog from "@/components/job-postings/SmsDialog";
 import ContractLinkModal from "@/components/job-postings/ContractLinkModal";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@repo/ui/src/dialog";
-import { Button } from "@repo/ui/src/button";
 
 dayjs.locale("ko");
 
@@ -48,7 +52,7 @@ export default function JobPostingDetailPage({ params }: { params: Promise<{ id:
   const [registerOpen, setRegisterOpen] = useState(false);
   const [smsOpen, setSmsOpen] = useState(false);
   const [contractLinkOpen, setContractLinkOpen] = useState(false);
-  const [descriptionOpen, setDescriptionOpen] = useState(false);
+  const [downloadOpen, setDownloadOpen] = useState(false);
   const { data: job, isLoading } = useJobPosting(id);
   const { data: assignments, isLoading: assignmentsLoading } = useAssignmentsByJobPosting(id);
 
@@ -94,7 +98,7 @@ export default function JobPostingDetailPage({ params }: { params: Promise<{ id:
           />
           <InfoItem label="장소" value={job.location} />
           <InfoItem label="플랫폼" value={job.platform} />
-          <InfoItem label="일자" value={`${job.start_date} ~ ${job.end_date}`} />
+          <InfoItem label="검사일" value={job.start_date} />
           <InfoItem
             label="근무/점심"
             value={
@@ -106,39 +110,21 @@ export default function JobPostingDetailPage({ params }: { params: Promise<{ id:
           <InfoItem label="급여" value={`${job.pay_rate.toLocaleString()}원 (${payTypeLabel[job.pay_type]})`} />
           <InfoItem label="모집인원" value={`${job.headcount}명`} />
         </dl>
-        {job.description && (
-          <div className="mt-2 border-t pt-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 gap-1.5 px-2 text-xs text-slate-500"
-              onClick={() => setDescriptionOpen(true)}
-            >
-              <FileText size={14} />
-              내용 보기
-            </Button>
-          </div>
-        )}
       </div>
-
-      {/* Description Dialog — 관리자 전용 앱, RichTextEditor로 입력된 신뢰 콘텐츠 */}
-      <Dialog open={descriptionOpen} onOpenChange={setDescriptionOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{job.title} — 내용</DialogTitle>
-          </DialogHeader>
-          <div
-            className="prose prose-sm max-w-none text-slate-700"
-            dangerouslySetInnerHTML={{ __html: job.description || "" }}
-          />
-        </DialogContent>
-      </Dialog>
 
       {/* Workers Table */}
       <div>
         <div className="mb-3 flex items-center justify-between">
           <h4 className="text-base font-semibold">지원자 명단</h4>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setDownloadOpen(true)}
+              disabled={!assignments || assignments.length === 0}
+              className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-transparent"
+            >
+              <Download size={15} />
+              명단 다운로드
+            </button>
             <button
               onClick={() => setContractLinkOpen(true)}
               className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium hover:bg-slate-50"
@@ -189,6 +175,34 @@ export default function JobPostingDetailPage({ params }: { params: Promise<{ id:
         assignments={assignments || []}
         job={job}
       />
+
+      <AlertDialog open={downloadOpen} onOpenChange={setDownloadOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>명단 다운로드</AlertDialogTitle>
+            <AlertDialogDescription>
+              지원자 명단을 Excel 파일로 다운로드합니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (!assignments || assignments.length === 0) return;
+                const blob = await generateContractListExcel(job, assignments);
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = getContractFileName(job);
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+            >
+              다운로드
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

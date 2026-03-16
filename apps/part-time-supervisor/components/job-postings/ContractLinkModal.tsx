@@ -30,13 +30,17 @@ export default function ContractLinkModal({
   }, [jobPostingId]);
 
   useEffect(() => {
-    if (canvasRef.current && contractUrl) {
-      QRCode.toCanvas(canvasRef.current, contractUrl, {
-        width: 256,
-        margin: 2,
-      });
-    }
-  }, [contractUrl]);
+    if (!open || !contractUrl) return;
+    const timer = setTimeout(() => {
+      if (canvasRef.current) {
+        QRCode.toCanvas(canvasRef.current, contractUrl, {
+          width: 256,
+          margin: 2,
+        });
+      }
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [open, contractUrl]);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(contractUrl);

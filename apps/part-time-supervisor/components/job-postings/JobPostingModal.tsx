@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { useJobPosting } from "@/hooks/use-job-postings";
 import { useCreateJobPosting, useUpdateJobPosting } from "@/hooks/use-job-posting-mutations";
 import { useMembers } from "@/hooks/use-members";
 import { toast } from "@repo/ui/src/sonner";
 import { Button } from "@repo/ui/src/button";
+import { DatePicker } from "@repo/ui/src/date-picker";
 import {
   Dialog,
   DialogContent,
@@ -39,7 +40,7 @@ type FormData = {
 
 const defaultValues: FormData = {
   title: "",
-  start_date: "",
+  start_date: new Date().toISOString().slice(0, 10),
   end_date: "",
   work_start: "",
   work_end: "",
@@ -47,8 +48,8 @@ const defaultValues: FormData = {
   work_type: "offline",
   shift_type: "day",
   location: "",
-  lunch_start: "",
-  lunch_end: "",
+  lunch_start: "12:00",
+  lunch_end: "13:00",
   pay_rate: 0,
   pay_type: "daily",
   platform: "",
@@ -75,6 +76,7 @@ export default function JobPostingModal({
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = useForm<FormData>({ defaultValues });
 
@@ -153,202 +155,212 @@ export default function JobPostingModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-h-[90vh] p-0">
+      <DialogContent className="max-h-[90vh] p-0" style={{ maxWidth: "48rem" }}>
         <DialogHeader className="px-6 pt-6 pb-0">
           <DialogTitle>{editingId ? "공고 수정" : "공고 등록"}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="overflow-y-auto space-y-4 px-6 py-4" style={{ maxHeight: "calc(90vh - 10rem)" }}>
-              {/* 제목 */}
-              <div>
-                <label className="mb-1 block text-sm font-medium">제목 *</label>
-                <input
-                  {...register("title", { required: "제목을 입력하세요" })}
-                  className="w-full rounded-lg border px-3 py-2 text-sm"
-                  placeholder="공고 제목"
-                />
-                {errors.title && <p className="mt-1 text-xs text-red-500">{errors.title.message}</p>}
-              </div>
-
-              {/* 일자 */}
-              <div className="grid grid-cols-2 gap-3">
+          <div className="overflow-y-auto px-6 py-4" style={{ maxHeight: "calc(90vh - 10rem)" }}>
+            <div className="grid grid-cols-2 gap-6">
+              {/* Left Column */}
+              <div className="space-y-4">
+                {/* 제목 */}
                 <div>
-                  <label className="mb-1 block text-sm font-medium">시작일 *</label>
+                  <label className="mb-1 block text-sm font-medium">제목 *</label>
                   <input
-                    type="date"
-                    {...register("start_date", { required: "시작일을 선택하세요" })}
+                    {...register("title", { required: "제목을 입력하세요" })}
                     className="w-full rounded-lg border px-3 py-2 text-sm"
+                    placeholder="공고 제목"
+                  />
+                  {errors.title && <p className="mt-1 text-xs text-red-500">{errors.title.message}</p>}
+                </div>
+
+                {/* 검사일 */}
+                <div>
+                  <label className="mb-1 block text-sm font-medium">검사일 *</label>
+                  <Controller
+                    name="start_date"
+                    control={control}
+                    rules={{ required: "검사일을 선택하세요" }}
+                    render={({ field }) => (
+                      <DatePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="검사일"
+                      />
+                    )}
                   />
                 </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium">종료일 *</label>
-                  <input
-                    type="date"
-                    {...register("end_date", { required: "종료일을 선택하세요" })}
-                    className="w-full rounded-lg border px-3 py-2 text-sm"
-                  />
-                </div>
-              </div>
 
-              {/* 근무시간 */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="mb-1 block text-sm font-medium">근무 시작</label>
-                  <input
-                    type="time"
-                    {...register("work_start")}
-                    className="w-full rounded-lg border px-3 py-2 text-sm"
-                  />
+                {/* 근무시간 - 추후 활성화
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">근무 시작</label>
+                    <input
+                      type="time"
+                      {...register("work_start")}
+                      className="w-full rounded-lg border px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">근무 종료</label>
+                    <input
+                      type="time"
+                      {...register("work_end")}
+                      className="w-full rounded-lg border px-3 py-2 text-sm"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium">근무 종료</label>
-                  <input
-                    type="time"
-                    {...register("work_end")}
-                    className="w-full rounded-lg border px-3 py-2 text-sm"
-                  />
-                </div>
-              </div>
+                */}
 
-              {/* 인원 */}
-              <div>
-                <label className="mb-1 block text-sm font-medium">모집인원 *</label>
-                <input
-                  type="number"
-                  {...register("headcount", { required: true, valueAsNumber: true, min: 1 })}
-                  className="w-full rounded-lg border px-3 py-2 text-sm"
-                />
-              </div>
-
-              {/* 유형 */}
-              <div className="grid grid-cols-2 gap-3">
+                {/* 인원 */}
                 <div>
-                  <label className="mb-1 block text-sm font-medium">형태</label>
-                  <select
-                    {...register("work_type")}
-                    className="w-full rounded-lg border px-3 py-2 text-sm"
-                  >
-                    <option value="offline">오프라인</option>
-                    <option value="online">온라인</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium">시간대</label>
-                  <select
-                    {...register("shift_type")}
-                    className="w-full rounded-lg border px-3 py-2 text-sm"
-                  >
-                    <option value="day">주간</option>
-                    <option value="night">야간</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* 장소 */}
-              <div>
-                <label className="mb-1 block text-sm font-medium">장소</label>
-                <input
-                  {...register("location")}
-                  className="w-full rounded-lg border px-3 py-2 text-sm"
-                  placeholder="근무 장소"
-                />
-              </div>
-
-              {/* 점심시간 */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="mb-1 block text-sm font-medium">점심 시작</label>
-                  <input
-                    type="time"
-                    {...register("lunch_start")}
-                    className="w-full rounded-lg border px-3 py-2 text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium">점심 종료</label>
-                  <input
-                    type="time"
-                    {...register("lunch_end")}
-                    className="w-full rounded-lg border px-3 py-2 text-sm"
-                  />
-                </div>
-              </div>
-
-              {/* 비용 */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="mb-1 block text-sm font-medium">급여 *</label>
+                  <label className="mb-1 block text-sm font-medium">모집인원 *</label>
                   <input
                     type="number"
-                    {...register("pay_rate", { required: true, valueAsNumber: true, min: 0 })}
+                    {...register("headcount", { required: true, valueAsNumber: true, min: 1 })}
                     className="w-full rounded-lg border px-3 py-2 text-sm"
-                    placeholder="금액"
                   />
                 </div>
+
+                {/* 담당자 */}
                 <div>
-                  <label className="mb-1 block text-sm font-medium">급여 유형</label>
+                  <label className="mb-1 block text-sm font-medium">담당자</label>
                   <select
-                    {...register("pay_type")}
+                    {...register("supervisor_id")}
                     className="w-full rounded-lg border px-3 py-2 text-sm"
                   >
-                    <option value="daily">일급</option>
-                    <option value="hourly">시급</option>
+                    <option value="">선택 안함</option>
+                    {members.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.full_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* 상태 */}
+                <div>
+                  <label className="mb-1 block text-sm font-medium">상태</label>
+                  <select
+                    {...register("status")}
+                    className="w-full rounded-lg border px-3 py-2 text-sm"
+                  >
+                    <option value="draft">임시</option>
+                    <option value="open">모집중</option>
+                    <option value="closed">마감</option>
+                    <option value="in_progress">진행중</option>
+                    <option value="completed">완료</option>
                   </select>
                 </div>
               </div>
 
-              {/* 플랫폼 */}
-              <div>
-                <label className="mb-1 block text-sm font-medium">플랫폼</label>
-                <input
-                  {...register("platform")}
-                  className="w-full rounded-lg border px-3 py-2 text-sm"
-                  placeholder="예: CJ, SK, 쿠팡"
-                />
-              </div>
+              {/* Right Column */}
+              <div className="space-y-4">
+                {/* 유형 */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">형태</label>
+                    <select
+                      {...register("work_type")}
+                      className="w-full rounded-lg border px-3 py-2 text-sm"
+                    >
+                      <option value="offline">오프라인</option>
+                      <option value="online">온라인</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">시간대</label>
+                    <select
+                      {...register("shift_type")}
+                      className="w-full rounded-lg border px-3 py-2 text-sm"
+                    >
+                      <option value="day">주간</option>
+                      <option value="night">야간</option>
+                    </select>
+                  </div>
+                </div>
 
-              {/* 상태 */}
-              <div>
-                <label className="mb-1 block text-sm font-medium">상태</label>
-                <select
-                  {...register("status")}
-                  className="w-full rounded-lg border px-3 py-2 text-sm"
-                >
-                  <option value="draft">임시</option>
-                  <option value="open">모집중</option>
-                  <option value="closed">마감</option>
-                  <option value="in_progress">진행중</option>
-                  <option value="completed">완료</option>
-                </select>
-              </div>
+                {/* 장소 */}
+                <div>
+                  <label className="mb-1 block text-sm font-medium">장소</label>
+                  <input
+                    {...register("location")}
+                    className="w-full rounded-lg border px-3 py-2 text-sm"
+                    placeholder="근무 장소"
+                  />
+                </div>
 
-              {/* 담당자 */}
-              <div>
-                <label className="mb-1 block text-sm font-medium">담당자</label>
-                <select
-                  {...register("supervisor_id")}
-                  className="w-full rounded-lg border px-3 py-2 text-sm"
-                >
-                  <option value="">선택 안함</option>
-                  {members.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.full_name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                {/* 플랫폼 */}
+                <div>
+                  <label className="mb-1 block text-sm font-medium">플랫폼</label>
+                  <input
+                    {...register("platform")}
+                    className="w-full rounded-lg border px-3 py-2 text-sm"
+                    placeholder="예: CJ, SK, 쿠팡"
+                  />
+                </div>
 
-              {/* 내용 */}
-              <div>
-                <label className="mb-1 block text-sm font-medium">내용</label>
-                <textarea
-                  {...register("description")}
-                  rows={4}
-                  className="w-full rounded-lg border px-3 py-2 text-sm"
-                  placeholder="공고 상세 내용"
-                />
+                {/* 급여 */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">급여 *</label>
+                    <Controller
+                      name="pay_rate"
+                      control={control}
+                      rules={{ required: true, min: 0 }}
+                      render={({ field }) => (
+                        <input
+                          inputMode="numeric"
+                          className="w-full rounded-lg border px-3 py-2 text-sm"
+                          placeholder="금액"
+                          value={field.value ? field.value.toLocaleString() : ""}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/,/g, "");
+                            const num = Number(raw);
+                            if (!raw || !isNaN(num)) {
+                              field.onChange(raw ? num : 0);
+                            }
+                          }}
+                        />
+                      )}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">급여 유형</label>
+                    <select
+                      {...register("pay_type")}
+                      className="w-full rounded-lg border px-3 py-2 text-sm"
+                    >
+                      <option value="daily">일급</option>
+                      <option value="hourly">시급</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* 점심시간 */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">점심 시작</label>
+                    <input
+                      type="time"
+                      {...register("lunch_start")}
+                      className="w-full rounded-lg border px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">점심 종료</label>
+                    <input
+                      type="time"
+                      {...register("lunch_end")}
+                      className="w-full rounded-lg border px-3 py-2 text-sm"
+                    />
+                  </div>
+                </div>
+
               </div>
+            </div>
           </div>
 
           <DialogFooter className="border-t px-6 py-4">

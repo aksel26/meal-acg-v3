@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     const { data: jobPostings, error } = await supabase
       .from("job_postings")
       .select(
-        `id, title, location, start_date, end_date, work_start, work_end, status, headcount, pay_rate, pay_type, lunch_start, lunch_end,
+        `id, title, location, platform, work_type, start_date, end_date, work_start, work_end, status, headcount, pay_rate, pay_type, lunch_start, lunch_end,
         assignments(id, attendance_status, contract_status, room_slots, status, worker:workers(id, name, phone))`
       )
       .in("status", ["draft", "open", "in_progress"])
@@ -132,6 +132,8 @@ export async function GET(request: NextRequest) {
         id: jp.id,
         title: jp.title,
         location: jp.location,
+        platform: jp.platform,
+        workType: jp.work_type,
         startDate: jp.start_date,
         endDate: jp.end_date,
         workStart: jp.work_start,

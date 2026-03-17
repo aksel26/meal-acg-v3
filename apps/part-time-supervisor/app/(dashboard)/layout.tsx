@@ -12,7 +12,7 @@ export default function DashboardLayout({
       <main className="relative flex h-full flex-1 flex-col overflow-hidden rounded-2xl bg-white">
         <Header />
         <div className="flex-1 overflow-y-auto scroll-smooth px-6 py-4">
-          <div className="md:px-2">{children}</div>
+          {children}
         </div>
       </main>
     </div>

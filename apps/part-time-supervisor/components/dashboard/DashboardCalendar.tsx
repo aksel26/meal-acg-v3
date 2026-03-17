@@ -108,9 +108,9 @@ export function DashboardCalendar({
             !modifiers.range_middle
           }
           className={cn(
-            "data-[selected-single=true]:border data-[selected-single=true]:border-blue-300 data-[selected-single=true]:text-blue-600",
+            "",
             "flex h-auto w-full min-h-[4.5rem] min-w-0 flex-col items-center rounded-lg p-1 leading-none font-normal",
-            labels.length > 0 ? "justify-start gap-0.5" : "justify-center",
+            "justify-start gap-0.5",
             "hover:bg-accent/50",
             defaultClassNames.day,
             className
@@ -119,8 +119,9 @@ export function DashboardCalendar({
         >
           <span
             className={cn(
-              "text-sm tabular-nums self-center",
-              modifiers.today && "font-bold text-blue-600",
+              "text-sm tabular-nums self-center size-8 flex items-center justify-center rounded-full",
+              modifiers.selected && !modifiers.outside && "bg-slate-900 text-white",
+              !modifiers.selected && modifiers.today && "font-bold text-blue-600",
               modifiers.outside && "text-muted-foreground/40"
             )}
           >
@@ -135,11 +136,11 @@ export function DashboardCalendar({
                   <div
                     key={label.id}
                     className={cn(
-                      "w-full truncate rounded-[2px] px-1 py-0.5 text-[9px] leading-tight",
+                      "w-full truncate rounded-md px-1 py-0.5 text-[9px] leading-tight",
                       color
                     )}
                   >
-                    {formatLabel(label.title, label.platform)}
+                    {label.platform ?? "기타"}
                   </div>
                 );
               })}
@@ -184,7 +185,7 @@ export function DashboardCalendar({
         month={displayMonth}
         onMonthChange={onDisplayMonthChange}
         showOutsideDays
-        className="bg-background p-3 [--cell-size:--spacing(9)]"
+        className="p-3 [--cell-size:--spacing(9)]"
         formatters={{
           formatCaption: (date) =>
             `${date.getFullYear()}년 ${date.getMonth() + 1}월`,
@@ -264,19 +265,6 @@ export function DashboardCalendar({
           WeekNumber: CalendarWeekNumber,
         }}
       />
-      <div className="flex gap-1.5 px-3 pb-2">
-        {presets.map((preset) => (
-          <Button
-            key={preset.label}
-            variant={activePreset === preset.label ? "default" : "outline"}
-            size="sm"
-            className="flex-1"
-            onClick={() => onPreset({ startDate: preset.start, endDate: preset.end })}
-          >
-            {preset.label}
-          </Button>
-        ))}
-      </div>
     </div>
   );
 }

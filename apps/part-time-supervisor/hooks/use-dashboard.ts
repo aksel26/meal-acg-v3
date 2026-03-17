@@ -18,6 +18,8 @@ export type DashboardJobPosting = {
   id: string;
   title: string;
   location: string | null;
+  platform: string | null;
+  workType: string | null;
   startDate: string;
   endDate: string;
   workStart: string | null;

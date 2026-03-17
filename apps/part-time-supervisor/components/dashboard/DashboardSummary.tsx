@@ -63,7 +63,7 @@ export function DashboardSummary({ summary }: Props) {
       display: String(summary.attendanceCompleted),
       icon: UserCheck,
       color: "bg-green-500/10 text-green-400",
-      valueColor: getRateColor(summary.attendanceCompleted, summary.totalAssigned),
+      valueColor: "",
       suffix: ` / ${summary.totalAssigned}`,
       progress: { completed: summary.attendanceCompleted, total: summary.totalAssigned },
     },
@@ -72,8 +72,8 @@ export function DashboardSummary({ summary }: Props) {
       value: summary.contractCompleted,
       display: String(summary.contractCompleted),
       icon: FileCheck,
-      color: "bg-blue-500/10 text-blue-400",
-      valueColor: getRateColor(summary.contractCompleted, summary.totalAssigned),
+      color: "",
+      valueColor: "",
       suffix: ` / ${summary.totalAssigned}`,
       progress: { completed: summary.contractCompleted, total: summary.totalAssigned },
     },
@@ -82,8 +82,8 @@ export function DashboardSummary({ summary }: Props) {
       value: summary.totalEstimatedCost,
       display: `₩${formatCost(summary.totalEstimatedCost)}`,
       icon: Banknote,
-      color: "bg-emerald-500/10 text-emerald-400",
-      valueColor: "text-emerald-400",
+      color: "",
+      valueColor: "",
       suffix: "",
       progress: null,
       isCost: true,
@@ -91,16 +91,13 @@ export function DashboardSummary({ summary }: Props) {
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+    <div className="rounded-xl bg-slate-50 p-5 grid grid-cols-2 gap-4 md:grid-cols-5">
       {cards.map((card) => (
         <div
           key={card.label}
-          className="group rounded-xl border p-4 transition-all duration-200 hover:border-border/80 hover:shadow-sm"
+          className="group rounded-xl bg-white p-4"
         >
           <div className="flex items-center gap-2.5">
-            <div className={`rounded-lg p-2 ${card.color}`}>
-              <card.icon size={18} />
-            </div>
             <div className="min-w-0 flex-1">
               <p className="text-xs text-muted-foreground">{card.label}</p>
               <div className="flex items-baseline gap-1">

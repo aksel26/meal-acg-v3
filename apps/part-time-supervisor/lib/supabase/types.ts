@@ -3,6 +3,8 @@ export type JobPosting = {
   title: string;
   location: string | null;
   start_date: string;
+  end_date: string;
+  description: string | null;
   work_start: string | null;
   work_end: string | null;
   pay_rate: number;
@@ -15,6 +17,7 @@ export type JobPosting = {
   lunch_start: string | null;
   lunch_end: string | null;
   supervisor_id: string | null;
+  rooms: string[] | null;
   supervisor_name: string | null;
   created_by: string | null;
   created_at: string;
@@ -35,6 +38,8 @@ export type Worker = {
   email: string | null;
   warning: string | null;
   status: "registered" | "contracted" | "working" | "completed";
+  work_start: string | null;
+  work_end: string | null;
   note: string | null;
   created_by: string | null;
   created_at: string;
@@ -82,4 +87,5 @@ export type WorkerWithAssignments = Worker & {
 export type AssignmentWithDetails = Assignment & {
   worker?: { id: string; name: string; phone: string | null; status: string };
   job_posting?: { id: string; title: string; status: string };
+  room_slots?: { date: string; start_time: string; end_time: string; room: string }[];
 };

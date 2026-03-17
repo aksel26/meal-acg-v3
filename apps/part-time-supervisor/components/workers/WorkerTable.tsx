@@ -230,7 +230,7 @@ export default function WorkerTable({
         <table className="w-full table-fixed text-sm">
           <thead>
             <tr className="border-b bg-slate-50 text-left">
-              <th className="w-10 px-4 py-3">
+              <th className="w-10 px-4 py-2">
                 <input
                   type="checkbox"
                   checked={allSelected}
@@ -239,14 +239,14 @@ export default function WorkerTable({
                   className="size-4 rounded border-slate-300"
                 />
               </th>
-              <th className="px-4 py-3 font-medium">이름</th>
-              <th className="px-4 py-3 font-medium">연락처</th>
-              <th className="px-4 py-3 font-medium">이메일</th>
-              <th className="px-4 py-3 font-medium text-center">배정 수</th>
-              <th className="px-4 py-3 font-medium text-center">블랙리스트</th>
-              <th className="w-[200px] px-4 py-3 font-medium">메모</th>
-              <th className="px-4 py-3 font-medium text-center">상태</th>
-              <th className="px-4 py-3 font-medium text-center">관리</th>
+              <th className="px-4 py-2 font-medium">이름</th>
+              <th className="px-4 py-2 font-medium">연락처</th>
+              <th className="px-4 py-2 font-medium">이메일</th>
+              <th className="px-4 py-2 font-medium text-center">배정 수</th>
+              <th className="px-4 py-2 font-medium text-center">블랙리스트</th>
+              <th className="w-[200px] px-4 py-2 font-medium">메모</th>
+              <th className="px-4 py-2 font-medium text-center">상태</th>
+              <th className="px-4 py-2 font-medium text-center">관리</th>
             </tr>
           </thead>
           <tbody>
@@ -255,7 +255,7 @@ export default function WorkerTable({
               const status = statusLabel[worker.status] ?? statusLabel.registered!;
               return (
                 <tr key={worker.id} className="border-b last:border-0 hover:bg-slate-50/50">
-                  <td className="w-10 px-4 py-3">
+                  <td className="w-10 px-4 py-2">
                     <input
                       type="checkbox"
                       checked={selectedIds.has(worker.id)}
@@ -263,10 +263,10 @@ export default function WorkerTable({
                       className="size-4 rounded border-slate-300"
                     />
                   </td>
-                  <td className="px-4 py-3 font-medium">{worker.name}</td>
-                  <td className="px-4 py-3 text-slate-500">{worker.phone || "-"}</td>
-                  <td className="px-4 py-3 text-slate-500">{worker.email || "-"}</td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-4 py-2 font-medium">{worker.name}</td>
+                  <td className="px-4 py-2 text-slate-500">{worker.phone || "-"}</td>
+                  <td className="px-4 py-2 text-slate-500">{worker.email || "-"}</td>
+                  <td className="px-4 py-2 text-center">
                     {assignCount > 0 ? (
                       <Popover>
                         <PopoverTrigger asChild>
@@ -280,7 +280,7 @@ export default function WorkerTable({
                       <span className="text-slate-400">0</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-4 py-2 text-center">
                     {worker.warning ? (
                       <span className="inline-block rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700">
                         주의
@@ -289,7 +289,7 @@ export default function WorkerTable({
                       <span className="text-slate-400">-</span>
                     )}
                   </td>
-                  <td className="w-[200px] px-4 py-3">
+                  <td className="w-[200px] px-4 py-2">
                     {editingNoteId === worker.id ? (
                       <input
                         autoFocus
@@ -323,12 +323,12 @@ export default function WorkerTable({
                       </button>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-4 py-2 text-center">
                     <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${status.className}`}>
                       {status.text}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-4 py-2 text-center">
                     <div className="flex items-center justify-center gap-1">
                       <button
                         onClick={() => onView(worker.id)}

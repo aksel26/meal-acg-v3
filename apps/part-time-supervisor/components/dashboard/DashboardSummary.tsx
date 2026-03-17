@@ -1,6 +1,11 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import { useMotionValue, useSpring, useTransform, motion } from "motion/react";
 import { Briefcase, Users, UserCheck, FileCheck, Banknote } from "lucide-react";
 
 type Props = {
+  dateLabel: string;
   summary: {
     activeJobCount: number;
     totalAssigned: number;
@@ -35,7 +40,32 @@ function formatCost(cost: number): string {
   return new Intl.NumberFormat("ko-KR").format(cost);
 }
 
-export function DashboardSummary({ summary }: Props) {
+function NumberTicker({
+  value,
+  prefix = "",
+  format,
+}: {
+  value: number;
+  prefix?: string;
+  format?: (n: number) => string;
+}) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const motionValue = useMotionValue(0);
+  const spring = useSpring(motionValue, { stiffness: 120, damping: 20, mass: 0.5 });
+  const display = useTransform(spring, (v) => {
+    const rounded = Math.round(v);
+    const formatted = format ? format(rounded) : String(rounded);
+    return `${prefix}${formatted}`;
+  });
+
+  useEffect(() => {
+    motionValue.set(value);
+  }, [value, motionValue]);
+
+  return <motion.span ref={ref}>{display}</motion.span>;
+}
+
+export function DashboardSummary({ summary, dateLabel }: Props) {
   const cards = [
     {
       label: "진행 중 공고",
@@ -91,7 +121,9 @@ export function DashboardSummary({ summary }: Props) {
   ];
 
   return (
-    <div className="rounded-xl bg-slate-50 p-5 grid grid-cols-2 gap-4 md:grid-cols-5">
+    <div className="rounded-xl bg-slate-50 p-5 space-y-3">
+      <h3 className="text-sm font-semibold text-muted-foreground">{dateLabel} 요약 현황</h3>
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
       {cards.map((card) => (
         <div
           key={card.label}
@@ -103,12 +135,12 @@ export function DashboardSummary({ summary }: Props) {
               <div className="flex items-baseline gap-1">
                 {"isCost" in card && card.isCost ? (
                   <span className={`tabular-nums text-lg font-bold leading-tight ${card.valueColor}`}>
-                    {card.display}
+                    <NumberTicker value={card.value} prefix="₩" format={(n) => formatCost(n)} />
                   </span>
                 ) : (
                   <>
                     <span className={`tabular-nums text-2xl font-bold ${card.valueColor}`}>
-                      {card.display}
+                      <NumberTicker value={card.value} />
                     </span>
                     {card.suffix && (
                       <span className="text-sm text-muted-foreground">{card.suffix}</span>
@@ -135,6 +167,7 @@ export function DashboardSummary({ summary }: Props) {
           )}
         </div>
       ))}
+      </div>
     </div>
   );
 }

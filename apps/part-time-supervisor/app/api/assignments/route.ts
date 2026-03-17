@@ -12,7 +12,7 @@ export async function GET(request: Request) {
 
     let query = supabase
       .from("assignments")
-      .select("*, contract_status, signature_image_path, signed_at, confirmed_at, attendance_status, checked_in_at, attendance_confirmed_at, attendance_confirmed_by, worker:workers(id, name, phone, email, gender, experience, address, warning, note, status, created_at), job_posting:job_postings(id, title, status)")
+      .select("*, contract_status, signature_image_path, signed_at, confirmed_at, attendance_status, checked_in_at, attendance_confirmed_at, attendance_confirmed_by, worker:workers(id, name, phone, email, gender, experience, address, warning, note, status, work_start, work_end, created_at), job_posting:job_postings(id, title, status)")
       .order("assigned_at", { ascending: false });
 
     if (jobPostingId) {

@@ -3,7 +3,11 @@
 import { useState, useMemo, useCallback } from "react";
 import { Button } from "@repo/ui/src/button";
 import dayjs from "dayjs";
-import { ChevronRight, ChevronLeft } from "lucide-react";
+import "dayjs/locale/ko";
+import { ChevronRight, ChevronLeft, ExternalLink } from "lucide-react";
+import Link from "next/link";
+
+dayjs.locale("ko");
 import { useDashboard } from "@/hooks/use-dashboard";
 import { useDashboardCalendar } from "@/hooks/use-dashboard-calendar";
 import { DashboardCalendar } from "@/components/dashboard/DashboardCalendar";
@@ -125,7 +129,6 @@ export default function DashboardPage() {
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[420px_1fr]">
       {/* 좌측: 캘린더 + 공고 리스트 */}
       <div className="space-y-4">
-        <button onClick={() => { throw Error("Generic Error Message"); }} className="rounded-xl bg-slate-50"> Generic Error Message </button>
         <div className="rounded-xl bg-slate-50">
           <DashboardCalendar
             dayMap={dayMap}
@@ -201,7 +204,7 @@ export default function DashboardPage() {
           <DashboardSkeleton />
         ) : data ? (
           <>
-            <DashboardSummary summary={data.summary} />
+            <DashboardSummary summary={data.summary} dateLabel={activePreset ?? dateLabel} />
             {(() => {
               const expandedJob = data.jobPostings.find((jp) => jp.id === expandedJobId);
               if (!expandedJob) {
@@ -218,7 +221,13 @@ export default function DashboardPage() {
               return (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold">{expandedJob.title}</h3>
+                    <Link
+                      href={`/job-postings/${expandedJob.id}`}
+                      className="group/link flex items-center gap-1 text-sm font-semibold hover:text-blue-600 transition-colors"
+                    >
+                      {expandedJob.title}
+                      <ExternalLink size={13} className="text-muted-foreground group-hover/link:text-blue-600 transition-colors" />
+                    </Link>
                     <span className="text-xs text-muted-foreground">
                       {expandedJob.workers.length}명 배정
                     </span>

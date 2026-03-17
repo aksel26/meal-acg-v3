@@ -292,6 +292,7 @@ export default function AssignedWorkersTable({
             <th className="px-4 py-3 font-medium">이메일</th>
             <th className="px-4 py-3 font-medium text-center">성별</th>
             <th className="px-4 py-3 font-medium">경력</th>
+            <th className="px-4 py-3 font-medium text-center">근무시간</th>
             <th className="px-4 py-3 font-medium">특이사항</th>
             <th className="px-4 py-3 font-medium text-center">회의실</th>
             <th className="px-4 py-3 font-medium text-center">상태</th>
@@ -309,6 +310,8 @@ export default function AssignedWorkersTable({
               gender?: string | null;
               email?: string | null;
               experience?: string | null;
+              work_start?: string | null;
+              work_end?: string | null;
               note?: string | null;
               created_at?: string;
             };
@@ -332,6 +335,11 @@ export default function AssignedWorkersTable({
                   {worker?.gender ? genderLabel[worker.gender] || "-" : "-"}
                 </td>
                 <td className="px-4 py-3 text-slate-500">{worker?.experience || "-"}</td>
+                <td className="px-4 py-3 text-center text-slate-500 whitespace-nowrap">
+                  {worker?.work_start && worker?.work_end
+                    ? `${worker.work_start} ~ ${worker.work_end}`
+                    : "-"}
+                </td>
                 <td className="px-4 py-3">
                   {worker?.id ? (
                     <NoteInput workerId={worker.id} initialValue={worker.note || ""} />

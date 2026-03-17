@@ -198,10 +198,10 @@ export default function JobPostingModal({
                   />
                 </div>
 
-                {/* 근무시간 - 추후 활성화
+                {/* 근무시간 */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="mb-1 block text-sm font-medium">근무 시작</label>
+                    <label className="mb-1 block text-sm font-medium">시작시간</label>
                     <input
                       type="time"
                       {...register("work_start")}
@@ -209,7 +209,7 @@ export default function JobPostingModal({
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-medium">근무 종료</label>
+                    <label className="mb-1 block text-sm font-medium">종료시간</label>
                     <input
                       type="time"
                       {...register("work_end")}
@@ -217,7 +217,6 @@ export default function JobPostingModal({
                     />
                   </div>
                 </div>
-                */}
 
                 {/* 인원 */}
                 <div>

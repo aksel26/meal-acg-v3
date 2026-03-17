@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import dayjs from "dayjs";
 import { DayButton, DayPicker, getDefaultClassNames } from "react-day-picker";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import type { CalendarWeek } from "react-day-picker";
+import { ChevronLeftIcon, ChevronRightIcon, ChevronUpIcon, ChevronDownIcon } from "lucide-react";
 import { Button, buttonVariants } from "@repo/ui/src/button";
 import { cn } from "@repo/ui/lib/utils";
 import type { DayJobLabel } from "@/hooks/use-dashboard-calendar";
@@ -75,6 +76,40 @@ export function DashboardCalendar({
   onPreset,
   activePreset,
 }: Props) {
+  const [isCollapsed, setIsCollapsed] = useState(true);
+
+  const selectedDateStr = dayjs(selectedDate).format("YYYY-MM-DD");
+
+  const stateRef = useRef({ isCollapsed, selectedDateStr });
+  stateRef.current = { isCollapsed, selectedDateStr };
+
+  const CustomWeek = useCallback(
+    ({
+      week,
+      ...trProps
+    }: { week: CalendarWeek } & React.HTMLAttributes<HTMLTableRowElement>) => {
+      const { isCollapsed: collapsed, selectedDateStr: selDate } = stateRef.current;
+      const containsSelected = week.days.some(
+        (day) => dayjs(day.date).format("YYYY-MM-DD") === selDate
+      );
+      const shouldHide = collapsed && !containsSelected;
+      return (
+        <tr
+          {...trProps}
+          style={{
+            ...trProps.style,
+            maxHeight: shouldHide ? 0 : 200,
+            overflow: "hidden",
+            opacity: shouldHide ? 0 : 1,
+            transition: "max-height 250ms ease, opacity 200ms ease",
+          }}
+        />
+      );
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
   const platformColorMap = useMemo(() => {
     const map = new Map<string, number>();
     let idx = 0;
@@ -263,8 +298,26 @@ export function DashboardCalendar({
           Chevron: CalendarChevron,
           DayButton: CustomDayButton,
           WeekNumber: CalendarWeekNumber,
+          Week: CustomWeek,
         }}
       />
+      <button
+        type="button"
+        onClick={() => setIsCollapsed((prev) => !prev)}
+        className="flex w-full items-center justify-center gap-1 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+      >
+        {isCollapsed ? (
+          <>
+            펼치기
+            <ChevronDownIcon className="size-3.5" />
+          </>
+        ) : (
+          <>
+            접기
+            <ChevronUpIcon className="size-3.5" />
+          </>
+        )}
+      </button>
     </div>
   );
 }

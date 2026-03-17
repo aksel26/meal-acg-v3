@@ -125,6 +125,12 @@ export default function DashboardPage() {
       ? dayjs(dateRange.startDate).format("M월 D일 (ddd)")
       : `${dayjs(dateRange.startDate).format("M/D")} ~ ${dayjs(dateRange.endDate).format("M/D")}`;
 
+  const selectedDateStr = dayjs(selectedDate).format("YYYY-MM-DD");
+  const filteredJobPostings = useMemo(
+    () => (data?.jobPostings ?? []).filter((jp) => jp.endDate >= selectedDateStr),
+    [data?.jobPostings, selectedDateStr]
+  );
+
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[420px_1fr]">
       {/* 좌측: 캘린더 + 공고 리스트 */}
@@ -142,14 +148,14 @@ export default function DashboardPage() {
         </div>
 
         {/* 공고별 현황 */}
-        {data && data.jobPostings.length > 0 && (
+        {data && filteredJobPostings.length > 0 && (
           <div className="space-y-2">
             <div className="flex items-center justify-between px-1">
               <h3 className="text-sm font-semibold text-muted-foreground">공고별 현황</h3>
-              <span className="text-xs text-muted-foreground/60">{data.jobPostings.length}건</span>
+              <span className="text-xs text-muted-foreground/60">{filteredJobPostings.length}건</span>
             </div>
             <div className="space-y-1.5">
-              {data.jobPostings.map((jp) => (
+              {filteredJobPostings.map((jp) => (
                 <div
                   key={jp.id}
                   className={`flex items-center gap-2 rounded-lg px-3 py-2.5 cursor-pointer transition-colors hover:bg-slate-100 ${expandedJobId === jp.id ? "bg-slate-100" : "bg-slate-50"}`}
@@ -206,12 +212,12 @@ export default function DashboardPage() {
           <>
             <DashboardSummary summary={data.summary} dateLabel={activePreset ?? dateLabel} />
             {(() => {
-              const expandedJob = data.jobPostings.find((jp) => jp.id === expandedJobId);
+              const expandedJob = filteredJobPostings.find((jp) => jp.id === expandedJobId);
               if (!expandedJob) {
                 return (
                   <div className="rounded-xl bg-slate-50 py-8">
                     <p className="text-sm text-muted-foreground text-center">
-                      {data.jobPostings.length === 0
+                      {filteredJobPostings.length === 0
                         ? "선택한 기간에 공고가 없습니다"
                         : "공고를 클릭하면 응시자 목록을 확인할 수 있습니다"}
                     </p>

@@ -47,9 +47,12 @@ export default function RoomAssignmentsPage() {
   const jobPostings = useMemo(
     () =>
       (jobPostingsData || []).filter(
-        (jp) => jp.status !== "closed" && jp.status !== "completed"
+        (jp) =>
+          jp.status !== "closed" &&
+          jp.status !== "completed" &&
+          jp.end_date >= date
       ),
-    [jobPostingsData]
+    [jobPostingsData, date]
   );
 
   const { data: roomData } = useRoomAssignments(date);

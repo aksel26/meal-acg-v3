@@ -38,6 +38,27 @@ export async function POST(request: Request) {
     const supabase = createServiceClient();
     const body = await request.json();
 
+    // job_posting의 rooms가 있으면 기본 room_slots 자동 배정
+    if (body.job_posting_id && !body.room_slots) {
+      const { data: jobPosting } = await supabase
+        .from("job_postings")
+        .select("rooms, start_date, work_start, work_end")
+        .eq("id", body.job_posting_id)
+        .single();
+
+      if (jobPosting?.rooms && jobPosting.rooms.length > 0) {
+        const startTime = jobPosting.work_start || "09:00";
+        const startHour = parseInt(startTime.split(":")[0], 10);
+        const endTime = `${String(startHour + 1).padStart(2, "0")}:00`;
+        body.room_slots = jobPosting.rooms.map((room: string) => ({
+          date: jobPosting.start_date,
+          start_time: startTime,
+          end_time: endTime,
+          room,
+        }));
+      }
+    }
+
     const { data, error } = await supabase
       .from("assignments")
       .insert(body)

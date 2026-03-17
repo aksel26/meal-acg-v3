@@ -17,6 +17,7 @@ import {
 } from "@repo/ui/src/dialog";
 
 import type { JobPosting } from "@/lib/supabase/types";
+import { ROOMS } from "@/lib/room-constants";
 
 type FormData = {
   title: string;
@@ -36,6 +37,7 @@ type FormData = {
   status: "open" | "closed" | "draft" | "in_progress" | "completed";
   description: string;
   supervisor_id: string;
+  rooms: string[];
 };
 
 const defaultValues: FormData = {
@@ -56,6 +58,7 @@ const defaultValues: FormData = {
   status: "draft",
   description: "",
   supervisor_id: "",
+  rooms: [],
 };
 
 export default function JobPostingModal({
@@ -100,6 +103,7 @@ export default function JobPostingModal({
         status: existing.status,
         description: existing.description || "",
         supervisor_id: existing.supervisor_id || "",
+        rooms: existing.rooms || [],
       });
     } else if (!editingId) {
       reset(defaultValues);
@@ -129,6 +133,7 @@ export default function JobPostingModal({
         supervisor_name: data.supervisor_id
           ? members.find((m) => m.id === data.supervisor_id)?.full_name || null
           : null,
+        rooms: data.rooms.length > 0 ? data.rooms : null,
       };
 
       if (editingId) {
@@ -357,6 +362,45 @@ export default function JobPostingModal({
                       className="w-full rounded-lg border px-3 py-2 text-sm"
                     />
                   </div>
+                </div>
+
+                {/* 회의실 */}
+                <div>
+                  <label className="mb-1 block text-sm font-medium">회의실</label>
+                  <Controller
+                    name="rooms"
+                    control={control}
+                    render={({ field }) => (
+                      <div className="grid grid-cols-4 gap-2">
+                        {ROOMS.map((room) => {
+                          const checked = field.value.includes(room.id);
+                          return (
+                            <label
+                              key={room.id}
+                              className={`flex cursor-pointer items-center justify-center rounded-lg border px-3 py-2 text-sm transition-colors ${
+                                checked
+                                  ? "border-indigo-500 bg-indigo-50 font-medium text-indigo-700"
+                                  : "hover:bg-slate-50"
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                className="sr-only"
+                                checked={checked}
+                                onChange={() => {
+                                  const next = checked
+                                    ? field.value.filter((r: string) => r !== room.id)
+                                    : [...field.value, room.id];
+                                  field.onChange(next);
+                                }}
+                              />
+                              {room.name}
+                            </label>
+                          );
+                        })}
+                      </div>
+                    )}
+                  />
                 </div>
 
               </div>

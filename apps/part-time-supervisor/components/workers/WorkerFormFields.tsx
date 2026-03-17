@@ -15,9 +15,26 @@ import {
 } from "@repo/ui/src/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/src/popover";
 import { Calendar } from "@repo/ui/src/calendar";
+import { TimeRangePicker } from "@repo/ui/src/time-range-picker";
+import { Badge } from "@repo/ui/src/badge";
 import { CalendarIcon } from "lucide-react";
 import { parse, isValid, format } from "date-fns";
 import { ko } from "date-fns/locale";
+
+function formatDuration(start: string, end: string): string | null {
+  if (!start || !end) return null;
+  const parts = start.split(":").map(Number);
+  const endParts = end.split(":").map(Number);
+  const sh = parts[0] ?? 0, sm = parts[1] ?? 0;
+  const eh = endParts[0] ?? 0, em = endParts[1] ?? 0;
+  const diff = eh * 60 + em - (sh * 60 + sm);
+  if (diff <= 0) return null;
+  const hours = Math.floor(diff / 60);
+  const mins = diff % 60;
+  if (hours > 0 && mins > 0) return `${hours}시간 ${mins}분`;
+  if (hours > 0) return `${hours}시간`;
+  return `${mins}분`;
+}
 
 export type WorkerFormData = {
   name: string;
@@ -30,6 +47,8 @@ export type WorkerFormData = {
   warning: string;
   bank_name: string;
   account_number: string;
+  work_start: string;
+  work_end: string;
   status: Worker["status"];
   note: string;
 };
@@ -45,6 +64,8 @@ export const workerFormDefaults: WorkerFormData = {
   warning: "",
   bank_name: "",
   account_number: "",
+  work_start: "",
+  work_end: "",
   status: "registered",
   note: "",
 };
@@ -278,6 +299,43 @@ export default function WorkerFormFields({
             </div>
           </div>
         </div>
+
+        {/* 근무 시간 */}
+        {control && (
+          <div className="space-y-3">
+            <SectionLabel>근무 시간</SectionLabel>
+            <Controller
+              name="work_start"
+              control={control}
+              render={({ field: startField }) => (
+                <Controller
+                  name="work_end"
+                  control={control}
+                  render={({ field: endField }) => {
+                    const duration = formatDuration(startField.value, endField.value);
+                    return (
+                      <div className="space-y-2">
+                        <TimeRangePicker
+                          startTime={startField.value}
+                          endTime={endField.value}
+                          onChange={({ startTime, endTime }) => {
+                            startField.onChange(startTime);
+                            endField.onChange(endTime);
+                          }}
+                        />
+                        {duration && (
+                          <Badge variant="secondary" className="w-full justify-center">
+                            {duration}
+                          </Badge>
+                        )}
+                      </div>
+                    );
+                  }}
+                />
+              )}
+            />
+          </div>
+        )}
 
         {/* 기타 */}
         <div className="space-y-3">

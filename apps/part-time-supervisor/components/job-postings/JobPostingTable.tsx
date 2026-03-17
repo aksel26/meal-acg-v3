@@ -6,6 +6,16 @@ import { useBulkDeleteJobPostings } from "@/hooks/use-bulk-delete-job-postings";
 import { toast } from "@repo/ui/src/sonner";
 import { Pencil, Trash2 } from "lucide-react";
 import type { JobPosting } from "@/lib/supabase/types";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@repo/ui/src/alert-dialog";
 import dayjs from "dayjs";
 import "dayjs/locale/ko";
 
@@ -49,6 +59,7 @@ export default function JobPostingTable({
   const router = useRouter();
   const bulkDeleteMutation = useBulkDeleteJobPostings();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
 
   const allSelected = data.length > 0 && selectedIds.size === data.length;
 
@@ -70,8 +81,6 @@ export default function JobPostingTable({
   };
 
   const handleBulkDelete = async () => {
-    if (selectedIds.size === 0) return;
-    if (!confirm(`선택한 ${selectedIds.size}개 공고를 삭제하시겠습니까?`)) return;
     try {
       await bulkDeleteMutation.mutateAsync(Array.from(selectedIds));
       toast.success(`${selectedIds.size}개 공고가 삭제되었습니다.`);
@@ -79,6 +88,7 @@ export default function JobPostingTable({
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "삭제에 실패했습니다.");
     }
+    setBulkDeleteOpen(false);
   };
 
   if (isLoading) {
@@ -95,7 +105,7 @@ export default function JobPostingTable({
         <div className="flex items-center gap-3 rounded-lg bg-slate-50 px-4 py-2">
           <span className="text-sm text-slate-600">{selectedIds.size}개 선택</span>
           <button
-            onClick={handleBulkDelete}
+            onClick={() => setBulkDeleteOpen(true)}
             disabled={bulkDeleteMutation.isPending}
             className="inline-flex items-center gap-1 rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-600 disabled:opacity-50"
           >
@@ -193,6 +203,26 @@ export default function JobPostingTable({
           </tbody>
         </table>
       </div>
+
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>일괄 삭제 확인</AlertDialogTitle>
+            <AlertDialogDescription>
+              선택한 {selectedIds.size}개 공고를 삭제하시겠습니까? 관련 배정도 함께 삭제됩니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              className="bg-destructive text-white hover:bg-destructive/90"
+            >
+              삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

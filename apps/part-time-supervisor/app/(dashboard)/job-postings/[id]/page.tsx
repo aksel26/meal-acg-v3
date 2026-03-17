@@ -18,10 +18,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@repo/ui/src/alert-dialog";
-import AssignedWorkersTable from "@/components/job-postings/AssignedWorkersTable";
+import CandidateListPanel from "@/components/job-postings/CandidateListPanel";
 import RegisterWorkerDialog from "@/components/job-postings/RegisterWorkerDialog";
 import SmsDialog from "@/components/job-postings/SmsDialog";
 import ContractLinkModal from "@/components/job-postings/ContractLinkModal";
+import WorkerModal from "@/components/workers/WorkerModal";
+import type { Worker } from "@/lib/supabase/types";
 
 dayjs.locale("ko");
 
@@ -53,6 +55,7 @@ export default function JobPostingDetailPage({ params }: { params: Promise<{ id:
   const [smsOpen, setSmsOpen] = useState(false);
   const [contractLinkOpen, setContractLinkOpen] = useState(false);
   const [downloadOpen, setDownloadOpen] = useState(false);
+  const [editingWorker, setEditingWorker] = useState<Worker | null>(null);
   const { data: job, isLoading } = useJobPosting(id);
   const { data: assignments, isLoading: assignmentsLoading } = useAssignmentsByJobPosting(id);
 
@@ -149,11 +152,12 @@ export default function JobPostingDetailPage({ params }: { params: Promise<{ id:
             </button>
           </div>
         </div>
-        <AssignedWorkersTable
+        <CandidateListPanel
           jobPostingId={id}
-          job={job}
+          jobPosting={job}
           assignments={assignments || []}
           isLoading={assignmentsLoading}
+          onEditWorker={setEditingWorker}
         />
       </div>
 
@@ -174,6 +178,12 @@ export default function JobPostingDetailPage({ params }: { params: Promise<{ id:
         onOpenChange={setSmsOpen}
         assignments={assignments || []}
         job={job}
+      />
+
+      <WorkerModal
+        open={!!editingWorker}
+        onClose={() => setEditingWorker(null)}
+        existing={editingWorker}
       />
 
       <AlertDialog open={downloadOpen} onOpenChange={setDownloadOpen}>

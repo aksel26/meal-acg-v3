@@ -1,22 +1,47 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
+import {
+  DndContext,
+  DragOverlay,
+  pointerWithin,
+  type DragStartEvent,
+  type DragEndEvent,
+} from "@dnd-kit/core";
 import { useRoomAssignments } from "@/hooks/use-room-assignments";
 import { useAssignmentsByJobPosting } from "@/hooks/use-assignments";
 import { useJobPostings } from "@/hooks/use-job-postings";
-import RoomTimetable from "@/components/room-assignments/RoomTimetable";
-import RoomAssignmentSidebar from "@/components/room-assignments/RoomAssignmentSidebar";
-import WorkerSidePanel from "@/components/room-assignments/WorkerSidePanel";
+import {
+  useDeleteRoomSlot,
+  useAddRoomSlot,
+} from "@/hooks/use-room-assignment-mutations";
+import DateJobPostingNode from "@/components/room-assignments/DateJobPostingNode";
+import RoomNode from "@/components/room-assignments/RoomNode";
+import WorkerListNode from "@/components/room-assignments/WorkerListNode";
+import FlowConnector from "@/components/room-assignments/FlowConnector";
+import { getRoomById } from "@/lib/room-constants";
+import { toast } from "@repo/ui/src/sonner";
 import dayjs from "dayjs";
 
+type DragData = {
+  assignmentId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  room: string;
+  workerName: string;
+};
+
 export default function RoomAssignmentsPage() {
-  const today = dayjs().format("YYYY-MM-DD");
-  const [date, setDate] = useState(today);
+  const [date, setDate] = useState(() => dayjs().format("YYYY-MM-DD"));
   const [selectedJobPostingId, setSelectedJobPostingId] = useState<
     string | null
   >(null);
-  const [startHour, setStartHour] = useState(8);
-  const [endHour, setEndHour] = useState(19);
+  const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
+  const [activeDrag, setActiveDrag] = useState<DragData | null>(null);
+
+  const deleteSlot = useDeleteRoomSlot();
+  const addSlot = useAddRoomSlot();
 
   const { data: jobPostingsData } = useJobPostings();
   const jobPostings = useMemo(
@@ -27,55 +52,111 @@ export default function RoomAssignmentsPage() {
     [jobPostingsData]
   );
 
-  const handleJobPostingChange = (id: string | null) => {
-    setSelectedJobPostingId(id);
-    if (id) {
-      const jp = jobPostings.find((j) => j.id === id);
-      if (jp?.work_start && jp?.work_end) {
-        setStartHour(parseInt(jp.work_start.split(":")[0] ?? "9", 10));
-        setEndHour(parseInt(jp.work_end.split(":")[0] ?? "18", 10));
-      }
-    }
-  };
-
   const { data: roomData } = useRoomAssignments(date);
   const roomAssignments = roomData?.room_assignments || [];
 
   const { data: assignments } =
     useAssignmentsByJobPosting(selectedJobPostingId);
 
-  return (
-    <div className="space-y-4">
-      <div className="flex gap-4">
-        <RoomAssignmentSidebar
-          date={date}
-          onDateChange={setDate}
-          startHour={startHour}
-          endHour={endHour}
-          onStartHourChange={setStartHour}
-          onEndHourChange={setEndHour}
-        />
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveDrag(event.active.data.current as DragData);
+  }, []);
 
-        <div className="flex flex-1 gap-4 overflow-hidden">
-          <div className="flex-[2] min-w-0 overflow-x-auto">
-            <RoomTimetable
+  const handleDragEnd = useCallback(
+    async (event: DragEndEvent) => {
+      setActiveDrag(null);
+      const { active, over } = event;
+      if (!over) return;
+
+      const data = active.data.current as DragData;
+      const targetRoom = over.id as string;
+
+      if (data.room === targetRoom) return;
+
+      try {
+        await deleteSlot.mutateAsync({
+          assignment_id: data.assignmentId,
+          date: data.date,
+          start_time: data.startTime,
+          end_time: data.endTime,
+          room: data.room,
+        });
+        await addSlot.mutateAsync({
+          assignment_id: data.assignmentId,
+          date: data.date,
+          start_time: data.startTime,
+          end_time: data.endTime,
+          room: targetRoom,
+        });
+        const roomName = getRoomById(targetRoom)?.name ?? targetRoom;
+        toast.success(`${data.workerName} → ${roomName} 이동 완료`);
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : "회의실 변경에 실패했습니다"
+        );
+      }
+    },
+    [deleteSlot, addSlot]
+  );
+
+  const handleDragCancel = useCallback(() => {
+    setActiveDrag(null);
+  }, []);
+
+  return (
+    <DndContext
+      collisionDetection={pointerWithin}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
+    >
+      <div className="overflow-x-auto">
+        <div className="flex items-start gap-0">
+          <div className="w-[280px] shrink-0">
+            <DateJobPostingNode
               date={date}
-              startHour={startHour}
-              endHour={endHour}
-              roomAssignments={roomAssignments}
-              availableAssignments={assignments || []}
+              onDateChange={setDate}
+              jobPostings={jobPostings}
+              selectedJobPostingId={selectedJobPostingId}
+              onJobPostingSelect={setSelectedJobPostingId}
             />
           </div>
 
-          <WorkerSidePanel
-            assignments={assignments || []}
-            roomAssignments={roomAssignments}
-            jobPostings={jobPostings}
-            selectedJobPostingId={selectedJobPostingId}
-            onJobPostingChange={handleJobPostingChange}
-          />
+          <FlowConnector isActive />
+
+          <div className="w-[160px] shrink-0">
+            <RoomNode
+              roomAssignments={roomAssignments}
+              selectedRoom={selectedRoom}
+              onSelect={setSelectedRoom}
+            />
+          </div>
+
+          <FlowConnector isActive={roomAssignments.length > 0} />
+
+          <div className="min-w-[400px] flex-1">
+            <WorkerListNode
+              roomAssignments={roomAssignments}
+              assignments={assignments || []}
+              selectedRoom={selectedRoom}
+              date={date}
+            />
+          </div>
         </div>
       </div>
-    </div>
+
+      <DragOverlay>
+        {activeDrag ? (
+          <div className="rounded-lg border border-indigo-200 bg-white px-3 py-2 shadow-lg">
+            <p className="text-sm font-medium text-slate-700">
+              {activeDrag.workerName}
+            </p>
+            <p className="text-xs text-slate-400">
+              {getRoomById(activeDrag.room)?.name ?? activeDrag.room} →
+            </p>
+          </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
   );
 }

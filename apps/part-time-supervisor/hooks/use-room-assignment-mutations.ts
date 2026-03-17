@@ -31,6 +31,9 @@ export function useAddRoomSlot() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.roomAssignments.all,
       });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.assignments.all,
+      });
     },
   });
 }
@@ -54,6 +57,9 @@ export function useDeleteRoomSlot() {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.roomAssignments.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.assignments.all,
       });
     },
   });

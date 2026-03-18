@@ -1,7 +1,8 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { Fragment, use, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import confetti from "canvas-confetti";
 import Image from "next/image";
 import type { JobPosting } from "@/lib/supabase/types";
 import TermsStep from "@/components/contract/TermsStep";
@@ -25,64 +26,255 @@ function formatPhoneNumber(value: string): string {
   return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
 }
 
-function WelcomeScreen({ job, onStart }: { job: JobPosting; onStart: () => void }) {
+const STEP_LABELS = ["본인 확인", "동의", "완료"];
+
+function StepIndicator({ current, total, completed = false }: { current: number; total: number; completed?: boolean }) {
   return (
-    <div className="flex min-h-[calc(100dvh-80px)] flex-col items-center justify-center text-center">
-      <motion.div
-        className="mb-6"
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ type: "spring", stiffness: 200, damping: 16, delay: 0.15 }}
-      >
-        <Image
-          src="/acg_ci_gray.png"
-          alt="ACG"
-          width={160}
-          height={52}
-          className="h-12 w-auto object-contain"
-          priority
+    <motion.div
+      className="mb-10"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 0.05 }}
+    >
+      <div className="flex items-center justify-around">
+        {STEP_LABELS.map((label, i) => (
+          <Fragment key={label}>
+            <div className="flex flex-col items-center gap-1.5">
+              <motion.div
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[11px] font-medium transition-colors duration-300 ${
+                  i < current || (completed && i === current)
+                    ? "bg-stone-900 text-white"
+                    : i === current
+                      ? "border-2 border-stone-900 bg-white text-stone-900"
+                      : "border border-stone-200 bg-white text-stone-300"
+                }`}
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: i * 0.08 }}
+              >
+                {i < current || (completed && i === current) ? (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                ) : (
+                  i + 1
+                )}
+              </motion.div>
+              <span
+                className={`whitespace-nowrap text-[11px] tracking-tight transition-colors duration-300 ${
+                  i <= current ? "font-medium text-stone-600" : "font-normal text-stone-300"
+                }`}
+              >
+                {label}
+              </span>
+            </div>
+            {i < total - 1 && (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`shrink-0 ${i < current || completed ? "text-stone-400" : "text-stone-200"}`}><polyline points="9 18 15 12 9 6" /></svg>
+            )}
+          </Fragment>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+function InputField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+  required = false,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  type?: string;
+  required?: boolean;
+}) {
+  const [focused, setFocused] = useState(false);
+
+  return (
+    <div>
+      <label className="mb-2 block text-[11px] font-normal uppercase tracking-wider text-stone-300">
+        {label}
+      </label>
+      <div className="relative">
+        <input
+          type={type}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          className="w-full border-b-2 border-stone-200 bg-transparent pb-3 pt-1 text-[16px] text-stone-500 outline-none transition-colors placeholder:text-stone-300 focus:border-stone-900"
+          placeholder={placeholder}
+          required={required}
         />
-      </motion.div>
+        <motion.div
+          className="absolute bottom-0 left-0 h-[2px] bg-stone-900"
+          initial={{ width: "0%" }}
+          animate={{ width: focused ? "100%" : "0%" }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
+        />
+      </div>
+    </div>
+  );
+}
 
-      <motion.h1
-        className="mb-1.5 text-[24px] font-bold leading-tight tracking-tight text-stone-900"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-        방문을 환영합니다!
-      </motion.h1>
+function WelcomeScreen({ job, onStart }: { job: JobPosting; onStart: () => void }) {
+  const [showAcgText, setShowAcgText] = useState(true);
+  const [showLogo, setShowLogo] = useState(false);
+  const [showIntro, setShowIntro] = useState(false);
+  const [showContent, setShowContent] = useState(false);
 
-      <motion.p
-        className="mb-3 text-[15px] font-semibold text-stone-600"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.38 }}
-      >
-        {job.title}
-      </motion.p>
+  const words = [
+    { text: "Assessment", delay: 0.3 },
+    { text: "Consulting", delay: 0.7 },
+    { text: "Group", delay: 1.1 },
+  ];
 
-      <motion.p
-        className="mb-10 max-w-[280px] text-[14px] leading-relaxed text-stone-400"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.46 }}
-      >
-        본인 확인 후 출석이 완료됩니다.
-        <br />
-        이름과 전화번호를 준비해 주세요.
-      </motion.p>
+  useEffect(() => {
+    const timers = [
+      setTimeout(() => setShowLogo(true), 1600),
+      setTimeout(() => setShowAcgText(false), 2400),
+      setTimeout(() => setShowIntro(true), 3000),
+      setTimeout(() => setShowIntro(false), 4400),
+      setTimeout(() => setShowContent(true), 4900),
+    ];
+    return () => timers.forEach(clearTimeout);
+  }, []);
 
-      <motion.button
-        onClick={onStart}
-        className="w-full max-w-xs rounded-xl bg-stone-900 py-3.5 text-sm font-semibold text-white"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.54 }}
-        whileTap={{ scale: 0.98 }}
-      >
-        시작하기
-      </motion.button>
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950 overflow-hidden">
+      <div className="flex flex-col items-center text-center px-5 w-full max-w-lg">
+        {/* Assessment · Consulting · Group */}
+        <AnimatePresence>
+          {showAcgText && (
+            <motion.div
+              key="acg-text"
+              className="absolute flex items-center gap-3"
+              style={{ top: "calc(50% - 60px)" }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              {words.map(({ text, delay }, i) => (
+                <span key={text} className="flex items-center gap-3">
+                  <motion.span
+                    className="text-[13px] font-normal tracking-widest text-white"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay, duration: 0.5, ease: "easeOut" }}
+                  >
+                    {text}
+                  </motion.span>
+                  {i < words.length - 1 && (
+                    <motion.span
+                      className="text-[13px] text-stone-600"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: delay + 0.3, duration: 0.3 }}
+                    >
+                      ·
+                    </motion.span>
+                  )}
+                </span>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Logo */}
+        <motion.div
+          layout
+          initial={{ opacity: 0 }}
+          animate={{ opacity: showLogo ? 1 : 0 }}
+          transition={{
+            opacity: { duration: 0.6 },
+            layout: { duration: 0.7, ease: [0.25, 0.1, 0.25, 1] },
+          }}
+        >
+          <Image
+            src="/acg_ci_gray.png"
+            alt="ACG"
+            width={160}
+            height={52}
+            className="h-10 w-auto object-contain brightness-0 invert"
+            priority
+          />
+        </motion.div>
+
+        {/* 환영합니다 intro text */}
+        <AnimatePresence>
+          {showIntro && !showContent && (
+            <motion.p
+              key="intro-text"
+              className="mt-8 text-[14px] tracking-tight text-stone-400"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              방문을 환영합니다
+            </motion.p>
+          )}
+        </AnimatePresence>
+
+        {showContent && (
+          <motion.div
+            className="mt-8 flex flex-col items-center w-full"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <motion.div
+              className="mb-3 h-[1px] w-8 bg-stone-600"
+              initial={{ width: 0 }}
+              animate={{ width: 32 }}
+              transition={{ delay: 0.05, duration: 0.4 }}
+            />
+
+            <motion.p
+              className="mb-2 text-[14px] tracking-tight text-stone-300"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              방문을 환영합니다
+            </motion.p>
+
+            <motion.h1
+              className="mb-4 text-[22px] font-normal leading-tight tracking-tight text-white"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              {job.title}
+            </motion.h1>
+
+            <motion.p
+              className="mb-12 max-w-[280px] text-[13px] leading-relaxed text-stone-300"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              본인 확인 후 출석이 완료됩니다.
+              <br />
+              이름, 전화번호, 이메일을 준비해 주세요.
+            </motion.p>
+
+            <motion.button
+              onClick={onStart}
+              className="group flex w-full max-w-xs items-center justify-center gap-2 border-2 border-white bg-white py-4 text-[13px] font-normal uppercase tracking-widest text-stone-950 transition-all hover:bg-transparent hover:text-white"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              whileTap={{ scale: 0.97 }}
+            >
+              출석하기
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transition-transform duration-200 group-hover:translate-x-1"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </motion.button>
+          </motion.div>
+        )}
+      </div>
     </div>
   );
 }
@@ -101,9 +293,6 @@ function VerifyStep({
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [nameFocused, setNameFocused] = useState(false);
-  const [phoneFocused, setPhoneFocused] = useState(false);
-  const [emailFocused, setEmailFocused] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,136 +326,95 @@ function VerifyStep({
   };
 
   return (
-    <div className="text-center">
-      <motion.div
-        className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-stone-900"
-        initial={{ scale: 0, rotate: -20 }}
-        animate={{ scale: 1, rotate: 0 }}
-        transition={{ type: "spring", stiffness: 260, damping: 18, delay: 0.1 }}
-      >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-          <circle cx="12" cy="7" r="4" />
-        </svg>
-      </motion.div>
+    <div>
+      <StepIndicator current={0} total={3} />
 
-      <motion.h1
-        className="mb-1.5 text-[22px] font-bold tracking-tight text-stone-900"
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
-      >
-        출석 확인
-      </motion.h1>
-      <motion.p
-        className="mb-2 text-[14px] font-semibold text-stone-600"
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-      >
-        {jobTitle}
-      </motion.p>
-      <motion.p
-        className="mb-8 text-[13px] leading-relaxed text-stone-400"
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.25 }}
-      >
-        이름과 전화번호로 본인 확인을 진행합니다
-      </motion.p>
+      <div className="mb-8 text-center">
+        <motion.p
+          className="mb-2 text-[13px] font-medium tracking-tight text-stone-700"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1 }}
+        >
+          {jobTitle}
+        </motion.p>
+        <motion.p
+          className="text-[14px] leading-relaxed text-stone-500"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.22 }}
+        >
+          출석을 위해 아래 정보를 입력해 주세요.
+        </motion.p>
+      </div>
 
       <motion.form
         onSubmit={handleSubmit}
-        className="mx-auto max-w-sm space-y-5 text-left"
+        className="mx-auto max-w-sm space-y-6"
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
+        transition={{ delay: 0.25 }}
       >
-        <div>
-          <label className="mb-1.5 block text-[13px] font-semibold text-stone-600">이름</label>
-          <div
-            className={`overflow-hidden rounded-xl border-2 transition-colors duration-200 ${
-              nameFocused ? "border-stone-400 bg-white" : "border-stone-200 bg-stone-50/80"
-            }`}
-          >
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onFocus={() => setNameFocused(true)}
-              onBlur={() => setNameFocused(false)}
-              className="w-full bg-transparent px-4 py-3.5 text-sm text-stone-800 outline-none placeholder:text-stone-300"
-              placeholder="홍길동"
-              required
-            />
-          </div>
-        </div>
+        <InputField
+          label="이름"
+          value={name}
+          onChange={setName}
+          placeholder="홍길동"
+          required
+        />
 
-        <div>
-          <label className="mb-1.5 block text-[13px] font-semibold text-stone-600">휴대전화번호</label>
-          <div
-            className={`overflow-hidden rounded-xl border-2 transition-colors duration-200 ${
-              phoneFocused ? "border-stone-400 bg-white" : "border-stone-200 bg-stone-50/80"
-            }`}
-          >
-            <input
-              value={phone}
-              onChange={(e) => setPhone(formatPhoneNumber(e.target.value))}
-              onFocus={() => setPhoneFocused(true)}
-              onBlur={() => setPhoneFocused(false)}
-              className="w-full bg-transparent px-4 py-3.5 text-sm text-stone-800 outline-none placeholder:text-stone-300"
-              placeholder="010-0000-0000"
-              required
-            />
-          </div>
-        </div>
+        <InputField
+          label="휴대전화번호"
+          value={phone}
+          onChange={(v) => setPhone(formatPhoneNumber(v))}
+          placeholder="010-0000-0000"
+          required
+        />
 
-        <div>
-          <label className="mb-1.5 block text-[13px] font-semibold text-stone-600">이메일</label>
-          <div
-            className={`overflow-hidden rounded-xl border-2 transition-colors duration-200 ${
-              emailFocused ? "border-stone-400 bg-white" : "border-stone-200 bg-stone-50/80"
-            }`}
-          >
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onFocus={() => setEmailFocused(true)}
-              onBlur={() => setEmailFocused(false)}
-              className="w-full bg-transparent px-4 py-3.5 text-sm text-stone-800 outline-none placeholder:text-stone-300"
-              placeholder="example@email.com"
-            />
-          </div>
-        </div>
+        <InputField
+          label="이메일"
+          value={email}
+          onChange={setEmail}
+          placeholder="example@email.com"
+          type="email"
+        />
 
         {error && (
           <motion.div
-            className="rounded-xl bg-red-50 px-4 py-3"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
+            className="border-l-2 border-red-500 bg-red-50/60 px-4 py-3"
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.2 }}
           >
-            <p className="text-[13px] text-red-600">{error}</p>
+            <p className="text-[13px] font-normal text-red-600">{error}</p>
             {error.includes("등록되지 않은") && (
-              <p className="mt-1 text-[12px] text-red-400">담당자에게 문의해 주세요.</p>
+              <p className="mt-0.5 text-[12px] text-red-400">담당자에게 문의해 주세요.</p>
             )}
           </motion.div>
         )}
 
-        <motion.button
-          type="submit"
-          disabled={loading || !name || !phone}
-          className="relative w-full overflow-hidden rounded-xl bg-stone-900 py-3.5 text-sm font-semibold text-white disabled:opacity-40"
-          whileTap={{ scale: 0.98 }}
-        >
-          <motion.span
-            className="relative z-10"
-            animate={loading ? { opacity: [1, 0.5, 1] } : { opacity: 1 }}
-            transition={loading ? { duration: 1.2, repeat: Infinity } : {}}
+        <div className="pt-2">
+          <motion.button
+            type="submit"
+            disabled={loading || !name || !phone}
+            className="group relative flex w-full items-center justify-center gap-2 overflow-hidden border-2 border-stone-900 bg-stone-900 py-4 text-[13px] font-normal uppercase tracking-widest text-white transition-all hover:bg-stone-800 disabled:border-stone-200 disabled:bg-stone-200 disabled:text-stone-300"
+            whileTap={{ scale: 0.97 }}
           >
-            {loading ? "확인 중..." : "본인 확인"}
-          </motion.span>
-        </motion.button>
+            {loading && (
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                animate={{ x: ["-100%", "100%"] }}
+                transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+              />
+            )}
+            <span className="relative z-10 flex items-center gap-2">
+              {loading ? "확인 중..." : "본인 확인"}
+              {!loading && (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transition-transform duration-200 group-hover:translate-x-1"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              )}
+            </span>
+          </motion.button>
+        </div>
       </motion.form>
     </div>
   );
@@ -277,61 +425,100 @@ function CheckedInStep({
 }: {
   workerName: string;
 }) {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      confetti({
+        particleCount: 50,
+        spread: 50,
+        origin: { y: 0.6 },
+        colors: ["#059669", "#34d399", "#6ee7b7", "#a7f3d0", "#404040"],
+        scalar: 0.7,
+        gravity: 1.2,
+        ticks: 100,
+      });
+    }, 400);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
-    <div className="flex min-h-[calc(100dvh-80px)] flex-col items-center justify-center text-center">
+    <div className="min-h-[calc(100dvh-80px)]">
+      <StepIndicator current={2} total={3} completed />
+      <div className="flex min-h-[calc(100dvh-80px-120px)] flex-col items-center justify-center text-center">
+
+      {/* Success image */}
       <motion.div
-        className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-100"
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
+        className="relative mx-auto mb-8"
+        initial={{ scale: 0, rotate: -10 }}
+        animate={{ scale: 1, rotate: 0 }}
         transition={{ type: "spring", stiffness: 200, damping: 16 }}
       >
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="20 6 9 17 4 12" />
-        </svg>
+        <Image
+          src="/finish-removebg-preview.webp"
+          alt="출석 완료"
+          width={100}
+          height={100}
+          className="object-contain"
+        />
       </motion.div>
 
       <motion.h1
-        className="mb-2 text-[22px] font-bold tracking-tight text-stone-900"
+        className="mb-2 text-[26px] font-normal tracking-tight text-stone-500"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
+        transition={{ delay: 0.2 }}
       >
-        출석 완료!
+        출석 완료
       </motion.h1>
       <motion.p
-        className="mb-1 text-[15px] font-semibold text-stone-600"
+        className="mb-10 text-[15px] text-stone-500"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.22 }}
+        transition={{ delay: 0.28 }}
       >
-        {workerName}님, 출석이 확인되었습니다.
+        <span className="font-medium text-stone-600">{workerName}</span>님, 출석이 확인되었습니다.
       </motion.p>
 
       <motion.div
-        initial={{ opacity: 0, y: 8 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="mt-6 w-full max-w-xs"
+        transition={{ delay: 0.4 }}
+        className="w-full max-w-xs"
       >
-        <motion.div
-          className="rounded-xl bg-stone-50 px-5 py-4 text-left"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-        >
-          <p className="mb-2 text-[14px] font-semibold text-stone-700">
-            출석이 완료되었습니다.
-          </p>
-          <p className="text-[13px] leading-relaxed text-stone-500">
-            감독관의 안내에 따라 업무를 진행해 주세요.
-          </p>
-          <p className="mt-2 text-[13px] leading-relaxed text-stone-500">
-            계약서 작성은 업무 종료 후 진행되오니,
-            <br />
-            업무 종료 후 대기해 주세요.
-          </p>
-        </motion.div>
+        <div className="border border-stone-200 bg-white">
+          <div className="border-b border-stone-200 px-5 py-3">
+            <p className="text-[11px] font-normal uppercase tracking-widest text-stone-400">안내사항</p>
+          </div>
+          <div className="divide-y divide-stone-100">
+            <div className="flex items-start gap-3 px-5 py-4">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center bg-stone-100 text-stone-400">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </span>
+              <p className="text-[13px] leading-relaxed text-stone-600">
+                감독관의 안내에 따라 업무를 진행해 주세요.
+              </p>
+            </div>
+            <div className="flex items-start gap-3 px-5 py-4">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center bg-stone-100 text-stone-400">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              </span>
+              <p className="text-[13px] leading-relaxed text-stone-600">
+                <span className="rounded bg-stone-900 px-1.5 py-0.5 font-light text-white">계약서 작성</span>은 업무 종료 후 진행됩니다.
+                <br />
+                <span className="rounded bg-stone-900 px-1.5 py-0.5 font-light text-white">업무 종료 후 대기</span>해 주세요.
+              </p>
+            </div>
+          </div>
+        </div>
       </motion.div>
+      </div>
+      <motion.p
+        className="-mt-4 pb-6 text-center text-[12px] text-stone-400"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.6 }}
+      >
+        이 화면은 닫아도 됩니다.
+      </motion.p>
     </div>
   );
 }
@@ -417,11 +604,11 @@ export default function AttendancePage({
         animate={{ opacity: 1 }}
       >
         <motion.div
-          className="h-8 w-8 rounded-full border-2 border-stone-200 border-t-stone-600"
+          className="h-6 w-6 border-2 border-stone-200 border-t-stone-600"
           animate={{ rotate: 360 }}
           transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
         />
-        <p className="mt-4 text-sm text-stone-400">불러오는 중...</p>
+        <p className="mt-4 text-[12px] uppercase tracking-widest text-stone-300">불러오는 중</p>
       </motion.div>
     );
   }
@@ -431,9 +618,8 @@ export default function AttendancePage({
       <div className="flex min-h-[calc(100dvh-80px)] flex-col items-center justify-center text-center">
         <motion.div
           className="mb-6"
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ type: "spring", stiffness: 200, damping: 16 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
         >
           <Image
             src="/acg_ci_gray.png"
@@ -445,7 +631,7 @@ export default function AttendancePage({
           />
         </motion.div>
         <motion.h2
-          className="mb-2 text-[20px] font-bold tracking-tight text-stone-900"
+          className="mb-2 text-[20px] font-normal tracking-tight text-stone-500"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
@@ -453,7 +639,7 @@ export default function AttendancePage({
           {errorMsg || "오류가 발생했습니다"}
         </motion.h2>
         <motion.p
-          className="text-[14px] text-stone-400"
+          className="text-[14px] text-stone-300"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
@@ -474,7 +660,10 @@ export default function AttendancePage({
         transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
       >
         {step === "welcome" && (
-          <WelcomeScreen job={job} onStart={() => setStep("verify")} />
+          <WelcomeScreen job={job} onStart={() => {
+            document.getElementById("attendance-layout")?.classList.replace("bg-stone-950", "bg-white");
+            setStep("verify");
+          }} />
         )}
 
         {step === "verify" && (

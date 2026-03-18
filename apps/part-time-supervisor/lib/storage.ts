@@ -24,13 +24,21 @@ export async function uploadFile(
 }
 
 export async function getSignedUrl(path: string): Promise<string | null> {
-  const supabase = createServiceClient();
-  const { data, error } = await supabase.storage
-    .from(BUCKET)
-    .createSignedUrl(path, 3600);
+  try {
+    const supabase = createServiceClient();
+    const { data, error } = await supabase.storage
+      .from(BUCKET)
+      .createSignedUrl(path, 3600);
 
-  if (error) return null;
-  return data.signedUrl;
+    if (error) {
+      console.error(`getSignedUrl error for path "${path}":`, error.message);
+      return null;
+    }
+    return data.signedUrl;
+  } catch (err) {
+    console.error(`getSignedUrl unexpected error for path "${path}":`, err);
+    return null;
+  }
 }
 
 export async function deleteFile(path: string): Promise<boolean> {

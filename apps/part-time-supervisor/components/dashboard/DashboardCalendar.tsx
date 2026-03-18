@@ -19,23 +19,6 @@ type Props = {
   activePreset: string | null;
 };
 
-const STATUS_COLORS = [
-  "bg-blue-200 text-blue-800",
-  "bg-emerald-200 text-emerald-800",
-  "bg-amber-200 text-amber-800",
-  "bg-violet-200 text-violet-800",
-  "bg-rose-200 text-rose-800",
-  "bg-cyan-200 text-cyan-800",
-];
-
-function getJobColor(index: number) {
-  return STATUS_COLORS[index % STATUS_COLORS.length] ?? STATUS_COLORS[0];
-}
-
-function formatLabel(title: string, platform: string | null): string {
-  if (platform) return `${title}-(${platform})`;
-  return title;
-}
 
 function CalendarChevron({
   orientation,
@@ -110,27 +93,12 @@ export function DashboardCalendar({
     []
   );
 
-  const platformColorMap = useMemo(() => {
-    const map = new Map<string, number>();
-    let idx = 0;
-    for (const labels of dayMap.values()) {
-      for (const label of labels) {
-        const key = label.platform ?? "기타";
-        if (!map.has(key)) {
-          map.set(key, idx++);
-        }
-      }
-    }
-    return map;
-  }, [dayMap]);
-
   const CustomDayButton = useCallback(
     ({ className, day, modifiers, ...props }: React.ComponentProps<typeof DayButton>) => {
       const defaultClassNames = getDefaultClassNames();
       const dateKey = dayjs(day.date).format("YYYY-MM-DD");
       const labels = dayMap.get(dateKey) ?? [];
-      const maxShow = 2;
-      const overflow = labels.length - maxShow;
+      const count = labels.length;
 
       return (
         <Button
@@ -143,53 +111,40 @@ export function DashboardCalendar({
             !modifiers.range_middle
           }
           className={cn(
-            "",
-            "flex h-auto w-full min-h-[4.5rem] min-w-0 flex-col items-center rounded-lg p-1 leading-none font-normal",
-            "justify-start gap-0.5",
+            "flex h-auto w-full min-w-0 flex-col items-center rounded-lg p-1 leading-none font-normal",
+            "justify-center",
             "hover:bg-accent/50",
             defaultClassNames.day,
             className
           )}
           {...props}
         >
-          <span
-            className={cn(
-              "text-sm tabular-nums self-center size-8 flex items-center justify-center rounded-full",
-              modifiers.selected && !modifiers.outside && "bg-slate-900 text-white",
-              !modifiers.selected && modifiers.today && "font-bold text-blue-600",
-              modifiers.outside && "text-muted-foreground/40"
-            )}
-          >
-            {day.date.getDate()}
-          </span>
-          {!modifiers.outside && labels.length > 0 && (
-            <div className="flex w-full flex-col gap-px">
-              {labels.slice(0, maxShow).map((label) => {
-                const colorIdx = platformColorMap.get(label.platform ?? "기타") ?? 0;
-                const color = getJobColor(colorIdx);
-                return (
-                  <div
-                    key={label.id}
-                    className={cn(
-                      "w-full truncate rounded-md px-1 py-0.5 text-[9px] leading-tight",
-                      color
-                    )}
-                  >
-                    {label.platform ?? "기타"}
-                  </div>
-                );
-              })}
-              {overflow > 0 && (
-                <span className="text-[9px] text-muted-foreground pl-0.5">
-                  +{overflow}건
-                </span>
+          <span className="relative inline-flex items-center justify-center">
+            <span
+              className={cn(
+                "text-sm tabular-nums size-8 flex items-center justify-center rounded-full",
+                modifiers.selected && !modifiers.outside && "bg-slate-900 text-white",
+                !modifiers.selected && modifiers.today && "font-bold text-blue-600",
+                modifiers.outside && "text-muted-foreground/40"
               )}
-            </div>
-          )}
+            >
+              {day.date.getDate()}
+            </span>
+            {!modifiers.outside && count > 0 && (
+              <span
+                className={cn(
+                  "absolute -top-1 -right-2.5 flex items-center justify-center rounded-full px-1 min-w-4 h-4 text-[9px] font-medium leading-none",
+                  "bg-blue-100 text-blue-700"
+                )}
+              >
+                +{count}
+              </span>
+            )}
+          </span>
         </Button>
       );
     },
-    [dayMap, platformColorMap]
+    [dayMap]
   );
 
   const presets = useMemo(() => {

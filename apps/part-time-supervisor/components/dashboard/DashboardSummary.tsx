@@ -6,6 +6,7 @@ import { Briefcase, Users, UserCheck, FileCheck, Banknote } from "lucide-react";
 
 type Props = {
   dateLabel: string;
+  isFuture?: boolean;
   summary: {
     activeJobCount: number;
     totalAssigned: number;
@@ -65,10 +66,10 @@ function NumberTicker({
   return <motion.span ref={ref}>{display}</motion.span>;
 }
 
-export function DashboardSummary({ summary, dateLabel }: Props) {
+export function DashboardSummary({ summary, dateLabel, isFuture }: Props) {
   const cards = [
     {
-      label: "진행 중 공고",
+      label: isFuture ? "진행 예정 공고" : "진행 중 공고",
       value: summary.activeJobCount,
       display: String(summary.activeJobCount),
       icon: Briefcase,
@@ -76,6 +77,7 @@ export function DashboardSummary({ summary, dateLabel }: Props) {
       valueColor: "",
       suffix: "",
       progress: null as { completed: number; total: number } | null,
+      disabled: false,
     },
     {
       label: "총 배정 인원",
@@ -86,9 +88,10 @@ export function DashboardSummary({ summary, dateLabel }: Props) {
       valueColor: "",
       suffix: "",
       progress: null as { completed: number; total: number } | null,
+      disabled: false,
     },
     {
-      label: "출석 완료",
+      label: isFuture ? "출석 예정" : "출석 완료",
       value: summary.attendanceCompleted,
       display: String(summary.attendanceCompleted),
       icon: UserCheck,
@@ -96,9 +99,10 @@ export function DashboardSummary({ summary, dateLabel }: Props) {
       valueColor: "",
       suffix: ` / ${summary.totalAssigned}`,
       progress: { completed: summary.attendanceCompleted, total: summary.totalAssigned },
+      disabled: !!isFuture,
     },
     {
-      label: "계약 완료",
+      label: isFuture ? "계약 예정" : "계약 완료",
       value: summary.contractCompleted,
       display: String(summary.contractCompleted),
       icon: FileCheck,
@@ -106,6 +110,7 @@ export function DashboardSummary({ summary, dateLabel }: Props) {
       valueColor: "",
       suffix: ` / ${summary.totalAssigned}`,
       progress: { completed: summary.contractCompleted, total: summary.totalAssigned },
+      disabled: !!isFuture,
     },
     {
       label: "총 예상 비용",
@@ -117,23 +122,26 @@ export function DashboardSummary({ summary, dateLabel }: Props) {
       suffix: "",
       progress: null,
       isCost: true,
+      disabled: false,
     },
   ];
 
   return (
-    <div className="rounded-xl bg-slate-50 p-5 space-y-3">
+    <div className="rounded-xl bg-slate-50 space-y-3">
       <h3 className="text-sm font-semibold text-muted-foreground">{dateLabel} 요약 현황</h3>
       <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
       {cards.map((card) => (
         <div
           key={card.label}
-          className="group rounded-xl bg-white p-4"
+          className={`group rounded-xl bg-white p-4 ${card.disabled ? "opacity-50" : ""}`}
         >
           <div className="flex items-center gap-2.5">
             <div className="min-w-0 flex-1">
-              <p className="text-xs text-muted-foreground">{card.label}</p>
-              <div className="flex items-baseline gap-1">
-                {"isCost" in card && card.isCost ? (
+              <p className="text-xs text-muted-foreground mb-1">{card.label}</p>
+              <div className="flex items-baseline gap-2">
+                {card.disabled ? (
+                  <span className="text-xs text-muted-foreground">진행 전입니다</span>
+                ) : "isCost" in card && card.isCost ? (
                   <span className={`tabular-nums text-lg font-bold leading-tight ${card.valueColor}`}>
                     <NumberTicker value={card.value} prefix="₩" format={(n) => formatCost(n)} />
                   </span>
@@ -150,7 +158,7 @@ export function DashboardSummary({ summary, dateLabel }: Props) {
               </div>
             </div>
           </div>
-          {card.progress && (
+          {card.progress && !card.disabled && (
             <div className="mt-2.5">
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
                 <div

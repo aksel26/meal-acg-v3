@@ -7,22 +7,22 @@ type Props = {
 function getAttendanceBadge(status: DashboardWorker["attendanceStatus"]) {
   switch (status) {
     case "confirmed":
-      return <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-xs text-green-400">출석확인</span>;
+      return <span className="rounded-sm bg-green-500/10 px-2 py-0.5 text-xs text-green-400">출석확인</span>;
     case "checked_in":
-      return <span className="rounded-full bg-yellow-500/10 px-2 py-0.5 text-xs text-yellow-400">확인대기</span>;
+      return <span className="rounded-sm bg-yellow-500/10 px-2 py-0.5 text-xs text-yellow-400">확인대기</span>;
     default:
-      return <span className="rounded-full bg-red-500/10 px-2 py-0.5 text-xs text-red-400">미출석</span>;
+      return <span className="rounded-sm bg-red-500/10 px-2 py-0.5 text-xs text-red-400">미출석</span>;
   }
 }
 
 function getContractBadge(status: DashboardWorker["contractStatus"]) {
   switch (status) {
     case "confirmed":
-      return <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-xs text-blue-400">확인완료</span>;
+      return <span className="rounded-sm bg-blue-500/10 px-2 py-0.5 text-xs text-blue-400">확인완료</span>;
     case "signed":
-      return <span className="rounded-full bg-yellow-500/10 px-2 py-0.5 text-xs text-yellow-400">서명완료</span>;
+      return <span className="rounded-sm bg-yellow-500/10 px-2 py-0.5 text-xs text-yellow-400">서명완료</span>;
     default:
-      return <span className="rounded-full bg-red-500/10 px-2 py-0.5 text-xs text-red-400">미서명</span>;
+      return <span className="rounded-sm bg-red-500/10 px-2 py-0.5 text-xs text-red-400">미서명</span>;
   }
 }
 

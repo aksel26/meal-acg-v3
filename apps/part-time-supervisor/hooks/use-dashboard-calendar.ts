@@ -38,7 +38,11 @@ export function useDashboardCalendar(year: number, month: number) {
     const map = new Map<string, DayJobLabel[]>();
     if (!data?.jobPostings) return map;
 
-    for (const jp of data.jobPostings) {
+    const sorted = [...data.jobPostings].sort(
+      (a, b) => a.startDate.localeCompare(b.startDate)
+    );
+
+    for (const jp of sorted) {
       const start = new Date(jp.startDate);
       const end = new Date(jp.endDate);
       const monthStart = new Date(year, month - 1, 1);

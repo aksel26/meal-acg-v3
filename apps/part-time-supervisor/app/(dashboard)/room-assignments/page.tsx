@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -8,9 +8,11 @@ import {
   type DragStartEvent,
   type DragEndEvent,
 } from "@dnd-kit/core";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRoomAssignments } from "@/hooks/use-room-assignments";
 import { useAssignmentsByJobPosting } from "@/hooks/use-assignments";
 import { useJobPostings } from "@/hooks/use-job-postings";
+import { queryKeys } from "@/lib/query-keys";
 import {
   useDeleteRoomSlot,
   useAddRoomSlot,
@@ -40,26 +42,61 @@ export default function RoomAssignmentsPage() {
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [activeDrag, setActiveDrag] = useState<DragData | null>(null);
 
+  const queryClient = useQueryClient();
   const deleteSlot = useDeleteRoomSlot();
   const addSlot = useAddRoomSlot();
 
   const { data: jobPostingsData } = useJobPostings();
-  const jobPostings = useMemo(
+  const activeJobPostings = useMemo(
     () =>
       (jobPostingsData || []).filter(
-        (jp) =>
-          jp.status !== "closed" &&
-          jp.status !== "completed" &&
-          jp.end_date >= date
+        (jp) => jp.status !== "closed" && jp.status !== "completed"
       ),
-    [jobPostingsData, date]
+    [jobPostingsData]
+  );
+  const jobPostings = useMemo(
+    () => activeJobPostings.filter((jp) => jp.start_date === date),
+    [activeJobPostings, date]
+  );
+  const jobPostingDates = useMemo(
+    () => new Set(activeJobPostings.map((jp) => jp.start_date)),
+    [activeJobPostings]
   );
 
-  const { data: roomData } = useRoomAssignments(date);
+  // 공고 목록 로드 시 첫 번째 공고 자동 선택
+  useEffect(() => {
+    if (jobPostings.length === 0) return;
+    const isValid =
+      selectedJobPostingId !== null &&
+      jobPostings.some((jp) => jp.id === selectedJobPostingId);
+    if (!isValid) {
+      setSelectedJobPostingId(jobPostings[0]!.id);
+    }
+  }, [jobPostings, selectedJobPostingId]);
+
+  const { data: roomData } = useRoomAssignments(date, selectedJobPostingId);
   const roomAssignments = roomData?.room_assignments || [];
+
+  const handleJobPostingSelect = useCallback(
+    (id: string | null) => {
+      if (id === selectedJobPostingId && id !== null) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.assignments.byJobPosting(id),
+        });
+      }
+      setSelectedJobPostingId(id);
+    },
+    [selectedJobPostingId, queryClient]
+  );
 
   const { data: assignments } =
     useAssignmentsByJobPosting(selectedJobPostingId);
+
+  const unassignedCount = useMemo(() => {
+    if (!assignments) return 0;
+    const assignedIds = new Set(roomAssignments.map((ra) => ra.assignment_id));
+    return assignments.filter((a) => !assignedIds.has(a.id)).length;
+  }, [assignments, roomAssignments]);
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveDrag(event.active.data.current as DragData);
@@ -77,22 +114,47 @@ export default function RoomAssignmentsPage() {
       if (data.room === targetRoom) return;
 
       try {
-        await deleteSlot.mutateAsync({
-          assignment_id: data.assignmentId,
-          date: data.date,
-          start_time: data.startTime,
-          end_time: data.endTime,
-          room: data.room,
-        });
-        await addSlot.mutateAsync({
-          assignment_id: data.assignmentId,
-          date: data.date,
-          start_time: data.startTime,
-          end_time: data.endTime,
-          room: targetRoom,
-        });
-        const roomName = getRoomById(targetRoom)?.name ?? targetRoom;
-        toast.success(`${data.workerName} → ${roomName} 이동 완료`);
+        if (targetRoom === "unassigned") {
+          // 회의실 → 미배정 (슬롯 삭제)
+          await deleteSlot.mutateAsync({
+            assignment_id: data.assignmentId,
+            date: data.date,
+            start_time: data.startTime,
+            end_time: data.endTime,
+            room: data.room,
+          });
+          toast.success(`${data.workerName} → 미배정으로 변경`);
+        } else if (data.room === "unassigned") {
+          // 미배정 → 회의실 신규 배정
+          await addSlot.mutateAsync({
+            assignment_id: data.assignmentId,
+            date: data.date,
+            start_time: data.startTime,
+            end_time: data.endTime,
+            room: targetRoom,
+          });
+          const roomName = getRoomById(targetRoom)?.name ?? targetRoom;
+          toast.success(`${data.workerName} → ${roomName} 배정 완료`);
+        } else {
+          // 기존 회의실 → 다른 회의실 이동
+          await deleteSlot.mutateAsync({
+            assignment_id: data.assignmentId,
+            date: data.date,
+            start_time: data.startTime,
+            end_time: data.endTime,
+            room: data.room,
+          });
+          await addSlot.mutateAsync({
+            assignment_id: data.assignmentId,
+            date: data.date,
+            start_time: data.startTime,
+            end_time: data.endTime,
+            room: targetRoom,
+            replace: true,
+          });
+          const roomName = getRoomById(targetRoom)?.name ?? targetRoom;
+          toast.success(`${data.workerName} → ${roomName} 이동 완료`);
+        }
       } catch (err) {
         toast.error(
           err instanceof Error ? err.message : "회의실 변경에 실패했습니다"
@@ -120,8 +182,9 @@ export default function RoomAssignmentsPage() {
               date={date}
               onDateChange={setDate}
               jobPostings={jobPostings}
+              jobPostingDates={jobPostingDates}
               selectedJobPostingId={selectedJobPostingId}
-              onJobPostingSelect={setSelectedJobPostingId}
+              onJobPostingSelect={handleJobPostingSelect}
             />
           </div>
 
@@ -132,6 +195,7 @@ export default function RoomAssignmentsPage() {
               roomAssignments={roomAssignments}
               selectedRoom={selectedRoom}
               onSelect={setSelectedRoom}
+              unassignedCount={unassignedCount}
             />
           </div>
 
@@ -143,6 +207,7 @@ export default function RoomAssignmentsPage() {
               assignments={assignments || []}
               selectedRoom={selectedRoom}
               date={date}
+              selectedJobPosting={jobPostings.find((jp) => jp.id === selectedJobPostingId) ?? null}
             />
           </div>
         </div>
@@ -155,7 +220,9 @@ export default function RoomAssignmentsPage() {
               {activeDrag.workerName}
             </p>
             <p className="text-xs text-slate-400">
-              {getRoomById(activeDrag.room)?.name ?? activeDrag.room} →
+              {activeDrag.room === "unassigned"
+                ? "미배정 →"
+                : `${getRoomById(activeDrag.room)?.name ?? activeDrag.room} →`}
             </p>
           </div>
         ) : null}

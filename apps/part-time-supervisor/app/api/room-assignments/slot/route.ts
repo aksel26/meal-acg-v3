@@ -8,6 +8,8 @@ export async function POST(request: Request) {
     await requireAuth();
     const supabase = createServiceClient();
     const body = await request.json();
+    const { searchParams } = new URL(request.url);
+    const replaceMode = searchParams.get("replace") === "true";
     const { assignment_id, date, start_time, end_time, room } = body as {
       assignment_id: string;
       date: string;
@@ -91,13 +93,40 @@ export async function POST(request: Request) {
       );
     }
 
+    // 1룸 제약: 다른 room의 슬롯이 이미 존재하는지 체크
+    const existingRooms = new Set(existingSlots.map((s) => s.room));
+    const hasOtherRoom = existingRooms.size > 0 && !existingRooms.has(room as RoomSlot["room"]);
+
+    if (hasOtherRoom && !replaceMode) {
+      const existingRoom = existingSlots[0]?.room ?? "";
+      return NextResponse.json(
+        { error: "already_assigned", existing_room: existingRoom },
+        { status: 409 }
+      );
+    }
+
     const newSlot: RoomSlot = {
       date,
       start_time,
       end_time,
       room: room as RoomSlot["room"],
     };
-    const updatedSlots = [...existingSlots, newSlot];
+
+    let updatedSlots: RoomSlot[];
+    if (hasOtherRoom && replaceMode) {
+      // 기존 슬롯의 room을 새 room으로 일괄 변경 (시간대 보존)
+      const migratedSlots: RoomSlot[] = existingSlots.map((s) => ({
+        ...s,
+        room: room as RoomSlot["room"],
+      }));
+      // 새 슬롯이 이미 migrated에 포함되어 있으면 중복 추가하지 않음
+      const alreadyExists = migratedSlots.some(
+        (s) => s.date === date && s.start_time === start_time
+      );
+      updatedSlots = alreadyExists ? migratedSlots : [...migratedSlots, newSlot];
+    } else {
+      updatedSlots = [...existingSlots, newSlot];
+    }
 
     const { data, error } = await supabase
       .from("assignments")

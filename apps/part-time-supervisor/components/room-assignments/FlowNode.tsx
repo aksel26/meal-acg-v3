@@ -20,14 +20,8 @@ export default function FlowNode({
   children,
 }: Props) {
   return (
-    <div
-      className={`rounded-xl border bg-white transition-all ${
-        isActive
-          ? "border-indigo-300 shadow-sm"
-          : "border-slate-200"
-      }`}
-    >
-      <div className="flex items-center gap-2 border-b px-3 py-2.5">
+    <div className="rounded-xl bg-white transition-all">
+      <div className="flex items-center gap-2 px-3 py-2.5">
         <span
           className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white ${
             isActive ? "bg-indigo-500" : "bg-slate-300"
@@ -38,7 +32,7 @@ export default function FlowNode({
         <Icon className="h-3.5 w-3.5 shrink-0 text-slate-400" />
         <span className="text-sm font-semibold text-slate-700">{title}</span>
         {badge !== undefined && (
-          <span className="ml-auto rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
+          <span className="ml-auto rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
             {badge}
           </span>
         )}

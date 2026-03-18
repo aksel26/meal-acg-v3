@@ -9,6 +9,7 @@ type SlotParams = {
   start_time: string;
   end_time: string;
   room: string;
+  replace?: boolean;
 };
 
 export function useAddRoomSlot() {
@@ -16,10 +17,14 @@ export function useAddRoomSlot() {
 
   return useMutation({
     mutationFn: async (data: SlotParams) => {
-      const res = await fetch("/api/room-assignments/slot", {
+      const { replace, ...body } = data;
+      const url = replace
+        ? "/api/room-assignments/slot?replace=true"
+        : "/api/room-assignments/slot";
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(body),
       });
       if (!res.ok) {
         const err = await res.json();

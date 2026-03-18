@@ -8,14 +8,20 @@ import { getRoomById } from "@/lib/room-constants";
 import { useDeleteRoomSlot } from "@/hooks/use-room-assignment-mutations";
 import FlowNode from "./FlowNode";
 import type { RoomAssignmentItem } from "@/hooks/use-room-assignments";
-import type { AssignmentWithDetails } from "@/lib/supabase/types";
+import type { AssignmentWithDetails, JobPosting } from "@/lib/supabase/types";
 
 type Props = {
   roomAssignments: RoomAssignmentItem[];
   assignments: AssignmentWithDetails[];
   selectedRoom: string | null;
   date: string;
+  selectedJobPosting?: JobPosting | null;
 };
+
+function addOneHour(time: string): string {
+  const hour = parseInt(time.split(":")[0] ?? "0", 10) + 1;
+  return `${String(hour).padStart(2, "0")}:00`;
+}
 
 type EnrichedRow = RoomAssignmentItem & {
   attendance_status: "checked_in" | "confirmed" | null;
@@ -31,20 +37,20 @@ function StatusBadge({
 }) {
   if (value === "checked_in" || value === "signed") {
     return (
-      <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">
+      <span className="rounded-sm bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">
         {labels.checked_in ?? labels.signed}
       </span>
     );
   }
   if (value === "confirmed") {
     return (
-      <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-600">
+      <span className="rounded-sm bg-green-50 px-2 py-0.5 text-xs font-medium text-green-600">
         {labels.confirmed}
       </span>
     );
   }
   return (
-    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-400">
+    <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-400">
       {labels.fallback}
     </span>
   );
@@ -128,15 +134,89 @@ function DraggableRow({
   );
 }
 
+function DraggableUnassignedRow({
+  assignment,
+  idx,
+  date,
+  startTime,
+  endTime,
+}: {
+  assignment: AssignmentWithDetails;
+  idx: number;
+  date: string;
+  startTime: string;
+  endTime: string;
+}) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `unassigned-${assignment.id}`,
+    data: {
+      assignmentId: assignment.id,
+      date,
+      startTime,
+      endTime,
+      room: "unassigned",
+      workerName: assignment.worker?.name ?? "-",
+    },
+  });
+
+  return (
+    <tr
+      ref={setNodeRef}
+      className={`border-b last:border-b-0 text-sm ${
+        idx % 2 === 0 ? "bg-white" : "bg-slate-50/30"
+      } ${isDragging ? "opacity-50" : ""}`}
+    >
+      <td className="w-8 px-1 py-2 text-center">
+        <button
+          {...attributes}
+          {...listeners}
+          className="inline-flex h-6 w-6 cursor-grab items-center justify-center rounded-md text-slate-300 transition-colors hover:bg-slate-100 hover:text-slate-500 active:cursor-grabbing"
+        >
+          <GripVertical className="h-3.5 w-3.5" />
+        </button>
+      </td>
+      <td className="px-3 py-2 font-medium text-slate-700">
+        {assignment.worker?.name ?? "-"}
+      </td>
+      <td className="max-w-[120px] truncate px-3 py-2 text-slate-500">
+        {assignment.job_posting?.title ?? "-"}
+      </td>
+      <td className="px-3 py-2">
+        <StatusBadge
+          value={assignment.attendance_status}
+          labels={{ checked_in: "출석", confirmed: "확인", fallback: "미확인" }}
+        />
+      </td>
+      <td className="px-3 py-2">
+        <StatusBadge
+          value={assignment.contract_status}
+          labels={{ signed: "서명", confirmed: "확인", fallback: "미서명" }}
+        />
+      </td>
+    </tr>
+  );
+}
+
 export default function WorkerListNode({
   roomAssignments,
   assignments,
   selectedRoom,
   date,
+  selectedJobPosting,
 }: Props) {
   const deleteSlot = useDeleteRoomSlot();
 
+  const isUnassignedView = selectedRoom === "unassigned";
+
+  const unassignedWorkers = useMemo(() => {
+    if (!isUnassignedView) return [];
+    const assignedIds = new Set(roomAssignments.map((ra) => ra.assignment_id));
+    return assignments.filter((a) => !assignedIds.has(a.id));
+  }, [isUnassignedView, roomAssignments, assignments]);
+
   const rows = useMemo<EnrichedRow[]>(() => {
+    if (isUnassignedView) return [];
+
     const assignmentMap = new Map(
       assignments.map((a) => [a.id, a])
     );
@@ -153,7 +233,7 @@ export default function WorkerListNode({
         contract_status: detail?.contract_status ?? null,
       };
     });
-  }, [roomAssignments, assignments, selectedRoom]);
+  }, [roomAssignments, assignments, selectedRoom, isUnassignedView]);
 
   const handleDelete = (item: RoomAssignmentItem) => {
     deleteSlot.mutate(
@@ -170,15 +250,49 @@ export default function WorkerListNode({
     );
   };
 
+  const displayCount = isUnassignedView ? unassignedWorkers.length : rows.length;
+
   return (
     <FlowNode
       step={3}
       title="지원자 목록"
       icon={Users}
-      badge={`${rows.length}명`}
-      isActive={rows.length > 0}
+      badge={`${displayCount}명`}
+      isActive={displayCount > 0}
     >
-      {rows.length === 0 ? (
+      {isUnassignedView ? (
+        unassignedWorkers.length === 0 ? (
+          <div className="flex h-32 items-center justify-center text-sm text-slate-400">
+            미배정 지원자가 없습니다
+          </div>
+        ) : (
+          <div className="max-h-[400px] overflow-y-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b bg-slate-50/60 text-xs text-slate-400">
+                  <th className="w-8 px-1 py-2" />
+                  <th className="px-3 py-2 text-left font-medium">이름</th>
+                  <th className="px-3 py-2 text-left font-medium">공고명</th>
+                  <th className="px-3 py-2 text-left font-medium">출석</th>
+                  <th className="px-3 py-2 text-left font-medium">계약</th>
+                </tr>
+              </thead>
+              <tbody>
+                {unassignedWorkers.map((a, idx) => (
+                  <DraggableUnassignedRow
+                    key={a.id}
+                    assignment={a}
+                    idx={idx}
+                    date={date}
+                    startTime={selectedJobPosting?.work_start ?? "09:00"}
+                    endTime={addOneHour(selectedJobPosting?.work_start ?? "09:00")}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      ) : rows.length === 0 ? (
         <div className="flex h-32 items-center justify-center text-sm text-slate-400">
           배정된 지원자가 없습니다
         </div>

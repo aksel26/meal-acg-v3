@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X, Download } from "lucide-react";
 import { toast } from "@repo/ui/src/sonner";
 
@@ -32,9 +33,10 @@ export default function ContractImageDialog({
 
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60"
+      onPointerDown={(e) => e.stopPropagation()}
       onClick={onClose}
     >
       <div
@@ -79,6 +81,7 @@ export default function ContractImageDialog({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

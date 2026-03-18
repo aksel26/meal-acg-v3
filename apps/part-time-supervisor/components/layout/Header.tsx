@@ -12,7 +12,9 @@ const pageTitles: Record<string, string> = {
 
 export default function Header() {
   const pathname = usePathname();
-  const title = pageTitles[pathname] || "감독관";
+  const title =
+    pageTitles[pathname] ||
+    (pathname.startsWith("/job-postings/") ? "공고 상세" : "감독관");
 
   return (
     <header className="flex h-14 items-center border-b px-6">

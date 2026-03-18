@@ -16,7 +16,7 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-full w-60 flex-col rounded-2xl bg-slate-900 p-4 text-white">
+    <aside className="flex h-full w-60 flex-col rounded-lg bg-slate-900 p-4 text-white">
       <Link href="/" className="mb-8 block px-2 py-4">
         <Image
           src="/ACG_CI-WHITE.webp"

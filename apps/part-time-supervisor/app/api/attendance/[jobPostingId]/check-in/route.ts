@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
+import { syncWorkerStatus } from "@/lib/worker-status";
 
 export async function POST(
   request: Request,
@@ -50,6 +51,8 @@ export async function POST(
       .eq("id", assignment_id);
 
     if (updateError) throw updateError;
+
+    await syncWorkerStatus(supabase, worker_id);
 
     return NextResponse.json({ success: true, attendance_status: "checked_in" });
   } catch (error) {

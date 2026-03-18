@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
+import { syncWorkerStatus } from "@/lib/worker-status";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -28,6 +29,17 @@ export async function POST(request: Request, { params }: Params) {
       );
     }
 
+    // 출석 상태 조회
+    const { data: fullAssignment, error: fullFetchError } = await supabase
+      .from("assignments")
+      .select("attendance_status")
+      .eq("id", id)
+      .single();
+
+    if (fullFetchError) throw fullFetchError;
+
+    const bothConfirmed = fullAssignment.attendance_status === "confirmed";
+
     // Update to confirmed
     const { data, error } = await supabase
       .from("assignments")
@@ -35,6 +47,7 @@ export async function POST(request: Request, { params }: Params) {
         contract_status: "confirmed",
         confirmed_at: new Date().toISOString(),
         confirmed_by: session.fullName,
+        ...(bothConfirmed && { status: "completed" }),
       })
       .eq("id", id)
       .select("*, worker:workers(id, name, phone), job_posting:job_postings(id, title)")
@@ -44,6 +57,9 @@ export async function POST(request: Request, { params }: Params) {
       console.error("Confirm update error:", error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    await syncWorkerStatus(supabase, data.worker_id);
+
     return NextResponse.json(data);
   } catch (error) {
     console.error("POST /api/assignments/[id]/confirm error:", error);

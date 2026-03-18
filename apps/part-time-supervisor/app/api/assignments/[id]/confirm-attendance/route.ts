@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
+import { syncWorkerStatus } from "@/lib/worker-status";
 
 export async function POST(
   request: Request,
@@ -14,7 +15,7 @@ export async function POST(
     // 현재 상태 확인
     const { data: assignment, error: fetchError } = await supabase
       .from("assignments")
-      .select("id, attendance_status")
+      .select("id, attendance_status, worker_id")
       .eq("id", id)
       .single();
 
@@ -32,18 +33,32 @@ export async function POST(
       );
     }
 
+    // 계약 상태도 함께 조회
+    const { data: fullAssignment, error: fullFetchError } = await supabase
+      .from("assignments")
+      .select("contract_status")
+      .eq("id", id)
+      .single();
+
+    if (fullFetchError) throw fullFetchError;
+
+    const bothConfirmed = fullAssignment.contract_status === "confirmed";
+
     const { data, error } = await supabase
       .from("assignments")
       .update({
         attendance_status: "confirmed",
         attendance_confirmed_at: new Date().toISOString(),
         attendance_confirmed_by: session.fullName,
+        ...(bothConfirmed && { status: "completed" }),
       })
       .eq("id", id)
       .select("*")
       .single();
 
     if (error) throw error;
+
+    await syncWorkerStatus(supabase, assignment.worker_id);
 
     return NextResponse.json(data);
   } catch (error) {

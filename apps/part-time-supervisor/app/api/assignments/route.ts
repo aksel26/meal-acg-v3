@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
+import { syncWorkerStatus } from "@/lib/worker-status";
 
 export async function GET(request: Request) {
   try {
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
         .eq("id", body.job_posting_id)
         .single();
 
-      if (jobPosting?.rooms && jobPosting.rooms.length > 0) {
+      if (jobPosting?.rooms && jobPosting.rooms.length === 1) {
         const startTime = jobPosting.work_start || "09:00";
         const startHour = parseInt(startTime.split(":")[0], 10);
         const endTime = `${String(startHour + 1).padStart(2, "0")}:00`;
@@ -74,6 +75,8 @@ export async function POST(request: Request) {
       }
       throw error;
     }
+    await syncWorkerStatus(supabase, body.worker_id);
+
     return NextResponse.json(data, { status: 201 });
   } catch (error) {
     console.error("POST /api/assignments error:", error);

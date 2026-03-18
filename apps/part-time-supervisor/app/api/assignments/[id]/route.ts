@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
+import { syncWorkerStatus } from "@/lib/worker-status";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -19,6 +20,9 @@ export async function PUT(request: Request, { params }: Params) {
       .single();
 
     if (error) throw error;
+
+    await syncWorkerStatus(supabase, data.worker_id);
+
     return NextResponse.json(data);
   } catch (error) {
     console.error("PUT /api/assignments/[id] error:", error);
@@ -32,12 +36,23 @@ export async function DELETE(request: Request, { params }: Params) {
     const { id } = await params;
     const supabase = createServiceClient();
 
+    const { data: assignment } = await supabase
+      .from("assignments")
+      .select("worker_id")
+      .eq("id", id)
+      .single();
+
     const { error } = await supabase
       .from("assignments")
       .delete()
       .eq("id", id);
 
     if (error) throw error;
+
+    if (assignment) {
+      await syncWorkerStatus(supabase, assignment.worker_id);
+    }
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("DELETE /api/assignments/[id] error:", error);

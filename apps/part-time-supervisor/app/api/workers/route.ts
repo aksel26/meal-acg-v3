@@ -11,7 +11,7 @@ export async function GET(request: Request) {
 
     let query = supabase
       .from("workers")
-      .select("*, assignments(count)")
+      .select("*, assignments(room_slots, status, attendance_status, contract_status)")
       .order("created_at", { ascending: false });
 
     if (status) {
@@ -21,7 +21,21 @@ export async function GET(request: Request) {
     const { data, error } = await query;
 
     if (error) throw error;
-    return NextResponse.json(data);
+
+    const result = data.map((worker) => {
+      const completedCount = (worker.assignments ?? []).filter(
+        (a: { status: string; attendance_status: string; contract_status: string }) =>
+          a.status === "completed" ||
+          (a.attendance_status === "confirmed" && a.contract_status === "confirmed")
+      ).length;
+
+      return {
+        ...worker,
+        assignments: [{ count: completedCount }],
+      };
+    });
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error("GET /api/workers error:", error);
     return NextResponse.json({ error: "Failed to fetch workers" }, { status: 500 });

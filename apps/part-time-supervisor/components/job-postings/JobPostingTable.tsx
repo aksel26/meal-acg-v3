@@ -102,7 +102,7 @@ export default function JobPostingTable({
   return (
     <div className="space-y-3">
       {selectedIds.size > 0 && (
-        <div className="flex items-center gap-3 rounded-lg bg-slate-50 px-4 py-2">
+        <div className="flex items-center gap-3 rounded-lg bg-white px-4 py-2">
           <span className="text-sm text-slate-600">{selectedIds.size}개 선택</span>
           <button
             onClick={() => setBulkDeleteOpen(true)}
@@ -115,10 +115,10 @@ export default function JobPostingTable({
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-xl border">
+      <div className="overflow-x-auto rounded-sm">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b bg-slate-50 text-left">
+            <tr className="border-b bg-white text-left">
               <th className="px-4 py-2">
                 <input
                   type="checkbox"
@@ -127,6 +127,7 @@ export default function JobPostingTable({
                   className="h-4 w-4 rounded border-slate-300"
                 />
               </th>
+              <th className="px-4 py-2 font-medium">공고명</th>
               <th className="px-4 py-2 font-medium">형태</th>
               <th className="px-4 py-2 font-medium">일자</th>
               <th className="px-4 py-2 font-medium">장소</th>
@@ -147,7 +148,7 @@ export default function JobPostingTable({
               return (
                 <tr
                   key={job.id}
-                  className="cursor-pointer border-b last:border-0 hover:bg-slate-50/50"
+                  className="cursor-pointer border-b last:border-0 bg-white hover:bg-slate-50/50"
                   onClick={() => router.push(`/job-postings/${job.id}`)}
                 >
                   <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
@@ -157,6 +158,9 @@ export default function JobPostingTable({
                       onChange={() => toggleOne(job.id)}
                       className="h-4 w-4 rounded border-slate-300"
                     />
+                  </td>
+                  <td className="px-4 py-2 font-medium text-slate-900">
+                    {job.title || "-"}
                   </td>
                   <td className="px-4 py-2">
                     <span className="inline-block rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
@@ -182,7 +186,7 @@ export default function JobPostingTable({
                   <td className="px-4 py-2 text-slate-500">{job.platform || "-"}</td>
                   <td className="px-4 py-2 text-slate-500">{job.supervisor_name || "-"}</td>
                   <td className="px-4 py-2 text-center">
-                    <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${status.className}`}>
+                    <span className={`inline-block rounded-sm px-2.5 py-0.5 text-xs font-medium ${status.className}`}>
                       {status.text}
                     </span>
                   </td>

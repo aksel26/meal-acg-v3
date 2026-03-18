@@ -66,7 +66,7 @@ export default function AssignedWorkersDialog({
                       <td className="px-3 py-2 font-medium">{a.worker?.name || "-"}</td>
                       <td className="px-3 py-2 text-slate-500">{a.worker?.phone || "-"}</td>
                       <td className="px-3 py-2 text-center">
-                        <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${status.className}`}>
+                        <span className={`inline-block rounded-sm px-2 py-0.5 text-xs font-medium ${status.className}`}>
                           {status.text}
                         </span>
                       </td>

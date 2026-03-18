@@ -19,6 +19,7 @@ import {
   AlertDialogTitle,
 } from "@repo/ui/src/alert-dialog";
 import CandidateListPanel from "@/components/job-postings/CandidateListPanel";
+import RoomAssignPopover from "@/components/job-postings/RoomAssignDialog";
 import RegisterWorkerDialog from "@/components/job-postings/RegisterWorkerDialog";
 import SmsDialog from "@/components/job-postings/SmsDialog";
 import ContractLinkModal from "@/components/job-postings/ContractLinkModal";
@@ -56,6 +57,7 @@ export default function JobPostingDetailPage({ params }: { params: Promise<{ id:
   const [contractLinkOpen, setContractLinkOpen] = useState(false);
   const [downloadOpen, setDownloadOpen] = useState(false);
   const [editingWorker, setEditingWorker] = useState<Worker | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const { data: job, isLoading } = useJobPosting(id);
   const { data: assignments, isLoading: assignmentsLoading } = useAssignmentsByJobPosting(id);
 
@@ -93,25 +95,37 @@ export default function JobPostingDetailPage({ params }: { params: Promise<{ id:
       </div>
 
       {/* Summary */}
-      <div className="rounded-xl border bg-slate-50/50 p-3">
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3">
+      <div className="rounded-xl bg-white p-3">
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-4">
           <InfoItem
             label="형태"
             value={`${workTypeLabel[job.work_type] || "-"} · ${shiftTypeLabel[job.shift_type] || "-"}`}
           />
           <InfoItem label="장소" value={job.location} />
           <InfoItem label="플랫폼" value={job.platform} />
-          <InfoItem label="검사일" value={job.start_date} />
           <InfoItem
-            label="근무/점심"
-            value={
-              job.work_start && job.work_end
-                ? `${job.work_start.slice(0, 5)}~${job.work_end.slice(0, 5)}${job.lunch_start && job.lunch_end ? ` (점심 ${job.lunch_start.slice(0, 5)}~${job.lunch_end.slice(0, 5)})` : ""}`
-                : null
-            }
+            label="일정"
+            value={(() => {
+              const date = dayjs(job.start_date).format("MM.DD");
+              const work = job.work_start && job.work_end
+                ? `${job.work_start.slice(0, 5)}~${job.work_end.slice(0, 5)}`
+                : null;
+              const lunch = job.lunch_start && job.lunch_end
+                ? `(점심 ${job.lunch_start.slice(0, 5)}~${job.lunch_end.slice(0, 5)})`
+                : null;
+              return [date, work, lunch].filter(Boolean).join(" / ");
+            })()}
           />
           <InfoItem label="급여" value={`${job.pay_rate.toLocaleString()}원 (${payTypeLabel[job.pay_type]})`} />
           <InfoItem label="모집인원" value={`${job.headcount}명`} />
+          <InfoItem
+            label="회의실"
+            value={
+              assignments && assignments.length > 0
+                ? [...new Set(assignments.flatMap((a) => (a.room_slots ?? []).map((s) => s.room)))].join(", ") || "-"
+                : "-"
+            }
+          />
         </dl>
       </div>
 
@@ -143,6 +157,14 @@ export default function JobPostingDetailPage({ params }: { params: Promise<{ id:
               <MessageSquare size={15} />
               SMS 전송
             </button>
+            <RoomAssignPopover
+              selectedCount={selectedIds.size}
+              selectedIds={selectedIds}
+              jobPosting={job}
+              assignments={assignments || []}
+              onComplete={() => setSelectedIds(new Set())}
+              disabled={selectedIds.size === 0}
+            />
             <button
               onClick={() => setRegisterOpen(true)}
               className="flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800"
@@ -157,6 +179,8 @@ export default function JobPostingDetailPage({ params }: { params: Promise<{ id:
           jobPosting={job}
           assignments={assignments || []}
           isLoading={assignmentsLoading}
+          selectedIds={selectedIds}
+          onSelectedIdsChange={setSelectedIds}
           onEditWorker={setEditingWorker}
         />
       </div>

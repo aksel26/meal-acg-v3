@@ -1,18 +1,19 @@
 "use client";
 
-import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "@repo/ui/src/sonner";
 import { queryKeys } from "@/lib/query-keys";
 import type { AssignmentWithDetails, JobPosting, Worker } from "@/lib/supabase/types";
 import AssignedWorkersTable from "./AssignedWorkersTable";
-import RoomAssignDialog from "./RoomAssignDialog";
+import { useState } from "react";
 
 type Props = {
   jobPostingId: string;
   jobPosting: JobPosting;
   assignments: AssignmentWithDetails[];
   isLoading: boolean;
+  selectedIds: Set<string>;
+  onSelectedIdsChange: (ids: Set<string>) => void;
   onEditWorker?: (worker: Worker) => void;
 };
 
@@ -21,27 +22,25 @@ export default function CandidateListPanel({
   jobPosting,
   assignments,
   isLoading,
+  selectedIds,
+  onSelectedIdsChange,
   onEditWorker,
 }: Props) {
   const queryClient = useQueryClient();
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
-  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
 
   const handleToggle = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    onSelectedIdsChange(next);
   };
 
   const handleToggleAll = () => {
     if (selectedIds.size === assignments.length) {
-      setSelectedIds(new Set());
+      onSelectedIdsChange(new Set());
     } else {
-      setSelectedIds(new Set(assignments.map((a) => a.id)));
+      onSelectedIdsChange(new Set(assignments.map((a) => a.id)));
     }
   };
 
@@ -63,7 +62,7 @@ export default function CandidateListPanel({
     queryClient.invalidateQueries({ queryKey: queryKeys.assignments.byJobPosting(jobPostingId) });
     queryClient.invalidateQueries({ queryKey: queryKeys.jobPostings.all });
     queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
-    setSelectedIds(new Set());
+    onSelectedIdsChange(new Set());
     setIsDeleting(false);
 
     if (failed === 0) {
@@ -79,7 +78,7 @@ export default function CandidateListPanel({
 
   return (
     <div>
-      {/* 액션 바 */}
+      {/* 액션 바 - 선택 시에만 표시 */}
       {selectedIds.size > 0 && (
         <div className="mb-2 flex items-center gap-3 rounded-lg border bg-blue-50/50 px-4 py-2">
           <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-700">
@@ -100,13 +99,6 @@ export default function CandidateListPanel({
             >
               {isDeleting ? "삭제 중..." : "삭제"}
             </button>
-            <button
-              onClick={() => setAssignDialogOpen(true)}
-              disabled={isDeleting}
-              className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-40"
-            >
-              회의실 배정
-            </button>
           </div>
         </div>
       )}
@@ -120,16 +112,6 @@ export default function CandidateListPanel({
         selectedIds={selectedIds}
         onToggle={handleToggle}
         onEditWorker={onEditWorker}
-      />
-
-      {/* 배정 다이얼로그 */}
-      <RoomAssignDialog
-        open={assignDialogOpen}
-        onClose={() => setAssignDialogOpen(false)}
-        selectedCount={selectedIds.size}
-        selectedIds={selectedIds}
-        jobPosting={jobPosting}
-        onComplete={() => setSelectedIds(new Set())}
       />
     </div>
   );

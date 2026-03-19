@@ -10,8 +10,8 @@ const HEADER_FILL: ExcelJS.FillPattern = {
 
 const FONT_BASE = { name: "나눔고딕" };
 
-const BORDER_THIN: ExcelJS.Border = { style: "thin" };
-const BORDER_MEDIUM: ExcelJS.Border = { style: "medium" };
+const BORDER_THIN: ExcelJS.Border = { style: "thin", color: { argb: "FF000000" } };
+const BORDER_MEDIUM: ExcelJS.Border = { style: "medium", color: { argb: "FF000000" } };
 
 function formatDateKR(dateStr: string): string {
   // "2026-03-15" -> "2026년 03월 15일"

@@ -41,3 +41,4 @@ yarn-error.log*
 
 # ui
 dist/
+.worktrees/

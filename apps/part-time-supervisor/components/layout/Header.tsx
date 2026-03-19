@@ -8,6 +8,7 @@ const pageTitles: Record<string, string> = {
   "/workers": "지원자 관리",
   "/assignments": "배정 관리",
   "/room-assignments": "회의실 배정",
+  "/cost-management": "비용 관리",
 };
 
 export default function Header() {

@@ -34,13 +34,7 @@ export function CostManagementPage() {
 
   return (
     <div className="space-y-6">
-      {/* 헤더 */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">비용 관리</h1>
-        <CostExportButton year={year} month={month} />
-      </div>
-
-      {/* 필터 */}
+      {/* 필터 + 엑셀 내보내기 (같은 행) */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2 rounded-lg border bg-white px-3 py-2">
           <button onClick={() => handleMonthChange(-1)} className="text-slate-400 hover:text-slate-600">
@@ -63,6 +57,10 @@ export function CostManagementPage() {
             onChange={(e) => setSearch(e.target.value)}
             className="w-full rounded-lg border bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-slate-400"
           />
+        </div>
+
+        <div className="ml-auto">
+          <CostExportButton year={year} month={month} />
         </div>
       </div>
 

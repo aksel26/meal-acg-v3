@@ -34,4 +34,16 @@ export const queryKeys = {
     byDateAndJobPosting: (date: string, jobPostingId: string) =>
       ["roomAssignments", date, jobPostingId] as const,
   },
+
+  costManagement: {
+    all: ["costManagement"] as const,
+    byMonth: (year: number, month: number) =>
+      ["costManagement", year, month] as const,
+  },
+
+  workRecords: {
+    all: ["workRecords"] as const,
+    byAssignment: (assignmentId: string) =>
+      ["workRecords", assignmentId] as const,
+  },
 };

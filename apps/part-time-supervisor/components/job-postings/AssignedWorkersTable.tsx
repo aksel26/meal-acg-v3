@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import { toast } from "@repo/ui/src/sonner";
-import { Pencil, Trash2 } from "lucide-react";
+import { FileCheck, Pencil, Trash2 } from "lucide-react";
+import ContractApprovalDialog from "@/components/job-postings/ContractApprovalDialog";
 import { ROOMS, getRoomById } from "@/lib/room-constants";
 import { useAddRoomSlot, useDeleteRoomSlot } from "@/hooks/use-room-assignment-mutations";
 import type { AssignmentWithDetails, JobPosting, Worker } from "@/lib/supabase/types";
@@ -12,7 +13,7 @@ import dayjs from "dayjs";
 import { Popover, PopoverTrigger, PopoverContent } from "@repo/ui/src/popover";
 
 const contractOptions = [
-  { value: null, label: "미서명", className: "bg-slate-100 text-slate-400" },
+  { value: null, label: "계약 전", className: "bg-slate-100 text-slate-400" },
   { value: "signed" as const, label: "서명완료", className: "bg-yellow-100 text-yellow-700" },
   { value: "confirmed" as const, label: "확인완료", className: "bg-green-100 text-green-700" },
 ];
@@ -274,6 +275,7 @@ export default function AssignedWorkersTable({
   onToggle?: (id: string) => void;
   onEditWorker?: (worker: Worker) => void;
 }) {
+  const [approvalAssignment, setApprovalAssignment] = useState<AssignmentWithDetails | null>(null);
   const queryClient = useQueryClient();
 
   const contractMutation = useMutation({
@@ -361,22 +363,22 @@ export default function AssignedWorkersTable({
         <thead>
           <tr className="border-b bg-white text-left whitespace-nowrap">
             {onToggle && (
-              <th className="w-10 px-2 py-3 text-center" />
+              <th className="px-4 py-2 text-center" />
             )}
-            <th className="px-1 py-3 font-medium text-center w-8">No.</th>
-            <th className="px-2 py-3 font-medium">이름</th>
-            <th className="px-2 py-3 font-medium">휴대전화번호</th>
-            <th className="px-2 py-3 font-medium min-w-[160px]">이메일</th>
-            <th className="px-2 py-3 font-medium text-center">성별</th>
-            <th className="px-2 py-3 font-medium">경력</th>
-            <th className="px-2 py-3 font-medium text-center">근무시간</th>
-            <th className="px-2 py-3 font-medium">특이사항</th>
-            <th className="px-2 py-3 font-medium text-center">회의실</th>
-            <th className="px-2 py-3 font-medium text-center">출석</th>
-            <th className="px-2 py-3 font-medium text-center">계약</th>
-            <th className="px-2 py-3 font-medium">등록일</th>
-            <th className="px-2 py-3 font-medium text-center w-10">수정</th>
-            <th className="px-2 py-3 font-medium text-center w-10">삭제</th>
+            <th className="px-2 py-2 font-medium text-center w-8">No.</th>
+            <th className="px-4 py-2 font-medium">이름</th>
+            <th className="px-4 py-2 font-medium">휴대전화번호</th>
+            <th className="px-4 py-2 font-medium min-w-[160px]">이메일</th>
+            <th className="px-4 py-2 font-medium text-center">성별</th>
+            <th className="px-4 py-2 font-medium">경력</th>
+            <th className="px-4 py-2 font-medium text-center">근무시간</th>
+            <th className="px-4 py-2 font-medium">특이사항</th>
+            <th className="px-4 py-2 font-medium text-center">회의실</th>
+            <th className="px-4 py-2 font-medium text-center">출석</th>
+            <th className="px-4 py-2 font-medium text-center">계약</th>
+            <th className="px-4 py-2 font-medium">등록일</th>
+            <th className="px-4 py-2 font-medium text-center w-10">수정</th>
+            <th className="px-4 py-2 font-medium text-center w-10">삭제</th>
           </tr>
         </thead>
         <tbody>
@@ -393,7 +395,7 @@ export default function AssignedWorkersTable({
             return (
               <tr key={a.id} className={`border-b last:border-0 hover:bg-slate-50/50 whitespace-nowrap ${selectedIds.has(a.id) ? "bg-blue-50/40" : "bg-white"}`}>
                 {onToggle && (
-                  <td className="px-2 py-3 text-center">
+                  <td className="px-4 py-2 text-center">
                     <input
                       type="checkbox"
                       checked={selectedIds.has(a.id)}
@@ -402,32 +404,32 @@ export default function AssignedWorkersTable({
                     />
                   </td>
                 )}
-                <td className="px-1 py-3 text-center text-slate-400">{idx + 1}</td>
-                <td className="px-2 py-3 font-medium">{worker?.name || "-"}</td>
-                <td className="px-2 py-3 text-slate-500">{worker?.phone || "-"}</td>
-                <td className="px-2 py-3 text-slate-500 min-w-[160px]">{worker?.email || "-"}</td>
-                <td className="px-2 py-3 text-center text-slate-500">
+                <td className="px-2 py-2 text-center text-slate-400">{idx + 1}</td>
+                <td className="px-4 py-2 font-medium">{worker?.name || "-"}</td>
+                <td className="px-4 py-2 text-slate-500">{worker?.phone || "-"}</td>
+                <td className="px-4 py-2 text-slate-500 min-w-[160px]">{worker?.email || "-"}</td>
+                <td className="px-4 py-2 text-center text-slate-500">
                   {worker?.gender ? genderLabel[worker.gender] || "-" : "-"}
                 </td>
-                <td className="px-2 py-3 text-slate-500">{worker?.experience || "-"}</td>
-                <td className="px-2 py-3 text-center text-slate-500">
+                <td className="px-4 py-2 text-slate-500">{worker?.experience || "-"}</td>
+                <td className="px-4 py-2 text-center text-slate-500">
                   {worker?.work_start && worker?.work_end
                     ? `${worker.work_start.slice(0, 5)} ~ ${worker.work_end.slice(0, 5)}`
                     : "-"}
                 </td>
-                <td className="px-2 py-3 whitespace-normal">
+                <td className="px-4 py-2 whitespace-normal">
                   {worker?.id ? (
                     <NoteInput workerId={worker.id} initialValue={worker.note || ""} />
                   ) : "-"}
                 </td>
-                <td className="px-2 py-3 text-center">
+                <td className="px-4 py-2 text-center">
                   <RoomDropdown
                     assignmentId={a.id}
                     currentRooms={[...new Set((a.room_slots ?? []).map((s) => s.room))]}
                     job={job}
                   />
                 </td>
-                <td className="px-2 py-3 text-center">
+                <td className="px-4 py-2 text-center">
                   <AttendancePopover
                     assignmentId={a.id}
                     currentStatus={a.attendance_status ?? null}
@@ -437,21 +439,32 @@ export default function AssignedWorkersTable({
                     }}
                   />
                 </td>
-                <td className="px-2 py-3 text-center">
-                  <ContractPopover
-                    assignmentId={a.id}
-                    currentStatus={(a.contract_status as "signed" | "confirmed" | null) ?? null}
-                    confirmedBy={a.confirmed_by ?? null}
-                    confirmedAt={a.confirmed_at ?? null}
-                    onChangeStatus={(status) => {
-                      contractMutation.mutate({ assignmentId: a.id, status });
-                    }}
-                  />
+                <td className="px-4 py-2 text-center">
+                  <div className="inline-flex items-center gap-1">
+                    <ContractPopover
+                      assignmentId={a.id}
+                      currentStatus={(a.contract_status as "signed" | "confirmed" | null) ?? null}
+                      confirmedBy={a.confirmed_by ?? null}
+                      confirmedAt={a.confirmed_at ?? null}
+                      onChangeStatus={(status) => {
+                        contractMutation.mutate({ assignmentId: a.id, status });
+                      }}
+                    />
+                    {(a.contract_status === "signed" || a.contract_status === "confirmed") && (
+                      <button
+                        onClick={() => setApprovalAssignment(a)}
+                        className="rounded-md p-1 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                        title="계약서 확인"
+                      >
+                        <FileCheck size={15} />
+                      </button>
+                    )}
+                  </div>
                 </td>
-                <td className="px-2 py-3 text-xs text-slate-400">
+                <td className="px-4 py-2 text-xs text-slate-400">
                   {dayjs(a.assigned_at).format("YYYY.MM.DD")}
                 </td>
-                <td className="px-2 py-3 text-center">
+                <td className="px-4 py-2 text-center">
                   {onEditWorker && worker?.id && (
                     <button
                       onClick={() => onEditWorker(worker as Worker)}
@@ -461,7 +474,7 @@ export default function AssignedWorkersTable({
                     </button>
                   )}
                 </td>
-                <td className="px-2 py-3 text-center">
+                <td className="px-4 py-2 text-center">
                   <button
                     onClick={() => handleDelete(a.id, worker?.name || "")}
                     className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500"
@@ -476,6 +489,14 @@ export default function AssignedWorkersTable({
       </table>
     </div>
 
+    {approvalAssignment && (
+      <ContractApprovalDialog
+        assignment={approvalAssignment}
+        job={job}
+        onClose={() => setApprovalAssignment(null)}
+        onConfirmed={() => setApprovalAssignment(null)}
+      />
+    )}
   </>
   );
 }

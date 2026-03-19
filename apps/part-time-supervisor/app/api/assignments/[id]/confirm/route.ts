@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
 import { syncWorkerStatus } from "@/lib/worker-status";
+import { generateWorkRecordsForAssignment } from "@/lib/work-records";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -59,6 +60,10 @@ export async function POST(request: Request, { params }: Params) {
     }
 
     await syncWorkerStatus(supabase, data.worker_id);
+
+    if (bothConfirmed) {
+      await generateWorkRecordsForAssignment(supabase, id);
+    }
 
     return NextResponse.json(data);
   } catch (error) {

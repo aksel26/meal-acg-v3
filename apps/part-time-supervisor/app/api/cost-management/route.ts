@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
 import { calculateAmount } from "@/lib/cost-utils";
+import { generateWorkRecordsForAssignment } from "@/lib/work-records";
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,9 +21,56 @@ export async function GET(request: NextRequest) {
 
     // 월의 시작/끝 날짜
     const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
-    const endDate = new Date(year, month, 0).toISOString().split("T")[0];
+    const endDate = new Date(year, month, 0).toISOString().split("T")[0]!;
 
     const supabase = createServiceClient();
+
+    // Auto-complete: 계약·출근 둘 다 confirmed인데 status가 completed가 아닌 assignment 자동 전환
+    const { data: stuckAssignments } = await supabase
+      .from("assignments")
+      .select("id")
+      .eq("contract_status", "confirmed")
+      .eq("attendance_status", "confirmed")
+      .neq("status", "completed");
+
+    if (stuckAssignments && stuckAssignments.length > 0) {
+      const stuckIds = stuckAssignments.map((a) => a.id);
+      await supabase
+        .from("assignments")
+        .update({ status: "completed" })
+        .in("id", stuckIds);
+    }
+
+    // Backfill: completed assignment 중 해당 월에 work_records가 없는 건 자동 생성
+    const { data: completedAssignments } = await supabase
+      .from("assignments")
+      .select("id, job_posting:job_postings(start_date, end_date)")
+      .eq("status", "completed");
+
+    if (completedAssignments) {
+      for (const a of completedAssignments) {
+        const jp = a.job_posting as unknown as {
+          start_date: string;
+          end_date: string;
+        } | null;
+        if (!jp) continue;
+
+        // 공고 기간이 요청 월과 겹치는지 확인
+        if (jp.end_date < startDate || jp.start_date > endDate) continue;
+
+        // 해당 assignment의 해당 월 work_records 존재 여부 확인
+        const { count } = await supabase
+          .from("work_records")
+          .select("id", { count: "exact", head: true })
+          .eq("assignment_id", a.id)
+          .gte("work_date", startDate)
+          .lte("work_date", endDate);
+
+        if (count === 0) {
+          await generateWorkRecordsForAssignment(supabase, a.id);
+        }
+      }
+    }
 
     // 해당 월의 work_records가 있는 assignments 조회 (worker, job_posting 포함)
     const { data: records, error } = await supabase

@@ -13,7 +13,7 @@ type VerifiedData = {
   worker_name: string;
 };
 
-type Step = "loading" | "error" | "welcome" | "verify" | "terms" | "checked_in";
+type Step = "loading" | "error" | "welcome" | "verify" | "terms" | "checked_in" | "already_checked_in";
 
 function formatPhoneNumber(value: string): string {
   const digits = value.replace(/\D/g, "").slice(0, 11);
@@ -34,14 +34,14 @@ function StepIndicator({ current, total, completed = false }: { current: number;
       className="mb-10"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ delay: 0.05 }}
+      transition={{ delay: 0.03 }}
     >
       <div className="flex items-center justify-around">
         {STEP_LABELS.map((label, i) => (
           <Fragment key={label}>
             <div className="flex flex-col items-center gap-1.5">
               <motion.div
-                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[11px] font-medium transition-colors duration-300 ${
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[11px] font-medium transition-colors duration-150 ${
                   i < current || (completed && i === current)
                     ? "bg-stone-900 text-white"
                     : i === current
@@ -50,7 +50,7 @@ function StepIndicator({ current, total, completed = false }: { current: number;
                 }`}
                 initial={{ scale: 0.8 }}
                 animate={{ scale: 1 }}
-                transition={{ delay: i * 0.08 }}
+                transition={{ delay: i * 0.04 }}
               >
                 {i < current || (completed && i === current) ? (
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
@@ -59,7 +59,7 @@ function StepIndicator({ current, total, completed = false }: { current: number;
                 )}
               </motion.div>
               <span
-                className={`whitespace-nowrap text-[11px] tracking-tight transition-colors duration-300 ${
+                className={`whitespace-nowrap text-[11px] tracking-tight transition-colors duration-150 ${
                   i <= current ? "font-medium text-stone-600" : "font-normal text-stone-300"
                 }`}
               >
@@ -113,7 +113,7 @@ function InputField({
           className="absolute bottom-0 left-0 h-[2px] bg-stone-900"
           initial={{ width: "0%" }}
           animate={{ width: focused ? "100%" : "0%" }}
-          transition={{ duration: 0.25, ease: "easeOut" }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
         />
       </div>
     </div>
@@ -123,22 +123,19 @@ function InputField({
 function WelcomeScreen({ job, onStart }: { job: JobPosting; onStart: () => void }) {
   const [showAcgText, setShowAcgText] = useState(true);
   const [showLogo, setShowLogo] = useState(false);
-  const [showIntro, setShowIntro] = useState(false);
   const [showContent, setShowContent] = useState(false);
 
   const words = [
-    { text: "Assessment", delay: 0.3 },
-    { text: "Consulting", delay: 0.7 },
-    { text: "Group", delay: 1.1 },
+    { text: "Assessment", delay: 0.15 },
+    { text: "Consulting", delay: 0.4 },
+    { text: "Group", delay: 0.65 },
   ];
 
   useEffect(() => {
     const timers = [
-      setTimeout(() => setShowLogo(true), 1600),
-      setTimeout(() => setShowAcgText(false), 2400),
-      setTimeout(() => setShowIntro(true), 3000),
-      setTimeout(() => setShowIntro(false), 4400),
-      setTimeout(() => setShowContent(true), 4900),
+      setTimeout(() => setShowLogo(true), 900),
+      setTimeout(() => setShowAcgText(false), 1400),
+      setTimeout(() => setShowContent(true), 1800),
     ];
     return () => timers.forEach(clearTimeout);
   }, []);
@@ -154,7 +151,7 @@ function WelcomeScreen({ job, onStart }: { job: JobPosting; onStart: () => void 
               className="absolute flex items-center gap-3"
               style={{ top: "calc(50% - 60px)" }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.4 }}
+              transition={{ duration: 0.2 }}
             >
               {words.map(({ text, delay }, i) => (
                 <span key={text} className="flex items-center gap-3">
@@ -162,7 +159,7 @@ function WelcomeScreen({ job, onStart }: { job: JobPosting; onStart: () => void 
                     className="text-[13px] font-normal tracking-widest text-white"
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay, duration: 0.5, ease: "easeOut" }}
+                    transition={{ delay, duration: 0.3, ease: "easeOut" }}
                   >
                     {text}
                   </motion.span>
@@ -171,7 +168,7 @@ function WelcomeScreen({ job, onStart }: { job: JobPosting; onStart: () => void 
                       className="text-[13px] text-stone-600"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      transition={{ delay: delay + 0.3, duration: 0.3 }}
+                      transition={{ delay: delay + 0.15, duration: 0.15 }}
                     >
                       ·
                     </motion.span>
@@ -188,8 +185,8 @@ function WelcomeScreen({ job, onStart }: { job: JobPosting; onStart: () => void 
           initial={{ opacity: 0 }}
           animate={{ opacity: showLogo ? 1 : 0 }}
           transition={{
-            opacity: { duration: 0.6 },
-            layout: { duration: 0.7, ease: [0.25, 0.1, 0.25, 1] },
+            opacity: { duration: 0.3 },
+            layout: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] },
           }}
         >
           <Image
@@ -202,50 +199,25 @@ function WelcomeScreen({ job, onStart }: { job: JobPosting; onStart: () => void 
           />
         </motion.div>
 
-        {/* 환영합니다 intro text */}
-        <AnimatePresence>
-          {showIntro && !showContent && (
-            <motion.p
-              key="intro-text"
-              className="mt-8 text-[14px] tracking-tight text-stone-400"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              방문을 환영합니다
-            </motion.p>
-          )}
-        </AnimatePresence>
-
         {showContent && (
           <motion.div
             className="mt-8 flex flex-col items-center w-full"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.15 }}
           >
             <motion.div
               className="mb-3 h-[1px] w-8 bg-stone-600"
               initial={{ width: 0 }}
               animate={{ width: 32 }}
-              transition={{ delay: 0.05, duration: 0.4 }}
+              transition={{ delay: 0.03, duration: 0.2 }}
             />
-
-            <motion.p
-              className="mb-2 text-[14px] tracking-tight text-stone-300"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              방문을 환영합니다
-            </motion.p>
 
             <motion.h1
               className="mb-4 text-[22px] font-normal leading-tight tracking-tight text-white"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
+              transition={{ delay: 0.1 }}
             >
               {job.title}
             </motion.h1>
@@ -254,11 +226,11 @@ function WelcomeScreen({ job, onStart }: { job: JobPosting; onStart: () => void 
               className="mb-12 max-w-[280px] text-[13px] leading-relaxed text-stone-300"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
+              transition={{ delay: 0.15 }}
             >
-              본인 확인 후 출석이 완료됩니다.
+              이름, 전화번호, 이메일로 본인 확인 후
               <br />
-              이름, 전화번호, 이메일을 준비해 주세요.
+              안내가 진행됩니다.
             </motion.p>
 
             <motion.button
@@ -266,11 +238,11 @@ function WelcomeScreen({ job, onStart }: { job: JobPosting; onStart: () => void 
               className="group flex w-full max-w-xs items-center justify-center gap-2 border-2 border-white bg-white py-4 text-[13px] font-normal uppercase tracking-widest text-stone-950 transition-all hover:bg-transparent hover:text-white"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
+              transition={{ delay: 0.2 }}
               whileTap={{ scale: 0.97 }}
             >
               출석하기
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transition-transform duration-200 group-hover:translate-x-1"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transition-transform duration-150 group-hover:translate-x-1"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </motion.button>
           </motion.div>
         )}
@@ -334,7 +306,7 @@ function VerifyStep({
           className="mb-2 text-[13px] font-medium tracking-tight text-stone-700"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.1 }}
+          transition={{ delay: 0.05 }}
         >
           {jobTitle}
         </motion.p>
@@ -342,7 +314,7 @@ function VerifyStep({
           className="text-[14px] leading-relaxed text-stone-500"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.22 }}
+          transition={{ delay: 0.12 }}
         >
           출석을 위해 아래 정보를 입력해 주세요.
         </motion.p>
@@ -353,7 +325,7 @@ function VerifyStep({
         className="mx-auto max-w-sm space-y-6"
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.25 }}
+        transition={{ delay: 0.12 }}
       >
         <InputField
           label="이름"
@@ -384,7 +356,7 @@ function VerifyStep({
             className="border-l-2 border-red-500 bg-red-50/60 px-4 py-3"
             initial={{ opacity: 0, x: -8 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.12 }}
           >
             <p className="text-[13px] font-normal text-red-600">{error}</p>
             {error.includes("등록되지 않은") && (
@@ -410,7 +382,7 @@ function VerifyStep({
             <span className="relative z-10 flex items-center gap-2">
               {loading ? "확인 중..." : "본인 확인"}
               {!loading && (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transition-transform duration-200 group-hover:translate-x-1"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transition-transform duration-150 group-hover:translate-x-1"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
               )}
             </span>
           </motion.button>
@@ -436,7 +408,7 @@ function CheckedInStep({
         gravity: 1.2,
         ticks: 100,
       });
-    }, 400);
+    }, 250);
     return () => clearTimeout(timer);
   }, []);
 
@@ -450,7 +422,7 @@ function CheckedInStep({
         className="relative mx-auto mb-8"
         initial={{ scale: 0, rotate: -10 }}
         animate={{ scale: 1, rotate: 0 }}
-        transition={{ type: "spring", stiffness: 200, damping: 16 }}
+        transition={{ type: "spring", stiffness: 300, damping: 14 }}
       >
         <Image
           src="/finish-removebg-preview.webp"
@@ -465,7 +437,7 @@ function CheckedInStep({
         className="mb-2 text-[26px] font-normal tracking-tight text-stone-500"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
+        transition={{ delay: 0.1 }}
       >
         출석 완료
       </motion.h1>
@@ -473,7 +445,7 @@ function CheckedInStep({
         className="mb-10 text-[15px] text-stone-500"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.28 }}
+        transition={{ delay: 0.15 }}
       >
         <span className="font-medium text-stone-600">{workerName}</span>님, 출석이 확인되었습니다.
       </motion.p>
@@ -481,7 +453,7 @@ function CheckedInStep({
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
+        transition={{ delay: 0.2 }}
         className="w-full max-w-xs"
       >
         <div className="border border-stone-200 bg-white">
@@ -515,7 +487,7 @@ function CheckedInStep({
         className="-mt-4 pb-6 text-center text-[12px] text-stone-400"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.6 }}
+        transition={{ delay: 0.3 }}
       >
         이 화면은 닫아도 됩니다.
       </motion.p>
@@ -565,6 +537,10 @@ export default function AttendancePage({
         const statusData = await statusRes.json();
         if (statusData.attendance_status === "confirmed") {
           window.location.href = `/contract/${jobPostingId}?worker_id=${data.worker_id}&assignment_id=${data.assignment_id}`;
+          return;
+        }
+        if (statusData.attendance_status === "checked_in") {
+          setStep("already_checked_in");
           return;
         }
       }
@@ -634,7 +610,7 @@ export default function AttendancePage({
           className="mb-2 text-[20px] font-normal tracking-tight text-stone-500"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
+          transition={{ delay: 0.08 }}
         >
           {errorMsg || "오류가 발생했습니다"}
         </motion.h2>
@@ -642,7 +618,7 @@ export default function AttendancePage({
           className="text-[14px] text-stone-300"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
+          transition={{ delay: 0.12 }}
         >
           관리자에게 문의 바랍니다.
         </motion.p>
@@ -657,7 +633,7 @@ export default function AttendancePage({
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -12 }}
-        transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+        transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
       >
         {step === "welcome" && (
           <WelcomeScreen job={job} onStart={() => {
@@ -684,6 +660,35 @@ export default function AttendancePage({
 
         {step === "checked_in" && verified && (
           <CheckedInStep workerName={verified.worker_name} />
+        )}
+
+        {step === "already_checked_in" && (
+          <div className="flex min-h-[calc(100dvh-80px)] flex-col items-center justify-center text-center">
+            <motion.div
+              className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-stone-100"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 300, damping: 16 }}
+            >
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-stone-500"><polyline points="20 6 9 17 4 12" /></svg>
+            </motion.div>
+            <motion.h1
+              className="mb-2 text-[22px] font-normal tracking-tight text-stone-600"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              이미 출석이 완료되었습니다.
+            </motion.h1>
+            <motion.p
+              className="text-[15px] text-stone-400"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+            >
+              감독관의 안내에 따라 대기해 주세요.
+            </motion.p>
+          </div>
         )}
       </motion.div>
     </AnimatePresence>

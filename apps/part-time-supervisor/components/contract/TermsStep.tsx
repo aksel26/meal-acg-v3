@@ -30,14 +30,14 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
       className="mb-10"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ delay: 0.05 }}
+      transition={{ delay: 0.03 }}
     >
       <div className="flex items-center justify-around">
         {STEP_LABELS.map((label, i) => (
           <Fragment key={label}>
             <div className="flex flex-col items-center gap-1.5">
               <motion.div
-                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[11px] font-medium transition-colors duration-300 ${
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[11px] font-medium transition-colors duration-150 ${
                   i < current
                     ? "bg-stone-900 text-white"
                     : i === current
@@ -46,7 +46,7 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
                 }`}
                 initial={{ scale: 0.8 }}
                 animate={{ scale: 1 }}
-                transition={{ delay: i * 0.08 }}
+                transition={{ delay: i * 0.04 }}
               >
                 {i < current ? (
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
@@ -55,7 +55,7 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
                 )}
               </motion.div>
               <span
-                className={`whitespace-nowrap text-[11px] tracking-tight transition-colors duration-300 ${
+                className={`whitespace-nowrap text-[11px] tracking-tight transition-colors duration-150 ${
                   i <= current ? "font-medium text-stone-600" : "font-normal text-stone-300"
                 }`}
               >
@@ -103,7 +103,7 @@ function PledgePage({
           className="mb-2 text-[22px] font-normal tracking-tight text-stone-500"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
+          transition={{ delay: 0.05 }}
         >
           {pledge.title}
         </motion.h2>
@@ -111,12 +111,12 @@ function PledgePage({
           className="flex items-center justify-center gap-2"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.15 }}
+          transition={{ delay: 0.08 }}
         >
           {Array.from({ length: total }, (_, i) => (
             <div
               key={i}
-              className={`h-[2px] transition-all duration-300 ${
+              className={`h-[2px] transition-all duration-150 ${
                 i === pageIndex ? "w-5 bg-stone-800" : "w-2 bg-stone-200"
               }`}
             />
@@ -129,7 +129,7 @@ function PledgePage({
         className="mb-5 border border-stone-200 bg-white"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
+        transition={{ delay: 0.1 }}
       >
         <div className="border-b border-stone-100 px-5 py-2.5">
           <p className="text-[11px] font-normal uppercase tracking-widest text-stone-400">
@@ -150,10 +150,10 @@ function PledgePage({
         }`}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.25 }}
+        transition={{ delay: 0.12 }}
       >
         <div
-          className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center border-2 transition-all duration-200 ${
+          className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center border-2 transition-all duration-150 ${
             agreed ? "border-stone-900 bg-stone-900" : "border-stone-400"
           }`}
         >
@@ -169,7 +169,7 @@ function PledgePage({
               strokeLinejoin="round"
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 400, damping: 15 }}
+              transition={{ type: "spring", stiffness: 500, damping: 12 }}
             >
               <polyline points="20 6 9 17 4 12" />
             </motion.svg>
@@ -191,7 +191,7 @@ function PledgePage({
         className="mb-6"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
+        transition={{ delay: 0.15 }}
       >
         <label className="mb-2 block text-[11px] font-normal uppercase tracking-wider text-stone-400">
           서명인 이름
@@ -219,7 +219,7 @@ function PledgePage({
             className="absolute bottom-0 left-0 h-[2px] bg-stone-900"
             initial={{ width: "0%" }}
             animate={{ width: nameFocused && !nameError ? "100%" : "0%" }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
           />
         </div>
         {nameError && (
@@ -242,9 +242,9 @@ function PledgePage({
           whileTap={{ scale: 0.97 }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.35 }}
+          transition={{ delay: 0.18 }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transition-transform duration-200 group-hover:-translate-x-1"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transition-transform duration-150 group-hover:-translate-x-1"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
           이전
         </motion.button>
         <motion.button
@@ -260,10 +260,10 @@ function PledgePage({
           whileTap={{ scale: 0.97 }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.35 }}
+          transition={{ delay: 0.18 }}
         >
           {pageIndex === total - 1 ? "동의 완료" : "다음"}
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transition-transform duration-200 group-hover:translate-x-1 group-disabled:hidden"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transition-transform duration-150 group-hover:translate-x-1 group-disabled:hidden"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </motion.button>
       </div>
     </div>
@@ -296,7 +296,7 @@ export default function TermsStep({
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -12 }}
-        transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+        transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
       >
         <PledgePage
           pledge={PLEDGES[page]!}

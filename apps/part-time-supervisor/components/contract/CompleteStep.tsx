@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import confetti from "canvas-confetti";
+import Image from "next/image";
 
 export default function CompleteStep() {
+  const [entranceDone, setEntranceDone] = useState(false);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       confetti({
@@ -21,28 +24,31 @@ export default function CompleteStep() {
   }, []);
 
   return (
-    <div className="py-8 text-center">
+    <div className="flex min-h-[calc(100dvh-80px)] flex-col items-center justify-center text-center">
       <motion.div
-        className="mx-auto mb-6 flex h-[72px] w-[72px] items-center justify-center rounded-full bg-emerald-50"
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ type: "spring", stiffness: 200, damping: 14, delay: 0.1 }}
+        className="relative mx-auto mb-6"
+        initial={{ scale: 0, rotate: -10 }}
+        animate={
+          entranceDone
+            ? { scale: 1, rotate: 0, y: [0, -8, 0] }
+            : { scale: 1, rotate: 0 }
+        }
+        transition={
+          entranceDone
+            ? { y: { duration: 2.5, ease: "easeInOut", repeat: Infinity } }
+            : { type: "spring", stiffness: 300, damping: 14 }
+        }
+        onAnimationComplete={() => {
+          if (!entranceDone) setEntranceDone(true);
+        }}
       >
-        <motion.svg
-          width="32"
-          height="32"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#059669"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 1 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
-        >
-          <polyline points="20 6 9 17 4 12" />
-        </motion.svg>
+        <Image
+          src="/contract_complete.webp"
+          alt="계약서 작성 완료"
+          width={200}
+          height={200}
+          className="object-contain"
+        />
       </motion.div>
 
       <motion.h2

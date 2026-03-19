@@ -62,6 +62,8 @@ export type Assignment = {
   attendance_confirmed_by: string | null;
   assigned_at: string;
   updated_at: string;
+  pay_rate_override: number | null;
+  pay_type_override: "hourly" | "daily" | null;
 };
 
 export type ContractDocument = {
@@ -88,4 +90,14 @@ export type AssignmentWithDetails = Assignment & {
   worker?: { id: string; name: string; phone: string | null; status: string };
   job_posting?: { id: string; title: string; status: string };
   room_slots?: { date: string; start_time: string; end_time: string; room: string }[];
+};
+
+export type WorkRecord = {
+  id: string;
+  assignment_id: string;
+  work_date: string;
+  work_hours: number;
+  note: string | null;
+  created_at: string;
+  updated_at: string;
 };

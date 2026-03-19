@@ -153,7 +153,7 @@ export default function SmsDialog({
               />
               <span className="text-sm font-medium">전체 선택</span>
             </label>
-            <ScrollArea className="max-h-40">
+            <ScrollArea className="max-h-52 overflow-hidden">
               {recipients.map((r) => (
                 <label
                   key={r.id}

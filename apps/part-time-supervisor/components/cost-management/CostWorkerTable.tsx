@@ -1,7 +1,8 @@
 "use client";
 
 import { Fragment, useState } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { ChevronRight } from "lucide-react";
 import { formatCurrency } from "@/lib/cost-utils";
 import type { CostWorkerData, CostPostingDetail } from "@/hooks/use-cost-management";
 import { CostWorkerExpandedRow } from "./CostWorkerExpandedRow";
@@ -34,10 +35,10 @@ export function CostWorkerTable({ workers, isLoading }: Props) {
 
   return (
     <>
-      <div className="overflow-hidden rounded-xl border bg-white">
+      <div className="overflow-hidden bg-white">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b bg-slate-50 text-left text-slate-500">
+            <tr className="border-b bg-slate-200 text-left text-slate-600 [&>th:first-child]:rounded-tl-md [&>th:last-child]:rounded-tr-md">
               <th className="px-4 py-3 font-medium w-8"></th>
               <th className="px-4 py-3 font-medium">지원자명</th>
               <th className="px-4 py-3 font-medium text-right">참여 공고</th>
@@ -52,30 +53,42 @@ export function CostWorkerTable({ workers, isLoading }: Props) {
               return (
                 <Fragment key={w.workerId}>
                   <tr
-                    className="cursor-pointer border-b hover:bg-slate-50"
+                    className="cursor-pointer border-b transition-colors duration-150 hover:bg-slate-50 active:bg-slate-100"
                     onClick={() => setExpandedWorker(isExpanded ? null : w.workerId)}
                   >
                     <td className="px-4 py-3 text-slate-400">
-                      {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                      <span className={`inline-block transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}>
+                        <ChevronRight size={16} />
+                      </span>
                     </td>
                     <td className="px-4 py-3 font-medium text-slate-900">{w.workerName}</td>
                     <td className="px-4 py-3 text-right text-slate-600">{w.postingCount}건</td>
                     <td className="px-4 py-3 text-right text-slate-600">{w.totalWorkDays}일</td>
                     <td className="px-4 py-3 text-right text-slate-600">{w.totalWorkHours}h</td>
-                    <td className="px-4 py-3 text-right font-semibold text-emerald-600">
+                    <td className="px-4 py-3 text-right font-semibold text-slate-900">
                       {formatCurrency(w.totalAmount)}
                     </td>
                   </tr>
-                  {isExpanded && (
-                    <tr>
-                      <td colSpan={6} className="p-0">
-                        <CostWorkerExpandedRow
-                          postings={w.postings}
-                          onEditClick={setEditingPosting}
-                        />
-                      </td>
-                    </tr>
-                  )}
+                  <AnimatePresence initial={false}>
+                    {isExpanded && (
+                      <tr>
+                        <td colSpan={6} className="p-0">
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.2, ease: "easeInOut" }}
+                            className="overflow-hidden"
+                          >
+                            <CostWorkerExpandedRow
+                              postings={w.postings}
+                              onEditClick={setEditingPosting}
+                            />
+                          </motion.div>
+                        </td>
+                      </tr>
+                    )}
+                  </AnimatePresence>
                 </Fragment>
               );
             })}

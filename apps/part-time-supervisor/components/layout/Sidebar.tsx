@@ -10,7 +10,7 @@ const navItems = [
   { href: "/job-postings", label: "공고 관리", icon: Briefcase },
   { href: "/workers", label: "지원자 관리", icon: Users },
   { href: "/room-assignments", label: "회의실 배정", icon: DoorOpen },
-  { href: "/cost-management", label: "비용 관리", icon: Calculator },
+  { href: "/cost-management", label: "정산 관리", icon: Calculator },
 ];
 
 export default function Sidebar() {

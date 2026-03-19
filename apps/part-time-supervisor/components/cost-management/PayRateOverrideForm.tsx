@@ -3,6 +3,18 @@
 import { useState } from "react";
 import { usePayOverride } from "@/hooks/use-pay-override";
 import { toast } from "@repo/ui/src/sonner";
+import { Checkbox } from "@repo/ui/src/checkbox";
+import { Label } from "@repo/ui/src/label";
+import { Input } from "@repo/ui/src/input";
+import { Button } from "@repo/ui/src/button";
+import { Badge } from "@repo/ui/src/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/src/select";
 
 type Props = {
   assignmentId: string;
@@ -32,55 +44,68 @@ export function PayRateOverrideForm({ assignmentId, currentPayRate, currentPayTy
   };
 
   return (
-    <div className="rounded-lg border bg-slate-50 p-4">
-      <div className="flex items-center gap-2">
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
+    <div className="rounded-lg border bg-slate-50/50 p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <Label
+          htmlFor="pay-override-toggle"
+          className="flex items-center gap-2.5 cursor-pointer select-none"
+        >
+          <Checkbox
+            id="pay-override-toggle"
             checked={enabled}
-            onChange={(e) => setEnabled(e.target.checked)}
-            className="rounded"
+            onCheckedChange={(checked) => setEnabled(checked === true)}
           />
-          커스텀 단가 사용
-        </label>
+          <div className="space-y-0.5">
+            <span className="text-sm text-slate-900">커스텀 단가 사용</span>
+            <p className="text-xs text-slate-500">공고 기본 단가 대신 개별 단가를 적용합니다.</p>
+          </div>
+        </Label>
+        {isOverridden && (
+          <Badge variant="secondary" className="bg-orange-50 text-orange-600 border-orange-200">
+            커스텀 적용중
+          </Badge>
+        )}
       </div>
 
       {enabled && (
-        <div className="mt-3 flex items-center gap-3">
-          <select
-            value={payType}
-            onChange={(e) => setPayType(e.target.value as "hourly" | "daily")}
-            className="rounded-lg border px-3 py-1.5 text-sm"
-          >
-            <option value="hourly">시급</option>
-            <option value="daily">일급</option>
-          </select>
-          <input
-            type="number"
-            value={payRate}
-            onChange={(e) => setPayRate(Number(e.target.value))}
-            className="w-32 rounded-lg border px-3 py-1.5 text-sm text-right"
-            min={0}
-          />
-          <span className="text-sm text-slate-500">원</span>
-          <button
-            onClick={handleSave}
-            disabled={payOverride.isPending}
-            className="rounded-lg bg-slate-900 px-3 py-1.5 text-sm text-white hover:bg-slate-800 disabled:opacity-50"
-          >
+        <div className="flex items-center gap-2.5 pt-1">
+          <Select value={payType} onValueChange={(v) => setPayType(v as "hourly" | "daily")}>
+            <SelectTrigger className="w-[80px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="hourly">시급</SelectItem>
+              <SelectItem value="daily">일급</SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="relative">
+            <Input
+              type="number"
+              value={payRate}
+              onChange={(e) => setPayRate(Number(e.target.value))}
+              className="w-32 pr-8 text-right"
+              min={0}
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+              원
+            </span>
+          </div>
+          <Button size="sm" onClick={handleSave} disabled={payOverride.isPending}>
             적용
-          </button>
+          </Button>
         </div>
       )}
 
       {!enabled && isOverridden && (
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={handleSave}
           disabled={payOverride.isPending}
-          className="mt-2 text-sm text-red-500 hover:underline"
+          className="text-red-500 hover:text-red-600 hover:bg-red-50 h-auto py-1 px-2"
         >
           커스텀 단가 제거
-        </button>
+        </Button>
       )}
     </div>
   );

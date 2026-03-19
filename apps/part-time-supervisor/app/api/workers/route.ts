@@ -11,7 +11,7 @@ export async function GET(request: Request) {
 
     let query = supabase
       .from("workers")
-      .select("*, assignments(room_slots, status, attendance_status, contract_status)")
+      .select("*, assignments(assigned_at, room_slots, status, attendance_status, contract_status)")
       .order("created_at", { ascending: false });
 
     if (status) {
@@ -23,15 +23,24 @@ export async function GET(request: Request) {
     if (error) throw error;
 
     const result = data.map((worker) => {
-      const completedCount = (worker.assignments ?? []).filter(
+      const assignments = worker.assignments ?? [];
+      const completedCount = assignments.filter(
         (a: { status: string; attendance_status: string; contract_status: string }) =>
           a.status === "completed" ||
           (a.attendance_status === "confirmed" && a.contract_status === "confirmed")
       ).length;
 
+      const latestAssignedAt = assignments.length > 0
+        ? assignments
+            .map((a: { assigned_at: string }) => a.assigned_at)
+            .sort()
+            .pop() ?? null
+        : null;
+
       return {
         ...worker,
         assignments: [{ count: completedCount }],
+        latest_assigned_at: latestAssignedAt,
       };
     });
 

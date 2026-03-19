@@ -6,6 +6,7 @@ import type { Worker, Assignment, ContractDocument } from "@/lib/supabase/types"
 
 type WorkerWithCount = Worker & {
   assignments: { count: number }[];
+  latest_assigned_at: string | null;
 };
 
 type WorkerDetail = Worker & {

@@ -3,13 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Briefcase, Users, LayoutDashboard, DoorOpen } from "lucide-react";
+import { Briefcase, Users, LayoutDashboard, DoorOpen, Calculator } from "lucide-react";
 
 const navItems = [
   { href: "/", label: "대시보드", icon: LayoutDashboard },
   { href: "/job-postings", label: "공고 관리", icon: Briefcase },
   { href: "/workers", label: "지원자 관리", icon: Users },
   { href: "/room-assignments", label: "회의실 배정", icon: DoorOpen },
+  { href: "/cost-management", label: "비용 관리", icon: Calculator },
 ];
 
 export default function Sidebar() {

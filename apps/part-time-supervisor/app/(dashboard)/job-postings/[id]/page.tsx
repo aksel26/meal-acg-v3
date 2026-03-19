@@ -4,7 +4,7 @@ import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useJobPosting } from "@/hooks/use-job-postings";
 import { useAssignmentsByJobPosting } from "@/hooks/use-assignments";
-import { ArrowLeft, Download, MessageSquare, Pencil, QrCode, UserPlus } from "lucide-react";
+import { ArrowLeft, Download, MessageSquare, Pencil, QrCode, UserPlus, Users } from "lucide-react";
 import { generateContractListExcel, getContractFileName } from "@/lib/excel-export";
 import dayjs from "dayjs";
 import "dayjs/locale/ko";
@@ -21,6 +21,7 @@ import {
 import CandidateListPanel from "@/components/job-postings/CandidateListPanel";
 import RoomAssignPopover from "@/components/job-postings/RoomAssignDialog";
 import RegisterWorkerDialog from "@/components/job-postings/RegisterWorkerDialog";
+import AssignExistingWorkersDialog from "@/components/job-postings/AssignExistingWorkersDialog";
 import SmsDialog from "@/components/job-postings/SmsDialog";
 import ContractLinkModal from "@/components/job-postings/ContractLinkModal";
 import WorkerModal from "@/components/workers/WorkerModal";
@@ -53,6 +54,7 @@ export default function JobPostingDetailPage({ params }: { params: Promise<{ id:
   const { id } = use(params);
   const router = useRouter();
   const [registerOpen, setRegisterOpen] = useState(false);
+  const [assignExistingOpen, setAssignExistingOpen] = useState(false);
   const [smsOpen, setSmsOpen] = useState(false);
   const [contractLinkOpen, setContractLinkOpen] = useState(false);
   const [downloadOpen, setDownloadOpen] = useState(false);
@@ -166,11 +168,18 @@ export default function JobPostingDetailPage({ params }: { params: Promise<{ id:
               disabled={selectedIds.size === 0}
             />
             <button
+              onClick={() => setAssignExistingOpen(true)}
+              className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium hover:bg-slate-50"
+            >
+              <Users size={15} />
+              기존 지원자 배정
+            </button>
+            <button
               onClick={() => setRegisterOpen(true)}
               className="flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800"
             >
               <UserPlus size={15} />
-              지원자 등록
+              신규 등록
             </button>
           </div>
         </div>
@@ -189,6 +198,13 @@ export default function JobPostingDetailPage({ params }: { params: Promise<{ id:
         open={registerOpen}
         onClose={() => setRegisterOpen(false)}
         jobPostingId={id}
+      />
+
+      <AssignExistingWorkersDialog
+        open={assignExistingOpen}
+        onClose={() => setAssignExistingOpen(false)}
+        jobPostingId={id}
+        assignments={assignments || []}
       />
 
       <ContractLinkModal

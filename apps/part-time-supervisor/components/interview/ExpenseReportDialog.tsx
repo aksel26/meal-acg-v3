@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { Plus, Trash2, Download } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -21,36 +22,35 @@ import {
 type Props = {
   open: boolean;
   onClose: () => void;
-  year: number;
-  month: number;
+  jobPostingId: string;
+  jobTitle: string;
 };
 
-export function ExpenseReportDialog({ open, onClose, year, month }: Props) {
-  const defaultTitle = `${year}년 ${month}월 면접교육 지출결의서`;
+export function ExpenseReportDialog({ open, onClose, jobPostingId, jobTitle }: Props) {
+  const defaultTitle = `${jobTitle} 지출결의서`;
 
   const [title, setTitle] = useState(defaultTitle);
-  const [items, setItems] = useState<ExpenseReportItem[]>([]);
+  const [items, setItems] = useState<(ExpenseReportItem & { _id: string })[]>([]);
+  const [isExporting, setIsExporting] = useState(false);
 
-  const { data: existing } = useExpenseReport(year, month);
+  const { data: existing } = useExpenseReport(jobPostingId);
   const save = useSaveExpenseReport();
 
   // Pre-populate when existing report loads
   useEffect(() => {
     if (existing) {
       setTitle(existing.title);
-      setItems(existing.items ?? []);
+      setItems((existing.items ?? []).map((item) => ({ ...item, _id: crypto.randomUUID() })));
     } else {
       setTitle(defaultTitle);
       setItems([]);
     }
   }, [existing, defaultTitle]);
 
-  const laborCost = existing?.total_labor_cost ?? 0;
   const extraCost = items.reduce((sum, item) => sum + (item.amount || 0), 0);
-  const grandTotal = laborCost + extraCost;
 
   const handleAddItem = () => {
-    setItems((prev) => [...prev, { name: "", amount: 0, note: "" }]);
+    setItems((prev) => [...prev, { name: "", amount: 0, note: "", _id: crypto.randomUUID() }]);
   };
 
   const handleRemoveItem = (index: number) => {
@@ -69,13 +69,33 @@ export function ExpenseReportDialog({ open, onClose, year, month }: Props) {
     );
   };
 
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const res = await fetch(`/api/interview/expense-reports/export?job_posting_id=${jobPostingId}`);
+      if (!res.ok) throw new Error("Export failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${title}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error("엑셀 다운로드에 실패했습니다.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!title.trim()) {
       toast.error("제목을 입력해주세요.");
       return;
     }
     try {
-      await save.mutateAsync({ year, month, title, items, status: "draft" });
+      const cleanItems = items.map(({ _id, ...rest }) => rest);
+      await save.mutateAsync({ job_posting_id: jobPostingId, title, items: cleanItems, status: "draft" });
       toast.success("지출결의서가 저장되었습니다.");
       onClose();
     } catch {
@@ -85,11 +105,11 @@ export function ExpenseReportDialog({ open, onClose, year, month }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-3xl sm:max-w-3xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>지출결의서</DialogTitle>
           <DialogDescription>
-            {year}년 {month}월 면접교육 지출결의서를 작성합니다.
+            {jobTitle} 지출결의서를 작성합니다.
           </DialogDescription>
         </DialogHeader>
 
@@ -101,21 +121,8 @@ export function ExpenseReportDialog({ open, onClose, year, month }: Props) {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="h-10 w-full rounded-lg border px-3 text-sm outline-none focus:border-slate-400"
+              className="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm outline-none transition-all duration-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             />
-          </div>
-
-          {/* 인건비 합계 (read-only) */}
-          <div className="rounded-lg bg-slate-50 p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-slate-600">인건비 합계</span>
-              <span className="font-semibold text-slate-900">
-                {laborCost.toLocaleString("ko-KR")}원
-              </span>
-            </div>
-            <p className="mt-1 text-xs text-slate-400">
-              저장 시 해당 월의 인건비가 자동으로 계산됩니다.
-            </p>
           </div>
 
           {/* 추가 비용 항목 */}
@@ -125,79 +132,105 @@ export function ExpenseReportDialog({ open, onClose, year, month }: Props) {
               <button
                 type="button"
                 onClick={handleAddItem}
-                className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
+                className="flex items-center gap-1 rounded-md px-2 py-1 text-sm text-blue-600 transition-all duration-200 hover:bg-blue-50 hover:text-blue-700 active:scale-95"
               >
                 <Plus size={14} />
                 항목 추가
               </button>
             </div>
 
-            {items.length === 0 && (
-              <p className="rounded-lg border border-dashed py-6 text-center text-sm text-slate-400">
-                추가 비용 항목이 없습니다.
-              </p>
-            )}
-
-            {items.map((item, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <input
-                  type="text"
-                  placeholder="항목명"
-                  value={item.name}
-                  onChange={(e) => handleItemChange(index, "name", e.target.value)}
-                  className="h-9 flex-1 rounded-lg border px-3 text-sm outline-none focus:border-slate-400"
-                />
-                <input
-                  type="number"
-                  placeholder="금액"
-                  value={item.amount || ""}
-                  onChange={(e) => handleItemChange(index, "amount", e.target.value)}
-                  className="h-9 w-32 rounded-lg border px-3 text-right text-sm outline-none focus:border-slate-400"
-                />
-                <input
-                  type="text"
-                  placeholder="비고"
-                  value={item.note ?? ""}
-                  onChange={(e) => handleItemChange(index, "note", e.target.value)}
-                  className="h-9 w-28 rounded-lg border px-3 text-sm outline-none focus:border-slate-400"
-                />
-                <button
+            <AnimatePresence initial={false} mode="popLayout">
+              {items.length === 0 && (
+                <motion.button
+                  key="empty-state"
                   type="button"
-                  onClick={() => handleRemoveItem(index)}
-                  className="text-slate-400 hover:text-red-500"
+                  onClick={handleAddItem}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="w-full rounded-lg border border-dashed border-slate-300 py-6 text-center text-sm text-slate-400 transition-colors duration-200 hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-500"
                 >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            ))}
+                  클릭하여 추가 비용 항목을 추가하세요
+                </motion.button>
+              )}
+
+              {items.map((item, index) => (
+                <motion.div
+                  key={item._id}
+                  layout
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2, ease: "easeInOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="group flex items-center gap-2 rounded-lg p-1.5 transition-colors duration-150 hover:bg-slate-50">
+                    <input
+                      type="text"
+                      placeholder="항목명"
+                      value={item.name}
+                      onChange={(e) => handleItemChange(index, "name", e.target.value)}
+                      className="h-9 flex-1 rounded-lg border border-slate-200 px-3 text-sm outline-none transition-all duration-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                    />
+                    <input
+                      type="number"
+                      placeholder="금액"
+                      value={item.amount || ""}
+                      onChange={(e) => handleItemChange(index, "amount", e.target.value)}
+                      className="h-9 w-36 rounded-lg border border-slate-200 px-3 text-right text-sm tabular-nums outline-none transition-all duration-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                    />
+                    <input
+                      type="text"
+                      placeholder="비고"
+                      value={item.note ?? ""}
+                      onChange={(e) => handleItemChange(index, "note", e.target.value)}
+                      className="h-9 w-36 rounded-lg border border-slate-200 px-3 text-sm outline-none transition-all duration-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveItem(index)}
+                      className="rounded-md p-1.5 text-slate-300 opacity-0 transition-all duration-200 hover:bg-red-50 hover:text-red-500 group-hover:opacity-100"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
 
           {/* 합계 */}
-          <div className="rounded-lg border bg-white p-4">
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between text-slate-600">
-                <span>인건비</span>
-                <span>{laborCost.toLocaleString("ko-KR")}원</span>
-              </div>
-              <div className="flex justify-between text-slate-600">
-                <span>추가 비용</span>
-                <span>{extraCost.toLocaleString("ko-KR")}원</span>
-              </div>
-              <div className="flex justify-between border-t pt-2 font-semibold text-slate-900">
-                <span>합계</span>
-                <span>{grandTotal.toLocaleString("ko-KR")}원</span>
-              </div>
+          <div className="rounded-lg border border-slate-200 bg-white p-4">
+            <div className="flex justify-between font-semibold text-slate-900">
+              <span>추가 비용 합계</span>
+              <span className="tabular-nums text-base">{extraCost.toLocaleString("ko-KR")}원</span>
             </div>
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            취소
-          </Button>
-          <Button onClick={handleSave} disabled={save.isPending}>
-            {save.isPending ? "저장 중..." : "저장"}
-          </Button>
+        <DialogFooter className="gap-2 sm:justify-between">
+          {existing ? (
+            <Button
+              variant="outline"
+              onClick={handleExport}
+              disabled={isExporting}
+              className="mr-auto flex items-center gap-1.5 transition-all duration-200 active:scale-95"
+            >
+              <Download size={15} />
+              {isExporting ? "내보내는 중..." : "엑셀 다운로드"}
+            </Button>
+          ) : (
+            <div />
+          )}
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onClose} className="transition-all duration-200 active:scale-95">
+              취소
+            </Button>
+            <Button onClick={handleSave} disabled={save.isPending} className="transition-all duration-200 active:scale-95">
+              {save.isPending ? "저장 중..." : "저장"}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

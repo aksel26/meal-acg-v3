@@ -8,18 +8,16 @@ export async function GET(request: NextRequest) {
     await requireAuth();
     const supabase = createServiceClient();
     const { searchParams } = request.nextUrl;
-    const year = parseInt(searchParams.get("year") ?? "");
-    const month = parseInt(searchParams.get("month") ?? "");
+    const jobPostingId = searchParams.get("job_posting_id");
 
-    if (!year || !month) {
-      return NextResponse.json({ error: "year and month are required" }, { status: 400 });
+    if (!jobPostingId) {
+      return NextResponse.json({ error: "job_posting_id is required" }, { status: 400 });
     }
 
     const { data, error } = await supabase
       .from("interview_expense_reports")
       .select("*")
-      .eq("year", year)
-      .eq("month", month)
+      .eq("job_posting_id", jobPostingId)
       .maybeSingle();
 
     if (error) throw error;
@@ -30,39 +28,25 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Helper: calculate total labor cost for the month (server-side)
+// Helper: calculate total labor cost from job posting assignments
 async function calculateLaborCost(
   supabase: ReturnType<typeof createServiceClient>,
-  year: number,
-  month: number
+  jobPostingId: string
 ): Promise<number> {
-  const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
-  const endDate = new Date(year, month, 0).toISOString().split("T")[0]!;
+  const { data: assignments, error } = await supabase
+    .from("interview_job_assignments")
+    .select("pay_type, pay_rate, work_hours")
+    .eq("job_posting_id", jobPostingId)
+    .neq("status", "cancelled");
 
-  const [personnelRes, recordsRes] = await Promise.all([
-    supabase.from("interview_personnel").select("*").eq("status", "active"),
-    supabase
-      .from("interview_work_records")
-      .select("*")
-      .gte("work_date", startDate)
-      .lte("work_date", endDate),
-  ]);
+  if (error) throw error;
 
   let total = 0;
-
-  for (const p of personnelRes.data ?? []) {
-    if (p.role === "rp") {
-      const records = (recordsRes.data ?? []).filter((r) => r.personnel_id === p.id);
-      for (const r of records) {
-        if (r.work_hours > 0) {
-          const rate = r.pay_rate_override ?? p.default_pay_rate ?? 0;
-          const type = (r.pay_type_override ?? p.pay_type) as "hourly" | "daily";
-          total += calculateAmount(type, rate, r.work_hours);
-        }
-      }
-    } else {
-      total += p.contract_amount ?? 0;
-    }
+  for (const a of assignments ?? []) {
+    const payType = (a.pay_type ?? "daily") as "hourly" | "daily";
+    const payRate = a.pay_rate ?? 0;
+    const workHours = a.work_hours ?? 0;
+    total += calculateAmount(payType, payRate, workHours);
   }
 
   return total;
@@ -73,13 +57,13 @@ export async function POST(request: NextRequest) {
     await requireAuth();
     const supabase = createServiceClient();
     const body = await request.json();
-    const { year, month, title, items } = body;
+    const { job_posting_id, title, items } = body;
 
-    if (!year || !month || !title) {
-      return NextResponse.json({ error: "year, month, and title are required" }, { status: 400 });
+    if (!job_posting_id || !title) {
+      return NextResponse.json({ error: "job_posting_id and title are required" }, { status: 400 });
     }
 
-    const totalLaborCost = await calculateLaborCost(supabase, year, month);
+    const totalLaborCost = await calculateLaborCost(supabase, job_posting_id);
     const parsedItems = items ?? [];
     const totalExtraCost = parsedItems.reduce(
       (sum: number, item: { amount: number }) => sum + (item.amount ?? 0),
@@ -91,8 +75,7 @@ export async function POST(request: NextRequest) {
       .from("interview_expense_reports")
       .upsert(
         {
-          year,
-          month,
+          job_posting_id,
           title,
           items: parsedItems,
           total_labor_cost: totalLaborCost,
@@ -100,7 +83,7 @@ export async function POST(request: NextRequest) {
           grand_total: grandTotal,
           status: body.status ?? "draft",
         },
-        { onConflict: "year,month" }
+        { onConflict: "job_posting_id" }
       )
       .select()
       .single();

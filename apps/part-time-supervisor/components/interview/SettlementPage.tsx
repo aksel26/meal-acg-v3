@@ -1,12 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, FileText } from "lucide-react";
+import { Search } from "lucide-react";
 import { useInterviewSettlement } from "@/hooks/use-interview-settlement";
 import { formatCurrency } from "@/lib/cost-utils";
 import { SettlementTable } from "./SettlementTable";
 import { SettlementExportButton } from "./SettlementExportButton";
-import { ExpenseReportDialog } from "./ExpenseReportDialog";
 
 const ROLE_TABS = [
   { value: "", label: "전체" },
@@ -22,8 +21,6 @@ export function SettlementPage() {
   const [roleFilter, setRoleFilter] = useState("");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [expenseDialogOpen, setExpenseDialogOpen] = useState(false);
-
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 300);
     return () => clearTimeout(timer);
@@ -69,16 +66,6 @@ export function SettlementPage() {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          {/* 지출결의서 버튼 */}
-          <button
-            onClick={() => setExpenseDialogOpen(true)}
-            className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-          >
-            <FileText size={16} />
-            지출결의서
-          </button>
-
-          {/* Excel 내보내기 */}
           <SettlementExportButton year={year} month={month} />
         </div>
       </div>
@@ -146,12 +133,6 @@ export function SettlementPage() {
         isLoading={isLoading}
       />
 
-      <ExpenseReportDialog
-        open={expenseDialogOpen}
-        onClose={() => setExpenseDialogOpen(false)}
-        year={year}
-        month={month}
-      />
     </div>
   );
 }

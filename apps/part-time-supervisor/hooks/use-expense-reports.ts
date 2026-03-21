@@ -7,8 +7,7 @@ export type ExpenseReportItem = { name: string; amount: number; note?: string };
 
 export type ExpenseReport = {
   id: string;
-  year: number;
-  month: number;
+  job_posting_id: string;
   title: string;
   items: ExpenseReportItem[];
   total_labor_cost: number;
@@ -19,14 +18,15 @@ export type ExpenseReport = {
   updated_at: string;
 };
 
-export function useExpenseReport(year: number, month: number) {
+export function useExpenseReport(jobPostingId: string) {
   return useQuery<ExpenseReport | null>({
-    queryKey: queryKeys.interviewExpenseReports.byMonth(year, month),
+    queryKey: queryKeys.interviewExpenseReports.byJobPosting(jobPostingId),
     queryFn: async () => {
-      const res = await fetch(`/api/interview/expense-reports?year=${year}&month=${month}`);
+      const res = await fetch(`/api/interview/expense-reports?job_posting_id=${jobPostingId}`);
       if (!res.ok) throw new Error("Failed to fetch");
       return res.json();
     },
+    enabled: !!jobPostingId,
   });
 }
 
@@ -34,8 +34,7 @@ export function useSaveExpenseReport() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (body: {
-      year: number;
-      month: number;
+      job_posting_id: string;
       title: string;
       items: ExpenseReportItem[];
       status?: string;

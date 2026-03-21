@@ -226,6 +226,43 @@ export default function DashboardPage() {
               dateLabel={activePreset ?? dateLabel}
               isFuture={dateRange.startDate > today.format("YYYY-MM-DD")}
             />
+            {/* 면접교육 & 합산 */}
+            {data.interview && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-muted-foreground">면접교육 현황 (이번 달)</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="rounded-xl bg-white p-4">
+                    <p className="text-xs text-muted-foreground mb-1">활동 인력</p>
+                    <p className="text-2xl font-bold">{data.interview.activePersonnel}<span className="text-sm font-normal text-muted-foreground">명</span></p>
+                  </div>
+                  <div className="rounded-xl bg-white p-4">
+                    <p className="text-xs text-muted-foreground mb-1">이번달 인건비</p>
+                    <p className="text-lg font-bold tabular-nums">₩{new Intl.NumberFormat("ko-KR").format(data.interview.monthlyLaborCost)}</p>
+                  </div>
+                  <div className="rounded-xl bg-white p-4">
+                    <p className="text-xs text-muted-foreground mb-1">지출결의 상태</p>
+                    <p className="text-lg font-bold">
+                      {data.interview.expenseReportStatus === "finalized" ? (
+                        <span className="text-green-600">확정</span>
+                      ) : data.interview.expenseReportStatus === "draft" ? (
+                        <span className="text-amber-600">작성중</span>
+                      ) : (
+                        <span className="text-muted-foreground">미작성</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                {/* 합산 카드 */}
+                <div className="rounded-xl bg-slate-900 p-4 text-white">
+                  <p className="text-xs text-slate-400 mb-1">이번달 총 비용 (감독관 + 면접교육)</p>
+                  <p className="text-2xl font-bold tabular-nums">
+                    ₩{new Intl.NumberFormat("ko-KR").format(
+                      (data.summary.totalEstimatedCost ?? 0) + (data.interview.monthlyLaborCost ?? 0)
+                    )}
+                  </p>
+                </div>
+              </div>
+            )}
             <AnimatePresence mode="wait">
               {(() => {
                 const expandedJob = filteredJobPostings.find((jp) => jp.id === expandedJobId);
@@ -258,7 +295,7 @@ export default function DashboardPage() {
                   >
                     <div className="flex items-center justify-between">
                       <Link
-                        href={`/job-postings/${expandedJob.id}`}
+                        href={`/supervisor/job-postings/${expandedJob.id}`}
                         className="group/link flex items-center gap-1 text-sm font-semibold hover:text-blue-600 transition-colors"
                       >
                         {expandedJob.title}

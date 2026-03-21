@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
+import { calculateAmount } from "@/lib/cost-utils";
 
 function parseTime(time: string): number {
   const parts = time.split(":").map(Number);
@@ -155,6 +156,55 @@ export async function GET(request: NextRequest) {
       };
     });
 
+    // ── 면접교육 데이터 ──
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    const monthStart = `${currentYear}-${String(currentMonth).padStart(2, "0")}-01`;
+    const monthEnd = new Date(currentYear, currentMonth, 0).toISOString().split("T")[0]!;
+
+    const [activePersonnelRes, interviewRecordsRes, interviewPersonnelRes, expenseReportRes] = await Promise.all([
+      supabase
+        .from("interview_personnel")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "active"),
+      supabase
+        .from("interview_work_records")
+        .select("*, personnel:interview_personnel(id, role, pay_type, default_pay_rate)")
+        .gte("work_date", monthStart)
+        .lte("work_date", monthEnd),
+      supabase
+        .from("interview_personnel")
+        .select("id, role, contract_amount")
+        .eq("status", "active"),
+      supabase
+        .from("interview_expense_reports")
+        .select("status")
+        .eq("year", currentYear)
+        .eq("month", currentMonth)
+        .maybeSingle(),
+    ]);
+
+    // Calculate interview labor cost
+    let interviewLaborCost = 0;
+
+    for (const p of interviewPersonnelRes.data ?? []) {
+      if (p.role !== "rp") {
+        interviewLaborCost += p.contract_amount ?? 0;
+      }
+    }
+
+    for (const r of interviewRecordsRes.data ?? []) {
+      if (r.work_hours > 0 && r.personnel) {
+        const p = r.personnel as { id: string; role: string; pay_type: string; default_pay_rate: number | null };
+        if (p.role === "rp") {
+          const rate = r.pay_rate_override ?? p.default_pay_rate ?? 0;
+          const type = (r.pay_type_override ?? p.pay_type) as "hourly" | "daily";
+          interviewLaborCost += calculateAmount(type, rate, r.work_hours);
+        }
+      }
+    }
+
     return NextResponse.json({
       summary: {
         activeJobCount: mappedJobPostings.length,
@@ -164,6 +214,11 @@ export async function GET(request: NextRequest) {
         totalEstimatedCost,
       },
       jobPostings: mappedJobPostings,
+      interview: {
+        activePersonnel: activePersonnelRes.count ?? 0,
+        monthlyLaborCost: interviewLaborCost,
+        expenseReportStatus: expenseReportRes.data?.status ?? null,
+      },
     });
   } catch (error) {
     console.error("Dashboard API error:", error);

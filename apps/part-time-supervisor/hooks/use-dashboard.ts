@@ -49,6 +49,11 @@ export type DashboardData = {
     totalEstimatedCost: number;
   };
   jobPostings: DashboardJobPosting[];
+  interview?: {
+    activePersonnel: number;
+    monthlyLaborCost: number;
+    expenseReportStatus: string | null;
+  };
 };
 
 export function useDashboard(startDate: string, endDate: string) {

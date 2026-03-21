@@ -1,5 +1,5 @@
-import { CostManagementPage } from "@/components/cost-management/CostManagementPage";
+import { redirect } from "next/navigation";
 
-export default function CostManagement() {
-  return <CostManagementPage />;
+export default function Page() {
+  redirect("/supervisor/cost-management");
 }

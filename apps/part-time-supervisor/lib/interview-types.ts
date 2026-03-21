@@ -1,4 +1,4 @@
-export type PersonnelRole = "rp" | "ft" | "instructor";
+export type PersonnelRole = "rp" | "ft" | "instructor" | "other";
 export type PersonnelPayType = "hourly" | "daily" | "contract";
 export type PersonnelStatus = "active" | "inactive";
 export type ExpenseReportStatus = "draft" | "finalized";
@@ -13,6 +13,7 @@ export type InterviewPersonnel = {
   pay_type: PersonnelPayType;
   default_pay_rate: number | null;
   contract_amount: number | null;
+  experience: string | null;
   memo: string | null;
   status: PersonnelStatus;
   created_at: string;
@@ -48,4 +49,43 @@ export type InterviewExpenseReport = {
   status: ExpenseReportStatus;
   created_at: string;
   updated_at: string;
+};
+
+export type InterviewJobPosting = {
+  id: string;
+  title: string;
+  start_date: string;
+  end_date: string;
+  work_start: string | null;
+  work_end: string | null;
+  platform: string | null;
+  total_headcount: number;
+  ft_count: number;
+  rp_count: number;
+  instructor_count: number;
+  other_count: number;
+  pay_rate: number | null;
+  pay_type: string;
+  status: string;
+  description: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type InterviewJobPostingWithCount = InterviewJobPosting & {
+  assignment_count: number;
+};
+
+export type InterviewJobAssignment = {
+  id: string;
+  job_posting_id: string;
+  personnel_id: string;
+  pay_type: string;
+  pay_rate: number;
+  work_hours: number | null;
+  status: string;
+  note: string | null;
+  created_at: string;
+  personnel?: InterviewPersonnel;
 };

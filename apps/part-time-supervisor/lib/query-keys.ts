@@ -68,8 +68,19 @@ export const queryKeys = {
 
   interviewExpenseReports: {
     all: ["interviewExpenseReports"] as const,
-    byMonth: (year: number, month: number) =>
-      ["interviewExpenseReports", year, month] as const,
+    byJobPosting: (jobPostingId: string) =>
+      ["interviewExpenseReports", jobPostingId] as const,
     detail: (id: string) => ["interviewExpenseReports", id] as const,
+  },
+
+  interviewJobPostings: {
+    all: ["interviewJobPostings"] as const,
+    detail: (id: string) => ["interviewJobPostings", id] as const,
+  },
+
+  interviewJobAssignments: {
+    all: ["interviewJobAssignments"] as const,
+    byJobPosting: (id: string) =>
+      ["interviewJobAssignments", id] as const,
   },
 };

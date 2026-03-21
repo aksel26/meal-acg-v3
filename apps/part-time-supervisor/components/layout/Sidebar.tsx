@@ -53,6 +53,7 @@ const navEntries: NavEntry[] = [
     label: "면접교육",
     icon: GraduationCap,
     children: [
+      { type: "item", href: "/interview/job-postings", label: "공고 관리", icon: Briefcase },
       { type: "item", href: "/interview/personnel", label: "인력 관리", icon: Users },
       { type: "item", href: "/room-assignments", label: "회의실 배정", icon: DoorOpen },
       { type: "item", href: "/interview/settlement", label: "정산 관리", icon: Calculator },

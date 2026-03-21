@@ -8,6 +8,7 @@ const pageTitles: Record<string, string> = {
   "/supervisor/workers": "지원자 관리",
   "/supervisor/cost-management": "감독관 정산 관리",
   "/room-assignments": "회의실 배정",
+  "/interview/job-postings": "면접교육 공고 관리",
   "/interview/personnel": "면접교육 인력 관리",
   "/interview/settlement": "면접교육 정산 관리",
 };
@@ -16,7 +17,11 @@ export default function Header() {
   const pathname = usePathname();
   const title =
     pageTitles[pathname] ||
-    (pathname.startsWith("/supervisor/job-postings/") ? "공고 상세" : "");
+    (pathname.startsWith("/supervisor/job-postings/")
+      ? "공고 상세"
+      : pathname.startsWith("/interview/job-postings/")
+        ? "면접교육 공고 상세"
+        : "");
 
   return (
     <header className="flex h-14 items-center border-b px-6">

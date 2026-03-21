@@ -149,7 +149,7 @@ export default function JobPostingTable({
                 <tr
                   key={job.id}
                   className="cursor-pointer border-b last:border-0 bg-white hover:bg-slate-50/50"
-                  onClick={() => router.push(`/job-postings/${job.id}`)}
+                  onClick={() => router.push(`/supervisor/job-postings/${job.id}`)}
                 >
                   <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                     <input

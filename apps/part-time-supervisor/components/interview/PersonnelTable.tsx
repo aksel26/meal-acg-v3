@@ -41,7 +41,7 @@ export function PersonnelTable({ data, isLoading, onEdit }: Props) {
     <div className="overflow-hidden bg-white">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b bg-slate-200 text-left text-slate-600 [&>th:first-child]:rounded-tl-md [&>th:last-child]:rounded-tr-md">
+          <tr className="border-b bg-slate-50 text-left text-xs text-slate-500">
             <th className="px-4 py-3 font-medium">이름</th>
             <th className="px-4 py-3 font-medium">역할</th>
             <th className="px-4 py-3 font-medium">연락처</th>

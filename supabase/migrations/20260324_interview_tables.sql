@@ -66,6 +66,11 @@ CREATE POLICY "service_role_all" ON supervisor.interview_work_records
 CREATE POLICY "service_role_all" ON supervisor.interview_expense_reports
   FOR ALL USING (auth.role() = 'service_role') WITH CHECK (auth.role() = 'service_role');
 
+-- Grant permissions to service_role for new tables
+GRANT ALL ON supervisor.interview_personnel TO service_role;
+GRANT ALL ON supervisor.interview_work_records TO service_role;
+GRANT ALL ON supervisor.interview_expense_reports TO service_role;
+
 -- updated_at triggers
 CREATE TRIGGER set_updated_at BEFORE UPDATE ON supervisor.interview_personnel
   FOR EACH ROW EXECUTE FUNCTION supervisor.update_updated_at();

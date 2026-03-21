@@ -46,4 +46,30 @@ export const queryKeys = {
     byAssignment: (assignmentId: string) =>
       ["workRecords", assignmentId] as const,
   },
+
+  interviewPersonnel: {
+    all: ["interviewPersonnel"] as const,
+    detail: (id: string) => ["interviewPersonnel", id] as const,
+  },
+
+  interviewWorkRecords: {
+    all: ["interviewWorkRecords"] as const,
+    byPersonnel: (personnelId: string) =>
+      ["interviewWorkRecords", personnelId] as const,
+    byMonth: (year: number, month: number) =>
+      ["interviewWorkRecords", year, month] as const,
+  },
+
+  interviewSettlement: {
+    all: ["interviewSettlement"] as const,
+    byMonth: (year: number, month: number) =>
+      ["interviewSettlement", year, month] as const,
+  },
+
+  interviewExpenseReports: {
+    all: ["interviewExpenseReports"] as const,
+    byMonth: (year: number, month: number) =>
+      ["interviewExpenseReports", year, month] as const,
+    detail: (id: string) => ["interviewExpenseReports", id] as const,
+  },
 };

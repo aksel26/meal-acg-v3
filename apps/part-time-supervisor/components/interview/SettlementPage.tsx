@@ -6,6 +6,7 @@ import { useInterviewSettlement } from "@/hooks/use-interview-settlement";
 import { formatCurrency } from "@/lib/cost-utils";
 import { SettlementTable } from "./SettlementTable";
 import { SettlementExportButton } from "./SettlementExportButton";
+import { ExpenseReportDialog } from "./ExpenseReportDialog";
 
 const ROLE_TABS = [
   { value: "", label: "전체" },
@@ -21,6 +22,7 @@ export function SettlementPage() {
   const [roleFilter, setRoleFilter] = useState("");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [expenseDialogOpen, setExpenseDialogOpen] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 300);
@@ -67,10 +69,10 @@ export function SettlementPage() {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          {/* 지출결의서 버튼 (플레이스홀더) */}
+          {/* 지출결의서 버튼 */}
           <button
-            disabled
-            className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium text-slate-400 disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => setExpenseDialogOpen(true)}
+            className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
             <FileText size={16} />
             지출결의서
@@ -142,6 +144,13 @@ export function SettlementPage() {
       <SettlementTable
         personnel={data?.personnel ?? []}
         isLoading={isLoading}
+      />
+
+      <ExpenseReportDialog
+        open={expenseDialogOpen}
+        onClose={() => setExpenseDialogOpen(false)}
+        year={year}
+        month={month}
       />
     </div>
   );

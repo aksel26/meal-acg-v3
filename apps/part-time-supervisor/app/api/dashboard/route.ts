@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
-import { calculateAmount } from "@/lib/cost-utils";
+import { calculateAmount, calculateDefaultWorkHours } from "@/lib/cost-utils";
 
 function parseTime(time: string): number {
   const parts = time.split(":").map(Number);
@@ -163,7 +163,7 @@ export async function GET(request: NextRequest) {
     const monthStart = `${currentYear}-${String(currentMonth).padStart(2, "0")}-01`;
     const monthEnd = new Date(currentYear, currentMonth, 0).toISOString().split("T")[0]!;
 
-    const [activePersonnelRes, interviewRecordsRes, interviewPersonnelRes, expenseReportRes] = await Promise.all([
+    const [activePersonnelRes, interviewRecordsRes, interviewPersonnelRes, expenseReportRes, interviewJobPostingsRes] = await Promise.all([
       supabase
         .from("interview_personnel")
         .select("id", { count: "exact", head: true })
@@ -183,6 +183,17 @@ export async function GET(request: NextRequest) {
         .eq("year", currentYear)
         .eq("month", currentMonth)
         .maybeSingle(),
+      supabase
+        .from("interview_job_postings")
+        .select(`
+          id, title, platform, start_date, end_date, work_start, work_end, status,
+          total_headcount, pay_rate, pay_type,
+          interview_job_assignments(id, pay_type, pay_rate, work_hours, status, note,
+            personnel:interview_personnel(id, name, role, phone))
+        `)
+        .in("status", ["draft", "open"])
+        .lte("start_date", endDate)
+        .gte("end_date", startDate),
     ]);
 
     // Calculate interview labor cost
@@ -205,6 +216,61 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // ── 면접교육 공고를 jobPostings에 통합 ──
+    const interviewJobPostings = (interviewJobPostingsRes.data ?? []).map((jp) => {
+      const activeAssignments = (jp.interview_job_assignments ?? []).filter(
+        (a: Record<string, unknown>) => a.status !== "cancelled"
+      );
+
+      return {
+        type: "interview" as const,
+        id: jp.id,
+        title: jp.title,
+        startDate: jp.start_date,
+        endDate: jp.end_date,
+        platform: jp.platform,
+        assignments: activeAssignments.map((a: Record<string, unknown>) => {
+          const p = a.personnel as Record<string, unknown> | null;
+          return {
+            id: a.id,
+            name: (p?.name as string) ?? "-",
+            role: (p?.role as string) ?? "other",
+            payType: a.pay_type as string,
+            payRate: a.pay_rate as number,
+            workHours: a.work_hours as number | null,
+            status: a.status as string,
+          };
+        }),
+      };
+    });
+
+    // ── 면접교육 공고 통계 ──
+    let interviewTotalAssigned = 0;
+    let interviewEstimatedCost = 0;
+
+    for (const jp of interviewJobPostingsRes.data ?? []) {
+      const activeAssignments = (jp.interview_job_assignments ?? []).filter(
+        (a: Record<string, unknown>) => a.status !== "cancelled"
+      );
+      interviewTotalAssigned += activeAssignments.length;
+
+      for (const a of activeAssignments) {
+        const rec = a as Record<string, unknown>;
+        const payType = rec.pay_type as "hourly" | "daily";
+        const payRate = rec.pay_rate as number;
+        const workHours = rec.work_hours as number | null;
+
+        if (payType === "daily") {
+          interviewEstimatedCost += payRate;
+        } else {
+          const hours = workHours ?? calculateDefaultWorkHours(
+            jp.work_start, jp.work_end, null, null
+          );
+          interviewEstimatedCost += payRate * hours;
+        }
+      }
+    }
+
     return NextResponse.json({
       summary: {
         activeJobCount: mappedJobPostings.length,
@@ -213,11 +279,17 @@ export async function GET(request: NextRequest) {
         contractCompleted: totalContractCompleted,
         totalEstimatedCost,
       },
-      jobPostings: mappedJobPostings,
+      jobPostings: [
+        ...mappedJobPostings.map((jp) => ({ ...jp, type: "supervisor" as const })),
+        ...interviewJobPostings,
+      ],
       interview: {
         activePersonnel: activePersonnelRes.count ?? 0,
         monthlyLaborCost: interviewLaborCost,
         expenseReportStatus: expenseReportRes.data?.status ?? null,
+        activeJobCount: interviewJobPostings.length,
+        totalAssigned: interviewTotalAssigned,
+        totalEstimatedCost: interviewEstimatedCost,
       },
     });
   } catch (error) {

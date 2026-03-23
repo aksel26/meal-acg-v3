@@ -23,29 +23,49 @@ export async function GET(request: NextRequest) {
 
     const supabase = createServiceClient();
 
-    const { data, error } = await supabase
-      .from("job_postings")
-      .select("id, title, platform, start_date, end_date, status")
-      .in("status", ["draft", "open", "in_progress"])
-      .lte("start_date", monthEnd)
-      .gte("end_date", monthStart);
+    const [supervisorRes, interviewRes] = await Promise.all([
+      supabase
+        .from("job_postings")
+        .select("id, title, platform, start_date, end_date, status")
+        .in("status", ["draft", "open", "in_progress"])
+        .lte("start_date", monthEnd)
+        .gte("end_date", monthStart),
+      supabase
+        .from("interview_job_postings")
+        .select("id, title, platform, start_date, end_date, status")
+        .in("status", ["draft", "open"])
+        .lte("start_date", monthEnd)
+        .gte("end_date", monthStart),
+    ]);
 
-    if (error) {
-      console.error("Calendar query error:", error);
+    if (supervisorRes.error || interviewRes.error) {
+      console.error("Calendar query error:", supervisorRes.error ?? interviewRes.error);
       return NextResponse.json(
         { error: "Failed to load calendar data" },
         { status: 500 }
       );
     }
 
-    const jobPostings = (data ?? []).map((jp) => ({
-      id: jp.id,
-      title: jp.title,
-      platform: jp.platform,
-      startDate: jp.start_date,
-      endDate: jp.end_date,
-      status: jp.status,
-    }));
+    const jobPostings = [
+      ...(supervisorRes.data ?? []).map((jp) => ({
+        id: jp.id,
+        title: jp.title,
+        platform: jp.platform,
+        startDate: jp.start_date,
+        endDate: jp.end_date,
+        status: jp.status,
+        type: "supervisor" as const,
+      })),
+      ...(interviewRes.data ?? []).map((jp) => ({
+        id: jp.id,
+        title: jp.title,
+        platform: jp.platform,
+        startDate: jp.start_date,
+        endDate: jp.end_date,
+        status: jp.status,
+        type: "interview" as const,
+      })),
+    ];
 
     return NextResponse.json({ jobPostings });
   } catch (error) {

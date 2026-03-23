@@ -175,8 +175,8 @@ export default function DashboardPage() {
                     </p>
                     <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
                       <span>{dayjs(jp.startDate).format("M/D")} ~ {dayjs(jp.endDate).format("M/D")}</span>
-                      {jp.location && <span>{jp.location}</span>}
-                      {jp.workType && (
+                      {jp.type === "supervisor" && jp.location && <span>{jp.location}</span>}
+                      {jp.type === "supervisor" && jp.workType && (
                         <span>{jp.workType === "online" ? "온라인" : "오프라인"}</span>
                       )}
                       {jp.platform && (

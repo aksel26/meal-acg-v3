@@ -1,8 +1,8 @@
-import type { DashboardJobPosting } from "@/hooks/use-dashboard";
+import type { DashboardSupervisorJobPosting } from "@/hooks/use-dashboard";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 type Props = {
-  jobPosting: DashboardJobPosting;
+  jobPosting: DashboardSupervisorJobPosting;
   isExpanded: boolean;
   onClick: () => void;
 };

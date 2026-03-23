@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { CalendarX } from "lucide-react";
-import type { DashboardJobPosting } from "@/hooks/use-dashboard";
+import type { DashboardSupervisorJobPosting } from "@/hooks/use-dashboard";
 import { JobPostingCard } from "./JobPostingCard";
 import { JobPostingDetail } from "./JobPostingDetail";
 
 type Props = {
-  jobPostings: DashboardJobPosting[];
+  jobPostings: DashboardSupervisorJobPosting[];
 };
 
 export function JobPostingGrid({ jobPostings }: Props) {
@@ -25,7 +25,7 @@ export function JobPostingGrid({ jobPostings }: Props) {
     );
   }
 
-  const rows: DashboardJobPosting[][] = [];
+  const rows: DashboardSupervisorJobPosting[][] = [];
   for (let i = 0; i < jobPostings.length; i += 2) {
     rows.push(jobPostings.slice(i, i + 2));
   }

@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import type { DashboardJobPosting } from "@/hooks/use-dashboard";
+import type { DashboardSupervisorJobPosting } from "@/hooks/use-dashboard";
 import { JobPostingDetailAttendance } from "./JobPostingDetailAttendance";
 import { JobPostingDetailContract } from "./JobPostingDetailContract";
 import { JobPostingDetailRooms } from "./JobPostingDetailRooms";
 
 type Props = {
-  jobPosting: DashboardJobPosting;
+  jobPosting: DashboardSupervisorJobPosting;
 };
 
 const TABS = [
@@ -18,7 +18,7 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]["id"];
 
-function getTabCount(jobPosting: DashboardJobPosting, tabId: TabId): { count: number; alert: number } {
+function getTabCount(jobPosting: DashboardSupervisorJobPosting, tabId: TabId): { count: number; alert: number } {
   const workers = jobPosting.workers;
   switch (tabId) {
     case "attendance": {

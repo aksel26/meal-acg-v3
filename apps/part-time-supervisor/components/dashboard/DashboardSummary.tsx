@@ -128,7 +128,10 @@ export function DashboardSummary({ summary, dateLabel, isFuture }: Props) {
 
   return (
     <div className="rounded-xl bg-slate-50 space-y-3">
-      <h3 className="text-sm font-semibold text-muted-foreground">{dateLabel} 요약 현황</h3>
+      <h3 className="text-sm font-semibold text-muted-foreground">
+        <span className="inline-block size-2 rounded-full bg-blue-500 mr-1.5 align-middle" />
+        감독관 {dateLabel} 요약 현황
+      </h3>
       <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
       {cards.map((card) => (
         <div

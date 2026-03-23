@@ -14,7 +14,8 @@ export type DashboardWorker = {
   roomSlots: RoomSlot[] | null;
 };
 
-export type DashboardJobPosting = {
+export type DashboardSupervisorJobPosting = {
+  type: "supervisor";
   id: string;
   title: string;
   location: string | null;
@@ -40,6 +41,30 @@ export type DashboardJobPosting = {
   hasIssues: boolean;
 };
 
+export type InterviewAssignmentRow = {
+  id: string;
+  name: string;
+  role: string;
+  payType: string;
+  payRate: number;
+  workHours: number | null;
+  status: string;
+};
+
+export type DashboardInterviewJobPosting = {
+  type: "interview";
+  id: string;
+  title: string;
+  startDate: string;
+  endDate: string;
+  platform: string | null;
+  assignments: InterviewAssignmentRow[];
+};
+
+export type DashboardJobPosting =
+  | DashboardSupervisorJobPosting
+  | DashboardInterviewJobPosting;
+
 export type DashboardData = {
   summary: {
     activeJobCount: number;
@@ -53,6 +78,9 @@ export type DashboardData = {
     activePersonnel: number;
     monthlyLaborCost: number;
     expenseReportStatus: string | null;
+    activeJobCount: number;
+    totalAssigned: number;
+    totalEstimatedCost: number;
   };
 };
 

@@ -98,7 +98,8 @@ export function DashboardCalendar({
       const defaultClassNames = getDefaultClassNames();
       const dateKey = dayjs(day.date).format("YYYY-MM-DD");
       const labels = dayMap.get(dateKey) ?? [];
-      const count = labels.length;
+      const hasSupervisor = labels.some((l) => l.type === "supervisor");
+      const hasInterview = labels.some((l) => l.type === "interview");
 
       return (
         <Button
@@ -119,7 +120,7 @@ export function DashboardCalendar({
           )}
           {...props}
         >
-          <span className="relative inline-flex items-center justify-center">
+          <span className="relative flex flex-col items-center">
             <span
               className={cn(
                 "text-sm tabular-nums size-8 flex items-center justify-center rounded-full",
@@ -130,14 +131,14 @@ export function DashboardCalendar({
             >
               {day.date.getDate()}
             </span>
-            {!modifiers.outside && count > 0 && (
-              <span
-                className={cn(
-                  "absolute -top-1 -right-2.5 flex items-center justify-center rounded-full px-1 min-w-4 h-4 text-[9px] font-medium leading-none",
-                  "bg-blue-100 text-blue-700"
+            {!modifiers.outside && (hasSupervisor || hasInterview) && (
+              <span className="flex flex-col items-center gap-0.5 mt-0.5">
+                {hasSupervisor && (
+                  <span className="block h-[3px] w-3 rounded-full bg-blue-500" />
                 )}
-              >
-                +{count}
+                {hasInterview && (
+                  <span className="block h-[3px] w-3 rounded-full bg-amber-500" />
+                )}
               </span>
             )}
           </span>

@@ -10,6 +10,7 @@ export type CalendarJobPosting = {
   startDate: string;
   endDate: string;
   status: string;
+  type: "supervisor" | "interview";
 };
 
 type CalendarResponse = {
@@ -20,6 +21,7 @@ export type DayJobLabel = {
   id: string;
   title: string;
   platform: string | null;
+  type: "supervisor" | "interview";
 };
 
 export function useDashboardCalendar(year: number, month: number) {
@@ -59,6 +61,7 @@ export function useDashboardCalendar(year: number, month: number) {
           id: jp.id,
           title: jp.title,
           platform: jp.platform,
+          type: jp.type,
         });
         map.set(key, existing);
         current.setDate(current.getDate() + 1);

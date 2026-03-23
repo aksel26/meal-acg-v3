@@ -14,6 +14,7 @@ import { useDashboardCalendar } from "@/hooks/use-dashboard-calendar";
 import { DashboardCalendar } from "@/components/dashboard/DashboardCalendar";
 import { DashboardSummary } from "@/components/dashboard/DashboardSummary";
 import { JobPostingGrid } from "@/components/dashboard/JobPostingGrid";
+import { InterviewSummary } from "@/components/dashboard/InterviewSummary";
 
 function DashboardSkeleton() {
   return (
@@ -166,7 +167,12 @@ export default function DashboardPage() {
                   onClick={() => setExpandedJobId(expandedJobId === jp.id ? null : jp.id)}
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{jp.title}</p>
+                    <p className="text-sm font-medium truncate">
+                      <span className={`inline-block size-1.5 rounded-full mr-1.5 align-middle ${
+                        jp.type === "interview" ? "bg-amber-500" : "bg-blue-500"
+                      }`} />
+                      {jp.title}
+                    </p>
                     <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
                       <span>{dayjs(jp.startDate).format("M/D")} ~ {dayjs(jp.endDate).format("M/D")}</span>
                       {jp.location && <span>{jp.location}</span>}
@@ -226,32 +232,14 @@ export default function DashboardPage() {
               dateLabel={activePreset ?? dateLabel}
               isFuture={dateRange.startDate > today.format("YYYY-MM-DD")}
             />
-            {/* 면접교육 & 합산 */}
+            {/* 면접교육 요약 */}
             {data.interview && (
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-muted-foreground">면접교육 현황 (이번 달)</h3>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="rounded-xl bg-white p-4">
-                    <p className="text-xs text-muted-foreground mb-1">활동 인력</p>
-                    <p className="text-2xl font-bold">{data.interview.activePersonnel}<span className="text-sm font-normal text-muted-foreground">명</span></p>
-                  </div>
-                  <div className="rounded-xl bg-white p-4">
-                    <p className="text-xs text-muted-foreground mb-1">이번달 인건비</p>
-                    <p className="text-lg font-bold tabular-nums">₩{new Intl.NumberFormat("ko-KR").format(data.interview.monthlyLaborCost)}</p>
-                  </div>
-                  <div className="rounded-xl bg-white p-4">
-                    <p className="text-xs text-muted-foreground mb-1">지출결의 상태</p>
-                    <p className="text-lg font-bold">
-                      {data.interview.expenseReportStatus === "finalized" ? (
-                        <span className="text-green-600">확정</span>
-                      ) : data.interview.expenseReportStatus === "draft" ? (
-                        <span className="text-amber-600">작성중</span>
-                      ) : (
-                        <span className="text-muted-foreground">미작성</span>
-                      )}
-                    </p>
-                  </div>
-                </div>
+                <h3 className="text-sm font-semibold text-muted-foreground">
+                  <span className="inline-block size-2 rounded-full bg-amber-500 mr-1.5 align-middle" />
+                  면접교육 요약 현황
+                </h3>
+                <InterviewSummary interview={data.interview} />
                 {/* 합산 카드 */}
                 <div className="rounded-xl bg-slate-900 p-4 text-white">
                   <p className="text-xs text-slate-400 mb-1">이번달 총 비용 (감독관 + 면접교육)</p>
@@ -295,55 +283,109 @@ export default function DashboardPage() {
                   >
                     <div className="flex items-center justify-between">
                       <Link
-                        href={`/supervisor/job-postings/${expandedJob.id}`}
+                        href={expandedJob.type === "interview"
+                          ? `/interview/job-postings/${expandedJob.id}`
+                          : `/supervisor/job-postings/${expandedJob.id}`
+                        }
                         className="group/link flex items-center gap-1 text-sm font-semibold hover:text-blue-600 transition-colors"
                       >
+                        <span className={`inline-block size-1.5 rounded-full mr-1 ${
+                          expandedJob.type === "interview" ? "bg-amber-500" : "bg-blue-500"
+                        }`} />
                         {expandedJob.title}
                         <ExternalLink size={13} className="text-muted-foreground group-hover/link:text-blue-600 transition-colors" />
                       </Link>
                       <span className="text-xs text-muted-foreground">
-                        {expandedJob.workers.length}명 배정
+                        {expandedJob.type === "supervisor"
+                          ? `${expandedJob.workers.length}명 배정`
+                          : `${expandedJob.assignments.length}명 배정`
+                        }
                       </span>
                     </div>
-                    {expandedJob.workers.length === 0 ? (
-                      <p className="text-sm text-muted-foreground py-4 text-center">배정된 지원자가 없습니다</p>
-                    ) : (
-                      <div className="rounded-lg overflow-hidden">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="bg-white text-xs text-muted-foreground">
-                              <th className="px-3 py-2 text-left font-medium">이름</th>
-                              <th className="px-3 py-2 text-left font-medium">연락처</th>
-                              <th className="px-3 py-2 text-left font-medium">회의실</th>
-                              <th className="px-3 py-2 text-left font-medium">출석</th>
-                              <th className="px-3 py-2 text-left font-medium">계약</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-border/80">
-                            {expandedJob.workers.map((w) => (
-                              <tr key={w.id} className="hover:bg-slate-50 bg-white">
-                                <td className="px-3 py-2">{w.name ?? "-"}</td>
-                                <td className="px-3 py-2 text-muted-foreground">{w.phone ?? "-"}</td>
-                                <td className="px-3 py-2 text-xs text-muted-foreground">
-                                  {w.roomSlots && w.roomSlots.length > 0
-                                    ? [...new Set(w.roomSlots.map((s) => s.room))].join(", ")
-                                    : "-"}
-                                </td>
-                                <td className="px-3 py-2">
-                                  <span className={`text-xs ${w.attendanceStatus ? "text-green-600" : "text-muted-foreground"}`}>
-                                    {w.attendanceStatus === "checked_in" ? "출석" : w.attendanceStatus === "confirmed" ? "확인" : "미출석"}
-                                  </span>
-                                </td>
-                                <td className="px-3 py-2">
-                                  <span className={`text-xs ${w.contractStatus ? "text-blue-600" : "text-muted-foreground"}`}>
-                                    {w.contractStatus === "signed" ? "서명" : w.contractStatus === "confirmed" ? "확인" : "미계약"}
-                                  </span>
-                                </td>
+                    {expandedJob.type === "supervisor" ? (
+                      expandedJob.workers.length === 0 ? (
+                        <p className="text-sm text-muted-foreground py-4 text-center">배정된 지원자가 없습니다</p>
+                      ) : (
+                        <div className="rounded-lg overflow-hidden">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="bg-white text-xs text-muted-foreground">
+                                <th className="px-3 py-2 text-left font-medium">이름</th>
+                                <th className="px-3 py-2 text-left font-medium">연락처</th>
+                                <th className="px-3 py-2 text-left font-medium">회의실</th>
+                                <th className="px-3 py-2 text-left font-medium">출석</th>
+                                <th className="px-3 py-2 text-left font-medium">계약</th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                            </thead>
+                            <tbody className="divide-y divide-border/80">
+                              {expandedJob.workers.map((w) => (
+                                <tr key={w.id} className="hover:bg-slate-50 bg-white">
+                                  <td className="px-3 py-2">{w.name ?? "-"}</td>
+                                  <td className="px-3 py-2 text-muted-foreground">{w.phone ?? "-"}</td>
+                                  <td className="px-3 py-2 text-xs text-muted-foreground">
+                                    {w.roomSlots && w.roomSlots.length > 0
+                                      ? [...new Set(w.roomSlots.map((s) => s.room))].join(", ")
+                                      : "-"}
+                                  </td>
+                                  <td className="px-3 py-2">
+                                    <span className={`text-xs ${w.attendanceStatus ? "text-green-600" : "text-muted-foreground"}`}>
+                                      {w.attendanceStatus === "checked_in" ? "출석" : w.attendanceStatus === "confirmed" ? "확인" : "미출석"}
+                                    </span>
+                                  </td>
+                                  <td className="px-3 py-2">
+                                    <span className={`text-xs ${w.contractStatus ? "text-blue-600" : "text-muted-foreground"}`}>
+                                      {w.contractStatus === "signed" ? "서명" : w.contractStatus === "confirmed" ? "확인" : "미계약"}
+                                    </span>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )
+                    ) : (
+                      expandedJob.assignments.length === 0 ? (
+                        <p className="text-sm text-muted-foreground py-4 text-center">배정된 인력이 없습니다</p>
+                      ) : (
+                        <div className="rounded-lg overflow-hidden">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="bg-white text-xs text-muted-foreground">
+                                <th className="px-3 py-2 text-left font-medium">이름</th>
+                                <th className="px-3 py-2 text-left font-medium">역할</th>
+                                <th className="px-3 py-2 text-left font-medium">급여유형</th>
+                                <th className="px-3 py-2 text-right font-medium">급여</th>
+                                <th className="px-3 py-2 text-left font-medium">상태</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-border/80">
+                              {expandedJob.assignments.map((a) => (
+                                <tr key={a.id} className="hover:bg-slate-50 bg-white">
+                                  <td className="px-3 py-2">{a.name}</td>
+                                  <td className="px-3 py-2 text-xs text-muted-foreground">
+                                    {a.role === "rp" ? "RP" : a.role === "ft" ? "FT" : a.role === "instructor" ? "강사" : "기타"}
+                                  </td>
+                                  <td className="px-3 py-2 text-xs text-muted-foreground">
+                                    {a.payType === "daily" ? "일급" : "시급"}
+                                  </td>
+                                  <td className="px-3 py-2 text-right tabular-nums text-xs">
+                                    ₩{new Intl.NumberFormat("ko-KR").format(a.payRate)}
+                                  </td>
+                                  <td className="px-3 py-2">
+                                    <span className={`text-xs ${
+                                      a.status === "completed" ? "text-green-600" :
+                                      a.status === "cancelled" ? "text-red-500" :
+                                      "text-muted-foreground"
+                                    }`}>
+                                      {a.status === "assigned" ? "배정" : a.status === "completed" ? "완료" : "취소"}
+                                    </span>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )
                     )}
                   </motion.div>
                 );

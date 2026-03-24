@@ -93,7 +93,20 @@ export async function DELETE(
       return NextResponse.json({ error: "Member ID is required" }, { status: 400 });
     }
 
-    // cascade 없는 FK 참조를 먼저 NULL 처리
+    // 1. 해당 멤버의 usage_records에 연결된 audit_logs 먼저 삭제 (트리거 FK 충돌 방지)
+    const { data: memberRecords } = await supabase
+      .from("usage_records")
+      .select("id")
+      .eq("member_id", id);
+    if (memberRecords && memberRecords.length > 0) {
+      const recordIds = memberRecords.map((r) => r.id);
+      await supabase
+        .from("usage_record_audit_logs")
+        .delete()
+        .in("usage_record_id", recordIds);
+    }
+
+    // 2. cascade 없는 FK 참조를 NULL 처리
     await Promise.all([
       supabase.from("settlement_status").update({ settled_by: null }).eq("settled_by", id),
       supabase.from("restaurants").update({ created_by: null }).eq("created_by", id),
@@ -104,6 +117,7 @@ export async function DELETE(
       supabase.from("usage_records").update({ second_reviewed_by: null }).eq("second_reviewed_by", id),
     ]);
 
+    // 3. 멤버 삭제 (나머지 테이블은 ON DELETE CASCADE로 자동 처리)
     const { error } = await supabase
       .from("members")
       .delete()

@@ -511,6 +511,12 @@ function ReviewPageContent() {
     },
   });
 
+  const memberMap = useMemo(() => {
+    const map = new Map<string, string>();
+    members?.forEach((m) => map.set(m.id, m.full_name));
+    return map;
+  }, [members]);
+
   const { data: auditLogsData, isLoading: isAuditLoading } =
     useAuditLogs(auditRecordId);
 
@@ -967,6 +973,14 @@ function ReviewPageContent() {
                           advanceReview.isPending || revertReview.isPending
                         }
                       />
+                    </td>
+                    <td className="max-w-[180px] truncate px-3 py-1 text-slate-400">
+                      {record.companions?.length
+                        ? record.companions.map((id: string) => memberMap.get(id) || id).join(", ")
+                        : "-"}
+                    </td>
+                    <td className="max-w-[180px] truncate px-3 py-1 text-slate-400">
+                      {record.delay_reason || "-"}
                     </td>
                     <td className="px-3 py-1 text-center">
                       <div className="flex items-center justify-center gap-0">

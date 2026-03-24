@@ -260,7 +260,6 @@ export default function Points() {
     amount: record.amount,
     used: true,
     confirmed: (record.review_status ?? 0) >= 1,
-    notes: record.notes || "",
     delay_reason: record.delay_reason || "",
     proxy_payers: (record.companions || []).map(
       (id) => membersData?.find((m) => m.id === id)?.full_name || id
@@ -303,7 +302,7 @@ export default function Points() {
         description: editingPoint.vendor,
         used_at: editingPoint.date,
         companions: companionIds,
-        notes: editingPoint.notes || "",
+
         delay_reason: editingPoint.delay_reason || "",
       });
     } else {
@@ -314,23 +313,22 @@ export default function Points() {
         amount: editingPoint.amount,
         description: editingPoint.vendor,
         used_at: editingPoint.date,
-        notes: editingPoint.notes || "",
+
         delay_reason: editingPoint.delay_reason || "",
         companions: companionIds,
       });
     }
 
     // Fire-and-forget: 대신 결제 푸시 알림
-    const proxyPayers = editingPoint.proxy_payers || [];
-    if (proxyPayers.length > 0 && currentMemberId) {
-      const payer = editingPoint.notes || userName || "누군가";
+    if (companionIds.length > 0 && currentMemberId) {
+      const payer = userName || "누군가";
       const vendor = editingPoint.vendor || "어딘가";
       fetch("/api/notifications/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           senderId: currentMemberId,
-          names: proxyPayers,
+          memberIds: companionIds,
           title: "복지포인트 대리결제 알림",
           body: `${payer}님이 ${vendor}에서 대신 결제했습니다. 본인 사용분을 입력해주세요.`,
           url: "/points",

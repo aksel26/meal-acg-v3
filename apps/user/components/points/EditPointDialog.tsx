@@ -47,16 +47,15 @@ interface WelfarePoint {
   proxy_payers?: string[];
 }
 
-type StepId = "scan" | "type" | "vendor" | "notes" | "proxy" | "amount";
+type StepId = "scan" | "type" | "vendor" | "proxy" | "amount";
 
-const STEP_ORDER_NEW: StepId[] = ["scan", "type", "vendor", "notes", "proxy", "amount"];
-const STEP_ORDER_EDIT: StepId[] = ["type", "vendor", "notes", "proxy", "amount"];
+const STEP_ORDER_NEW: StepId[] = ["scan", "type", "vendor", "proxy", "amount"];
+const STEP_ORDER_EDIT: StepId[] = ["type", "vendor", "proxy", "amount"];
 
 const STEP_LABELS: Record<StepId, string> = {
   scan: "영수증",
   type: "유형",
   vendor: "사용처",
-  notes: "결제자",
   proxy: "대신 결제",
   amount: "금액·날짜",
 };
@@ -141,7 +140,6 @@ export function EditPointDialog({
   const [completedSteps, setCompletedSteps] = useState<StepId[]>([]);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const vendorInputRef = useRef<HTMLInputElement>(null);
-  const notesInputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
   const proxyInputRef = useRef<HTMLInputElement>(null);
 
@@ -177,7 +175,6 @@ export function EditPointDialog({
     if (!isOpen) return;
     const timer = setTimeout(() => {
       if (currentStep === "vendor") vendorInputRef.current?.focus();
-      else if (currentStep === "notes") notesInputRef.current?.focus();
       else if (currentStep === "proxy") proxyInputRef.current?.focus();
       else if (currentStep === "amount") amountInputRef.current?.focus();
     }, 350);
@@ -302,8 +299,6 @@ export function EditPointDialog({
         return editingPoint.type === "welfare" ? "복지포인트" : "활동비";
       case "vendor":
         return editingPoint.vendor || "-";
-      case "notes":
-        return editingPoint.notes || "(없음)";
       case "proxy":
         return editingPoint.proxy_payers?.length
           ? editingPoint.proxy_payers.join(", ")
@@ -440,61 +435,6 @@ export function EditPointDialog({
           </motion.div>
         );
 
-      case "notes":
-        return (
-          <motion.div
-            key="notes"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.25 }}
-            className="space-y-4"
-          >
-            <div className="text-center space-y-1 mb-2">
-              <h3 className="text-sm font-semibold text-gray-800">결제자를 입력해주세요</h3>
-              <p className="text-xs text-gray-500">본인 결제 시 건너뛰기를 눌러주세요</p>
-            </div>
-            <AutoCompleteInput
-              ref={notesInputRef}
-              suggestions={users}
-              value={editingPoint.notes || ""}
-              onValueChange={(value) => updatePoint({ notes: value })}
-              onSuggestionSelect={() => completeAndNext("notes")}
-              placeholder="결제자 이름"
-              allowFreeText={true}
-              showOnFocus={false}
-              maxSuggestions={users.length}
-              emptyText="결제자를 찾을 수 없습니다"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && editingPoint.notes?.trim()) {
-                  e.preventDefault();
-                  completeAndNext("notes");
-                }
-              }}
-              className="h-12 text-sm rounded-xl border-2 border-gray-100 bg-white focus:border-gray-300 focus:ring-0 transition-all placeholder:text-gray-400"
-            />
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  updatePoint({ notes: "" });
-                  completeAndNext("notes");
-                }}
-                className="flex-1 py-3.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
-              >
-                건너뛰기
-              </button>
-              <button
-                type="button"
-                onClick={() => completeAndNext("notes")}
-                className="flex-1 py-3.5 rounded-xl bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors"
-              >
-                다음
-              </button>
-            </div>
-          </motion.div>
-        );
-
       case "proxy":
         return (
           <motion.div
@@ -505,9 +445,15 @@ export function EditPointDialog({
             transition={{ duration: 0.25 }}
             className="space-y-4"
           >
-            <div className="text-center space-y-1 mb-2">
-              <h3 className="text-sm font-semibold text-gray-800">대신 결제한 사람</h3>
-              <p className="text-xs text-gray-500">알림을 받을 조직원을 선택해주세요</p>
+            <div className="text-center space-y-3 mb-2">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-800">결제자</h3>
+                <p className="text-xs text-gray-500">{userName}</p>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-gray-800">대신 결제한 사람</h3>
+                <p className="text-xs text-gray-500">팀원을 선택해주세요.</p>
+              </div>
             </div>
 
             {/* Selected proxy payers chips */}

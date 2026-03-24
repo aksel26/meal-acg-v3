@@ -462,6 +462,7 @@ export function EditPointDialog({
               onSuggestionSelect={() => completeAndNext("notes")}
               placeholder="결제자 이름"
               allowFreeText={true}
+              showOnFocus={false}
               maxSuggestions={users.length}
               emptyText="결제자를 찾을 수 없습니다"
               onKeyDown={(e) => {
@@ -536,6 +537,7 @@ export function EditPointDialog({
 
             <AutoCompleteInput
               ref={proxyInputRef}
+              showOnFocus={false}
               suggestions={users.filter(
                 (u) =>
                   !(editingPoint.proxy_payers || []).includes(u) &&

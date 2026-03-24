@@ -23,6 +23,7 @@ import {
   useMemberIdLookup,
   usePointsWelfare,
   usePointsActivity,
+  usePointsMembers,
   type UsageRecord,
 } from "@/hooks/use-points-data";
 import {
@@ -184,6 +185,8 @@ export default function Points() {
   const { data: activityData, isLoading: isActivityLoading } =
     usePointsActivity(isManager ? currentMemberId : null, selectedMonth);
 
+  const { data: membersData } = usePointsMembers(currentMemberId);
+
   // Mutation hooks
   const addMutation = useAddUsageRecord();
   const updateMutation = useUpdateUsageRecord();
@@ -259,6 +262,9 @@ export default function Points() {
     confirmed: (record.review_status ?? 0) >= 1,
     notes: record.notes || "",
     delay_reason: record.delay_reason || "",
+    proxy_payers: (record.companions || []).map(
+      (id) => membersData?.find((m) => m.id === id)?.full_name || id
+    ),
   });
 
   const handleEditPoint = (record: UsageRecord) => {
@@ -272,6 +278,11 @@ export default function Points() {
     if (!editingPoint || !currentMemberId) return;
 
     const pointType = editingPoint.type === "welfare" ? "welfare" : "activity";
+
+    // 이름 → UUID 변환
+    const companionIds = (editingPoint.proxy_payers || [])
+      .map((name) => membersData?.find((m) => m.full_name === name)?.id)
+      .filter(Boolean) as string[];
 
     if (isNewPoint) {
       const allocId =
@@ -291,7 +302,7 @@ export default function Points() {
         amount: editingPoint.amount,
         description: editingPoint.vendor,
         used_at: editingPoint.date,
-        companions: [],
+        companions: companionIds,
         notes: editingPoint.notes || "",
         delay_reason: editingPoint.delay_reason || "",
       });
@@ -305,6 +316,7 @@ export default function Points() {
         used_at: editingPoint.date,
         notes: editingPoint.notes || "",
         delay_reason: editingPoint.delay_reason || "",
+        companions: companionIds,
       });
     }
 

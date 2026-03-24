@@ -93,11 +93,16 @@ export async function DELETE(
       return NextResponse.json({ error: "Member ID is required" }, { status: 400 });
     }
 
-    // settled_by FK에 cascade가 없으므로 먼저 NULL 처리
-    await supabase
-      .from("settlement_status")
-      .update({ settled_by: null })
-      .eq("settled_by", id);
+    // cascade 없는 FK 참조를 먼저 NULL 처리
+    await Promise.all([
+      supabase.from("settlement_status").update({ settled_by: null }).eq("settled_by", id),
+      supabase.from("restaurants").update({ created_by: null }).eq("created_by", id),
+      supabase.from("usage_record_audit_logs").update({ changed_by: null }).eq("changed_by", id),
+      supabase.from("usage_records").update({ first_reviewed_by: null }).eq("first_reviewed_by", id),
+      supabase.from("usage_records").update({ last_modified_by: null }).eq("last_modified_by", id),
+      supabase.from("usage_records").update({ reviewed_by: null }).eq("reviewed_by", id),
+      supabase.from("usage_records").update({ second_reviewed_by: null }).eq("second_reviewed_by", id),
+    ]);
 
     const { error } = await supabase
       .from("members")

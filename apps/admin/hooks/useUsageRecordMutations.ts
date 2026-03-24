@@ -102,6 +102,7 @@ export function useUpdateUsageRecord() {
       description?: string;
       used_at?: string;
       notes?: string | null;
+      companions?: string[];
       modified_by?: string;
     }) => {
       const res = await fetch(`/api/usage-records/${id}`, {

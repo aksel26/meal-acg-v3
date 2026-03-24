@@ -43,6 +43,7 @@ import {
   AlertTriangle,
   Download,
   Upload,
+  X,
 } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
 import { useAuth } from "@/hooks/useAuth";
@@ -457,7 +458,7 @@ function ReviewPageContent() {
   const [editDescription, setEditDescription] = useState("");
   const [editUsedAt, setEditUsedAt] = useState("");
 
-  const [editNotes, setEditNotes] = useState("");
+  const [editCompanions, setEditCompanions] = useState<string[]>([]);
 
   // Delete confirm
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -510,6 +511,12 @@ function ReviewPageContent() {
       return res.json();
     },
   });
+
+  const memberMap = useMemo(() => {
+    const map = new Map<string, string>();
+    members?.forEach((m) => map.set(m.id, m.full_name));
+    return map;
+  }, [members]);
 
   const { data: auditLogsData, isLoading: isAuditLoading } =
     useAuditLogs(auditRecordId);
@@ -587,7 +594,7 @@ function ReviewPageContent() {
     setEditAmount(String(record.amount));
     setEditDescription(record.description || "");
     setEditUsedAt(formatDate(record.used_at));
-    setEditNotes(record.notes || "");
+    setEditCompanions(record.companions || []);
     setIsEditOpen(true);
   };
 
@@ -608,7 +615,7 @@ function ReviewPageContent() {
         amount,
         description: editDescription || undefined,
         used_at: editUsedAt,
-        notes: editNotes || null,
+        companions: editCompanions,
         modified_by: user?.id,
       },
       {
@@ -950,6 +957,14 @@ function ReviewPageContent() {
                     <td className="whitespace-nowrap px-3 py-1 text-right tabular-nums font-medium text-slate-900">
                       {formatCurrency(record.amount)}
                     </td>
+                    <td className="max-w-[180px] truncate px-3 py-1 text-slate-400">
+                      {record.companions?.length
+                        ? record.companions.map((id: string) => memberMap.get(id) || id).join(", ")
+                        : "-"}
+                    </td>
+                    <td className="max-w-[180px] truncate px-3 py-1 text-slate-400">
+                      {record.delay_reason || "-"}
+                    </td>
                     <td className="px-3 py-1 text-center">
                       <ReviewStepIndicator
                         record={record}
@@ -1054,13 +1069,49 @@ function ReviewPageContent() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-notes">비고</Label>
-              <Input
-                id="edit-notes"
-                value={editNotes}
-                onChange={(e) => setEditNotes(e.target.value)}
-                placeholder="비고를 입력하세요"
-              />
+              <Label>비고 (대리결제자)</Label>
+              {editCompanions.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {editCompanions.map((id) => (
+                    <span
+                      key={id}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-xs"
+                    >
+                      {memberMap.get(id) || id}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEditCompanions((prev) =>
+                            prev.filter((c) => c !== id)
+                          )
+                        }
+                        className="hover:bg-slate-200 rounded-full p-0.5"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <Select
+                onValueChange={(id) => {
+                  if (!editCompanions.includes(id))
+                    setEditCompanions((prev) => [...prev, id]);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="멤버 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  {members
+                    ?.filter((m) => !editCompanions.includes(m.id))
+                    .map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.full_name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

@@ -23,6 +23,7 @@ import {
   useMemberIdLookup,
   usePointsWelfare,
   usePointsActivity,
+  usePointsMembers,
   type UsageRecord,
 } from "@/hooks/use-points-data";
 import {
@@ -184,6 +185,8 @@ export default function Points() {
   const { data: activityData, isLoading: isActivityLoading } =
     usePointsActivity(isManager ? currentMemberId : null, selectedMonth);
 
+  const { data: membersData } = usePointsMembers(currentMemberId);
+
   // Mutation hooks
   const addMutation = useAddUsageRecord();
   const updateMutation = useUpdateUsageRecord();
@@ -257,8 +260,10 @@ export default function Points() {
     amount: record.amount,
     used: true,
     confirmed: (record.review_status ?? 0) >= 1,
-    notes: record.notes || "",
     delay_reason: record.delay_reason || "",
+    proxy_payers: (record.companions || []).map(
+      (id) => membersData?.find((m) => m.id === id)?.full_name || id
+    ),
   });
 
   const handleEditPoint = (record: UsageRecord) => {
@@ -272,6 +277,11 @@ export default function Points() {
     if (!editingPoint || !currentMemberId) return;
 
     const pointType = editingPoint.type === "welfare" ? "welfare" : "activity";
+
+    // 이름 → UUID 변환
+    const companionIds = (editingPoint.proxy_payers || [])
+      .map((name) => membersData?.find((m) => m.full_name === name)?.id)
+      .filter(Boolean) as string[];
 
     if (isNewPoint) {
       const allocId =
@@ -291,8 +301,8 @@ export default function Points() {
         amount: editingPoint.amount,
         description: editingPoint.vendor,
         used_at: editingPoint.date,
-        companions: [],
-        notes: editingPoint.notes || "",
+        companions: companionIds,
+
         delay_reason: editingPoint.delay_reason || "",
       });
     } else {
@@ -303,22 +313,22 @@ export default function Points() {
         amount: editingPoint.amount,
         description: editingPoint.vendor,
         used_at: editingPoint.date,
-        notes: editingPoint.notes || "",
+
         delay_reason: editingPoint.delay_reason || "",
+        companions: companionIds,
       });
     }
 
     // Fire-and-forget: 대신 결제 푸시 알림
-    const proxyPayers = editingPoint.proxy_payers || [];
-    if (proxyPayers.length > 0 && currentMemberId) {
-      const payer = editingPoint.notes || userName || "누군가";
+    if (companionIds.length > 0 && currentMemberId) {
+      const payer = userName || "누군가";
       const vendor = editingPoint.vendor || "어딘가";
       fetch("/api/notifications/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           senderId: currentMemberId,
-          names: proxyPayers,
+          memberIds: companionIds,
           title: "복지포인트 대리결제 알림",
           body: `${payer}님이 ${vendor}에서 대신 결제했습니다. 본인 사용분을 입력해주세요.`,
           url: "/points",
@@ -650,9 +660,9 @@ export default function Points() {
                         </span>
                       </div>
                     </div>
-                    {record.notes && (
+                    {record.companions?.length > 0 && (
                       <p className="text-xs text-gray-400 mt-1">
-                        {record.notes}
+                        {record.companions.map((id: string) => membersData?.find((m) => m.id === id)?.full_name || id).join(", ")}
                       </p>
                     )}
                   </div>

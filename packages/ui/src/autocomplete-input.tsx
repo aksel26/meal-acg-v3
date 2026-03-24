@@ -51,10 +51,11 @@ export interface AutoCompleteInputProps extends Omit<React.InputHTMLAttributes<H
   allowFreeText?: boolean;
   maxSuggestions?: number;
   emptyText?: string;
+  showOnFocus?: boolean;
 }
 
 const AutoCompleteInput = React.forwardRef<HTMLInputElement, AutoCompleteInputProps>(
-  ({ suggestions = [], onValueChange, onSuggestionSelect, allowFreeText = true, maxSuggestions = 10, emptyText = "No suggestions found", className, ...props }, ref) => {
+  ({ suggestions = [], onValueChange, onSuggestionSelect, allowFreeText = true, maxSuggestions = 10, emptyText = "No suggestions found", showOnFocus = true, className, ...props }, ref) => {
     const [isOpen, setIsOpen] = React.useState(false);
     const [selectedIndex, setSelectedIndex] = React.useState(-1);
     const [dropdownPosition, setDropdownPosition] = React.useState<"bottom" | "top">("bottom");
@@ -93,9 +94,18 @@ const AutoCompleteInput = React.forwardRef<HTMLInputElement, AutoCompleteInputPr
 
     // Handle input focus
     const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-      setIsOpen(true);
-      calculateDropdownPosition();
+      if (showOnFocus) {
+        setIsOpen(true);
+        calculateDropdownPosition();
+      }
       props.onFocus?.(e);
+    };
+
+    const handleClick = () => {
+      if (!isOpen) {
+        setIsOpen(true);
+        calculateDropdownPosition();
+      }
     };
 
     // Handle input blur
@@ -193,6 +203,7 @@ const AutoCompleteInput = React.forwardRef<HTMLInputElement, AutoCompleteInputPr
           onChange={handleChange}
           onFocus={handleFocus}
           onBlur={handleBlur}
+          onClick={handleClick}
           onKeyDown={handleKeyDown}
           className={cn(
             "flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm",

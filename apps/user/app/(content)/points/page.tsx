@@ -151,7 +151,6 @@ export default function Points() {
   const [typeFilter, setTypeFilter] = useState<"all" | "welfare" | "activity">(
     "all",
   );
-  const [isDeleting, setIsDeleting] = useState(false);
   const [isActivityViewOpen, setIsActivityViewOpen] = useState(false);
   const [isAllRecordsOpen, setIsAllRecordsOpen] = useState(false);
 
@@ -191,6 +190,7 @@ export default function Points() {
   const addMutation = useAddUsageRecord();
   const updateMutation = useUpdateUsageRecord();
   const deleteMutation = useDeleteUsageRecord();
+  const isSaving = addMutation.isPending || updateMutation.isPending;
 
   // 복지포인트 금액 데이터
   const welfareTotalAmount = welfareData?.summary?.total_amount ?? 0;
@@ -275,6 +275,7 @@ export default function Points() {
 
   const handleSavePoint = async () => {
     if (!editingPoint || !currentMemberId) return;
+    if (isSaving) return;
 
     const pointType = editingPoint.type === "welfare" ? "welfare" : "activity";
 
@@ -346,8 +347,8 @@ export default function Points() {
 
   const handleDeletePoint = async (point: WelfarePoint) => {
     if (!point.id || !currentMemberId) return;
+    if (deleteMutation.isPending) return;
 
-    setIsDeleting(true);
     try {
       const pointType = point.type === "welfare" ? "welfare" : "activity";
       await deleteMutation.mutateAsync({
@@ -365,8 +366,6 @@ export default function Points() {
           ? error.message
           : "알 수 없는 오류가 발생했습니다.";
       toast.error(`삭제에 실패했습니다: ${msg}`);
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -699,7 +698,8 @@ export default function Points() {
         onDelete={handleDeletePoint}
         onPointChange={setEditingPoint}
         isNewPoint={isNewPoint}
-        isDeleting={isDeleting}
+        isDeleting={deleteMutation.isPending}
+        isSaving={isSaving}
         isManager={isManager}
       />
 

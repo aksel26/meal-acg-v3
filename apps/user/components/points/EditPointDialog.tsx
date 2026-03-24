@@ -119,6 +119,7 @@ interface EditPointDialogProps {
   onPointChange: (point: WelfarePoint) => void;
   isNewPoint: boolean;
   isDeleting?: boolean;
+  isSaving?: boolean;
   isManager?: boolean;
 }
 
@@ -131,6 +132,7 @@ export function EditPointDialog({
   onPointChange,
   isNewPoint,
   isDeleting = false,
+  isSaving = false,
   isManager = false,
 }: EditPointDialogProps) {
   // 비매니저는 type 스텝 건너뛰기 (복지포인트 고정)
@@ -240,6 +242,7 @@ export function EditPointDialog({
   // --- Handlers ---
 
   const handleSave = async () => {
+    if (isSaving) return;
     try {
       await onSave();
     } catch (error) {
@@ -615,7 +618,7 @@ export function EditPointDialog({
             )}
             <button
               type="button"
-              disabled={!editingPoint.amount || editingPoint.amount <= 0 || (needsDelayReason && !editingPoint.delay_reason?.trim())}
+              disabled={!editingPoint.amount || editingPoint.amount <= 0 || (needsDelayReason && !editingPoint.delay_reason?.trim()) || isSaving}
               onClick={handleSave}
               className={`w-full py-3.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
                 isNewPoint
@@ -623,7 +626,14 @@ export function EditPointDialog({
                   : "bg-gray-800 hover:bg-gray-700 text-white"
               }`}
             >
-              {isNewPoint ? "추가하기" : "수정하기"}
+              {isSaving ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                  저장 중...
+                </div>
+              ) : (
+                isNewPoint ? "추가하기" : "수정하기"
+              )}
             </button>
           </motion.div>
         );
@@ -765,9 +775,17 @@ export function EditPointDialog({
                 <button
                   type="button"
                   onClick={handleSave}
-                  className="w-full py-4 rounded-xl bg-gray-800 hover:bg-gray-700 text-white text-sm font-semibold transition-colors"
+                  disabled={isSaving}
+                  className="w-full py-4 rounded-xl bg-gray-800 hover:bg-gray-700 text-white text-sm font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
-                  수정 완료
+                  {isSaving ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                      저장 중...
+                    </div>
+                  ) : (
+                    "수정 완료"
+                  )}
                 </button>
               </motion.div>
             ) : (

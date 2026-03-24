@@ -892,14 +892,14 @@ function ReviewPageContent() {
                   <th className="w-[88px] whitespace-nowrap px-3 py-2 text-right text-xs font-semibold text-slate-500">
                     금액
                   </th>
+                  <th className="w-[150px] whitespace-nowrap px-3 py-2 text-center text-xs font-semibold text-slate-500">
+                    P&C팀 확인
+                  </th>
                   <th className="min-w-[80px] whitespace-nowrap px-3 py-2 text-left text-xs font-semibold text-slate-500">
                     비고
                   </th>
                   <th className="min-w-[100px] whitespace-nowrap px-3 py-2 text-left text-xs font-semibold text-slate-500">
                     지연 사유
-                  </th>
-                  <th className="w-[150px] whitespace-nowrap px-3 py-2 text-center text-xs font-semibold text-slate-500">
-                    P&C팀 확인
                   </th>
                   <th className="w-[88px] whitespace-nowrap px-3 py-2 text-center text-xs font-semibold text-slate-500">
                     액션
@@ -976,6 +976,12 @@ function ReviewPageContent() {
                           advanceReview.isPending || revertReview.isPending
                         }
                       />
+                    </td>
+                    <td className="max-w-[180px] truncate px-3 py-1 text-slate-400">
+                      {record.notes || "-"}
+                    </td>
+                    <td className="max-w-[180px] truncate px-3 py-1 text-slate-400">
+                      {record.delay_reason || "-"}
                     </td>
                     <td className="px-3 py-1 text-center">
                       <div className="flex items-center justify-center gap-0">

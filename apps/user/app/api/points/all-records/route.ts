@@ -63,6 +63,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    if (!currentMember.organization_id) {
+      return NextResponse.json(
+        { error: "조직 정보가 설정되지 않았습니다." },
+        { status: 400 }
+      );
+    }
+
+    // 같은 조직의 멤버 ID 목록 조회 (임베디드 필터 대신 직접 필터링)
+    const { data: orgMembers } = await supabase
+      .from("members")
+      .select("id")
+      .eq("organization_id", currentMember.organization_id);
+
+    const orgMemberIds = orgMembers?.map((m: { id: string }) => m.id) || [];
+
     // 같은 조직의 모든 usage_records 조회
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let query = supabase
@@ -73,15 +88,16 @@ export async function GET(request: NextRequest) {
         member:members!usage_records_member_id_fkey (
           id,
           full_name,
-          team:teams(name),
-          organization_id
+          team:teams(name)
         )
       `,
         { count: "exact" }
       ) as any;
 
-    // 같은 조직 필터링 (organization_id를 통해)
-    query = query.eq("member.organization_id", currentMember.organization_id);
+    // 같은 조직 필터링 (member_id IN 방식)
+    if (orgMemberIds.length > 0) {
+      query = query.in("member_id", orgMemberIds);
+    }
 
     // period 필터
     if (period && period !== "all") {

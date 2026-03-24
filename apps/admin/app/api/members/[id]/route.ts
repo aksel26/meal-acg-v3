@@ -117,7 +117,10 @@ export async function DELETE(
       supabase.from("usage_records").update({ second_reviewed_by: null }).eq("second_reviewed_by", id),
     ]);
 
-    // 3. 멤버 삭제 (나머지 테이블은 ON DELETE CASCADE로 자동 처리)
+    // 3. 멤버의 usage_records 직접 삭제 (CASCADE 대신, 트리거 발동 시 멤버가 아직 존재)
+    await supabase.from("usage_records").delete().eq("member_id", id);
+
+    // 4. 멤버 삭제 (나머지 테이블은 ON DELETE CASCADE로 자동 처리)
     const { error } = await supabase
       .from("members")
       .delete()

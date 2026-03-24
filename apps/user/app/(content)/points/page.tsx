@@ -662,9 +662,9 @@ export default function Points() {
                         </span>
                       </div>
                     </div>
-                    {record.notes && (
+                    {record.companions?.length > 0 && (
                       <p className="text-xs text-gray-400 mt-1">
-                        {record.notes}
+                        {record.companions.map((id: string) => membersData?.find((m) => m.id === id)?.full_name || id).join(", ")}
                       </p>
                     )}
                   </div>

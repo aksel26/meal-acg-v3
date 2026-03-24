@@ -110,7 +110,7 @@ export async function DELETE(
     await Promise.all([
       supabase.from("settlement_status").update({ settled_by: null }).eq("settled_by", id),
       supabase.from("restaurants").update({ created_by: null }).eq("created_by", id),
-      supabase.from("usage_record_audit_logs").update({ changed_by: null }).eq("changed_by", id),
+      supabase.from("usage_record_audit_logs").delete().eq("changed_by", id),
       supabase.from("usage_records").update({ first_reviewed_by: null }).eq("first_reviewed_by", id),
       supabase.from("usage_records").update({ last_modified_by: null }).eq("last_modified_by", id),
       supabase.from("usage_records").update({ reviewed_by: null }).eq("reviewed_by", id),

@@ -43,6 +43,7 @@ import {
   AlertTriangle,
   Download,
   Upload,
+  X,
 } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
 import { useAuth } from "@/hooks/useAuth";
@@ -457,7 +458,7 @@ function ReviewPageContent() {
   const [editDescription, setEditDescription] = useState("");
   const [editUsedAt, setEditUsedAt] = useState("");
 
-  const [editNotes, setEditNotes] = useState("");
+  const [editCompanions, setEditCompanions] = useState<string[]>([]);
 
   // Delete confirm
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -593,7 +594,7 @@ function ReviewPageContent() {
     setEditAmount(String(record.amount));
     setEditDescription(record.description || "");
     setEditUsedAt(formatDate(record.used_at));
-    setEditNotes(record.notes || "");
+    setEditCompanions(record.companions || []);
     setIsEditOpen(true);
   };
 
@@ -614,7 +615,7 @@ function ReviewPageContent() {
         amount,
         description: editDescription || undefined,
         used_at: editUsedAt,
-        notes: editNotes || null,
+        companions: editCompanions,
         modified_by: user?.id,
       },
       {
@@ -1062,13 +1063,49 @@ function ReviewPageContent() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-notes">비고</Label>
-              <Input
-                id="edit-notes"
-                value={editNotes}
-                onChange={(e) => setEditNotes(e.target.value)}
-                placeholder="비고를 입력하세요"
-              />
+              <Label>비고 (대리결제자)</Label>
+              {editCompanions.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {editCompanions.map((id) => (
+                    <span
+                      key={id}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-xs"
+                    >
+                      {memberMap.get(id) || id}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEditCompanions((prev) =>
+                            prev.filter((c) => c !== id)
+                          )
+                        }
+                        className="hover:bg-slate-200 rounded-full p-0.5"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <Select
+                onValueChange={(id) => {
+                  if (!editCompanions.includes(id))
+                    setEditCompanions((prev) => [...prev, id]);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="멤버 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  {members
+                    ?.filter((m) => !editCompanions.includes(m.id))
+                    .map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.full_name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

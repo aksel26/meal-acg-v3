@@ -93,6 +93,12 @@ export async function DELETE(
       return NextResponse.json({ error: "Member ID is required" }, { status: 400 });
     }
 
+    // settled_by FK에 cascade가 없으므로 먼저 NULL 처리
+    await supabase
+      .from("settlement_status")
+      .update({ settled_by: null })
+      .eq("settled_by", id);
+
     const { error } = await supabase
       .from("members")
       .delete()

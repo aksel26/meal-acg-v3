@@ -37,6 +37,7 @@ export interface UsageRecord {
   description: string;
   used_at: string;
   companions: string[];
+  co_payers: string[];
   receipt_url: string | null;
   notes: string | null;
   delay_reason: string | null;

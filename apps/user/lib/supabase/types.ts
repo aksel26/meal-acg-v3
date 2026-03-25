@@ -678,6 +678,7 @@ export type Database = {
         Row: {
           allocation_id: string
           amount: number
+          co_payers: string[] | null
           companions: string[] | null
           created_at: string | null
           delay_reason: string | null
@@ -704,6 +705,7 @@ export type Database = {
         Insert: {
           allocation_id: string
           amount: number
+          co_payers?: string[] | null
           companions?: string[] | null
           created_at?: string | null
           delay_reason?: string | null
@@ -724,6 +726,7 @@ export type Database = {
         Update: {
           allocation_id?: string
           amount?: number
+          co_payers?: string[] | null
           companions?: string[] | null
           created_at?: string | null
           delay_reason?: string | null

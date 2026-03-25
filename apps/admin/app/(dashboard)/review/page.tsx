@@ -18,6 +18,7 @@ import {
 } from "@repo/ui/src/select";
 import { Checkbox } from "@repo/ui/src/checkbox";
 import { SearchableDropdown } from "@repo/ui/src/searchable-dropdown";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@repo/ui/src/tooltip";
 import {
   Dialog,
   DialogContent,
@@ -69,6 +70,7 @@ interface UsageRecord {
   description: string | null;
   used_at: string;
   companions: string[] | null;
+  co_payers: string[] | null;
   notes: string | null;
   delay_reason: string | null;
   receipt_url: string | null;
@@ -958,9 +960,25 @@ function ReviewPageContent() {
                       {formatCurrency(record.amount)}
                     </td>
                     <td className="max-w-[180px] truncate px-3 py-1 text-slate-400">
-                      {record.companions?.length
-                        ? record.companions.map((id: string) => memberMap.get(id) || id).join(", ")
-                        : "-"}
+                      <span className="inline-flex items-center justify-between gap-1 w-full">
+                        {record.companions?.length
+                          ? record.companions.map((id: string) => memberMap.get(id) || id).join(", ")
+                          : "-"}
+                        {record.co_payers?.length ? (
+                          <TooltipProvider delayDuration={0}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-violet-100 text-violet-600 text-[10px] font-bold cursor-default shrink-0">
+                                  +{record.co_payers.length}
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent side="top">
+                                동반: {record.co_payers.map((id: string) => memberMap.get(id) || id).join(", ")}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ) : null}
+                      </span>
                     </td>
                     <td className="max-w-[180px] truncate px-3 py-1 text-slate-400">
                       {record.delay_reason || "-"}

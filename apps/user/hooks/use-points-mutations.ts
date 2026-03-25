@@ -13,6 +13,7 @@ interface AddUsageInput {
   description: string;
   used_at: string;
   companions?: string[];
+  co_payers?: string[];
   receipt_url?: string;
   notes?: string;
   delay_reason?: string;
@@ -26,6 +27,7 @@ interface UpdateUsageInput {
   description?: string;
   used_at?: string;
   companions?: string[];
+  co_payers?: string[];
   receipt_url?: string;
   notes?: string;
   delay_reason?: string;

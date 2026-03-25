@@ -163,6 +163,7 @@ export async function POST(request: NextRequest) {
       description,
       used_at,
       companions,
+      co_payers,
       receipt_url,
       notes,
       delay_reason,
@@ -203,6 +204,7 @@ export async function POST(request: NextRequest) {
         description,
         used_at,
         companions: companions || [],
+        co_payers: co_payers || [],
         receipt_url: receipt_url || null,
         notes: notes || null,
         delay_reason: delay_reason || null,
@@ -232,7 +234,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, member_id, amount, description, used_at, companions, receipt_url, notes, delay_reason } =
+    const { id, member_id, amount, description, used_at, companions, co_payers, receipt_url, notes, delay_reason } =
       body;
 
     if (!id) {
@@ -290,6 +292,7 @@ export async function PUT(request: NextRequest) {
     if (description !== undefined) updateData.description = description;
     if (used_at !== undefined) updateData.used_at = used_at;
     if (companions !== undefined) updateData.companions = companions;
+    if (co_payers !== undefined) updateData.co_payers = co_payers;
     if (receipt_url !== undefined) updateData.receipt_url = receipt_url;
     if (notes !== undefined) updateData.notes = notes;
     if (delay_reason !== undefined) updateData.delay_reason = delay_reason;

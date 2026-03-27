@@ -249,7 +249,10 @@ function CollectionListView({
         </Card>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {collections.map((col) => (
+          {[...collections].sort((a, b) => {
+            if (a.is_active !== b.is_active) return a.is_active ? -1 : 1;
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+          }).map((col) => (
             <Card
               key={col.id}
               className={cn(

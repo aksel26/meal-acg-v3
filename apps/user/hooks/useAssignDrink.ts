@@ -4,15 +4,18 @@ import { queryKeys } from "@/lib/query-keys";
 interface AssignDrinkRequest {
   name: string;
   drink: string;
+  collectionId?: string;
 }
 
-async function assignDrinkFn({ name, drink }: AssignDrinkRequest): Promise<void> {
+async function assignDrinkFn({
+  name,
+  drink,
+  collectionId,
+}: AssignDrinkRequest): Promise<void> {
   const response = await fetch("/api/monthly", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ name, drink }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, drink, collectionId }),
   });
 
   const result = await response.json();
@@ -28,7 +31,6 @@ export const useAssignDrink = () => {
   return useMutation({
     mutationFn: assignDrinkFn,
     onSuccess: () => {
-      // 성공 시 monthly 데이터 무효화하여 자동 리패치
       queryClient.invalidateQueries({ queryKey: queryKeys.monthly.all });
     },
   });

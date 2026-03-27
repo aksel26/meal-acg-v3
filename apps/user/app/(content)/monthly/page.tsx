@@ -16,10 +16,10 @@ import {
 } from "@repo/ui/src/dialog";
 import { AllHistoryDialog } from "@/components/monthly/AllHistoryDialog";
 import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@repo/ui/src/tooltip";
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@repo/ui/src/popover";
 import { DRINKS } from "@/lib/const/const";
 import { motion } from "motion/react";
 
@@ -251,27 +251,48 @@ function DrinkSelectionView({
               )}
             </p>
           </button>
-          <div className="flex-1 rounded-xl p-3.5 bg-gray-50 min-w-0">
-            <p className="text-[11px] text-gray-400 font-medium">픽업담당</p>
-            {isLoading ? (
-              <p className="text-sm font-semibold text-gray-900 mt-1.5">
-                <span className="skeleton inline-block w-14 h-5" />
-              </p>
-            ) : pickupPersons.length > 0 ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <p className="text-sm font-semibold text-gray-900 mt-1.5 truncate cursor-default">
-                    {pickupPersons.map((p) => p.name).join(", ")}
-                  </p>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-[200px] bg-gray-900 text-white text-xs rounded-lg px-3 py-2">
-                  {pickupPersons.map((p) => p.name).join(", ")}
-                </TooltipContent>
-              </Tooltip>
-            ) : (
-              <p className="text-sm font-semibold text-gray-300 mt-1.5">미정</p>
-            )}
-          </div>
+          {pickupPersons.length > 0 ? (
+            <Popover>
+              <PopoverTrigger asChild>
+                <div
+                  className="flex-1 rounded-xl p-3.5 bg-gray-50 min-w-0 cursor-default"
+                  onMouseEnter={(e) => {
+                    const trigger = e.currentTarget;
+                    trigger.click();
+                  }}
+                  onMouseLeave={(e) => {
+                    const trigger = e.currentTarget;
+                    trigger.click();
+                  }}
+                >
+                  <p className="text-[11px] text-gray-400 font-medium">픽업담당</p>
+                  {isLoading ? (
+                    <p className="text-sm font-semibold text-gray-900 mt-1.5">
+                      <span className="skeleton inline-block w-14 h-5" />
+                    </p>
+                  ) : (
+                    <p className="text-sm font-semibold text-gray-900 mt-1.5 truncate">
+                      {pickupPersons.map((p) => p.name).join(", ")}
+                    </p>
+                  )}
+                </div>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto max-w-[200px] bg-gray-900 text-white text-xs rounded-lg px-3 py-2 border-0">
+                {pickupPersons.map((p) => p.name).join(", ")}
+              </PopoverContent>
+            </Popover>
+          ) : (
+            <div className="flex-1 rounded-xl p-3.5 bg-gray-50 min-w-0">
+              <p className="text-[11px] text-gray-400 font-medium">픽업담당</p>
+              {isLoading ? (
+                <p className="text-sm font-semibold text-gray-900 mt-1.5">
+                  <span className="skeleton inline-block w-14 h-5" />
+                </p>
+              ) : (
+                <p className="text-sm font-semibold text-gray-300 mt-1.5">미정</p>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

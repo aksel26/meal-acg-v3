@@ -799,9 +799,49 @@ export type Database = {
           },
         ]
       }
+      drink_collections: {
+        Row: {
+          id: string
+          title: string
+          year: number
+          month: number | null
+          is_active: boolean
+          is_one_time: boolean
+          drink_options: Json
+          pickup_persons: Json
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          title: string
+          year: number
+          month?: number | null
+          is_active?: boolean
+          is_one_time?: boolean
+          drink_options?: Json
+          pickup_persons?: Json
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          title?: string
+          year?: number
+          month?: number | null
+          is_active?: boolean
+          is_one_time?: boolean
+          drink_options?: Json
+          pickup_persons?: Json
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       monthly_drink_applications: {
         Row: {
           created_at: string | null
+          collection_id: string | null
           drink: string | null
           id: string
           memo: string | null
@@ -812,6 +852,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          collection_id?: string | null
           drink?: string | null
           id?: string
           memo?: string | null
@@ -822,6 +863,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          collection_id?: string | null
           drink?: string | null
           id?: string
           memo?: string | null
@@ -843,6 +885,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "monthly_drink_applications_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "drink_collections"
             referencedColumns: ["id"]
           },
           {
@@ -1283,6 +1332,7 @@ export type Database = {
         Row: {
           allocation_id: string
           amount: number
+          co_payers: string[] | null
           companions: string[] | null
           created_at: string | null
           delay_reason: string | null
@@ -1309,6 +1359,7 @@ export type Database = {
         Insert: {
           allocation_id: string
           amount: number
+          co_payers?: string[] | null
           companions?: string[] | null
           created_at?: string | null
           delay_reason?: string | null
@@ -1335,6 +1386,7 @@ export type Database = {
         Update: {
           allocation_id?: string
           amount?: number
+          co_payers?: string[] | null
           companions?: string[] | null
           created_at?: string | null
           delay_reason?: string | null
@@ -1939,6 +1991,9 @@ export type LunchGroupSettings = Tables<"lunch_group_settings">
 export type LunchGroupExcludedMember = Tables<"lunch_group_excluded_members">
 export type MonthlyDrinkSettings = Tables<"monthly_drink_settings">
 export type MonthlyDrinkApplication = Tables<"monthly_drink_applications">
+export type DrinkCollection = Tables<"drink_collections">
+export type DrinkCollectionInsert = TablesInsert<"drink_collections">
+export type DrinkCollectionUpdate = TablesUpdate<"drink_collections">
 
 // Points management types
 export type Organization = Tables<"organizations">

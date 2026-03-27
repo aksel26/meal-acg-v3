@@ -122,9 +122,6 @@ body {
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow:
-    var(--shadow-lg),
-    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
 }
 
 /* Premium Gradient Backgrounds */
@@ -172,20 +169,20 @@ body {
   background:
     radial-gradient(
       ellipse at 20% 0%,
-      oklch(0.92 0.06 280 / 0.4) 0%,
+      oklch(0.97 0.015 350 / 0.2) 0%,
       transparent 50%
     ),
     radial-gradient(
       ellipse at 80% 100%,
-      oklch(0.92 0.05 220 / 0.3) 0%,
+      oklch(0.96 0.012 340 / 0.15) 0%,
       transparent 50%
     ),
     radial-gradient(
       ellipse at 0% 50%,
-      oklch(0.94 0.04 50 / 0.2) 0%,
+      oklch(0.97 0.01 10 / 0.1) 0%,
       transparent 50%
     ),
-    linear-gradient(135deg, oklch(0.98 0.01 250) 0%, oklch(0.96 0.02 280) 100%);
+    linear-gradient(135deg, oklch(0.995 0.005 350) 0%, oklch(0.98 0.008 340) 100%);
 }
 
 /* Premium Buttons */

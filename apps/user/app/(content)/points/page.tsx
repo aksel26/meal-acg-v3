@@ -23,6 +23,7 @@ import {
   useMemberIdLookup,
   usePointsWelfare,
   usePointsActivity,
+  usePointsMembers,
   type UsageRecord,
 } from "@/hooks/use-points-data";
 import {
@@ -44,7 +45,8 @@ interface WelfarePoint {
   confirmed: boolean;
   notes?: string;
   delay_reason?: string;
-  proxy_payers?: string[];
+  proxy_payer?: string;         // 대표 결제자 이름 (단일). undefined = 본인
+  companion_names?: string[];   // 동반 결제자 이름들 (UI 전용, DB 저장 안함)
 }
 
 function BudgetRow({
@@ -150,7 +152,6 @@ export default function Points() {
   const [typeFilter, setTypeFilter] = useState<"all" | "welfare" | "activity">(
     "all",
   );
-  const [isDeleting, setIsDeleting] = useState(false);
   const [isActivityViewOpen, setIsActivityViewOpen] = useState(false);
   const [isAllRecordsOpen, setIsAllRecordsOpen] = useState(false);
 
@@ -184,10 +185,13 @@ export default function Points() {
   const { data: activityData, isLoading: isActivityLoading } =
     usePointsActivity(isManager ? currentMemberId : null, selectedMonth);
 
+  const { data: membersData } = usePointsMembers(currentMemberId);
+
   // Mutation hooks
   const addMutation = useAddUsageRecord();
   const updateMutation = useUpdateUsageRecord();
   const deleteMutation = useDeleteUsageRecord();
+  const isSaving = addMutation.isPending || updateMutation.isPending;
 
   // 복지포인트 금액 데이터
   const welfareTotalAmount = welfareData?.summary?.total_amount ?? 0;
@@ -257,8 +261,13 @@ export default function Points() {
     amount: record.amount,
     used: true,
     confirmed: (record.review_status ?? 0) >= 1,
-    notes: record.notes || "",
     delay_reason: record.delay_reason || "",
+    proxy_payer: record.companions?.[0]
+      ? membersData?.find((m) => m.id === record.companions[0])?.full_name || record.companions[0]
+      : undefined,
+    companion_names: (record.co_payers || []).map(
+      (id) => membersData?.find((m) => m.id === id)?.full_name || id
+    ),
   });
 
   const handleEditPoint = (record: UsageRecord) => {
@@ -270,8 +279,21 @@ export default function Points() {
 
   const handleSavePoint = async () => {
     if (!editingPoint || !currentMemberId) return;
+    if (isSaving) return;
 
     const pointType = editingPoint.type === "welfare" ? "welfare" : "activity";
+
+    // 대표 결제자: 이름 → UUID (본인이면 빈 배열)
+    const proxyPayerName = editingPoint.proxy_payer;
+    const proxyPayerId = proxyPayerName
+      ? membersData?.find((m) => m.full_name === proxyPayerName)?.id
+      : undefined;
+    const companionIds = proxyPayerId ? [proxyPayerId] : [];
+
+    // 동반 결제자: DB 저장 + 알림
+    const coPayerIds = (editingPoint.companion_names || [])
+      .map((name) => membersData?.find((m) => m.full_name === name)?.id)
+      .filter(Boolean) as string[];
 
     if (isNewPoint) {
       const allocId =
@@ -291,8 +313,8 @@ export default function Points() {
         amount: editingPoint.amount,
         description: editingPoint.vendor,
         used_at: editingPoint.date,
-        companions: [],
-        notes: editingPoint.notes || "",
+        companions: companionIds,
+        co_payers: coPayerIds,
         delay_reason: editingPoint.delay_reason || "",
       });
     } else {
@@ -303,24 +325,24 @@ export default function Points() {
         amount: editingPoint.amount,
         description: editingPoint.vendor,
         used_at: editingPoint.date,
-        notes: editingPoint.notes || "",
         delay_reason: editingPoint.delay_reason || "",
+        companions: companionIds,
+        co_payers: coPayerIds,
       });
     }
 
-    // Fire-and-forget: 대신 결제 푸시 알림
-    const proxyPayers = editingPoint.proxy_payers || [];
-    if (proxyPayers.length > 0 && currentMemberId) {
-      const payer = editingPoint.notes || userName || "누군가";
+    // Fire-and-forget: 동반 결제자 푸시 알림
+    if (coPayerIds.length > 0 && currentMemberId) {
+      const payer = editingPoint.proxy_payer ?? userName ?? "누군가";
       const vendor = editingPoint.vendor || "어딘가";
       fetch("/api/notifications/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           senderId: currentMemberId,
-          names: proxyPayers,
-          title: "복지포인트 대리결제 알림",
-          body: `${payer}님이 ${vendor}에서 대신 결제했습니다. 본인 사용분을 입력해주세요.`,
+          memberIds: coPayerIds,
+          title: "복지포인트 동반결제 알림",
+          body: `${payer}님이 ${vendor}에서 결제했습니다. 본인 사용분을 입력해주세요.`,
           url: "/points",
           tag: `proxy-payment-${Date.now()}`,
         }),
@@ -336,8 +358,8 @@ export default function Points() {
 
   const handleDeletePoint = async (point: WelfarePoint) => {
     if (!point.id || !currentMemberId) return;
+    if (deleteMutation.isPending) return;
 
-    setIsDeleting(true);
     try {
       const pointType = point.type === "welfare" ? "welfare" : "activity";
       await deleteMutation.mutateAsync({
@@ -355,8 +377,6 @@ export default function Points() {
           ? error.message
           : "알 수 없는 오류가 발생했습니다.";
       toast.error(`삭제에 실패했습니다: ${msg}`);
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -370,7 +390,8 @@ export default function Points() {
       used: false,
       confirmed: false,
       notes: userName || "",
-      proxy_payers: [],
+      proxy_payer: undefined,
+      companion_names: [],
     };
     setEditingPoint(newPoint);
     setIsNewPoint(true);
@@ -650,9 +671,14 @@ export default function Points() {
                         </span>
                       </div>
                     </div>
-                    {record.notes && (
+                    {record.companions?.length > 0 && (
                       <p className="text-xs text-gray-400 mt-1">
-                        {record.notes}
+                        카드: {record.companions.map((id: string) => membersData?.find((m) => m.id === id)?.full_name || id).join(", ")}
+                      </p>
+                    )}
+                    {record.co_payers?.length > 0 && (
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        동반: {record.co_payers.map((id: string) => membersData?.find((m) => m.id === id)?.full_name || id).join(", ")}
                       </p>
                     )}
                   </div>
@@ -689,7 +715,8 @@ export default function Points() {
         onDelete={handleDeletePoint}
         onPointChange={setEditingPoint}
         isNewPoint={isNewPoint}
-        isDeleting={isDeleting}
+        isDeleting={deleteMutation.isPending}
+        isSaving={isSaving}
         isManager={isManager}
       />
 

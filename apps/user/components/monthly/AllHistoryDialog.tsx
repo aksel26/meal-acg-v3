@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from "motion/react";
 interface AllHistoryDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  collectionId?: string;
 }
 
 const getDrinkInfo = (drink: string) => {
@@ -31,9 +32,12 @@ const getDrinkInfo = (drink: string) => {
   return { icon: "☕", gradient: "from-gray-50 to-gray-100" };
 };
 
-export const AllHistoryDialog = ({ isOpen, onClose }: AllHistoryDialogProps) => {
-  const { data, isLoading, isError } = useMonthlyData();
-  // TanStack Query가 자동으로 캐시된 데이터를 공유하므로 별도 fetch 불필요
+export const AllHistoryDialog = ({
+  isOpen,
+  onClose,
+  collectionId,
+}: AllHistoryDialogProps) => {
+  const { data, isLoading, isError } = useMonthlyData(collectionId);
 
   const applications = data?.applications || [];
 
@@ -107,10 +111,7 @@ export const AllHistoryDialog = ({ isOpen, onClose }: AllHistoryDialogProps) => 
                 className="space-y-3"
               >
                 {Array.from({ length: 4 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="skeleton h-16 rounded-2xl"
-                  />
+                  <div key={i} className="skeleton h-16 rounded-2xl" />
                 ))}
               </motion.div>
             ) : isError ? (

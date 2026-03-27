@@ -712,9 +712,11 @@ function CalendarPageContent() {
                             </span>
                           )}
                         </div>
-                      ) : (
+                      ) : (() => {
+                        const isWork = attInfo?.label === "출근";
+                        return (
                         <>
-                          {attInfo && attInfo.label !== "출근" && (
+                          {attInfo && !isWork && (
                             <div
                               className={`flex items-center justify-between rounded px-2 py-1 ${attInfo.bg}`}
                             >
@@ -735,6 +737,15 @@ function CalendarPageContent() {
                                 조식
                               </span>
                             </div>
+                          ) : mealLog.breakfast_store ? (
+                            <div className="flex items-center justify-between rounded bg-orange-50/60 px-2 py-1">
+                              <span className="text-sm font-bold tabular-nums text-orange-700/50">
+                                0
+                              </span>
+                              <span className="text-xs font-semibold text-orange-400">
+                                조식
+                              </span>
+                            </div>
                           ) : null}
                           {mealLog.lunch_amount && mealLog.lunch_amount > 0 ? (
                             <div className="flex items-center justify-between rounded bg-emerald-50 px-2 py-1">
@@ -742,6 +753,15 @@ function CalendarPageContent() {
                                 {formatAmount(mealLog.lunch_amount)}
                               </span>
                               <span className="text-xs font-semibold text-emerald-500">
+                                중식
+                              </span>
+                            </div>
+                          ) : (mealLog.lunch_store || isWork) ? (
+                            <div className="flex items-center justify-between rounded bg-emerald-50/60 px-2 py-1">
+                              <span className="text-sm font-bold tabular-nums text-emerald-700/50">
+                                0
+                              </span>
+                              <span className="text-xs font-semibold text-emerald-400">
                                 중식
                               </span>
                             </div>
@@ -756,9 +776,19 @@ function CalendarPageContent() {
                                 석식
                               </span>
                             </div>
+                          ) : mealLog.dinner_store ? (
+                            <div className="flex items-center justify-between rounded bg-indigo-50/60 px-2 py-1">
+                              <span className="text-sm font-bold tabular-nums text-indigo-700/50">
+                                0
+                              </span>
+                              <span className="text-xs font-semibold text-indigo-400">
+                                석식
+                              </span>
+                            </div>
                           ) : null}
                         </>
-                      )
+                        );
+                      })()
                     ) : null}
                   </div>
                 </div>

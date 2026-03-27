@@ -164,6 +164,7 @@ export function StepFormContainer({
 
   // Handle form submission
   const handleSubmit = useCallback(async () => {
+    if (isSubmitting) return;
     setIsSubmitting(true);
     try {
       // Save new restaurant if needed
@@ -178,7 +179,7 @@ export function StepFormContainer({
     } finally {
       setIsSubmitting(false);
     }
-  }, [currentFormData.store, saveNewRestaurant, onFormSubmit, setIsSubmitting]);
+  }, [isSubmitting, currentFormData.store, saveNewRestaurant, onFormSubmit, setIsSubmitting]);
 
   // Render current step component
   const renderCurrentStep = () => {

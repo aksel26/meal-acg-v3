@@ -844,6 +844,131 @@ export type Database = {
           },
         ]
       }
+      lunch_fixed_schedules: {
+        Row: {
+          id: string
+          day_of_week: number
+          user_id: string | null
+          label: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          day_of_week: number
+          user_id?: string | null
+          label?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          day_of_week?: number
+          user_id?: string | null
+          label?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lunch_fixed_schedules_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      lunch_group_settings: {
+        Row: {
+          id: string
+          max_members_per_group: number
+          total_groups: number
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          max_members_per_group?: number
+          total_groups?: number
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          max_members_per_group?: number
+          total_groups?: number
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      monthly_drink_settings: {
+        Row: {
+          id: string
+          year: number
+          month: number
+          drink_options: string[] | null
+          pickup_persons: string[] | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          year: number
+          month: number
+          drink_options?: string[] | null
+          pickup_persons?: string[] | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          year?: number
+          month?: number
+          drink_options?: string[] | null
+          pickup_persons?: string[] | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      drink_collections: {
+        Row: {
+          id: string
+          title: string
+          year: number
+          month: number | null
+          is_active: boolean
+          is_one_time: boolean
+          drink_options: string[] | null
+          pickup_persons: string[] | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          title: string
+          year: number
+          month?: number | null
+          is_active?: boolean
+          is_one_time?: boolean
+          drink_options?: string[] | null
+          pickup_persons?: string[] | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          title?: string
+          year?: number
+          month?: number | null
+          is_active?: boolean
+          is_one_time?: boolean
+          drink_options?: string[] | null
+          pickup_persons?: string[] | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       monthly_drink_applications: {
         Row: {
           created_at: string | null
@@ -853,6 +978,7 @@ export type Database = {
           month: number
           updated_at: string | null
           user_id: string
+          collection_id: string | null
           year: number
         }
         Insert: {
@@ -863,6 +989,7 @@ export type Database = {
           month: number
           updated_at?: string | null
           user_id: string
+          collection_id?: string | null
           year: number
         }
         Update: {
@@ -873,6 +1000,7 @@ export type Database = {
           month?: number
           updated_at?: string | null
           user_id?: string
+          collection_id?: string | null
           year?: number
         }
         Relationships: [
@@ -888,6 +1016,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "monthly_drink_applications_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "drink_collections"
             referencedColumns: ["id"]
           },
           {
@@ -1261,6 +1396,93 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      usage_records: {
+        Row: {
+          allocation_id: string
+          amount: number
+          co_payers: string[] | null
+          companions: string[] | null
+          created_at: string | null
+          delay_reason: string | null
+          description: string
+          id: string
+          is_reviewed: boolean | null
+          review_status: number
+          last_modified_at: string | null
+          last_modified_by: string | null
+          member_id: string
+          no: number | null
+          receipt_url: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          first_reviewed_by: string | null
+          first_reviewed_at: string | null
+          second_reviewed_by: string | null
+          second_reviewed_at: string | null
+          notes: string | null
+          type: Database["public"]["Enums"]["budget_type"]
+          updated_at: string | null
+          used_at: string
+        }
+        Insert: {
+          allocation_id: string
+          amount: number
+          co_payers?: string[] | null
+          companions?: string[] | null
+          created_at?: string | null
+          delay_reason?: string | null
+          description: string
+          id?: string
+          is_reviewed?: boolean | null
+          review_status?: number
+          last_modified_at?: string | null
+          last_modified_by?: string | null
+          member_id: string
+          receipt_url?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          type: Database["public"]["Enums"]["budget_type"]
+          updated_at?: string | null
+          used_at: string
+        }
+        Update: {
+          allocation_id?: string
+          amount?: number
+          co_payers?: string[] | null
+          companions?: string[] | null
+          created_at?: string | null
+          delay_reason?: string | null
+          description?: string
+          id?: string
+          is_reviewed?: boolean | null
+          review_status?: number
+          last_modified_at?: string | null
+          last_modified_by?: string | null
+          member_id?: string
+          receipt_url?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          type?: Database["public"]["Enums"]["budget_type"]
+          updated_at?: string | null
+          used_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usage_records_allocation_id_fkey"
+            columns: ["allocation_id"]
+            isOneToOne: false
+            referencedRelation: "budget_allocations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usage_records_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
             referencedColumns: ["id"]
           },
         ]
@@ -1983,6 +2205,8 @@ export type LunchGroupSettings = Tables<"lunch_group_settings">
 export type LunchGroupExcludedMember = Tables<"lunch_group_excluded_members">
 export type MonthlyDrinkSettings = Tables<"monthly_drink_settings">
 export type MonthlyDrinkApplication = Tables<"monthly_drink_applications">
+export type DrinkCollection = Tables<"drink_collections">
+export type DrinkCollectionInsert = TablesInsert<"drink_collections">
 export type PushSubscription = Tables<"push_subscriptions">
 export type PushSubscriptionInsert = TablesInsert<"push_subscriptions">
 

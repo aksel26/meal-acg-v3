@@ -22,7 +22,7 @@ const Header = () => {
       }}
       className="sticky top-0 px-4 pt-3"
     >
-      <div className="glass-card-elevated rounded-2xl px-5 py-3 flex justify-center items-center shadow-sm">
+      <div className="glass-card-elevated rounded-2xl px-5 py-3 flex justify-center items-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}

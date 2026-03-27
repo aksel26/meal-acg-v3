@@ -143,7 +143,10 @@ function DrinkSelectionView({
   const availableDrinks = drinkOptions
     .filter((option) => option.available)
     .map((option) => option.name);
-  const displayDrinks = availableDrinks.length > 0 ? availableDrinks : DRINKS;
+  const allDrinks = availableDrinks.length > 0 ? availableDrinks : DRINKS;
+  const displayDrinks = collection.is_one_time
+    ? allDrinks
+    : allDrinks.filter((d) => d !== "기타");
 
   const [currentUserName, setCurrentUserName] = useState("");
   const myDrink =

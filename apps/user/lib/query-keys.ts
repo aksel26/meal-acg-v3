@@ -62,6 +62,8 @@ export const queryKeys = {
   monthly: {
     all: ["monthly"] as const,
     data: ["monthly", "data"] as const,
+    collections: ["monthly", "collections"] as const,
+    collection: (id: string) => ["monthly", "collection", id] as const,
   },
 
   // 포인트 관련 쿼리 (Supabase 기반)

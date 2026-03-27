@@ -23,12 +23,26 @@ export interface MonthlyData {
   totalMembers: number;
 }
 
-async function fetchMonthlyData(): Promise<MonthlyData> {
-  const response = await fetch("/api/monthly", {
+export interface DrinkCollectionItem {
+  id: string;
+  title: string;
+  year: number;
+  month: number | null;
+  is_active: boolean;
+  is_one_time: boolean;
+  drink_options: string[];
+  pickup_persons: string[];
+  created_at: string;
+}
+
+async function fetchMonthlyData(collectionId?: string): Promise<MonthlyData> {
+  const url = collectionId
+    ? `/api/monthly?collectionId=${collectionId}`
+    : "/api/monthly";
+
+  const response = await fetch(url, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
   });
 
   if (!response.ok) {
@@ -44,11 +58,29 @@ async function fetchMonthlyData(): Promise<MonthlyData> {
   throw new Error("Invalid response format");
 }
 
-export const useMonthlyData = () => {
+export const useMonthlyData = (collectionId?: string) => {
   return useQuery({
-    queryKey: queryKeys.monthly.data,
-    queryFn: fetchMonthlyData,
-    staleTime: 2 * 60 * 1000, // 2분
-    gcTime: 5 * 60 * 1000, // 5분
+    queryKey: collectionId
+      ? queryKeys.monthly.collection(collectionId)
+      : queryKeys.monthly.data,
+    queryFn: () => fetchMonthlyData(collectionId),
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
+};
+
+async function fetchCollections(): Promise<DrinkCollectionItem[]> {
+  const response = await fetch("/api/monthly/collections");
+  if (!response.ok) throw new Error("Failed to fetch collections");
+  const result = await response.json();
+  return result.data || [];
+}
+
+export const useCollections = () => {
+  return useQuery({
+    queryKey: queryKeys.monthly.collections,
+    queryFn: fetchCollections,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
   });
 };

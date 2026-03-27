@@ -8,19 +8,12 @@ interface DrinkApplication {
   month: number;
   drink: string | null;
   memo: string | null;
+  collection_id: string | null;
   members: { id: string; full_name: string } | null;
 }
 
-interface DrinkSettings {
-  id: string;
-  year: number;
-  month: number;
-  drink_options: string[];
-  pickup_persons: string[];
-}
-
-// GET /api/monthly - Get monthly drink data
-export async function GET() {
+// GET /api/monthly - 월간 음료 데이터 조회
+export async function GET(request: NextRequest) {
   try {
     const supabase = createServiceClient();
     if (!supabase) {
@@ -35,8 +28,8 @@ export async function GET() {
       });
     }
 
-    const year = new Date().getFullYear();
-    const month = new Date().getMonth() + 1;
+    const searchParams = request.nextUrl.searchParams;
+    const collectionId = searchParams.get("collectionId");
 
     // 전체 멤버 조회
     const { data: members } = await supabase
@@ -44,25 +37,84 @@ export async function GET() {
       .select("id, full_name")
       .order("full_name");
 
-    // 설정 조회 (타입 단언 사용 - 새로 생성된 테이블)
+    let drinkOptions: { name: string; available: boolean }[] = [];
+    let pickupPersons: { name: string }[] = [];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: settings } = await (supabase as any)
-      .from("monthly_drink_settings")
-      .select("*")
-      .eq("year", year)
-      .eq("month", month)
-      .single() as { data: DrinkSettings | null };
+    let applications: any[] | null = null;
 
-    // 신청 내역 조회
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: applications, error: appError } = await (supabase as any)
-      .from("monthly_drink_applications")
-      .select("*")
-      .eq("year", year)
-      .eq("month", month) as { data: DrinkApplication[] | null; error: unknown };
+    if (collectionId) {
+      // collection 기반 조회
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: collection } = await (supabase as any)
+        .from("drink_collections")
+        .select("*")
+        .eq("id", collectionId)
+        .single();
 
-    if (appError) {
-      console.error("Error fetching applications:", appError);
+      if (collection) {
+        const options = (collection.drink_options as string[]) || [];
+        drinkOptions = options.map((name: string) => ({
+          name,
+          available: true,
+        }));
+        const persons = (collection.pickup_persons as string[]) || [];
+        pickupPersons = persons.map((name: string) => ({ name }));
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: apps, error: appError } = await (supabase as any)
+        .from("monthly_drink_applications")
+        .select("*")
+        .eq("collection_id", collectionId) as {
+        data: DrinkApplication[] | null;
+        error: unknown;
+      };
+
+      if (appError) console.error("Error fetching applications:", appError);
+      applications = apps;
+    } else {
+      // 기존 year/month 기반 조회 (하위호환)
+      const year = new Date().getFullYear();
+      const month = new Date().getMonth() + 1;
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: settings } = await (supabase as any)
+        .from("monthly_drink_settings")
+        .select("*")
+        .eq("year", year)
+        .eq("month", month)
+        .single() as { data: { drink_options: string[]; pickup_persons: string[] } | null };
+
+      const defaultDrinkOptions = [
+        { name: "HOT 아메리카노", available: true },
+        { name: "ICE 아메리카노", available: true },
+        { name: "HOT 디카페인 아메리카노", available: true },
+        { name: "ICE 디카페인 아메리카노", available: true },
+        { name: "바닐라크림 콜드브루", available: true },
+        { name: "ICE 자몽허니블랙티", available: true },
+        { name: "선택안함", available: true },
+      ];
+
+      drinkOptions = settings?.drink_options
+        ? settings.drink_options.map((name: string) => ({
+            name,
+            available: true,
+          }))
+        : defaultDrinkOptions;
+
+      pickupPersons = settings?.pickup_persons
+        ? settings.pickup_persons.map((name: string) => ({ name }))
+        : [];
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: apps, error: appError } = await (supabase as any)
+        .from("monthly_drink_applications")
+        .select("*")
+        .eq("year", year)
+        .eq("month", month) as { data: DrinkApplication[] | null; error: unknown };
+
+      if (appError) console.error("Error fetching applications:", appError);
+      applications = apps;
     }
 
     // 멤버별 신청 내역 매핑
@@ -70,37 +122,15 @@ export async function GET() {
       applications?.map((app) => [app.user_id, app]) || []
     );
 
-    // 기본 음료 옵션
-    const defaultDrinkOptions = [
-      { name: "HOT 아메리카노", available: true },
-      { name: "ICE 아메리카노", available: true },
-      { name: "HOT 디카페인 아메리카노", available: true },
-      { name: "ICE 디카페인 아메리카노", available: true },
-      { name: "바닐라크림 콜드브루", available: true },
-      { name: "ICE 자몽허니블랙티", available: true },
-      { name: "선택안함", available: true },
-    ];
-
-    const drinkOptions = settings?.drink_options
-      ? settings.drink_options.map((name: string) => ({
-          name,
-          available: true,
-        }))
-      : defaultDrinkOptions;
-
-    const pickupPersons = settings?.pickup_persons
-      ? settings.pickup_persons.map((name: string) => ({ name }))
-      : [];
-
-    // 전체 멤버 목록과 신청 내역 병합
-    const allApplications = members?.map((member) => {
-      const app = applicationMap.get(member.id);
-      return {
-        name: member.full_name,
-        drink: app?.drink || "",
-        memo: app?.memo || "",
-      };
-    }) || [];
+    const allApplications =
+      members?.map((member) => {
+        const app = applicationMap.get(member.id);
+        return {
+          name: member.full_name,
+          drink: app?.drink || "",
+          memo: app?.memo || "",
+        };
+      }) || [];
 
     return NextResponse.json({
       success: true,
@@ -126,7 +156,7 @@ export async function GET() {
   }
 }
 
-// POST /api/monthly - Assign drink
+// POST /api/monthly - 음료 신청
 export async function POST(request: NextRequest) {
   try {
     const supabase = createServiceClient();
@@ -138,7 +168,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, drink } = body;
+    const { name, drink, collectionId } = body;
 
     if (!name || !drink) {
       return NextResponse.json(
@@ -161,20 +191,42 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const year = new Date().getFullYear();
-    const month = new Date().getMonth() + 1;
+    let year: number;
+    let month: number;
+
+    if (collectionId) {
+      // collection에서 year/month 가져오기
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: collection } = await (supabase as any)
+        .from("drink_collections")
+        .select("year, month")
+        .eq("id", collectionId)
+        .single() as { data: { year: number; month: number | null } | null };
+
+      year = collection?.year || new Date().getFullYear();
+      month = collection?.month || new Date().getMonth() + 1;
+    } else {
+      year = new Date().getFullYear();
+      month = new Date().getMonth() + 1;
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any).from("monthly_drink_applications").upsert(
-      {
-        user_id: member.id,
-        year,
-        month,
-        drink,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id,year,month" }
-    );
+    const upsertData: any = {
+      user_id: member.id,
+      year,
+      month,
+      drink,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (collectionId) {
+      upsertData.collection_id = collectionId;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any)
+      .from("monthly_drink_applications")
+      .upsert(upsertData, { onConflict: "user_id,year,month" });
 
     if (error) {
       console.error("Error assigning drink:", error);

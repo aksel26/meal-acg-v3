@@ -29,7 +29,7 @@ export function BottomNavigation() {
     },
     {
       id: "monthly",
-      label: "먼쓸리",
+      label: "음료취합",
       icon: MonthlyIcon,
     },
     {

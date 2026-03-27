@@ -767,7 +767,7 @@ function CollectionDetailView({
                 : "신청 내역이 없습니다"}
             </div>
           ) : (
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-4 gap-2">
               {filteredApplications.map((app) => {
                 const memberStatus = statusMap.get(app.userId);
                 return (

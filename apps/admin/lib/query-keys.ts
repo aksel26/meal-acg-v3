@@ -80,6 +80,8 @@ export const queryKeys = {
   // Monthly Drinks
   monthly: {
     all: ["monthly"] as const,
+    collections: ["monthly", "collections"] as const,
+    collection: (id: string) => ["monthly", "collections", id] as const,
   },
 
   // Organizations

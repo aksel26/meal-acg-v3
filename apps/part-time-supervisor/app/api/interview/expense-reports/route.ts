@@ -9,9 +9,31 @@ export async function GET(request: NextRequest) {
     const supabase = createServiceClient();
     const { searchParams } = request.nextUrl;
     const jobPostingId = searchParams.get("job_posting_id");
+    const year = searchParams.get("year");
+    const month = searchParams.get("month");
+
+    // year/month 기반 목록 조회
+    if (year && month) {
+      let query = supabase
+        .from("interview_expense_reports")
+        .select("*")
+        .eq("year", Number(year))
+        .eq("month", Number(month))
+        .order("created_at", { ascending: false });
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return NextResponse.json(data ?? []);
+    }
 
     if (!jobPostingId) {
-      return NextResponse.json({ error: "job_posting_id is required" }, { status: 400 });
+      // 전체 목록 반환
+      const { data, error } = await supabase
+        .from("interview_expense_reports")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return NextResponse.json(data ?? []);
     }
 
     const { data, error } = await supabase
@@ -57,34 +79,39 @@ export async function POST(request: NextRequest) {
     await requireAuth();
     const supabase = createServiceClient();
     const body = await request.json();
-    const { job_posting_id, title, items } = body;
+    const { job_posting_id, title, items, year, month } = body;
 
-    if (!job_posting_id || !title) {
-      return NextResponse.json({ error: "job_posting_id and title are required" }, { status: 400 });
+    if (!title) {
+      return NextResponse.json({ error: "title is required" }, { status: 400 });
     }
 
-    const totalLaborCost = await calculateLaborCost(supabase, job_posting_id);
     const parsedItems = items ?? [];
     const totalExtraCost = parsedItems.reduce(
       (sum: number, item: { amount: number }) => sum + (item.amount ?? 0),
       0
     );
+
+    let totalLaborCost = body.total_labor_cost ?? 0;
+    if (job_posting_id) {
+      totalLaborCost = await calculateLaborCost(supabase, job_posting_id);
+    }
     const grandTotal = totalLaborCost + totalExtraCost;
+
+    const insertData: Record<string, unknown> = {
+      title,
+      items: parsedItems,
+      total_labor_cost: totalLaborCost,
+      total_extra_cost: totalExtraCost,
+      grand_total: grandTotal,
+      status: body.status ?? "draft",
+    };
+    if (job_posting_id) insertData.job_posting_id = job_posting_id;
+    if (year !== undefined) insertData.year = year;
+    if (month !== undefined) insertData.month = month;
 
     const { data, error } = await supabase
       .from("interview_expense_reports")
-      .upsert(
-        {
-          job_posting_id,
-          title,
-          items: parsedItems,
-          total_labor_cost: totalLaborCost,
-          total_extra_cost: totalExtraCost,
-          grand_total: grandTotal,
-          status: body.status ?? "draft",
-        },
-        { onConflict: "job_posting_id" }
-      )
+      .upsert(insertData, { onConflict: "job_posting_id" })
       .select()
       .single();
 

@@ -1,232 +1,118 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
-import {
-  DndContext,
-  DragOverlay,
-  pointerWithin,
-  type DragStartEvent,
-  type DragEndEvent,
-} from "@dnd-kit/core";
-import { useQueryClient } from "@tanstack/react-query";
-import { useRoomAssignments } from "@/hooks/use-room-assignments";
-import { useAssignmentsByJobPosting } from "@/hooks/use-assignments";
-import { useJobPostings } from "@/hooks/use-job-postings";
-import { queryKeys } from "@/lib/query-keys";
-import {
-  useDeleteRoomSlot,
-  useAddRoomSlot,
-} from "@/hooks/use-room-assignment-mutations";
-import DateJobPostingNode from "@/components/room-assignments/DateJobPostingNode";
-import RoomNode from "@/components/room-assignments/RoomNode";
-import WorkerListNode from "@/components/room-assignments/WorkerListNode";
-import FlowConnector from "@/components/room-assignments/FlowConnector";
-import { getRoomById } from "@/lib/room-constants";
+import { useState, useCallback } from "react";
+import { useRoomReservations } from "@/hooks/use-room-reservations-new";
+import { useUpdateRoomReservation } from "@/hooks/use-room-reservation-new-mutations";
+import { TimelineGrid } from "@/components/room-reservations/TimelineGrid";
+import ReservationDialog from "@/components/room-reservations/ReservationDialog";
 import { toast } from "@repo/ui/src/sonner";
-import dayjs from "dayjs";
+import type { RoomReservation } from "@/hooks/use-room-reservations-new";
 
-type DragData = {
-  assignmentId: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  room: string;
-  workerName: string;
-};
+function getTodayString(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
 
 export default function RoomAssignmentsPage() {
-  const [date, setDate] = useState(() => dayjs().format("YYYY-MM-DD"));
-  const [selectedJobPostingId, setSelectedJobPostingId] = useState<
-    string | null
-  >(null);
-  const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
-  const [activeDrag, setActiveDrag] = useState<DragData | null>(null);
+  const [date, setDate] = useState(getTodayString);
+  const { data: reservations, isLoading } = useRoomReservations(date);
+  const updateMutation = useUpdateRoomReservation();
 
-  const queryClient = useQueryClient();
-  const deleteSlot = useDeleteRoomSlot();
-  const addSlot = useAddRoomSlot();
+  // Dialog state
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogProps, setDialogProps] = useState<{
+    roomId?: string;
+    startTime?: string;
+    endTime?: string;
+    reservation?: RoomReservation;
+  }>({});
 
-  const { data: jobPostingsData } = useJobPostings();
-  const activeJobPostings = useMemo(
-    () =>
-      (jobPostingsData || []).filter(
-        (jp) => jp.status !== "closed" && jp.status !== "completed"
-      ),
-    [jobPostingsData]
-  );
-  const jobPostings = useMemo(
-    () => activeJobPostings.filter((jp) => jp.start_date === date),
-    [activeJobPostings, date]
-  );
-  const jobPostingDates = useMemo(
-    () => new Set(activeJobPostings.map((jp) => jp.start_date)),
-    [activeJobPostings]
-  );
+  const handleDateChange = (direction: -1 | 1) => {
+    const d = new Date(date + "T00:00:00");
+    d.setDate(d.getDate() + direction);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    setDate(`${y}-${m}-${day}`);
+  };
 
-  // 공고 목록 로드 시 첫 번째 공고 자동 선택
-  useEffect(() => {
-    if (jobPostings.length === 0) return;
-    const isValid =
-      selectedJobPostingId !== null &&
-      jobPostings.some((jp) => jp.id === selectedJobPostingId);
-    if (!isValid) {
-      setSelectedJobPostingId(jobPostings[0]!.id);
+  const handleCreateRequest = useCallback((roomId: string, startTime: string, endTime: string) => {
+    setDialogProps({ roomId, startTime, endTime, reservation: undefined });
+    setDialogOpen(true);
+  }, []);
+
+  const handleMoveReservation = useCallback(async (id: string, roomId: string) => {
+    try {
+      const res = await updateMutation.mutateAsync({ id, room_id: roomId });
+      if (res.warning) toast.warning("이동한 시간에 다른 예약이 있습니다.");
+    } catch {
+      toast.error("이동에 실패했습니다.");
     }
-  }, [jobPostings, selectedJobPostingId]);
+  }, [updateMutation]);
 
-  const { data: roomData } = useRoomAssignments(date, selectedJobPostingId);
-  const roomAssignments = roomData?.room_assignments || [];
+  const handleResizeReservation = useCallback(async (id: string, startTime: string, endTime: string) => {
+    try {
+      const res = await updateMutation.mutateAsync({ id, start_time: startTime, end_time: endTime });
+      if (res.warning) toast.warning("변경된 시간에 다른 예약이 있습니다.");
+    } catch {
+      toast.error("시간 변경에 실패했습니다.");
+    }
+  }, [updateMutation]);
 
-  const handleJobPostingSelect = useCallback(
-    (id: string | null) => {
-      if (id === selectedJobPostingId && id !== null) {
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.assignments.byJobPosting(id),
-        });
-      }
-      setSelectedJobPostingId(id);
-    },
-    [selectedJobPostingId, queryClient]
-  );
-
-  const { data: assignments } =
-    useAssignmentsByJobPosting(selectedJobPostingId);
-
-  const unassignedCount = useMemo(() => {
-    if (!assignments) return 0;
-    const assignedIds = new Set(roomAssignments.map((ra) => ra.assignment_id));
-    return assignments.filter((a) => !assignedIds.has(a.id)).length;
-  }, [assignments, roomAssignments]);
-
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    setActiveDrag(event.active.data.current as DragData);
+  const handleClickReservation = useCallback((reservation: RoomReservation) => {
+    setDialogProps({ reservation, roomId: undefined, startTime: undefined, endTime: undefined });
+    setDialogOpen(true);
   }, []);
 
-  const handleDragEnd = useCallback(
-    async (event: DragEndEvent) => {
-      setActiveDrag(null);
-      const { active, over } = event;
-      if (!over) return;
-
-      const data = active.data.current as DragData;
-      const targetRoom = over.id as string;
-
-      if (data.room === targetRoom) return;
-
-      try {
-        if (targetRoom === "unassigned") {
-          // 회의실 → 미배정 (슬롯 삭제)
-          await deleteSlot.mutateAsync({
-            assignment_id: data.assignmentId,
-            date: data.date,
-            start_time: data.startTime,
-            end_time: data.endTime,
-            room: data.room,
-          });
-          toast.success(`${data.workerName} → 미배정으로 변경`);
-        } else if (data.room === "unassigned") {
-          // 미배정 → 회의실 신규 배정
-          await addSlot.mutateAsync({
-            assignment_id: data.assignmentId,
-            date: data.date,
-            start_time: data.startTime,
-            end_time: data.endTime,
-            room: targetRoom,
-          });
-          const roomName = getRoomById(targetRoom)?.name ?? targetRoom;
-          toast.success(`${data.workerName} → ${roomName} 배정 완료`);
-        } else {
-          // 기존 회의실 → 다른 회의실 이동
-          await deleteSlot.mutateAsync({
-            assignment_id: data.assignmentId,
-            date: data.date,
-            start_time: data.startTime,
-            end_time: data.endTime,
-            room: data.room,
-          });
-          await addSlot.mutateAsync({
-            assignment_id: data.assignmentId,
-            date: data.date,
-            start_time: data.startTime,
-            end_time: data.endTime,
-            room: targetRoom,
-            replace: true,
-          });
-          const roomName = getRoomById(targetRoom)?.name ?? targetRoom;
-          toast.success(`${data.workerName} → ${roomName} 이동 완료`);
-        }
-      } catch (err) {
-        toast.error(
-          err instanceof Error ? err.message : "회의실 변경에 실패했습니다"
-        );
-      }
-    },
-    [deleteSlot, addSlot]
-  );
-
-  const handleDragCancel = useCallback(() => {
-    setActiveDrag(null);
-  }, []);
+  // Date display with day of week
+  const dateObj = new Date(date + "T00:00:00");
+  const displayDate = `${dateObj.getFullYear()}년 ${dateObj.getMonth() + 1}월 ${dateObj.getDate()}일 (${DAY_NAMES[dateObj.getDay()]})`;
 
   return (
-    <DndContext
-      collisionDetection={pointerWithin}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      onDragCancel={handleDragCancel}
-    >
-      <div className="overflow-x-auto">
-        <div className="flex items-start gap-0">
-          <div className="w-[280px] shrink-0">
-            <DateJobPostingNode
-              date={date}
-              onDateChange={setDate}
-              jobPostings={jobPostings}
-              jobPostingDates={jobPostingDates}
-              selectedJobPostingId={selectedJobPostingId}
-              onJobPostingSelect={handleJobPostingSelect}
-            />
-          </div>
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <div className="flex h-10 items-center gap-2 rounded-lg border bg-white px-3">
+          <button onClick={() => handleDateChange(-1)} className="text-slate-400 hover:text-slate-600">&larr;</button>
+          <span className="min-w-[180px] text-center font-medium text-slate-900">{displayDate}</span>
+          <button onClick={() => handleDateChange(1)} className="text-slate-400 hover:text-slate-600">&rarr;</button>
+        </div>
 
-          <FlowConnector isActive />
-
-          <div className="w-[160px] shrink-0">
-            <RoomNode
-              roomAssignments={roomAssignments}
-              selectedRoom={selectedRoom}
-              onSelect={setSelectedRoom}
-              unassignedCount={unassignedCount}
-            />
-          </div>
-
-          <FlowConnector isActive={roomAssignments.length > 0} />
-
-          <div className="min-w-[400px] flex-1">
-            <WorkerListNode
-              roomAssignments={roomAssignments}
-              assignments={assignments || []}
-              selectedRoom={selectedRoom}
-              date={date}
-              selectedJobPosting={jobPostings.find((jp) => jp.id === selectedJobPostingId) ?? null}
-            />
-          </div>
+        <div className="flex items-center gap-3 text-xs text-slate-500">
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-2.5 w-2.5 rounded-sm bg-blue-200" /> 감독관
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-2.5 w-2.5 rounded-sm bg-indigo-200" /> 면접교육
+          </span>
         </div>
       </div>
 
-      <DragOverlay>
-        {activeDrag ? (
-          <div className="rounded-lg border border-indigo-200 bg-white px-3 py-2 shadow-lg">
-            <p className="text-sm font-medium text-slate-700">
-              {activeDrag.workerName}
-            </p>
-            <p className="text-xs text-slate-400">
-              {activeDrag.room === "unassigned"
-                ? "미배정 →"
-                : `${getRoomById(activeDrag.room)?.name ?? activeDrag.room} →`}
-            </p>
-          </div>
-        ) : null}
-      </DragOverlay>
-    </DndContext>
+      {/* Timeline */}
+      {isLoading ? (
+        <div className="flex h-60 items-center justify-center text-slate-400">불러오는 중...</div>
+      ) : (
+        <TimelineGrid
+          reservations={reservations ?? []}
+          onCreateRequest={handleCreateRequest}
+          onMoveReservation={handleMoveReservation}
+          onResizeReservation={handleResizeReservation}
+          onClickReservation={handleClickReservation}
+        />
+      )}
+
+      {/* Reservation Dialog */}
+      <ReservationDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        date={date}
+        {...dialogProps}
+      />
+    </div>
   );
 }

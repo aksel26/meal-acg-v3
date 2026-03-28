@@ -10,7 +10,8 @@ import {
 import { useClients } from "@/hooks/use-clients";
 import { toast } from "@repo/ui/src/sonner";
 import { Button } from "@repo/ui/src/button";
-import { DatePicker } from "@repo/ui/src/date-picker";
+import { DateRangePicker } from "@repo/ui/src/date-range-picker";
+import { TimeRangePicker } from "@repo/ui/src/time-range-picker";
 import {
   Dialog,
   DialogContent,
@@ -42,8 +43,8 @@ const defaultValues: FormData = {
   title: "",
   start_date: new Date().toISOString().slice(0, 10),
   end_date: new Date().toISOString().slice(0, 10),
-  work_start: "",
-  work_end: "",
+  work_start: "09:00",
+  work_end: "17:00",
   platform: "",
   total_headcount: 0,
   ft_count: 0,
@@ -220,59 +221,56 @@ export function InterviewJobPostingModal({
                 <fieldset className="rounded-lg bg-slate-50 p-4">
                   <legend className="px-2 text-sm font-semibold text-slate-700">일정</legend>
                   <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-600">
-                          시작일 <span className="text-red-500">*</span>
-                        </label>
-                        <Controller
-                          name="start_date"
-                          control={control}
-                          rules={{ required: "시작일을 선택하세요" }}
-                          render={({ field }) => (
-                            <DatePicker
-                              value={field.value}
-                              onChange={field.onChange}
-                              placeholder="시작일"
-                            />
-                          )}
-                        />
-                      </div>
-                      <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-600">
-                          종료일 <span className="text-red-500">*</span>
-                        </label>
-                        <Controller
-                          name="end_date"
-                          control={control}
-                          rules={{ required: "종료일을 선택하세요" }}
-                          render={({ field }) => (
-                            <DatePicker
-                              value={field.value}
-                              onChange={field.onChange}
-                              placeholder="종료일"
-                            />
-                          )}
-                        />
-                      </div>
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-slate-600">
+                        교육 기간 <span className="text-red-500">*</span>
+                      </label>
+                      <Controller
+                        name="start_date"
+                        control={control}
+                        rules={{ required: "기간을 선택하세요" }}
+                        render={({ field: startField }) => (
+                          <Controller
+                            name="end_date"
+                            control={control}
+                            rules={{ required: "기간을 선택하세요" }}
+                            render={({ field: endField }) => (
+                              <DateRangePicker
+                                startDate={startField.value}
+                                endDate={endField.value}
+                                onChange={({ startDate, endDate }) => {
+                                  startField.onChange(startDate);
+                                  endField.onChange(endDate);
+                                }}
+                                placeholder="시작일 ~ 종료일"
+                              />
+                            )}
+                          />
+                        )}
+                      />
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-600">근무 시작</label>
-                        <input
-                          type="time"
-                          {...register("work_start")}
-                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition-all duration-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-                        />
-                      </div>
-                      <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-600">근무 종료</label>
-                        <input
-                          type="time"
-                          {...register("work_end")}
-                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition-all duration-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-                        />
-                      </div>
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-slate-600">근무 시간</label>
+                      <Controller
+                        name="work_start"
+                        control={control}
+                        render={({ field: startField }) => (
+                          <Controller
+                            name="work_end"
+                            control={control}
+                            render={({ field: endField }) => (
+                              <TimeRangePicker
+                                startTime={startField.value}
+                                endTime={endField.value}
+                                onChange={({ startTime, endTime }) => {
+                                  startField.onChange(startTime);
+                                  endField.onChange(endTime);
+                                }}
+                              />
+                            )}
+                          />
+                        )}
+                      />
                     </div>
                   </div>
                 </fieldset>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 import { useInterviewSettlement } from "@/hooks/use-interview-settlement";
 import { formatCurrency } from "@/lib/cost-utils";
@@ -8,13 +8,6 @@ import { SettlementTable } from "./SettlementTable";
 import { SettlementExportButton } from "./SettlementExportButton";
 import { SettlementLockButton } from "@/components/common/SettlementLockButton";
 import { useSettlementLock } from "@/hooks/use-settlement-lock";
-import { AuditLogViewer } from "@/components/common/AuditLogViewer";
-
-const MAIN_TABS = [
-  { value: "settlement", label: "정산" },
-  { value: "audit", label: "감사 로그" },
-] as const;
-
 const ROLE_TABS = [
   { value: "", label: "전체" },
   { value: "rp", label: "RP" },
@@ -24,7 +17,6 @@ const ROLE_TABS = [
 
 export function SettlementPage() {
   const now = new Date();
-  const [activeTab, setActiveTab] = useState<"settlement" | "audit">("settlement");
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [roleFilter, setRoleFilter] = useState("");
@@ -55,29 +47,6 @@ export function SettlementPage() {
 
   return (
     <div className="space-y-6">
-      {/* 메인 탭 */}
-      <div className="flex gap-1 rounded-lg border bg-white p-1 w-fit">
-        {MAIN_TABS.map((tab) => (
-          <button
-            key={tab.value}
-            onClick={() => setActiveTab(tab.value)}
-            className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
-              activeTab === tab.value
-                ? "bg-slate-900 text-white"
-                : "text-slate-500 hover:text-slate-700"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {activeTab === "audit" && (
-        <AuditLogViewer defaultTableName="interview_work_records" />
-      )}
-
-      {activeTab === "settlement" && (
-      <>
       {/* 필터 행 */}
       <div className="flex items-center gap-3">
         {/* 월 내비게이션 */}
@@ -107,25 +76,39 @@ export function SettlementPage() {
 
       {/* 요약 카드 */}
       {data && (
-        <div className="grid grid-cols-3 gap-4">
-          <div className="rounded-md bg-white p-5">
-            <p className="text-sm text-slate-500">총 인건비</p>
-            <p className="mt-1 text-2xl font-semibold text-slate-900">
-              {formatCurrency(data.summary.totalAmount)}
-            </p>
+        <div className="rounded-lg bg-white p-5">
+          <div className="flex items-center gap-6 border-b pb-4">
+            <div>
+              <p className="text-sm text-slate-500">총 인건비</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">
+                {formatCurrency(data.summary.totalAmount)}
+              </p>
+            </div>
+            <div className="rounded-lg bg-slate-50 px-4 py-2">
+              <p className="text-xs text-slate-500">총 인원</p>
+              <p className="text-lg font-bold text-slate-900">{data.summary.totalWorkers}<span className="ml-0.5 text-sm font-normal text-slate-500">명</span></p>
+            </div>
           </div>
-          <div className="rounded-md bg-white p-5">
-            <p className="text-sm text-slate-500">인력 수</p>
-            <p className="mt-1 text-2xl font-semibold text-slate-900">
-              {data.summary.totalWorkers}명
-            </p>
-          </div>
-          <div className="rounded-md bg-white p-5">
-            <p className="text-sm text-slate-500">총 근무시간</p>
-            <p className="mt-1 text-2xl font-semibold text-slate-900">
-              {data.summary.totalWorkHours}h
-            </p>
-          </div>
+          {data.summary.byRole && (
+            <div className="grid grid-cols-3 divide-x pt-4">
+              {([
+                { key: "rp", label: "RP", bg: "bg-blue-50", text: "text-blue-700" },
+                { key: "ft", label: "FT", bg: "bg-emerald-50", text: "text-emerald-700" },
+                { key: "instructor", label: "강사", bg: "bg-purple-50", text: "text-purple-700" },
+              ] as const).map(({ key, label, bg, text }) => {
+                const role = data.summary.byRole[key];
+                return (
+                  <div key={key} className="flex flex-col items-center px-4">
+                    <div className="flex items-center gap-1.5">
+                      <span className={`inline-flex items-center rounded-full ${bg} px-2 py-0.5 text-xs font-medium ${text}`}>{label}</span>
+                      <span className="text-xs text-slate-400">{role.count}명</span>
+                    </div>
+                    <p className="mt-1 text-base font-semibold text-slate-900">{formatCurrency(role.amount)}</p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
@@ -168,9 +151,6 @@ export function SettlementPage() {
         isLoading={isLoading}
         isLocked={isLocked}
       />
-      </>
-      )}
-
     </div>
   );
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@repo/ui/src/tooltip";
 import type { InterviewPersonnel } from "@/lib/interview-types";
 
 type Props = {
@@ -80,26 +82,42 @@ export function PersonnelTable({ data, isLoading, onEdit }: Props) {
                 <td className="px-4 py-3 text-right text-slate-600">
                   {amount != null ? `${amount.toLocaleString("ko-KR")}원` : "-"}
                 </td>
-                <td className="px-4 py-3 text-slate-600">
-                  {person.assignments && person.assignments.length > 0
-                    ? person.assignments[0]!.job_posting_title
-                    : "-"}
+                <td className="px-4 py-3">
+                  {person.assignments && person.assignments.length > 0 ? (
+                    <Link
+                      href={`/interview/job-postings/${person.assignments[0]!.job_posting_id}`}
+                      className="text-blue-600 hover:text-blue-800 hover:underline"
+                    >
+                      {person.assignments[0]!.job_posting_title}
+                    </Link>
+                  ) : (
+                    <span className="text-slate-400">-</span>
+                  )}
                 </td>
                 <td className="px-4 py-3 text-center">
                   {person.assignments && person.assignments.length > 0 ? (
-                    <span className="group relative cursor-default text-slate-600">
-                      {person.assignments.length}
-                      <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 rounded-lg border bg-white px-3 py-2 opacity-0 shadow-lg transition-opacity group-hover:pointer-events-auto group-hover:opacity-100">
-                        <p className="mb-1 whitespace-nowrap text-xs font-medium text-slate-500">참여 공고 목록</p>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex h-6 min-w-6 cursor-default items-center justify-center rounded-full bg-slate-100 px-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-200">
+                          {person.assignments.length}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-xs" onPointerDownOutside={(e) => e.preventDefault()}>
+                        <p className="mb-1 font-medium">참여 공고 목록</p>
                         <ul className="space-y-0.5">
                           {person.assignments.map((a) => (
-                            <li key={a.job_posting_id} className="whitespace-nowrap text-xs text-slate-700">
-                              {a.job_posting_title}
+                            <li key={a.job_posting_id}>
+                              <Link
+                                href={`/interview/job-postings/${a.job_posting_id}`}
+                                className="underline decoration-dotted hover:decoration-solid"
+                              >
+                                {a.job_posting_title}
+                              </Link>
                             </li>
                           ))}
                         </ul>
-                      </div>
-                    </span>
+                      </TooltipContent>
+                    </Tooltip>
                   ) : (
                     <span className="text-slate-400">0</span>
                   )}

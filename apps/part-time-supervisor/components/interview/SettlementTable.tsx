@@ -23,6 +23,7 @@ type SettlementPersonnel = {
     amount: number;
     is_overridden: boolean;
     note: string | null;
+    job_posting_id: string | null;
     job_posting_title: string | null;
   }[];
   assignments?: {

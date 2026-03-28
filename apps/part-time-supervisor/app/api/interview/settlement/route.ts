@@ -62,11 +62,11 @@ export async function GET(request: NextRequest) {
       postingsByPersonnel.set(a.personnel_id, list);
     }
 
-    // Helper: find job posting title for a work record by matching date range
-    const findPostingTitle = (personnelId: string, workDate: string): string | null => {
+    // Helper: find job posting for a work record by matching date range
+    const findPosting = (personnelId: string, workDate: string): { id: string; title: string } | null => {
       const postings = postingsByPersonnel.get(personnelId) ?? [];
       const match = postings.find((p) => workDate >= p.start_date && workDate <= p.end_date);
-      return match?.title ?? null;
+      return match ? { id: match.id, title: match.title } : null;
     };
 
     // Derive assignmentsByPersonnel for main table display
@@ -113,7 +113,8 @@ export async function GET(request: NextRequest) {
               amount: recordAmount,
               is_overridden: r.pay_rate_override != null || r.pay_type_override != null,
               note: r.note,
-              job_posting_title: findPostingTitle(p.id, r.work_date),
+              job_posting_id: findPosting(p.id, r.work_date)?.id ?? null,
+              job_posting_title: findPosting(p.id, r.work_date)?.title ?? null,
             };
           });
 
@@ -154,12 +155,23 @@ export async function GET(request: NextRequest) {
     // Sort by amount descending
     personnel.sort((a, b) => b.amount - a.amount);
 
+    // 역할별 요약
+    const byRole = { rp: { amount: 0, count: 0 }, ft: { amount: 0, count: 0 }, instructor: { amount: 0, count: 0 } };
+    for (const p of personnel) {
+      const r = p.role as keyof typeof byRole;
+      if (byRole[r]) {
+        byRole[r].amount += p.amount;
+        byRole[r].count += 1;
+      }
+    }
+
     return NextResponse.json({
       summary: {
         totalAmount,
         totalWorkers: personnel.length,
         totalWorkHours: Math.round(totalWorkHours * 10) / 10,
         totalWorkDays,
+        byRole,
       },
       personnel,
     });

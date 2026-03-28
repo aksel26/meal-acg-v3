@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { formatCurrency } from "@/lib/cost-utils";
 
 type Detail = {
@@ -11,6 +12,7 @@ type Detail = {
   amount: number;
   is_overridden: boolean;
   note: string | null;
+  job_posting_id: string | null;
   job_posting_title: string | null;
 };
 
@@ -37,8 +39,17 @@ export function SettlementExpandedRow({ details }: Props) {
           {details.map((d) => (
             <tr key={d.id} className="border-b last:border-0">
               <td className="py-2.5 text-slate-900">{d.work_date}</td>
-              <td className="py-2.5 text-slate-600">
-                {d.job_posting_title ?? "-"}
+              <td className="py-2.5">
+                {d.job_posting_id && d.job_posting_title ? (
+                  <Link
+                    href={`/interview/job-postings/${d.job_posting_id}`}
+                    className="text-blue-600 hover:text-blue-800 hover:underline"
+                  >
+                    {d.job_posting_title}
+                  </Link>
+                ) : (
+                  <span className="text-slate-400">-</span>
+                )}
               </td>
               <td className="py-2.5 text-slate-600">{d.work_hours}h</td>
               <td className="py-2.5">

@@ -1,20 +1,21 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 
-type Member = {
+export type Member = {
   id: string;
   full_name: string;
-  member_role: string;
 };
 
 export function useMembers() {
   return useQuery<Member[]>({
-    queryKey: ["members"],
+    queryKey: queryKeys.members.all,
     queryFn: async () => {
       const res = await fetch("/api/members");
-      if (!res.ok) throw new Error("Failed to fetch members");
+      if (!res.ok) throw new Error("Failed to fetch");
       return res.json();
     },
+    staleTime: 5 * 60 * 1000,
   });
 }

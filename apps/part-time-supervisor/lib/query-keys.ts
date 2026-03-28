@@ -83,4 +83,13 @@ export const queryKeys = {
     byJobPosting: (id: string) =>
       ["interviewJobAssignments", id] as const,
   },
+
+  roomReservations: {
+    all: ["roomReservations"] as const,
+    byDate: (date: string) => ["roomReservations", date] as const,
+  },
+
+  members: {
+    all: ["members"] as const,
+  },
 };

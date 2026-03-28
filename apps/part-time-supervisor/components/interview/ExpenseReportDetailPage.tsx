@@ -5,6 +5,18 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Plus, Trash2, Download, Lock, Unlock } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "@repo/ui/src/sonner";
+import { Button } from "@repo/ui/src/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@repo/ui/src/alert-dialog";
 import { useExpenseReportDetail } from "@/hooks/use-expense-reports";
 import { useUpdateExpenseReport, useDeleteExpenseReportById } from "@/hooks/use-expense-report-mutations";
 import { formatCurrency } from "@/lib/cost-utils";
@@ -21,7 +33,6 @@ export function ExpenseReportDetailPage({ id }: { id: string }) {
   const [title, setTitle] = useState("");
   const [items, setItems] = useState<ItemWithId[]>([]);
   const [isDirty, setIsDirty] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
@@ -218,17 +229,6 @@ export function ExpenseReportDetailPage({ id }: { id: string }) {
         </div>
       </div>
 
-      {/* 인건비 섹션 */}
-      <div className="rounded-lg border bg-white p-5 space-y-3">
-        <h2 className="text-sm font-semibold text-slate-700">인건비</h2>
-        <div className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3">
-          <span className="text-sm text-slate-500">자동 산정 (배정 기록 기반)</span>
-          <span className="text-base font-semibold tabular-nums text-slate-900">
-            {formatCurrency(laborCost)}
-          </span>
-        </div>
-      </div>
-
       {/* 부가비용 섹션 */}
       <div className="rounded-lg border bg-white p-5 space-y-4">
         <div className="flex items-center justify-between">
@@ -340,46 +340,37 @@ export function ExpenseReportDetailPage({ id }: { id: string }) {
       {/* 저장 / 삭제 */}
       {isDraft && (
         <div className="flex items-center justify-between">
-          <button
-            onClick={() => setShowDeleteConfirm(true)}
-            className="rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
-          >
-            삭제
-          </button>
-          <button
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50">
+                삭제
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="!max-w-sm">
+              <AlertDialogHeader>
+                <AlertDialogTitle>지출결의서 삭제</AlertDialogTitle>
+                <AlertDialogDescription>
+                  이 지출결의서를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>취소</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDelete}
+                  disabled={deleteMutation.isPending}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  {deleteMutation.isPending ? "삭제 중..." : "삭제"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          <Button
             onClick={handleSave}
             disabled={!isDirty || update.isPending}
-            className="rounded-lg bg-slate-900 px-5 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-40"
           >
             {update.isPending ? "저장 중..." : "저장"}
-          </button>
-        </div>
-      )}
-
-      {/* 삭제 확인 */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl">
-            <h3 className="text-base font-semibold text-slate-900">지출결의서 삭제</h3>
-            <p className="mt-2 text-sm text-slate-500">
-              이 지출결의서를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
-            </p>
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                onClick={() => setShowDeleteConfirm(false)}
-                className="rounded-lg border px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-              >
-                취소
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={deleteMutation.isPending}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
-              >
-                {deleteMutation.isPending ? "삭제 중..." : "삭제"}
-              </button>
-            </div>
-          </div>
+          </Button>
         </div>
       )}
     </div>

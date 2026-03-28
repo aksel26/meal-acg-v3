@@ -4,6 +4,14 @@ import { useState } from "react";
 import Link from "next/link";
 import { Plus, Trash2, FileText, Download } from "lucide-react";
 import { toast } from "@repo/ui/src/sonner";
+import { Button } from "@repo/ui/src/button";
+import { Input } from "@repo/ui/src/input";
+import { Label } from "@repo/ui/src/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@repo/ui/src/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@repo/ui/src/alert-dialog";
 import { useExpenseReports } from "@/hooks/use-expense-reports";
 import { useCreateExpenseReport, useDeleteExpenseReportById } from "@/hooks/use-expense-report-mutations";
 import { formatCurrency } from "@/lib/cost-utils";
@@ -156,49 +164,45 @@ export function ExpenseReportListPage() {
       </div>
 
       {/* 새 지출결의서 다이얼로그 */}
-      {showCreateDialog && (
-        <CreateExpenseReportDialog
-          year={year}
-          month={month}
-          onClose={() => setShowCreateDialog(false)}
-        />
-      )}
+      <CreateExpenseReportDialog
+        open={showCreateDialog}
+        year={year}
+        month={month}
+        onClose={() => setShowCreateDialog(false)}
+      />
 
       {/* 삭제 확인 다이얼로그 */}
-      {deleteTargetId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl">
-            <h3 className="text-base font-semibold text-slate-900">지출결의서 삭제</h3>
-            <p className="mt-2 text-sm text-slate-500">
+      <AlertDialog open={!!deleteTargetId} onOpenChange={(v) => !v && setDeleteTargetId(null)}>
+        <AlertDialogContent className="!max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>지출결의서 삭제</AlertDialogTitle>
+            <AlertDialogDescription>
               이 지출결의서를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
-            </p>
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                onClick={() => setDeleteTargetId(null)}
-                className="rounded-lg border px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-              >
-                취소
-              </button>
-              <button
-                onClick={() => handleDelete(deleteTargetId)}
-                disabled={deleteMutation.isPending}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
-              >
-                {deleteMutation.isPending ? "삭제 중..." : "삭제"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteTargetId && handleDelete(deleteTargetId)}
+              disabled={deleteMutation.isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleteMutation.isPending ? "삭제 중..." : "삭제"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
 
 function CreateExpenseReportDialog({
+  open,
   year,
   month,
   onClose,
 }: {
+  open: boolean;
   year: number;
   month: number;
   onClose: () => void;
@@ -221,36 +225,27 @@ function CreateExpenseReportDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-        <h3 className="text-base font-semibold text-slate-900">새 지출결의서</h3>
-        <p className="mt-1 text-sm text-slate-500">{year}년 {month}월</p>
-        <div className="mt-4">
-          <label className="text-sm font-medium text-slate-700">제목</label>
-          <input
-            type="text"
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="!max-w-md">
+        <DialogHeader>
+          <DialogTitle>새 지출결의서</DialogTitle>
+          <p className="text-sm text-muted-foreground">{year}년 {month}월</p>
+        </DialogHeader>
+        <div className="space-y-1.5">
+          <Label>제목</Label>
+          <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="mt-1.5 h-10 w-full rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             autoFocus
           />
         </div>
-        <div className="mt-5 flex justify-end gap-2">
-          <button
-            onClick={onClose}
-            className="rounded-lg border px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-          >
-            취소
-          </button>
-          <button
-            onClick={handleCreate}
-            disabled={create.isPending}
-            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
-          >
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>취소</Button>
+          <Button onClick={handleCreate} disabled={create.isPending}>
             {create.isPending ? "생성 중..." : "생성"}
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

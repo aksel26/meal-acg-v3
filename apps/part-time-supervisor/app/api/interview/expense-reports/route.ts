@@ -105,9 +105,28 @@ export async function POST(request: NextRequest) {
       grand_total: grandTotal,
       status: body.status ?? "draft",
     };
-    if (job_posting_id) insertData.job_posting_id = job_posting_id;
-    if (year !== undefined) insertData.year = year;
-    if (month !== undefined) insertData.month = month;
+    if (job_posting_id) {
+      insertData.job_posting_id = job_posting_id;
+      // 공고 시작일에서 year/month 자동 추출 (명시적으로 전달되지 않은 경우)
+      if (year === undefined || month === undefined) {
+        const { data: posting } = await supabase
+          .from("interview_job_postings")
+          .select("start_date")
+          .eq("id", job_posting_id)
+          .single();
+        if (posting?.start_date) {
+          const [pYear, pMonth] = posting.start_date.split("-").map(Number);
+          insertData.year = year ?? pYear;
+          insertData.month = month ?? pMonth;
+        }
+      } else {
+        insertData.year = year;
+        insertData.month = month;
+      }
+    } else {
+      if (year !== undefined) insertData.year = year;
+      if (month !== undefined) insertData.month = month;
+    }
 
     const { data, error } = await supabase
       .from("interview_expense_reports")

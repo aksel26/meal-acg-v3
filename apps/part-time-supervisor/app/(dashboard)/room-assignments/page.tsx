@@ -46,9 +46,9 @@ export default function RoomAssignmentsPage() {
     setDialogOpen(true);
   }, []);
 
-  const handleMoveReservation = useCallback(async (id: string, roomId: string) => {
+  const handleMoveReservation = useCallback(async (id: string, roomId: string, startTime: string, endTime: string) => {
     try {
-      const res = await updateMutation.mutateAsync({ id, room_id: roomId });
+      const res = await updateMutation.mutateAsync({ id, room_id: roomId, start_time: startTime, end_time: endTime });
       if (res.warning) toast.warning("이동한 시간에 다른 예약이 있습니다.");
     } catch {
       toast.error("이동에 실패했습니다.");

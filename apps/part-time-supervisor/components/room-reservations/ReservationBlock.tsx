@@ -8,7 +8,7 @@ type Props = {
   width: string;
   isDragging: boolean;
   onClick: () => void;
-  onDragStart: () => void;
+  onDragStart: (e: React.MouseEvent) => void;
   onResizeStart: (edge: "left" | "right") => void;
 };
 
@@ -46,7 +46,7 @@ export function ReservationBlock({
       onMouseDown={(e) => {
         e.stopPropagation();
         if (!(e.target as HTMLElement).dataset.resize) {
-          onDragStart();
+          onDragStart(e);
         }
       }}
       onClick={(e) => {

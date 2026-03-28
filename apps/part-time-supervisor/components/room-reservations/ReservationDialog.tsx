@@ -3,6 +3,18 @@
 import { useState, useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import { toast } from "@repo/ui/src/sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@repo/ui/src/dialog";
+import { Button } from "@repo/ui/src/button";
+import { Input } from "@repo/ui/src/input";
+import { Textarea } from "@repo/ui/src/textarea";
+import { Label } from "@repo/ui/src/label";
+import { Badge } from "@repo/ui/src/badge";
 import { useMembers } from "@/hooks/use-members";
 import {
   useCreateRoomReservation,
@@ -16,11 +28,9 @@ type Props = {
   open: boolean;
   onClose: () => void;
   date: string;
-  // Create mode
   roomId?: string;
   startTime?: string;
   endTime?: string;
-  // Edit mode
   reservation?: RoomReservation;
 };
 
@@ -40,7 +50,6 @@ export default function ReservationDialog({
   const effectiveEnd = reservation?.end_time?.slice(0, 5) ?? endTime ?? "";
   const room = getRoomById(effectiveRoomId);
 
-  // Form state
   const [type, setType] = useState<"supervisor" | "interview">("supervisor");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -57,7 +66,6 @@ export default function ReservationDialog({
   const updateMutation = useUpdateRoomReservation();
   const deleteMutation = useDeleteRoomReservation();
 
-  // Initialize form state when dialog opens or reservation changes
   useEffect(() => {
     if (open) {
       setType(reservation?.type ?? "supervisor");
@@ -70,7 +78,6 @@ export default function ReservationDialog({
     }
   }, [open, reservation]);
 
-  // Close dropdown on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (
@@ -121,9 +128,7 @@ export default function ReservationDialog({
             }
             onClose();
           },
-          onError: () => {
-            toast.error("예약 수정에 실패했습니다");
-          },
+          onError: () => toast.error("예약 수정에 실패했습니다"),
         }
       );
     } else {
@@ -147,9 +152,7 @@ export default function ReservationDialog({
             }
             onClose();
           },
-          onError: () => {
-            toast.error("예약 등록에 실패했습니다");
-          },
+          onError: () => toast.error("예약 등록에 실패했습니다"),
         }
       );
     }
@@ -166,13 +169,9 @@ export default function ReservationDialog({
         toast.success("예약이 삭제되었습니다");
         onClose();
       },
-      onError: () => {
-        toast.error("예약 삭제에 실패했습니다");
-      },
+      onError: () => toast.error("예약 삭제에 실패했습니다"),
     });
   }
-
-  if (!open) return null;
 
   const isPending =
     createMutation.isPending ||
@@ -180,118 +179,90 @@ export default function ReservationDialog({
     deleteMutation.isPending;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-        {/* Header */}
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">
-            {isEdit ? "예약 수정" : "회의실 예약"}
-          </h2>
-          <button
-            onClick={onClose}
-            className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="!max-w-md" showCloseButton={false}>
+        <DialogHeader>
+          <DialogTitle>{isEdit ? "예약 수정" : "회의실 예약"}</DialogTitle>
+        </DialogHeader>
 
-        {/* Form */}
         <div className="space-y-4">
-          {/* Type toggle */}
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">
-              유형
-            </label>
+          {/* 유형 */}
+          <div className="space-y-1.5">
+            <Label>유형</Label>
             <div className="flex gap-2">
-              <button
+              <Button
                 type="button"
+                variant={type === "supervisor" ? "default" : "outline"}
+                className={`flex-1 ${type === "supervisor" ? "bg-blue-600 hover:bg-blue-700" : ""}`}
                 onClick={() => setType("supervisor")}
-                className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  type === "supervisor"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
               >
                 감독관
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant={type === "interview" ? "default" : "outline"}
+                className={`flex-1 ${type === "interview" ? "bg-indigo-600 hover:bg-indigo-700" : ""}`}
                 onClick={() => setType("interview")}
-                className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  type === "interview"
-                    ? "bg-indigo-600 text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
               >
                 면접교육
-              </button>
+              </Button>
             </div>
           </div>
 
-          {/* Room (read-only) */}
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">
-              회의실
-            </label>
-            <div className="rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-700">
-              {room ? `${room.name} (${room.capacity}명)` : effectiveRoomId}
+          {/* 회의실 + 시간 */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-1.5">
+              <Label>회의실</Label>
+              <div className="rounded-md border bg-muted px-3 py-2 text-sm">
+                {room ? `${room.name} (${room.capacity}명)` : effectiveRoomId}
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>시작</Label>
+              <div className="rounded-md border bg-muted px-3 py-2 text-sm">
+                {effectiveStart}
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>종료</Label>
+              <div className="rounded-md border bg-muted px-3 py-2 text-sm">
+                {effectiveEnd}
+              </div>
             </div>
           </div>
 
-          {/* Time (read-only) */}
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">
-              시간
-            </label>
-            <div className="rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-700">
-              {effectiveStart} ~ {effectiveEnd}
-            </div>
-          </div>
-
-          {/* Title */}
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">
-              제목
-            </label>
-            <input
-              type="text"
+          {/* 제목 */}
+          <div className="space-y-1.5">
+            <Label>제목</Label>
+            <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="예약 제목을 입력하세요"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             />
           </div>
 
-          {/* CC Members */}
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">
-              참조자
-            </label>
-            {/* Selected tags */}
+          {/* 참조자 */}
+          <div className="space-y-1.5">
+            <Label>참조자</Label>
             {ccMembers.length > 0 && (
-              <div className="mb-2 flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-1.5">
                 {ccMembers.map((name) => (
-                  <span
-                    key={name}
-                    className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700"
-                  >
+                  <Badge key={name} variant="secondary" className="gap-1 pr-1">
                     {name}
                     <button
                       type="button"
                       onClick={() => removeMember(name)}
-                      className="rounded-full p-0.5 hover:bg-blue-100"
+                      className="rounded-full p-0.5 hover:bg-accent"
                     >
                       <X className="h-3 w-3" />
                     </button>
-                  </span>
+                  </Badge>
                 ))}
               </div>
             )}
-            {/* Search input */}
             <div className="relative">
-              <input
+              <Input
                 ref={searchRef}
-                type="text"
                 value={memberSearch}
                 onChange={(e) => {
                   setMemberSearch(e.target.value);
@@ -299,19 +270,18 @@ export default function ReservationDialog({
                 }}
                 onFocus={() => setShowDropdown(true)}
                 placeholder="이름으로 검색"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               />
               {showDropdown && filteredMembers.length > 0 && (
                 <div
                   ref={dropdownRef}
-                  className="absolute left-0 right-0 top-full z-10 mt-1 max-h-40 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg"
+                  className="absolute left-0 right-0 top-full z-10 mt-1 max-h-40 overflow-y-auto rounded-md border bg-popover shadow-md"
                 >
                   {filteredMembers.map((m) => (
                     <button
                       key={m.id}
                       type="button"
                       onClick={() => addMember(m.full_name)}
-                      className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-accent"
                     >
                       {m.full_name}
                     </button>
@@ -321,59 +291,51 @@ export default function ReservationDialog({
             </div>
           </div>
 
-          {/* Content */}
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">
-              내용
-            </label>
-            <textarea
+          {/* 내용 */}
+          <div className="space-y-1.5">
+            <Label>내용</Label>
+            <Textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="내용을 입력하세요"
               rows={3}
-              className="w-full resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="resize-none"
             />
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="mt-6 flex items-center justify-between">
+        <DialogFooter className="flex-row justify-between sm:justify-between">
           <div>
             {isEdit && (
-              <button
+              <Button
                 type="button"
+                variant={showDeleteConfirm ? "destructive" : "ghost"}
                 onClick={handleDelete}
                 disabled={isPending}
-                className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                  showDeleteConfirm
-                    ? "bg-red-600 text-white hover:bg-red-700"
-                    : "text-red-600 hover:bg-red-50"
-                }`}
               >
                 {showDeleteConfirm ? "정말 삭제" : "삭제"}
-              </button>
+              </Button>
             )}
           </div>
           <div className="flex gap-2">
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={onClose}
               disabled={isPending}
-              className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
             >
               취소
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               onClick={handleSubmit}
               disabled={isPending}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
             >
               {isPending ? "처리중..." : isEdit ? "수정" : "예약"}
-            </button>
+            </Button>
           </div>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

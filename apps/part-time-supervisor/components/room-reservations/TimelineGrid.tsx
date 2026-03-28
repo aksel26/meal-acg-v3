@@ -20,6 +20,10 @@ type DragState =
       reservationId: string;
       originRoomId: string;
       currentRoomId: string;
+      originStartSlot: number;
+      originEndSlot: number;
+      grabSlot: number;
+      currentSlotOffset: number;
     }
   | {
       mode: "resize";
@@ -32,7 +36,7 @@ type DragState =
 type Props = {
   reservations: RoomReservation[];
   onCreateRequest: (roomId: string, startTime: string, endTime: string) => void;
-  onMoveReservation: (id: string, roomId: string) => void;
+  onMoveReservation: (id: string, roomId: string, startTime: string, endTime: string) => void;
   onResizeReservation: (
     id: string,
     startTime: string,
@@ -115,12 +119,25 @@ export function TimelineGrid({
         });
       } else if (drag.mode === "move") {
         const roomId = getRoomFromY(e.clientY);
-        if (roomId) {
-          setDrag((prev) => {
-            if (prev.mode !== "move") return prev;
-            return { ...prev, currentRoomId: roomId };
-          });
-        }
+        const slot = getSlotFromX(e.clientX);
+        setDrag((prev) => {
+          if (prev.mode !== "move") return prev;
+          const slotOffset = slot - prev.grabSlot;
+          // 블록이 그리드 밖으로 나가지 않도록 클램프
+          const newStart = prev.originStartSlot + slotOffset;
+          const newEnd = prev.originEndSlot + slotOffset;
+          const clampedOffset =
+            newStart < 0
+              ? slotOffset - newStart
+              : newEnd > SLOT_COUNT
+                ? slotOffset - (newEnd - SLOT_COUNT)
+                : slotOffset;
+          return {
+            ...prev,
+            currentRoomId: roomId ?? prev.currentRoomId,
+            currentSlotOffset: clampedOffset,
+          };
+        });
       } else if (drag.mode === "resize") {
         const slot = getSlotFromX(e.clientX);
         setDrag((prev) => {
@@ -145,9 +162,16 @@ export function TimelineGrid({
     } else if (drag.mode === "move") {
       if (
         didDragRef.current &&
-        drag.currentRoomId !== drag.originRoomId
+        (drag.currentRoomId !== drag.originRoomId || drag.currentSlotOffset !== 0)
       ) {
-        onMoveReservation(drag.reservationId, drag.currentRoomId);
+        const newStart = drag.originStartSlot + drag.currentSlotOffset;
+        const newEnd = drag.originEndSlot + drag.currentSlotOffset;
+        onMoveReservation(
+          drag.reservationId,
+          drag.currentRoomId,
+          slotToTime(newStart),
+          slotToTime(newEnd),
+        );
       }
     } else if (drag.mode === "resize") {
       if (didDragRef.current) {
@@ -162,16 +186,23 @@ export function TimelineGrid({
   }, [drag, onCreateRequest, onMoveReservation, onResizeReservation]);
 
   const handleBlockDragStart = useCallback(
-    (id: string, roomId: string) => {
+    (id: string, roomId: string, e: React.MouseEvent) => {
       didDragRef.current = false;
+      const reservation = reservations.find((r) => r.id === id);
+      if (!reservation) return;
+      const grabSlot = getSlotFromX(e.clientX);
       setDrag({
         mode: "move",
         reservationId: id,
         originRoomId: roomId,
         currentRoomId: roomId,
+        originStartSlot: timeToSlot(reservation.start_time),
+        originEndSlot: timeToSlot(reservation.end_time),
+        grabSlot,
+        currentSlotOffset: 0,
       });
     },
-    []
+    [reservations, getSlotFromX]
   );
 
   const handleBlockResizeStart = useCallback(
@@ -213,17 +244,19 @@ export function TimelineGrid({
             className="shrink-0 border-r"
             style={{ width: ROOM_LABEL_WIDTH }}
           />
-          {hours.map((h) => (
-            <div
-              key={h}
-              className="flex shrink-0 items-center border-r text-xs text-slate-500"
-              style={{ width: `${(2 / SLOT_COUNT) * 100}%` }}
-            >
-              <span className="pl-1">
-                {String(h).padStart(2, "0")}:00
-              </span>
-            </div>
-          ))}
+          <div className="relative flex-1">
+            {hours.map((h, i) => (
+              <div
+                key={h}
+                className="absolute top-0 flex h-full items-center border-l border-slate-200 text-xs text-slate-500"
+                style={{ left: `${((i * 2) / SLOT_COUNT) * 100}%` }}
+              >
+                <span className="pl-1">
+                  {String(h).padStart(2, "0")}:00
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Room rows */}
@@ -233,13 +266,20 @@ export function TimelineGrid({
           );
           const isCreateTarget =
             drag.mode === "create" && drag.roomId === room.id;
-          const isMoveTarget =
-            drag.mode === "move" && drag.currentRoomId === room.id;
+          // move 중 이 행에 임시 블록을 표시할지
+          const moveGhost =
+            drag.mode === "move" && drag.currentRoomId === room.id
+              ? {
+                  startSlot: drag.originStartSlot + drag.currentSlotOffset,
+                  endSlot: drag.originEndSlot + drag.currentSlotOffset,
+                  type: reservations.find((r) => r.id === drag.reservationId)?.type ?? "supervisor",
+                }
+              : null;
 
           return (
             <div
               key={room.id}
-              className={`flex border-b ${isMoveTarget ? "bg-blue-50" : ""}`}
+              className="flex border-b"
               style={{ minHeight: ROW_HEIGHT }}
             >
               {/* Room label */}
@@ -281,19 +321,33 @@ export function TimelineGrid({
                   );
                 })()}
 
+                {/* Move ghost block */}
+                {moveGhost && (() => {
+                  const ghostStyle = moveGhost.type === "supervisor"
+                    ? "border-blue-400 bg-blue-100/40"
+                    : "border-indigo-400 bg-indigo-100/40";
+                  return (
+                    <div
+                      className={`absolute top-1 bottom-1 rounded border-2 border-dashed ${ghostStyle}`}
+                      style={{
+                        left: `${(moveGhost.startSlot / SLOT_COUNT) * 100}%`,
+                        width: `${(((moveGhost.endSlot - moveGhost.startSlot) / SLOT_COUNT) * 100)}%`,
+                      }}
+                    />
+                  );
+                })()}
+
                 {/* Reservation blocks */}
                 {roomReservations.map((r) => {
                   const isResizing =
                     drag.mode === "resize" && drag.reservationId === r.id;
-                  const isDragging =
-                    drag.mode === "move" && drag.reservationId === r.id;
-
-                  const startSlot = isResizing
-                    ? drag.startSlot
-                    : timeToSlot(r.start_time);
-                  const endSlot = isResizing
-                    ? drag.endSlot
-                    : timeToSlot(r.end_time);
+                  let startSlot = timeToSlot(r.start_time);
+                  let endSlot = timeToSlot(r.end_time);
+                  if (isResizing) {
+                    startSlot = drag.startSlot;
+                    endSlot = drag.endSlot;
+                  }
+                  const isDragging = false;
 
                   return (
                     <ReservationBlock
@@ -303,8 +357,8 @@ export function TimelineGrid({
                       width={`${((endSlot - startSlot) / SLOT_COUNT) * 100}%`}
                       isDragging={isDragging}
                       onClick={() => handleBlockClick(r)}
-                      onDragStart={() =>
-                        handleBlockDragStart(r.id, r.room_id)
+                      onDragStart={(e) =>
+                        handleBlockDragStart(r.id, r.room_id, e)
                       }
                       onResizeStart={(edge) =>
                         handleBlockResizeStart(r.id, edge, r)

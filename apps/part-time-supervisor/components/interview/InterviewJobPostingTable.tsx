@@ -78,6 +78,7 @@ export function InterviewJobPostingTable({
             <th className="px-4 py-3 font-medium">공고명</th>
             <th className="px-4 py-3 font-medium">기간</th>
             <th className="px-4 py-3 font-medium">플랫폼</th>
+            <th className="px-4 py-3 font-medium">고객사</th>
             <th className="px-4 py-3 font-medium">구성</th>
             <th className="px-4 py-3 font-medium">인원</th>
             <th className="px-4 py-3 font-medium">상태</th>
@@ -109,6 +110,9 @@ export function InterviewJobPostingTable({
                 </td>
                 <td className="px-4 py-3 text-slate-600">
                   {posting.platform || "-"}
+                </td>
+                <td className="px-4 py-3 text-slate-600">
+                  {posting.client?.name || "-"}
                 </td>
                 <td className="px-4 py-3">
                   <CompositionBadges

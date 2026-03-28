@@ -9,7 +9,7 @@ export async function GET() {
 
     const { data: postings, error } = await supabase
       .from("interview_job_postings")
-      .select("*")
+      .select("*, client:clients(id, name)")
       .order("created_at", { ascending: false });
 
     if (error) throw error;

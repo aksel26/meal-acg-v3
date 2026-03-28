@@ -5,6 +5,7 @@ import { Controller, useForm } from "react-hook-form";
 import { useJobPosting } from "@/hooks/use-job-postings";
 import { useCreateJobPosting, useUpdateJobPosting } from "@/hooks/use-job-posting-mutations";
 import { useMembers } from "@/hooks/use-members";
+import { useClients } from "@/hooks/use-clients";
 import { toast } from "@repo/ui/src/sonner";
 import { Button } from "@repo/ui/src/button";
 import { DatePicker } from "@repo/ui/src/date-picker";
@@ -38,6 +39,7 @@ type FormData = {
   description: string;
   supervisor_id: string;
   rooms: string[];
+  client_id: string;
 };
 
 const defaultValues: FormData = {
@@ -59,6 +61,7 @@ const defaultValues: FormData = {
   description: "",
   supervisor_id: "",
   rooms: [],
+  client_id: "",
 };
 
 export default function JobPostingModal({
@@ -72,6 +75,7 @@ export default function JobPostingModal({
 }) {
   const { data: existing } = useJobPosting(editingId);
   const { data: members = [] } = useMembers();
+  const { data: clients = [] } = useClients();
   const createMutation = useCreateJobPosting();
   const updateMutation = useUpdateJobPosting();
 
@@ -104,6 +108,7 @@ export default function JobPostingModal({
         description: existing.description || "",
         supervisor_id: existing.supervisor_id || "",
         rooms: existing.rooms || [],
+        client_id: existing.client_id || "",
       });
     } else if (!editingId) {
       reset(defaultValues);
@@ -134,6 +139,7 @@ export default function JobPostingModal({
           ? members.find((m) => m.id === data.supervisor_id)?.full_name || null
           : null,
         rooms: data.rooms.length > 0 ? data.rooms : null,
+        client_id: data.client_id || null,
       };
 
       if (editingId) {
@@ -304,6 +310,22 @@ export default function JobPostingModal({
                     className="w-full rounded-lg border px-3 py-2 text-sm"
                     placeholder="예: CJ, SK, 쿠팡"
                   />
+                </div>
+
+                {/* 고객사 */}
+                <div>
+                  <label className="mb-1 block text-sm font-medium">고객사</label>
+                  <select
+                    {...register("client_id")}
+                    className="w-full rounded-lg border px-3 py-2 text-sm"
+                  >
+                    <option value="">선택 안함</option>
+                    {clients.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* 급여 */}

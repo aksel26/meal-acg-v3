@@ -7,6 +7,7 @@ import {
   useCreateInterviewJobPosting,
   useUpdateInterviewJobPosting,
 } from "@/hooks/use-interview-job-postings";
+import { useClients } from "@/hooks/use-clients";
 import { toast } from "@repo/ui/src/sonner";
 import { Button } from "@repo/ui/src/button";
 import { DatePicker } from "@repo/ui/src/date-picker";
@@ -34,6 +35,7 @@ type FormData = {
   pay_type: string;
   status: string;
   description: string;
+  client_id: string;
 };
 
 const defaultValues: FormData = {
@@ -52,6 +54,7 @@ const defaultValues: FormData = {
   pay_type: "daily",
   status: "draft",
   description: "",
+  client_id: "",
 };
 
 export function InterviewJobPostingModal({
@@ -64,6 +67,7 @@ export function InterviewJobPostingModal({
   editingId: string | null;
 }) {
   const { data: existing } = useInterviewJobPosting(editingId);
+  const { data: clients = [] } = useClients();
   const createMutation = useCreateInterviewJobPosting();
   const updateMutation = useUpdateInterviewJobPosting();
 
@@ -93,6 +97,7 @@ export function InterviewJobPostingModal({
         pay_type: existing.pay_type || "daily",
         status: existing.status,
         description: existing.description || "",
+        client_id: existing.client_id || "",
       });
     } else if (!editingId) {
       reset(defaultValues);
@@ -117,6 +122,7 @@ export function InterviewJobPostingModal({
         pay_type: data.pay_type,
         status: data.status,
         description: data.description || null,
+        client_id: data.client_id || null,
       };
 
       if (editingId) {
@@ -181,6 +187,20 @@ export function InterviewJobPostingModal({
                         className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition-all duration-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                         placeholder="예: CJ, SK, 쿠팡"
                       />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-slate-600">고객사</label>
+                      <select
+                        {...register("client_id")}
+                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition-all duration-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                      >
+                        <option value="">선택 안함</option>
+                        {clients.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <label className="mb-1 block text-sm font-medium text-slate-600">상태</label>

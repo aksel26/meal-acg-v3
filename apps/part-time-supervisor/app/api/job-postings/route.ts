@@ -11,7 +11,7 @@ export async function GET(request: Request) {
 
     let query = supabase
       .from("job_postings")
-      .select("*, assignments(count)")
+      .select("*, assignments(count), client:clients(id, name)")
       .order("created_at", { ascending: false });
 
     if (status) {

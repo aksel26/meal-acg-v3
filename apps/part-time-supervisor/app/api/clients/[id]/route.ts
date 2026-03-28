@@ -11,17 +11,16 @@ export async function GET(request: Request, { params }: Params) {
     const supabase = createServiceClient();
 
     const { data, error } = await supabase
-      .from("job_postings")
-      .select("*, client:clients(id, name)")
+      .from("clients")
+      .select("*")
       .eq("id", id)
       .single();
 
     if (error) throw error;
-    if (!data) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json(data);
   } catch (error) {
-    console.error("GET /api/job-postings/[id] error:", error);
-    return NextResponse.json({ error: "Failed to fetch job posting" }, { status: 500 });
+    console.error("GET /api/clients/[id] error:", error);
+    return NextResponse.json({ error: "Failed to fetch client" }, { status: 500 });
   }
 }
 
@@ -33,8 +32,8 @@ export async function PUT(request: Request, { params }: Params) {
     const body = await request.json();
 
     const { data, error } = await supabase
-      .from("job_postings")
-      .update({ ...body, end_date: body.start_date })
+      .from("clients")
+      .update(body)
       .eq("id", id)
       .select()
       .single();
@@ -42,8 +41,8 @@ export async function PUT(request: Request, { params }: Params) {
     if (error) throw error;
     return NextResponse.json(data);
   } catch (error) {
-    console.error("PUT /api/job-postings/[id] error:", error);
-    return NextResponse.json({ error: "Failed to update job posting" }, { status: 500 });
+    console.error("PUT /api/clients/[id] error:", error);
+    return NextResponse.json({ error: "Failed to update client" }, { status: 500 });
   }
 }
 
@@ -53,28 +52,15 @@ export async function DELETE(request: Request, { params }: Params) {
     const { id } = await params;
     const supabase = createServiceClient();
 
-    const { count } = await supabase
-      .from("assignments")
-      .select("*", { count: "exact", head: true })
-      .eq("job_posting_id", id)
-      .in("status", ["assigned", "working"]);
-
-    if (count && count > 0) {
-      return NextResponse.json(
-        { error: "활성 배정이 있는 공고는 삭제할 수 없습니다." },
-        { status: 400 }
-      );
-    }
-
     const { error } = await supabase
-      .from("job_postings")
+      .from("clients")
       .delete()
       .eq("id", id);
 
     if (error) throw error;
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("DELETE /api/job-postings/[id] error:", error);
-    return NextResponse.json({ error: "Failed to delete job posting" }, { status: 500 });
+    console.error("DELETE /api/clients/[id] error:", error);
+    return NextResponse.json({ error: "Failed to delete client" }, { status: 500 });
   }
 }

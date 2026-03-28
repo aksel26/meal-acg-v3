@@ -13,7 +13,7 @@ export async function GET(
 
     const { data, error } = await supabase
       .from("interview_job_postings")
-      .select("*")
+      .select("*, client:clients(id, name)")
       .eq("id", id)
       .single();
 

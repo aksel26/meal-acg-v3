@@ -21,8 +21,11 @@ import "dayjs/locale/ko";
 
 dayjs.locale("ko");
 
+import type { Client } from "@/lib/supabase/types";
+
 type JobPostingRow = JobPosting & {
   assignments: { count: number }[];
+  client?: Pick<Client, "id" | "name"> | null;
 };
 
 const statusLabel: Record<string, { text: string; className: string }> = {
@@ -135,6 +138,7 @@ export default function JobPostingTable({
               <th className="px-4 py-2 font-medium text-right">비용</th>
               <th className="px-4 py-2 font-medium text-center">모집인원</th>
               <th className="px-4 py-2 font-medium">플랫폼</th>
+              <th className="px-4 py-2 font-medium">고객사</th>
               <th className="px-4 py-2 font-medium">담당자</th>
               <th className="px-4 py-2 font-medium text-center">상태</th>
               <th className="px-4 py-2 font-medium">등록일</th>
@@ -184,6 +188,7 @@ export default function JobPostingTable({
                     <span className="text-slate-400"> / {job.headcount}</span>
                   </td>
                   <td className="px-4 py-2 text-slate-500">{job.platform || "-"}</td>
+                  <td className="px-4 py-2 text-slate-500">{job.client?.name || "-"}</td>
                   <td className="px-4 py-2 text-slate-500">{job.supervisor_name || "-"}</td>
                   <td className="px-4 py-2 text-center">
                     <span className={`inline-block rounded-sm px-2.5 py-0.5 text-xs font-medium ${status.className}`}>

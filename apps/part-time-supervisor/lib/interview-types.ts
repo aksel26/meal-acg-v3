@@ -18,6 +18,14 @@ export type InterviewPersonnel = {
   status: PersonnelStatus;
   created_at: string;
   updated_at: string;
+  // 참여 공고 & 출석 정보 (목록 조회 시)
+  assignments?: {
+    job_posting_id: string;
+    job_posting_title: string;
+    start_date: string;
+    status: string;
+  }[];
+  work_record_count?: number;
 };
 
 export type InterviewWorkRecord = {
@@ -68,6 +76,7 @@ export type InterviewJobPosting = {
   pay_type: string;
   status: string;
   description: string | null;
+  client_id: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -75,6 +84,7 @@ export type InterviewJobPosting = {
 
 export type InterviewJobPostingWithCount = InterviewJobPosting & {
   assignment_count: number;
+  client?: { id: string; name: string } | null;
 };
 
 export type InterviewJobAssignment = {

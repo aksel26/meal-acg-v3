@@ -11,6 +11,7 @@ type Detail = {
   amount: number;
   is_overridden: boolean;
   note: string | null;
+  job_posting_title: string | null;
 };
 
 type Props = {
@@ -24,6 +25,7 @@ export function SettlementExpandedRow({ details }: Props) {
         <thead>
           <tr className="border-b text-left text-slate-500">
             <th className="pb-2 font-medium">날짜</th>
+            <th className="pb-2 font-medium">공고</th>
             <th className="pb-2 font-medium">근무시간</th>
             <th className="pb-2 font-medium">급여타입</th>
             <th className="pb-2 font-medium text-right">단가</th>
@@ -35,6 +37,9 @@ export function SettlementExpandedRow({ details }: Props) {
           {details.map((d) => (
             <tr key={d.id} className="border-b last:border-0">
               <td className="py-2.5 text-slate-900">{d.work_date}</td>
+              <td className="py-2.5 text-slate-600">
+                {d.job_posting_title ?? "-"}
+              </td>
               <td className="py-2.5 text-slate-600">{d.work_hours}h</td>
               <td className="py-2.5">
                 <span

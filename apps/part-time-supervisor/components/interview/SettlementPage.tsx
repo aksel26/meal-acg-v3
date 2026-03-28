@@ -6,6 +6,14 @@ import { useInterviewSettlement } from "@/hooks/use-interview-settlement";
 import { formatCurrency } from "@/lib/cost-utils";
 import { SettlementTable } from "./SettlementTable";
 import { SettlementExportButton } from "./SettlementExportButton";
+import { SettlementLockButton } from "@/components/common/SettlementLockButton";
+import { useSettlementLock } from "@/hooks/use-settlement-lock";
+import { AuditLogViewer } from "@/components/common/AuditLogViewer";
+
+const MAIN_TABS = [
+  { value: "settlement", label: "정산" },
+  { value: "audit", label: "감사 로그" },
+] as const;
 
 const ROLE_TABS = [
   { value: "", label: "전체" },
@@ -16,6 +24,7 @@ const ROLE_TABS = [
 
 export function SettlementPage() {
   const now = new Date();
+  const [activeTab, setActiveTab] = useState<"settlement" | "audit">("settlement");
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [roleFilter, setRoleFilter] = useState("");
@@ -41,9 +50,34 @@ export function SettlementPage() {
     roleFilter || undefined,
     debouncedSearch || undefined,
   );
+  const { data: settlementLock } = useSettlementLock("interview", year, month);
+  const isLocked = settlementLock != null;
 
   return (
     <div className="space-y-6">
+      {/* 메인 탭 */}
+      <div className="flex gap-1 rounded-lg border bg-white p-1 w-fit">
+        {MAIN_TABS.map((tab) => (
+          <button
+            key={tab.value}
+            onClick={() => setActiveTab(tab.value)}
+            className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
+              activeTab === tab.value
+                ? "bg-slate-900 text-white"
+                : "text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "audit" && (
+        <AuditLogViewer defaultTableName="interview_work_records" />
+      )}
+
+      {activeTab === "settlement" && (
+      <>
       {/* 필터 행 */}
       <div className="flex items-center gap-3">
         {/* 월 내비게이션 */}
@@ -66,6 +100,7 @@ export function SettlementPage() {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
+          <SettlementLockButton type="interview" year={year} month={month} />
           <SettlementExportButton year={year} month={month} />
         </div>
       </div>
@@ -131,7 +166,10 @@ export function SettlementPage() {
       <SettlementTable
         personnel={data?.personnel ?? []}
         isLoading={isLoading}
+        isLocked={isLocked}
       />
+      </>
+      )}
 
     </div>
   );

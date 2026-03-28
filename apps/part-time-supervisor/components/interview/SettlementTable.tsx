@@ -23,12 +23,18 @@ type SettlementPersonnel = {
     amount: number;
     is_overridden: boolean;
     note: string | null;
+    job_posting_title: string | null;
+  }[];
+  assignments?: {
+    job_posting_id: string;
+    job_posting_title: string;
   }[];
 };
 
 type Props = {
   personnel: SettlementPersonnel[];
   isLoading: boolean;
+  isLocked?: boolean;
 };
 
 const ROLE_LABELS: Record<string, { label: string; className: string }> = {
@@ -43,7 +49,7 @@ const PAY_TYPE_LABELS: Record<string, string> = {
   contract: "계약금",
 };
 
-export function SettlementTable({ personnel, isLoading }: Props) {
+export function SettlementTable({ personnel, isLoading, isLocked: _isLocked = false }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   if (isLoading) {

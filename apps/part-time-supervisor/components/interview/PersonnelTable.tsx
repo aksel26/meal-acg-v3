@@ -47,6 +47,8 @@ export function PersonnelTable({ data, isLoading, onEdit }: Props) {
             <th className="px-4 py-3 font-medium">연락처</th>
             <th className="px-4 py-3 font-medium">급여유형</th>
             <th className="px-4 py-3 font-medium text-right">단가/계약금</th>
+            <th className="px-4 py-3 font-medium">최근 참여 공고</th>
+            <th className="px-4 py-3 font-medium text-center">참여 수</th>
             <th className="px-4 py-3 font-medium">상태</th>
             <th className="px-4 py-3 font-medium"></th>
           </tr>
@@ -77,6 +79,30 @@ export function PersonnelTable({ data, isLoading, onEdit }: Props) {
                 </td>
                 <td className="px-4 py-3 text-right text-slate-600">
                   {amount != null ? `${amount.toLocaleString("ko-KR")}원` : "-"}
+                </td>
+                <td className="px-4 py-3 text-slate-600">
+                  {person.assignments && person.assignments.length > 0
+                    ? person.assignments[0]!.job_posting_title
+                    : "-"}
+                </td>
+                <td className="px-4 py-3 text-center">
+                  {person.assignments && person.assignments.length > 0 ? (
+                    <span className="group relative cursor-default text-slate-600">
+                      {person.assignments.length}
+                      <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 rounded-lg border bg-white px-3 py-2 opacity-0 shadow-lg transition-opacity group-hover:pointer-events-auto group-hover:opacity-100">
+                        <p className="mb-1 whitespace-nowrap text-xs font-medium text-slate-500">참여 공고 목록</p>
+                        <ul className="space-y-0.5">
+                          {person.assignments.map((a) => (
+                            <li key={a.job_posting_id} className="whitespace-nowrap text-xs text-slate-700">
+                              {a.job_posting_title}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </span>
+                  ) : (
+                    <span className="text-slate-400">0</span>
+                  )}
                 </td>
                 <td className="px-4 py-3">
                   {person.status === "active" ? (

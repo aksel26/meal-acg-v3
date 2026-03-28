@@ -41,6 +41,40 @@ export async function GET(request: NextRequest) {
       .lte("work_date", endDate);
     if (wrError) throw wrError;
 
+    // Fetch job assignments with posting info (해당 월과 겹치는 공고)
+    const { data: assignments, error: aError } = await supabase
+      .from("interview_job_assignments")
+      .select("personnel_id, status, interview_job_postings(id, title, start_date, end_date)")
+      .neq("status", "cancelled");
+    if (aError) throw aError;
+
+    // Build personnel → [{posting info with date range}] map
+    type PostingInfo = { id: string; title: string; start_date: string; end_date: string };
+    const postingsByPersonnel = new Map<string, PostingInfo[]>();
+    for (const a of assignments ?? []) {
+      const posting = a.interview_job_postings as unknown as PostingInfo | null;
+      if (!posting) continue;
+      if (posting.end_date < startDate || posting.start_date > endDate) continue;
+      const list = postingsByPersonnel.get(a.personnel_id) ?? [];
+      if (!list.some((x) => x.id === posting.id)) {
+        list.push(posting);
+      }
+      postingsByPersonnel.set(a.personnel_id, list);
+    }
+
+    // Helper: find job posting title for a work record by matching date range
+    const findPostingTitle = (personnelId: string, workDate: string): string | null => {
+      const postings = postingsByPersonnel.get(personnelId) ?? [];
+      const match = postings.find((p) => workDate >= p.start_date && workDate <= p.end_date);
+      return match?.title ?? null;
+    };
+
+    // Derive assignmentsByPersonnel for main table display
+    const assignmentsByPersonnel = new Map<string, { job_posting_id: string; job_posting_title: string }[]>();
+    for (const [pid, postings] of postingsByPersonnel) {
+      assignmentsByPersonnel.set(pid, postings.map((p) => ({ job_posting_id: p.id, job_posting_title: p.title })));
+    }
+
     // Group work records by personnel_id
     const recordsByPersonnel = new Map<string, typeof workRecords>();
     for (const rec of workRecords ?? []) {
@@ -79,6 +113,7 @@ export async function GET(request: NextRequest) {
               amount: recordAmount,
               is_overridden: r.pay_rate_override != null || r.pay_type_override != null,
               note: r.note,
+              job_posting_title: findPostingTitle(p.id, r.work_date),
             };
           });
 
@@ -95,6 +130,7 @@ export async function GET(request: NextRequest) {
           work_days: workDays,
           work_hours: Math.round(workHours * 10) / 10,
           details,
+          assignments: assignmentsByPersonnel.get(p.id) ?? [],
         };
       } else {
         // FT/instructor: use contract_amount
@@ -110,6 +146,7 @@ export async function GET(request: NextRequest) {
           work_days: null,
           work_hours: null,
           details: [],
+          assignments: assignmentsByPersonnel.get(p.id) ?? [],
         };
       }
     });

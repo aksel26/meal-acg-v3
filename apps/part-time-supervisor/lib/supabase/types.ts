@@ -1,3 +1,15 @@
+export type Client = {
+  id: string;
+  name: string;
+  parent_company: string | null;
+  contact_name: string | null;
+  contact_phone: string | null;
+  contact_email: string | null;
+  memo: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type JobPosting = {
   id: string;
   title: string;
@@ -19,6 +31,8 @@ export type JobPosting = {
   supervisor_id: string | null;
   rooms: string[] | null;
   supervisor_name: string | null;
+  client_id: string | null;
+  client?: Client | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -100,4 +114,25 @@ export type WorkRecord = {
   note: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type SettlementLock = {
+  id: string;
+  type: "supervisor" | "interview";
+  year: number;
+  month: number;
+  locked_at: string;
+  locked_by: string;
+  memo: string | null;
+};
+
+export type SettlementAuditLog = {
+  id: string;
+  table_name: string;
+  record_id: string;
+  action: "INSERT" | "UPDATE" | "DELETE";
+  old_data: Record<string, unknown> | null;
+  new_data: Record<string, unknown> | null;
+  changed_by: string | null;
+  changed_at: string;
 };

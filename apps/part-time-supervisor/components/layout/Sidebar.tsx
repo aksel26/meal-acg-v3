@@ -11,6 +11,7 @@ import {
   Calculator,
   GraduationCap,
   ChevronDown,
+  FileText,
   type LucideIcon,
 } from "lucide-react";
 import { useState } from "react";
@@ -37,6 +38,7 @@ function isGroup(entry: NavEntry): entry is NavGroup {
 
 const navEntries: NavEntry[] = [
   { type: "item", href: "/", label: "대시보드", icon: LayoutDashboard },
+  { type: "item", href: "/room-assignments", label: "회의실 배정", icon: DoorOpen },
   {
     type: "group",
     label: "감독관",
@@ -44,7 +46,6 @@ const navEntries: NavEntry[] = [
     children: [
       { type: "item", href: "/supervisor/job-postings", label: "공고 관리", icon: Briefcase },
       { type: "item", href: "/supervisor/workers", label: "지원자 관리", icon: Users },
-      { type: "item", href: "/room-assignments", label: "회의실 배정", icon: DoorOpen },
       { type: "item", href: "/supervisor/cost-management", label: "정산 관리", icon: Calculator },
     ],
   },
@@ -55,8 +56,8 @@ const navEntries: NavEntry[] = [
     children: [
       { type: "item", href: "/interview/job-postings", label: "공고 관리", icon: Briefcase },
       { type: "item", href: "/interview/personnel", label: "인력 관리", icon: Users },
-      { type: "item", href: "/room-assignments", label: "회의실 배정", icon: DoorOpen },
       { type: "item", href: "/interview/settlement", label: "정산 관리", icon: Calculator },
+      { type: "item", href: "/interview/expense-reports", label: "지출결의서", icon: FileText },
     ],
   },
 ];

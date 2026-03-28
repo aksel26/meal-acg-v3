@@ -11,9 +11,10 @@ import { WorkRecordEditModal } from "./WorkRecordEditModal";
 type Props = {
   workers: CostWorkerData[];
   isLoading: boolean;
+  isLocked?: boolean;
 };
 
-export function CostWorkerTable({ workers, isLoading }: Props) {
+export function CostWorkerTable({ workers, isLoading, isLocked = false }: Props) {
   const [expandedWorker, setExpandedWorker] = useState<string | null>(null);
   const [editingPosting, setEditingPosting] = useState<CostPostingDetail | null>(null);
 
@@ -83,6 +84,7 @@ export function CostWorkerTable({ workers, isLoading }: Props) {
                             <CostWorkerExpandedRow
                               postings={w.postings}
                               onEditClick={setEditingPosting}
+                              isLocked={isLocked}
                             />
                           </motion.div>
                         </td>

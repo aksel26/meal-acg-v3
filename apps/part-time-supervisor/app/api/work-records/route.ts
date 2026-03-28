@@ -2,6 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
 
+async function checkSettlementLock(
+  supabase: ReturnType<typeof createServiceClient>,
+  year: number,
+  month: number
+): Promise<boolean> {
+  const { data } = await supabase
+    .from("settlement_locks")
+    .select("id")
+    .eq("type", "supervisor")
+    .eq("year", year)
+    .eq("month", month)
+    .maybeSingle();
+  return data != null;
+}
+
 // GET: 특정 assignment의 근무 기록 조회
 export async function GET(request: NextRequest) {
   try {
@@ -30,13 +45,21 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     await requireAuth();
-    const { assignmentId, records } = await request.json();
+    const { assignmentId, records, year, month } = await request.json();
 
     if (!assignmentId || !Array.isArray(records)) {
       return NextResponse.json({ error: "assignmentId and records are required" }, { status: 400 });
     }
 
     const supabase = createServiceClient();
+
+    // 잠금 체크
+    if (year && month) {
+      const isLocked = await checkSettlementLock(supabase, year, month);
+      if (isLocked) {
+        return NextResponse.json({ error: "정산이 확정되어 수정할 수 없습니다" }, { status: 423 });
+      }
+    }
     const upsertData = records.map((r: { workDate: string; workHours: number; note?: string }) => ({
       assignment_id: assignmentId,
       work_date: r.workDate,

@@ -4,11 +4,45 @@ import { requireAuth } from "@/lib/auth";
 
 type Params = { params: Promise<{ id: string }> };
 
+async function checkInterviewSettlementLock(
+  supabase: ReturnType<typeof createServiceClient>,
+  recordId: string
+): Promise<boolean> {
+  // 해당 근무 기록의 work_date를 조회해 year/month 확인
+  const { data: rec } = await supabase
+    .from("interview_work_records")
+    .select("work_date")
+    .eq("id", recordId)
+    .maybeSingle();
+
+  if (!rec) return false;
+
+  const d = new Date(rec.work_date);
+  const year = d.getFullYear();
+  const month = d.getMonth() + 1;
+
+  const { data: lock } = await supabase
+    .from("settlement_locks")
+    .select("id")
+    .eq("type", "interview")
+    .eq("year", year)
+    .eq("month", month)
+    .maybeSingle();
+
+  return lock != null;
+}
+
 export async function PATCH(request: Request, { params }: Params) {
   try {
     await requireAuth();
     const { id } = await params;
     const supabase = createServiceClient();
+
+    const isLocked = await checkInterviewSettlementLock(supabase, id);
+    if (isLocked) {
+      return NextResponse.json({ error: "정산이 확정되어 수정할 수 없습니다" }, { status: 423 });
+    }
+
     const body = await request.json();
 
     const { data, error } = await supabase
@@ -31,6 +65,11 @@ export async function DELETE(request: Request, { params }: Params) {
     await requireAuth();
     const { id } = await params;
     const supabase = createServiceClient();
+
+    const isLocked = await checkInterviewSettlementLock(supabase, id);
+    if (isLocked) {
+      return NextResponse.json({ error: "정산이 확정되어 삭제할 수 없습니다" }, { status: 423 });
+    }
 
     const { error } = await supabase
       .from("interview_work_records")

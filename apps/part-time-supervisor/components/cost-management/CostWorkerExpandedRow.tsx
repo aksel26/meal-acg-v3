@@ -6,9 +6,10 @@ import type { CostPostingDetail } from "@/hooks/use-cost-management";
 type Props = {
   postings: CostPostingDetail[];
   onEditClick: (posting: CostPostingDetail) => void;
+  isLocked?: boolean;
 };
 
-export function CostWorkerExpandedRow({ postings, onEditClick }: Props) {
+export function CostWorkerExpandedRow({ postings, onEditClick, isLocked = false }: Props) {
   return (
     <div className="bg-slate-50 px-6 py-4">
       <table className="w-full text-sm">
@@ -52,7 +53,8 @@ export function CostWorkerExpandedRow({ postings, onEditClick }: Props) {
               <td className="py-2.5 text-right">
                 <button
                   onClick={() => onEditClick(p)}
-                  className="rounded px-2 py-1 text-xs text-blue-600 hover:bg-blue-50"
+                  disabled={isLocked}
+                  className="rounded px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   수정
                 </button>

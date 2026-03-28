@@ -42,6 +42,7 @@ export function calculateAmount(
 /**
  * 금액 포맷 (예: 1,500,000원)
  */
-export function formatCurrency(amount: number): string {
-  return `${amount.toLocaleString("ko-KR")}원`;
+export function formatCurrency(amount: number | string | null | undefined): string {
+  const num = Number(amount ?? 0);
+  return `${num.toLocaleString("ko-KR")}원`;
 }

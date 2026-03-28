@@ -229,6 +229,26 @@ WHERE id IN (
 );
 
 -- ============================================================
+-- 고객사 시드 데이터
+-- ============================================================
+DELETE FROM supervisor.clients;
+
+INSERT INTO supervisor.clients (id, name, parent_company, contact_name, contact_phone, contact_email, memo) VALUES
+  ('f0000000-0000-0000-0000-000000000001', '삼성전자', '삼성그룹', '김담당', '010-9999-0001', 'kim@samsung.com', '주요 고객사'),
+  ('f0000000-0000-0000-0000-000000000002', 'LG CNS', 'LG그룹', '이담당', '010-9999-0002', 'lee@lgcns.com', NULL),
+  ('f0000000-0000-0000-0000-000000000003', 'SK하이닉스', 'SK그룹', '박담당', '010-9999-0003', 'park@skhynix.com', '반도체 사업부'),
+  ('f0000000-0000-0000-0000-000000000004', '현대자동차', '현대차그룹', '최담당', '010-9999-0004', 'choi@hyundai.com', NULL),
+  ('f0000000-0000-0000-0000-000000000005', '네이버', NULL, '정담당', '010-9999-0005', 'jung@naver.com', 'IT 기업')
+ON CONFLICT (id) DO NOTHING;
+
+-- 감독관 공고에 고객사 연결
+UPDATE supervisor.job_postings SET client_id = 'f0000000-0000-0000-0000-000000000001' WHERE id = 'b0000000-0000-0000-0000-000000000001';
+UPDATE supervisor.job_postings SET client_id = 'f0000000-0000-0000-0000-000000000002' WHERE id = 'b0000000-0000-0000-0000-000000000004';
+UPDATE supervisor.job_postings SET client_id = 'f0000000-0000-0000-0000-000000000003' WHERE id = 'b0000000-0000-0000-0000-000000000005';
+UPDATE supervisor.job_postings SET client_id = 'f0000000-0000-0000-0000-000000000004' WHERE id = 'b0000000-0000-0000-0000-000000000007';
+UPDATE supervisor.job_postings SET client_id = 'f0000000-0000-0000-0000-000000000005' WHERE id = 'b0000000-0000-0000-0000-000000000009';
+
+-- ============================================================
 -- 면접교육 시드 데이터
 -- ============================================================
 
@@ -248,6 +268,11 @@ INSERT INTO supervisor.interview_job_postings (id, title, start_date, end_date, 
   ('d1000000-0000-0000-0000-000000000011', '2026년 3월 면접교육 2차', '2026-03-24', '2026-03-28', '09:00', '18:00', '서울 본사', 5, 2, 2, 1, 0, 150000, 'daily', 'open', '3월 2차 면접교육 진행중', 'b1000000-0000-0000-0000-000000000001'),
   ('d1000000-0000-0000-0000-000000000012', '2026년 4월 면접교육', '2026-04-07', '2026-04-11', '09:00', '18:00', '부산 센터', 6, 2, 2, 1, 1, 150000, 'daily', 'draft', '4월 면접교육 예정', 'b1000000-0000-0000-0000-000000000001')
 ON CONFLICT (id) DO NOTHING;
+
+-- 면접교육 공고에 고객사 연결
+UPDATE supervisor.interview_job_postings SET client_id = 'f0000000-0000-0000-0000-000000000001' WHERE id = 'd1000000-0000-0000-0000-000000000010';
+UPDATE supervisor.interview_job_postings SET client_id = 'f0000000-0000-0000-0000-000000000002' WHERE id = 'd1000000-0000-0000-0000-000000000011';
+UPDATE supervisor.interview_job_postings SET client_id = 'f0000000-0000-0000-0000-000000000003' WHERE id = 'd1000000-0000-0000-0000-000000000012';
 
 -- 면접교육 공고 인원 배정 (완료 공고 4명, 진행중 공고 4명)
 INSERT INTO supervisor.interview_job_assignments (id, job_posting_id, personnel_id, pay_type, pay_rate, work_hours, status, note) VALUES
@@ -279,9 +304,40 @@ INSERT INTO supervisor.interview_work_records (id, personnel_id, work_date, work
   ('f1000000-0000-0000-0000-000000000012', 'c1000000-0000-0000-0000-000000000005', '2026-03-05', 8, NULL, '강의')
 ON CONFLICT (id) DO NOTHING;
 
+-- 면접교육 근무기록 (2차 공고 진행분: 3/24~3/26 일부)
+INSERT INTO supervisor.interview_work_records (id, personnel_id, work_date, work_hours, pay_rate_override, note) VALUES
+  ('f1000000-0000-0000-0000-000000000013', 'c1000000-0000-0000-0000-000000000001', '2026-03-24', 8, NULL, NULL),
+  ('f1000000-0000-0000-0000-000000000014', 'c1000000-0000-0000-0000-000000000001', '2026-03-25', 8, NULL, NULL),
+  ('f1000000-0000-0000-0000-000000000015', 'c1000000-0000-0000-0000-000000000001', '2026-03-26', 8, NULL, NULL),
+  ('f1000000-0000-0000-0000-000000000016', 'c1000000-0000-0000-0000-000000000002', '2026-03-24', 8, NULL, NULL),
+  ('f1000000-0000-0000-0000-000000000017', 'c1000000-0000-0000-0000-000000000002', '2026-03-25', 8, NULL, NULL),
+  ('f1000000-0000-0000-0000-000000000018', 'c1000000-0000-0000-0000-000000000003', '2026-03-24', 8, NULL, NULL),
+  ('f1000000-0000-0000-0000-000000000019', 'c1000000-0000-0000-0000-000000000003', '2026-03-25', 8, NULL, NULL),
+  ('f1000000-0000-0000-0000-000000000020', 'c1000000-0000-0000-0000-000000000003', '2026-03-26', 8, NULL, NULL),
+  ('f1000000-0000-0000-0000-000000000021', 'c1000000-0000-0000-0000-000000000005', '2026-03-24', 8, NULL, '강의'),
+  ('f1000000-0000-0000-0000-000000000022', 'c1000000-0000-0000-0000-000000000005', '2026-03-25', 8, NULL, '강의')
+ON CONFLICT (id) DO NOTHING;
+
 -- 면접교육 지출결의서 (1차 공고 완료분)
-INSERT INTO supervisor.interview_expense_reports (id, job_posting_id, title, items, total_labor_cost, total_extra_cost, grand_total, status) VALUES
+INSERT INTO supervisor.interview_expense_reports (id, job_posting_id, title, items, total_labor_cost, total_extra_cost, grand_total, status, year, month) VALUES
   ('a2000000-0000-0000-0000-000000000001', 'd1000000-0000-0000-0000-000000000010', '2026년 3월 1차 면접교육 지출결의서',
    '[{"name":"한지민","role":"rp","days":3,"pay_rate":150000,"subtotal":450000},{"name":"강수연","role":"ft","days":3,"pay_rate":120000,"subtotal":360000},{"name":"윤태호","role":"ft","days":3,"pay_rate":120000,"subtotal":360000},{"name":"임서현","role":"instructor","days":3,"pay_rate":200000,"subtotal":600000}]',
-   1770000, 0, 1770000, 'finalized')
+   1770000, 0, 1770000, 'finalized', 2026, 3)
 ON CONFLICT (id) DO NOTHING;
+
+-- 정산 잠금 샘플 (1차 면접교육 3월분 확정)
+INSERT INTO supervisor.settlement_locks (id, type, year, month, locked_by, memo) VALUES
+  ('a3000000-0000-0000-0000-000000000001', 'interview', 2026, 3, '김관리', '3월 1차 면접교육 정산 확정')
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- 회의실 예약 샘플
+-- ============================================================
+DELETE FROM supervisor.room_reservations;
+
+INSERT INTO supervisor.room_reservations (id, room_id, date, start_time, end_time, type, title, content, reserved_by, cc_members) VALUES
+  ('b1000000-0000-0000-0000-000000000001', 'C1', '2026-03-28', '09:00', '11:00', 'supervisor', '서울시청 민원안내 감독', '감독관 배치 미팅', '김관리', '{"이철수","박영희"}'),
+  ('b1000000-0000-0000-0000-000000000002', 'C1', '2026-03-28', '13:00', '16:00', 'interview', '3월 2차 면접교육', '면접위원 교육 진행', '김관리', '{"최민수"}'),
+  ('b1000000-0000-0000-0000-000000000003', 'C2', '2026-03-28', '09:00', '12:00', 'interview', '3월 2차 면접교육 B반', NULL, '김관리', '{}'),
+  ('b1000000-0000-0000-0000-000000000004', 'R', '2026-03-28', '09:00', '13:00', 'supervisor', '강남역 설문조사 브리핑', '설문 문항 검토', '김관리', '{"정수진"}'),
+  ('b1000000-0000-0000-0000-000000000005', '406-2', '2026-03-28', '10:00', '15:00', 'supervisor', '홍대 카페 시식 준비', NULL, '김관리', '{}');

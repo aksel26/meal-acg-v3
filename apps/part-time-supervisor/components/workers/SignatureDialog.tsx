@@ -1,9 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
-import { X, Download } from "lucide-react";
+import { Download } from "lucide-react";
 import { toast } from "@repo/ui/src/sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@repo/ui/src/dialog";
 
 export default function ContractImageDialog({
   contractId,
@@ -31,21 +36,12 @@ export default function ContractImageDialog({
       .finally(() => setLoading(false));
   }, [open, contractId]);
 
-  if (!open) return null;
-
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60"
-      onPointerDown={(e) => e.stopPropagation()}
-      onClick={onClose}
-    >
-      <div
-        className="relative max-h-[80vh] max-w-[80vw] overflow-auto rounded-xl bg-white p-4"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="mb-3 flex items-center justify-between">
-          <h4 className="text-sm font-semibold">계약서</h4>
-          <div className="flex items-center gap-1">
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-[80vw] max-h-[80vh] overflow-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center justify-between">
+            <span>계약서</span>
             {signedUrl && (
               <a
                 href={signedUrl}
@@ -57,14 +53,8 @@ export default function ContractImageDialog({
                 <Download size={16} />
               </a>
             )}
-            <button
-              onClick={onClose}
-              className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
-            >
-              <X size={16} />
-            </button>
-          </div>
-        </div>
+          </DialogTitle>
+        </DialogHeader>
         {loading ? (
           <div className="flex h-40 w-60 items-center justify-center text-sm text-slate-400">
             로딩 중...
@@ -80,8 +70,7 @@ export default function ContractImageDialog({
             이미지를 불러올 수 없습니다.
           </div>
         )}
-      </div>
-    </div>,
-    document.body
+      </DialogContent>
+    </Dialog>
   );
 }

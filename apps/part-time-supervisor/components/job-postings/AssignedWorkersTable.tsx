@@ -489,14 +489,13 @@ export default function AssignedWorkersTable({
       </table>
     </div>
 
-    {approvalAssignment && (
-      <ContractApprovalDialog
-        assignment={approvalAssignment}
-        job={job}
-        onClose={() => setApprovalAssignment(null)}
-        onConfirmed={() => setApprovalAssignment(null)}
-      />
-    )}
+    <ContractApprovalDialog
+      assignment={approvalAssignment}
+      job={job}
+      open={approvalAssignment !== null}
+      onOpenChange={(open) => { if (!open) setApprovalAssignment(null); }}
+      onConfirmed={() => setApprovalAssignment(null)}
+    />
   </>
   );
 }

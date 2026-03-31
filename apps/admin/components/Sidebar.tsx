@@ -109,6 +109,7 @@ const navigation: NavigationItem[] = [
     name: "근태 관리",
     icon: CalendarClock,
     items: [
+      { name: "출퇴근 현황", href: "/attendance", icon: UserCheck },
       { name: "휴가 관리", href: "/dayoffs", icon: CalendarDays },
       { name: "연차 현황", href: "/leave-balances", icon: BarChart3 },
     ],

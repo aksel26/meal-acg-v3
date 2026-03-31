@@ -52,6 +52,7 @@ import type {
   OrgTeam,
   OrgMember,
 } from "@/hooks/useOrganizationTree";
+import OrgChart from "@/components/OrgChart";
 import {
   useCreateDivision,
   useUpdateDivision,
@@ -356,6 +357,7 @@ const UnassignedMemberRow = memo(function UnassignedMemberRow({
 // ── Main Page Component ──
 
 export default function OrganizationPage() {
+  const [viewMode, setViewMode] = useState<"list" | "chart">("list");
   const { data: orgTree, isLoading } = useOrganizationTree(null);
 
   // 특이사항 인원 조회
@@ -660,6 +662,31 @@ export default function OrganizationPage() {
           <span>멤버 <strong className="text-slate-800">{totalMembers}</strong></span>
         </div>
         <div className="ml-auto flex items-center gap-2">
+          {/* View Toggle */}
+          <div className="flex rounded-lg border border-slate-200 p-0.5">
+            <button
+              onClick={() => setViewMode("list")}
+              className={cn(
+                "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                viewMode === "list"
+                  ? "bg-slate-900 text-white"
+                  : "text-slate-500 hover:text-slate-700"
+              )}
+            >
+              목록
+            </button>
+            <button
+              onClick={() => setViewMode("chart")}
+              className={cn(
+                "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                viewMode === "chart"
+                  ? "bg-slate-900 text-white"
+                  : "text-slate-500 hover:text-slate-700"
+              )}
+            >
+              조직도
+            </button>
+          </div>
           {/* [HIDDEN] 본부 추가 버튼 — 본부 기능 재활성화 시 주석 해제
           <Button
             onClick={() => openDialog({ type: "createDivision" })}
@@ -704,8 +731,15 @@ export default function OrganizationPage() {
         </div>
       )}
 
-      {/* Organization Tree */}
-      {!isLoading && orgTree && (
+      {/* Org Chart View */}
+      {!isLoading && orgTree && viewMode === "chart" && (
+        <div className="glass-panel overflow-x-auto rounded-xl">
+          <OrgChart tree={orgTree} />
+        </div>
+      )}
+
+      {/* Organization Tree (List View) */}
+      {!isLoading && orgTree && viewMode === "list" && (
         <div className="space-y-4">
           {/* Divisions */}
           {divisions.map((division) => (

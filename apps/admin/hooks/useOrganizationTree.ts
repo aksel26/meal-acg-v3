@@ -11,6 +11,8 @@ export interface OrgMember {
   team_id: string | null;
   division_id: string | null;
   intern_months?: number | null;
+  position?: { id: string; name: string } | null;
+  title?: { id: string; name: string } | null;
 }
 
 export interface OrgTeam {

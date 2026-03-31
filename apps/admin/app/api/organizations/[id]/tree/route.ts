@@ -25,12 +25,12 @@ export async function GET(
           *,
           teams (
             *,
-            members!members_team_id_fkey (id, full_name, member_role, email, team_id, division_id, intern_months)
+            members!members_team_id_fkey (id, full_name, member_role, email, team_id, division_id, intern_months, position:positions(id, name), title:titles(id, name))
           )
         ),
         teams!teams_organization_id_fkey (
           *,
-          members!members_team_id_fkey (id, full_name, member_role, email, team_id, division_id, intern_months)
+          members!members_team_id_fkey (id, full_name, member_role, email, team_id, division_id, intern_months, position:positions(id, name), title:titles(id, name))
         )
       `)
       .eq("id", id)
@@ -47,7 +47,7 @@ export async function GET(
     // Fetch members not assigned to any team (including those with no organization_id)
     const { data: unassigned } = await supabase
       .from("members")
-      .select("id, full_name, member_role, email, team_id, division_id, intern_months")
+      .select("id, full_name, member_role, email, team_id, division_id, intern_months, position:positions(id, name), title:titles(id, name)")
       .or(`organization_id.eq.${id},organization_id.is.null`)
       .is("team_id", null)
       .order("full_name");

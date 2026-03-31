@@ -25,6 +25,7 @@ import {
   BarChart3,
   Bell,
   CalendarClock,
+  ClipboardList,
   Eye,
   EyeOff,
   HardHat,
@@ -112,6 +113,7 @@ const navigation: NavigationItem[] = [
       { name: "출퇴근 현황", href: "/attendance", icon: UserCheck },
       { name: "휴가 관리", href: "/dayoffs", icon: CalendarDays },
       { name: "연차 현황", href: "/leave-balances", icon: BarChart3 },
+      { name: "승인 관리", href: "/approvals", icon: ClipboardList },
     ],
   },
   {
@@ -128,7 +130,10 @@ const navigation: NavigationItem[] = [
   {
     name: "설정",
     icon: Cog,
-    items: [{ name: "공휴일 관리", href: "/holidays", icon: CalendarDays }],
+    items: [
+      { name: "공휴일 관리", href: "/holidays", icon: CalendarDays },
+      { name: "휴가 유형 관리", href: "/leave-types", icon: CalendarClock },
+    ],
   },
 ];
 

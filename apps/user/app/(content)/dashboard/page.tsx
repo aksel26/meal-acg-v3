@@ -11,6 +11,9 @@ import { useMealData } from "@/hooks/use-meal-data";
 import { useMealDelete } from "@/hooks/use-meal-delete";
 import { useMealSubmit } from "@/hooks/use-meal-submit";
 import { useMyAttendanceToday, useCheckIn, useCheckOut } from "@/hooks/useAttendance";
+import { useApprovals } from "@/hooks/use-approvals";
+import { CalendarPlus, ClipboardList } from "lucide-react";
+import Link from "next/link";
 import { useMealDrawerStore } from "@/stores/mealDrawerStore";
 import { useUserStore } from "@/stores/userStore";
 import dayjs from "dayjs";
@@ -135,6 +138,48 @@ function AttendanceWidget() {
           <p className="text-sm font-semibold text-emerald-600">✓ 퇴근 완료</p>
         </div>
       )}
+    </div>
+  );
+}
+
+function ApprovalShortcuts() {
+  const { memberId } = useUserStore();
+  const { data: pendingApprovals } = useApprovals(memberId || "", "pending");
+  const pendingCount = pendingApprovals?.length || 0;
+
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      <Link
+        href="/leave-request"
+        className="flex items-center gap-3 rounded-2xl border bg-white p-4 transition-colors hover:bg-slate-50"
+      >
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
+          <CalendarPlus className="h-5 w-5 text-blue-500" />
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-slate-900">휴가 신청</p>
+          <p className="text-xs text-slate-500">승인 요청</p>
+        </div>
+      </Link>
+      <Link
+        href="/approvals"
+        className="relative flex items-center gap-3 rounded-2xl border bg-white p-4 transition-colors hover:bg-slate-50"
+      >
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50">
+          <ClipboardList className="h-5 w-5 text-amber-500" />
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-slate-900">승인함</p>
+          <p className="text-xs text-slate-500">
+            {pendingCount > 0 ? `${pendingCount}건 대기` : "요청 관리"}
+          </p>
+        </div>
+        {pendingCount > 0 && (
+          <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+            {pendingCount}
+          </span>
+        )}
+      </Link>
     </div>
   );
 }
@@ -269,6 +314,7 @@ export default function DashboardPage() {
   return (
     <React.Fragment>
       <AttendanceWidget />
+      <ApprovalShortcuts />
       <GreetingSection userName={displayUserName} />
       <StatsSection userId={currentUserId} month={currentMonth} year={currentYear} onDataChange={setCalculationData} />
       <PopularRestaurantsSection />

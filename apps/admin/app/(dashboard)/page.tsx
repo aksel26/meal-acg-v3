@@ -14,6 +14,8 @@ import { queryKeys } from "@/lib/query-keys";
 import { useAuth } from "@/hooks/useAuth";
 import { useActiveStatusMembers } from "@/hooks/useActiveStatusMembers";
 import { useBudgetSummary } from "@/hooks/useBudgetAllocations";
+import { useAttendanceToday } from "@/hooks/useAttendance";
+import { useApprovals } from "@/hooks/useApprovals";
 import { STATUS_COLORS, SETTLEMENT_EXCLUDED_STATUSES } from "@/lib/constants";
 import { cn } from "@repo/ui/lib/utils";
 
@@ -93,6 +95,91 @@ const formatCurrencyShort = (amount: number) => {
 };
 
 // ── Progress Bar ──
+function AttendanceSummaryCard() {
+  const { data } = useAttendanceToday();
+  if (!data) {
+    return <div className="h-16 animate-pulse rounded bg-slate-100" />;
+  }
+  return (
+    <div className="space-y-2">
+      <div className="grid grid-cols-4 gap-2">
+        <div className="rounded-lg bg-green-50 px-3 py-2 text-center">
+          <p className="text-lg font-bold tabular-nums text-green-700">{data.checkedIn}</p>
+          <p className="text-[11px] text-green-600">출근</p>
+        </div>
+        <div className="rounded-lg bg-slate-50 px-3 py-2 text-center">
+          <p className="text-lg font-bold tabular-nums text-slate-700">{data.notCheckedIn}</p>
+          <p className="text-[11px] text-slate-500">미출근</p>
+        </div>
+        <div className="rounded-lg bg-red-50 px-3 py-2 text-center">
+          <p className="text-lg font-bold tabular-nums text-red-700">{data.late}</p>
+          <p className="text-[11px] text-red-600">지각</p>
+        </div>
+        <div className="rounded-lg bg-blue-50 px-3 py-2 text-center">
+          <p className="text-lg font-bold tabular-nums text-blue-700">{data.onLeave}</p>
+          <p className="text-[11px] text-blue-600">휴가</p>
+        </div>
+      </div>
+      {data.lateMembers.length > 0 && (
+        <div className="flex flex-wrap gap-1 border-t border-slate-100 pt-2">
+          <span className="text-[11px] text-slate-400">지각:</span>
+          {data.lateMembers.map((m) => (
+            <span key={m.id} className="rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-medium text-red-600">
+              {m.name}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PendingApprovalCard() {
+  const { data: approvals } = useApprovals("pending");
+  const count = approvals?.length || 0;
+
+  if (!approvals) {
+    return <div className="h-16 animate-pulse rounded bg-slate-100" />;
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-baseline gap-2">
+        <span className="text-3xl font-bold tabular-nums text-slate-900">{count}</span>
+        <span className="text-sm text-slate-500">건 대기 중</span>
+      </div>
+      {count > 0 && (
+        <div className="space-y-1 border-t border-slate-100 pt-2">
+          {approvals.slice(0, 5).map((a) => (
+            <div key={a.id} className="flex items-center justify-between rounded-md bg-slate-50/80 px-2.5 py-1.5">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-slate-700">
+                  {a.requester?.full_name || "알 수 없음"}
+                </span>
+                {a.related_data?.leave_type && (
+                  <span className="text-[11px] text-slate-400">
+                    {(a.related_data as { leave_type?: { name: string } }).leave_type?.name}
+                  </span>
+                )}
+              </div>
+              {a.related_data && (
+                <span className="text-[11px] tabular-nums text-slate-400">
+                  {dayjs((a.related_data as { leave_date?: string }).leave_date).format("MM/DD")}
+                </span>
+              )}
+            </div>
+          ))}
+          {count > 5 && (
+            <p className="text-center text-[11px] text-slate-400">
+              외 {count - 5}건
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ProgressBar({
   percent,
 }: {
@@ -389,10 +476,27 @@ function DashboardPageContent() {
       </div>
 
       {/* ══════════════════════════════════════════════
-          2-Column Layout: 인원/점심조 (left) | 비용 통계 (right)
+          상단: 오늘 근태 + 승인 대기 (실시간)
+          ══════════════════════════════════════════════ */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {/* 오늘의 근태 */}
+        <Link href="/attendance" className={cardClass}>
+          <h4 className="mb-2 text-sm font-semibold text-slate-700">오늘의 근태</h4>
+          <AttendanceSummaryCard />
+        </Link>
+
+        {/* 승인 대기 */}
+        <Link href="/approvals" className={cardClass}>
+          <h4 className="mb-2 text-sm font-semibold text-slate-700">승인 대기</h4>
+          <PendingApprovalCard />
+        </Link>
+      </div>
+
+      {/* ══════════════════════════════════════════════
+          하단: 조직 현황 | 정산 | 비용 통계
           ══════════════════════════════════════════════ */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        {/* ── Col 1: 총 인원 + 점심조 ── */}
+        {/* ── Col 1: 총 인원 ── */}
         <div className="flex flex-col gap-3">
           {/* 총 인원 */}
           <Link href="/member-status" className={cardClass}>
@@ -478,64 +582,9 @@ function DashboardPageContent() {
             )}
           </Link>
 
-          {/* 점심조 */}
-          <Link href="/lunch-groups" className={cardClass}>
-            <div className="mb-1.5">
-              <h3 className="text-base font-semibold text-slate-800">점심조</h3>
-            </div>
-            <div className="mb-1.5 flex items-center justify-between">
-              <button
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setWeekOffset((prev) => prev - 1); }}
-                className="rounded-md p-0.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
-              >
-                <ChevronLeft className="h-3.5 w-3.5" />
-              </button>
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-medium tabular-nums text-slate-600">
-                  {weekStartDisplay} ~ {weekEndDate}
-                </span>
-                {weekOffset === 0 && (
-                  <span className="rounded-full bg-slate-900 px-1.5 py-0.5 text-[10px] font-medium text-white">
-                    이번주
-                  </span>
-                )}
-              </div>
-              <button
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setWeekOffset((prev) => prev + 1); }}
-                className="rounded-md p-0.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
-              >
-                <ChevronRight className="h-3.5 w-3.5" />
-              </button>
-            </div>
-            <div className="flex-1 space-y-1 overflow-y-auto">
-              {lunchGroups && lunchGroups.length > 0 ? (
-                lunchGroups.map((group) => (
-                  <div
-                    key={group.id}
-                    className="flex items-center gap-2.5 rounded-md bg-slate-50/80 px-3 py-1.5"
-                  >
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-slate-100 text-[11px] font-bold text-slate-700">
-                      {group.group_number}
-                    </span>
-                    <div className="min-w-0 flex-1 truncate text-sm text-slate-600">
-                      {group.members.map((m) => m.member.full_name).join(", ") ||
-                        "미배정"}
-                    </div>
-                    <span className="text-xs font-medium tabular-nums text-slate-400">
-                      {group.members.length}/{group.max_slots}
-                    </span>
-                  </div>
-                ))
-              ) : (
-                <p className="py-4 text-center text-sm text-slate-400">
-                  {weekOffset === 0 ? "이번 주" : "해당 주"} 점심조가 없습니다
-                </p>
-              )}
-            </div>
-          </Link>
         </div>
 
-        {/* ── Col 2: 정산 + 초과액 ── */}
+        {/* ── Col 2: 정산 ── */}
         <div className="flex flex-col gap-3">
           {/* 정산 현황 */}
           <Link href="/meal-status" className={cardClass}>
@@ -595,44 +644,7 @@ function DashboardPageContent() {
             })()}
           </Link>
 
-          {/* 초과액 현황 */}
-          <Link href="/meal-status" className={cardClass}>
-            <h4 className="mb-2 text-sm font-semibold text-slate-700">
-              초과액 현황
-            </h4>
-            <div className="space-y-0.5">
-              {memberSpending?.members &&
-              memberSpending.members.length > 0 ? (
-                memberSpending.members.map((member, idx) => (
-                  <div
-                    key={member.id}
-                    className="group flex items-center gap-2 rounded-md px-1.5 py-1 transition-colors hover:bg-slate-50"
-                  >
-                    <span
-                      className={cn(
-                        "flex h-4.5 w-4.5 items-center justify-center rounded text-[10px] font-bold",
-                        idx < 3
-                          ? "bg-slate-800 text-white"
-                          : "bg-slate-100 text-slate-500"
-                      )}
-                    >
-                      {idx + 1}
-                    </span>
-                    <p className="min-w-0 flex-1 truncate text-sm font-medium text-slate-700 group-hover:text-slate-900">
-                      {member.name}
-                    </p>
-                    <span className="text-xs font-semibold tabular-nums text-slate-900">
-                      +{formatCurrency(member.excess)}
-                    </span>
-                  </div>
-                ))
-              ) : (
-                <p className="py-4 text-center text-sm text-slate-400">
-                  초과액이 없습니다
-                </p>
-              )}
-            </div>
-          </Link>
+          {/* [초과액 현황 카드 제거됨 — 대시보드 재구성] */}
         </div>
 
         {/* ── Col 3: 비용 통계 (식대 + 복지포인트 + 활동비) ── */}

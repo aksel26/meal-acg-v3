@@ -16,27 +16,6 @@ type Props = {
   };
 };
 
-function getRate(completed: number, total: number): number {
-  if (total === 0) return 0;
-  return completed / total;
-}
-
-function getRateColor(completed: number, total: number): string {
-  if (total === 0) return "";
-  const rate = completed / total;
-  if (rate >= 0.8) return "text-green-400";
-  if (rate >= 0.5) return "text-yellow-400";
-  return "text-red-400";
-}
-
-function getBarColor(completed: number, total: number): string {
-  if (total === 0) return "bg-slate-200";
-  const rate = completed / total;
-  if (rate >= 0.8) return "bg-green-400";
-  if (rate >= 0.5) return "bg-yellow-400";
-  return "bg-red-400";
-}
-
 function formatCost(cost: number): string {
   return new Intl.NumberFormat("ko-KR").format(cost);
 }
@@ -73,7 +52,8 @@ export function DashboardSummary({ summary, dateLabel, isFuture }: Props) {
       value: summary.activeJobCount,
       display: String(summary.activeJobCount),
       icon: Briefcase,
-      color: "bg-blue-500/10 text-blue-400",
+      color: "text-[#111111]",
+      cardClassName: "bg-[#eef5fe]",
       valueColor: "",
       suffix: "",
       progress: null as { completed: number; total: number } | null,
@@ -84,7 +64,8 @@ export function DashboardSummary({ summary, dateLabel, isFuture }: Props) {
       value: summary.totalAssigned,
       display: String(summary.totalAssigned),
       icon: Users,
-      color: "bg-slate-500/10 text-slate-400",
+      color: "text-[#111111]",
+      cardClassName: "bg-[#f9f9fa]",
       valueColor: "",
       suffix: "",
       progress: null as { completed: number; total: number } | null,
@@ -95,10 +76,10 @@ export function DashboardSummary({ summary, dateLabel, isFuture }: Props) {
       value: summary.attendanceCompleted,
       display: String(summary.attendanceCompleted),
       icon: UserCheck,
-      color: "bg-green-500/10 text-green-400",
+      color: "text-[#111111]",
+      cardClassName: "bg-[#eaf7ee]",
       valueColor: "",
       suffix: ` / ${summary.totalAssigned}`,
-      progress: { completed: summary.attendanceCompleted, total: summary.totalAssigned },
       disabled: !!isFuture,
     },
     {
@@ -106,10 +87,10 @@ export function DashboardSummary({ summary, dateLabel, isFuture }: Props) {
       value: summary.contractCompleted,
       display: String(summary.contractCompleted),
       icon: FileCheck,
-      color: "",
+      color: "text-[#111111]",
+      cardClassName: "bg-[#eaf7ee]",
       valueColor: "",
       suffix: ` / ${summary.totalAssigned}`,
-      progress: { completed: summary.contractCompleted, total: summary.totalAssigned },
       disabled: !!isFuture,
     },
     {
@@ -117,65 +98,55 @@ export function DashboardSummary({ summary, dateLabel, isFuture }: Props) {
       value: summary.totalEstimatedCost,
       display: `₩${formatCost(summary.totalEstimatedCost)}`,
       icon: Banknote,
-      color: "",
+      color: "text-[#111111]",
+      cardClassName: "bg-[#f9f9fa]",
       valueColor: "",
       suffix: "",
-      progress: null,
       isCost: true,
       disabled: false,
     },
   ];
 
   return (
-    <div className="rounded-xl bg-slate-50 space-y-3">
-      <h3 className="text-sm font-semibold text-muted-foreground">
-        <span className="inline-block size-2 rounded-full bg-blue-500 mr-1.5 align-middle" />
+    <div className="space-y-4">
+      <h3 className="text-sm font-semibold text-slate-600">
+        <span className="mr-1.5 inline-block size-2 rounded-full bg-blue-500 align-middle" />
         감독관 {dateLabel} 요약 현황
       </h3>
       <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
       {cards.map((card) => (
         <div
           key={card.label}
-          className={`group rounded-xl bg-white p-4 ${card.disabled ? "opacity-50" : ""}`}
+          className={`group rounded-xl p-4 ${card.cardClassName} ${card.disabled ? "opacity-55" : ""}`}
         >
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <p className="text-xs text-muted-foreground mb-1">{card.label}</p>
+              <p className="mb-1 text-xs font-medium leading-5 tracking-[-0.01em] text-slate-600">
+                {card.label}
+              </p>
               <div className="flex items-baseline gap-2">
                 {card.disabled ? (
-                  <span className="text-xs text-muted-foreground">진행 전입니다</span>
+                  <span className="text-xs text-slate-400">진행 전입니다</span>
                 ) : "isCost" in card && card.isCost ? (
-                  <span className={`tabular-nums text-lg font-bold leading-tight ${card.valueColor}`}>
+                  <span className={`tabular-nums text-lg font-extrabold leading-tight tracking-[-0.02em] text-slate-900 ${card.valueColor}`}>
                     <NumberTicker value={card.value} prefix="₩" format={(n) => formatCost(n)} />
                   </span>
                 ) : (
                   <>
-                    <span className={`tabular-nums text-2xl font-bold ${card.valueColor}`}>
+                    <span className={`tabular-nums text-2xl font-extrabold leading-none tracking-[-0.03em] text-slate-900 ${card.valueColor}`}>
                       <NumberTicker value={card.value} />
                     </span>
                     {card.suffix && (
-                      <span className="text-sm text-muted-foreground">{card.suffix}</span>
+                      <span className="text-sm leading-5 tracking-[-0.01em] text-slate-500">{card.suffix}</span>
                     )}
                   </>
                 )}
               </div>
             </div>
-          </div>
-          {card.progress && !card.disabled && (
-            <div className="mt-2.5">
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-                <div
-                  className={`h-full rounded-full transition-all ${getBarColor(card.progress.completed, card.progress.total)}`}
-                  style={{ width: `${Math.round(getRate(card.progress.completed, card.progress.total) * 100)}%` }}
-                />
-              </div>
-              <p className="mt-1 text-right text-[10px] text-muted-foreground">
-                {card.progress.total > 0
-                  ? `${Math.round(getRate(card.progress.completed, card.progress.total) * 100)}%`
-                  : "-"}
-              </p>
+            <div className={`flex size-11 shrink-0 items-center justify-center ${card.color || "text-slate-600"}`}>
+              <card.icon size={18} />
             </div>
-          )}
+          </div>
         </div>
       ))}
       </div>

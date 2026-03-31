@@ -17,6 +17,7 @@ type Props = {
   onDateSelect: (date: Date) => void;
   onPreset: (range: { startDate: string; endDate: string }) => void;
   activePreset: string | null;
+  dateLabel: string;
 };
 
 
@@ -58,6 +59,7 @@ export function DashboardCalendar({
   onDateSelect,
   onPreset,
   activePreset,
+  dateLabel,
 }: Props) {
   const [isCollapsed, setIsCollapsed] = useState(true);
 
@@ -112,9 +114,9 @@ export function DashboardCalendar({
             !modifiers.range_middle
           }
           className={cn(
-            "flex h-auto w-full min-w-0 flex-col items-center rounded-lg p-1 leading-none font-normal",
+            "flex h-auto w-full min-w-0 flex-col items-center rounded-xl p-1 leading-none font-normal transition-all duration-200",
             "justify-center",
-            "hover:bg-accent/50",
+            "hover:bg-blue-50",
             defaultClassNames.day,
             className
           )}
@@ -123,7 +125,7 @@ export function DashboardCalendar({
           <span className="relative flex flex-col items-center">
             <span
               className={cn(
-                "text-sm tabular-nums size-8 flex items-center justify-center rounded-full",
+                "flex size-8 items-center justify-center rounded-full text-sm tabular-nums",
                 modifiers.selected && !modifiers.outside && "bg-slate-900 text-white",
                 !modifiers.selected && modifiers.today && "font-bold text-blue-600",
                 modifiers.outside && "text-muted-foreground/40"
@@ -148,6 +150,7 @@ export function DashboardCalendar({
     [dayMap]
   );
 
+  const defaultClassNames = getDefaultClassNames();
   const presets = useMemo(() => {
     const today = dayjs();
     const day = today.day();
@@ -165,115 +168,141 @@ export function DashboardCalendar({
     ];
   }, []);
 
-  const defaultClassNames = getDefaultClassNames();
-
   return (
-    <div className="flex flex-col gap-3">
-      <DayPicker
-        mode="single"
-        selected={selectedDate}
-        onSelect={(date) => date && onDateSelect(date)}
-        month={displayMonth}
-        onMonthChange={onDisplayMonthChange}
-        showOutsideDays
-        className="p-3 [--cell-size:--spacing(9)]"
-        formatters={{
-          formatCaption: (date) =>
-            `${date.getFullYear()}년 ${date.getMonth() + 1}월`,
-          formatMonthDropdown: (date) =>
-            `${date.getMonth() + 1}월`,
-          formatWeekdayName: (date) => {
-            const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
-            return dayNames[date.getDay()] || "";
-          },
-        }}
-        classNames={{
-          root: cn("w-full", defaultClassNames.root),
-          months: cn("flex gap-4 flex-col relative", defaultClassNames.months),
-          month: cn("flex flex-col w-full gap-4", defaultClassNames.month),
-          nav: cn(
-            "flex items-center gap-1 w-full absolute top-0 inset-x-0 justify-between",
-            defaultClassNames.nav
-          ),
-          button_previous: cn(
-            buttonVariants({ variant: "ghost" }),
-            "size-(--cell-size) aria-disabled:opacity-50 p-0 select-none",
-            defaultClassNames.button_previous
-          ),
-          button_next: cn(
-            buttonVariants({ variant: "ghost" }),
-            "size-(--cell-size) aria-disabled:opacity-50 p-0 select-none",
-            defaultClassNames.button_next
-          ),
-          month_caption: cn(
-            "flex items-center justify-center h-(--cell-size) w-full px-(--cell-size)",
-            defaultClassNames.month_caption
-          ),
-          caption_label: cn(
-            "select-none font-medium text-sm",
-            defaultClassNames.caption_label
-          ),
-          table: "w-full border-collapse",
-          weekdays: cn("flex", defaultClassNames.weekdays),
-          weekday: cn(
-            "rounded-md flex-1 font-normal text-[0.8rem] select-none",
-            "[&:first-child]:text-red-500",
-            "[&:last-child]:text-blue-500",
-            "[&:not(:first-child):not(:last-child)]:text-muted-foreground",
-            defaultClassNames.weekday
-          ),
-          week: cn("flex w-full", defaultClassNames.week),
-          week_number_header: cn(
-            "select-none w-(--cell-size)",
-            defaultClassNames.week_number_header
-          ),
-          week_number: cn(
-            "text-[0.8rem] select-none text-muted-foreground",
-            defaultClassNames.week_number
-          ),
-          day: cn(
-            "relative w-full p-0 text-center group/day select-none",
-            defaultClassNames.day
-          ),
-          today: cn(
-            "rounded-lg",
-            defaultClassNames.today
-          ),
-          outside: cn(
-            "text-muted-foreground",
-            defaultClassNames.outside
-          ),
-          disabled: cn(
-            "text-muted-foreground opacity-50",
-            defaultClassNames.disabled
-          ),
-          hidden: cn("invisible", defaultClassNames.hidden),
-        }}
-        components={{
-          Root: CalendarRoot,
-          Chevron: CalendarChevron,
-          DayButton: CustomDayButton,
-          WeekNumber: CalendarWeekNumber,
-          Week: CustomWeek,
-        }}
-      />
-      <button
-        type="button"
-        onClick={() => setIsCollapsed((prev) => !prev)}
-        className="flex w-full items-center justify-center gap-1 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-      >
-        {isCollapsed ? (
-          <>
-            펼치기
-            <ChevronDownIcon className="size-3.5" />
-          </>
-        ) : (
-          <>
-            접기
-            <ChevronUpIcon className="size-3.5" />
-          </>
-        )}
-      </button>
+    <div className="snow-panel rounded-xl p-3">
+      <div className="mb-3 flex items-center justify-between px-2 pt-1">
+        <div>
+          <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-slate-500">Calendar</p>
+          <p className="mt-1 text-sm font-semibold text-slate-900">일정 중심 보기</p>
+        </div>
+        <div className="snow-pill rounded-full px-3 py-1 text-[11px] font-medium">
+          {dateLabel} 기준 현황
+        </div>
+      </div>
+      <div className="mb-3 flex gap-1.5 px-1">
+        {presets.map((preset) => (
+          <Button
+            key={preset.label}
+            variant={activePreset === preset.label ? "default" : "outline"}
+            size="sm"
+            onClick={() => onPreset({ startDate: preset.start, endDate: preset.end })}
+            className={
+              activePreset === preset.label
+                ? "h-8 rounded-full bg-slate-900 px-3 text-xs text-white shadow-none hover:bg-slate-800"
+                : "h-8 rounded-full bg-[#f9f9fa] px-3 text-xs text-slate-600 hover:bg-[#f1f1f2]"
+            }
+          >
+            {preset.label}
+          </Button>
+        ))}
+      </div>
+      <div className="flex flex-col gap-3">
+        <DayPicker
+          mode="single"
+          selected={selectedDate}
+          onSelect={(date) => date && onDateSelect(date)}
+          month={displayMonth}
+          onMonthChange={onDisplayMonthChange}
+          showOutsideDays
+          className="snow-grid rounded-xl bg-white p-3 [--cell-size:--spacing(9)]"
+          formatters={{
+            formatCaption: (date) =>
+              `${date.getFullYear()}년 ${date.getMonth() + 1}월`,
+            formatMonthDropdown: (date) =>
+              `${date.getMonth() + 1}월`,
+            formatWeekdayName: (date) => {
+              const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
+              return dayNames[date.getDay()] || "";
+            },
+          }}
+          classNames={{
+            root: cn("w-full", defaultClassNames.root),
+            months: cn("flex gap-4 flex-col relative", defaultClassNames.months),
+            month: cn("flex flex-col w-full gap-4", defaultClassNames.month),
+            nav: cn(
+              "flex items-center gap-1 w-full absolute top-0 inset-x-0 justify-between",
+              defaultClassNames.nav
+            ),
+            button_previous: cn(
+              buttonVariants({ variant: "ghost" }),
+              "size-(--cell-size) aria-disabled:opacity-50 p-0 select-none",
+              defaultClassNames.button_previous
+            ),
+            button_next: cn(
+              buttonVariants({ variant: "ghost" }),
+              "size-(--cell-size) aria-disabled:opacity-50 p-0 select-none",
+              defaultClassNames.button_next
+            ),
+            month_caption: cn(
+              "flex items-center justify-center h-(--cell-size) w-full px-(--cell-size)",
+              defaultClassNames.month_caption
+            ),
+            caption_label: cn(
+              "select-none font-medium text-sm",
+              defaultClassNames.caption_label
+            ),
+            table: "w-full border-collapse",
+            weekdays: cn("flex", defaultClassNames.weekdays),
+            weekday: cn(
+              "rounded-md flex-1 font-normal text-[0.8rem] select-none",
+              "[&:first-child]:text-red-500",
+              "[&:last-child]:text-blue-500",
+              "[&:not(:first-child):not(:last-child)]:text-muted-foreground",
+              defaultClassNames.weekday
+            ),
+            week: cn("flex w-full", defaultClassNames.week),
+            week_number_header: cn(
+              "select-none w-(--cell-size)",
+              defaultClassNames.week_number_header
+            ),
+            week_number: cn(
+              "text-[0.8rem] select-none text-muted-foreground",
+              defaultClassNames.week_number
+            ),
+            day: cn(
+              "relative w-full p-0 text-center group/day select-none",
+              defaultClassNames.day
+            ),
+            today: cn(
+              "rounded-lg",
+              defaultClassNames.today
+            ),
+            outside: cn(
+              "text-muted-foreground",
+              defaultClassNames.outside
+            ),
+            disabled: cn(
+              "text-muted-foreground opacity-50",
+              defaultClassNames.disabled
+            ),
+            hidden: cn("invisible", defaultClassNames.hidden),
+          }}
+          components={{
+            Root: CalendarRoot,
+            Chevron: CalendarChevron,
+            DayButton: CustomDayButton,
+            WeekNumber: CalendarWeekNumber,
+            Week: CustomWeek,
+          }}
+        />
+        <button
+          type="button"
+          onClick={() => setIsCollapsed((prev) => !prev)}
+          className="snow-pill flex w-full items-center justify-center gap-1 rounded-xl py-2 text-xs font-medium transition-colors hover:text-slate-900"
+        >
+          {isCollapsed ? (
+            <>
+              펼치기
+              <ChevronDownIcon className="size-3.5" />
+            </>
+          ) : (
+            <>
+              접기
+              <ChevronUpIcon className="size-3.5" />
+            </>
+          )}
+        </button>
+      </div>
     </div>
   );
 }

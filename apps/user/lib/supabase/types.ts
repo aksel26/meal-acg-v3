@@ -365,31 +365,112 @@ export type Database = {
         }
         Relationships: []
       }
+      leave_adjustments: {
+        Row: {
+          id: string
+          balance_id: string
+          adjusted_by: string
+          amount: number
+          reason: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          balance_id: string
+          adjusted_by: string
+          amount: number
+          reason?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          balance_id?: string
+          adjusted_by?: string
+          amount?: number
+          reason?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      leave_balances: {
+        Row: {
+          id: string
+          member_id: string
+          year: number
+          type: string
+          granted: number
+          used: number
+          adjusted: number
+          note: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          member_id: string
+          year: number
+          type: string
+          granted?: number
+          used?: number
+          adjusted?: number
+          note?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          member_id?: string
+          year?: number
+          type?: string
+          granted?: number
+          used?: number
+          adjusted?: number
+          note?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       leave_types: {
         Row: {
           category: string
           created_at: string
+          deduction_amount: number
+          deducts_annual: boolean
+          default_quota: number
           duration_type: string
+          has_separate_quota: boolean
           id: number
           include_in_stats: boolean
+          is_system: boolean
           name: string
           sort_order: number
         }
         Insert: {
           category: string
           created_at?: string
+          deduction_amount?: number
+          deducts_annual?: boolean
+          default_quota?: number
           duration_type?: string
+          has_separate_quota?: boolean
           id: number
           include_in_stats?: boolean
+          is_system?: boolean
           name: string
           sort_order?: number
         }
         Update: {
           category?: string
           created_at?: string
+          deduction_amount?: number
+          deducts_annual?: boolean
+          default_quota?: number
           duration_type?: string
+          has_separate_quota?: boolean
           id?: number
           include_in_stats?: boolean
+          is_system?: boolean
           name?: string
           sort_order?: number
         }

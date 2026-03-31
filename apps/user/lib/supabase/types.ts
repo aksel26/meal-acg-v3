@@ -47,48 +47,45 @@ export type Database = {
     Tables: {
       attendance_records: {
         Row: {
-          check_in_at: string | null
-          check_out_at: string | null
-          created_at: string
           id: string
           member_id: string
+          date: string
+          check_in_at: string | null
+          check_out_at: string | null
+          status: string
+          overtime_minutes: number
+          is_weekend: boolean
+          note: string | null
+          created_at: string
           updated_at: string
-          work_date: string
         }
         Insert: {
-          check_in_at?: string | null
-          check_out_at?: string | null
-          created_at?: string
           id?: string
           member_id: string
-          updated_at?: string
-          work_date?: string
-        }
-        Update: {
+          date: string
           check_in_at?: string | null
           check_out_at?: string | null
+          status?: string
+          overtime_minutes?: number
+          is_weekend?: boolean
+          note?: string | null
           created_at?: string
+          updated_at?: string
+        }
+        Update: {
           id?: string
           member_id?: string
+          date?: string
+          check_in_at?: string | null
+          check_out_at?: string | null
+          status?: string
+          overtime_minutes?: number
+          is_weekend?: boolean
+          note?: string | null
+          created_at?: string
           updated_at?: string
-          work_date?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "attendance_records_member_id_fkey"
-            columns: ["member_id"]
-            isOneToOne: false
-            referencedRelation: "members"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "attendance_records_member_id_fkey"
-            columns: ["member_id"]
-            isOneToOne: false
-            referencedRelation: "member_current_status"
-            referencedColumns: ["member_id"]
-          },
-        ]
+        Relationships: []
       }
       budget_allocations: {
         Row: {

@@ -45,6 +45,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      attendance_records: {
+        Row: {
+          id: string
+          member_id: string
+          date: string
+          check_in_at: string | null
+          check_out_at: string | null
+          status: string
+          overtime_minutes: number
+          is_weekend: boolean
+          note: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          member_id: string
+          date: string
+          check_in_at?: string | null
+          check_out_at?: string | null
+          status?: string
+          overtime_minutes?: number
+          is_weekend?: boolean
+          note?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          member_id?: string
+          date?: string
+          check_in_at?: string | null
+          check_out_at?: string | null
+          status?: string
+          overtime_minutes?: number
+          is_weekend?: boolean
+          note?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       budget_allocations: {
         Row: {
           created_at: string | null

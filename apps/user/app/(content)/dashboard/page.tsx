@@ -10,6 +10,7 @@ import { Footer } from "@/components/Footer";
 import { useMealData } from "@/hooks/use-meal-data";
 import { useMealDelete } from "@/hooks/use-meal-delete";
 import { useMealSubmit } from "@/hooks/use-meal-submit";
+import { useMyAttendanceToday, useCheckIn, useCheckOut } from "@/hooks/useAttendance";
 import { useMealDrawerStore } from "@/stores/mealDrawerStore";
 import { useUserStore } from "@/stores/userStore";
 import dayjs from "dayjs";
@@ -28,6 +29,115 @@ const MealEntryDrawer = lazy(() =>
     default: module.default,
   }))
 );
+
+function AttendanceWidget() {
+  const { data: attendance } = useMyAttendanceToday();
+  const checkIn = useCheckIn();
+  const checkOut = useCheckOut();
+  const [now, setNow] = useState(() => dayjs().tz("Asia/Seoul"));
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(dayjs().tz("Asia/Seoul"));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const hasCheckedIn = attendance && attendance.check_in_at;
+  const hasCheckedOut = attendance && attendance.check_out_at;
+
+  // 퇴근 가능 시각: 출근 시각 + 9시간
+  const checkOutAvailable =
+    hasCheckedIn && !hasCheckedOut
+      ? dayjs(attendance.check_in_at).tz("Asia/Seoul").add(9, "hour")
+      : null;
+
+  // 지각 여부: 출근 시각이 10:00 이후
+  const isLate =
+    hasCheckedIn &&
+    dayjs(attendance.check_in_at).tz("Asia/Seoul").isAfter(
+      dayjs(attendance.check_in_at).tz("Asia/Seoul").startOf("day").hour(10)
+    );
+
+  // 근무시간 계산
+  const workDuration =
+    hasCheckedIn && hasCheckedOut
+      ? (() => {
+          const diffSec = dayjs(attendance.check_out_at)
+            .diff(dayjs(attendance.check_in_at), "second");
+          const h = Math.floor(diffSec / 3600);
+          const m = Math.floor((diffSec % 3600) / 60);
+          const s = diffSec % 60;
+          return `${h}시간 ${m}분 ${s}초`;
+        })()
+      : null;
+
+  return (
+    <div className="rounded-2xl border bg-white p-5">
+      {!hasCheckedIn && (
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-2xl font-semibold tabular-nums text-slate-800">
+            🕐 현재 시각: {now.format("HH:mm:ss")}
+          </p>
+          <button
+            className="w-full rounded-xl bg-slate-900 py-4 text-lg font-bold text-white hover:bg-slate-800 disabled:opacity-50"
+            onClick={() => checkIn.mutate()}
+            disabled={checkIn.isPending}
+          >
+            출근하기
+          </button>
+          <p className="text-sm text-slate-500">08:00 ~ 10:00 출근 가능</p>
+        </div>
+      )}
+
+      {hasCheckedIn && !hasCheckedOut && (
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-base font-medium text-slate-700">
+              출근 {dayjs(attendance.check_in_at).tz("Asia/Seoul").format("HH:mm:ss")}
+            </span>
+            {isLate && (
+              <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-600">
+                지각
+              </span>
+            )}
+          </div>
+          {checkOutAvailable && (
+            <p className="text-sm text-slate-500">
+              퇴근 가능: {checkOutAvailable.format("HH:mm:ss")}
+            </p>
+          )}
+          <button
+            className="w-full rounded-xl border-2 border-slate-900 py-3 text-base font-semibold text-slate-900 hover:bg-slate-50 disabled:opacity-50"
+            onClick={() => checkOut.mutate()}
+            disabled={checkOut.isPending}
+          >
+            퇴근하기
+          </button>
+        </div>
+      )}
+
+      {hasCheckedIn && hasCheckedOut && (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2 text-base font-medium text-slate-700">
+            <span>출근 {dayjs(attendance.check_in_at).tz("Asia/Seoul").format("HH:mm:ss")}</span>
+            <span className="text-slate-400">→</span>
+            <span>퇴근 {dayjs(attendance.check_out_at).tz("Asia/Seoul").format("HH:mm:ss")}</span>
+          </div>
+          {workDuration && (
+            <p className="text-sm text-slate-600">근무시간: {workDuration}</p>
+          )}
+          {attendance.overtime_minutes > 0 && (
+            <p className="text-sm font-medium text-blue-600">
+              초과 {attendance.overtime_minutes}분
+            </p>
+          )}
+          <p className="text-sm font-semibold text-emerald-600">✓ 퇴근 완료</p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   const [mounted, setMounted] = useState(false);
@@ -158,6 +268,7 @@ export default function DashboardPage() {
 
   return (
     <React.Fragment>
+      <AttendanceWidget />
       <GreetingSection userName={displayUserName} />
       <StatsSection userId={currentUserId} month={currentMonth} year={currentYear} onDataChange={setCalculationData} />
       <PopularRestaurantsSection />

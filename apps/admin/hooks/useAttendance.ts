@@ -16,6 +16,7 @@ export interface AttendanceRecord {
     id: string;
     full_name: string;
     position: { name: string } | null;
+    title?: { name: string | null } | null;
   };
 }
 
@@ -49,6 +50,18 @@ export function useAttendanceToday() {
       return res.json();
     },
     refetchInterval: 60000, // 1분마다 새로고침
+  });
+}
+
+export function useAttendanceByDate(date: string) {
+  return useQuery<AttendanceRecord[]>({
+    queryKey: queryKeys.attendance.byDate(date),
+    queryFn: async () => {
+      const res = await fetch(`/api/attendance?date=${date}&allMembers=true`);
+      if (!res.ok) throw new Error("Failed to fetch attendance");
+      return res.json();
+    },
+    enabled: !!date,
   });
 }
 

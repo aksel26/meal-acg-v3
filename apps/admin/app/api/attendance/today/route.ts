@@ -19,7 +19,7 @@ export async function GET() {
     // 전체 활성 멤버 수 (퇴사자 제외)
     const { data: allMembers, error: membersError } = await supabase
       .from("member_current_status")
-      .select("id, full_name")
+      .select("member_id, full_name")
       .is("current_status", null);
 
     if (membersError) {
@@ -30,9 +30,9 @@ export async function GET() {
       );
     }
 
-    const members = (allMembers ?? []) as { id: string; full_name: string }[];
+    const members = (allMembers ?? []) as { member_id: string; full_name: string }[];
     const total = members.length;
-    const memberMap = new Map(members.map((m) => [m.id, m.full_name]));
+    const memberMap = new Map(members.map((m) => [m.member_id, m.full_name]));
 
     // 오늘 출퇴근 기록
     const { data: records, error: recordsError } = await supabase
@@ -83,8 +83,8 @@ export async function GET() {
       .map((id) => ({ id, name: memberMap.get(id)! }));
 
     const notCheckedInMembers = members
-      .filter((m) => !checkedInIds.has(m.id) && !onLeaveIds.has(m.id))
-      .map((m) => ({ id: m.id, name: m.full_name }));
+      .filter((m) => !checkedInIds.has(m.member_id) && !onLeaveIds.has(m.member_id))
+      .map((m) => ({ id: m.member_id, name: m.full_name }));
 
     return NextResponse.json({
       total,

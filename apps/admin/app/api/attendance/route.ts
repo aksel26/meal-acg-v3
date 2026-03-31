@@ -21,7 +21,57 @@ export async function GET(request: NextRequest) {
       .order("date", { ascending: true })
       .order("member_id", { ascending: true });
 
-    if (date) {
+    const allMembers = searchParams.get("allMembers");
+
+    if (date && allMembers === "true") {
+      // 전체 멤버 + 해당 날짜 출퇴근 기록 병합
+      const { data: members, error: membersError } = await supabase
+        .from("member_current_status")
+        .select("member_id, full_name, position_name, title_name, current_status")
+        .is("current_status", null);
+
+      if (membersError) {
+        return NextResponse.json({ error: "멤버 조회 실패" }, { status: 500 });
+      }
+
+      const { data: records, error: recordsError } = await supabase
+        .from("attendance_records")
+        .select("*")
+        .eq("date", date);
+
+      if (recordsError) {
+        return NextResponse.json({ error: "출퇴근 조회 실패" }, { status: 500 });
+      }
+
+      const recordMap = new Map(
+        (records || []).map((r) => [r.member_id, r])
+      );
+
+      const merged = (members || []).map((m) => {
+        const rec = recordMap.get(m.member_id);
+        return {
+          id: rec?.id || null,
+          member_id: m.member_id,
+          date,
+          check_in_at: rec?.check_in_at || null,
+          check_out_at: rec?.check_out_at || null,
+          status: rec?.status || "pending",
+          overtime_minutes: rec?.overtime_minutes || 0,
+          is_weekend: rec?.is_weekend || false,
+          note: rec?.note || null,
+          created_at: rec?.created_at || null,
+          updated_at: rec?.updated_at || null,
+          member: {
+            id: m.member_id,
+            full_name: m.full_name,
+            position: { name: m.position_name || "-" },
+            title: { name: m.title_name || null },
+          },
+        };
+      });
+
+      return NextResponse.json(merged);
+    } else if (date) {
       query = query.eq("date", date);
     } else if (year && month) {
       const m = month.padStart(2, "0");
@@ -49,6 +99,56 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(data);
   } catch (error) {
     console.error("Attendance API error:", error);
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+// POST /api/attendance - 출퇴근 기록 생성 (admin 수동 입력)
+export async function POST(request: NextRequest) {
+  try {
+    await requireAdmin();
+    const supabase = createServiceClient();
+    const body = await request.json();
+
+    const { member_id, date, check_in_at, check_out_at, status, note } = body;
+
+    if (!member_id || !date) {
+      return NextResponse.json(
+        { error: "member_id와 date는 필수입니다." },
+        { status: 400 }
+      );
+    }
+
+    const { data, error } = await supabase
+      .from("attendance_records")
+      .upsert(
+        {
+          member_id,
+          date,
+          check_in_at: check_in_at || null,
+          check_out_at: check_out_at || null,
+          status: status || "normal",
+          note: note || null,
+        },
+        { onConflict: "member_id,date" }
+      )
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error creating attendance:", error);
+      return NextResponse.json(
+        { error: "출퇴근 기록 생성 실패", details: error.message },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json(data, { status: 201 });
+  } catch (error) {
+    console.error("Attendance POST error:", error);
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

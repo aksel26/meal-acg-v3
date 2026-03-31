@@ -79,7 +79,7 @@ WHERE target_id = 'b1000000-0000-0000-0000-000000000004'
   AND leave_type_id = 1;
 
 -- 8. attendance_records 샘플 (최근 5영업일: 3/2~3/6)
-INSERT INTO attendance_records (member_id, work_date, check_in_at, check_out_at) VALUES
+INSERT INTO attendance_records (member_id, date, check_in_at, check_out_at) VALUES
   -- 3/2 (월)
   ('b1000000-0000-0000-0000-000000000001', '2026-03-02', '2026-03-02 08:55:00+09', '2026-03-02 18:10:00+09'),
   ('b1000000-0000-0000-0000-000000000002', '2026-03-02', '2026-03-02 09:02:00+09', '2026-03-02 18:05:00+09'),

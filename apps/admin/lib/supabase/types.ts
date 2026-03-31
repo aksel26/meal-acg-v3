@@ -45,6 +45,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      approval_requests: {
+        Row: {
+          id: string
+          type: string
+          requester_id: string
+          approver_id: string
+          status: string
+          cc_member_ids: string[] | null
+          related_table: string | null
+          related_id: string | null
+          reject_reason: string | null
+          requested_at: string
+          resolved_at: string | null
+          resolved_by: string | null
+        }
+        Insert: {
+          id?: string
+          type: string
+          requester_id: string
+          approver_id: string
+          status?: string
+          cc_member_ids?: string[] | null
+          related_table?: string | null
+          related_id?: string | null
+          reject_reason?: string | null
+          requested_at?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+        }
+        Update: {
+          id?: string
+          type?: string
+          requester_id?: string
+          approver_id?: string
+          status?: string
+          cc_member_ids?: string[] | null
+          related_table?: string | null
+          related_id?: string | null
+          reject_reason?: string | null
+          requested_at?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+        }
+        Relationships: []
+      }
       attendance_records: {
         Row: {
           id: string
@@ -144,6 +189,7 @@ export type Database = {
       }
       dayoffs: {
         Row: {
+          approval_status: string
           approved_at: string | null
           approver_id: string | null
           author_id: string
@@ -161,6 +207,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          approval_status?: string
           approved_at?: string | null
           approver_id?: string | null
           author_id: string
@@ -178,6 +225,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          approval_status?: string
           approved_at?: string | null
           approver_id?: string | null
           author_id?: string
@@ -1880,6 +1928,10 @@ export type Database = {
           p_per_member_amount?: number
         }
         Returns: number
+      }
+      get_approver_for_member: {
+        Args: { p_member_id: string }
+        Returns: string
       }
       get_dayoff_monthly_stats: {
         Args: { p_month: number; p_year: number }

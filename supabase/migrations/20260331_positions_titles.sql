@@ -41,7 +41,8 @@ INSERT INTO "public"."positions" ("name", "sort_order", "annual_leave_days", "le
 INSERT INTO "public"."titles" ("name", "sort_order") VALUES
     ('파트장', 1),
     ('팀장',   2),
-    ('본부장', 3);
+    ('본부장', 3),
+    ('대표',   4);
 
 -- 4. members 테이블에 position_id, title_id 컬럼 추가
 ALTER TABLE "public"."members"

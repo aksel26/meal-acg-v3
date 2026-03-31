@@ -355,6 +355,71 @@ INSERT INTO supervisor.room_reservations (id, room_id, date, start_time, end_tim
   ('b1000000-0000-0000-0000-000000000005', '406-2', '2026-03-28', '10:00', '15:00', 'supervisor', '홍대 카페 시식 준비', NULL, '김관리', '{}');
 
 -- ============================================================
+-- Phase 4: 승인 워크플로 시드 데이터
+-- ============================================================
+
+-- 대표/본부장 추가 (승인라인 테스트)
+INSERT INTO members (id, full_name, login_id, password, role, member_role, organization_id, division_id, team_id) VALUES
+  ('b1000000-0000-0000-0000-000000000006', '한대표', 'ceo', 'admin123', 'admin', '팀장', '6a521219-f6fc-483d-96d8-3fa12a77af20', 'd1000000-0000-0000-0000-000000000001', 'a1000000-0000-0000-0000-000000000001'),
+  ('b1000000-0000-0000-0000-000000000007', '오본부장', 'director', 'admin123', 'admin', '본부장', '6a521219-f6fc-483d-96d8-3fa12a77af20', 'd1000000-0000-0000-0000-000000000001', 'a1000000-0000-0000-0000-000000000001')
+ON CONFLICT (id) DO NOTHING;
+
+-- 직급/직책 매핑
+UPDATE members SET position_id = (SELECT id FROM positions WHERE name = '대표'), title_id = (SELECT id FROM titles WHERE name = '대표')
+  WHERE id = 'b1000000-0000-0000-0000-000000000006';
+UPDATE members SET position_id = (SELECT id FROM positions WHERE name = '수석'), title_id = (SELECT id FROM titles WHERE name = '본부장')
+  WHERE id = 'b1000000-0000-0000-0000-000000000007';
+
+-- hire_date 추가 (승인라인 + 연차 계산에 필요)
+UPDATE members SET hire_date = '2020-03-01' WHERE id = 'b1000000-0000-0000-0000-000000000001'; -- 김관리 (팀장)
+UPDATE members SET hire_date = '2023-07-15' WHERE id = 'b1000000-0000-0000-0000-000000000002'; -- 이철수
+UPDATE members SET hire_date = '2022-01-10' WHERE id = 'b1000000-0000-0000-0000-000000000003'; -- 박영희
+UPDATE members SET hire_date = '2024-03-01' WHERE id = 'b1000000-0000-0000-0000-000000000004'; -- 최민수
+UPDATE members SET hire_date = '2025-09-01' WHERE id = 'b1000000-0000-0000-0000-000000000005'; -- 정수진
+UPDATE members SET hire_date = '2015-01-05' WHERE id = 'b1000000-0000-0000-0000-000000000006'; -- 한대표
+UPDATE members SET hire_date = '2018-06-01' WHERE id = 'b1000000-0000-0000-0000-000000000007'; -- 오본부장
+
+-- 승인 요청 샘플 데이터
+-- 승인라인: 팀원/파트장 → 김관리(팀장), 김관리(팀장) → 오본부장, 오본부장 → 한대표
+
+-- 1) 이철수 연차 신청 → 김관리 승인 대기 (pending)
+INSERT INTO dayoffs (id, author_id, target_id, leave_date, leave_type_id, reason, approval_status) VALUES
+  ('d4000000-0000-0000-0000-000000000001', 'b1000000-0000-0000-0000-000000000002', 'b1000000-0000-0000-0000-000000000002', '2026-04-07', 5, '개인 사유 (승인 대기)', 'pending'),
+  ('d4000000-0000-0000-0000-000000000002', 'b1000000-0000-0000-0000-000000000002', 'b1000000-0000-0000-0000-000000000002', '2026-04-08', 5, '개인 사유 (승인 대기)', 'pending');
+
+INSERT INTO approval_requests (id, type, requester_id, approver_id, status, related_table, related_id, requested_at) VALUES
+  ('e4000000-0000-0000-0000-000000000001', 'leave', 'b1000000-0000-0000-0000-000000000002', 'b1000000-0000-0000-0000-000000000001', 'pending', 'dayoffs', 'd4000000-0000-0000-0000-000000000001', '2026-03-31 09:00:00+09'),
+  ('e4000000-0000-0000-0000-000000000002', 'leave', 'b1000000-0000-0000-0000-000000000002', 'b1000000-0000-0000-0000-000000000001', 'pending', 'dayoffs', 'd4000000-0000-0000-0000-000000000002', '2026-03-31 09:00:00+09');
+
+-- 2) 박영희 오전반차 신청 → 김관리 승인 대기 (pending)
+INSERT INTO dayoffs (id, author_id, target_id, leave_date, leave_type_id, reason, approval_status) VALUES
+  ('d4000000-0000-0000-0000-000000000003', 'b1000000-0000-0000-0000-000000000003', 'b1000000-0000-0000-0000-000000000003', '2026-04-10', 3, '병원 진료 (승인 대기)', 'pending');
+
+INSERT INTO approval_requests (id, type, requester_id, approver_id, status, related_table, related_id, cc_member_ids, requested_at) VALUES
+  ('e4000000-0000-0000-0000-000000000003', 'leave', 'b1000000-0000-0000-0000-000000000003', 'b1000000-0000-0000-0000-000000000001', 'pending', 'dayoffs', 'd4000000-0000-0000-0000-000000000003', ARRAY['b1000000-0000-0000-0000-000000000002']::uuid[], '2026-03-31 10:30:00+09');
+
+-- 3) 최민수 연차 → 김관리 승인 완료 (approved)
+INSERT INTO dayoffs (id, author_id, target_id, leave_date, leave_type_id, reason, approver_id, approved_at, approval_status) VALUES
+  ('d4000000-0000-0000-0000-000000000004', 'b1000000-0000-0000-0000-000000000004', 'b1000000-0000-0000-0000-000000000004', '2026-04-14', 5, '가족 행사', 'b1000000-0000-0000-0000-000000000001', '2026-03-28 14:00:00+09', 'approved');
+
+INSERT INTO approval_requests (id, type, requester_id, approver_id, status, related_table, related_id, requested_at, resolved_at, resolved_by) VALUES
+  ('e4000000-0000-0000-0000-000000000004', 'leave', 'b1000000-0000-0000-0000-000000000004', 'b1000000-0000-0000-0000-000000000001', 'approved', 'dayoffs', 'd4000000-0000-0000-0000-000000000004', '2026-03-27 11:00:00+09', '2026-03-28 14:00:00+09', 'b1000000-0000-0000-0000-000000000001');
+
+-- 4) 정수진 연차 → 김관리 반려 (rejected)
+INSERT INTO dayoffs (id, author_id, target_id, leave_date, leave_type_id, reason, approval_status) VALUES
+  ('d4000000-0000-0000-0000-000000000005', 'b1000000-0000-0000-0000-000000000005', 'b1000000-0000-0000-0000-000000000005', '2026-04-03', 5, '여행', 'rejected');
+
+INSERT INTO approval_requests (id, type, requester_id, approver_id, status, related_table, related_id, reject_reason, requested_at, resolved_at, resolved_by) VALUES
+  ('e4000000-0000-0000-0000-000000000005', 'leave', 'b1000000-0000-0000-0000-000000000005', 'b1000000-0000-0000-0000-000000000001', 'rejected', 'dayoffs', 'd4000000-0000-0000-0000-000000000005', '해당 날짜는 프로젝트 마감일입니다.', '2026-03-30 09:00:00+09', '2026-03-30 16:00:00+09', 'b1000000-0000-0000-0000-000000000001');
+
+-- 5) 김관리(팀장) 연차 → 오본부장 승인 대기 (팀장→본부장 승인라인 테스트)
+INSERT INTO dayoffs (id, author_id, target_id, leave_date, leave_type_id, reason, approval_status) VALUES
+  ('d4000000-0000-0000-0000-000000000006', 'b1000000-0000-0000-0000-000000000001', 'b1000000-0000-0000-0000-000000000001', '2026-04-15', 5, '개인 사유', 'pending');
+
+INSERT INTO approval_requests (id, type, requester_id, approver_id, status, related_table, related_id, requested_at) VALUES
+  ('e4000000-0000-0000-0000-000000000006', 'leave', 'b1000000-0000-0000-0000-000000000001', 'b1000000-0000-0000-0000-000000000007', 'pending', 'dayoffs', 'd4000000-0000-0000-0000-000000000006', '2026-03-31 11:00:00+09');
+
+-- ============================================================
 -- 연차 시드 데이터 (2026년)
 -- ============================================================
 SELECT generate_annual_leave(2026);

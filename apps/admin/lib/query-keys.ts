@@ -173,6 +173,12 @@ export const queryKeys = {
     byYear: (year: number) => ["leaveBalances", year] as const,
   },
 
+  // Approvals (승인)
+  approvals: {
+    all: ["approvals"] as const,
+    byStatus: (status: string) => ["approvals", status] as const,
+  },
+
   // Attendance (출퇴근)
   attendance: {
     all: ["attendance"] as const,

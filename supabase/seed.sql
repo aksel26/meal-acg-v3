@@ -27,6 +27,18 @@ INSERT INTO members (id, full_name, login_id, password, role, member_role, organ
   ('b1000000-0000-0000-0000-000000000005', '정수진', 'user4', 'user123', 'user', '팀원', '6a521219-f6fc-483d-96d8-3fa12a77af20', 'd1000000-0000-0000-0000-000000000001', 'a1000000-0000-0000-0000-000000000001')
 ON CONFLICT (id) DO NOTHING;
 
+-- 직급/직책 매핑 (시드 데이터용)
+UPDATE members SET position_id = (SELECT id FROM positions WHERE name = '책임'), title_id = (SELECT id FROM titles WHERE name = '팀장')
+  WHERE id = 'b1000000-0000-0000-0000-000000000001'; -- 김관리 (admin)
+UPDATE members SET position_id = (SELECT id FROM positions WHERE name = '사원')
+  WHERE id = 'b1000000-0000-0000-0000-000000000002'; -- 이철수
+UPDATE members SET position_id = (SELECT id FROM positions WHERE name = '선임')
+  WHERE id = 'b1000000-0000-0000-0000-000000000003'; -- 박영희
+UPDATE members SET position_id = (SELECT id FROM positions WHERE name = '사원')
+  WHERE id = 'b1000000-0000-0000-0000-000000000004'; -- 최민수
+UPDATE members SET position_id = (SELECT id FROM positions WHERE name = '인턴')
+  WHERE id = 'b1000000-0000-0000-0000-000000000005'; -- 정수진
+
 -- 5. member_statuses: 전원 재직 중이므로 레코드 불필요
 -- (member_current_status VIEW에서 status 없으면 재직으로 처리)
 

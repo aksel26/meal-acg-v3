@@ -687,8 +687,10 @@ export type Database = {
           note: string | null
           organization_id: string | null
           password: string
+          position_id: string
           role: string | null
           team_id: string | null
+          title_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -703,8 +705,10 @@ export type Database = {
           note?: string | null
           organization_id?: string | null
           password: string
+          position_id?: string
           role?: string | null
           team_id?: string | null
+          title_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -719,8 +723,10 @@ export type Database = {
           note?: string | null
           organization_id?: string | null
           password?: string
+          position_id?: string
           role?: string | null
           team_id?: string | null
+          title_id?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -746,6 +752,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      positions: {
+        Row: {
+          id: string
+          name: string
+          sort_order: number
+          annual_leave_days: number
+          leave_accrual_rule: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          sort_order?: number
+          annual_leave_days?: number
+          leave_accrual_rule?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          sort_order?: number
+          annual_leave_days?: number
+          leave_accrual_rule?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      titles: {
+        Row: {
+          id: string
+          name: string
+          sort_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       monthly_allowances: {
         Row: {
@@ -1586,12 +1646,16 @@ export type Database = {
           full_name: string | null
           member_id: string | null
           member_role: Database["public"]["Enums"]["member_role"] | null
+          position_id: string | null
+          position_name: string | null
           status_end_date: string | null
           status_id: string | null
           status_note: string | null
           status_start_date: string | null
           team_id: string | null
           team_name: string | null
+          title_id: string | null
+          title_name: string | null
         }
         Relationships: [
           {

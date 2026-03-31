@@ -157,6 +157,16 @@ export const queryKeys = {
     all: ["leaveTypes"] as const,
   },
 
+  // Positions (직급)
+  positions: {
+    all: ["positions"] as const,
+  },
+
+  // Titles (직책)
+  titles: {
+    all: ["titles"] as const,
+  },
+
   // Usage Records
   usageRecords: {
     all: ["usageRecords"] as const,

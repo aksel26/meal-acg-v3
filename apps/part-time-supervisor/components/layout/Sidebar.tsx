@@ -94,17 +94,17 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="flex h-full w-60 flex-col rounded-lg bg-slate-900 p-4 text-white">
+    <aside className="flex h-full w-60 flex-col rounded-lg border border-[#f3f3f3] bg-white p-4 text-slate-900">
       <Link href="/" className="mb-8 block px-2 py-4">
         <Image
-          src="/ACG_CI-WHITE.webp"
+          src="/acg_ci_gray.png"
           alt="ACG"
-          width={120}
-          height={40}
+          width={96}
+          height={32}
           className="h-auto w-auto"
           priority
         />
-        <p className="mt-1 text-sm text-slate-400">아르바이트 관리</p>
+        <p className="mt-1 text-sm text-[#111111]">아르바이트 관리</p>
       </Link>
 
       <nav className="flex flex-1 flex-col gap-1">
@@ -118,8 +118,8 @@ export default function Sidebar() {
                 href={entry.href}
                 className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
                   isActive
-                    ? "bg-white/10 font-medium text-white"
-                    : "text-slate-400 hover:bg-white/5 hover:text-white"
+                    ? "bg-[#111111] font-medium text-white"
+                    : "text-slate-500 hover:bg-[#f9f9fa] hover:text-[#111111]"
                 }`}
               >
                 <Icon size={18} />
@@ -139,8 +139,8 @@ export default function Sidebar() {
                 onClick={() => handleGroupClick(entry)}
                 className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
                   active
-                    ? "text-white"
-                    : "text-slate-400 hover:bg-white/5 hover:text-white"
+                    ? "text-[#111111]"
+                    : "text-slate-500 hover:bg-[#f9f9fa] hover:text-[#111111]"
                 }`}
               >
                 <GroupIcon size={18} />
@@ -162,8 +162,8 @@ export default function Sidebar() {
                         href={child.href}
                         className={`flex items-center gap-3 rounded-lg py-2 pl-9 pr-3 text-sm transition-colors ${
                           isChildActive
-                            ? "bg-white/10 font-medium text-white"
-                            : "text-slate-400 hover:bg-white/5 hover:text-white"
+                            ? "bg-[#111111] font-medium text-white"
+                            : "text-slate-500 hover:bg-[#f9f9fa] hover:text-[#111111]"
                         }`}
                       >
                         <ChildIcon size={16} />

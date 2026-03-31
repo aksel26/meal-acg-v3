@@ -1,8 +1,66 @@
 @import "tailwindcss";
 @import "@repo/tailwind-config";
 
+:root {
+  --snow-bg: #ffffff;
+  --snow-panel: #f9f9fa;
+  --snow-panel-strong: #f9f9fa;
+  --snow-text: #10233f;
+  --snow-muted: #5f728f;
+  --snow-blue: #3b82f6;
+  --snow-cyan: #38bdf8;
+}
+
 html {
   font-size: 14px;
+}
+
+.snow-page {
+  position: relative;
+  isolation: isolate;
+}
+
+.snow-page::before {
+  content: none;
+}
+
+.snow-panel {
+  background: var(--snow-panel);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.snow-panel-strong {
+  background: var(--snow-panel-strong);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.snow-pill {
+  background: #f9f9fa;
+  color: var(--snow-muted);
+  box-shadow: none;
+}
+
+.snow-kpi {
+  background: #f9f9fa;
+  box-shadow: none;
+}
+
+.snow-grid {
+  background-image: none;
+}
+
+.snow-table thead tr {
+  background: #f9f9fa;
+}
+
+.snow-table tbody tr {
+  background: #ffffff;
+}
+
+.snow-table tbody tr:hover {
+  background: #f9f9fa;
 }
 
 .font-bold {

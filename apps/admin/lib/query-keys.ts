@@ -167,6 +167,12 @@ export const queryKeys = {
     all: ["titles"] as const,
   },
 
+  // Leave Balances (연차 현황)
+  leaveBalances: {
+    all: ["leaveBalances"] as const,
+    byYear: (year: number) => ["leaveBalances", year] as const,
+  },
+
   // Usage Records
   usageRecords: {
     all: ["usageRecords"] as const,

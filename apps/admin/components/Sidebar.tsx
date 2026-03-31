@@ -11,7 +11,6 @@ import {
   Settings,
   LogOut,
   ChevronDown,
-  Utensils,
   Shuffle,
   Coffee,
   Upload,
@@ -82,14 +81,17 @@ const navigation: NavigationItem[] = [
     icon: LayoutDashboard,
   },
   {
-    name: "식대 관리",
-    icon: Utensils,
+    name: "비용 관리",
+    icon: Coins,
     items: [
       { name: "사용현황 (인원별)", href: "/meal-status", icon: Users },
       { name: "식대 입력", href: "/calendar", icon: Calendar },
       { name: "식대 기본금 설정", href: "/settings", icon: Settings },
       { name: "엑셀 가져오기", href: "/import", icon: Upload },
       { name: "엑셀 내보내기", href: "/export", icon: Download },
+      { name: "예산 할당", href: "/budget", icon: PiggyBank },
+      { name: "사용내역 검토", href: "/review", icon: ClipboardCheck },
+      { name: "사용 내역 조회", href: "/points-overview", icon: BarChart3 },
     ],
   },
   {
@@ -98,23 +100,17 @@ const navigation: NavigationItem[] = [
     items: [
       { name: "조직 구성", href: "/organization", icon: Building2 },
       { name: "조직원 현황", href: "/member-status", icon: UserCheck },
+      { name: "직급/직책 관리", href: "/job-titles", icon: Grid3X3 },
       { name: "점심조 관리", href: "/lunch-groups", icon: Shuffle },
       { name: "Monthly 음료", href: "/monthly", icon: Coffee },
     ],
   },
   {
-    name: "포인트 관리",
-    icon: Coins,
-    items: [
-      { name: "예산 할당", href: "/budget", icon: PiggyBank },
-      { name: "사용내역 검토", href: "/review", icon: ClipboardCheck },
-      { name: "사용 내역 조회", href: "/points-overview", icon: BarChart3 },
-    ],
-  },
-  {
     name: "근태 관리",
-    href: "/dayoffs",
     icon: CalendarClock,
+    items: [
+      { name: "휴가 관리", href: "/dayoffs", icon: CalendarDays },
+    ],
   },
   {
     name: "알림 관리",

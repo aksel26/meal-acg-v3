@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     const supabase = createServiceClient();
     const body = await request.json();
 
-    const { loginId, password, fullName, role = "user", email, memberRole, internMonths } = body;
+    const { loginId, password, fullName, role = "user", email, memberRole, internMonths, position_id, title_id } = body;
 
     if (!loginId || !password || !fullName) {
       return NextResponse.json(
@@ -87,6 +87,8 @@ export async function POST(request: NextRequest) {
         member_role: memberRole || "팀원",
         intern_months: memberRole === "인턴" && internMonths ? parseInt(internMonths, 10) : null,
         organization_id: adminMember?.organization_id || null,
+        ...(position_id ? { position_id } : {}),
+        title_id: title_id || null,
       })
       .select()
       .single();

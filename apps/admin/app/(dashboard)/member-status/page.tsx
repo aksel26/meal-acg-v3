@@ -57,6 +57,8 @@ import {
   useUpdateMemberStatus,
   useDeleteMemberStatus,
 } from "@/hooks/useMemberStatusMutations";
+import { usePositions } from "@/hooks/usePositions";
+import { useTitles } from "@/hooks/useTitles";
 import type {
   MemberCurrentStatus,
   MemberStatus,
@@ -93,6 +95,8 @@ interface UserFormData {
   memberRole: string;
   internMonths: string;
   role: string;
+  position_id: string;
+  title_id: string;
 }
 
 type SortKey = "member_role" | "team_name" | "current_status";
@@ -128,6 +132,8 @@ export default function MemberStatusPage() {
     member_role: string;
     intern_months: string;
     role: string;
+    position_id: string;
+    title_id: string;
   } | null>(null);
 
   // History modal
@@ -170,6 +176,8 @@ export default function MemberStatusPage() {
   const { data: allMembersStatus } = useMemberStatuses({});
   const { data: historyData, isLoading: isHistoryLoading } =
     useMemberStatusHistory(historyMemberId);
+  const { data: positions } = usePositions();
+  const { data: titles } = useTitles();
 
   const { data: allMembers } = useQuery<MemberOption[]>({
     queryKey: queryKeys.members.all,
@@ -233,11 +241,15 @@ export default function MemberStatusPage() {
       memberRole: "팀원",
       internMonths: "",
       role: "user",
+      position_id: "",
+      title_id: "",
     },
   });
 
   const watchedMemberRole = watchAddForm("memberRole");
   const watchedRole = watchAddForm("role");
+  const watchedPositionId = watchAddForm("position_id");
+  const watchedTitleId = watchAddForm("title_id");
 
   const createUserMutation = useMutation({
     mutationFn: async (data: {
@@ -247,6 +259,8 @@ export default function MemberStatusPage() {
       email?: string;
       memberRole?: string;
       internMonths?: string;
+      position_id?: string;
+      title_id?: string;
       role?: string;
     }) => {
       const response = await fetch("/api/members", {
@@ -288,7 +302,11 @@ export default function MemberStatusPage() {
   });
 
   const onSubmitAddMember = (data: UserFormData) => {
-    createUserMutation.mutate(data);
+    createUserMutation.mutate({
+      ...data,
+      position_id: data.position_id || undefined,
+      title_id: data.title_id || undefined,
+    });
   };
 
   // Member note map (id → note)
@@ -335,6 +353,8 @@ export default function MemberStatusPage() {
       member_role: string;
       intern_months?: number | null;
       role?: string;
+      position_id?: string;
+      title_id?: string | null;
     }) => {
       const res = await fetch(`/api/members/${data.id}`, {
         method: "PUT",
@@ -348,6 +368,8 @@ export default function MemberStatusPage() {
               ? data.intern_months
               : null,
           role: data.role,
+          ...(data.position_id !== undefined ? { position_id: data.position_id } : {}),
+          title_id: data.title_id ?? null,
         }),
       });
       if (!res.ok) throw new Error("Failed to update member");
@@ -378,6 +400,8 @@ export default function MemberStatusPage() {
       member_role: member?.member_role || row.member_role || "팀원",
       intern_months: member?.intern_months?.toString() || "",
       role: member?.role || "user",
+      position_id: row.position_id || "",
+      title_id: row.title_id || "",
     });
     setIsEditMemberOpen(true);
   };
@@ -394,6 +418,8 @@ export default function MemberStatusPage() {
           ? parseInt(editingMember.intern_months, 10)
           : null,
       role: editingMember.role,
+      position_id: editingMember.position_id || undefined,
+      title_id: editingMember.title_id || null,
     });
   };
 
@@ -838,26 +864,20 @@ export default function MemberStatusPage() {
                         {row.email || "-"}
                       </TableCell>
                       <TableCell className="text-center text-sm">
-                        {row.member_role ? (
-                          <Badge
-                            className={cn(
-                              "border-0 px-2 py-0.5 text-[11px] font-medium",
-                              (row.member_role as string) === "대표"
-                                ? "bg-rose-100 text-rose-700"
-                                : row.member_role === "본부장"
-                                  ? "bg-purple-100 text-purple-700"
-                                  : row.member_role === "팀장"
-                                    ? "bg-blue-100 text-blue-700"
-                                    : row.member_role === "인턴"
-                                      ? "bg-amber-100 text-amber-700"
-                                      : "bg-slate-100 text-slate-600",
-                            )}
-                          >
-                            {row.member_role}
-                          </Badge>
-                        ) : (
-                          "-"
-                        )}
+                        <div className="flex flex-col items-center gap-0.5">
+                          {row.position_name ? (
+                            <span className="text-[12px] font-medium text-slate-700">
+                              {row.position_name}
+                            </span>
+                          ) : (
+                            <span className="text-[11px] text-slate-400">-</span>
+                          )}
+                          {row.title_name && (
+                            <span className="text-[10px] text-slate-400">
+                              {row.title_name}
+                            </span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-left text-sm text-slate-600">
                         {row.division_name || "-"}
@@ -1060,7 +1080,46 @@ export default function MemberStatusPage() {
                 )}
               </div>
               <div className="space-y-2">
-                <Label>직급</Label>
+                <Label>직급 (positions)</Label>
+                <Select
+                  value={watchedPositionId}
+                  onValueChange={(val) => setAddFormValue("position_id", val)}
+                >
+                  <SelectTrigger className="border border-slate-200 w-full">
+                    <SelectValue placeholder="직급 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(positions ?? []).map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>직책 (선택)</Label>
+                <Select
+                  value={watchedTitleId}
+                  onValueChange={(val) =>
+                    setAddFormValue("title_id", val === "__none__" ? "" : val)
+                  }
+                >
+                  <SelectTrigger className="border border-slate-200 w-full">
+                    <SelectValue placeholder="직책 선택 (선택사항)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">없음</SelectItem>
+                    {(titles ?? []).map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>직군 (member_role)</Label>
                 <Select
                   value={watchedMemberRole}
                   onValueChange={(val) => {
@@ -1069,7 +1128,7 @@ export default function MemberStatusPage() {
                   }}
                 >
                   <SelectTrigger className="border border-slate-200 w-full">
-                    <SelectValue placeholder="직급 선택" />
+                    <SelectValue placeholder="직군 선택" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="팀원">팀원</SelectItem>
@@ -1480,7 +1539,51 @@ export default function MemberStatusPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>직급</Label>
+                <Label>직급 (positions)</Label>
+                <Select
+                  value={editingMember.position_id}
+                  onValueChange={(val) =>
+                    setEditingMember({ ...editingMember, position_id: val })
+                  }
+                >
+                  <SelectTrigger className="border border-slate-200 w-full">
+                    <SelectValue placeholder="직급 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(positions ?? []).map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>직책 (선택)</Label>
+                <Select
+                  value={editingMember.title_id || "__none__"}
+                  onValueChange={(val) =>
+                    setEditingMember({
+                      ...editingMember,
+                      title_id: val === "__none__" ? "" : val,
+                    })
+                  }
+                >
+                  <SelectTrigger className="border border-slate-200 w-full">
+                    <SelectValue placeholder="직책 선택 (선택사항)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">없음</SelectItem>
+                    {(titles ?? []).map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>직군 (member_role)</Label>
                 <Select
                   value={editingMember.member_role}
                   onValueChange={(val) =>
@@ -1493,7 +1596,7 @@ export default function MemberStatusPage() {
                   }
                 >
                   <SelectTrigger className="border border-slate-200 w-full">
-                    <SelectValue placeholder="직급 선택" />
+                    <SelectValue placeholder="직군 선택" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="팀원">팀원</SelectItem>

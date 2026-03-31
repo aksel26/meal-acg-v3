@@ -127,6 +127,7 @@ export const queryKeys = {
     all: ["attendance"] as const,
     byDate: (memberId: string, date: string) =>
       ["attendance", memberId, date] as const,
+    today: ["attendance", "today"] as const,
   },
 
   // 근태 유형

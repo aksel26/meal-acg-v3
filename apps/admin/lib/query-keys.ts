@@ -173,6 +173,14 @@ export const queryKeys = {
     byYear: (year: number) => ["leaveBalances", year] as const,
   },
 
+  // Attendance (출퇴근)
+  attendance: {
+    all: ["attendance"] as const,
+    byDate: (date: string) => ["attendance", date] as const,
+    byMonth: (year: number, month: number) => ["attendance", "month", year, month] as const,
+    today: ["attendance", "today"] as const,
+  },
+
   // Usage Records
   usageRecords: {
     all: ["usageRecords"] as const,

@@ -57,7 +57,7 @@ export function useSupervisorCalendar(date: string) {
 
 export function useSupervisorCalendarByMonth(year: number, month: number) {
   return useQuery<SupervisorCalendarData>({
-    queryKey: ["supervisor", "calendar-month", year, month],
+    queryKey: queryKeys.supervisor.calendarByMonth(year, month),
     queryFn: async () => {
       const res = await fetch(`/api/supervisor/calendar?year=${year}&month=${month}`);
       if (!res.ok) throw new Error("Failed to fetch supervisor calendar");

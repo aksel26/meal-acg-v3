@@ -191,6 +191,8 @@ export const queryKeys = {
   supervisor: {
     all: ["supervisor"] as const,
     calendar: (date: string) => ["supervisor", "calendar", date] as const,
+    calendarByMonth: (year: number, month: number) =>
+      ["supervisor", "calendar-month", year, month] as const,
   },
 
   // Usage Records

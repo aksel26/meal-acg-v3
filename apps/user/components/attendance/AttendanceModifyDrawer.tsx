@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerFooter,
-  DrawerClose,
-} from "@repo/ui/src/drawer";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@repo/ui/src/dialog";
 import { Button } from "@repo/ui/src/button";
 import { Textarea } from "@repo/ui/src/textarea";
 import { Label } from "@repo/ui/src/label";
@@ -33,19 +33,19 @@ interface AttendanceRecord {
   attendance_type: string;
 }
 
-interface AttendanceModifyDrawerProps {
+interface AttendanceModifyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   record: AttendanceRecord | null;
   memberId: string;
 }
 
-export default function AttendanceModifyDrawer({
+export default function AttendanceModifyDialog({
   open,
   onOpenChange,
   record,
   memberId,
-}: AttendanceModifyDrawerProps) {
+}: AttendanceModifyDialogProps) {
   const [requestedType, setRequestedType] = useState<string>("");
   const [reason, setReason] = useState("");
 
@@ -85,13 +85,13 @@ export default function AttendanceModifyDrawer({
   const isValid = !!requestedType && requestedType !== record.attendance_type && reason.trim().length > 0;
 
   return (
-    <Drawer open={open} onOpenChange={handleOpen}>
-      <DrawerContent>
-        <DrawerHeader>
-          <DrawerTitle>근태 수정 요청</DrawerTitle>
-        </DrawerHeader>
+    <Dialog open={open} onOpenChange={handleOpen}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>근태 수정 요청</DialogTitle>
+        </DialogHeader>
 
-        <div className="px-4 pb-4 space-y-5">
+        <div className="space-y-5">
           <div>
             <Label className="text-sm text-[oklch(0.50_0.01_250)]">
               대상 날짜
@@ -157,7 +157,7 @@ export default function AttendanceModifyDrawer({
           </div>
         </div>
 
-        <DrawerFooter>
+        <DialogFooter className="flex flex-col gap-2 sm:flex-col">
           <Button
             onClick={handleSubmit}
             disabled={!isValid || modifyMutation.isPending}
@@ -165,13 +165,13 @@ export default function AttendanceModifyDrawer({
           >
             {modifyMutation.isPending ? "제출 중..." : "수정 요청"}
           </Button>
-          <DrawerClose asChild>
+          <DialogClose asChild>
             <Button variant="outline" className="w-full">
               취소
             </Button>
-          </DrawerClose>
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -100,8 +100,9 @@ export default function AttendanceTable({
             const d = dayjs(record.date);
             const dayOfWeek = d.day();
             const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+            const DEFAULT_STATUS = { text: "정상", color: "text-[oklch(0.45_0.12_150)]" };
             const statusInfo =
-              STATUS_LABELS[record.status] || STATUS_LABELS["normal"];
+              STATUS_LABELS[record.status] ?? DEFAULT_STATUS;
             const badgeStyle =
               TYPE_BADGE_STYLES[record.attendance_type] ||
               TYPE_BADGE_STYLES["근무"];

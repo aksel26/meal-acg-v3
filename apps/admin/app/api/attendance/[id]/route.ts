@@ -13,7 +13,11 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
 
-    const { check_in_at, check_out_at, status, overtime_minutes, note } = body;
+    const {
+      check_in_at, check_out_at, status, overtime_minutes, note,
+      attendance_type, location, reference, modifier_id,
+      approver_id, approved_at, login_ip, login_ip2,
+    } = body;
 
     const updateData: Record<string, unknown> = {};
     if (check_in_at !== undefined) updateData.check_in_at = check_in_at;
@@ -21,6 +25,14 @@ export async function PUT(
     if (status !== undefined) updateData.status = status;
     if (overtime_minutes !== undefined) updateData.overtime_minutes = overtime_minutes;
     if (note !== undefined) updateData.note = note;
+    if (attendance_type !== undefined) updateData.attendance_type = attendance_type;
+    if (location !== undefined) updateData.location = location;
+    if (reference !== undefined) updateData.reference = reference;
+    if (modifier_id !== undefined) updateData.modifier_id = modifier_id;
+    if (approver_id !== undefined) updateData.approver_id = approver_id;
+    if (approved_at !== undefined) updateData.approved_at = approved_at;
+    if (login_ip !== undefined) updateData.login_ip = login_ip;
+    if (login_ip2 !== undefined) updateData.login_ip2 = login_ip2;
 
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json(

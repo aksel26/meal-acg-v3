@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, Check, Save, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, Loader2 } from "lucide-react";
 import { Button } from "@repo/ui/src/button";
 import { Input } from "@repo/ui/src/input";
 import {
@@ -22,16 +22,29 @@ import {
 import dayjs from "dayjs";
 import { cn } from "@repo/ui/lib/utils";
 
-const STATUS_OPTIONS = [
-  { value: "normal", label: "정상", className: "bg-green-100 text-green-700" },
-  { value: "late", label: "지각", className: "bg-red-100 text-red-700" },
-  { value: "early_leave", label: "조퇴", className: "bg-orange-100 text-orange-700" },
-  { value: "absent", label: "결근", className: "bg-red-100 text-red-700" },
-  { value: "pending", label: "미출근", className: "bg-slate-100 text-slate-500" },
+const ATTENDANCE_TYPES = [
+  "출근",
+  "연차",
+  "오전반차",
+  "오후반차",
+  "외근",
+  "출장",
+  "재택근무",
+  "병가",
+  "경조사",
+  "기타",
 ];
 
-const STATUS_BADGE: Record<string, { label: string; className: string }> = Object.fromEntries(
-  STATUS_OPTIONS.map((s) => [s.value, { label: s.label, className: s.className }])
+const STATUS_OPTIONS = [
+  { value: "normal", label: "정상" },
+  { value: "late", label: "지각" },
+  { value: "early_leave", label: "조퇴" },
+  { value: "absent", label: "결근" },
+  { value: "pending", label: "미출근" },
+];
+
+const STATUS_LABEL: Record<string, string> = Object.fromEntries(
+  STATUS_OPTIONS.map((s) => [s.value, s.label])
 );
 
 function formatTime(ts: string | null): string {
@@ -39,13 +52,16 @@ function formatTime(ts: string | null): string {
   return dayjs(ts).format("HH:mm");
 }
 
-function formatDuration(inAt: string | null, outAt: string | null): string {
-  if (!inAt || !outAt) return "-";
-  const diffMin = dayjs(outAt).diff(dayjs(inAt), "minute");
-  if (diffMin <= 0) return "-";
-  const h = Math.floor(diffMin / 60);
-  const m = diffMin % 60;
-  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+function formatDateTime(ts: string | null): string {
+  if (!ts) return "-";
+  return dayjs(ts).format("MM/DD HH:mm");
+}
+
+function formatOvertimeMinutes(min: number): string {
+  if (!min || min <= 0) return "-";
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return h > 0 ? `${h}시간 ${m}분` : `${m}분`;
 }
 
 type ViewMode = "date" | "month";
@@ -86,14 +102,13 @@ export default function AttendancePage() {
   };
 
   const dow = dayjs(selectedDate).format("ddd");
+  const colCount = 16;
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-bold text-slate-900">출퇴근 현황</h1>
+      <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
-          {/* 뷰 모드 토글 */}
           <div className="flex rounded-lg border border-slate-200 p-0.5">
             <button
               onClick={() => setViewMode("date")}
@@ -153,64 +168,50 @@ export default function AttendancePage() {
             </div>
           )}
         </div>
+
+        {viewMode === "date" && selectedDate === todayStr && summary && (
+          <div className="ml-auto flex items-center gap-4 text-xs text-slate-500">
+            <span>출근 <strong className="text-base text-green-600">{summary.checkedIn}</strong></span>
+            <span>미출근 <strong className="text-base text-slate-700">{summary.notCheckedIn}</strong></span>
+            <span>지각 <strong className="text-base text-red-600">{summary.late}</strong></span>
+            <span>휴가 <strong className="text-base text-blue-600">{summary.onLeave}</strong></span>
+            {summary.lateMembers.length > 0 && (
+              <span className="text-red-500">
+                지각: {summary.lateMembers.map((m) => m.name).join(", ")}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Today Summary Cards (only in date mode when viewing today) */}
-      {viewMode === "date" && selectedDate === todayStr && summary && (
-        <>
-          <div className="grid grid-cols-4 gap-3">
-            <div className="rounded-xl border bg-green-50 p-4">
-              <p className="text-xs font-medium text-green-600">출근</p>
-              <p className="mt-1 text-3xl font-bold text-green-700">{summary.checkedIn}</p>
-            </div>
-            <div className="rounded-xl border bg-slate-50 p-4">
-              <p className="text-xs font-medium text-slate-500">미출근</p>
-              <p className="mt-1 text-3xl font-bold text-slate-700">{summary.notCheckedIn}</p>
-            </div>
-            <div className="rounded-xl border bg-red-50 p-4">
-              <p className="text-xs font-medium text-red-500">지각</p>
-              <p className="mt-1 text-3xl font-bold text-red-700">{summary.late}</p>
-            </div>
-            <div className="rounded-xl border bg-blue-50 p-4">
-              <p className="text-xs font-medium text-blue-500">휴가</p>
-              <p className="mt-1 text-3xl font-bold text-blue-700">{summary.onLeave}</p>
-            </div>
-          </div>
-          {summary.lateMembers.length > 0 && (
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-xs font-medium text-red-500">지각:</span>
-              {summary.lateMembers.map((m) => (
-                <span key={m.id} className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-600">
-                  {m.name}
-                </span>
-              ))}
-            </div>
-          )}
-        </>
-      )}
-
       {/* Table */}
-      <div className="overflow-hidden rounded-xl border bg-white">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto rounded-xl border bg-white">
+        <table className="w-full text-sm whitespace-nowrap">
           <thead className="border-b bg-slate-50 text-left text-xs font-medium text-slate-500">
             <tr>
-              {viewMode === "month" && <th className="px-4 py-3">날짜</th>}
-              <th className="px-4 py-3">이름</th>
-              <th className="px-4 py-3">직급</th>
-              <th className="px-4 py-3">출근여부</th>
-              <th className="px-4 py-3">출근</th>
-              <th className="px-4 py-3">퇴근</th>
-              <th className="px-4 py-3">근무시간</th>
-              <th className="px-4 py-3">상태</th>
-              <th className="px-4 py-3">초과근무</th>
-              <th className="px-4 py-3">비고</th>
-              <th className="px-3 py-3 w-16"></th>
+              <th className="px-3 py-3">이름</th>
+              <th className="px-3 py-3">수정자</th>
+              <th className="px-3 py-3">근태명</th>
+              <th className="px-3 py-3">날짜</th>
+              <th className="px-3 py-3">출근시간</th>
+              <th className="px-3 py-3">퇴근시간</th>
+              <th className="px-3 py-3">연장시간</th>
+              <th className="px-3 py-3">장소</th>
+              <th className="px-3 py-3">참조</th>
+              <th className="px-3 py-3">내용</th>
+              <th className="px-3 py-3">승인자</th>
+              <th className="px-3 py-3">등록일</th>
+              <th className="px-3 py-3">수정일</th>
+              <th className="px-3 py-3">승인일</th>
+              <th className="px-3 py-3">로그인IP</th>
+              <th className="px-3 py-3">로그인IP2</th>
+              <th className="px-2 py-3 w-14"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {isLoading ? (
               <tr>
-                <td colSpan={viewMode === "month" ? 11 : 10} className="py-10 text-center text-sm text-slate-400">
+                <td colSpan={colCount + 1} className="py-10 text-center text-sm text-slate-400">
                   로딩 중...
                 </td>
               </tr>
@@ -219,12 +220,11 @@ export default function AttendancePage() {
                 <InlineRow
                   key={record.id || `${record.member_id}-${record.date}-${idx}`}
                   record={record}
-                  showDate={viewMode === "month"}
                 />
               ))
             ) : (
               <tr>
-                <td colSpan={viewMode === "month" ? 11 : 10} className="py-12 text-center text-sm text-slate-400">
+                <td colSpan={colCount + 1} className="py-12 text-center text-sm text-slate-400">
                   출퇴근 기록이 없습니다.
                 </td>
               </tr>
@@ -236,22 +236,16 @@ export default function AttendancePage() {
   );
 }
 
-function InlineRow({
-  record,
-  showDate,
-}: {
-  record: AttendanceRecord;
-  showDate: boolean;
-}) {
+function InlineRow({ record }: { record: AttendanceRecord }) {
   const updateMutation = useUpdateAttendance();
   const [editing, setEditing] = useState(false);
   const [checkIn, setCheckIn] = useState(formatTime(record.check_in_at));
   const [checkOut, setCheckOut] = useState(formatTime(record.check_out_at));
-  const [status, setStatus] = useState(record.status);
+  const [attendanceType, setAttendanceType] = useState(record.attendance_type || "출근");
   const [note, setNote] = useState(record.note ?? "");
+  const [location, setLocation] = useState(record.location ?? "");
+  const [reference, setReference] = useState(record.reference ?? "");
 
-  const hasCheckedIn = !!record.check_in_at;
-  const badge = STATUS_BADGE[record.status] ?? STATUS_BADGE["pending"]!;
   const date = dayjs(record.date);
 
   const handleSave = async () => {
@@ -262,19 +256,19 @@ function InlineRow({
     };
 
     if (record.id) {
-      // 기존 레코드 수정
       updateMutation.mutate(
         {
           id: record.id,
           check_in_at: toIso(checkIn),
           check_out_at: toIso(checkOut),
-          status,
+          attendance_type: attendanceType,
           note: note || null,
+          location: location || null,
+          reference: reference || null,
         },
         { onSuccess: () => setEditing(false) }
       );
     } else {
-      // 신규 레코드 생성 (upsert)
       try {
         const res = await fetch("/api/attendance", {
           method: "POST",
@@ -284,8 +278,11 @@ function InlineRow({
             date: dateStr,
             check_in_at: toIso(checkIn),
             check_out_at: toIso(checkOut),
-            status,
+            attendance_type: attendanceType,
+            status: "normal",
             note: note || null,
+            location: location || null,
+            reference: reference || null,
           }),
         });
         if (res.ok) {
@@ -298,98 +295,150 @@ function InlineRow({
     }
   };
 
+  const handleCancel = () => {
+    setEditing(false);
+    setCheckIn(formatTime(record.check_in_at));
+    setCheckOut(formatTime(record.check_out_at));
+    setAttendanceType(record.attendance_type || "출근");
+    setNote(record.note ?? "");
+    setLocation(record.location ?? "");
+    setReference(record.reference ?? "");
+  };
+
+  const cellClass = "px-3 py-2.5 text-slate-600";
+
   return (
     <tr className={cn("hover:bg-slate-50", editing && "bg-blue-50/30")}>
-      {showDate && (
-        <td className="px-4 py-2.5 text-slate-600">
-          {date.format("MM/DD")}
-          <span className="ml-1 text-xs text-slate-400">
-            ({["일","월","화","수","목","금","토"][date.day()]})
-          </span>
-        </td>
-      )}
-      <td className="px-4 py-2.5 font-medium text-slate-800">
+      {/* 이름 */}
+      <td className="px-3 py-2.5 font-medium text-slate-800">
         {record.member.full_name}
       </td>
-      <td className="px-4 py-2.5 text-slate-500 text-xs">
-        {record.member.position?.name ?? "-"}
+      {/* 수정자 */}
+      <td className={cellClass}>
+        {record.modifier?.full_name ?? "-"}
       </td>
-      <td className="px-4 py-2.5">
-        {hasCheckedIn ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-            <Check className="h-3 w-3" />
-            출근
-          </span>
+      {/* 근태명 */}
+      <td className={cellClass}>
+        {editing ? (
+          <Select value={attendanceType} onValueChange={setAttendanceType}>
+            <SelectTrigger className="h-7 w-[90px] text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ATTENDANCE_TYPES.map((t) => (
+                <SelectItem key={t} value={t}>{t}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         ) : (
-          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
-            미출근
-          </span>
+          <span className="text-xs">{record.attendance_type || "출근"}</span>
         )}
       </td>
-      <td className="px-4 py-2.5">
+      {/* 날짜 */}
+      <td className={cellClass}>
+        {date.format("MM/DD")}
+        <span className="ml-1 text-xs text-slate-400">
+          ({["일","월","화","수","목","금","토"][date.day()]})
+        </span>
+      </td>
+      {/* 출근시간 */}
+      <td className={cellClass}>
         {editing ? (
           <Input
             type="time"
             value={checkIn}
             onChange={(e) => setCheckIn(e.target.value)}
-            className="h-7 w-[100px] text-xs"
+            className="h-7 w-[90px] text-xs"
           />
         ) : (
-          <span className="text-slate-600">{formatTime(record.check_in_at) || "-"}</span>
+          formatTime(record.check_in_at) || "-"
         )}
       </td>
-      <td className="px-4 py-2.5">
+      {/* 퇴근시간 */}
+      <td className={cellClass}>
         {editing ? (
           <Input
             type="time"
             value={checkOut}
             onChange={(e) => setCheckOut(e.target.value)}
-            className="h-7 w-[100px] text-xs"
+            className="h-7 w-[90px] text-xs"
           />
         ) : (
-          <span className="text-slate-600">{formatTime(record.check_out_at) || "-"}</span>
+          formatTime(record.check_out_at) || "-"
         )}
       </td>
-      <td className="px-4 py-2.5 text-slate-600">
-        {formatDuration(record.check_in_at, record.check_out_at)}
+      {/* 연장시간 */}
+      <td className={cellClass}>
+        {formatOvertimeMinutes(record.overtime_minutes)}
       </td>
-      <td className="px-4 py-2.5">
+      {/* 장소 */}
+      <td className={cellClass}>
         {editing ? (
-          <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger className="h-7 w-[90px] text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {STATUS_OPTIONS.map((s) => (
-                <SelectItem key={s.value} value={s.value}>
-                  {s.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Input
+            type="text"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            className="h-7 w-[80px] text-xs"
+            placeholder="장소"
+          />
         ) : (
-          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}>
-            {badge.label}
-          </span>
+          <span className="text-xs">{record.location || "-"}</span>
         )}
       </td>
-      <td className="px-4 py-2.5 text-slate-500">
-        {record.overtime_minutes > 0 ? `${record.overtime_minutes}분` : "-"}
+      {/* 참조 */}
+      <td className={cellClass}>
+        {editing ? (
+          <Input
+            type="text"
+            value={reference}
+            onChange={(e) => setReference(e.target.value)}
+            className="h-7 w-[80px] text-xs"
+            placeholder="참조"
+          />
+        ) : (
+          <span className="text-xs">{record.reference || "-"}</span>
+        )}
       </td>
-      <td className="px-4 py-2.5">
+      {/* 내용 */}
+      <td className={cellClass}>
         {editing ? (
           <Input
             type="text"
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            className="h-7 w-[120px] text-xs"
-            placeholder="비고"
+            className="h-7 w-[100px] text-xs"
+            placeholder="내용"
           />
         ) : (
-          <span className="text-xs text-slate-400">{record.note || ""}</span>
+          <span className="text-xs text-slate-400">{record.note || "-"}</span>
         )}
       </td>
-      <td className="px-3 py-2.5">
+      {/* 승인자 */}
+      <td className={cellClass}>
+        {record.approver?.full_name ?? "-"}
+      </td>
+      {/* 등록일 */}
+      <td className={cellClass}>
+        <span className="text-xs">{formatDateTime(record.created_at)}</span>
+      </td>
+      {/* 수정일 */}
+      <td className={cellClass}>
+        <span className="text-xs">{formatDateTime(record.updated_at)}</span>
+      </td>
+      {/* 승인일 */}
+      <td className={cellClass}>
+        <span className="text-xs">{formatDateTime(record.approved_at)}</span>
+      </td>
+      {/* 로그인IP */}
+      <td className={cellClass}>
+        <span className="text-xs font-mono">{record.login_ip || "-"}</span>
+      </td>
+      {/* 로그인IP2 */}
+      <td className={cellClass}>
+        <span className="text-xs font-mono">{record.login_ip2 || "-"}</span>
+      </td>
+      {/* Actions */}
+      <td className="px-2 py-2.5">
         {editing ? (
           <div className="flex gap-1">
             <Button
@@ -409,13 +458,7 @@ function InlineRow({
               variant="ghost"
               size="sm"
               className="h-7 w-7 p-0 text-xs text-slate-400"
-              onClick={() => {
-                setEditing(false);
-                setCheckIn(formatTime(record.check_in_at));
-                setCheckOut(formatTime(record.check_out_at));
-                setStatus(record.status);
-                setNote(record.note ?? "");
-              }}
+              onClick={handleCancel}
             >
               ✕
             </Button>

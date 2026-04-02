@@ -9,15 +9,27 @@ export interface AttendanceRecord {
   check_in_at: string | null;
   check_out_at: string | null;
   status: string;
+  attendance_type: string;
   overtime_minutes: number;
   is_weekend: boolean;
   note: string | null;
+  location: string | null;
+  reference: string | null;
+  modifier_id: string | null;
+  approver_id: string | null;
+  approved_at: string | null;
+  login_ip: string | null;
+  login_ip2: string | null;
+  created_at: string | null;
+  updated_at: string | null;
   member: {
     id: string;
     full_name: string;
     position: { name: string } | null;
     title?: { name: string | null } | null;
   };
+  modifier?: { id: string; full_name: string } | null;
+  approver?: { id: string; full_name: string } | null;
 }
 
 export interface AttendanceTodaySummary {

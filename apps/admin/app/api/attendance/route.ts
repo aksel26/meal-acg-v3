@@ -56,9 +56,17 @@ export async function GET(request: NextRequest) {
           check_in_at: rec?.check_in_at || null,
           check_out_at: rec?.check_out_at || null,
           status: rec?.status || "pending",
+          attendance_type: rec?.attendance_type || "출근",
           overtime_minutes: rec?.overtime_minutes || 0,
           is_weekend: rec?.is_weekend || false,
           note: rec?.note || null,
+          location: rec?.location || null,
+          reference: rec?.reference || null,
+          modifier_id: rec?.modifier_id || null,
+          approver_id: rec?.approver_id || null,
+          approved_at: rec?.approved_at || null,
+          login_ip: rec?.login_ip || null,
+          login_ip2: rec?.login_ip2 || null,
           created_at: rec?.created_at || null,
           updated_at: rec?.updated_at || null,
           member: {
@@ -67,6 +75,8 @@ export async function GET(request: NextRequest) {
             position: { name: m.position_name || "-" },
             title: { name: m.title_name || null },
           },
+          modifier: null,
+          approver: null,
         };
       });
 
@@ -113,7 +123,11 @@ export async function POST(request: NextRequest) {
     const supabase = createServiceClient();
     const body = await request.json();
 
-    const { member_id, date, check_in_at, check_out_at, status, note } = body;
+    const {
+      member_id, date, check_in_at, check_out_at, status, note,
+      attendance_type, location, reference, modifier_id,
+      approver_id, approved_at, login_ip, login_ip2,
+    } = body;
 
     if (!member_id || !date) {
       return NextResponse.json(
@@ -131,7 +145,15 @@ export async function POST(request: NextRequest) {
           check_in_at: check_in_at || null,
           check_out_at: check_out_at || null,
           status: status || "normal",
+          attendance_type: attendance_type || "출근",
           note: note || null,
+          location: location || null,
+          reference: reference || null,
+          modifier_id: modifier_id || null,
+          approver_id: approver_id || null,
+          approved_at: approved_at || null,
+          login_ip: login_ip || null,
+          login_ip2: login_ip2 || null,
         },
         { onConflict: "member_id,date" }
       )

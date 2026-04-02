@@ -358,7 +358,7 @@ const UnassignedMemberRow = memo(function UnassignedMemberRow({
 
 export default function OrganizationPage() {
   const [viewMode, setViewMode] = useState<"list" | "chart">("list");
-  const { data: orgTree, isLoading } = useOrganizationTree(null);
+  const { data: orgTree, isLoading, refetch } = useOrganizationTree(null);
 
   // 특이사항 인원 조회
   const { data: activeStatusMembers } = useActiveStatusMembers();
@@ -733,8 +733,12 @@ export default function OrganizationPage() {
 
       {/* Org Chart View */}
       {!isLoading && orgTree && viewMode === "chart" && (
-        <div className="glass-panel overflow-x-auto rounded-xl">
-          <OrgChart tree={orgTree} />
+        <div className="glass-panel overflow-hidden rounded-xl">
+          <OrgChart
+            tree={orgTree}
+            organizationId={orgTree.id}
+            onSaved={() => refetch()}
+          />
         </div>
       )}
 

@@ -73,9 +73,6 @@ export default function AttendanceTable({
               날짜
             </th>
             <th className="text-left py-3 px-2 font-medium text-[oklch(0.50_0.01_250)]">
-              요일
-            </th>
-            <th className="text-left py-3 px-2 font-medium text-[oklch(0.50_0.01_250)]">
               출근
             </th>
             <th className="text-left py-3 px-2 font-medium text-[oklch(0.50_0.01_250)]">
@@ -120,19 +117,16 @@ export default function AttendanceTable({
                     {record.modification_status && (
                       <span className="w-2 h-2 rounded-full bg-[oklch(0.65_0.15_60)] shrink-0" />
                     )}
-                    {d.format("MM-DD")}
+                    <span className={
+                      dayOfWeek === 0
+                        ? "text-red-400"
+                        : dayOfWeek === 6
+                          ? "text-blue-400"
+                          : ""
+                    }>
+                      {d.format("MM-DD")} ({d.format("dd")})
+                    </span>
                   </div>
-                </td>
-                <td
-                  className={`py-3 px-2 ${
-                    dayOfWeek === 0
-                      ? "text-red-400"
-                      : dayOfWeek === 6
-                        ? "text-blue-400"
-                        : "text-[oklch(0.45_0.02_250)]"
-                  }`}
-                >
-                  {d.format("dd")}
                 </td>
                 <td className="py-3 px-2 text-[oklch(0.30_0.02_250)]">
                   {formatTime(record.check_in_at)}

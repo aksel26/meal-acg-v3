@@ -3,15 +3,9 @@
 import React from "react";
 import Header from "../components/Header";
 import { BottomNavigation } from "@/components/BottomNavigation";
-import { Sidebar } from "@/components/Sidebar";
+import { Sidebar, MobileSidebar } from "@/components/Sidebar";
 import { motion, AnimatePresence } from "motion/react";
 import { usePathname } from "next/navigation";
-import dynamic from "next/dynamic";
-
-const PushNotificationPrompt = dynamic(
-  () => import("@/components/PushNotificationPrompt"),
-  { ssr: false },
-);
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
@@ -22,6 +16,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         {/* ── Sidebar (desktop only) ── */}
         <div className="max-md:hidden">
           <Sidebar />
+        </div>
+
+        {/* ── Mobile Sidebar (overlay) ── */}
+        <div className="md:hidden">
+          <MobileSidebar />
         </div>
 
         {/* ── Main Area ── */}
@@ -58,7 +57,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </div>
       </div>
-      <PushNotificationPrompt />
     </>
   );
 };

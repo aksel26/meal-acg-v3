@@ -272,6 +272,25 @@ body {
 }
 
 /* Premium Cards */
+/* Snow Theme */
+.snow-panel {
+  background: #f9f9fa;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.snow-card {
+  background: #ffffff;
+  border-radius: 1rem;
+  border: 1px solid #f0f0f0;
+}
+
+.snow-pill {
+  background: #f9f9fa;
+  color: #5f728f;
+  box-shadow: none;
+}
+
 .card-premium {
   background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(20px);

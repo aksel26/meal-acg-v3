@@ -142,6 +142,13 @@ export const queryKeys = {
     byDate: (memberId: string, date: string) =>
       ["attendance", memberId, date] as const,
     today: ["attendance", "today"] as const,
+    monthly: (memberId: string, year: number, month: number) =>
+      ["attendance", "monthly", memberId, year, month] as const,
+    modifyRequests: {
+      all: ["attendance", "modifyRequests"] as const,
+      byMember: (memberId: string) =>
+        ["attendance", "modifyRequests", memberId] as const,
+    },
   },
 
   // 근태 유형

@@ -98,6 +98,7 @@ export type Database = {
           check_in_at: string | null
           check_out_at: string | null
           status: string
+          attendance_type: string
           overtime_minutes: number
           is_weekend: boolean
           note: string | null
@@ -111,6 +112,7 @@ export type Database = {
           check_in_at?: string | null
           check_out_at?: string | null
           status?: string
+          attendance_type?: string
           overtime_minutes?: number
           is_weekend?: boolean
           note?: string | null
@@ -124,6 +126,7 @@ export type Database = {
           check_in_at?: string | null
           check_out_at?: string | null
           status?: string
+          attendance_type?: string
           overtime_minutes?: number
           is_weekend?: boolean
           note?: string | null
@@ -131,6 +134,72 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      attendance_modification_requests: {
+        Row: {
+          id: string
+          attendance_record_id: string
+          requester_id: string
+          original_type: string
+          requested_type: string
+          reason: string
+          approval_status: string
+          first_approver_id: string | null
+          first_approved_at: string | null
+          final_approver_id: string | null
+          final_approved_at: string | null
+          reject_reason: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          attendance_record_id: string
+          requester_id: string
+          original_type: string
+          requested_type: string
+          reason: string
+          approval_status?: string
+          first_approver_id?: string | null
+          first_approved_at?: string | null
+          final_approver_id?: string | null
+          final_approved_at?: string | null
+          reject_reason?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          attendance_record_id?: string
+          requester_id?: string
+          original_type?: string
+          requested_type?: string
+          reason?: string
+          approval_status?: string
+          first_approver_id?: string | null
+          first_approved_at?: string | null
+          final_approver_id?: string | null
+          final_approved_at?: string | null
+          reject_reason?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_modification_requests_attendance_record_id_fkey"
+            columns: ["attendance_record_id"]
+            isOneToOne: false
+            referencedRelation: "attendance_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_modification_requests_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       budget_allocations: {
         Row: {

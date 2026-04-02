@@ -1,34 +1,22 @@
 "use client";
 
 import GreetingSection from "@/components/dashboard/GreetingSection";
-import MealSection from "@/components/dashboard/MealSection";
-import PopularRestaurantsSection from "@/components/dashboard/PopularRestaurantsSection";
-import StatsSection from "@/components/dashboard/StatsSection";
-import { CalculationData } from "@/components/dashboard/types";
-import { Footer } from "@/components/Footer";
-import { useMealData } from "@/hooks/use-meal-data";
-import { useMealDelete } from "@/hooks/use-meal-delete";
-import { useMealSubmit } from "@/hooks/use-meal-submit";
 import { useApprovals } from "@/hooks/use-approvals";
-import { CalendarPlus, ClipboardList } from "lucide-react";
-import Link from "next/link";
-import { useMealDrawerStore } from "@/stores/mealDrawerStore";
 import { useUserStore } from "@/stores/userStore";
+import { CalendarPlus, ClipboardList, Cake, Coffee, Bell } from "lucide-react";
+import Link from "next/link";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
-import React, { lazy, Suspense, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { UpdateNotificationDialog } from "@/components/UpdateNotificationDialog";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
+
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-const MealEntryDrawer = lazy(() =>
-  import("@/components/MealEntryDrawer").then((module) => ({
-    default: module.default,
-  })),
-);
+// ─── 바로가기 ───
 
 function ApprovalShortcuts() {
   const { memberId } = useUserStore();
@@ -72,39 +60,162 @@ function ApprovalShortcuts() {
   );
 }
 
+// ─── 탭 콘텐츠: 공지 / 생일자 / 음료 ───
+
+type TabId = "notices" | "birthdays" | "drinks";
+
+const tabs: { id: TabId; label: string; icon: React.ElementType }[] = [
+  { id: "notices", label: "공지", icon: Bell },
+  { id: "birthdays", label: "생일자", icon: Cake },
+  { id: "drinks", label: "음료", icon: Coffee },
+];
+
+function NoticesContent() {
+  return (
+    <div className="space-y-3">
+      <div className="rounded-xl border border-slate-100 bg-white p-4">
+        <p className="text-xs text-slate-400 mb-1">2026.04.01</p>
+        <p className="text-sm font-medium text-slate-800">4월 식대 정책 안내</p>
+        <p className="mt-1 text-xs text-slate-500 line-clamp-2">
+          4월부터 식대 한도가 조정됩니다. 자세한 내용은 공지사항을 확인해주세요.
+        </p>
+      </div>
+      <div className="rounded-xl border border-slate-100 bg-white p-4">
+        <p className="text-xs text-slate-400 mb-1">2026.03.28</p>
+        <p className="text-sm font-medium text-slate-800">시스템 업데이트 공지</p>
+        <p className="mt-1 text-xs text-slate-500 line-clamp-2">
+          앱 v1.3 업데이트가 적용되었습니다. 새로운 기능을 확인해보세요.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function BirthdaysContent() {
+  const today = dayjs().tz("Asia/Seoul");
+  const monthName = today.format("M");
+
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-slate-400">{monthName}월 생일자</p>
+      <div className="flex flex-col gap-2">
+        {[
+          { name: "홍길동", date: "04.05", team: "개발팀" },
+          { name: "김철수", date: "04.12", team: "디자인팀" },
+          { name: "이영희", date: "04.20", team: "기획팀" },
+        ].map((person) => (
+          <div
+            key={person.name}
+            className="flex items-center gap-3 rounded-xl border border-slate-100 bg-white p-3"
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-pink-50 text-sm">
+              🎂
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-slate-800">
+                {person.name}
+              </p>
+              <p className="text-[11px] text-slate-400">{person.team}</p>
+            </div>
+            <span className="text-xs text-slate-400">{person.date}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DrinksContent() {
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-slate-400">이번 달 음료 취합</p>
+      <div className="rounded-xl border border-slate-100 bg-white p-4 text-center">
+        <Coffee className="mx-auto mb-2 h-8 w-8 text-amber-400" />
+        <p className="text-sm font-medium text-slate-700">
+          음료 취합이 진행 중입니다
+        </p>
+        <Link
+          href="/monthly"
+          className="mt-2 inline-block text-xs font-medium text-blue-500 hover:text-blue-600"
+        >
+          참여하기 →
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function InfoTabs() {
+  const [activeTab, setActiveTab] = useState<TabId>("notices");
+
+  return (
+    <div className="snow-card overflow-hidden">
+      {/* Tab Headers */}
+      <div className="flex border-b border-slate-100">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex flex-1 items-center justify-center gap-1.5 px-3 py-3 text-xs font-medium transition-colors ${
+              activeTab === tab.id
+                ? "border-b-2 border-slate-800 text-slate-800"
+                : "text-slate-400 hover:text-slate-600"
+            }`}
+          >
+            <tab.icon size={14} />
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab Content */}
+      <div className="p-4">
+        {activeTab === "notices" && <NoticesContent />}
+        {activeTab === "birthdays" && <BirthdaysContent />}
+        {activeTab === "drinks" && <DrinksContent />}
+      </div>
+    </div>
+  );
+}
+
+// ─── 휴가 요약 ───
+
+function LeaveSummary() {
+  return (
+    <div className="snow-card p-5">
+      <h3 className="mb-4 text-sm font-semibold text-slate-800">휴가 요약</h3>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="rounded-xl bg-blue-50/60 p-3 text-center">
+          <p className="text-[11px] text-blue-500 mb-1">총 연차</p>
+          <p className="text-lg font-bold text-blue-700">15일</p>
+        </div>
+        <div className="rounded-xl bg-emerald-50/60 p-3 text-center">
+          <p className="text-[11px] text-emerald-500 mb-1">잔여</p>
+          <p className="text-lg font-bold text-emerald-700">8일</p>
+        </div>
+        <div className="rounded-xl bg-amber-50/60 p-3 text-center">
+          <p className="text-[11px] text-amber-500 mb-1">사용</p>
+          <p className="text-lg font-bold text-amber-700">7일</p>
+        </div>
+        <div className="rounded-xl bg-slate-50 p-3 text-center">
+          <p className="text-[11px] text-slate-400 mb-1">예정</p>
+          <p className="text-lg font-bold text-slate-600">1일</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Dashboard Page ───
+
 export default function DashboardPage() {
   const [mounted, setMounted] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
-    dayjs().tz("Asia/Seoul").toDate(),
-  );
-  const [currentMonth, setCurrentMonth] = useState<number>(
-    dayjs().tz("Asia/Seoul").month() + 1,
-  );
-  const [currentYear, setCurrentYear] = useState<number>(
-    dayjs().tz("Asia/Seoul").year(),
-  );
-  const [calculationData, setCalculationData] =
-    useState<CalculationData | null>(null);
-
   const router = useRouter();
 
-  const formData = useMealDrawerStore((s) => s.formData);
-  const drawerSelectedDate = useMealDrawerStore((s) => s.selectedDate);
-  const closeDrawer = useMealDrawerStore((s) => s.closeDrawer);
-  const resetForm = useMealDrawerStore((s) => s.resetForm);
-  const userId = useUserStore((s) => s.userId);
   const userName = useUserStore((s) => s.userName);
   const isLoggedIn = useUserStore((s) => s.isLoggedIn);
   const hydrate = useUserStore((s) => s.hydrate);
   const hasHydrated = useUserStore((s) => s.hasHydrated);
-
-  const { data: mealData = [] } = useMealData(
-    userName || "",
-    currentMonth,
-    currentYear,
-  );
-  const mealSubmitMutation = useMealSubmit();
-  const mealDeleteMutation = useMealDelete();
 
   useEffect(() => {
     setMounted(true);
@@ -118,64 +229,7 @@ export default function DashboardPage() {
     }
   }, [router, isLoggedIn, userName, hasHydrated]);
 
-  const handleMonthChange = (month: number, year: number) => {
-    setCurrentMonth(month);
-    setCurrentYear(year);
-  };
-
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!drawerSelectedDate) return;
-    if (!userName && !userId) return;
-
-    const requestData = {
-      userName: userName || "",
-      userId: userId || "",
-      date: dayjs(drawerSelectedDate).tz("Asia/Seoul").format("YYYY-MM-DD"),
-      breakfast: {
-        store: formData.breakfast.store || "",
-        amount: formData.breakfast.amount || "0",
-        payer: formData.breakfast.payer || "",
-      },
-      lunch: {
-        store: formData.lunch.store || "",
-        amount: formData.lunch.amount || "0",
-        payer: formData.lunch.payer || "",
-        attendance: formData.lunch.attendance || "",
-      },
-      dinner: {
-        store: formData.dinner.store || "",
-        amount: formData.dinner.amount || "0",
-        payer: formData.dinner.payer || "",
-      },
-    };
-
-    try {
-      await mealSubmitMutation.mutateAsync(requestData);
-      closeDrawer();
-      resetForm();
-    } catch (error) {
-      console.error("Form submit error:", error);
-    }
-  };
-
-  const handleDeleteMeal = async (date: string) => {
-    if (!userName) return;
-
-    try {
-      await mealDeleteMutation.mutateAsync({
-        userName,
-        userId: userId || undefined,
-        date,
-      });
-    } catch (error) {
-      console.error("Meal delete error:", error);
-    }
-  };
-
   const displayUserName = userName || "";
-  const currentUserId = userId || "";
 
   if (!mounted || !hasHydrated || !displayUserName) {
     return (
@@ -206,58 +260,24 @@ export default function DashboardPage() {
         <ApprovalShortcuts />
       </motion.div>
 
-      {/* ── 식대 통계 ── */}
+      {/* ── 공지 / 생일자 / 음료 탭 ── */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+        className="mb-6"
       >
-        <StatsSection
-          userId={currentUserId}
-          month={currentMonth}
-          year={currentYear}
-          onDataChange={setCalculationData}
-        />
+        <InfoTabs />
       </motion.div>
 
-      {/* ── 식사 기록 (캘린더 + 카드) ── */}
+      {/* ── 휴가 요약 ── */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+        className="mb-6"
       >
-        <MealSection
-          selectedDate={selectedDate}
-          setSelectedDate={setSelectedDate}
-          handleMonthChange={handleMonthChange}
-          mealData={mealData}
-        />
-      </motion.div>
-
-      {/* ── 인기 식당 ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <PopularRestaurantsSection />
-      </motion.div>
-
-      {/* Lazy-loaded Meal Entry Drawer */}
-      <Suspense fallback={null}>
-        <MealEntryDrawer
-          onFormSubmit={handleFormSubmit}
-          onDeleteMeal={handleDeleteMeal}
-        />
-      </Suspense>
-
-      {/* Bottom Navigation */}
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-      >
-        <Footer />
+        <LeaveSummary />
       </motion.div>
 
       <UpdateNotificationDialog />

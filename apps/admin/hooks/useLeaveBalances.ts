@@ -55,6 +55,36 @@ export function useGenerateLeave() {
   });
 }
 
+export interface LeaveTypeInfo {
+  id: number;
+  name: string;
+  sort_order: number;
+}
+
+export interface MemberUsageStat {
+  member_id: string;
+  full_name: string;
+  position_name: string | null;
+  counts: Record<number, number>;
+  total: number;
+}
+
+export interface UsageStatsResponse {
+  leaveTypes: LeaveTypeInfo[];
+  stats: MemberUsageStat[];
+}
+
+export function useLeaveUsageStats(year: number) {
+  return useQuery<UsageStatsResponse>({
+    queryKey: [...queryKeys.leaveBalances.all, "usage-stats", year],
+    queryFn: async () => {
+      const res = await fetch(`/api/leave-balances/usage-stats?year=${year}`);
+      if (!res.ok) throw new Error("Failed to fetch usage stats");
+      return res.json();
+    },
+  });
+}
+
 export function useAdjustLeaveBalance() {
   const queryClient = useQueryClient();
   return useMutation({

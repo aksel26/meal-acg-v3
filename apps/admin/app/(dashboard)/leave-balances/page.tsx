@@ -26,6 +26,7 @@ import {
   useLeaveBalances,
   useGenerateLeave,
   useAdjustLeaveBalance,
+  useLeaveUsageStats,
   type LeaveBalance,
 } from "@/hooks/useLeaveBalances";
 
@@ -49,24 +50,37 @@ export default function LeaveBalancesPage() {
   const [adjustAmount, setAdjustAmount] = useState("");
   const [adjustReason, setAdjustReason] = useState("");
 
-  const { data: balances, isLoading } = useLeaveBalances(year);
+  const { data: balances, isLoading: balancesLoading } = useLeaveBalances(year);
+  const { data: usageData, isLoading: usageLoading } = useLeaveUsageStats(year);
   const generateMutation = useGenerateLeave();
   const adjustMutation = useAdjustLeaveBalance();
 
-  // Group by member_id, preserving order of first appearance
-  const grouped = useMemo(() => {
-    if (!balances) return [];
+  const isLoading = balancesLoading || usageLoading;
+
+  // Group balances by member
+  const balanceMap = useMemo(() => {
     const map = new Map<string, LeaveBalance[]>();
-    const order: string[] = [];
-    for (const b of balances) {
-      if (!map.has(b.member_id)) {
-        map.set(b.member_id, []);
-        order.push(b.member_id);
-      }
+    for (const b of balances || []) {
+      if (!map.has(b.member_id)) map.set(b.member_id, []);
       map.get(b.member_id)!.push(b);
     }
-    return order.map((id) => map.get(id)!);
+    return map;
   }, [balances]);
+
+  // Filter leave types that have at least 1 usage
+  const activeLeaveTypes = useMemo(() => {
+    if (!usageData) return [];
+    const usedTypeIds = new Set<number>();
+    for (const s of usageData.stats) {
+      for (const [id, count] of Object.entries(s.counts)) {
+        if (count > 0) usedTypeIds.add(Number(id));
+      }
+    }
+    return usageData.leaveTypes.filter((t) => usedTypeIds.has(t.id));
+  }, [usageData]);
+
+  // All leave types for full display
+  const allLeaveTypes = usageData?.leaveTypes || [];
 
   const handleGenerate = () => {
     generateMutation.mutate(year, {
@@ -92,18 +106,17 @@ export default function LeaveBalancesPage() {
         adjustment: Number(adjustAmount),
         reason: adjustReason,
       },
-      {
-        onSuccess: () => setAdjustTarget(null),
-      }
+      { onSuccess: () => setAdjustTarget(null) }
     );
   };
+
+  const colCount = 2 + allLeaveTypes.length + 1;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h1 className="text-xl font-semibold text-slate-900">연차 현황</h1>
           <div className="flex items-center gap-1">
             <button
               className="inline-flex items-center justify-center h-8 w-8 rounded-md border bg-white hover:bg-slate-50 transition-colors"
@@ -129,82 +142,56 @@ export default function LeaveBalancesPage() {
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl border bg-white">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto rounded-xl border bg-white">
+        <table className="w-full text-sm whitespace-nowrap">
           <thead className="border-b bg-slate-50">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">이름</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">직급</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">입사일</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">유형</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-slate-500">부여</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-slate-500">사용</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-slate-500">조정</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-slate-500">잔여</th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-slate-500">관리</th>
+              <th className="px-3 py-2.5 text-left text-xs font-medium text-slate-500 w-20">이름</th>
+              <th className="px-2 py-2.5 text-left text-xs font-medium text-slate-500 w-14">직급</th>
+              {allLeaveTypes.map((t) => (
+                <th key={t.id} className="px-1.5 py-2.5 text-center text-[11px] font-medium text-slate-500 min-w-[40px] border-l border-slate-200">
+                  {t.name}
+                </th>
+              ))}
+              <th className="px-2 py-2.5 text-center text-xs font-medium text-slate-700 bg-slate-100">합계</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-slate-100">
             {isLoading ? (
               <tr>
-                <td colSpan={9} className="py-12 text-center text-sm text-slate-400">
+                <td colSpan={colCount} className="py-12 text-center text-sm text-slate-400">
                   로딩 중...
                 </td>
               </tr>
-            ) : grouped.length > 0 ? (
-              grouped.map((rows, groupIdx) => {
-                const first = rows[0]!;
-                return rows.map((balance, rowIdx) => {
-                  const remaining = balance.granted + balance.adjusted - balance.used;
-                  const isFirstRow = rowIdx === 0;
-                  const isFirstGroup = groupIdx === 0;
-                  const rowClass = isFirstRow && !isFirstGroup ? "border-t border-slate-200" : "";
-
-                  return (
-                    <tr key={balance.id} className={`${rowClass} hover:bg-slate-50 transition-colors`}>
-                      <td className="px-4 py-2.5 font-medium text-slate-900">
-                        {isFirstRow ? first.member.full_name : ""}
-                      </td>
-                      <td className="px-4 py-2.5 text-slate-600">
-                        {isFirstRow ? (first.member.position?.name ?? "-") : ""}
-                      </td>
-                      <td className="px-4 py-2.5 text-slate-600">
-                        {isFirstRow ? (first.member.hire_date ?? "-") : ""}
-                      </td>
-                      <td className="px-4 py-2.5 text-slate-700">
-                        {TYPE_LABEL[balance.type] ?? balance.type}
-                      </td>
-                      <td className="px-4 py-2.5 text-right text-slate-700">{balance.granted}</td>
-                      <td className="px-4 py-2.5 text-right text-slate-700">{balance.used}</td>
-                      <td className="px-4 py-2.5 text-right text-slate-700">{balance.adjusted}</td>
-                      <td
-                        className={`px-4 py-2.5 text-right font-semibold ${
-                          remaining > 0
-                            ? "text-slate-900"
-                            : remaining === 0
-                              ? "text-slate-400"
-                              : "text-rose-600"
-                        }`}
-                      >
-                        {remaining}
-                      </td>
-                      <td className="px-4 py-2.5 text-center">
-                        <button
-                          className="inline-flex items-center justify-center h-7 w-7 rounded hover:bg-slate-100 transition-colors text-slate-500 hover:text-slate-700"
-                          onClick={() => handleOpenAdjust(balance)}
-                          title="조정"
-                        >
-                          <Settings2 className="h-3.5 w-3.5" />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                });
+            ) : usageData && usageData.stats.length > 0 ? (
+              usageData.stats.map((member) => {
+                const memberBalances = balanceMap.get(member.member_id) || [];
+                return (
+                  <tr key={member.member_id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-3 py-2 font-medium text-slate-900 text-xs">{member.full_name}</td>
+                    <td className="px-2 py-2 text-slate-500 text-[11px]">{member.position_name || "-"}</td>
+                    {allLeaveTypes.map((t) => {
+                      const count = member.counts[t.id] || 0;
+                      return (
+                        <td key={t.id} className="px-1.5 py-2 text-center text-xs border-l border-slate-100">
+                          {count > 0 ? (
+                            <span className="font-medium text-slate-800">{count}</span>
+                          ) : (
+                            <span className="text-slate-300">-</span>
+                          )}
+                        </td>
+                      );
+                    })}
+                    <td className="px-2 py-2 text-center text-xs font-semibold text-slate-900 bg-slate-50">
+                      {member.total}
+                    </td>
+                  </tr>
+                );
               })
             ) : (
               <tr>
-                <td colSpan={9} className="py-12 text-center text-sm text-slate-400">
-                  해당 연도의 연차 데이터가 없습니다. &apos;연차 일괄 부여&apos; 버튼으로 부여해주세요.
+                <td colSpan={colCount} className="py-12 text-center text-sm text-slate-400">
+                  해당 연도의 데이터가 없습니다. &apos;연차 일괄 부여&apos; 버튼으로 부여해주세요.
                 </td>
               </tr>
             )}

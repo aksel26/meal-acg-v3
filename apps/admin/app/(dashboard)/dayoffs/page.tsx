@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import "dayjs/locale/ko";
@@ -241,7 +242,7 @@ export default function DayoffsPage() {
 
   const handleSave = () => {
     if (!formData.targetId || !formData.startDate || !formData.leaveTypeId) {
-      toast.error("대상자, 날짜, 근태 유형을 입력해주세요.");
+      toast.error("대상자, 날짜, 휴가 유형을 입력해주세요.");
       return;
     }
 
@@ -367,7 +368,7 @@ export default function DayoffsPage() {
           </div>
           <Button onClick={() => handleOpenCreate()}>
             <Plus className="mr-2 h-4 w-4" />
-            근태 등록
+            휴가 등록
           </Button>
         </div>
       </div>
@@ -424,14 +425,8 @@ export default function DayoffsPage() {
 
       {/* Table View */}
       {viewMode === "table" && (
-        <Card className="glass-panel border-0">
-          <CardHeader>
-            <CardTitle>근태 목록</CardTitle>
-            <CardDescription>
-              {year}년 {month}월 ({dayoffs?.length || 0}건)
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+        <Card className="glass-panel border-0 shadow-none">
+          <CardContent className="p-0">
             <Table>
               <TableHeader className="sticky top-0 z-10 bg-slate-50">
                 <TableRow>
@@ -466,7 +461,12 @@ export default function DayoffsPage() {
                           </span>
                         </TableCell>
                         <TableCell className="py-1 text-sm font-medium">
-                          {record.target?.full_name}
+                          <Link
+                            href={`/dayoffs/${record.target_id}`}
+                            className="text-blue-600 hover:text-blue-800 hover:underline"
+                          >
+                            {record.target?.full_name}
+                          </Link>
                         </TableCell>
                         <TableCell className="py-1">{getLeaveTypeBadge(record)}</TableCell>
                         <TableCell className="py-1 text-sm text-slate-600 max-w-[200px] truncate">
@@ -526,7 +526,7 @@ export default function DayoffsPage() {
                     <TableCell colSpan={8} className="py-12">
                       <div className="flex flex-col items-center gap-2 text-gray-400">
                         <CalendarOff className="h-8 w-8" />
-                        <p className="text-sm">등록된 근태가 없습니다.</p>
+                        <p className="text-sm">등록된 휴가가 없습니다.</p>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -542,10 +542,10 @@ export default function DayoffsPage() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              {editingRecord ? "근태 수정" : "근태 등록"}
+              {editingRecord ? "휴가 수정" : "휴가 등록"}
             </DialogTitle>
             <DialogDescription>
-              {editingRecord ? "근태 정보를 수정합니다." : "근태를 등록합니다. 주말/공휴일은 자동 제외됩니다."}
+              {editingRecord ? "휴가 정보를 수정합니다." : "휴가를 등록합니다. 주말/공휴일은 자동 제외됩니다."}
             </DialogDescription>
           </DialogHeader>
 
@@ -601,7 +601,7 @@ export default function DayoffsPage() {
                 onValueChange={(v) => setFormData({ ...formData, leaveTypeId: parseInt(v) })}
               >
                 <SelectTrigger className="bg-white">
-                  <SelectValue placeholder="근태 유형 선택" />
+                  <SelectValue placeholder="휴가 유형 선택" />
                 </SelectTrigger>
                 <SelectContent>
                   {(leaveTypes || []).map((t) => (
@@ -683,9 +683,9 @@ export default function DayoffsPage() {
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>근태 삭제</AlertDialogTitle>
+            <AlertDialogTitle>휴가 삭제</AlertDialogTitle>
             <AlertDialogDescription>
-              이 근태 기록을 삭제하시겠습니까?
+              이 휴가 기록을 삭제하시겠습니까?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -705,10 +705,10 @@ export default function DayoffsPage() {
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {year}년 {month}월 근태 통계
+              {year}년 {month}월 휴가 통계
             </DialogTitle>
             <DialogDescription>
-              직원별 근태 유형별 건수
+              직원별 휴가 유형별 건수
             </DialogDescription>
           </DialogHeader>
           <Table>
@@ -741,7 +741,7 @@ export default function DayoffsPage() {
               {(!stats || stats.length === 0) && (
                 <TableRow>
                   <TableCell colSpan={(leaveTypes?.length || 0) + 2} className="text-center py-8 text-slate-400">
-                    해당 월의 근태 기록이 없습니다.
+                    해당 월의 휴가 기록이 없습니다.
                   </TableCell>
                 </TableRow>
               )}

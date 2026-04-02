@@ -40,6 +40,18 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
     title: "조직원 현황",
     subtitle: "멤버별 상태(휴직, 파견, 퇴사 등) 이력을 관리합니다",
   },
+  "/job-titles": {
+    title: "직급/직책 관리",
+    subtitle: "조직의 직급과 직책을 관리합니다",
+  },
+  "/attendance": {
+    title: "출퇴근 현황",
+    subtitle: "조직원의 출퇴근 기록을 관리합니다",
+  },
+  "/leave-balances": {
+    title: "잔여 휴가 현황",
+    subtitle: "조직원별 잔여 휴가 현황을 조회합니다",
+  },
   "/budget": {
     title: "예산 할당 관리",
     subtitle: "기간별 복지포인트 및 활동비를 멤버에게 할당합니다",
@@ -53,8 +65,8 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
     subtitle: "전체 조직원의 포인트 사용 내역을 조회합니다",
   },
   "/dayoffs": {
-    title: "근태 관리",
-    subtitle: "근태 등록, 승인, 통계를 관리합니다",
+    title: "휴가 관리",
+    subtitle: "휴가 등록, 승인, 통계를 관리합니다",
   },
   "/notifications": {
     title: "알림 관리",

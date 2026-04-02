@@ -187,6 +187,12 @@ export const queryKeys = {
     today: ["attendance", "today"] as const,
   },
 
+  // Supervisor
+  supervisor: {
+    all: ["supervisor"] as const,
+    calendar: (date: string) => ["supervisor", "calendar", date] as const,
+  },
+
   // Usage Records
   usageRecords: {
     all: ["usageRecords"] as const,

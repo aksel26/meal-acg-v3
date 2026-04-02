@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
 import { useAuth } from "@/hooks/useAuth";
+import DashboardCalendar from "@/components/DashboardCalendar";
 import { useActiveStatusMembers } from "@/hooks/useActiveStatusMembers";
 import { useBudgetSummary } from "@/hooks/useBudgetAllocations";
 import { useAttendanceToday } from "@/hooks/useAttendance";
@@ -225,6 +226,7 @@ function DashboardPageContent() {
   const [isYearOpen, setIsYearOpen] = useState(false);
   const [isMonthOpen, setIsMonthOpen] = useState(false);
   const [weekOffset, setWeekOffset] = useState(0);
+  const [viewMode, setViewMode] = useState<"stats" | "calendar">("stats");
 
   const updateURL = useCallback(
     (year: number, month: number) => {
@@ -388,93 +390,122 @@ function DashboardPageContent() {
 
   return (
     <div className="flex flex-col gap-5 pb-6">
-      {/* ── Date Selector ── */}
+      {/* ── Date Selector + View Toggle ── */}
       <div className="flex flex-wrap items-center gap-3">
-        <div className="relative">
+        <div className="flex rounded-lg border border-slate-200 p-0.5">
           <button
-            onClick={() => {
-              setIsYearOpen(!isYearOpen);
-              setIsMonthOpen(false);
-            }}
-            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-base font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            onClick={() => setViewMode("stats")}
+            className={cn(
+              "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+              viewMode === "stats" ? "bg-slate-900 text-white" : "text-slate-500 hover:text-slate-700"
+            )}
           >
-            {selectedYear}년
-            <ChevronDown
-              className={cn(
-                "h-4 w-4 text-slate-400 transition-transform",
-                isYearOpen && "rotate-180"
-              )}
-            />
+            통계
           </button>
-          {isYearOpen && (
-            <div className="absolute left-0 top-full z-50 mt-2 w-32 rounded-lg bg-white p-1 shadow-lg ring-1 ring-slate-200/60">
-              {years.map((year) => (
-                <button
-                  key={year}
-                  onClick={() => {
-                    setSelectedYear(year);
-                    setIsYearOpen(false);
-                    updateURL(year, selectedMonth);
-                  }}
-                  className={cn(
-                    "flex w-full items-center rounded-md px-3 py-2 text-base transition-colors",
-                    year === selectedYear
-                      ? "bg-blue-50 font-medium text-blue-600"
-                      : "text-slate-600 hover:bg-slate-50"
-                  )}
-                >
-                  {year}년
-                </button>
-              ))}
-            </div>
-          )}
+          <button
+            onClick={() => setViewMode("calendar")}
+            className={cn(
+              "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+              viewMode === "calendar" ? "bg-slate-900 text-white" : "text-slate-500 hover:text-slate-700"
+            )}
+          >
+            캘린더
+          </button>
         </div>
 
-        <div className="relative">
-          <button
-            onClick={() => {
-              setIsMonthOpen(!isMonthOpen);
-              setIsYearOpen(false);
-            }}
-            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-base font-medium text-slate-700 transition-colors hover:bg-slate-50"
-          >
-            {selectedMonth}월
-            <ChevronDown
-              className={cn(
-                "h-4 w-4 text-slate-400 transition-transform",
-                isMonthOpen && "rotate-180"
-              )}
-            />
-          </button>
-          {isMonthOpen && (
-            <div className="absolute left-0 top-full z-50 mt-2 grid w-48 grid-cols-4 gap-1 rounded-lg bg-white p-2 shadow-lg ring-1 ring-slate-200/60">
-              {months.map((month) => (
-                <button
-                  key={month}
-                  onClick={() => {
-                    setSelectedMonth(month);
-                    setIsMonthOpen(false);
-                    updateURL(selectedYear, month);
-                  }}
-                  className={cn(
-                    "flex items-center justify-center rounded-md py-2 text-base transition-colors",
-                    month === selectedMonth
-                      ? "bg-blue-50 font-medium text-blue-600"
-                      : "text-slate-600 hover:bg-slate-50"
-                  )}
-                >
-                  {month}월
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        {viewMode === "stats" && (
+          <>
+          <div className="relative">
+            <button
+              onClick={() => {
+                setIsYearOpen(!isYearOpen);
+                setIsMonthOpen(false);
+              }}
+              className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-base font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              {selectedYear}년
+              <ChevronDown
+                className={cn(
+                  "h-4 w-4 text-slate-400 transition-transform",
+                  isYearOpen && "rotate-180"
+                )}
+              />
+            </button>
+            {isYearOpen && (
+              <div className="absolute left-0 top-full z-50 mt-2 w-32 rounded-lg bg-white p-1 shadow-lg ring-1 ring-slate-200/60">
+                {years.map((year) => (
+                  <button
+                    key={year}
+                    onClick={() => {
+                      setSelectedYear(year);
+                      setIsYearOpen(false);
+                      updateURL(year, selectedMonth);
+                    }}
+                    className={cn(
+                      "flex w-full items-center rounded-md px-3 py-2 text-base transition-colors",
+                      year === selectedYear
+                        ? "bg-blue-50 font-medium text-blue-600"
+                        : "text-slate-600 hover:bg-slate-50"
+                    )}
+                  >
+                    {year}년
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
-        <div className="ml-auto text-base text-slate-500">
-          {selectedYear}년 {selectedMonth}월 현황
-        </div>
+          <div className="relative">
+            <button
+              onClick={() => {
+                setIsMonthOpen(!isMonthOpen);
+                setIsYearOpen(false);
+              }}
+              className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-base font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              {selectedMonth}월
+              <ChevronDown
+                className={cn(
+                  "h-4 w-4 text-slate-400 transition-transform",
+                  isMonthOpen && "rotate-180"
+                )}
+              />
+            </button>
+            {isMonthOpen && (
+              <div className="absolute left-0 top-full z-50 mt-2 grid w-48 grid-cols-4 gap-1 rounded-lg bg-white p-2 shadow-lg ring-1 ring-slate-200/60">
+                {months.map((month) => (
+                  <button
+                    key={month}
+                    onClick={() => {
+                      setSelectedMonth(month);
+                      setIsMonthOpen(false);
+                      updateURL(selectedYear, month);
+                    }}
+                    className={cn(
+                      "flex items-center justify-center rounded-md py-2 text-base transition-colors",
+                      month === selectedMonth
+                        ? "bg-blue-50 font-medium text-blue-600"
+                        : "text-slate-600 hover:bg-slate-50"
+                    )}
+                  >
+                    {month}월
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="ml-auto text-base text-slate-500">
+            {selectedYear}년 {selectedMonth}월 현황
+          </div>
+          </>
+        )}
       </div>
 
+      {viewMode === "calendar" ? (
+        <DashboardCalendar />
+      ) : (
+      <>
       {/* ══════════════════════════════════════════════
           상단: 오늘 근태 + 승인 대기 (실시간)
           ══════════════════════════════════════════════ */}
@@ -811,6 +842,9 @@ function DashboardPageContent() {
           </Link>
         </div>
       </div>
+
+      </>
+      )}
 
       {/* Click outside to close dropdowns */}
       {(isYearOpen || isMonthOpen) && (

@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
       .from("attendance_records")
       .select("*")
       .eq("member_id", memberId)
-      .eq("work_date", date)
+      .eq("date", date)
       .maybeSingle();
 
     if (error) {
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
         .from("attendance_records")
         .select("id, check_in_at")
         .eq("member_id", memberId)
-        .eq("work_date", kstDate)
+        .eq("date", kstDate)
         .maybeSingle();
 
       if (existing?.check_in_at) {
@@ -102,10 +102,10 @@ export async function POST(request: NextRequest) {
         .upsert(
           {
             member_id: memberId,
-            work_date: kstDate,
+            date: kstDate,
             check_in_at: now.toISOString(),
           },
-          { onConflict: "member_id,work_date" }
+          { onConflict: "member_id,date" }
         )
         .select()
         .single();
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
       .from("attendance_records")
       .select("id, check_in_at, check_out_at")
       .eq("member_id", memberId)
-      .eq("work_date", kstDate)
+      .eq("date", kstDate)
       .maybeSingle();
 
     if (!record?.check_in_at) {

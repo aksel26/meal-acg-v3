@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -44,6 +45,7 @@ import {
   Loader2,
   Pencil,
   Plus,
+  Settings,
   Trash2,
   Users,
 } from "lucide-react";
@@ -92,6 +94,9 @@ interface UserFormData {
   loginId: string;
   password: string;
   email: string;
+  birthDate: string;
+  phone: string;
+  passportNumber: string;
   memberRole: string;
   internMonths: string;
   role: string;
@@ -238,6 +243,9 @@ export default function MemberStatusPage() {
       loginId: "",
       password: "",
       email: "",
+      birthDate: "",
+      phone: "",
+      passportNumber: "",
       memberRole: "팀원",
       internMonths: "",
       role: "user",
@@ -257,6 +265,9 @@ export default function MemberStatusPage() {
       loginId: string;
       password: string;
       email?: string;
+      birthDate?: string;
+      phone?: string;
+      passportNumber?: string;
       memberRole?: string;
       internMonths?: string;
       position_id?: string;
@@ -304,6 +315,9 @@ export default function MemberStatusPage() {
   const onSubmitAddMember = (data: UserFormData) => {
     createUserMutation.mutate({
       ...data,
+      birthDate: data.birthDate || undefined,
+      phone: data.phone || undefined,
+      passportNumber: data.passportNumber || undefined,
       position_id: data.position_id || undefined,
       title_id: data.title_id || undefined,
     });
@@ -756,14 +770,8 @@ export default function MemberStatusPage() {
             <table className="w-full caption-bottom text-sm">
               <TableHeader className="sticky top-0 z-10">
                 <TableRow className="bg-slate-50 [&>th]:h-9 [&>th]:px-3 [&>th]:py-0">
-                  <TableHead className="pl-6 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 w-24 text-center">
+                  <TableHead className="pl-6 text-center text-xs font-semibold uppercase tracking-wider text-slate-500 w-24">
                     이름
-                  </TableHead>
-                  <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500 w-16">
-                    권한
-                  </TableHead>
-                  <TableHead className="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    이메일
                   </TableHead>
                   <TableHead
                     className="cursor-pointer select-none text-center text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-800"
@@ -781,31 +789,27 @@ export default function MemberStatusPage() {
                       />
                     </span>
                   </TableHead>
-                  <TableHead className="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    본부
+                  <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    직책
                   </TableHead>
-                  <TableHead
-                    className="cursor-pointer select-none text-left text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-800"
-                    onClick={() => handleSort("team_name")}
-                  >
-                    <span className="inline-flex items-center gap-1">
-                      팀
-                      <ArrowUpDown
-                        className={cn(
-                          "h-3 w-3",
-                          sortKey === "team_name"
-                            ? "text-[#135bec]"
-                            : "text-slate-300",
-                        )}
-                      />
-                    </span>
+                  <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    아이디
+                  </TableHead>
+                  <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    생년월일
+                  </TableHead>
+                  <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    휴대폰번호
+                  </TableHead>
+                  <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500 w-16">
+                    권한
                   </TableHead>
                   <TableHead
                     className="cursor-pointer select-none text-center text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-800"
                     onClick={() => handleSort("current_status")}
                   >
                     <span className="inline-flex items-center gap-1">
-                      특이사항
+                      상태
                       <ArrowUpDown
                         className={cn(
                           "h-3 w-3",
@@ -816,17 +820,24 @@ export default function MemberStatusPage() {
                       />
                     </span>
                   </TableHead>
+                  <TableHead
+                    className="cursor-pointer select-none text-center text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-800"
+                    onClick={() => handleSort("team_name")}
+                  >
+                    <span className="inline-flex items-center gap-1">
+                      팀명
+                      <ArrowUpDown
+                        className={cn(
+                          "h-3 w-3",
+                          sortKey === "team_name"
+                            ? "text-[#135bec]"
+                            : "text-slate-300",
+                        )}
+                      />
+                    </span>
+                  </TableHead>
                   <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    기간(일자)
-                  </TableHead>
-                  <TableHead className="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    메모
-                  </TableHead>
-                  <TableHead className="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    비고
-                  </TableHead>
-                  <TableHead className="w-12 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    삭제
+                    가입일
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -849,6 +860,33 @@ export default function MemberStatusPage() {
                           {row.full_name}
                         </button>
                       </TableCell>
+                      <TableCell className="text-center text-sm">
+                        {row.position_name ? (
+                          <span className="text-[12px] font-medium text-slate-700">
+                            {row.position_name}
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-slate-400">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center text-sm">
+                        {row.title_name ? (
+                          <span className="text-[12px] text-slate-600">
+                            {row.title_name}
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-slate-400">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center text-sm text-slate-500">
+                        {row.login_id || "-"}
+                      </TableCell>
+                      <TableCell className="text-center text-sm text-slate-500">
+                        {row.birth_date || "-"}
+                      </TableCell>
+                      <TableCell className="text-center text-sm text-slate-500">
+                        {row.phone || "-"}
+                      </TableCell>
                       <TableCell className="text-center">
                         {row.member_id && adminIds.has(row.member_id) ? (
                           <Badge className="border-0 bg-indigo-100 text-indigo-700 px-1.5 py-0.5 text-[10px] font-medium">
@@ -859,31 +897,6 @@ export default function MemberStatusPage() {
                             일반
                           </span>
                         )}
-                      </TableCell>
-                      <TableCell className="text-sm text-slate-500">
-                        {row.email || "-"}
-                      </TableCell>
-                      <TableCell className="text-center text-sm">
-                        <div className="flex flex-col items-center gap-0.5">
-                          {row.position_name ? (
-                            <span className="text-[12px] font-medium text-slate-700">
-                              {row.position_name}
-                            </span>
-                          ) : (
-                            <span className="text-[11px] text-slate-400">-</span>
-                          )}
-                          {row.title_name && (
-                            <span className="text-[10px] text-slate-400">
-                              {row.title_name}
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-left text-sm text-slate-600">
-                        {row.division_name || "-"}
-                      </TableCell>
-                      <TableCell className="text-left text-sm text-slate-600">
-                        {row.team_name || "-"}
                       </TableCell>
                       <TableCell className="text-center">
                         <Badge
@@ -900,36 +913,12 @@ export default function MemberStatusPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center text-sm text-slate-600">
-                        {row.status_start_date
-                          ? row.current_status === "퇴사"
-                            ? row.status_start_date
-                            : `${row.status_start_date} ~ ${row.status_end_date || "진행중"}`
+                        {row.team_name || "-"}
+                      </TableCell>
+                      <TableCell className="text-center text-sm text-slate-500">
+                        {row.created_at
+                          ? new Date(row.created_at).toLocaleDateString("ko-KR")
                           : "-"}
-                      </TableCell>
-                      <TableCell className="max-w-[200px] truncate text-sm text-slate-600">
-                        {row.status_note || "-"}
-                      </TableCell>
-                      <TableCell className="min-w-[150px]">
-                        <input
-                          key={`${row.member_id}-${noteMap.get(row.member_id!) || ""}`}
-                          defaultValue={noteMap.get(row.member_id!) || ""}
-                          onBlur={(e) => {
-                            const newVal = e.target.value.trim();
-                            const oldVal = noteMap.get(row.member_id!) || "";
-                            if (newVal !== oldVal && row.member_id) {
-                              updateNoteMutation.mutate({
-                                id: row.member_id,
-                                note: newVal,
-                              });
-                            }
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter")
-                              (e.target as HTMLInputElement).blur();
-                          }}
-                          className="w-full rounded border-0 bg-transparent px-1.5 py-0.5 text-sm text-slate-600 outline-none focus:bg-white focus:ring-1 focus:ring-slate-300"
-                          placeholder="-"
-                        />
                       </TableCell>
                       <TableCell className="text-center">
                         {row.current_status === "퇴사" && (
@@ -974,198 +963,229 @@ export default function MemberStatusPage() {
           if (!open) resetAddForm();
         }}
       >
-        <DialogContent className="max-w-sm">
+        <DialogContent style={{ maxWidth: 672 }}>
           <DialogHeader>
             <DialogTitle>인원 추가</DialogTitle>
             <DialogDescription>새 인원 정보를 입력하세요.</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleFormSubmit(onSubmitAddMember)}>
             <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="addFullName">이름</Label>
-                <Input
-                  id="addFullName"
-                  placeholder="홍길동"
-                  className={
-                    addFormErrors.fullName
-                      ? "border-red-500 focus-visible:ring-red-500"
-                      : ""
-                  }
-                  {...register("fullName", {
-                    required: "이름을 입력해주세요.",
-                  })}
-                />
-                {addFormErrors.fullName && (
-                  <p className="text-sm text-red-500">
-                    {addFormErrors.fullName.message}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="addLoginId">아이디</Label>
-                <Input
-                  id="addLoginId"
-                  placeholder="hong123"
-                  className={
-                    addFormErrors.loginId
-                      ? "border-red-500 focus-visible:ring-red-500"
-                      : ""
-                  }
-                  {...register("loginId", {
-                    required: "아이디를 입력해주세요.",
-                  })}
-                />
-                {addFormErrors.loginId && (
-                  <p className="text-sm text-red-500">
-                    {addFormErrors.loginId.message}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="addPassword">비밀번호</Label>
-                <div className="relative">
-                  <Input
-                    id="addPassword"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    className={
-                      addFormErrors.password
-                        ? "border-red-500 focus-visible:ring-red-500 pr-10"
-                        : "pr-10"
-                    }
-                    {...register("password", {
-                      required: "비밀번호를 입력해주세요.",
-                    })}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
+              {/* 기본 정보 */}
+              <div className="rounded-lg bg-slate-50 p-4 space-y-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">기본 정보</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="addFullName">이름</Label>
+                    <Input
+                      id="addFullName"
+                      placeholder="홍길동"
+                      className={
+                        addFormErrors.fullName
+                          ? "border-red-500 focus-visible:ring-red-500"
+                          : ""
+                      }
+                      {...register("fullName", {
+                        required: "이름을 입력해주세요.",
+                      })}
+                    />
+                    {addFormErrors.fullName && (
+                      <p className="text-sm text-red-500">
+                        {addFormErrors.fullName.message}
+                      </p>
                     )}
-                  </button>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="addEmail">이메일 (선택)</Label>
+                    <Input
+                      id="addEmail"
+                      type="email"
+                      placeholder="hong@example.com"
+                      className={
+                        addFormErrors.email
+                          ? "border-red-500 focus-visible:ring-red-500"
+                          : ""
+                      }
+                      {...register("email", {
+                        pattern: {
+                          value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                          message: "올바른 이메일 형식이 아닙니다.",
+                        },
+                      })}
+                    />
+                    {addFormErrors.email && (
+                      <p className="text-sm text-red-500">
+                        {addFormErrors.email.message}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="addBirthDate">생년월일 (선택)</Label>
+                    <Input
+                      id="addBirthDate"
+                      type="date"
+                      {...register("birthDate")}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="addPhone">휴대폰번호 (선택)</Label>
+                    <Input
+                      id="addPhone"
+                      type="tel"
+                      placeholder="010-1234-5678"
+                      {...register("phone")}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="addPassportNumber">여권번호 (선택)</Label>
+                    <Input
+                      id="addPassportNumber"
+                      placeholder="M12345678"
+                      {...register("passportNumber")}
+                    />
+                  </div>
                 </div>
-                {addFormErrors.password && (
-                  <p className="text-sm text-red-500">
-                    {addFormErrors.password.message}
-                  </p>
-                )}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="addEmail">이메일 (선택)</Label>
-                <Input
-                  id="addEmail"
-                  type="email"
-                  placeholder="hong@example.com"
-                  className={
-                    addFormErrors.email
-                      ? "border-red-500 focus-visible:ring-red-500"
-                      : ""
-                  }
-                  {...register("email", {
-                    pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: "올바른 이메일 형식이 아닙니다.",
-                    },
-                  })}
-                />
-                {addFormErrors.email && (
-                  <p className="text-sm text-red-500">
-                    {addFormErrors.email.message}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label>직급 (positions)</Label>
-                <Select
-                  value={watchedPositionId}
-                  onValueChange={(val) => setAddFormValue("position_id", val)}
-                >
-                  <SelectTrigger className="border border-slate-200 w-full">
-                    <SelectValue placeholder="직급 선택" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(positions ?? []).map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>직책 (선택)</Label>
-                <Select
-                  value={watchedTitleId}
-                  onValueChange={(val) =>
-                    setAddFormValue("title_id", val === "__none__" ? "" : val)
-                  }
-                >
-                  <SelectTrigger className="border border-slate-200 w-full">
-                    <SelectValue placeholder="직책 선택 (선택사항)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">없음</SelectItem>
-                    {(titles ?? []).map((t) => (
-                      <SelectItem key={t.id} value={t.id}>
-                        {t.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>직군 (member_role)</Label>
-                <Select
-                  value={watchedMemberRole}
-                  onValueChange={(val) => {
-                    setAddFormValue("memberRole", val);
-                    if (val !== "인턴") setAddFormValue("internMonths", "");
-                  }}
-                >
-                  <SelectTrigger className="border border-slate-200 w-full">
-                    <SelectValue placeholder="직군 선택" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="팀원">팀원</SelectItem>
-                    <SelectItem value="인턴">인턴</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {watchedMemberRole === "인턴" && (
-                <div className="space-y-2">
-                  <Label htmlFor="addInternMonths">인턴 기간 (개월)</Label>
-                  <Input
-                    id="addInternMonths"
-                    type="number"
-                    min={1}
-                    max={6}
-                    placeholder="1~6"
-                    {...register("internMonths", {
-                      min: { value: 1, message: "1 이상 입력해주세요." },
-                      max: { value: 6, message: "6 이하로 입력해주세요." },
-                    })}
-                  />
-                  {addFormErrors.internMonths && (
-                    <p className="text-sm text-red-500">
-                      {addFormErrors.internMonths.message}
-                    </p>
+
+              {/* 직급/직책 */}
+              <div className="rounded-lg bg-slate-50 p-4 space-y-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">직급 / 직책</p>
+                <div className="flex gap-4">
+                  <div className="space-y-2 flex-1">
+                    <Label>직급</Label>
+                    <Select
+                      value={watchedPositionId}
+                      onValueChange={(val) => {
+                        setAddFormValue("position_id", val);
+                        const selected = positions?.find((p) => p.id === val);
+                        if (selected?.name !== "인턴") setAddFormValue("internMonths", "");
+                      }}
+                    >
+                      <SelectTrigger className="border border-slate-200 w-full">
+                        <SelectValue placeholder="직급 선택" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(positions ?? []).map((p) => (
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {positions?.find((p) => p.id === watchedPositionId)?.name === "인턴" && (
+                    <div className="space-y-2 w-32">
+                      <Label htmlFor="addInternMonths">개월 수</Label>
+                      <Input
+                        id="addInternMonths"
+                        type="number"
+                        min={1}
+                        max={12}
+                        placeholder="1~12"
+                        {...register("internMonths", {
+                          min: { value: 1, message: "1 이상" },
+                          max: { value: 12, message: "12 이하" },
+                        })}
+                      />
+                      {addFormErrors.internMonths && (
+                        <p className="text-sm text-red-500">
+                          {addFormErrors.internMonths.message}
+                        </p>
+                      )}
+                    </div>
                   )}
+                  <div className="space-y-2 flex-1">
+                    <Label>직책 (선택)</Label>
+                    <Select
+                      value={watchedTitleId}
+                      onValueChange={(val) =>
+                        setAddFormValue("title_id", val === "__none__" ? "" : val)
+                      }
+                    >
+                      <SelectTrigger className="border border-slate-200 w-full">
+                        <SelectValue placeholder="직책 선택" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">없음</SelectItem>
+                        {(titles ?? []).map((t) => (
+                          <SelectItem key={t.id} value={t.id}>
+                            {t.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-              )}
-              <label className="flex w-full items-center justify-between rounded-md border border-slate-200 px-3 py-2.5 cursor-pointer hover:bg-slate-50 transition-colors">
-                <span className="text-sm font-medium">관리자 권한</span>
-                <Checkbox
-                  checked={watchedRole === "admin"}
-                  onCheckedChange={(checked) =>
-                    setAddFormValue("role", checked ? "admin" : "user")
-                  }
-                />
-              </label>
+              </div>
+
+              {/* 계정 정보 */}
+              <div className="rounded-lg bg-slate-50 p-4 space-y-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">계정 정보</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="addLoginId">아이디</Label>
+                    <Input
+                      id="addLoginId"
+                      placeholder="hong123"
+                      className={
+                        addFormErrors.loginId
+                          ? "border-red-500 focus-visible:ring-red-500"
+                          : ""
+                      }
+                      {...register("loginId", {
+                        required: "아이디를 입력해주세요.",
+                      })}
+                    />
+                    {addFormErrors.loginId && (
+                      <p className="text-sm text-red-500">
+                        {addFormErrors.loginId.message}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="addPassword">비밀번호</Label>
+                    <div className="relative">
+                      <Input
+                        id="addPassword"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        className={
+                          addFormErrors.password
+                            ? "border-red-500 focus-visible:ring-red-500 pr-10"
+                            : "pr-10"
+                        }
+                        {...register("password", {
+                          required: "비밀번호를 입력해주세요.",
+                        })}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                    {addFormErrors.password && (
+                      <p className="text-sm text-red-500">
+                        {addFormErrors.password.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <label className="flex w-full items-center justify-between rounded-md bg-white px-3 py-2.5 cursor-pointer hover:bg-slate-100 transition-colors">
+                  <span className="text-sm font-medium">관리자 권한</span>
+                  <Checkbox
+                    checked={watchedRole === "admin"}
+                    onCheckedChange={(checked) =>
+                      setAddFormValue("role", checked ? "admin" : "user")
+                    }
+                  />
+                </label>
+              </div>
             </div>
             <div className="flex justify-end gap-2">
               <Button

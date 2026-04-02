@@ -95,16 +95,16 @@ export default function Sidebar() {
 
   return (
     <aside className="flex h-full w-60 flex-col rounded-lg border border-[#f3f3f3] bg-white p-4 text-slate-900">
-      <Link href="/" className="mb-8 block px-2 py-4">
+      <Link href="/" className="mb-8 flex items-center gap-3 px-2 py-4">
         <Image
           src="/acg_ci_gray.png"
           alt="ACG"
-          width={96}
-          height={32}
-          className="h-auto w-auto"
+          width={48}
+          height={48}
+          className="h-12 w-12 object-contain"
           priority
         />
-        <p className="mt-1 text-sm text-[#111111]">아르바이트 관리</p>
+        <p className="text-sm text-[#111111]">아르바이트 관리</p>
       </Link>
 
       <nav className="flex flex-1 flex-col gap-1">

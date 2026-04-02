@@ -109,6 +109,8 @@ export default function AttendancePage() {
             year={year}
             month={month}
             onMonthChange={handleMonthChange}
+            selectedDate={selectedDate}
+            onDateSelect={setSelectedDate}
             records={records}
             summary={summary}
             isLoading={isLoading}

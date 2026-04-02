@@ -30,6 +30,7 @@ interface AttendanceCalendarProps {
   selectedDate: string | null;
   onDateSelect: (date: string) => void;
   records: AttendanceRecord[];
+  defaultExpanded?: boolean;
 }
 
 export default function AttendanceCalendar({
@@ -38,8 +39,9 @@ export default function AttendanceCalendar({
   selectedDate,
   onDateSelect,
   records,
+  defaultExpanded = false,
 }: AttendanceCalendarProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
   const recordMap = useMemo(() => {
     const map: Record<string, AttendanceRecord> = {};

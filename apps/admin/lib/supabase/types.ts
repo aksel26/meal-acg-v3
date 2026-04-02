@@ -862,9 +862,13 @@ export type Database = {
           role: string | null
           team_id: string | null
           title_id: string | null
+          birth_date: string | null
+          passport_number: string | null
+          phone: string | null
           updated_at: string | null
         }
         Insert: {
+          birth_date?: string | null
           created_at?: string | null
           division_id?: string | null
           email?: string | null
@@ -875,7 +879,9 @@ export type Database = {
           member_role?: Database["public"]["Enums"]["member_role"]
           note?: string | null
           organization_id?: string | null
+          passport_number?: string | null
           password: string
+          phone?: string | null
           position_id?: string
           role?: string | null
           team_id?: string | null
@@ -883,6 +889,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          birth_date?: string | null
           created_at?: string | null
           division_id?: string | null
           email?: string | null
@@ -893,7 +900,9 @@ export type Database = {
           member_role?: Database["public"]["Enums"]["member_role"]
           note?: string | null
           organization_id?: string | null
+          passport_number?: string | null
           password?: string
+          phone?: string | null
           position_id?: string
           role?: string | null
           team_id?: string | null
@@ -1808,6 +1817,8 @@ export type Database = {
       }
       member_current_status: {
         Row: {
+          birth_date: string | null
+          created_at: string | null
           current_status:
             | Database["public"]["Enums"]["member_status_type"]
             | null
@@ -1815,8 +1826,11 @@ export type Database = {
           division_name: string | null
           email: string | null
           full_name: string | null
+          login_id: string | null
           member_id: string | null
           member_role: Database["public"]["Enums"]["member_role"] | null
+          passport_number: string | null
+          phone: string | null
           position_id: string | null
           position_name: string | null
           status_end_date: string | null

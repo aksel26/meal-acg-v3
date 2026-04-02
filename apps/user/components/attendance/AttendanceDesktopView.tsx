@@ -70,10 +70,17 @@ export default function AttendanceDesktopView({
           records={records}
           defaultExpanded
         />
+      </div>
+
+      {/* 우측: 서머리 + 필터 + 테이블 (7) */}
+      <div className="flex-1 min-w-0 space-y-4">
+        <div className="flex items-center justify-end">
+          <AttendanceFilter selected={filterType} onChange={setFilterType} />
+        </div>
 
         {/* 서머리 카드 */}
         {summary && (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-5 gap-3">
             {[
               { label: "근무일", value: `${summary.total_work_days}일` },
               {
@@ -104,13 +111,6 @@ export default function AttendanceDesktopView({
             ))}
           </div>
         )}
-      </div>
-
-      {/* 우측: 필터 + 테이블 (7) */}
-      <div className="flex-1 min-w-0 space-y-4">
-        <div className="flex items-center justify-end">
-          <AttendanceFilter selected={filterType} onChange={setFilterType} />
-        </div>
 
         {isLoading ? (
           <div className="flex items-center justify-center py-12">

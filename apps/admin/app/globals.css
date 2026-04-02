@@ -96,6 +96,33 @@ body {
   background: var(--color-slate-400);
 }
 
+/* Snow Theme */
+.snow-page {
+  position: relative;
+  isolation: isolate;
+}
+
+.snow-panel {
+  background: #f9f9fa;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.snow-pill {
+  background: #f9f9fa;
+  color: #5f728f;
+  box-shadow: none;
+}
+
+.snow-kpi {
+  background: #f9f9fa;
+  box-shadow: none;
+}
+
+.snow-grid {
+  background-image: none;
+}
+
 /* Custom Utilities */
 .glass-card {
   background: #ffffff;

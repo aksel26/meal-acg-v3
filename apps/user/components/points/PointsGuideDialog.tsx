@@ -9,9 +9,15 @@ import {
 } from "@repo/ui/src/dialog";
 import { HelpCircle } from "@repo/ui/icons";
 
-export function PointsGuideDialog() {
+export function PointsGuideDialog({
+  open,
+  onOpenChange,
+}: {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) {
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger>
         <HelpCircle
           className="w-6 h-6 text-gray-400 hover:text-gray-600 transition-colors"

@@ -13,6 +13,7 @@ interface MealSectionProps {
   setSelectedDate: (date: Date | undefined) => void;
   handleMonthChange: (month: number, year: number) => void;
   mealData: MealData[];
+  renderMode?: "all" | "calendar" | "cards";
 }
 
 export default function MealSection({
@@ -20,6 +21,7 @@ export default function MealSection({
   setSelectedDate,
   handleMonthChange,
   mealData,
+  renderMode = "all",
 }: MealSectionProps) {
   const { openDrawer, openDrawerForEdit, openDrawerForHolidayEdit } = useMealDrawerStore();
 
@@ -42,6 +44,9 @@ export default function MealSection({
     openDrawerForHolidayEdit(mealInfo, selectedDate);
   };
 
+  const showCalendar = renderMode === "all" || renderMode === "calendar";
+  const showCards = renderMode === "all" || renderMode === "cards";
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
@@ -52,19 +57,23 @@ export default function MealSection({
         ease: [0.25, 0.46, 0.45, 0.94],
       }}
     >
-      <CalendarComponent
-        onDateSelect={setSelectedDate}
-        selectedDate={selectedDate}
-        onMonthChange={handleMonthChange}
-        mealData={mealData}
-      />
-      <MealCards
-        selectedDate={selectedDate}
-        mealData={mealData}
-        onAddMeal={handleAddMeal}
-        onEditMeal={handleEditMeal}
-        onHolidayEdit={handleHolidayAttendanceEdit}
-      />
+      {showCalendar && (
+        <CalendarComponent
+          onDateSelect={setSelectedDate}
+          selectedDate={selectedDate}
+          onMonthChange={handleMonthChange}
+          mealData={mealData}
+        />
+      )}
+      {showCards && (
+        <MealCards
+          selectedDate={selectedDate}
+          mealData={mealData}
+          onAddMeal={handleAddMeal}
+          onEditMeal={handleEditMeal}
+          onHolidayEdit={handleHolidayAttendanceEdit}
+        />
+      )}
     </motion.div>
   );
 }

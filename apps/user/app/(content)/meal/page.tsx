@@ -1,10 +1,8 @@
 "use client";
 
 import MealSection from "@/components/dashboard/MealSection";
-import PopularRestaurantsSection from "@/components/dashboard/PopularRestaurantsSection";
 import StatsSection from "@/components/dashboard/StatsSection";
 import { CalculationData } from "@/components/dashboard/types";
-import { Footer } from "@/components/Footer";
 import { useMealData } from "@/hooks/use-meal-data";
 import { useMealDelete } from "@/hooks/use-meal-delete";
 import { useMealSubmit } from "@/hooks/use-meal-submit";
@@ -141,42 +139,89 @@ export default function MealPage() {
 
   return (
     <React.Fragment>
-      {/* ── 식대 통계 ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <StatsSection
-          userId={currentUserId}
-          month={currentMonth}
-          year={currentYear}
-          onDataChange={setCalculationData}
-        />
-      </motion.div>
+      {/* ── Mobile: 세로 레이아웃 ── */}
+      <div className="md:hidden">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          className="mb-6"
+        >
+          <StatsSection
+            userId={currentUserId}
+            month={currentMonth}
+            year={currentYear}
+            onDataChange={setCalculationData}
+          />
+        </motion.div>
 
-      {/* ── 식사 기록 (캘린더 + 카드) ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <MealSection
-          selectedDate={selectedDate}
-          setSelectedDate={setSelectedDate}
-          handleMonthChange={handleMonthChange}
-          mealData={mealData}
-        />
-      </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <MealSection
+            selectedDate={selectedDate}
+            setSelectedDate={setSelectedDate}
+            handleMonthChange={handleMonthChange}
+            mealData={mealData}
+          />
+        </motion.div>
+      </div>
 
-      {/* ── 인기 식당 ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <PopularRestaurantsSection />
-      </motion.div>
+      {/* ── PC: 2컬럼 레이아웃 ── */}
+      <div className="max-md:hidden grid grid-cols-2 gap-6">
+        {/* 좌측: 캘린더 */}
+        <div>
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="mb-6"
+          >
+            <div className="rounded-2xl bg-gray-50 p-4">
+              <MealSection
+                selectedDate={selectedDate}
+                setSelectedDate={setSelectedDate}
+                handleMonthChange={handleMonthChange}
+                mealData={mealData}
+                renderMode="calendar"
+              />
+            </div>
+          </motion.div>
+        </div>
+
+        {/* 우측: 요약 + 식사카드 */}
+        <div>
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="mb-6"
+          >
+            <StatsSection
+              userId={currentUserId}
+              month={currentMonth}
+              year={currentYear}
+              onDataChange={setCalculationData}
+            />
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <MealSection
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
+              handleMonthChange={handleMonthChange}
+              mealData={mealData}
+              renderMode="cards"
+            />
+          </motion.div>
+        </div>
+      </div>
 
       {/* Lazy-loaded Meal Entry Drawer */}
       <Suspense fallback={null}>
@@ -185,14 +230,6 @@ export default function MealPage() {
           onDeleteMeal={handleDeleteMeal}
         />
       </Suspense>
-
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
-      >
-        <Footer />
-      </motion.div>
     </React.Fragment>
   );
 }

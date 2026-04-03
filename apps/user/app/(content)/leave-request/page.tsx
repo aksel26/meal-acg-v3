@@ -6,6 +6,7 @@ import { CalendarDays, ChevronLeft, Send, Users, Loader2 } from "lucide-react";
 import { Button } from "@repo/ui/src/button";
 import { Input } from "@repo/ui/src/input";
 import { Label } from "@repo/ui/src/label";
+import { DateRangePicker } from "@repo/ui/src/date-range-picker";
 import { Textarea } from "@repo/ui/src/textarea";
 import {
   Select,
@@ -139,36 +140,16 @@ export default function LeaveRequestPage() {
         </div>
 
         {/* 날짜 */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-slate-700">
-              시작일 *
-            </Label>
-            <div className="relative">
-              <CalendarDays className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <Input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-slate-700">
-              종료일
-            </Label>
-            <div className="relative">
-              <CalendarDays className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <Input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="pl-10"
-                min={startDate}
-              />
-            </div>
-          </div>
+        <div className="space-y-2">
+          <Label className="text-sm font-medium text-slate-700">기간 *</Label>
+          <DateRangePicker
+            startDate={startDate}
+            endDate={endDate}
+            onChange={({ startDate: s, endDate: e }) => {
+              setStartDate(s);
+              setEndDate(e);
+            }}
+          />
         </div>
 
         {/* 사유 */}

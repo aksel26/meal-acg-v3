@@ -1,0 +1,176 @@
+"use client";
+
+import { useMemo } from "react";
+import dayjs from "dayjs";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import type { MealData } from "./types";
+
+type CalendarDay = {
+  date: string;
+  dayOfMonth: number;
+  isCurrentMonth: boolean;
+};
+
+type DayData = {
+  hasMeal: boolean;
+  mealLabel: string | null;
+  dayoffs: string[];
+  supervisors: string[];
+  interviews: string[];
+};
+
+interface Props {
+  year: number;
+  month: number;
+  selectedDate?: Date;
+  onDateSelect: (date: Date) => void;
+  onPrevMonth: () => void;
+  onNextMonth: () => void;
+  mealData?: MealData[];
+  dayDataMap?: Map<string, DayData>;
+}
+
+export default function DashboardGridCalendar({
+  year,
+  month,
+  selectedDate,
+  onDateSelect,
+  onPrevMonth,
+  onNextMonth,
+  mealData = [],
+  dayDataMap,
+}: Props) {
+  const calendarDays = useMemo(() => {
+    const start = dayjs(`${year}-${String(month).padStart(2, "0")}-01`);
+    const daysInMonth = start.daysInMonth();
+    const startDay = start.day();
+    const days: CalendarDay[] = [];
+
+    for (let i = 0; i < startDay; i++) {
+      const d = start.subtract(startDay - i, "day");
+      days.push({ date: d.format("YYYY-MM-DD"), dayOfMonth: d.date(), isCurrentMonth: false });
+    }
+    for (let i = 1; i <= daysInMonth; i++) {
+      const d = start.date(i);
+      days.push({ date: d.format("YYYY-MM-DD"), dayOfMonth: i, isCurrentMonth: true });
+    }
+    const remaining = 7 - (days.length % 7);
+    if (remaining < 7) {
+      const lastDay = dayjs(days[days.length - 1].date);
+      for (let i = 1; i <= remaining; i++) {
+        const d = lastDay.add(i, "day");
+        days.push({ date: d.format("YYYY-MM-DD"), dayOfMonth: d.date(), isCurrentMonth: false });
+      }
+    }
+    return days;
+  }, [year, month]);
+
+  const mealByDate = useMemo(() => {
+    const map = new Map<string, MealData>();
+    mealData.forEach((m) => map.set(m.date, m));
+    return map;
+  }, [mealData]);
+
+  const selectedStr = selectedDate ? dayjs(selectedDate).format("YYYY-MM-DD") : "";
+  const todayStr = dayjs().format("YYYY-MM-DD");
+
+  return (
+    <div>
+      {/* 헤더: 월 네비게이션 */}
+      <div className="flex items-center justify-between mb-4">
+        <button
+          onClick={onPrevMonth}
+          className="rounded-lg p-1.5 text-slate-400 hover:bg-gray-100 hover:text-slate-600 transition-colors"
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </button>
+        <h2 className="text-base font-semibold text-slate-800">
+          {year}년 {month}월
+        </h2>
+        <button
+          onClick={onNextMonth}
+          className="rounded-lg p-1.5 text-slate-400 hover:bg-gray-100 hover:text-slate-600 transition-colors"
+        >
+          <ChevronRight className="h-5 w-5" />
+        </button>
+      </div>
+
+      {/* 캘린더 그리드 */}
+      <div className="grid grid-cols-7 gap-px rounded-lg bg-slate-100 overflow-hidden">
+        {/* 요일 헤더 */}
+        {["일", "월", "화", "수", "목", "금", "토"].map((day, i) => (
+          <div
+            key={day}
+            className={`bg-gray-50 p-2 text-center text-xs font-semibold ${
+              i === 0 ? "text-red-400" : i === 6 ? "text-blue-400" : "text-slate-500"
+            }`}
+          >
+            {day}
+          </div>
+        ))}
+
+        {/* 날짜 셀 */}
+        {calendarDays.map((day) => {
+          const dow = dayjs(day.date).day();
+          const isSelected = day.date === selectedStr;
+          const isToday = day.date === todayStr;
+          const meal = mealByDate.get(day.date);
+          const extra = dayDataMap?.get(day.date);
+
+          return (
+            <div
+              key={day.date}
+              onClick={() => day.isCurrentMonth && onDateSelect(dayjs(day.date).toDate())}
+              className={`min-h-[80px] bg-white p-1.5 transition-colors ${
+                !day.isCurrentMonth ? "opacity-30" : "cursor-pointer hover:bg-slate-50"
+              } ${isSelected ? "ring-1 ring-inset ring-slate-800" : ""}`}
+            >
+              {/* 날짜 숫자 */}
+              <div className="flex items-center gap-1 mb-0.5">
+                <span
+                  className={`text-xs font-medium ${
+                    isToday
+                      ? "flex h-5 w-5 items-center justify-center rounded-full bg-slate-800 text-white text-[10px]"
+                      : dow === 0
+                        ? "text-red-400"
+                        : dow === 6
+                          ? "text-blue-400"
+                          : "text-slate-700"
+                  }`}
+                >
+                  {day.dayOfMonth}
+                </span>
+              </div>
+
+              {/* 인디케이터 */}
+              {day.isCurrentMonth && (
+                <div className="space-y-0.5">
+                  {meal && (
+                    <div className="truncate rounded px-1 py-0.5 text-[10px] bg-emerald-50 text-slate-600">
+                      식사
+                    </div>
+                  )}
+                  {extra && extra.dayoffs.length > 0 && (
+                    <div className="truncate rounded px-1 py-0.5 text-[10px] bg-rose-50 text-slate-600">
+                      근태 +{extra.dayoffs.length}
+                    </div>
+                  )}
+                  {extra && extra.supervisors.length > 0 && (
+                    <div className="truncate rounded px-1 py-0.5 text-[10px] bg-blue-50 text-slate-600">
+                      검사 +{extra.supervisors.length}
+                    </div>
+                  )}
+                  {extra && extra.interviews.length > 0 && (
+                    <div className="truncate rounded px-1 py-0.5 text-[10px] bg-amber-50 text-slate-600">
+                      면접교육 +{extra.interviews.length}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

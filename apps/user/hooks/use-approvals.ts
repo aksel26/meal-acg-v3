@@ -56,6 +56,19 @@ export function useMyRequests(memberId: string) {
   });
 }
 
+// 참조된 요청 목록 (내가 CC에 포함된 건)
+export function useCcRequests(memberId: string) {
+  return useQuery<ApprovalRequest[]>({
+    queryKey: queryKeys.approvals.cc ? queryKeys.approvals.cc(memberId) : ["approvals", "cc", memberId],
+    queryFn: async () => {
+      const res = await fetch(`/api/approvals/cc?memberId=${memberId}`);
+      if (!res.ok) throw new Error("참조 목록 조회 실패");
+      return res.json();
+    },
+    enabled: !!memberId,
+  });
+}
+
 // 휴가 신청
 export function useCreateLeaveRequest() {
   const queryClient = useQueryClient();

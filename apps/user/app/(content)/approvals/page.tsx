@@ -1,14 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState } from "react";
+import { motion } from "motion/react";
 import {
-  ChevronLeft,
   Check,
   X,
   Clock,
-  CheckCircle2,
-  XCircle,
   FileText,
   Send,
 } from "lucide-react";
@@ -34,14 +31,13 @@ import dayjs from "dayjs";
 
 type ViewMode = "inbox" | "sent";
 
-const STATUS_BADGE: Record<string, { label: string; className: string }> = {
-  pending: { label: "대기", className: "bg-amber-100 text-amber-700" },
-  approved: { label: "승인", className: "bg-green-100 text-green-700" },
-  rejected: { label: "반려", className: "bg-red-100 text-red-700" },
+const STATUS_BADGE: Record<string, { label: string; className: string; icon: typeof Check }> = {
+  pending: { label: "대기", className: "bg-amber-50 text-amber-600", icon: Clock },
+  approved: { label: "승인", className: "bg-emerald-50 text-emerald-600", icon: Check },
+  rejected: { label: "반려", className: "bg-red-50 text-red-600", icon: X },
 };
 
 export default function ApprovalsPage() {
-  const router = useRouter();
   const { memberId } = useUserStore();
   const [viewMode, setViewMode] = useState<ViewMode>("inbox");
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
@@ -94,77 +90,109 @@ export default function ApprovalsPage() {
   const isLoading = viewMode === "inbox" ? inboxLoading : sentLoading;
   const items = viewMode === "inbox" ? inboxItems : sentItems;
 
-  return (
-    <div className="space-y-5">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <button
-          onClick={() => router.back()}
-          className="rounded-xl p-2 transition-colors hover:bg-white/60"
-        >
-          <ChevronLeft className="h-5 w-5 text-slate-600" />
-        </button>
-        <h1 className="text-lg font-bold text-slate-900">승인함</h1>
-      </div>
-
-      {/* View Toggle */}
-      <div className="flex gap-1 rounded-xl bg-white/50 p-1">
-        <button
-          onClick={() => setViewMode("inbox")}
-          className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+  // 탭 토글
+  const tabToggle = (
+    <div className="flex gap-2">
+      <button
+        onClick={() => setViewMode("inbox")}
+        className={`flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
+          viewMode === "inbox"
+            ? "bg-slate-800 text-white"
+            : "bg-gray-50 text-slate-400 hover:text-slate-600"
+        }`}
+      >
+        <Clock size={14} />
+        받은 요청
+        {inboxItems && inboxItems.length > 0 && (
+          <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
             viewMode === "inbox"
-              ? "bg-white text-slate-900 shadow-sm"
-              : "text-slate-500"
-          }`}
-        >
-          <Clock className="h-4 w-4" />
-          받은 요청
-          {inboxItems && inboxItems.length > 0 && (
-            <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-xs text-amber-700">
-              {inboxItems.length}
-            </span>
-          )}
-        </button>
-        <button
-          onClick={() => setViewMode("sent")}
-          className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-            viewMode === "sent"
-              ? "bg-white text-slate-900 shadow-sm"
-              : "text-slate-500"
-          }`}
-        >
-          <Send className="h-4 w-4" />
-          보낸 요청
-        </button>
-      </div>
+              ? "bg-white/20 text-white"
+              : "bg-amber-100 text-amber-700"
+          }`}>
+            {inboxItems.length}
+          </span>
+        )}
+      </button>
+      <button
+        onClick={() => setViewMode("sent")}
+        className={`flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
+          viewMode === "sent"
+            ? "bg-slate-800 text-white"
+            : "bg-gray-50 text-slate-400 hover:text-slate-600"
+        }`}
+      >
+        <Send size={14} />
+        보낸 요청
+      </button>
+    </div>
+  );
 
-      {/* Content */}
-      {isLoading ? (
-        <div className="flex items-center justify-center py-16 text-sm text-slate-400">
-          불러오는 중...
-        </div>
-      ) : !items || items.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-slate-400">
-          <FileText className="mb-3 h-8 w-8" />
-          <p className="text-sm">
-            {viewMode === "inbox"
-              ? "대기 중인 요청이 없습니다."
-              : "보낸 요청이 없습니다."}
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {items.map((item) => (
+  // 요청 리스트
+  const listContent = isLoading ? (
+    <div className="rounded-2xl bg-gray-50 p-5">
+      <div className="space-y-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="animate-pulse rounded-xl bg-white p-4">
+            <div className="flex justify-between mb-2">
+              <div className="bg-gray-100 rounded h-4 w-24" />
+              <div className="bg-gray-100 rounded h-3 w-12" />
+            </div>
+            <div className="bg-gray-50 rounded h-3 w-40" />
+          </div>
+        ))}
+      </div>
+    </div>
+  ) : !items || items.length === 0 ? (
+    <div className="rounded-2xl bg-gray-50 p-5">
+      <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+        <FileText className="mb-3 h-8 w-8" />
+        <p className="text-sm">
+          {viewMode === "inbox"
+            ? "대기 중인 요청이 없습니다."
+            : "보낸 요청이 없습니다."}
+        </p>
+      </div>
+    </div>
+  ) : (
+    <div className="rounded-2xl bg-gray-50 p-4">
+      <div className="space-y-2.5">
+        {items.map((item, index) => (
+          <motion.div
+            key={item.id}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
+          >
             <ApprovalCard
-              key={item.id}
               item={item}
               viewMode={viewMode}
               onApprove={handleApprove}
               onReject={openRejectDialog}
             />
-          ))}
-        </div>
-      )}
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <React.Fragment>
+      <div className="space-y-4">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        >
+          {tabToggle}
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+        >
+          {listContent}
+        </motion.div>
+      </div>
 
       {/* Reject Dialog */}
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
@@ -195,7 +223,7 @@ export default function ApprovalsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </React.Fragment>
   );
 }
 
@@ -214,22 +242,22 @@ function ApprovalCard({
   const dayoff = item.related_data;
 
   return (
-    <div className="rounded-2xl bg-white/70 p-4 backdrop-blur-sm">
-      <div className="space-y-2">
+    <div className="rounded-xl bg-white p-4 transition-colors">
+      <div className="space-y-2.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span
-              className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}
+              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${badge.className}`}
             >
               {badge.label}
             </span>
             {dayoff?.leave_type && (
-              <span className="text-sm font-medium text-slate-700">
+              <span className="text-sm font-semibold text-slate-800">
                 {dayoff.leave_type.name}
               </span>
             )}
           </div>
-          <span className="text-xs text-slate-400">
+          <span className="text-[11px] text-slate-400">
             {dayjs(item.requested_at).format("MM/DD")}
           </span>
         </div>
@@ -237,7 +265,7 @@ function ApprovalCard({
         <div className="space-y-1">
           <p className="text-sm text-slate-600">
             {viewMode === "inbox"
-              ? `${item.requester?.full_name || "알 수 없음"}`
+              ? item.requester?.full_name || "알 수 없음"
               : `승인자: ${item.approver?.full_name || "알 수 없음"}`}
           </p>
           {dayoff && (
@@ -256,11 +284,11 @@ function ApprovalCard({
         </div>
 
         {viewMode === "inbox" && item.status === "pending" && (
-          <div className="flex gap-2 pt-1">
+          <div className="flex gap-2 pt-0.5">
             <Button
               size="sm"
               variant="outline"
-              className="flex-1 gap-1 text-green-600 hover:bg-green-50"
+              className="flex-1 gap-1 text-emerald-600 hover:bg-emerald-50 border-emerald-200"
               onClick={() => onApprove(item.id)}
             >
               <Check className="h-3.5 w-3.5" />
@@ -269,7 +297,7 @@ function ApprovalCard({
             <Button
               size="sm"
               variant="outline"
-              className="flex-1 gap-1 text-red-600 hover:bg-red-50"
+              className="flex-1 gap-1 text-red-500 hover:bg-red-50 border-red-200"
               onClick={() => onReject(item.id)}
             >
               <X className="h-3.5 w-3.5" />
@@ -279,7 +307,7 @@ function ApprovalCard({
         )}
 
         {item.status !== "pending" && item.resolved_at && (
-          <p className="text-xs text-slate-400">
+          <p className="text-[11px] text-slate-400">
             처리: {dayjs(item.resolved_at).format("MM/DD HH:mm")}
           </p>
         )}

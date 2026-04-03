@@ -94,13 +94,7 @@ html {
 }
 
 body {
-  background: linear-gradient(
-    135deg,
-    oklch(0.97 0.015 250) 0%,
-    oklch(0.96 0.02 280) 50%,
-    oklch(0.97 0.015 220) 100%
-  );
-  background-attachment: fixed;
+  background: #ffffff;
   min-height: 100dvh;
   font-weight: 400;
   overflow-x: hidden; /* PWA: 가로 스크롤 방지 */
@@ -282,7 +276,6 @@ body {
 .snow-card {
   background: #ffffff;
   border-radius: 1rem;
-  border: 1px solid #f0f0f0;
 }
 
 .snow-pill {
@@ -292,18 +285,9 @@ body {
 }
 
 .card-premium {
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: #ffffff;
   border-radius: var(--radius-2xl);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  /* box-shadow: var(--shadow-md); */
   transition: all 0.4s var(--ease-out-expo);
-}
-
-.card-premium:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
 }
 
 

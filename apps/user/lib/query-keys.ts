@@ -155,6 +155,19 @@ export const queryKeys = {
   leaveTypes: {
     all: ["leaveTypes"] as const,
   },
+
+  // Supervisor (공고)
+  supervisor: {
+    all: ["supervisor"] as const,
+    calendarByMonth: (year: number, month: number) =>
+      ["supervisor", "calendar-month", year, month] as const,
+  },
+
+  // 회의실 예약
+  roomReservations: {
+    all: ["roomReservations"] as const,
+    byDate: (date: string) => ["roomReservations", date] as const,
+  },
 } as const;
 
 // 타입 유틸리티 함수들

@@ -7,6 +7,8 @@ import { motion, AnimatePresence, PanInfo } from "motion/react";
 import { useHolidays } from "@/hooks/useHolidays";
 import { MealData } from "@/components/dashboard/types";
 import { CalendarDayCell } from "./CalendarDayCell";
+import { useSupervisorCalendarByMonth, buildPostingsByDate } from "@/hooks/use-supervisor-calendar";
+import { useDayoffs } from "@/hooks/use-dayoffs";
 
 dayjs.locale("ko");
 
@@ -35,6 +37,23 @@ export default function CalendarComponent({
 
   // 공휴일 데이터 가져오기
   const { data: holidayData = [] } = useHolidays(currentMonth, currentYear);
+
+  // 공고 데이터 가져오기
+  const { data: supervisorData } = useSupervisorCalendarByMonth(currentYear, currentMonth);
+  const postingsByDate = React.useMemo(() => buildPostingsByDate(supervisorData), [supervisorData]);
+
+  // 휴가 데이터 가져오기
+  const { data: dayoffsData } = useDayoffs(currentYear, currentMonth);
+  const dayoffsByDate = React.useMemo(() => {
+    const map = new Map<string, typeof dayoffsData>();
+    if (!dayoffsData) return map;
+    for (const d of dayoffsData) {
+      const list = map.get(d.leave_date) || [];
+      list.push(d);
+      map.set(d.leave_date, list);
+    }
+    return map;
+  }, [dayoffsData]);
 
   const getMealDataForDate = React.useCallback(
     (targetDate: Date) => {
@@ -182,13 +201,15 @@ export default function CalendarComponent({
             isLoading={isLoading}
             onDateSelect={handleDateSelect}
             dayButtonProps={props}
+            postings={postingsByDate.get(dayjs(day.date).format("YYYY-MM-DD"))}
+            dayoffs={dayoffsByDate.get(dayjs(day.date).format("YYYY-MM-DD"))}
           >
             {children}
           </CalendarDayCell>
         );
       },
     }),
-    [getMealDataForDate, getMealIcon, getHolidayForDate, isLoading, handleDateSelect]
+    [getMealDataForDate, getMealIcon, getHolidayForDate, isLoading, handleDateSelect, postingsByDate, dayoffsByDate]
   );
 
   return (

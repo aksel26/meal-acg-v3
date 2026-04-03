@@ -2,6 +2,8 @@ import * as React from "react";
 import { CalendarDayButton } from "@repo/ui/src/calendar";
 import Image from "next/image";
 import type { MealData } from "@/components/dashboard/types";
+import type { SupervisorPosting } from "@/hooks/use-supervisor-calendar";
+import type { DayoffRecord } from "@/hooks/use-dayoffs";
 import dayjs from "dayjs";
 
 // CalendarDayButton에서 day와 modifiers 타입 추출
@@ -25,6 +27,8 @@ interface CalendarDayCellProps {
   isLoading: boolean;
   onDateSelect: (date: Date) => void;
   dayButtonProps: Omit<DayButtonProps, "day" | "modifiers" | "children">;
+  postings?: SupervisorPosting[];
+  dayoffs?: DayoffRecord[];
 }
 
 function arePropsEqual(prev: CalendarDayCellProps, next: CalendarDayCellProps) {
@@ -38,7 +42,9 @@ function arePropsEqual(prev: CalendarDayCellProps, next: CalendarDayCellProps) {
     prev.mealIcon?.type === next.mealIcon?.type &&
     prev.holiday === next.holiday &&
     prev.isLoading === next.isLoading &&
-    prev.onDateSelect === next.onDateSelect
+    prev.onDateSelect === next.onDateSelect &&
+    prev.postings?.length === next.postings?.length &&
+    prev.dayoffs?.length === next.dayoffs?.length
   );
 }
 
@@ -52,6 +58,8 @@ export const CalendarDayCell = React.memo(function CalendarDayCell({
   isLoading,
   onDateSelect,
   dayButtonProps,
+  postings,
+  dayoffs,
 }: CalendarDayCellProps) {
   if (modifiers.outside) {
     return (
@@ -147,6 +155,40 @@ export const CalendarDayCell = React.memo(function CalendarDayCell({
             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-100" />
           ) : null}
         </div>
+        {postings && postings.length > 0 && (
+          <div className="flex flex-col gap-0.5 w-full px-0.5">
+            {postings.slice(0, 2).map((p) => (
+              <span
+                key={p.id}
+                className={`text-[7px] sm:text-[8px] font-medium leading-tight truncate rounded px-0.5 ${
+                  p.type === "interview"
+                    ? "bg-amber-100 text-amber-700"
+                    : "bg-blue-100 text-blue-700"
+                }`}
+              >
+                {p.type === "interview" ? "면접" : "감독"} {p.title.length > 3 ? p.title.slice(0, 3) + ".." : p.title}
+              </span>
+            ))}
+            {postings.length > 2 && (
+              <span className="text-[7px] text-slate-400">+{postings.length - 2}</span>
+            )}
+          </div>
+        )}
+        {dayoffs && dayoffs.length > 0 && (
+          <div className="flex flex-col gap-0.5 w-full px-0.5">
+            {dayoffs.slice(0, 2).map((d) => (
+              <span
+                key={d.id}
+                className="text-[7px] sm:text-[8px] font-medium leading-tight truncate rounded px-0.5 bg-purple-100 text-purple-700"
+              >
+                {d.target?.full_name?.slice(0, 2) || ""} {d.leave_type?.name || "휴가"}
+              </span>
+            ))}
+            {dayoffs.length > 2 && (
+              <span className="text-[7px] text-slate-400">+{dayoffs.length - 2}</span>
+            )}
+          </div>
+        )}
       </div>
     </CalendarDayButton>
   );

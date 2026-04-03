@@ -61,11 +61,17 @@ export function useCheckOut() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (memberId: string) => {
+    mutationFn: async ({
+      memberId,
+      earlyLeaveReason,
+    }: {
+      memberId: string;
+      earlyLeaveReason?: string;
+    }) => {
       const res = await fetch("/api/attendance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId, action: "check_out" }),
+        body: JSON.stringify({ memberId, action: "check_out", earlyLeaveReason }),
       });
       if (!res.ok) {
         const err = await res.json();

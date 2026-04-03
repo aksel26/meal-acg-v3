@@ -46,11 +46,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Fetch hire date from member_statuses (earliest start_date)
+    const { data: statusData } = await supabase
+      .from("member_statuses")
+      .select("start_date")
+      .eq("member_id", user.user_id)
+      .order("start_date", { ascending: true })
+      .limit(1)
+      .single();
+
+    const hireDate = statusData?.start_date || null;
+
     // Set session cookie
     await setSession({
       userId: user.user_id,
       fullName: user.full_name,
       role: user.role as "admin",
+      hireDate,
     });
 
     return NextResponse.json({
@@ -59,6 +71,7 @@ export async function POST(request: NextRequest) {
         id: user.user_id,
         fullName: user.full_name,
         role: user.role,
+        hireDate,
       },
     });
   } catch (error) {

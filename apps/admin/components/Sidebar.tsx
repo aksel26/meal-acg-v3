@@ -55,12 +55,14 @@ import {
 } from "@repo/ui/src/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import Image from "next/image";
+import dayjs from "dayjs";
 
 interface NavItem {
   name: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   external?: boolean;
+  isLabel?: boolean;
 }
 
 interface NavGroup {
@@ -85,11 +87,13 @@ const navigation: NavigationItem[] = [
     name: "비용 관리",
     icon: Coins,
     items: [
+      { name: "식대 관리", href: "", icon: Coffee, isLabel: true },
       { name: "사용현황 (인원별)", href: "/meal-status", icon: Users },
       { name: "식대 입력", href: "/calendar", icon: Calendar },
       { name: "식대 기본금 설정", href: "/settings", icon: Settings },
       { name: "엑셀 가져오기", href: "/import", icon: Upload },
       { name: "엑셀 내보내기", href: "/export", icon: Download },
+      { name: "포인트 관리", href: "", icon: PiggyBank, isLabel: true },
       { name: "예산 할당", href: "/budget", icon: PiggyBank },
       { name: "사용내역 검토", href: "/review", icon: ClipboardCheck },
       { name: "사용 내역 조회", href: "/points-overview", icon: BarChart3 },
@@ -272,6 +276,18 @@ function NavGroupComponent({
         )}
       >
         {group.items.map((item) => {
+          if (item.isLabel) {
+            if (collapsed) return null;
+            return (
+              <div
+                key={item.name}
+                className="px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400"
+              >
+                {item.name}
+              </div>
+            );
+          }
+
           const isActive =
             pathname === item.href ||
             (item.href !== "/" && pathname.startsWith(item.href));
@@ -397,7 +413,7 @@ export default function Sidebar() {
           <Link
             href="/"
             className={cn(
-              "flex flex-col items-center gap-3 py-1",
+              "flex flex-col items-center gap-1.5 py-1",
               collapsed && "gap-0",
             )}
           >
@@ -473,9 +489,9 @@ export default function Sidebar() {
                 onClick={() => setIsPasswordDialogOpen(true)}
                 className="flex w-full cursor-pointer items-center justify-center rounded-lg p-2 transition-colors hover:bg-white/60"
               >
-                <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-blue-600 text-xs font-bold text-white">
+                <span className="text-xs font-bold text-slate-700">
                   {user?.fullName?.charAt(0) || "A"}
-                </div>
+                </span>
               </button>
             </TooltipTrigger>
             <TooltipContent side="right" sideOffset={8}>
@@ -486,11 +502,8 @@ export default function Sidebar() {
           <button
             type="button"
             onClick={() => setIsPasswordDialogOpen(true)}
-            className="flex w-full cursor-pointer items-center gap-3 rounded-lg p-2 transition-colors hover:bg-white/60"
+            className="flex w-full cursor-pointer items-center justify-between rounded-lg px-3 py-2.5 transition-colors hover:bg-white/60"
           >
-            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-blue-600 text-sm font-bold text-white">
-              {user?.fullName?.charAt(0) || "A"}
-            </div>
             <div className="flex flex-col items-start">
               <p className="text-xs font-bold text-slate-900">
                 {user?.fullName || "Admin"}
@@ -499,6 +512,11 @@ export default function Sidebar() {
                 {user?.role === "admin" ? "관리자" : "사용자"}
               </p>
             </div>
+            {user?.hireDate && (
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
+                D+{dayjs().diff(dayjs(user.hireDate), "day")}
+              </span>
+            )}
           </button>
         )}
 

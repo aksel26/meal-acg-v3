@@ -38,6 +38,7 @@ export function useAuth() {
           id: data.user.id,
           fullName: data.user.fullName,
           role: data.user.role,
+          hireDate: data.user.hireDate,
         });
         return true;
       } else {

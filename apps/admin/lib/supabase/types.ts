@@ -2297,5 +2297,6 @@ export interface AuthSession {
   userId: string
   fullName: string
   role: "user" | "admin"
+  hireDate?: string | null
 }
 

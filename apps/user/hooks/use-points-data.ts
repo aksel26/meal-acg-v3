@@ -71,6 +71,7 @@ export interface MemberLookup {
   id: string;
   full_name: string;
   member_role: string;
+  hire_date: string | null;
 }
 
 // --- Fetch Functions ---

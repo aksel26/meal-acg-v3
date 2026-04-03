@@ -53,7 +53,7 @@ export default function AttendancePage() {
 
   useEffect(() => {
     if (memberLookup && !memberId) {
-      setMemberInfo(memberLookup.id, memberLookup.member_role || "팀원");
+      setMemberInfo(memberLookup.id, memberLookup.member_role || "팀원", memberLookup.hire_date);
     }
   }, [memberLookup, memberId, setMemberInfo]);
 

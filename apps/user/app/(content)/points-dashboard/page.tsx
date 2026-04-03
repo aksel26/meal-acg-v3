@@ -27,7 +27,7 @@ export default function PointsDashboard() {
 
   useEffect(() => {
     if (memberLookup && !memberId) {
-      setMemberInfo(memberLookup.id, memberLookup.member_role);
+      setMemberInfo(memberLookup.id, memberLookup.member_role, memberLookup.hire_date);
     }
   }, [memberLookup, memberId, setMemberInfo]);
 

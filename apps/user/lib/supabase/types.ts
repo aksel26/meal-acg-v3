@@ -916,6 +916,7 @@ export type Database = {
       }
       members: {
         Row: {
+          birth_date: string | null
           created_at: string | null
           division_id: string | null
           email: string | null
@@ -926,7 +927,9 @@ export type Database = {
           member_role: Database["public"]["Enums"]["member_role"]
           note: string | null
           organization_id: string | null
+          passport_number: string | null
           password: string
+          phone: string | null
           position_id: string
           role: string | null
           team_id: string | null

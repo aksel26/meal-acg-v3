@@ -20,6 +20,8 @@ import {
   X,
   Bell,
   BellOff,
+  ChevronDown,
+  ExternalLink,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import LOGO from "@/public/images/ACG_LOGO_GRAY.png";
@@ -33,6 +35,7 @@ import {
 } from "@/lib/push-notifications";
 import { toast } from "@repo/ui/src/sonner";
 import { useAttendance, useCheckIn, useCheckOut } from "@/hooks/use-attendance";
+import AttendanceConfirmDialog from "./dashboard/AttendanceConfirmDialog";
 import { useMemberIdLookup } from "@/hooks/use-points-data";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
@@ -50,11 +53,15 @@ interface MenuItem {
   href: string;
   icon: LucideIcon;
   badge?: string;
+  external?: boolean;
 }
 
 interface MenuGroup {
   label: string;
   items: MenuItem[];
+  href?: string;
+  icon?: LucideIcon;
+  external?: boolean;
 }
 
 const menuGroups: MenuGroup[] = [
@@ -70,19 +77,24 @@ const menuGroups: MenuGroup[] = [
     label: "복지",
     items: [
       { id: "meals", label: "식대", href: "/meal", icon: UtensilsCrossed },
-      { id: "points", label: "복지포인트", href: "/points", icon: Wallet },
-      { id: "activity", label: "활동비", href: "/points-dashboard", icon: Coins },
+      { id: "points", label: "복지포인트/활동비", href: "/points", icon: Wallet },
     ],
   },
   {
     label: "기타",
     items: [
       { id: "profile", label: "내 정보 수정", href: "/profile", icon: UserPen },
-      { id: "approvals", label: "결재/승인", href: "/approvals", icon: FileCheck, badge: "New" },
       { id: "notices", label: "공지/일정", href: "/notices", icon: Megaphone, badge: "New" },
       { id: "room", label: "회의실 예약", href: "/room-booking", icon: DoorOpen },
       { id: "sms", label: "SMS 전송", href: "/sms", icon: MessageSquareText },
     ],
+  },
+  {
+    label: "감독관/면접교육 운영",
+    items: [],
+    href: "/part-time-supervisor",
+    icon: ExternalLink,
+    external: true,
   },
 ];
 
@@ -95,14 +107,13 @@ function formatTime(isoString: string) {
 // ─── Sub-components ───
 
 function UserInfoCard() {
-  const { userName, memberRole } = useUserStore();
+  const { userName, memberRole, hireDate } = useUserStore();
+
+  const daysFromHire = hireDate ? dayjs().diff(dayjs(hireDate), "day") : null;
 
   return (
-    <div className="mx-3 mb-4 rounded-xl bg-[#f9f9fa] px-4 py-3.5">
-      <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 text-sm font-bold text-white">
-          {userName?.charAt(0) || "?"}
-        </div>
+    <div className="mx-3 mb-4 rounded-xl bg-[#f9f9fa] px-4 py-3">
+      <div className="flex items-center justify-between">
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-[#111111]">
             {userName || "사용자"}
@@ -111,6 +122,11 @@ function UserInfoCard() {
             {memberRole || "팀원"} · ACG
           </p>
         </div>
+        {daysFromHire !== null && (
+          <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-500 shadow-sm">
+            D+{daysFromHire}
+          </span>
+        )}
       </div>
     </div>
   );
@@ -122,29 +138,38 @@ function AttendanceSection({ memberId }: { memberId: string | null }) {
   const checkInMutation = useCheckIn();
   const checkOutMutation = useCheckOut();
 
+  const [checkInDialogOpen, setCheckInDialogOpen] = useState(false);
+  const [checkOutDialogOpen, setCheckOutDialogOpen] = useState(false);
+
   const hasCheckedIn = !!attendance?.check_in_at;
   const hasCheckedOut = !!attendance?.check_out_at;
   const isMutating = checkInMutation.isPending || checkOutMutation.isPending;
 
   const handleCheckIn = () => {
-    if (memberId) checkInMutation.mutate(memberId);
+    if (memberId) checkInMutation.mutate(memberId, {
+      onSuccess: () => setCheckInDialogOpen(false),
+    });
   };
-  const handleCheckOut = () => {
-    if (memberId) checkOutMutation.mutate(memberId);
+  const handleCheckOut = (earlyLeaveReason?: string) => {
+    if (memberId) checkOutMutation.mutate(
+      { memberId, earlyLeaveReason },
+      { onSuccess: () => setCheckOutDialogOpen(false) }
+    );
   };
 
   return (
+    <>
     <div className="mx-3 mb-4">
       <p className="mb-2 px-1 text-[11px] font-medium uppercase tracking-widest text-slate-400">
         출퇴근
       </p>
       {!hasCheckedIn ? (
         <button
-          onClick={handleCheckIn}
+          onClick={() => setCheckInDialogOpen(true)}
           disabled={isMutating}
           className="w-full rounded-lg bg-[#111111] py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#222222] disabled:opacity-50"
         >
-          {isMutating ? "처리 중..." : "출근하기"}
+          출근하기
         </button>
       ) : !hasCheckedOut ? (
         <div className="space-y-2">
@@ -155,11 +180,11 @@ function AttendanceSection({ memberId }: { memberId: string | null }) {
             </span>
           </div>
           <button
-            onClick={handleCheckOut}
+            onClick={() => setCheckOutDialogOpen(true)}
             disabled={isMutating}
             className="w-full rounded-lg border border-[#f3f3f3] py-2 text-sm font-medium text-slate-500 transition-colors hover:bg-[#f9f9fa] disabled:opacity-50"
           >
-            {isMutating ? "..." : "퇴근하기"}
+            퇴근하기
           </button>
         </div>
       ) : (
@@ -174,6 +199,22 @@ function AttendanceSection({ memberId }: { memberId: string | null }) {
         </div>
       )}
     </div>
+    <AttendanceConfirmDialog
+      mode="check-in"
+      open={checkInDialogOpen}
+      onOpenChange={setCheckInDialogOpen}
+      onConfirm={handleCheckIn}
+      isPending={checkInMutation.isPending}
+    />
+    <AttendanceConfirmDialog
+      mode="check-out"
+      open={checkOutDialogOpen}
+      onOpenChange={setCheckOutDialogOpen}
+      onConfirm={handleCheckOut}
+      isPending={checkOutMutation.isPending}
+      checkInAt={attendance?.check_in_at}
+    />
+    </>
   );
 }
 
@@ -181,41 +222,115 @@ function NavMenu() {
   const pathname = usePathname();
   const { close } = useSidebarStore();
 
+  // 현재 활성 경로가 포함된 그룹은 기본 열림
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    menuGroups.forEach((group) => {
+      const hasActive = group.items.some((item) => pathname.startsWith(item.href));
+      initial[group.label] = !hasActive;
+    });
+    return initial;
+  });
+
+  const toggleGroup = useCallback((label: string) => {
+    setCollapsed((prev) => ({ ...prev, [label]: !prev[label] }));
+  }, []);
+
   return (
     <nav className="flex-1 overflow-y-auto px-3">
-      {menuGroups.map((group) => (
-        <div key={group.label} className="mb-4">
-          <p className="mb-1.5 px-1 text-[11px] font-medium uppercase tracking-widest text-slate-400">
-            {group.label}
-          </p>
-          <div className="space-y-0.5">
-            {group.items.map((item) => {
-              const isActive = pathname === item.href;
+      {menuGroups.map((group) => {
+        // 외부 링크 그룹: 제목 자체가 링크
+        if (group.href) {
+          const Icon = group.icon;
+          return (
+            <div key={group.label} className="mb-4">
+              <a
+                href={group.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={close}
+                className="flex w-full items-center justify-between px-1 mb-1.5 group"
+              >
+                <p className="text-sm font-semibold text-slate-700">
+                  {group.label}
+                </p>
+                {Icon && (
+                  <Icon
+                    size={14}
+                    className="text-slate-300 group-hover:text-slate-400"
+                  />
+                )}
+              </a>
+            </div>
+          );
+        }
 
-              return (
-                <Link
-                  key={item.id}
-                  href={item.href}
-                  onClick={close}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+        const isCollapsed = collapsed[group.label];
+        return (
+          <div key={group.label} className="mb-4">
+            <button
+              onClick={() => toggleGroup(group.label)}
+              className="flex w-full items-center justify-between px-1 mb-1.5 group"
+            >
+              <p className="text-sm font-semibold text-slate-700">
+                {group.label}
+              </p>
+              <ChevronDown
+                size={14}
+                className={`text-slate-300 transition-transform duration-200 group-hover:text-slate-400 ${
+                  isCollapsed ? "-rotate-90" : ""
+                }`}
+              />
+            </button>
+            {!isCollapsed && (
+              <div className="space-y-0.5">
+                {group.items.map((item) => {
+                  const isActive = pathname === item.href;
+                  const className = `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
                     isActive
                       ? "bg-[#111111] font-medium text-white"
                       : "text-slate-500 hover:bg-[#f9f9fa] hover:text-[#111111]"
-                  }`}
-                >
-                  <item.icon size={18} className="shrink-0" />
-                  <span className="flex-1 truncate">{item.label}</span>
-                  {item.badge && (
-                    <span className="rounded-full bg-rose-500 px-1.5 py-0.5 text-[9px] font-bold leading-none text-white">
-                      {item.badge}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
+                  }`;
+
+                  const content = (
+                    <>
+                      <item.icon size={18} className="shrink-0" />
+                      <span className="flex-1 truncate">{item.label}</span>
+                      {item.badge && (
+                        <span className="rounded-full bg-rose-500 px-1.5 py-0.5 text-[9px] font-bold leading-none text-white">
+                          {item.badge}
+                        </span>
+                      )}
+                    </>
+                  );
+
+                  return item.external ? (
+                    <a
+                      key={item.id}
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={close}
+                      className={className}
+                    >
+                      {content}
+                    </a>
+                  ) : (
+                    <Link
+                      key={item.id}
+                      href={item.href}
+                      onClick={close}
+                      className={className}
+                    >
+                      {content}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        </div>
-      ))}
+        );
+      })}
     </nav>
   );
 }
@@ -305,7 +420,7 @@ export function Sidebar() {
 
   useEffect(() => {
     if (memberLookup && !memberId) {
-      setMemberInfo(memberLookup.id, memberLookup.member_role || "팀원");
+      setMemberInfo(memberLookup.id, memberLookup.member_role || "팀원", memberLookup.hire_date);
     }
   }, [memberLookup, memberId, setMemberInfo]);
 
@@ -317,7 +432,7 @@ export function Sidebar() {
   return (
     <aside className="flex h-screen w-60 shrink-0 flex-col border-r border-[#f3f3f3] bg-white py-5 text-slate-900">
       {/* Logo */}
-      <Link href="/dashboard" className="mb-8 flex items-center gap-3 px-5">
+      <Link href="/dashboard" className="mb-5 flex items-center gap-2 px-5">
         <Image src={LOGO} alt="ACG" width={48} height={48} className="h-12 w-12 object-contain" />
         <p className="text-sm text-[#111111]">ACG 그룹웨어</p>
       </Link>
@@ -356,7 +471,7 @@ export function MobileSidebar() {
 
   useEffect(() => {
     if (memberLookup && !memberId) {
-      setMemberInfo(memberLookup.id, memberLookup.member_role || "팀원");
+      setMemberInfo(memberLookup.id, memberLookup.member_role || "팀원", memberLookup.hire_date);
     }
   }, [memberLookup, memberId, setMemberInfo]);
 
@@ -389,8 +504,8 @@ export function MobileSidebar() {
             className="fixed inset-y-0 left-0 z-[70] flex w-[280px] flex-col bg-white py-5"
           >
             {/* Header with close */}
-            <div className="mb-8 flex items-center justify-between px-5">
-              <div className="flex items-center gap-3">
+            <div className="mb-5 flex items-center justify-between px-5">
+              <div className="flex items-center gap-2">
                 <Image src={LOGO} alt="ACG" width={48} height={48} className="h-12 w-12 object-contain" />
                 <p className="text-sm text-[#111111]">ACG 그룹웨어</p>
               </div>

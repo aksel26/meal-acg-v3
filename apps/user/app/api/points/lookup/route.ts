@@ -36,10 +36,20 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // 입사일 조회 (member_statuses에서 가장 이른 start_date)
+    const { data: statusData } = await supabase
+      .from("member_statuses")
+      .select("start_date")
+      .eq("member_id", member.id)
+      .order("start_date", { ascending: true })
+      .limit(1)
+      .single();
+
     return NextResponse.json({
       id: member.id,
       full_name: member.full_name,
       member_role: member.member_role,
+      hire_date: statusData?.start_date || null,
     });
   } catch (error) {
     console.error("멤버 조회 오류:", error);

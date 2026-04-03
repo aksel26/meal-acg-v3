@@ -7,13 +7,14 @@ interface UserState {
   role: string | null;
   memberId: string | null;
   memberRole: string | null;
+  hireDate: string | null;
   isLoggedIn: boolean;
   hasHydrated: boolean;
   login: (userId: string, userName: string, role: string | null) => void;
   logout: () => void;
   hydrate: () => void;
   setHasHydrated: (state: boolean) => void;
-  setMemberInfo: (memberId: string, memberRole: string) => void;
+  setMemberInfo: (memberId: string, memberRole: string, hireDate?: string | null) => void;
 }
 
 export const useUserStore = create<UserState>()(
@@ -24,6 +25,7 @@ export const useUserStore = create<UserState>()(
       role: null,
       memberId: null,
       memberRole: null,
+      hireDate: null,
       isLoggedIn: false,
       hasHydrated: false,
 
@@ -46,8 +48,8 @@ export const useUserStore = create<UserState>()(
         }
       },
 
-      setMemberInfo: (memberId: string, memberRole: string) => {
-        set({ memberId, memberRole });
+      setMemberInfo: (memberId: string, memberRole: string, hireDate?: string | null) => {
+        set({ memberId, memberRole, hireDate: hireDate || null });
       },
 
       logout: () => {
@@ -57,6 +59,7 @@ export const useUserStore = create<UserState>()(
           role: null,
           memberId: null,
           memberRole: null,
+          hireDate: null,
           isLoggedIn: false,
         });
         // localStorage 정리
@@ -94,6 +97,7 @@ export const useUserStore = create<UserState>()(
         role: state.role,
         memberId: state.memberId,
         memberRole: state.memberRole,
+        hireDate: state.hireDate,
         isLoggedIn: state.isLoggedIn,
       }),
       onRehydrateStorage: () => (state) => {

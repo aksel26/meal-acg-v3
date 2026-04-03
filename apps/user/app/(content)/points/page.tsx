@@ -8,7 +8,7 @@ import {
   SelectValue,
 } from "@repo/ui/src/select";
 import { NumberTicker } from "@repo/ui/src/number-ticker";
-import { Check, ChevronRight, Eye, ListFilter, Plus } from "@repo/ui/icons";
+import { Check, ChevronRight, Eye, HelpCircle, ListFilter, Plus } from "@repo/ui/icons";
 import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/src/popover";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@repo/ui/src/tooltip";
 import { motion } from "motion/react";
@@ -154,6 +154,7 @@ export default function Points() {
   );
   const [isActivityViewOpen, setIsActivityViewOpen] = useState(false);
   const [isAllRecordsOpen, setIsAllRecordsOpen] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
 
   // Zustand store에서 사용자 정보 가져오기
   const { userName, memberId, memberRole, setMemberInfo } = useUserStore();
@@ -164,7 +165,7 @@ export default function Points() {
   // member_id와 member_role을 최신 값으로 store에 저장
   useEffect(() => {
     if (memberLookup) {
-      setMemberInfo(memberLookup.id, memberLookup.member_role);
+      setMemberInfo(memberLookup.id, memberLookup.member_role, memberLookup.hire_date);
     }
   }, [memberLookup, setMemberInfo]);
 
@@ -398,94 +399,86 @@ export default function Points() {
     setIsEditDialogOpen(true);
   };
 
-  return (
-    <React.Fragment>
-      {/* Stats Section */}
-      {isLoading ? (
-        <div className="card-premium relative overflow-hidden mb-6">
-          <div className="px-4 pt-4 pb-3 space-y-3">
-            <div className="flex justify-between items-start">
-              <div className="space-y-1.5">
-                <div className="animate-pulse bg-gray-200 rounded h-3 w-20" />
-                <div className="animate-pulse bg-gray-200 rounded h-6 w-32" />
-              </div>
-              <div className="animate-pulse bg-gray-200 rounded h-3 w-28" />
-            </div>
-            <div className="animate-pulse bg-gray-100 rounded-full h-2 w-full" />
+  // 통계 카드 렌더링
+  const statsContent = isLoading ? (
+    <div className="card-premium relative overflow-hidden">
+      <div className="px-4 pt-4 pb-3 space-y-3">
+        <div className="flex justify-between items-start">
+          <div className="space-y-1.5">
+            <div className="animate-pulse bg-gray-200 rounded h-3 w-20" />
+            <div className="animate-pulse bg-gray-200 rounded h-6 w-32" />
           </div>
+          <div className="animate-pulse bg-gray-200 rounded h-3 w-28" />
         </div>
-      ) : (
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="mb-6"
-        >
-          <div
-            className="card-premium relative overflow-hidden cursor-pointer active:scale-[0.99] transition-transform"
-            onClick={() => setIsActivityViewOpen(true)}
-          >
-            <div className="relative px-4 pt-4 pb-5">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <h1 className="text-base font-semibold text-gray-900">
-                    복지포인트{isManager ? " · 활동비" : ""}
-                  </h1>
-                  <span onClick={(e) => e.stopPropagation()}>
-                    <PointsGuideDialog />
-                  </span>
-                </div>
-                <span className="flex items-center gap-0.5 text-sm text-blue-500/100">
-                  팀별 활동비 내역
-                  <ChevronRight className="w-4 h-4" />
-                </span>
-              </div>
-
-              {welfareError && (
-                <p className="text-xs text-red-500 mb-2">
-                  데이터 로딩 중 오류가 발생했습니다.
-                </p>
-              )}
-
-              {/* 매니저: 활동비 + 복지포인트 동시 표시 */}
-              {isManager ? (
-                <div className="space-y-3">
-                  <BudgetRow
-                    label="활동비"
-                    remaining={activityRemainingAmount}
-                    used={activityUsedAmount}
-                    total={activityTotalAmount}
-                  />
-                  <BudgetRow
-                    label="복지포인트"
-                    remaining={welfareRemainingAmount}
-                    used={welfareUsedAmount}
-                    total={welfareTotalAmount}
-                  />
-                </div>
-              ) : (
-                <BudgetRow
-                  label="복지포인트"
-                  remaining={welfareRemainingAmount}
-                  used={welfareUsedAmount}
-                  total={welfareTotalAmount}
-                  showProgressBar
-                />
-              )}
+        <div className="animate-pulse bg-gray-100 rounded-full h-2 w-full" />
+      </div>
+    </div>
+  ) : (
+    <>
+      <div
+        className="card-premium relative overflow-hidden cursor-pointer active:scale-[0.99] transition-transform"
+        onClick={() => setIsActivityViewOpen(true)}
+      >
+        <div className="relative px-4 pt-4 pb-5">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <h1 className="text-base font-semibold text-gray-900">
+                복지포인트{isManager ? " · 활동비" : ""}
+              </h1>
+              <span onClick={(e) => e.stopPropagation()}>
+                <PointsGuideDialog open={isGuideOpen} onOpenChange={setIsGuideOpen} />
+              </span>
             </div>
+            <span className="flex items-center gap-0.5 text-sm text-blue-500/100">
+              팀별 활동비 내역
+              <ChevronRight className="w-4 h-4" />
+            </span>
           </div>
-          <ActivityViewDialog
-            memberId={currentMemberId}
-            period={selectedMonth}
-            open={isActivityViewOpen}
-            onOpenChange={setIsActivityViewOpen}
-          />
-        </motion.div>
-      )}
 
-      {/* Points List */}
-      <div>
+          {welfareError && (
+            <p className="text-xs text-red-500 mb-2">
+              데이터 로딩 중 오류가 발생했습니다.
+            </p>
+          )}
+
+          {isManager ? (
+            <div className="space-y-3">
+              <BudgetRow
+                label="활동비"
+                remaining={activityRemainingAmount}
+                used={activityUsedAmount}
+                total={activityTotalAmount}
+              />
+              <BudgetRow
+                label="복지포인트"
+                remaining={welfareRemainingAmount}
+                used={welfareUsedAmount}
+                total={welfareTotalAmount}
+              />
+            </div>
+          ) : (
+            <BudgetRow
+              label="복지포인트"
+              remaining={welfareRemainingAmount}
+              used={welfareUsedAmount}
+              total={welfareTotalAmount}
+              showProgressBar
+            />
+          )}
+        </div>
+      </div>
+      <ActivityViewDialog
+        memberId={currentMemberId}
+        period={selectedMonth}
+        open={isActivityViewOpen}
+        onOpenChange={setIsActivityViewOpen}
+      />
+    </>
+  );
+
+  // 사용 내역 리스트 렌더링
+  const listContent = (
+    <div>
         <div className="mb-3 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <h2 className="text-md font-semibold text-gray-900">사용 내역</h2>
@@ -706,6 +699,96 @@ export default function Points() {
           )}
         </div>
       </div>
+  );
+
+  return (
+    <React.Fragment>
+      {/* ── Mobile: 세로 레이아웃 ── */}
+      <div className="md:hidden">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className="mb-6"
+        >
+          {statsContent}
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+        >
+          {listContent}
+        </motion.div>
+      </div>
+
+      {/* ── PC: 2컬럼 레이아웃 ── */}
+      <div className="max-md:hidden grid grid-cols-[6fr_4fr] gap-6">
+        {/* 좌측: 통계 요약 + 사용 내역 */}
+        <div>
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="mb-6"
+          >
+            <div className="rounded-2xl bg-gray-50 p-4">
+              {statsContent}
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {listContent}
+          </motion.div>
+        </div>
+
+        {/* 우측: 액션 버튼 */}
+        <div className="sticky top-8">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+            className="grid grid-cols-2 gap-3"
+          >
+            <button
+              onClick={() => setIsActivityViewOpen(true)}
+              className="flex items-center justify-between rounded-lg bg-blue-50 px-5 py-4 transition-colors active:bg-blue-100"
+            >
+              <span className="text-sm font-semibold text-slate-800">활동비 내역</span>
+              <Eye className="h-4.5 w-4.5 text-blue-400 shrink-0" />
+            </button>
+
+            <button
+              onClick={() => setIsAllRecordsOpen(true)}
+              className="flex items-center justify-between rounded-lg bg-amber-50 px-5 py-4 transition-colors active:bg-amber-100"
+            >
+              <span className="text-sm font-semibold text-slate-800">ACG 직원 사용 내역</span>
+              <ListFilter className="h-4.5 w-4.5 text-amber-400 shrink-0" />
+            </button>
+
+            <button
+              onClick={handleAddNewPoint}
+              className="flex items-center justify-between rounded-lg bg-emerald-50 px-5 py-4 transition-colors active:bg-emerald-100"
+            >
+              <span className="text-sm font-semibold text-slate-800">새 내역 추가</span>
+              <Plus className="h-4.5 w-4.5 text-emerald-400 shrink-0" />
+            </button>
+
+            <button
+              onClick={() => setIsGuideOpen(true)}
+              className="flex items-center justify-between rounded-lg bg-violet-50 px-5 py-4 transition-colors active:bg-violet-100"
+            >
+              <span className="text-sm font-semibold text-slate-800">매뉴얼</span>
+              <HelpCircle className="h-4.5 w-4.5 text-violet-400 shrink-0" />
+            </button>
+          </motion.div>
+        </div>
+      </div>
+
       {/* Edit Drawer */}
       <EditPointDialog
         isOpen={isEditDialogOpen}
@@ -726,7 +809,6 @@ export default function Points() {
         onOpenChange={setIsAllRecordsOpen}
         memberId={currentMemberId}
       />
-
     </React.Fragment>
   );
 }

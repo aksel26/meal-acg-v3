@@ -5,13 +5,7 @@ import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import "dayjs/locale/ko";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@repo/ui/src/card";
+import { cn } from "@repo/ui/lib/utils";
 import {
   Select,
   SelectContent,
@@ -24,14 +18,6 @@ import { Input } from "@repo/ui/src/input";
 import { Label } from "@repo/ui/src/label";
 import { Badge } from "@repo/ui/src/badge";
 import { Textarea } from "@repo/ui/src/textarea";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@repo/ui/src/table";
 import {
   Dialog,
   DialogContent,
@@ -352,15 +338,21 @@ export default function DayoffsPage() {
             <BarChart3 className="mr-2 h-4 w-4" />
             통계
           </Button>
-          <div className="flex rounded-lg border bg-white p-0.5">
+          <div className="flex rounded-lg border border-slate-200 p-0.5">
             <button
-              className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${viewMode === "table" ? "bg-slate-100 text-slate-900" : "text-slate-500"}`}
+              className={cn(
+                "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                viewMode === "table" ? "bg-slate-900 text-white" : "text-slate-500 hover:text-slate-700"
+              )}
               onClick={() => setViewMode("table")}
             >
               목록
             </button>
             <button
-              className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${viewMode === "calendar" ? "bg-slate-100 text-slate-900" : "text-slate-500"}`}
+              className={cn(
+                "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                viewMode === "calendar" ? "bg-slate-900 text-white" : "text-slate-500 hover:text-slate-700"
+              )}
               onClick={() => setViewMode("calendar")}
             >
               캘린더
@@ -375,8 +367,7 @@ export default function DayoffsPage() {
 
       {/* Calendar View */}
       {viewMode === "calendar" && (
-        <Card className="glass-panel border-0">
-          <CardContent className="pt-6">
+        <div className="rounded-xl border bg-white p-4">
             <div className="grid grid-cols-7 gap-px rounded-lg bg-slate-200 overflow-hidden">
               {["일", "월", "화", "수", "목", "금", "토"].map((day, i) => (
                 <div key={day} className={`bg-slate-50 p-2 text-center text-xs font-semibold ${i === 0 ? "text-red-500" : i === 6 ? "text-blue-500" : "text-slate-600"}`}>
@@ -419,122 +410,119 @@ export default function DayoffsPage() {
                 );
               })}
             </div>
-          </CardContent>
-        </Card>
+        </div>
       )}
 
       {/* Table View */}
       {viewMode === "table" && (
-        <Card className="glass-panel border-0 shadow-none">
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader className="sticky top-0 z-10 bg-slate-50">
-                <TableRow>
-                  <TableHead className="w-10 h-auto py-1 text-xs">#</TableHead>
-                  <TableHead className="h-auto py-1 text-xs">날짜</TableHead>
-                  <TableHead className="h-auto py-1 text-xs">대상자</TableHead>
-                  <TableHead className="h-auto py-1 text-xs">구분</TableHead>
-                  <TableHead className="h-auto py-1 text-xs">사유</TableHead>
-                  <TableHead className="h-auto py-1 text-xs">작성자</TableHead>
-                  <TableHead className="h-auto py-1 text-xs">승인</TableHead>
-                  <TableHead className="w-28 h-auto py-1 text-xs">관리</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={8} className="py-8 text-center text-sm text-slate-400">
-                      로딩 중...
-                    </TableCell>
-                  </TableRow>
-                ) : dayoffs && dayoffs.length > 0 ? (
-                  dayoffs.map((record, index) => {
-                    const date = dayjs(record.leave_date);
-                    const dayOfWeek = ["일", "월", "화", "수", "목", "금", "토"][date.day()];
-                    return (
-                      <TableRow key={record.id}>
-                        <TableCell className="py-1 text-xs text-slate-400">{index + 1}</TableCell>
-                        <TableCell className="py-1 text-sm">
-                          {date.format("MM-DD")}
-                          <span className={`ml-0.5 text-xs ${date.day() === 0 ? "text-red-500" : date.day() === 6 ? "text-blue-500" : "text-slate-400"}`}>
-                            ({dayOfWeek})
-                          </span>
-                        </TableCell>
-                        <TableCell className="py-1 text-sm font-medium">
-                          <Link
-                            href={`/dayoffs/${record.target_id}`}
-                            className="text-blue-600 hover:text-blue-800 hover:underline"
+        <div className="overflow-x-auto rounded-xl border bg-white">
+          <table className="w-full text-sm whitespace-nowrap">
+            <thead className="border-b bg-slate-50 text-left text-xs font-medium text-slate-500">
+              <tr>
+                <th className="px-3 py-2 w-10">#</th>
+                <th className="px-3 py-2">날짜</th>
+                <th className="px-3 py-2">대상자</th>
+                <th className="px-3 py-2">구분</th>
+                <th className="px-3 py-2">사유</th>
+                <th className="px-3 py-2">작성자</th>
+                <th className="px-3 py-2">승인</th>
+                <th className="px-3 py-2 w-28">관리</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {isLoading ? (
+                <tr>
+                  <td colSpan={8} className="py-10 text-center text-sm text-slate-400">
+                    로딩 중...
+                  </td>
+                </tr>
+              ) : dayoffs && dayoffs.length > 0 ? (
+                dayoffs.map((record, index) => {
+                  const date = dayjs(record.leave_date);
+                  const dayOfWeek = ["일", "월", "화", "수", "목", "금", "토"][date.day()];
+                  return (
+                    <tr key={record.id} className="hover:bg-slate-50">
+                      <td className="px-3 py-1.5 text-xs text-slate-400">{index + 1}</td>
+                      <td className="px-3 py-1.5 text-slate-600">
+                        {date.format("MM-DD")}
+                        <span className={cn("ml-1 text-xs", date.day() === 0 ? "text-red-500" : date.day() === 6 ? "text-blue-500" : "text-slate-400")}>
+                          ({dayOfWeek})
+                        </span>
+                      </td>
+                      <td className="px-3 py-1.5 font-medium text-slate-800">
+                        <Link
+                          href={`/dayoffs/${record.target_id}`}
+                          className="text-blue-600 hover:text-blue-800 hover:underline"
+                        >
+                          {record.target?.full_name}
+                        </Link>
+                      </td>
+                      <td className="px-3 py-1.5">{getLeaveTypeBadge(record)}</td>
+                      <td className="px-3 py-1.5 text-slate-600 max-w-[200px] truncate">
+                        <span className="text-xs">{record.reason || "-"}</span>
+                      </td>
+                      <td className="px-3 py-1.5 text-xs text-slate-400">
+                        {record.author?.full_name}
+                      </td>
+                      <td className="px-3 py-1.5">{getApprovalBadge(record)}</td>
+                      <td className="px-3 py-1.5">
+                        <div className="flex gap-0.5">
+                          {!record.approver_id ? (
+                            <button
+                              className="inline-flex items-center justify-center h-6 w-6 rounded hover:bg-green-50 transition-colors text-green-500 hover:text-green-700"
+                              onClick={() => approveMutation.mutate({ id: record.id, action: "approve" })}
+                              title="승인"
+                            >
+                              <Check className="h-3 w-3" />
+                            </button>
+                          ) : (
+                            <button
+                              className="inline-flex items-center justify-center h-6 w-6 rounded hover:bg-amber-50 transition-colors text-amber-500 hover:text-amber-700"
+                              onClick={() => approveMutation.mutate({ id: record.id, action: "cancel" })}
+                              title="승인 취소"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          )}
+                          <button
+                            className="inline-flex items-center justify-center h-6 w-6 rounded hover:bg-slate-100 transition-colors text-slate-500 hover:text-slate-700"
+                            onClick={() => handleOpenEdit(record)}
+                            title="수정"
                           >
-                            {record.target?.full_name}
-                          </Link>
-                        </TableCell>
-                        <TableCell className="py-1">{getLeaveTypeBadge(record)}</TableCell>
-                        <TableCell className="py-1 text-sm text-slate-600 max-w-[200px] truncate">
-                          {record.reason || "-"}
-                        </TableCell>
-                        <TableCell className="py-1 text-xs text-slate-400">
-                          {record.author?.full_name}
-                        </TableCell>
-                        <TableCell className="py-1">{getApprovalBadge(record)}</TableCell>
-                        <TableCell className="py-1">
-                          <div className="flex gap-0.5">
-                            {!record.approver_id ? (
-                              <button
-                                className="inline-flex items-center justify-center h-6 w-6 rounded hover:bg-green-50 transition-colors text-green-500 hover:text-green-700"
-                                onClick={() => approveMutation.mutate({ id: record.id, action: "approve" })}
-                                title="승인"
-                              >
-                                <Check className="h-3 w-3" />
-                              </button>
-                            ) : (
-                              <button
-                                className="inline-flex items-center justify-center h-6 w-6 rounded hover:bg-amber-50 transition-colors text-amber-500 hover:text-amber-700"
-                                onClick={() => approveMutation.mutate({ id: record.id, action: "cancel" })}
-                                title="승인 취소"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-                            )}
-                            <button
-                              className="inline-flex items-center justify-center h-6 w-6 rounded hover:bg-slate-100 transition-colors text-slate-500 hover:text-slate-700"
-                              onClick={() => handleOpenEdit(record)}
-                              title="수정"
-                            >
-                              <Pencil className="h-3 w-3" />
-                            </button>
-                            <button
-                              className="inline-flex items-center justify-center h-6 w-6 rounded hover:bg-slate-100 transition-colors text-slate-500 hover:text-slate-700"
-                              onClick={() => handleCopy(record)}
-                              title="복사"
-                            >
-                              <Copy className="h-3 w-3" />
-                            </button>
-                            <button
-                              className="inline-flex items-center justify-center h-6 w-6 rounded hover:bg-red-50 transition-colors text-red-400 hover:text-red-600"
-                              onClick={() => setDeleteTarget(record.id)}
-                              title="삭제"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={8} className="py-12">
-                      <div className="flex flex-col items-center gap-2 text-gray-400">
-                        <CalendarOff className="h-8 w-8" />
-                        <p className="text-sm">등록된 휴가가 없습니다.</p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                            <Pencil className="h-3 w-3" />
+                          </button>
+                          <button
+                            className="inline-flex items-center justify-center h-6 w-6 rounded hover:bg-slate-100 transition-colors text-slate-500 hover:text-slate-700"
+                            onClick={() => handleCopy(record)}
+                            title="복사"
+                          >
+                            <Copy className="h-3 w-3" />
+                          </button>
+                          <button
+                            className="inline-flex items-center justify-center h-6 w-6 rounded hover:bg-red-50 transition-colors text-red-400 hover:text-red-600"
+                            onClick={() => setDeleteTarget(record.id)}
+                            title="삭제"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={8} className="py-12">
+                    <div className="flex flex-col items-center gap-2 text-slate-400">
+                      <CalendarOff className="h-8 w-8" />
+                      <p className="text-sm">등록된 휴가가 없습니다.</p>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {/* Create/Edit Dialog */}
@@ -711,42 +699,44 @@ export default function DayoffsPage() {
               직원별 휴가 유형별 건수
             </DialogDescription>
           </DialogHeader>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-xs sticky left-0 bg-white">이름</TableHead>
-                <TableHead className="text-xs">팀</TableHead>
-                {(leaveTypes || []).map((t) => (
-                  <TableHead key={t.id} className="text-xs text-center w-12">
-                    {t.name}
-                  </TableHead>
+          <div className="overflow-x-auto rounded-lg border">
+            <table className="w-full text-sm whitespace-nowrap">
+              <thead className="border-b bg-slate-50 text-left text-xs font-medium text-slate-500">
+                <tr>
+                  <th className="px-3 py-2 sticky left-0 bg-slate-50">이름</th>
+                  <th className="px-3 py-2">팀</th>
+                  {(leaveTypes || []).map((t) => (
+                    <th key={t.id} className="px-3 py-2 text-center w-12">
+                      {t.name}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {(stats || []).map((s) => (
+                  <tr key={s.member_id} className="hover:bg-slate-50">
+                    <td className="px-3 py-1.5 font-medium text-slate-800 sticky left-0 bg-white">{s.member_name}</td>
+                    <td className="px-3 py-1.5 text-xs text-slate-400">{s.team_name || "-"}</td>
+                    {(leaveTypes || []).map((t) => {
+                      const count = s.types[t.id] || 0;
+                      return (
+                        <td key={t.id} className={cn("px-3 py-1.5 text-center", count > 0 ? "text-red-600 font-semibold" : "text-slate-300")}>
+                          {count || "-"}
+                        </td>
+                      );
+                    })}
+                  </tr>
                 ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {(stats || []).map((s) => (
-                <TableRow key={s.member_id}>
-                  <TableCell className="text-sm font-medium sticky left-0 bg-white">{s.member_name}</TableCell>
-                  <TableCell className="text-xs text-slate-400">{s.team_name || "-"}</TableCell>
-                  {(leaveTypes || []).map((t) => {
-                    const count = s.types[t.id] || 0;
-                    return (
-                      <TableCell key={t.id} className={`text-center text-sm ${count > 0 ? "text-red-600 font-semibold" : "text-slate-300"}`}>
-                        {count || "-"}
-                      </TableCell>
-                    );
-                  })}
-                </TableRow>
-              ))}
-              {(!stats || stats.length === 0) && (
-                <TableRow>
-                  <TableCell colSpan={(leaveTypes?.length || 0) + 2} className="text-center py-8 text-slate-400">
-                    해당 월의 휴가 기록이 없습니다.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                {(!stats || stats.length === 0) && (
+                  <tr>
+                    <td colSpan={(leaveTypes?.length || 0) + 2} className="text-center py-8 text-slate-400">
+                      해당 월의 휴가 기록이 없습니다.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

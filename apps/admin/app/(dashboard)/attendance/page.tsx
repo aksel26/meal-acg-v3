@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { ChevronLeft, ChevronRight, Save, Loader2 } from "lucide-react";
 import { Button } from "@repo/ui/src/button";
 import { Input } from "@repo/ui/src/input";
@@ -24,6 +24,7 @@ import { cn } from "@repo/ui/lib/utils";
 
 const ATTENDANCE_TYPES = [
   "출근",
+  "미출근",
   "연차",
   "오전반차",
   "오후반차",
@@ -189,23 +190,22 @@ export default function AttendancePage() {
         <table className="w-full text-sm whitespace-nowrap">
           <thead className="border-b bg-slate-50 text-left text-xs font-medium text-slate-500">
             <tr>
-              <th className="px-3 py-3">이름</th>
-              <th className="px-3 py-3">수정자</th>
-              <th className="px-3 py-3">근태명</th>
-              <th className="px-3 py-3">날짜</th>
-              <th className="px-3 py-3">출근시간</th>
-              <th className="px-3 py-3">퇴근시간</th>
-              <th className="px-3 py-3">연장시간</th>
-              <th className="px-3 py-3">장소</th>
-              <th className="px-3 py-3">참조</th>
-              <th className="px-3 py-3">내용</th>
-              <th className="px-3 py-3">승인자</th>
-              <th className="px-3 py-3">등록일</th>
-              <th className="px-3 py-3">수정일</th>
-              <th className="px-3 py-3">승인일</th>
-              <th className="px-3 py-3">로그인IP</th>
-              <th className="px-3 py-3">로그인IP2</th>
-              <th className="px-2 py-3 w-14"></th>
+              <th className="px-3 py-2">이름</th>
+              <th className="px-3 py-2">수정자</th>
+              <th className="px-3 py-2">근태명</th>
+              <th className="px-3 py-2">날짜</th>
+              <th className="px-3 py-2">출근시간</th>
+              <th className="px-3 py-2">퇴근시간</th>
+              <th className="px-3 py-2">연장시간</th>
+              <th className="px-3 py-2">장소</th>
+              <th className="px-3 py-2">참조</th>
+              <th className="px-3 py-2">내용</th>
+              <th className="px-3 py-2">승인자</th>
+              <th className="px-3 py-2">등록일</th>
+              <th className="px-3 py-2">수정일</th>
+              <th className="px-3 py-2">승인일</th>
+              <th className="px-3 py-2">로그인IP</th>
+              <th className="px-3 py-2">로그인IP2</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -236,9 +236,61 @@ export default function AttendancePage() {
   );
 }
 
+type EditingField = "checkIn" | "checkOut" | null;
+
+function TimeEditDropdown({
+  label,
+  value,
+  onChange,
+  onSave,
+  onCancel,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  onSave: () => void;
+  onCancel: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const stableSave = useCallback(onSave, [onSave]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        stableSave();
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [stableSave]);
+
+  return (
+    <div
+      ref={ref}
+      className="absolute top-full left-0 z-50 rounded-md border bg-white p-3 shadow-md animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-150"
+    >
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-medium text-slate-500">{label}</label>
+        <Input
+          type="time"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") { e.preventDefault(); onSave(); }
+            if (e.key === "Escape") { e.preventDefault(); onCancel(); }
+          }}
+          className="h-8 w-[130px] text-xs appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+          autoFocus
+        />
+      </div>
+    </div>
+  );
+}
+
 function InlineRow({ record }: { record: AttendanceRecord }) {
   const updateMutation = useUpdateAttendance();
   const [editing, setEditing] = useState(false);
+  const [editingField, setEditingField] = useState<EditingField>(null);
   const [checkIn, setCheckIn] = useState(formatTime(record.check_in_at));
   const [checkOut, setCheckOut] = useState(formatTime(record.check_out_at));
   const [attendanceType, setAttendanceType] = useState(record.attendance_type || "출근");
@@ -248,13 +300,46 @@ function InlineRow({ record }: { record: AttendanceRecord }) {
 
   const date = dayjs(record.date);
 
-  const handleSave = async () => {
-    const dateStr = record.date;
-    const toIso = (time: string) => {
-      if (!time) return null;
-      return dayjs(`${dateStr}T${time}:00+09:00`).toISOString();
-    };
+  const toIso = (time: string) => {
+    if (!time) return null;
+    return dayjs(`${record.date}T${time}:00+09:00`).toISOString();
+  };
 
+  const saveField = async (field: "checkIn" | "checkOut", value: string) => {
+    const payload: Record<string, unknown> = {};
+    if (field === "checkIn") payload.check_in_at = toIso(value);
+    if (field === "checkOut") payload.check_out_at = toIso(value);
+
+    if (record.id) {
+      updateMutation.mutate(
+        { id: record.id, ...payload },
+        { onSuccess: () => setEditingField(null) }
+      );
+    } else {
+      try {
+        const res = await fetch("/api/attendance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            member_id: record.member_id,
+            date: record.date,
+            check_in_at: field === "checkIn" ? toIso(value) : toIso(checkIn),
+            check_out_at: field === "checkOut" ? toIso(value) : toIso(checkOut),
+            attendance_type: attendanceType,
+            status: "normal",
+          }),
+        });
+        if (res.ok) {
+          setEditingField(null);
+          window.location.reload();
+        }
+      } catch {
+        // error handled silently
+      }
+    }
+  };
+
+  const handleSave = async () => {
     if (record.id) {
       updateMutation.mutate(
         {
@@ -275,7 +360,7 @@ function InlineRow({ record }: { record: AttendanceRecord }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             member_id: record.member_id,
-            date: dateStr,
+            date: record.date,
             check_in_at: toIso(checkIn),
             check_out_at: toIso(checkOut),
             attendance_type: attendanceType,
@@ -297,6 +382,7 @@ function InlineRow({ record }: { record: AttendanceRecord }) {
 
   const handleCancel = () => {
     setEditing(false);
+    setEditingField(null);
     setCheckIn(formatTime(record.check_in_at));
     setCheckOut(formatTime(record.check_out_at));
     setAttendanceType(record.attendance_type || "출근");
@@ -305,12 +391,29 @@ function InlineRow({ record }: { record: AttendanceRecord }) {
     setReference(record.reference ?? "");
   };
 
-  const cellClass = "px-3 py-2.5 text-slate-600";
+  const handleTimeKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    field: "checkIn" | "checkOut",
+    value: string
+  ) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      saveField(field, value);
+    }
+    if (e.key === "Escape") {
+      e.preventDefault();
+      setEditingField(null);
+      if (field === "checkIn") setCheckIn(formatTime(record.check_in_at));
+      if (field === "checkOut") setCheckOut(formatTime(record.check_out_at));
+    }
+  };
+
+  const cellClass = "px-3 py-1.5 text-slate-600";
 
   return (
     <tr className={cn("hover:bg-slate-50", editing && "bg-blue-50/30")}>
       {/* 이름 */}
-      <td className="px-3 py-2.5 font-medium text-slate-800">
+      <td className="px-3 py-1.5 font-medium text-slate-800">
         {record.member.full_name}
       </td>
       {/* 수정자 */}
@@ -319,20 +422,28 @@ function InlineRow({ record }: { record: AttendanceRecord }) {
       </td>
       {/* 근태명 */}
       <td className={cellClass}>
-        {editing ? (
-          <Select value={attendanceType} onValueChange={setAttendanceType}>
-            <SelectTrigger className="h-7 w-[90px] text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {ATTENDANCE_TYPES.map((t) => (
-                <SelectItem key={t} value={t}>{t}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : (
-          <span className="text-xs">{record.attendance_type || "출근"}</span>
-        )}
+        <Select
+          value={attendanceType}
+          onValueChange={(val) => {
+            setAttendanceType(val);
+            if (!editing) {
+              if (record.id) {
+                updateMutation.mutate(
+                  { id: record.id, attendance_type: val },
+                );
+              }
+            }
+          }}
+        >
+          <SelectTrigger size="sm" className="text-xs border-0 bg-transparent shadow-none px-0 h-auto gap-1">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {ATTENDANCE_TYPES.map((t) => (
+              <SelectItem key={t} value={t}>{t}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </td>
       {/* 날짜 */}
       <td className={cellClass}>
@@ -341,8 +452,8 @@ function InlineRow({ record }: { record: AttendanceRecord }) {
           ({["일","월","화","수","목","금","토"][date.day()]})
         </span>
       </td>
-      {/* 출근시간 */}
-      <td className={cellClass}>
+      {/* 출근시간 - 인라인 편집 */}
+      <td className={cn(cellClass, "relative")}>
         {editing ? (
           <Input
             type="time"
@@ -351,11 +462,34 @@ function InlineRow({ record }: { record: AttendanceRecord }) {
             className="h-7 w-[90px] text-xs"
           />
         ) : (
-          formatTime(record.check_in_at) || "-"
+          <>
+            <button
+              className="text-xs text-slate-600 hover:text-blue-600 hover:underline underline-offset-2 decoration-dashed"
+              onClick={() => setEditingField("checkIn")}
+            >
+              {formatTime(record.check_in_at) || "-"}
+            </button>
+            {editingField === "checkIn" && (
+              <TimeEditDropdown
+                label="출근시간"
+                value={checkIn}
+                onChange={setCheckIn}
+                onSave={() => {
+                  const original = formatTime(record.check_in_at);
+                  if (checkIn !== original) saveField("checkIn", checkIn);
+                  else setEditingField(null);
+                }}
+                onCancel={() => {
+                  setCheckIn(formatTime(record.check_in_at));
+                  setEditingField(null);
+                }}
+              />
+            )}
+          </>
         )}
       </td>
-      {/* 퇴근시간 */}
-      <td className={cellClass}>
+      {/* 퇴근시간 - 인라인 편집 */}
+      <td className={cn(cellClass, "relative")}>
         {editing ? (
           <Input
             type="time"
@@ -364,7 +498,30 @@ function InlineRow({ record }: { record: AttendanceRecord }) {
             className="h-7 w-[90px] text-xs"
           />
         ) : (
-          formatTime(record.check_out_at) || "-"
+          <>
+            <button
+              className="text-xs text-slate-600 hover:text-blue-600 hover:underline underline-offset-2 decoration-dashed"
+              onClick={() => setEditingField("checkOut")}
+            >
+              {formatTime(record.check_out_at) || "-"}
+            </button>
+            {editingField === "checkOut" && (
+              <TimeEditDropdown
+                label="퇴근시간"
+                value={checkOut}
+                onChange={setCheckOut}
+                onSave={() => {
+                  const original = formatTime(record.check_out_at);
+                  if (checkOut !== original) saveField("checkOut", checkOut);
+                  else setEditingField(null);
+                }}
+                onCancel={() => {
+                  setCheckOut(formatTime(record.check_out_at));
+                  setEditingField(null);
+                }}
+              />
+            )}
+          </>
         )}
       </td>
       {/* 연장시간 */}
@@ -436,43 +593,6 @@ function InlineRow({ record }: { record: AttendanceRecord }) {
       {/* 로그인IP2 */}
       <td className={cellClass}>
         <span className="text-xs font-mono">{record.login_ip2 || "-"}</span>
-      </td>
-      {/* Actions */}
-      <td className="px-2 py-2.5">
-        {editing ? (
-          <div className="flex gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0"
-              onClick={handleSave}
-              disabled={updateMutation.isPending}
-            >
-              {updateMutation.isPending ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Save className="h-3.5 w-3.5 text-blue-600" />
-              )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0 text-xs text-slate-400"
-              onClick={handleCancel}
-            >
-              ✕
-            </Button>
-          </div>
-        ) : (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 text-xs text-slate-400 hover:text-slate-600"
-            onClick={() => setEditing(true)}
-          >
-            수정
-          </Button>
-        )}
       </td>
     </tr>
   );

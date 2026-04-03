@@ -2,6 +2,38 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
 
+// GET /api/members/[id] - Get a single member with team/position info
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    await requireAdmin();
+    const supabase = createServiceClient();
+    const { id } = await params;
+
+    const { data, error } = await supabase
+      .from("members")
+      .select("*, team:teams(name), position:positions(name), division:divisions(name)")
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      if (error.code === "PGRST116") {
+        return NextResponse.json({ error: "Member not found" }, { status: 404 });
+      }
+      return NextResponse.json({ error: "Failed to fetch member" }, { status: 500 });
+    }
+
+    return NextResponse.json(data);
+  } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
 // PUT /api/members/[id] - Update a member (organization info, role, etc.)
 export async function PUT(
   request: NextRequest,

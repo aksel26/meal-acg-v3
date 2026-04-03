@@ -179,6 +179,12 @@ export const queryKeys = {
     byStatus: (status: string) => ["approvals", status] as const,
   },
 
+  // Early Leave Requests (조기퇴근)
+  earlyLeaveRequests: {
+    all: ["earlyLeaveRequests"] as const,
+    byStatus: (status: string) => ["earlyLeaveRequests", status] as const,
+  },
+
   // Attendance (출퇴근)
   attendance: {
     all: ["attendance"] as const,

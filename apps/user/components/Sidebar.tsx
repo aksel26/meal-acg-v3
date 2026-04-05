@@ -16,6 +16,9 @@ import {
   Megaphone,
   DoorOpen,
   MessageSquareText,
+  BookOpen,
+  CarFront,
+  ClipboardList,
   LogOut,
   X,
   Bell,
@@ -90,6 +93,14 @@ const menuGroups: MenuGroup[] = [
     ],
   },
   {
+    label: "ACG 라이프",
+    items: [
+      { id: "onboarding", label: "온보딩 가이드", href: "/onboarding", icon: BookOpen },
+      { id: "parking", label: "주차등록 신청", href: "/parking", icon: CarFront },
+      { id: "inventory", label: "물품관리 대장", href: "/inventory", icon: ClipboardList },
+    ],
+  },
+  {
     label: "감독관/면접교육 운영",
     items: [],
     href: "/part-time-supervisor",
@@ -112,23 +123,25 @@ function UserInfoCard() {
   const daysFromHire = hireDate ? dayjs().diff(dayjs(hireDate), "day") : null;
 
   return (
-    <div className="mx-3 mb-4 rounded-xl bg-[#f9f9fa] px-4 py-3">
-      <div className="flex items-center justify-between">
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-[#111111]">
-            {userName || "사용자"}
-          </p>
-          <p className="mt-0.5 text-[11px] text-slate-400">
-            {memberRole || "팀원"} · ACG
-          </p>
+    <Link href="/profile" className="block">
+      <div className="mx-3 mb-4 rounded-xl bg-[#f9f9fa] px-4 py-3 transition-colors hover:bg-[#f0f0f1]">
+        <div className="flex items-center justify-between">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-[#111111]">
+              {userName || "사용자"}
+            </p>
+            <p className="mt-0.5 text-[11px] text-slate-400">
+              {memberRole || "팀원"} · ACG
+            </p>
+          </div>
+          {daysFromHire !== null && (
+            <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-500 shadow-sm">
+              D+{daysFromHire}
+            </span>
+          )}
         </div>
-        {daysFromHire !== null && (
-          <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-500 shadow-sm">
-            D+{daysFromHire}
-          </span>
-        )}
       </div>
-    </div>
+    </Link>
   );
 }
 

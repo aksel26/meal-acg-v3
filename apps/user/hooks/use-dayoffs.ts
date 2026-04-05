@@ -70,6 +70,23 @@ export function useDayoffs(year: number, month: number, targetId?: string) {
   });
 }
 
+export function useDayoffsYearly(targetId: string | null, year: number) {
+  return useQuery<DayoffRecord[]>({
+    queryKey: queryKeys.dayoffs.byYear(targetId || "", year),
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        year: String(year),
+        target_id: targetId!,
+      });
+      const res = await fetch(`/api/dayoffs?${params}`);
+      if (!res.ok) throw new Error("Failed to fetch yearly dayoffs");
+      return res.json();
+    },
+    enabled: !!targetId,
+    staleTime: 30 * 1000,
+  });
+}
+
 export function useDayoffDetail(id: string | null) {
   return useQuery<DayoffRecord>({
     queryKey: queryKeys.dayoffs.detail(id || ""),

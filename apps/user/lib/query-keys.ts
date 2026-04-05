@@ -120,6 +120,8 @@ export const queryKeys = {
       ["dayoffs", "month", year, month] as const,
     byTarget: (targetId: string) => ["dayoffs", "target", targetId] as const,
     detail: (id: string) => ["dayoffs", id] as const,
+    byYear: (targetId: string, year: number) =>
+      ["dayoffs", "year", targetId, year] as const,
   },
 
   // 승인 관련
@@ -149,6 +151,13 @@ export const queryKeys = {
       byMember: (memberId: string) =>
         ["attendance", "modifyRequests", memberId] as const,
     },
+  },
+
+  // 연차 잔액
+  leaveBalances: {
+    all: ["leaveBalances"] as const,
+    byYear: (memberId: string, year: number) =>
+      ["leaveBalances", memberId, year] as const,
   },
 
   // 근태 유형

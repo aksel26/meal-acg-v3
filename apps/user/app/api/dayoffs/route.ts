@@ -37,6 +37,10 @@ export async function GET(request: NextRequest) {
       query = query
         .gte("leave_date", `${year}-${m}-01`)
         .lte("leave_date", `${year}-${m}-${lastDay}`);
+    } else if (year) {
+      query = query
+        .gte("leave_date", `${year}-01-01`)
+        .lte("leave_date", `${year}-12-31`);
     }
 
     if (targetId) {

@@ -622,7 +622,7 @@ function CalendarPageContent() {
                     Icon: Clock,
                     bg: "bg-violet-50",
                     text: "text-violet-600",
-                    label: lower.includes("오전") ? "오전" : "오후",
+                    label: lower.includes("오전") ? "오전 반차" : "오후 반차",
                   };
                 return {
                   Icon: Briefcase,
@@ -643,9 +643,15 @@ function CalendarPageContent() {
 
               const isToday = dateStr === dayjs().format("YYYY-MM-DD");
 
-              const isNonWorkAttendance = ["연차", "휴무", "재택", "휴가"].some(
-                (type) => mealLog?.attendance?.includes(type),
-              );
+              const normalizedAttendance = mealLog?.attendance?.toLowerCase() ?? "";
+              const isHalfDayAttendance = normalizedAttendance.includes("반차");
+              const isFullDayNonWorkAttendance =
+                !isHalfDayAttendance &&
+                (normalizedAttendance.includes("재택") ||
+                  normalizedAttendance.includes("홈") ||
+                  normalizedAttendance.includes("휴가") ||
+                  normalizedAttendance.includes("연차") ||
+                  normalizedAttendance === "휴무");
 
               return (
                 <div
@@ -699,7 +705,7 @@ function CalendarPageContent() {
                         <Skeleton className="h-4 w-3/4 rounded" />
                       </div>
                     ) : mealLog ? (
-                      isNonWorkAttendance ? (
+                      isFullDayNonWorkAttendance ? (
                         <div className="flex h-full items-center justify-center">
                           {attInfo && (
                             <span

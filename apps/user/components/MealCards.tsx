@@ -74,6 +74,17 @@ export function MealCards({
       currentMealData.dinner ||
       currentMealData.attendance);
 
+  const hasMealEntry = (
+    meal?: { store: string; amount: number; payer: string },
+  ): boolean => {
+    if (!meal) return false;
+
+    const hasAmount = meal.amount > 0;
+    const hasStore = meal.store?.trim().length > 0;
+
+    return hasAmount || hasStore;
+  };
+
   const meals = [
     {
       title: "조식",
@@ -120,12 +131,33 @@ export function MealCards({
   });
 
   const isHoliday = (attendance: string): boolean => {
-    return Boolean(attendance && attendance.includes("휴무"));
+    const normalizedAttendance = attendance?.trim().toLowerCase() || "";
+    return Boolean(
+      normalizedAttendance &&
+        !normalizedAttendance.includes("반차") &&
+        (normalizedAttendance.includes("연차") ||
+          normalizedAttendance === "휴무"),
+    );
   };
 
   const isRemoteWork = (attendance: string): boolean => {
     return Boolean(attendance && attendance.includes("재택근무"));
   };
+
+  const isHalfDayAttendance = (attendance: string): boolean => {
+    return Boolean(attendance && attendance.includes("반차"));
+  };
+
+  const isHalfDay = Boolean(
+    currentMealData?.attendance && isHalfDayAttendance(currentMealData.attendance),
+  );
+
+  const availableHalfDayMeals = currentMealData
+    ? (["breakfast", "dinner"] as const).filter((mealType) => {
+        const meal = currentMealData[mealType];
+        return !hasMealEntry(meal);
+      })
+    : [];
 
   // Empty State
   if (!hasMealData) {
@@ -243,12 +275,26 @@ export function MealCards({
         </div>
         <div className="text-center py-4">
           <p className="text-sm text-gray-400 mb-3">식사 기록 없음</p>
-          <button
-            onClick={() => onAddMeal?.("lunch")}
-            className="text-sm text-gray-500 hover:text-gray-700"
-          >
-            + 추가
-          </button>
+          {isHalfDay ? (
+            <div className="flex justify-center gap-2">
+              {availableHalfDayMeals.map((mealType) => (
+                <button
+                  key={mealType}
+                  onClick={() => onAddMeal?.(mealType)}
+                  className="rounded-lg bg-gray-100 px-3 py-2 text-sm text-gray-600 hover:bg-gray-200 hover:text-gray-800"
+                >
+                  + {mealType === "breakfast" ? "조식" : "석식"} 추가
+                </button>
+              ))}
+            </div>
+          ) : (
+            <button
+              onClick={() => onAddMeal?.("lunch")}
+              className="text-sm text-gray-500 hover:text-gray-700"
+            >
+              + 추가
+            </button>
+          )}
         </div>
       </motion.div>
     );
@@ -335,13 +381,29 @@ export function MealCards({
       </div>
 
       {/* Add button if needed */}
-      {visibleMeals.length < 3 && (
-        <button
-          onClick={() => onAddMeal?.("dinner")}
-          className="w-full mt-2 py-2 text-sm text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          + 식사 추가
-        </button>
+      {isHalfDay ? (
+        availableHalfDayMeals.length > 0 && (
+          <div className="mt-2 flex gap-2">
+            {availableHalfDayMeals.map((mealType) => (
+              <button
+                key={mealType}
+                onClick={() => onAddMeal?.(mealType)}
+                className="flex-1 rounded-lg py-2 text-sm text-gray-400 transition-colors hover:text-gray-600"
+              >
+                + {mealType === "breakfast" ? "조식" : "석식"} 추가
+              </button>
+            ))}
+          </div>
+        )
+      ) : (
+        visibleMeals.length < 3 && (
+          <button
+            onClick={() => onAddMeal?.("dinner")}
+            className="w-full mt-2 py-2 text-sm text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            + 식사 추가
+          </button>
+        )
       )}
     </motion.div>
   );

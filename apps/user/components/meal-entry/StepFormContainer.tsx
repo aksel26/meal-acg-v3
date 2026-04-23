@@ -6,8 +6,10 @@ import {
   useMealDrawerStore,
   StepId,
   STEP_ORDER_LUNCH,
+  STEP_ORDER_DINNER,
   STEP_ORDER_OTHER,
   NO_MEAL_SUPPORT_ATTENDANCE,
+  DINNER_NO_MEAL_SUPPORT_ATTENDANCE,
   INDIVIDUAL_MEAL_ATTENDANCE,
 } from "@/stores/mealDrawerStore";
 import { CompletedStepItem } from "./CompletedStepItem";
@@ -75,6 +77,13 @@ export function StepFormContainer({
       // 아직 선택 안 한 경우
       return STEP_ORDER_LUNCH;
     }
+    if (selectedMealType === "dinner") {
+      const attendance = formData.lunch.attendance;
+      if (DINNER_NO_MEAL_SUPPORT_ATTENDANCE.includes(attendance)) {
+        return ["attendance"] as StepId[];
+      }
+      return STEP_ORDER_DINNER;
+    }
     return STEP_ORDER_OTHER;
   }, [selectedMealType, formData.lunch.attendance]);
 
@@ -92,7 +101,7 @@ export function StepFormContainer({
           return currentFormData.payer;
         case "store":
           return currentFormData.store;
-        case "amount":
+        case "amount": {
           const amount = currentFormData.amount;
           if (!amount) {
             if (selectedMealType === "lunch" && formData.lunch.attendance === "근무(개별식사 / 식사안함)") {
@@ -101,6 +110,7 @@ export function StepFormContainer({
             return "";
           }
           return `${Number(amount).toLocaleString()}원`;
+        }
         default:
           return "";
       }
@@ -118,8 +128,13 @@ export function StepFormContainer({
 
   // Steps that require form input (excluding receipt which is optional)
   const formSteps = useMemo(() => {
-    return visibleSteps.filter((step) => step !== "receipt");
-  }, [visibleSteps]);
+    const base = visibleSteps.filter((step) => step !== "receipt");
+    // 석식 수정 모드에서는 근태 대신 식사 타입 라벨로 대체 (조식과 동일 UX)
+    if (isEditMode && selectedMealType === "dinner") {
+      return ["mealType" as StepId, ...base.filter((step) => step !== "attendance")];
+    }
+    return base;
+  }, [visibleSteps, isEditMode, selectedMealType]);
 
   // Check if all form steps are completed
   const allStepsCompleted = useMemo(() => {
@@ -137,10 +152,29 @@ export function StepFormContainer({
       return formSteps;
     }
     // In edit mode or normal mode, show completed steps except current
-    return visibleSteps.filter(
+    const base = visibleSteps.filter(
       (step) => isStepCompleted(step) && step !== currentStep && step !== "receipt"
     );
-  }, [visibleSteps, formSteps, isStepCompleted, currentStep, isShowingSummary]);
+
+    // visibleSteps에 없지만 completedSteps에 포함된 경우에도 라벨 표시
+    // 순서: 근태 → 식사 타입 → 나머지
+    const prefix: StepId[] = [];
+    if (
+      completedSteps.includes("attendance") &&
+      currentStep !== "attendance" &&
+      !base.includes("attendance")
+    ) {
+      prefix.push("attendance");
+    }
+    if (
+      completedSteps.includes("mealType") &&
+      currentStep !== "mealType" &&
+      !base.includes("mealType")
+    ) {
+      prefix.push("mealType");
+    }
+    return [...prefix, ...base];
+  }, [visibleSteps, formSteps, isStepCompleted, currentStep, isShowingSummary, completedSteps]);
 
   // Save new restaurant if needed
   const saveNewRestaurant = useCallback(
@@ -218,15 +252,19 @@ export function StepFormContainer({
       {/* Completed Steps */}
       {displayedCompletedSteps.length > 0 && (
         <div className="space-y-2 mb-6">
-          {displayedCompletedSteps.map((stepId, index) => (
-            <CompletedStepItem
-              key={stepId}
-              stepId={stepId}
-              value={getStepValue(stepId)}
-              onEdit={() => goToStep(stepId)}
-              index={index}
-            />
-          ))}
+          {displayedCompletedSteps.map((stepId, index) => {
+            // visibleSteps에 없는 스텝(근태 등 정보용)은 편집 불가
+            const isInformational = !visibleSteps.includes(stepId);
+            return (
+              <CompletedStepItem
+                key={stepId}
+                stepId={stepId}
+                value={getStepValue(stepId)}
+                onEdit={isInformational ? () => {} : () => goToStep(stepId)}
+                index={index}
+              />
+            );
+          })}
         </div>
       )}
 

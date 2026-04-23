@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   useMealDrawerStore,
   NO_MEAL_SUPPORT_ATTENDANCE,
+  DINNER_NO_MEAL_SUPPORT_ATTENDANCE,
   INDIVIDUAL_MEAL_ATTENDANCE,
 } from "@/stores/mealDrawerStore";
 import { attendanceOptions } from "@/lib/const/const";
@@ -27,24 +28,28 @@ export function AttendanceStep({
   onSubmit,
   isSubmitting,
 }: AttendanceStepProps) {
-  const { formData, updateFormField, completeStep } = useMealDrawerStore();
+  const { formData, selectedMealType, updateFormField, completeStep } = useMealDrawerStore();
   const currentAttendance = formData.lunch.attendance;
   const [selectedValue, setSelectedValue] = useState<string>(currentAttendance);
 
-  // 선택한 값이 식대 미지원 또는 개별식사인지 확인
-  const isNoMealSupport = NO_MEAL_SUPPORT_ATTENDANCE.includes(selectedValue);
-  const isIndividualMeal = selectedValue === INDIVIDUAL_MEAL_ATTENDANCE;
+  const isLunchFlow = selectedMealType === "lunch";
+  const isNoMealSupport = isLunchFlow
+    ? NO_MEAL_SUPPORT_ATTENDANCE.includes(selectedValue)
+    : DINNER_NO_MEAL_SUPPORT_ATTENDANCE.includes(selectedValue);
+  const isIndividualMeal = isLunchFlow && selectedValue === INDIVIDUAL_MEAL_ATTENDANCE;
   const showSaveButton = isNoMealSupport || isIndividualMeal;
 
   const handleSelect = (value: string) => {
     setSelectedValue(value);
     updateFormField("attendance", value);
 
-    // 근무 선택 시에만 바로 다음 단계로 진행
-    if (value === "근무") {
+    const shouldAdvance = isLunchFlow
+      ? value === "근무"
+      : !DINNER_NO_MEAL_SUPPORT_ATTENDANCE.includes(value);
+
+    if (shouldAdvance) {
       completeStep("attendance");
     }
-    // 식대 미지원/개별식사는 저장 버튼 표시 후 사용자가 직접 저장
   };
 
   const handleSave = async () => {
@@ -60,12 +65,14 @@ export function AttendanceStep({
           오늘 근태는 어떤가요?
         </h3>
         <p className="text-sm text-gray-500">
-          중식 기록에 필요한 근태 정보예요
+          {selectedMealType === "dinner"
+            ? "석식 기록에 필요한 근태 정보예요"
+            : "중식 기록에 필요한 근태 정보예요"}
         </p>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        {attendanceOptions?.map((option, index) => {
+        {attendanceOptions?.map((option) => {
           const config = attendanceConfig[option.value];
           const isSelected = selectedValue === option.value;
 

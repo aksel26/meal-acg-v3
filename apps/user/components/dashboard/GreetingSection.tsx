@@ -17,7 +17,7 @@ export default function GreetingSection({ userName }: GreetingSectionProps) {
   };
 
   return (
-    <motion.div
+    <motion.section
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
@@ -25,76 +25,48 @@ export default function GreetingSection({ userName }: GreetingSectionProps) {
         delay: 0.1,
         ease: [0.16, 1, 0.3, 1],
       }}
-      className="mb-6"
+      className="relative overflow-hidden rounded-[40px] bg-[var(--lifted-cream)] px-6 py-7 shadow-[var(--shadow-elevated)]"
     >
-      <div className="card-premium rounded-2xl p-5 relative overflow-hidden">
-        {/* Decorative gradient blob */}
-        <div className="absolute -top-10 -right-10 w-32 h-32 bg-[oklch(0.88_0.10_250/0.4)] rounded-full blur-2xl" />
-        <div className="absolute -bottom-8 -left-8 w-24 h-24 bg-[oklch(0.90_0.08_200/0.3)] rounded-full blur-2xl" />
+      <div className="absolute -right-10 top-0 h-40 w-40 rounded-full bg-[var(--whisper-cream)]" />
+      <div className="orbit-line -left-16 bottom-4 h-48 w-48 opacity-70" />
+      <div className="orbit-dot right-24 top-24" />
 
-        <div className="relative flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <motion.h1
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-                className="text-lg font-semibold text-[oklch(0.20_0.02_250)]"
-              >
-                {getGreeting()}, {userName}님
-              </motion.h1>
-              <motion.div
-                animate={{
-                  rotate: [0, 14, -8, 14, -4, 10, 0],
-                  transformOrigin: "70% 70%",
-                }}
-                transition={{
-                  duration: 2.5,
-                  ease: "easeInOut",
-                  repeat: Infinity,
-                  repeatDelay: 1,
-                }}
-              >
-                <Image
-                  src="/icons/greeting.png"
-                  alt="greeting"
-                  width={28}
-                  height={28}
-                  className="object-contain"
-                />
-              </motion.div>
-            </div>
-
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className="text-sm text-[oklch(0.50_0.01_250)]"
-            >
-              오늘은{" "}
-              <span className="font-medium text-[oklch(0.35_0.02_250)]">
-                {formatDateKorean()}
-              </span>{" "}
-              입니다
-            </motion.p>
+      <div className="relative flex items-start justify-between gap-5">
+        <div className="max-w-[16rem] space-y-4">
+          <p className="eyebrow-label">For You</p>
+          <div className="space-y-2">
+            <h1 className="text-[2rem] font-medium leading-[0.98] tracking-[-0.04em] text-[var(--ink-black)]">
+              {getGreeting()},
+              <br />
+              {userName}님.
+            </h1>
+            <p className="text-sm leading-6 text-[var(--granite)]">
+              오늘 식대 기록과 점심조 일정을 한 화면에서 가볍게 정리해보세요.
+            </p>
           </div>
 
-          {/* Date Badge */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.4, type: "spring", bounce: 0.4 }}
-            className="flex flex-col items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-[oklch(0.55_0.18_250)] to-[oklch(0.48_0.20_270)] text-white shadow-lg shadow-[oklch(0.55_0.18_250/0.3)]"
-          >
-            <span className="text-[10px] font-medium opacity-90 uppercase tracking-wide">
-              {new Date().toLocaleDateString("ko-KR", { weekday: "short" })}
-            </span>
-            <span className="text-xl font-bold -mt-0.5">
-              {new Date().getDate()}
-            </span>
-          </motion.div>
+          <div className="inline-flex items-center gap-2 rounded-[999px] border border-[rgba(20,20,19,0.08)] bg-white/80 px-4 py-2 text-sm text-[var(--granite)]">
+            <span className="font-medium text-[var(--ink-black)]">{formatDateKorean()}</span>
+            <span className="h-1 w-1 rounded-full bg-[var(--light-signal-orange)]" />
+            <span>오늘의 기록 시작</span>
+          </div>
+        </div>
+
+        <div className="relative mr-2 mt-2 hidden shrink-0 sm:block">
+          <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full bg-[var(--ink-black)]">
+            <Image
+              src="/icons/greeting.png"
+              alt="greeting"
+              width={68}
+              height={68}
+              className="object-contain"
+            />
+          </div>
+          <div className="absolute -bottom-1 -right-2 flex h-14 w-14 items-center justify-center rounded-full bg-white text-xl text-[var(--ink-black)] shadow-[var(--shadow-sm)]">
+            →
+          </div>
         </div>
       </div>
-    </motion.div>
+    </motion.section>
   );
 }

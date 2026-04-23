@@ -55,8 +55,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: light)", color: "#f3f0ee" },
+    { media: "(prefers-color-scheme: dark)", color: "#f3f0ee" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -64,12 +64,8 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 const myFont = localFont({
-  src: [
-    { path: "../fonts/NanumSquareRoundL.ttf", weight: "300" },
-    { path: "../fonts/NanumSquareRoundR.ttf", weight: "400" },
-    { path: "../fonts/NanumSquareRoundB.ttf", weight: "700" },
-    { path: "../fonts/NanumSquareRoundEB.ttf", weight: "800" },
-  ],
+  src: [{ path: "../fonts/NanumSquareNeo-Variable.ttf", weight: "300 800", style: "normal" }],
+  variable: "--font-editorial",
 });
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -83,7 +79,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <link rel="apple-touch-icon" href="/ios/AppIcon@2x.png"></link>
       </head>
-      <body className={myFont.className}>
+      <body className={`${myFont.variable} font-editorial`}>
         <QueryProvider>
           {children}
           <Analytics />

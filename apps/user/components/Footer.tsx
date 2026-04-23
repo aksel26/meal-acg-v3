@@ -18,53 +18,68 @@ export function Footer({ className = "" }: FooterProps) {
   };
 
   return (
-    <footer className={`w-full mt-8 ${className}`}>
-      <div className="card-premium mx-0 rounded-2xl overflow-hidden">
-        <div className="p-6 space-y-5 relative">
-          {/* Decorative gradient */}
-          <div className="absolute top-0 right-0 w-32 h-32 bg-[oklch(0.92_0.05_250/0.3)] rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
-
-          {/* App Info */}
-          <div className="text-center relative">
-            <h3 className="text-sm font-semibold text-[oklch(0.25_0.02_250)] mb-1.5">
-              ACG 식대관리 서비스
-            </h3>
-            <p className="text-xs text-[oklch(0.55_0.01_250)] leading-relaxed">
-              간편한 식대관리, 점심조 편성, 음료취합을 위한 앱
+    <footer className={`w-full ${className}`}>
+      <div className="overflow-hidden rounded-[40px] bg-[var(--ink-black)] text-white shadow-[var(--shadow-elevated)]">
+        <div className="space-y-6 px-6 py-8">
+          <div className="space-y-3">
+            <p className="eyebrow-label text-[rgba(255,255,255,0.72)] before:bg-[var(--light-signal-orange)]">
+              Support
+            </p>
+            <h2 className="max-w-[16rem] text-[1.8rem] font-medium leading-[1.05] tracking-[-0.03em]">
+              식대 관리가 필요한 순간에 바로 닿는 안내와 지원.
+            </h2>
+            <p className="max-w-[18rem] text-sm leading-6 text-[rgba(255,255,255,0.68)]">
+              식대 기록, 점심조 편성, 음료 취합까지 user 앱 안에서 같은 톤으로 이어집니다.
             </p>
           </div>
 
-          {/* Divider */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <motion.button
+              whileTap={{ scale: 0.98 }}
+              onClick={() => window.open("https://github.com/aksel26", "_blank")}
+              className="flex items-center justify-between rounded-[999px] border border-white/10 bg-white/6 px-4 py-3 text-left transition-colors hover:bg-white/10"
+            >
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10">
+                  <Image src={GithubIconSvg} alt="GitHub" width={16} height={16} />
+                </span>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-[rgba(255,255,255,0.45)]">
+                    Github
+                  </p>
+                  <p className="text-sm font-medium">aksel26</p>
+                </div>
+              </div>
+              <span className="text-lg text-[rgba(255,255,255,0.7)]">↗</span>
+            </motion.button>
+
+            <motion.button
+              whileTap={{ scale: 0.98 }}
+              onClick={handleEmailClick}
+              className="flex items-center justify-between rounded-[999px] border border-white/10 bg-white/6 px-4 py-3 text-left transition-colors hover:bg-white/10"
+            >
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10">
+                  <AtSign size={16} className="text-[var(--canvas-cream)]" />
+                </span>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-[rgba(255,255,255,0.45)]">
+                    Email
+                  </p>
+                  <p className="text-sm font-medium">hmkim@acghr.co.kr</p>
+                </div>
+              </div>
+              <span className="text-lg text-[rgba(255,255,255,0.7)]">↗</span>
+            </motion.button>
+          </div>
+
           <div className="divider" />
 
-          {/* Links */}
-          <div className="flex justify-center items-center gap-4 relative">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => window.open("https://github.com/aksel26", "_blank")}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[oklch(0.97_0.01_250)] hover:bg-[oklch(0.95_0.02_250)] transition-colors"
-            >
-              <Image src={GithubIconSvg} alt="GitHub" width={14} height={14} />
-              <span className="text-xs text-[oklch(0.40_0.01_250)]">aksel26</span>
-            </motion.button>
-
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleEmailClick}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[oklch(0.97_0.01_250)] hover:bg-[oklch(0.95_0.02_250)] transition-colors"
-            >
-              <AtSign size={14} className="text-[oklch(0.50_0.01_250)]" />
-              <span className="text-xs text-[oklch(0.40_0.01_250)]">hmkim@acghr.co.kr</span>
-            </motion.button>
-          </div>
-
-          {/* Copyright */}
-          <div className="text-center pt-2 relative">
-            <p className="text-[10px] text-[oklch(0.60_0.01_250)]">
-              © {currentYear} ACG 식대관리 서비스. All rights reserved.
-            </p>
+          <div className="flex items-center justify-between gap-4 text-xs text-[rgba(255,255,255,0.58)]">
+            <span>© {currentYear} ACG Meal Service</span>
+            <span className="rounded-[999px] border border-white/12 px-3 py-1.5 text-[rgba(255,255,255,0.72)]">
+              KO • User App
+            </span>
           </div>
         </div>
       </div>

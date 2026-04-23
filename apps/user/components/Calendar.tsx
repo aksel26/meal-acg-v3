@@ -196,10 +196,48 @@ export default function CalendarComponent({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.2 }}
-      className="card-premium rounded-2xl p-3 sm:p-4 overflow-hidden touch-pan-y"
+      className="card-premium overflow-hidden p-4 sm:p-5 touch-pan-y"
     >
+      <div className="mb-4 flex items-start justify-between gap-3 px-1">
+        <div>
+          <p className="eyebrow-label">Calendar</p>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-[1.8rem] font-medium tracking-[-0.04em] text-[var(--ink-black)]">
+              {currentMonth}월
+            </span>
+            <span className="text-sm text-[var(--slate-gray)]">{currentYear}</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handlePrevClick}
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(20,20,19,0.08)] bg-white/90 transition-colors hover:bg-white touch-manipulation"
+            aria-label="이전 달"
+          >
+            <svg className="h-5 w-5 text-[var(--ink-black)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+
+          <button
+            onClick={handleNextClick}
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(20,20,19,0.08)] bg-white/90 transition-colors hover:bg-white touch-manipulation"
+            aria-label="다음 달"
+          >
+            <svg className="h-5 w-5 text-[var(--ink-black)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div className="mb-4 rounded-[24px] bg-white/70 px-4 py-3 text-xs leading-5 text-[var(--granite)]">
+        날짜를 누르면 해당 일자의 식사 기록을 바로 입력하거나 수정할 수 있습니다.
+      </div>
+
       {/* 월 표시 헤더 */}
-      <div className="flex items-center justify-between mb-3 px-1">
+      <div className="hidden items-center justify-between mb-3 px-1">
         <button
           onClick={handlePrevClick}
           className="p-2 -ml-2 rounded-xl hover:bg-gray-100 active:bg-gray-200 transition-colors touch-manipulation"
@@ -232,7 +270,7 @@ export default function CalendarComponent({
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.1}
         onDragEnd={handleDragEnd}
-        className="cursor-grab active:cursor-grabbing"
+        className="cursor-grab active:cursor-grabbing rounded-[28px] bg-white/72 p-2"
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
@@ -254,6 +292,8 @@ export default function CalendarComponent({
                 month_caption: "hidden",
                 nav: "hidden",
                 day: "relative w-full p-0 text-center min-h-[60px] sm:min-h-[72px] select-none",
+                weekdays: "mb-2",
+                weekday: "text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--slate-gray)]",
               }}
               components={calendarComponents}
             />

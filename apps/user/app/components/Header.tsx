@@ -20,22 +20,33 @@ const Header = () => {
         duration: 0.3,
         ease: [0.16, 1, 0.3, 1],
       }}
-      className="sticky top-0 px-4 pt-3"
+      className="sticky top-0 z-40 pt-3"
     >
-      <div className="glass-card-elevated rounded-2xl px-5 py-3 flex justify-center items-center">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.1 }}
-        >
-          <Image
-            src={LOGO}
-            alt="ACG Logo"
-            width={48}
-            height={16}
-            className="opacity-70 hover:opacity-100 transition-opacity duration-200"
-          />
-        </motion.div>
+      <div className="glass-card-elevated flex items-center justify-between gap-4 rounded-[999px] px-5 py-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--canvas-cream)]">
+            <Image
+              src={LOGO}
+              alt="ACG Logo"
+              width={42}
+              height={14}
+              className="opacity-80"
+            />
+          </div>
+          <div className="min-w-0">
+            <p className="eyebrow-label text-[11px]">User App</p>
+            <p className="truncate text-sm font-medium tracking-[-0.02em] text-[var(--ink-black)]">
+              ACG Meal Companion
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 rounded-full border border-[rgba(20,20,19,0.08)] bg-[var(--lifted-cream)] px-3 py-2">
+          <span className="h-2 w-2 rounded-full bg-[var(--signal-orange)]" />
+          <span className="text-xs font-medium text-[var(--granite)]">
+            식대관리
+          </span>
+        </div>
       </div>
     </motion.header>
   );

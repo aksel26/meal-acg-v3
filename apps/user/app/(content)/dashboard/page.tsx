@@ -3,6 +3,7 @@
 
 import GreetingSection from "@/components/dashboard/GreetingSection";
 import MealSection from "@/components/dashboard/MealSection";
+import NoticeSection from "@/components/dashboard/NoticeSection";
 import PopularRestaurantsSection from "@/components/dashboard/PopularRestaurantsSection";
 import StatsSection from "@/components/dashboard/StatsSection";
 import { CalculationData } from "@/components/dashboard/types";
@@ -34,7 +35,7 @@ export default function DashboardPage() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(dayjs().tz("Asia/Seoul").toDate());
   const [currentMonth, setCurrentMonth] = useState<number>(dayjs().tz("Asia/Seoul").month() + 1);
   const [currentYear, setCurrentYear] = useState<number>(dayjs().tz("Asia/Seoul").year());
-  const [calculationData, setCalculationData] = useState<CalculationData | null>(null);
+  const [, setCalculationData] = useState<CalculationData | null>(null);
 
   const router = useRouter();
 
@@ -158,10 +159,13 @@ export default function DashboardPage() {
 
   return (
     <React.Fragment>
-      <GreetingSection userName={displayUserName} />
-      <StatsSection userId={currentUserId} month={currentMonth} year={currentYear} onDataChange={setCalculationData} />
-      <PopularRestaurantsSection />
-      <MealSection selectedDate={selectedDate} setSelectedDate={setSelectedDate} handleMonthChange={handleMonthChange} mealData={mealData} />
+      <div className="space-y-6">
+        <GreetingSection userName={displayUserName} />
+        <NoticeSection />
+        <StatsSection userId={currentUserId} month={currentMonth} year={currentYear} onDataChange={setCalculationData} />
+        <PopularRestaurantsSection />
+        <MealSection selectedDate={selectedDate} setSelectedDate={setSelectedDate} handleMonthChange={handleMonthChange} mealData={mealData} />
+      </div>
 
       {/* Lazy-loaded Meal Entry Drawer */}
       <Suspense fallback={null}>
@@ -177,6 +181,7 @@ export default function DashboardPage() {
           delay: 0.6,
           ease: [0.25, 0.46, 0.45, 0.94],
         }}
+        className="pt-4"
       >
         <Footer />
       </motion.div>

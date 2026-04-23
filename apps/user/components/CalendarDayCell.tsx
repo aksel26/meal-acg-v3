@@ -88,43 +88,43 @@ export const CalendarDayCell = React.memo(function CalendarDayCell({
       {...dayButtonProps}
       onClick={handleDayClick}
       className={`
-        relative p-0.5 sm:p-1 rounded-xl transition-all duration-200
-        ${isSelected ? "" : "hover:bg-gray-50 active:bg-gray-100"}
+        relative rounded-[20px] p-0.5 sm:p-1 transition-all duration-200
+        ${isSelected ? "bg-[rgba(20,20,19,0.04)]" : "hover:bg-white/60 active:bg-white/80"}
         touch-manipulation
       `}
       style={
         isSelected
           ? {
               background:
-                "radial-gradient(circle, oklch(0.92 0.05 250) 10%, transparent 50%)",
+                "radial-gradient(circle, rgba(243,115,56,0.14) 10%, rgba(20,20,19,0.04) 65%)",
             }
           : undefined
       }
     >
       {isToday && (
-        <span className="absolute top-1 left-2.5 w-1.5 h-1.5 rounded-full bg-[oklch(0.45_0.2_250)]" />
+        <span className="absolute left-2.5 top-1 h-1.5 w-1.5 rounded-full bg-[var(--signal-orange)]" />
       )}
       <div className="flex flex-col items-center gap-0.5 sm:gap-1 py-1 sm:py-1.5 min-h-[60px] sm:min-h-[72px]">
         <span
           className={`
             text-xs sm:text-sm font-semibold transition-all duration-200 leading-none
-            ${isToday ? "text-[oklch(0.45_0.2_250)] font-bold" : ""}
-            ${isSelected && !isToday ? "text-blue-600" : ""}
-            ${!isToday && !isSelected && (isSunday || isHoliday) ? "text-red-500" : ""}
-            ${!isToday && !isSelected && isSaturday && !isHoliday ? "text-blue-500" : ""}
-            ${!isToday && !isSelected && !isSunday && !isSaturday && !isHoliday ? "text-gray-400" : ""}
+            ${isToday ? "text-[var(--signal-orange)] font-bold" : ""}
+            ${isSelected && !isToday ? "text-[var(--ink-black)]" : ""}
+            ${!isToday && !isSelected && (isSunday || isHoliday) ? "text-[var(--signal-orange)]" : ""}
+            ${!isToday && !isSelected && isSaturday && !isHoliday ? "text-[var(--link-blue)]" : ""}
+            ${!isToday && !isSelected && !isSunday && !isSaturday && !isHoliday ? "text-[var(--granite)]" : ""}
           `}
         >
           {children}
         </span>
         {holiday && (
-          <span className="text-[8px] sm:text-[9px] text-red-400 font-medium max-w-full px-0.5 leading-tight">
+          <span className="max-w-full px-0.5 text-[8px] font-medium leading-tight text-[var(--signal-orange)] sm:text-[9px]">
             {holiday.length > 5 ? `${holiday.slice(0, 5)}..` : holiday}
           </span>
         )}
         <div className="w-7 h-7 sm:w-9 sm:h-9 flex items-center justify-center relative">
           {isLoading ? (
-            <div className="w-5 h-5 rounded-full bg-gray-200 animate-pulse" />
+            <div className="h-5 w-5 animate-pulse rounded-full bg-[var(--whisper-cream)]" />
           ) : mealIcon ? (
             <div className="relative flex items-center justify-center">
               <Image
@@ -135,7 +135,7 @@ export const CalendarDayCell = React.memo(function CalendarDayCell({
                 className="drop-shadow-sm sm:w-[26px] sm:h-[26px]"
               />
               {mealIcon.label && (
-                <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[7px] sm:text-[8px] font-bold text-blue-600 bg-blue-50 px-1 rounded">
+                <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-white px-1.5 text-[7px] font-bold text-[var(--clay-brown)] sm:text-[8px]">
                   {mealIcon.label}
                 </span>
               )}
@@ -144,7 +144,7 @@ export const CalendarDayCell = React.memo(function CalendarDayCell({
             !isSaturday &&
             !isHoliday &&
             dayjs(day.date).isBefore(dayjs(), "day") ? (
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-100" />
+            <div className="h-7 w-7 rounded-full bg-[var(--whisper-cream)] sm:h-8 sm:w-8" />
           ) : null}
         </div>
       </div>

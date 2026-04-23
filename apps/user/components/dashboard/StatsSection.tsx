@@ -41,11 +41,9 @@ function CalculationResult({
     year,
   );
 
-  // 복지포인트 정산 Dialog 상태
   const [dialogOpen, setDialogOpen] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState(0);
 
-  // 복지포인트 관련 hooks (잔액 초과 시에만 조회)
   const isOverBudget = data ? data.balance < 0 : false;
   const { userName, memberId } = useUserStore();
   const { data: memberLookup } = useMemberIdLookup(
@@ -98,19 +96,23 @@ function CalculationResult({
     onDataChange?.(data || null);
   }, [data, onDataChange]);
 
+  const copyAccount = () => {
+    navigator.clipboard
+      .writeText("국민 005701-04-142344 ㈜에이시지알")
+      .then(() => toast.success("계좌 정보가 복사되었습니다."))
+      .catch(() => toast.error("복사에 실패했습니다."));
+  };
+
   if (isLoading) {
     return (
-      <div className="card-premium rounded-2xl p-5 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-[oklch(0.92_0.06_200/0.25)] rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
-        <div className="space-y-4 relative">
-          <div className="flex justify-between items-center">
-            <div className="skeleton h-4 w-16 rounded" />
-            <div className="skeleton h-6 w-24 rounded" />
-          </div>
-          <div className="skeleton h-2 w-full rounded-full" />
-          <div className="flex justify-between">
-            <div className="skeleton h-4 w-20 rounded" />
-            <div className="skeleton h-4 w-20 rounded" />
+      <div className="card-premium overflow-hidden p-6">
+        <div className="space-y-4">
+          <div className="skeleton h-4 w-24 rounded-full" />
+          <div className="skeleton h-12 w-48 rounded-full" />
+          <div className="skeleton h-3 w-full rounded-full" />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="skeleton h-20 rounded-[24px]" />
+            <div className="skeleton h-20 rounded-[24px]" />
           </div>
         </div>
       </div>
@@ -119,13 +121,13 @@ function CalculationResult({
 
   if (error) {
     return (
-      <div className="card-premium rounded-2xl p-6 text-center relative overflow-hidden">
-        <p className="text-sm text-gray-500 mb-3">{error.message}</p>
+      <div className="card-premium overflow-hidden p-6 text-center">
+        <p className="text-sm text-[var(--granite)]">{error.message}</p>
         <Button
           onClick={() => refetch()}
           variant="outline"
           size="sm"
-          className="text-xs rounded-lg px-4"
+          className="btn-secondary mt-4 px-4 py-2 text-xs"
         >
           다시 시도
         </Button>
@@ -136,173 +138,185 @@ function CalculationResult({
   if (!data) {
     return (
       <div className="flex items-center justify-center py-8">
-        <div className="flex items-center gap-2 text-gray-400">
-          <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-500 rounded-full animate-spin" />
+        <div className="flex items-center gap-2 text-[var(--slate-gray)]">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--whisper-cream)] border-t-[var(--signal-orange)]" />
           <span className="text-sm">불러오는 중...</span>
         </div>
       </div>
     );
   }
 
-  const formatCurrency = (amount: number) => {
-    return Math.abs(amount).toLocaleString();
-  };
-
-  // 사용 비율 계산 (0~100)
+  const formatCurrency = (amount: number) => Math.abs(amount).toLocaleString();
   const usagePercent =
     data.allowanceAmount > 0
       ? Math.min(100, Math.round((data.totalUsed / data.allowanceAmount) * 100))
       : 0;
-
-  // 잔액 상태 판단
   const isLowBalance =
     data.balance >= 0 && data.balance < data.allowanceAmount * 0.2;
+  const statusLabel = isOverBudget ? "초과" : isLowBalance ? "주의" : "양호";
+  const statusTone = isOverBudget
+    ? "bg-[rgba(207,69,0,0.12)] text-[var(--clay-brown)]"
+    : isLowBalance
+      ? "bg-[rgba(243,115,56,0.14)] text-[var(--clay-brown)]"
+      : "bg-[var(--whisper-cream)] text-[var(--ink-black)]";
+  const progressTone = isOverBudget
+    ? "from-[var(--signal-orange)] to-[var(--clay-brown)]"
+    : isLowBalance
+      ? "from-[var(--light-signal-orange)] to-[var(--signal-orange)]"
+      : "from-[var(--ink-black)] to-[var(--charcoal)]";
 
   return (
-    <div className="card-premium rounded-2xl relative">
-      {/* Decorative Elements */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-[oklch(0.92_0.06_200/0.25)] rounded-full blur-2xl -translate-y-1/2 translate-x-1/4" />
-      <div className="absolute bottom-0 left-0 w-24 h-24 bg-[oklch(0.90_0.08_250/0.2)] rounded-full blur-2xl translate-y-1/2 -translate-x-1/4" />
+    <div className="card-premium relative overflow-hidden">
+      <div className="absolute -right-10 top-0 h-40 w-40 rounded-full bg-[var(--whisper-cream)]" />
+      <div className="orbit-line -left-12 top-20 h-56 w-56 opacity-65" />
 
-      {/* 메인 잔액 표시 */}
-      <div className="relative px-5 pt-5 pb-4">
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <p className="text-xs text-gray-500 mb-1">이번 달 잔액</p>
-            <div className="flex items-baseline gap-1 relative">
-              {isOverBudget && (
-                <span className="text-2xl font-bold text-red-500">-</span>
-              )}
-              <NumberTicker
-                value={Math.abs(data.balance)}
-                className={`text-2xl font-bold tracking-tight ${
-                  isOverBudget
-                    ? "text-red-500"
-                    : isLowBalance
-                      ? "text-amber-600"
-                      : "text-gray-900"
-                }`}
-              />
-              <span
-                className={`text-sm font-medium ${
-                  isOverBudget
-                    ? "text-red-400"
-                    : isLowBalance
-                      ? "text-amber-500"
-                      : "text-gray-400"
-                }`}
-              >
-                원
-              </span>
+      <div className="relative px-6 pt-6 pb-5">
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <p className="eyebrow-label">Monthly Balance</p>
+              <p className="text-sm text-[var(--granite)]">{month}월 잔액</p>
+              <div className="flex items-end gap-1">
+                {isOverBudget && (
+                  <span className="text-3xl font-medium text-[var(--signal-orange)]">-</span>
+                )}
+                <NumberTicker
+                  value={Math.abs(data.balance)}
+                  className={`text-[2.5rem] font-medium tracking-[-0.05em] ${
+                    isOverBudget
+                      ? "text-[var(--signal-orange)]"
+                      : isLowBalance
+                        ? "text-[var(--clay-brown)]"
+                        : "text-[var(--ink-black)]"
+                  }`}
+                />
+                <span className="pb-1 text-sm font-medium text-[var(--slate-gray)]">
+                  원
+                </span>
+              </div>
+            </div>
 
-            
+            <div className={`inline-flex rounded-[999px] px-3 py-1.5 text-xs font-medium ${statusTone}`}>
+              {statusLabel}
             </div>
           </div>
 
-          {/* 상태 뱃지 */}
-          <div
-            className={`px-2.5 py-1 rounded-full text-[11px] font-medium ${
-              isOverBudget
-                ? "bg-red-50 text-red-600"
-                : isLowBalance
-                  ? "bg-amber-50 text-amber-600"
-                  : "bg-emerald-50 text-emerald-600"
-            }`}
-          >
-            {isOverBudget ? "초과" : isLowBalance ? "주의" : "양호"}
+          <div className="relative mt-1 hidden h-28 w-28 shrink-0 sm:block">
+            <div className="absolute inset-0 rounded-full bg-white/70" />
+            <div className="absolute inset-[10px] rounded-full border border-[rgba(243,115,56,0.34)]" />
+            <div className="absolute inset-0 flex items-center justify-center text-sm font-medium text-[var(--ink-black)]">
+              {usagePercent}%
+            </div>
+            <div className="absolute -bottom-1 -right-1 flex h-12 w-12 items-center justify-center rounded-full bg-white text-[var(--ink-black)] shadow-[var(--shadow-sm)]">
+              ↗
+            </div>
           </div>
         </div>
 
-        {/* 사용량 프로그레스 바 */}
-        <div className="space-y-2">
-          <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+        <div className="mt-6 space-y-3">
+          <div className="h-3 overflow-hidden rounded-full bg-white/75">
             <motion.div
               initial={{ width: 0, opacity: 0 }}
               animate={{ width: `${Math.min(usagePercent, 100)}%`, opacity: 1 }}
               transition={{
                 width: { duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.2 },
-                opacity: { duration: 0.3 }
+                opacity: { duration: 0.3 },
               }}
-              className={`h-full rounded-full relative ${
-                isOverBudget
-                  ? "bg-gradient-to-r from-red-400 to-red-500"
-                  : isLowBalance
-                    ? "bg-gradient-to-r from-amber-400 to-amber-500"
-                    : "bg-gradient-to-r from-[oklch(0.55_0.18_250)] to-[oklch(0.48_0.20_270)]"
-              }`}
-            >
-              {/* 글로우 효과 */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-white/30 to-transparent"
-              />
-            </motion.div>
+              className={`h-full rounded-full bg-gradient-to-r ${progressTone}`}
+            />
           </div>
-          <div className="flex justify-between text-[11px] text-gray-400">
-            <motion.span
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-            >
-              {usagePercent}% 사용
-            </motion.span>
+          <div className="flex justify-between text-xs text-[var(--slate-gray)]">
+            <span>{usagePercent}% 사용</span>
             <span>{formatCurrency(data.allowanceAmount)}원 중</span>
           </div>
         </div>
 
-          {/* 잔액 초과 시 둥실둥실 떠다니는 복지포인트 풍선 */}
-          {isOverBudget && (
-                <button
-                  type="button"
-                  onClick={handleOpenDialog}
-                  className="absolute left-42 top-1/2 -translate-y-[25px] ml-2.5 z-10"
-                >
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.5 }}
-                    animate={{
-                      opacity: 1,
-                      scale: 1,
-                      y: [0, -4, 0, 3, 0],
-                    }}
-                    transition={{
-                      opacity: { duration: 0.3, delay: 0.8 },
-                      scale: {
-                        type: "spring",
-                        stiffness: 500,
-                        damping: 15,
-                        delay: 0.8,
-                      },
-                      y: {
-                        duration: 3,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                        delay: 1.2,
-                      },
-                    }}
-                    className="relative whitespace-nowrap"
-                  >
-                    {/* 말풍선 본체 */}
-                    <div className="bg-gradient-to-r from-[oklch(0.55_0.15_270)] to-[oklch(0.55_0.15_300)] text-white rounded-xl px-3 py-1.5 text-[11px] font-semibold shadow-lg shadow-violet-500/25 active:scale-95 transition-transform">
-                      복지포인트로 지불하기
-                    </div>
-                    {/* 왼쪽 삼각형 포인터 */}
-                    <div
-                      className="absolute top-1/2 -translate-y-1/2 -left-[4px]"
-                      style={{
-                        width: 0,
-                        height: 0,
-                        borderTop: "5px solid transparent",
-                        borderBottom: "5px solid transparent",
-                        borderRight: "6px solid oklch(0.55 0.15 270)",
-                      }}
-                    />
-                  </motion.div>
-                </button>
-              )}
+        <div className="mt-5 grid grid-cols-2 gap-3">
+          <div className="rounded-[24px] bg-white/72 px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">
+              사용가능액
+            </p>
+            <p className="mt-2 text-base font-medium text-[var(--ink-black)]">
+              {formatCurrency(data.allowanceAmount)}
+              <span className="ml-1 text-xs font-normal text-[var(--slate-gray)]">원</span>
+            </p>
+          </div>
+          <div className="rounded-[24px] bg-white/72 px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">
+              사용금액
+            </p>
+            <p className="mt-2 text-base font-medium text-[var(--ink-black)]">
+              {formatCurrency(data.totalUsed)}
+              <span className="ml-1 text-xs font-normal text-[var(--slate-gray)]">원</span>
+            </p>
+          </div>
+        </div>
 
-      {/* 복지포인트 정산 확인 Dialog */}
+        {isOverBudget && (
+          <button
+            type="button"
+            onClick={handleOpenDialog}
+            className="btn-secondary mt-4 w-full py-2 text-sm"
+          >
+            복지포인트로 초과분 정산하기
+          </button>
+        )}
+      </div>
+
+      {((data.totalDeduction ?? 0) > 0 || (data.weekendWorkCount ?? 0) > 0) && (
+        <div className="relative border-t border-[rgba(20,20,19,0.08)] bg-white/50 px-6 py-4">
+          <p className="eyebrow-label text-[11px]">Adjustments</p>
+          <div className="mt-3 space-y-2">
+            {(data.weekendWorkCount ?? 0) > 0 && (
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-[var(--granite)]">주말근무 {data.weekendWorkCount}일</span>
+                <span className="font-medium text-[var(--link-blue)]">
+                  +{formatCurrency(data.weekendWorkAddition || 0)}원
+                </span>
+              </div>
+            )}
+            {(data.individualMealCount ?? 0) > 0 && (
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-[var(--granite)]">개별식사 {data.individualMealCount}회</span>
+                <span className="font-medium text-[var(--granite)]">
+                  -{formatCurrency(data.individualMealDeduction || 0)}원
+                </span>
+              </div>
+            )}
+            {(data.noMealFullDayCount ?? 0) > 0 && (
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-[var(--granite)]">연차/재택/휴무 {data.noMealFullDayCount}일</span>
+                <span className="font-medium text-[var(--granite)]">
+                  -{formatCurrency(data.noMealDeduction || 0)}원
+                </span>
+              </div>
+            )}
+            {(data.halfDayOffCount ?? 0) > 0 && (
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-[var(--granite)]">반차 {data.halfDayOffCount}일</span>
+                <span className="font-medium text-[var(--granite)]">
+                  -{formatCurrency(data.halfDayDeduction || 0)}원
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="relative border-t border-[rgba(20,20,19,0.08)] px-6 py-4">
+        <button
+          type="button"
+          onClick={copyAccount}
+          className="flex w-full items-center justify-between rounded-[999px] bg-white/70 px-4 py-3 text-xs transition-opacity active:opacity-70"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-[var(--slate-gray)]">입금계좌</span>
+            <span className="font-medium text-[var(--granite)]">국민 005701-04-142344 ㈜에이시지알</span>
+          </div>
+          <Copy className="h-3.5 w-3.5 text-[var(--slate-gray)]" />
+        </button>
+      </div>
+
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -310,8 +324,8 @@ function CalculationResult({
             <DialogDescription>{month}월 점심식대 초과분</DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
+          <div className="space-y-3">
+            <label className="text-sm font-medium text-[var(--granite)]">
               정산금액
             </label>
             <Input
@@ -326,11 +340,11 @@ function CalculationResult({
             const depositAmount = totalOverage - paymentAmount;
             if (depositAmount <= 0) return null;
             return (
-              <div className="p-3 bg-amber-50 rounded-xl border border-amber-100 space-y-1.5">
-                <p className="text-xs font-semibold text-amber-700">
+              <div className="space-y-1.5 rounded-[24px] border border-[rgba(243,115,56,0.16)] bg-[rgba(243,115,56,0.08)] p-4">
+                <p className="text-xs font-semibold text-[var(--clay-brown)]">
                   잔금 입금 안내
                 </p>
-                <p className="text-[11px] text-amber-600">
+                <p className="text-[11px] text-[var(--clay-brown)]">
                   정산금액({totalOverage.toLocaleString()}원) 중 나머지{" "}
                   <span className="font-bold">
                     {depositAmount.toLocaleString()}원
@@ -339,24 +353,17 @@ function CalculationResult({
                 </p>
                 <button
                   type="button"
-                  onClick={() => {
-                    navigator.clipboard
-                      .writeText("국민 005701-04-142344 ㈜에이시지알")
-                      .then(() =>
-                        toast.success("계좌 정보가 복사되었습니다."),
-                      )
-                      .catch(() => toast.error("복사에 실패했습니다."));
-                  }}
-                  className="flex items-center gap-1.5 text-[11px] font-medium text-amber-800 bg-amber-100 rounded-lg px-2.5 py-1.5 active:bg-amber-200 transition-colors"
+                  onClick={copyAccount}
+                  className="flex items-center gap-1.5 rounded-[999px] bg-white px-3 py-2 text-[11px] font-medium text-[var(--clay-brown)]"
                 >
                   <span>국민 005701-04-142344 ㈜에이시지알</span>
-                  <Copy className="w-3 h-3 shrink-0" />
+                  <Copy className="h-3 w-3 shrink-0" />
                 </button>
               </div>
             );
           })()}
 
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-[var(--slate-gray)]">
             {month}월 점심식대 초과분을 복지포인트에서 차감합니다.
           </p>
 
@@ -373,96 +380,6 @@ function CalculationResult({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      </div>
-
-      {/* 상세 내역 */}
-      <div className="relative grid grid-cols-2 border-t border-white/40">
-        <div className="px-5 py-4 border-r border-white/40">
-          <p className="text-[11px] text-gray-400 mb-1">사용가능액</p>
-          <p className="text-base font-semibold text-gray-700">
-            {formatCurrency(data.allowanceAmount)}
-            <span className="text-xs font-normal text-gray-400 ml-0.5">원</span>
-          </p>
-        </div>
-        <div className="px-5 py-4">
-          <p className="text-[11px] text-gray-400 mb-1">사용금액</p>
-          <p className="text-base font-semibold text-gray-700">
-            {formatCurrency(data.totalUsed)}
-            <span className="text-xs font-normal text-gray-400 ml-0.5">원</span>
-          </p>
-        </div>
-      </div>
-
-      {/* 차감/가산 정보 (있을 경우) */}
-      {((data.totalDeduction ?? 0) > 0 || (data.weekendWorkCount ?? 0) > 0) && (
-        <div className="relative px-5 py-3 bg-white/30 border-t border-white/40 space-y-1.5">
-          {/* 주말 근무 가산 */}
-          {(data.weekendWorkCount ?? 0) > 0 && (
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-500">
-                주말근무 {data.weekendWorkCount}일
-              </span>
-              <span className="font-medium text-blue-600">
-                +{formatCurrency(data.weekendWorkAddition || 0)}원
-              </span>
-            </div>
-          )}
-          {/* 개별식사 차감 */}
-          {(data.individualMealCount ?? 0) > 0 && (
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-500">
-                개별식사 {data.individualMealCount}회
-              </span>
-              <span className="font-medium text-gray-600">
-                -{formatCurrency(data.individualMealDeduction || 0)}원
-              </span>
-            </div>
-          )}
-          {/* 연차/재택/휴무 차감 */}
-          {(data.noMealFullDayCount ?? 0) > 0 && (
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-500">
-                연차/재택/휴무 {data.noMealFullDayCount}일
-              </span>
-              <span className="font-medium text-gray-600">
-                -{formatCurrency(data.noMealDeduction || 0)}원
-              </span>
-            </div>
-          )}
-          {/* 반차 차감 */}
-          {(data.halfDayOffCount ?? 0) > 0 && (
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-500">
-                반차 {data.halfDayOffCount}일
-              </span>
-              <span className="font-medium text-gray-600">
-                -{formatCurrency(data.halfDayDeduction || 0)}원
-              </span>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 계좌 복사 버튼 */}
-      <div className="relative px-5 py-3 border-t border-white/40">
-        <button
-          type="button"
-          onClick={() => {
-            navigator.clipboard
-              .writeText("국민 005701-04-142344 ㈜에이시지알")
-              .then(() => toast.success("계좌 정보가 복사되었습니다."))
-              .catch(() => toast.error("복사에 실패했습니다."));
-          }}
-          className="flex items-center justify-between w-full text-xs active:opacity-70 transition-opacity"
-        >
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px] text-gray-400">입금계좌</span>
-            <span className="font-medium text-gray-600">국민 005701-04-142344 ㈜에이시지알</span>
-          </div>
-          <Copy className="w-3.5 h-3.5 text-gray-400" />
-        </button>
-      </div>
-
     </div>
   );
 }
@@ -478,7 +395,6 @@ export default function StatsSection({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
-      className="mb-6"
     >
       <CalculationResult
         userId={userId}

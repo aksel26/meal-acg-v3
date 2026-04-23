@@ -32,7 +32,7 @@ export default function PopularRestaurantsSection() {
           <div className="skeleton h-8 w-44 rounded-full" />
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="skeleton h-16 w-full rounded-[20px]" />
+              <div key={i} className="skeleton h-16 w-full rounded-[16px]" />
             ))}
           </div>
         </div>
@@ -62,7 +62,7 @@ export default function PopularRestaurantsSection() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="relative overflow-hidden rounded-[40px] bg-[var(--lifted-cream)] px-6 py-6 shadow-[var(--shadow-elevated)]"
+      className="relative overflow-hidden rounded-[24px] bg-[var(--lifted-cream)] px-6 py-6 shadow-[var(--shadow-elevated)]"
     >
       <div className="orbit-line right-[-3rem] top-6 h-28 w-28 opacity-70" />
       <div className="flex items-start justify-between gap-4">
@@ -128,7 +128,7 @@ function RestaurantItem({
         ease: [0.25, 0.46, 0.45, 0.94],
         layout: { duration: 0.12 },
       }}
-      className="flex items-center gap-4 rounded-[24px] border border-[rgba(20,20,19,0.06)] bg-white/70 px-4 py-3"
+      className="flex items-center gap-4 rounded-[16px] border border-[rgba(20,20,19,0.06)] bg-white/70 px-4 py-3"
     >
       <div
         className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
@@ -147,7 +147,7 @@ function RestaurantItem({
         </p>
       </div>
 
-      <div className="rounded-[999px] bg-[var(--canvas-cream)] px-3 py-1.5 text-xs font-medium text-[var(--granite)]">
+      <div className="rounded-[14px] bg-[var(--canvas-cream)] px-3 py-1.5 text-xs font-medium text-[var(--granite)]">
         {restaurant.count}회
       </div>
     </motion.div>

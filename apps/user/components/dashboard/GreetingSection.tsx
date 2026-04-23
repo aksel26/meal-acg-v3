@@ -25,7 +25,7 @@ export default function GreetingSection({ userName }: GreetingSectionProps) {
         delay: 0.1,
         ease: [0.16, 1, 0.3, 1],
       }}
-      className="relative overflow-hidden rounded-[40px] bg-[var(--lifted-cream)] px-6 py-7 shadow-[var(--shadow-elevated)]"
+      className="relative overflow-hidden rounded-[24px] bg-[var(--lifted-cream)] px-6 py-7 shadow-[var(--shadow-elevated)]"
     >
       <div className="absolute -right-10 top-0 h-40 w-40 rounded-full bg-[var(--whisper-cream)]" />
       <div className="orbit-line -left-16 bottom-4 h-48 w-48 opacity-70" />
@@ -45,7 +45,7 @@ export default function GreetingSection({ userName }: GreetingSectionProps) {
             </p>
           </div>
 
-          <div className="inline-flex items-center gap-2 rounded-[999px] border border-[rgba(20,20,19,0.08)] bg-white/80 px-4 py-2 text-sm text-[var(--granite)]">
+          <div className="inline-flex items-center gap-2 rounded-[16px] border border-[rgba(20,20,19,0.08)] bg-white/80 px-4 py-2 text-sm text-[var(--granite)]">
             <span className="font-medium text-[var(--ink-black)]">{formatDateKorean()}</span>
             <span className="h-1 w-1 rounded-full bg-[var(--light-signal-orange)]" />
             <span>오늘의 기록 시작</span>

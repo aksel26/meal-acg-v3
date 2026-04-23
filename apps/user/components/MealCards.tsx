@@ -210,7 +210,7 @@ export function MealCards({
               {formatDate(selectedDate)}
             </span>
           </div>
-          <span className="rounded-[999px] bg-white/80 px-3 py-1.5 text-xs font-medium text-[var(--granite)]">
+            <span className="rounded-[14px] bg-white/80 px-3 py-1.5 text-xs font-medium text-[var(--granite)]">
             {currentMealData.attendance}
           </span>
         </div>
@@ -241,7 +241,7 @@ export function MealCards({
             </span>
           </div>
           {currentMealData?.attendance && (
-            <span className="rounded-[999px] bg-white/80 px-3 py-1.5 text-xs text-[var(--granite)]">
+            <span className="rounded-[14px] bg-white/80 px-3 py-1.5 text-xs text-[var(--granite)]">
               {currentMealData.attendance}
             </span>
           )}
@@ -289,7 +289,7 @@ export function MealCards({
         </div>
         {currentMealData?.attendance &&
           !currentMealData.attendance.includes("근무") && (
-            <span className="rounded-[999px] bg-white/80 px-3 py-1.5 text-xs text-[var(--granite)]">
+            <span className="rounded-[14px] bg-white/80 px-3 py-1.5 text-xs text-[var(--granite)]">
               {currentMealData.attendance}
             </span>
           )}
@@ -310,7 +310,7 @@ export function MealCards({
                 onAddMeal?.(meal.type);
               }
             }}
-            className={`flex w-full items-center justify-between rounded-[24px] border border-[rgba(20,20,19,0.06)] p-3.5 text-left transition-colors ${meal.tone}`}
+            className={`flex w-full items-center justify-between rounded-[16px] border border-[rgba(20,20,19,0.06)] p-3.5 text-left transition-colors ${meal.tone}`}
           >
             <div className="flex min-w-0 items-center gap-3">
               <div className={`h-2.5 w-2.5 rounded-full ${meal.dot}`} />

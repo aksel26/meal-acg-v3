@@ -88,15 +88,14 @@ export const CalendarDayCell = React.memo(function CalendarDayCell({
       {...dayButtonProps}
       onClick={handleDayClick}
       className={`
-        relative rounded-[20px] p-0.5 sm:p-1 transition-all duration-200
+        relative rounded-[12px] p-0.5 sm:p-1 transition-all duration-200
         ${isSelected ? "bg-[rgba(20,20,19,0.04)]" : "hover:bg-white/60 active:bg-white/80"}
         touch-manipulation
       `}
       style={
         isSelected
           ? {
-              background:
-                "radial-gradient(circle, rgba(243,115,56,0.14) 10%, rgba(20,20,19,0.04) 65%)",
+              background: "rgba(232, 226, 218, 0.8)",
             }
           : undefined
       }

@@ -111,8 +111,8 @@ function CalculationResult({
           <div className="skeleton h-12 w-48 rounded-full" />
           <div className="skeleton h-3 w-full rounded-full" />
           <div className="grid grid-cols-2 gap-3">
-            <div className="skeleton h-20 rounded-[24px]" />
-            <div className="skeleton h-20 rounded-[24px]" />
+            <div className="skeleton h-20 rounded-[18px]" />
+            <div className="skeleton h-20 rounded-[18px]" />
           </div>
         </div>
       </div>
@@ -160,10 +160,10 @@ function CalculationResult({
       ? "bg-[rgba(243,115,56,0.14)] text-[var(--clay-brown)]"
       : "bg-[var(--whisper-cream)] text-[var(--ink-black)]";
   const progressTone = isOverBudget
-    ? "from-[var(--signal-orange)] to-[var(--clay-brown)]"
+    ? "bg-[var(--signal-orange)]"
     : isLowBalance
-      ? "from-[var(--light-signal-orange)] to-[var(--signal-orange)]"
-      : "from-[var(--ink-black)] to-[var(--charcoal)]";
+      ? "bg-[var(--light-signal-orange)]"
+      : "bg-[var(--ink-black)]";
 
   return (
     <div className="card-premium relative overflow-hidden">
@@ -196,7 +196,7 @@ function CalculationResult({
               </div>
             </div>
 
-            <div className={`inline-flex rounded-[999px] px-3 py-1.5 text-xs font-medium ${statusTone}`}>
+            <div className={`inline-flex rounded-[16px] px-3 py-1.5 text-xs font-medium ${statusTone}`}>
               {statusLabel}
             </div>
           </div>
@@ -222,7 +222,7 @@ function CalculationResult({
                 width: { duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.2 },
                 opacity: { duration: 0.3 },
               }}
-              className={`h-full rounded-full bg-gradient-to-r ${progressTone}`}
+              className={`h-full rounded-full ${progressTone}`}
             />
           </div>
           <div className="flex justify-between text-xs text-[var(--slate-gray)]">
@@ -232,7 +232,7 @@ function CalculationResult({
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-3">
-          <div className="rounded-[24px] bg-white/72 px-4 py-3">
+          <div className="rounded-[16px] bg-white/72 px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">
               사용가능액
             </p>
@@ -241,7 +241,7 @@ function CalculationResult({
               <span className="ml-1 text-xs font-normal text-[var(--slate-gray)]">원</span>
             </p>
           </div>
-          <div className="rounded-[24px] bg-white/72 px-4 py-3">
+          <div className="rounded-[16px] bg-white/72 px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">
               사용금액
             </p>
@@ -307,7 +307,7 @@ function CalculationResult({
         <button
           type="button"
           onClick={copyAccount}
-          className="flex w-full items-center justify-between rounded-[999px] bg-white/70 px-4 py-3 text-xs transition-opacity active:opacity-70"
+          className="flex w-full items-center justify-between rounded-[16px] bg-white/70 px-4 py-3 text-xs transition-opacity active:opacity-70"
         >
           <div className="flex items-center gap-2">
             <span className="text-[var(--slate-gray)]">입금계좌</span>
@@ -340,7 +340,7 @@ function CalculationResult({
             const depositAmount = totalOverage - paymentAmount;
             if (depositAmount <= 0) return null;
             return (
-              <div className="space-y-1.5 rounded-[24px] border border-[rgba(243,115,56,0.16)] bg-[rgba(243,115,56,0.08)] p-4">
+              <div className="space-y-1.5 rounded-[16px] border border-[rgba(243,115,56,0.16)] bg-[rgba(243,115,56,0.08)] p-4">
                 <p className="text-xs font-semibold text-[var(--clay-brown)]">
                   잔금 입금 안내
                 </p>
@@ -354,7 +354,7 @@ function CalculationResult({
                 <button
                   type="button"
                   onClick={copyAccount}
-                  className="flex items-center gap-1.5 rounded-[999px] bg-white px-3 py-2 text-[11px] font-medium text-[var(--clay-brown)]"
+                  className="flex items-center gap-1.5 rounded-[14px] bg-white px-3 py-2 text-[11px] font-medium text-[var(--clay-brown)]"
                 >
                   <span>국민 005701-04-142344 ㈜에이시지알</span>
                   <Copy className="h-3 w-3 shrink-0" />

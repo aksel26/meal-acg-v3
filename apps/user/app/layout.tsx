@@ -4,8 +4,6 @@ import "@repo/ui/styles.css";
 import type { Metadata, Viewport } from "next";
 import QueryProvider from "./providers/QueryProvider"; // 위에서 생성한 Provider 임포트
 import { Analytics } from "@vercel/analytics/next";
-// import { Geist } from "next/font/google";
-import localFont from "next/font/local";
 import dayjs from "dayjs";
 
 const APP_NAME = "🍙 ACG 식대";
@@ -63,10 +61,6 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
 };
-const myFont = localFont({
-  src: [{ path: "../fonts/NanumSquareNeo-Variable.ttf", weight: "300 800", style: "normal" }],
-  variable: "--font-editorial",
-});
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -78,8 +72,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <link rel="apple-touch-icon" href="/ios/AppIcon@2x.png"></link>
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
       </head>
-      <body className={`${myFont.variable} font-editorial`}>
+      <body className="font-editorial">
         <QueryProvider>
           {children}
           <Analytics />

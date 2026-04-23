@@ -1,31 +1,18 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Header from "../components/Header";
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { motion, AnimatePresence } from "motion/react";
 import { usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
-const Snowfall = dynamic(() => import("react-snowfall"), { ssr: false });
 const PushNotificationPrompt = dynamic(
   () => import("@/components/PushNotificationPrompt"),
   { ssr: false },
 );
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
-  const [images, setImages] = useState<HTMLImageElement[]>([]);
   const pathname = usePathname();
-
-  useEffect(() => {
-    const snowflake1 = document.createElement("img");
-    snowflake1.onload = () => {
-      setImages([snowflake1]);
-    };
-    snowflake1.onerror = () => {
-      console.error("이미지 로드 실패: /images/snowflake.png 경로를 확인해주세요.");
-    };
-    snowflake1.src = "/images/cherry-blossom.png";
-  }, []);
 
   return (
     <>
@@ -43,22 +30,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
       {/* Main Content */}
       <main className="relative px-4 py-6">
-        {/* Snowfall Effect */}
-        <Snowfall
-          snowflakeCount={25}
-          speed={[0.5, 1.5]}
-          radius={[6, 16]}
-          images={images}
-          style={{
-            position: "fixed",
-            width: "100vw",
-            height: "100vh",
-            zIndex: 1,
-            pointerEvents: "none",
-            opacity: 0.7,
-          }}
-        />
-
         {/* Page Content with Transitions */}
         <AnimatePresence mode="wait">
           <motion.div

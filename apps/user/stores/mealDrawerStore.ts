@@ -4,10 +4,10 @@ import { FormData, MealData } from "@/components/dashboard/types";
 // Step definitions
 export type StepId = "mealType" | "attendance" | "receipt" | "payer" | "store" | "amount";
 
-// 중식: 근태 먼저, 그 외: mealType 먼저
+// 중식: 근태 먼저 + 영수증 스캔 단계 포함. 조식/석식: 영수증 스캔 스킵.
 export const STEP_ORDER_LUNCH: StepId[] = ["attendance", "mealType", "receipt", "payer", "store", "amount"];
-export const STEP_ORDER_DINNER: StepId[] = ["attendance", "receipt", "payer", "store", "amount"];
-export const STEP_ORDER_OTHER: StepId[] = ["mealType", "receipt", "payer", "store", "amount"];
+export const STEP_ORDER_DINNER: StepId[] = ["attendance", "payer", "store", "amount"];
+export const STEP_ORDER_OTHER: StepId[] = ["mealType", "payer", "store", "amount"];
 
 // 기본 스텝 순서 (하위 호환)
 export const STEP_ORDER: StepId[] = STEP_ORDER_LUNCH;
@@ -101,13 +101,11 @@ const getStepOrder = (mealType: "breakfast" | "lunch" | "dinner"): StepId[] => {
 
 export const getFirstStep = (
   mealType: "breakfast" | "lunch" | "dinner",
-  attendance?: string,
+  _attendance?: string,
 ): StepId => {
   if (mealType === "lunch") return "attendance";
-  if (mealType === "dinner") {
-    return hasAttendance(attendance) ? "receipt" : "attendance";
-  }
-  return "mealType";
+  // 조식/석식: 근태 선택 UI 생략, 식사 타입 선택 UI 생략 → 결제자 스텝으로 바로 이동
+  return "payer";
 };
 
 // Helper to get next step based on meal type and attendance
@@ -212,6 +210,15 @@ export const useMealDrawerStore = create<MealDrawerState>((set, get) => ({
 
     const firstStep = getFirstStep(mealType, updatedFormData.lunch.attendance);
 
+    // 조식/석식 신규 등록: dialog 상단에 근태(있으면)+식사 타입 라벨로 표시
+    const initialCompletedSteps: StepId[] = [];
+    if (mealType !== "lunch") {
+      if (updatedFormData.lunch.attendance?.trim()) {
+        initialCompletedSteps.push("attendance");
+      }
+      initialCompletedSteps.push("mealType");
+    }
+
     set({
       isOpen: true,
       isEditMode: false,
@@ -219,7 +226,7 @@ export const useMealDrawerStore = create<MealDrawerState>((set, get) => ({
       selectedDate: date,
       formData: updatedFormData,
       currentStep: firstStep,
-      completedSteps: [],
+      completedSteps: initialCompletedSteps,
       isManualInput: false,
     });
   },
@@ -355,12 +362,29 @@ export const useMealDrawerStore = create<MealDrawerState>((set, get) => ({
   },
 
   setSelectedMealType: (type) => {
-    const { completedSteps } = get();
+    const { completedSteps, formData } = get();
     // When meal type changes, also complete the mealType step and advance
     const mealTypeStep: StepId = "mealType";
     const newCompletedSteps: StepId[] = completedSteps.includes(mealTypeStep)
-      ? completedSteps
+      ? [...completedSteps]
       : [...completedSteps, mealTypeStep];
+
+    const attendance = formData.lunch.attendance?.trim();
+
+    // 근태가 이미 있으면 조식/석식 선택 시 attendance 스텝을 건너뛰고 완료 라벨로 표시
+    if (type !== "lunch" && attendance && !newCompletedSteps.includes("attendance")) {
+      newCompletedSteps.push("attendance");
+    }
+
+    // 석식 + 근태 있음: attendance 스텝 스킵 → payer로 이동
+    if (type === "dinner" && attendance) {
+      set({
+        selectedMealType: type,
+        completedSteps: newCompletedSteps,
+        currentStep: "payer",
+      });
+      return;
+    }
 
     // Get next step based on the NEW meal type
     const nextStep = getNextStep("mealType", type);
@@ -460,6 +484,24 @@ export const useMealDrawerStore = create<MealDrawerState>((set, get) => ({
     const { selectedMealType, formData, completedSteps } = get();
     const stepOrder = getStepOrder(selectedMealType);
     const targetStepIndex = stepOrder.indexOf(step);
+
+    // mealType이 현재 타입의 step order에 없는 경우 (예: 석식 수정) 식사 타입 선택 화면으로 전환하며 전체 초기화
+    if (step === "mealType" && targetStepIndex === -1) {
+      set({
+        currentStep: "mealType",
+        completedSteps: [],
+        formData: {
+          ...formData,
+          [selectedMealType]: {
+            ...formData[selectedMealType],
+            payer: "",
+            store: "",
+            amount: "",
+          },
+        },
+      });
+      return;
+    }
 
     // Remove all steps at or after target step from completedSteps
     const newCompletedSteps = completedSteps.filter((s) => {

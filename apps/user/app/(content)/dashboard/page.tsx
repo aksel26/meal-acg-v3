@@ -91,26 +91,42 @@ export default function DashboardPage() {
       return;
     }
 
+    // 이미 저장된 다른 식사 타입 데이터 보존 (formData가 stale하거나 미입력인 경우 fallback)
+    const dateStr = dayjs(drawerSelectedDate).tz("Asia/Seoul").format("YYYY-MM-DD");
+    const existingMealForDate = mealData.find((m) => m.date === dateStr);
+
     // 3개 독립된 form 데이터를 한번에 전송
     const requestData = {
       userName: userName || "",
       userId: userId || "",
-      date: dayjs(drawerSelectedDate).tz("Asia/Seoul").format("YYYY-MM-DD"),
+      date: dateStr,
       breakfast: {
-        store: formData.breakfast.store || "",
-        amount: formData.breakfast.amount || "0",
-        payer: formData.breakfast.payer || "",
+        store: formData.breakfast.store || existingMealForDate?.breakfast?.store || "",
+        amount:
+          formData.breakfast.amount ||
+          (existingMealForDate?.breakfast?.amount
+            ? String(existingMealForDate.breakfast.amount)
+            : "0"),
+        payer: formData.breakfast.payer || existingMealForDate?.breakfast?.payer || "",
       },
       lunch: {
-        store: formData.lunch.store || "",
-        amount: formData.lunch.amount || "0",
-        payer: formData.lunch.payer || "",
-        attendance: formData.lunch.attendance || "",
+        store: formData.lunch.store || existingMealForDate?.lunch?.store || "",
+        amount:
+          formData.lunch.amount ||
+          (existingMealForDate?.lunch?.amount
+            ? String(existingMealForDate.lunch.amount)
+            : "0"),
+        payer: formData.lunch.payer || existingMealForDate?.lunch?.payer || "",
+        attendance: formData.lunch.attendance || existingMealForDate?.attendance || "",
       },
       dinner: {
-        store: formData.dinner.store || "",
-        amount: formData.dinner.amount || "0",
-        payer: formData.dinner.payer || "",
+        store: formData.dinner.store || existingMealForDate?.dinner?.store || "",
+        amount:
+          formData.dinner.amount ||
+          (existingMealForDate?.dinner?.amount
+            ? String(existingMealForDate.dinner.amount)
+            : "0"),
+        payer: formData.dinner.payer || existingMealForDate?.dinner?.payer || "",
       },
     };
 

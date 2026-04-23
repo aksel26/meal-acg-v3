@@ -57,7 +57,7 @@ export function BottomNavigation() {
       transition={{ type: "spring", stiffness: 280, damping: 28, delay: 0.3 }}
       className="fixed bottom-0 left-1/2 z-50 w-full max-w-xl -translate-x-1/2 px-4 pb-4"
     >
-      <div className="glass-card-elevated rounded-[999px] px-2 py-2 shadow-[var(--shadow-float)]">
+      <div className="glass-card-elevated rounded-[18px] px-2 py-2 shadow-[var(--shadow-float)]">
         <div className="flex items-center justify-around pb-safe">
           {navItems.map((item) => {
             const isActive = pathname === `/${item.id}`;
@@ -67,7 +67,7 @@ export function BottomNavigation() {
                 key={item.id}
                 whileTap={{ scale: 0.96 }}
                 onClick={() => handleNavigation(item.id)}
-                className={`relative flex min-w-[60px] flex-col items-center justify-center rounded-[999px] px-3 py-2 transition-colors ${
+                className={`relative flex min-w-[60px] flex-col items-center justify-center rounded-[14px] px-3 py-2 transition-colors ${
                   isActive
                     ? "bg-[var(--ink-black)] text-[var(--canvas-cream)]"
                     : "text-[var(--granite)]"

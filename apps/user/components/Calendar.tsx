@@ -232,7 +232,7 @@ export default function CalendarComponent({
         </div>
       </div>
 
-      <div className="mb-4 rounded-[24px] bg-white/70 px-4 py-3 text-xs leading-5 text-[var(--granite)]">
+      <div className="mb-4 rounded-[16px] bg-white/70 px-4 py-3 text-xs leading-5 text-[var(--granite)]">
         날짜를 누르면 해당 일자의 식사 기록을 바로 입력하거나 수정할 수 있습니다.
       </div>
 
@@ -270,7 +270,7 @@ export default function CalendarComponent({
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.1}
         onDragEnd={handleDragEnd}
-        className="cursor-grab active:cursor-grabbing rounded-[28px] bg-white/72 p-2"
+        className="cursor-grab active:cursor-grabbing rounded-[18px] bg-white/72 p-2"
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div

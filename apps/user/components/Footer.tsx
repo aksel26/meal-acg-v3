@@ -19,7 +19,7 @@ export function Footer({ className = "" }: FooterProps) {
 
   return (
     <footer className={`w-full ${className}`}>
-      <div className="overflow-hidden rounded-[40px] bg-[var(--ink-black)] text-white shadow-[var(--shadow-elevated)]">
+      <div className="overflow-hidden rounded-[24px] bg-[var(--ink-black)] text-white shadow-[var(--shadow-elevated)]">
         <div className="space-y-6 px-6 py-8">
           <div className="space-y-3">
             <p className="eyebrow-label text-[rgba(255,255,255,0.72)] before:bg-[var(--light-signal-orange)]">
@@ -37,7 +37,7 @@ export function Footer({ className = "" }: FooterProps) {
             <motion.button
               whileTap={{ scale: 0.98 }}
               onClick={() => window.open("https://github.com/aksel26", "_blank")}
-              className="flex items-center justify-between rounded-[999px] border border-white/10 bg-white/6 px-4 py-3 text-left transition-colors hover:bg-white/10"
+              className="flex items-center justify-between rounded-[18px] border border-white/10 bg-white/6 px-4 py-3 text-left transition-colors hover:bg-white/10"
             >
               <div className="flex items-center gap-3">
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10">
@@ -56,7 +56,7 @@ export function Footer({ className = "" }: FooterProps) {
             <motion.button
               whileTap={{ scale: 0.98 }}
               onClick={handleEmailClick}
-              className="flex items-center justify-between rounded-[999px] border border-white/10 bg-white/6 px-4 py-3 text-left transition-colors hover:bg-white/10"
+              className="flex items-center justify-between rounded-[18px] border border-white/10 bg-white/6 px-4 py-3 text-left transition-colors hover:bg-white/10"
             >
               <div className="flex items-center gap-3">
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10">
@@ -77,7 +77,7 @@ export function Footer({ className = "" }: FooterProps) {
 
           <div className="flex items-center justify-between gap-4 text-xs text-[rgba(255,255,255,0.58)]">
             <span>© {currentYear} ACG Meal Service</span>
-            <span className="rounded-[999px] border border-white/12 px-3 py-1.5 text-[rgba(255,255,255,0.72)]">
+            <span className="rounded-[14px] border border-white/12 px-3 py-1.5 text-[rgba(255,255,255,0.72)]">
               KO • User App
             </span>
           </div>

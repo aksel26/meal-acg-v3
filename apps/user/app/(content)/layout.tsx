@@ -21,9 +21,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         <div className="fixed inset-0 gradient-mesh -z-10" />
 
         {/* Decorative Background Blobs */}
-        <div className="fixed top-20 right-0 w-64 h-64 bg-[oklch(0.96_0.02_350/0.1)] rounded-full blur-3xl -z-10" />
-        <div className="fixed top-1/2 left-0 w-48 h-48 bg-[oklch(0.97_0.015_340/0.08)] rounded-full blur-3xl -z-10" />
-        <div className="fixed bottom-40 right-0 w-56 h-56 bg-[oklch(0.97_0.012_10/0.08)] rounded-full blur-3xl -z-10" />
+        <div className="fixed top-20 right-0 w-64 h-64 bg-[oklch(0.88_0.10_280/0.2)] rounded-full blur-3xl -z-10" />
+        <div className="fixed top-1/2 left-0 w-48 h-48 bg-[oklch(0.90_0.08_220/0.15)] rounded-full blur-3xl -z-10" />
+        <div className="fixed bottom-40 right-0 w-56 h-56 bg-[oklch(0.92_0.06_50/0.15)] rounded-full blur-3xl -z-10" />
 
         {/* Header */}
         <Header />

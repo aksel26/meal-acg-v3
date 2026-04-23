@@ -100,45 +100,45 @@ export default function HomePage() {
                 </div>
 
                 <form onSubmit={handleLogin} className="space-y-3.5">
-                <div className="space-y-2">
-                  <Label className="ml-1 text-xs font-medium text-[var(--granite)]" htmlFor="id">
-                    아이디
-                  </Label>
-                  <Input
-                    className="input-premium h-12 text-sm"
-                    id="id"
-                    name="id"
-                    type="text"
-                    value={formData.id}
-                    onChange={handleInputChange}
-                    placeholder="사용자명을 입력하세요"
-                    required
-                  />
-                </div>
+                  <div className="space-y-2">
+                    <Label className="ml-1 text-xs font-medium text-[var(--granite)]" htmlFor="id">
+                      아이디
+                    </Label>
+                    <Input
+                      className="input-premium h-12 text-sm"
+                      id="id"
+                      name="id"
+                      type="text"
+                      value={formData.id}
+                      onChange={handleInputChange}
+                      placeholder="사용자명을 입력하세요"
+                      required
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label className="ml-1 text-xs font-medium text-[var(--granite)]" htmlFor="password">
-                    비밀번호
-                  </Label>
-                  <Input
-                    className="input-premium h-12 text-sm"
-                    id="password"
-                    name="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    placeholder="비밀번호를 입력하세요"
-                    required
-                  />
-                </div>
+                  <div className="space-y-2">
+                    <Label className="ml-1 text-xs font-medium text-[var(--granite)]" htmlFor="password">
+                      비밀번호
+                    </Label>
+                    <Input
+                      className="input-premium h-12 text-sm"
+                      id="password"
+                      name="password"
+                      type="password"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      placeholder="비밀번호를 입력하세요"
+                      required
+                    />
+                  </div>
 
-                {error && (
-                  <Alert variant="destructive" className="rounded-[16px] border-none bg-[rgba(207,69,0,0.08)] text-[var(--clay-brown)]">
-                    <AlertDescription className="text-sm">
-                      {error}
-                    </AlertDescription>
-                  </Alert>
-                )}
+                  {error && (
+                    <Alert variant="destructive" className="rounded-[16px] border-none bg-[rgba(207,69,0,0.08)] text-[var(--clay-brown)]">
+                      <AlertDescription className="text-sm">
+                        {error}
+                      </AlertDescription>
+                    </Alert>
+                  )}
 
                   <Button
                     type="submit"

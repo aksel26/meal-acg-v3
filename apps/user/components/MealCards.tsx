@@ -152,6 +152,25 @@ export function MealCards({
     currentMealData?.attendance && isHalfDayAttendance(currentMealData.attendance),
   );
 
+  const hasLunchEntry = Boolean(
+    currentMealData &&
+      (hasMealEntry(currentMealData.lunch) ||
+        currentMealData.attendance?.includes("개별식사")),
+  );
+  const hasDinnerEntry = Boolean(
+    currentMealData && hasMealEntry(currentMealData.dinner),
+  );
+
+  const availableRegularMeals = currentMealData
+    ? ([
+        { type: "lunch" as const, label: "중식", isAdded: hasLunchEntry },
+        { type: "dinner" as const, label: "석식", isAdded: hasDinnerEntry },
+      ]).filter((meal) => !meal.isAdded)
+    : [
+        { type: "lunch" as const, label: "중식", isAdded: false },
+        { type: "dinner" as const, label: "석식", isAdded: false },
+      ];
+
   const availableHalfDayMeals = currentMealData
     ? (["breakfast", "dinner"] as const).filter((mealType) => {
         const meal = currentMealData[mealType];
@@ -187,12 +206,17 @@ export function MealCards({
           <p className="text-sm text-gray-400 mb-4">
             {formatDate(selectedDate)} 기록 없음
           </p>
-          <Button
-            onClick={() => onAddMeal?.("lunch")}
-            className="h-9 px-4 text-sm font-medium bg-gray-900 hover:bg-gray-800 text-white rounded-lg"
-          >
-            기록 추가
-          </Button>
+          <div className="flex justify-center gap-2">
+            {availableRegularMeals.map((meal) => (
+              <Button
+                key={meal.type}
+                onClick={() => onAddMeal?.(meal.type)}
+                className="h-9 px-4 text-sm font-medium bg-gray-900 hover:bg-gray-800 text-white rounded-lg"
+              >
+                {meal.label} 추가
+              </Button>
+            ))}
+          </div>
         </div>
       </motion.div>
     );
@@ -288,12 +312,17 @@ export function MealCards({
               ))}
             </div>
           ) : (
-            <button
-              onClick={() => onAddMeal?.("lunch")}
-              className="text-sm text-gray-500 hover:text-gray-700"
-            >
-              + 추가
-            </button>
+            <div className="flex justify-center gap-2">
+              {availableRegularMeals.map((meal) => (
+                <button
+                  key={meal.type}
+                  onClick={() => onAddMeal?.(meal.type)}
+                  className="rounded-lg bg-gray-100 px-3 py-2 text-sm text-gray-600 hover:bg-gray-200 hover:text-gray-800"
+                >
+                  + {meal.label} 추가
+                </button>
+              ))}
+            </div>
           )}
         </div>
       </motion.div>
@@ -396,13 +425,18 @@ export function MealCards({
           </div>
         )
       ) : (
-        visibleMeals.length < 3 && (
-          <button
-            onClick={() => onAddMeal?.("dinner")}
-            className="w-full mt-2 py-2 text-sm text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            + 식사 추가
-          </button>
+        availableRegularMeals.length > 0 && (
+          <div className="mt-2 flex gap-2">
+            {availableRegularMeals.map((meal) => (
+              <button
+                key={meal.type}
+                onClick={() => onAddMeal?.(meal.type)}
+                className="flex-1 rounded-lg py-2 text-sm text-gray-400 transition-colors hover:text-gray-600"
+              >
+                + {meal.label} 추가
+              </button>
+            ))}
+          </div>
         )
       )}
     </motion.div>

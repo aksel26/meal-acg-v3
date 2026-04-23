@@ -6,6 +6,7 @@ export type StepId = "mealType" | "attendance" | "receipt" | "payer" | "store" |
 
 // 중식: 근태 먼저, 그 외: mealType 먼저
 export const STEP_ORDER_LUNCH: StepId[] = ["attendance", "mealType", "receipt", "payer", "store", "amount"];
+export const STEP_ORDER_DINNER: StepId[] = ["attendance", "receipt", "payer", "store", "amount"];
 export const STEP_ORDER_OTHER: StepId[] = ["mealType", "receipt", "payer", "store", "amount"];
 
 // 기본 스텝 순서 (하위 호환)
@@ -13,6 +14,7 @@ export const STEP_ORDER: StepId[] = STEP_ORDER_LUNCH;
 
 // 식대 지원이 안 되는 근태 유형
 export const NO_MEAL_SUPPORT_ATTENDANCE = ["오전 반차/휴무", "오후 반차/휴무", "연차/휴무", "재택근무"];
+export const DINNER_NO_MEAL_SUPPORT_ATTENDANCE = ["연차/휴무", "재택근무"];
 export const INDIVIDUAL_MEAL_ATTENDANCE = "근무(개별식사 / 식사안함)";
 
 export const STEP_LABELS: Record<StepId, string> = {
@@ -76,9 +78,36 @@ const initialFormData: FormData = {
   },
 };
 
+const updateMealFormData = <T extends keyof FormData>(
+  formData: FormData,
+  mealType: T,
+  patch: Partial<FormData[T]>,
+): FormData => ({
+  ...formData,
+  [mealType]: {
+    ...formData[mealType],
+    ...patch,
+  },
+});
+
 // Helper to get step order based on meal type
+const hasAttendance = (attendance?: string): boolean => Boolean(attendance?.trim());
+
 const getStepOrder = (mealType: "breakfast" | "lunch" | "dinner"): StepId[] => {
-  return mealType === "lunch" ? STEP_ORDER_LUNCH : STEP_ORDER_OTHER;
+  if (mealType === "lunch") return STEP_ORDER_LUNCH;
+  if (mealType === "dinner") return STEP_ORDER_DINNER;
+  return STEP_ORDER_OTHER;
+};
+
+export const getFirstStep = (
+  mealType: "breakfast" | "lunch" | "dinner",
+  attendance?: string,
+): StepId => {
+  if (mealType === "lunch") return "attendance";
+  if (mealType === "dinner") {
+    return hasAttendance(attendance) ? "receipt" : "attendance";
+  }
+  return "mealType";
 };
 
 // Helper to get next step based on meal type and attendance
@@ -102,7 +131,13 @@ const getNextStep = (
     }
   }
 
-  let nextIndex = currentIndex + 1;
+  if (mealType === "dinner" && currentStep === "attendance" && attendance) {
+    if (DINNER_NO_MEAL_SUPPORT_ATTENDANCE.includes(attendance)) {
+      return null;
+    }
+  }
+
+  const nextIndex = currentIndex + 1;
   const result = stepOrder[nextIndex];
   return result !== undefined ? result : null;
 };
@@ -121,7 +156,7 @@ const getPrevStep = (
     return "attendance";
   }
 
-  let prevIndex = currentIndex - 1;
+  const prevIndex = currentIndex - 1;
   const result = stepOrder[prevIndex];
   return result !== undefined ? result : null;
 };
@@ -141,12 +176,9 @@ export const useMealDrawerStore = create<MealDrawerState>((set, get) => ({
 
   // Actions
   openDrawer: (mealType, date, existingMealData) => {
-    // 중식은 attendance 먼저, 그 외는 mealType 먼저
-    const firstStep: StepId = mealType === "lunch" ? "attendance" : "mealType";
-
     // 기존 데이터가 있으면 모든 식사 타입의 데이터를 유지
     // (MealTypeStep에서 다른 타입을 선택할 수 있으므로 특정 타입을 초기화하지 않음)
-    let updatedFormData = { ...initialFormData };
+    const updatedFormData = { ...initialFormData };
     if (existingMealData) {
       if (existingMealData.breakfast) {
         updatedFormData.breakfast = {
@@ -177,6 +209,8 @@ export const useMealDrawerStore = create<MealDrawerState>((set, get) => ({
         };
       }
     }
+
+    const firstStep = getFirstStep(mealType, updatedFormData.lunch.attendance);
 
     set({
       isOpen: true,
@@ -236,7 +270,9 @@ export const useMealDrawerStore = create<MealDrawerState>((set, get) => ({
     // In edit mode, all steps are completed
     const allSteps: StepId[] = mealType === "lunch"
       ? ["mealType", "attendance", "payer", "store", "amount"]
-      : ["mealType", "payer", "store", "amount"];
+      : mealType === "dinner" && mealInfo.attendance
+        ? ["mealType", "attendance", "payer", "store", "amount"]
+        : ["mealType", "payer", "store", "amount"];
 
     set({
       isOpen: true,
@@ -341,13 +377,9 @@ export const useMealDrawerStore = create<MealDrawerState>((set, get) => ({
     console.log(`Updating field: ${field} = ${value} for mealType: ${selectedMealType}`);
     console.log("Current formData before update:", formData);
 
-    const updatedFormData = { ...formData };
-
-    // 현재 선택된 식사 타입의 데이터를 복사하고 필드 업데이트
-    updatedFormData[selectedMealType] = {
-      ...updatedFormData[selectedMealType],
+    const updatedFormData = updateMealFormData(formData, selectedMealType, {
       [field]: value,
-    } as any;
+    } as Partial<FormData[typeof selectedMealType]>);
 
     console.log("Updated formData:", updatedFormData);
     set({ formData: updatedFormData });
@@ -402,20 +434,17 @@ export const useMealDrawerStore = create<MealDrawerState>((set, get) => ({
 
       stepsToReset.forEach((step) => {
         if (step === "payer") {
-          updatedFormData[selectedMealType] = {
-            ...updatedFormData[selectedMealType],
+          Object.assign(updatedFormData, updateMealFormData(updatedFormData, selectedMealType, {
             payer: "",
-          } as any;
+          }));
         } else if (step === "store") {
-          updatedFormData[selectedMealType] = {
-            ...updatedFormData[selectedMealType],
+          Object.assign(updatedFormData, updateMealFormData(updatedFormData, selectedMealType, {
             store: "",
-          } as any;
+          }));
         } else if (step === "amount") {
-          updatedFormData[selectedMealType] = {
-            ...updatedFormData[selectedMealType],
+          Object.assign(updatedFormData, updateMealFormData(updatedFormData, selectedMealType, {
             amount: "",
-          } as any;
+          }));
         }
       });
 
@@ -444,20 +473,17 @@ export const useMealDrawerStore = create<MealDrawerState>((set, get) => ({
 
     stepsToReset.forEach((s) => {
       if (s === "payer") {
-        updatedFormData[selectedMealType] = {
-          ...updatedFormData[selectedMealType],
+        Object.assign(updatedFormData, updateMealFormData(updatedFormData, selectedMealType, {
           payer: "",
-        } as any;
+        }));
       } else if (s === "store") {
-        updatedFormData[selectedMealType] = {
-          ...updatedFormData[selectedMealType],
+        Object.assign(updatedFormData, updateMealFormData(updatedFormData, selectedMealType, {
           store: "",
-        } as any;
+        }));
       } else if (s === "amount") {
-        updatedFormData[selectedMealType] = {
-          ...updatedFormData[selectedMealType],
+        Object.assign(updatedFormData, updateMealFormData(updatedFormData, selectedMealType, {
           amount: "",
-        } as any;
+        }));
       } else if (s === "attendance" && selectedMealType === "lunch") {
         updatedFormData.lunch = {
           ...updatedFormData.lunch,

@@ -6,8 +6,10 @@ import {
   useMealDrawerStore,
   StepId,
   STEP_ORDER_LUNCH,
+  STEP_ORDER_DINNER,
   STEP_ORDER_OTHER,
   NO_MEAL_SUPPORT_ATTENDANCE,
+  DINNER_NO_MEAL_SUPPORT_ATTENDANCE,
   INDIVIDUAL_MEAL_ATTENDANCE,
 } from "@/stores/mealDrawerStore";
 import { CompletedStepItem } from "./CompletedStepItem";
@@ -75,6 +77,13 @@ export function StepFormContainer({
       // 아직 선택 안 한 경우
       return STEP_ORDER_LUNCH;
     }
+    if (selectedMealType === "dinner") {
+      const attendance = formData.lunch.attendance;
+      if (DINNER_NO_MEAL_SUPPORT_ATTENDANCE.includes(attendance)) {
+        return ["attendance"] as StepId[];
+      }
+      return STEP_ORDER_DINNER;
+    }
     return STEP_ORDER_OTHER;
   }, [selectedMealType, formData.lunch.attendance]);
 
@@ -92,7 +101,7 @@ export function StepFormContainer({
           return currentFormData.payer;
         case "store":
           return currentFormData.store;
-        case "amount":
+        case "amount": {
           const amount = currentFormData.amount;
           if (!amount) {
             if (selectedMealType === "lunch" && formData.lunch.attendance === "근무(개별식사 / 식사안함)") {
@@ -101,6 +110,7 @@ export function StepFormContainer({
             return "";
           }
           return `${Number(amount).toLocaleString()}원`;
+        }
         default:
           return "";
       }

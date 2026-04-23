@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, lazy, Suspense } from "react";
-import { useMealDrawerStore } from "@/stores/mealDrawerStore";
+import { getFirstStep, useMealDrawerStore } from "@/stores/mealDrawerStore";
 import { motion, AnimatePresence } from "motion/react";
 
 import {
@@ -36,6 +36,7 @@ export default function MealEntryDrawer({
     isEditMode,
     selectedDate,
     selectedMealType,
+    formData,
     currentStep,
     completedSteps,
     closeDrawer,
@@ -57,9 +58,11 @@ export default function MealEntryDrawer({
     }
   };
 
-  // 중식은 attendance가 첫 스텝, 그 외는 mealType이 첫 스텝
-  const firstStep = selectedMealType === "lunch" ? "attendance" : "mealType";
-  const canGoBack = currentStep !== firstStep && completedSteps.length > 0;
+  const firstStep = getFirstStep(selectedMealType, formData.lunch.attendance);
+  const canGoBack =
+    currentStep !== "mealType" &&
+    currentStep !== firstStep &&
+    completedSteps.length > 0;
 
   return (
     <Dialog open={isOpen} onOpenChange={closeDrawer}>

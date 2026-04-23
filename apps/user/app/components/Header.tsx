@@ -4,7 +4,7 @@ import Image from "next/image";
 import React from "react";
 import { useHeaderVisibility } from "@/hooks/useHeaderVisibility";
 import { motion } from "motion/react";
-import { Menu, Bell, Check, X, Clock, Send, FileText, Users } from "lucide-react";
+import { Menu, Bell, Clock, Send, FileText, Users } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/src/popover";
 import { Button } from "@repo/ui/src/button";
 import { toast } from "@repo/ui/src/sonner";
@@ -34,6 +34,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/lunch": "점심 그룹",
   "/notices": "공지/일정",
   "/profile": "내 정보 수정",
+  "/acg-life": "ACG 라이프",
 };
 
 const Header = () => {

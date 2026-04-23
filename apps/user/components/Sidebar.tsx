@@ -10,20 +10,16 @@ import {
   AlarmClock,
   UtensilsCrossed,
   Wallet,
-  Coins,
   UserPen,
-  FileCheck,
   Megaphone,
   DoorOpen,
   MessageSquareText,
-  BookOpen,
-  CarFront,
-  ClipboardList,
   LogOut,
   X,
   Bell,
   BellOff,
   ChevronDown,
+  ChevronRight,
   ExternalLink,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -94,11 +90,8 @@ const menuGroups: MenuGroup[] = [
   },
   {
     label: "ACG 라이프",
-    items: [
-      { id: "onboarding", label: "온보딩 가이드", href: "/onboarding", icon: BookOpen },
-      { id: "parking", label: "주차등록 신청", href: "/parking", icon: CarFront },
-      { id: "inventory", label: "물품관리 대장", href: "/inventory", icon: ClipboardList },
-    ],
+    items: [],
+    href: "/acg-life",
   },
   {
     label: "감독관/면접교육 운영",
@@ -252,28 +245,47 @@ function NavMenu() {
   return (
     <nav className="flex-1 overflow-y-auto px-3">
       {menuGroups.map((group) => {
-        // 외부 링크 그룹: 제목 자체가 링크
+        // 링크 그룹: 제목 자체가 링크 (외부 또는 내부)
         if (group.href) {
           const Icon = group.icon;
+          const isActive = pathname === group.href;
           return (
             <div key={group.label} className="mb-4">
-              <a
-                href={group.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={close}
-                className="flex w-full items-center justify-between px-1 mb-1.5 group"
-              >
-                <p className="text-sm font-semibold text-slate-700">
-                  {group.label}
-                </p>
-                {Icon && (
-                  <Icon
+              {group.external ? (
+                <a
+                  href={group.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={close}
+                  className="flex w-full items-center justify-between px-1 mb-1.5 group"
+                >
+                  <p className="text-sm font-semibold text-slate-700">
+                    {group.label}
+                  </p>
+                  {Icon && (
+                    <Icon
+                      size={14}
+                      className="text-slate-300 group-hover:text-slate-400"
+                    />
+                  )}
+                </a>
+              ) : (
+                <Link
+                  href={group.href}
+                  onClick={close}
+                  className="flex w-full items-center justify-between px-1 mb-1.5 group"
+                >
+                  <p className={`text-sm font-semibold transition-colors duration-200 ${
+                    isActive ? "text-[#111111]" : "text-slate-700 group-hover:text-[#111111]"
+                  }`}>
+                    {group.label}
+                  </p>
+                  <ChevronRight
                     size={14}
-                    className="text-slate-300 group-hover:text-slate-400"
+                    className="text-slate-300 transition-colors duration-200 group-hover:text-slate-500"
                   />
-                )}
-              </a>
+                </Link>
+              )}
             </div>
           );
         }

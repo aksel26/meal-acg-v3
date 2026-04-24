@@ -408,16 +408,14 @@ export default function LunchGroupsPage() {
     return members.filter((m) => !excludedMemberIds.has(m.id));
   }, [members, excludedMemberIds]);
 
-  // 총 조 개수 및 나머지 계산
+  // 총 조 개수 계산 (조당 최대 인원을 엄격히 상한으로 적용)
   const { totalGroups, remainder } = useMemo(() => {
     if (availableMembers.length === 0 || maxPerGroup <= 0) {
       return { totalGroups: 0, remainder: 0 };
     }
-    // 31 ÷ 4 = 7 나머지 3 → 7개 조, 3개 조는 +1명
-    const groups = Math.ceil(availableMembers.length / (maxPerGroup + 1));
-    const baseSlots = groups * maxPerGroup;
-    const rem = availableMembers.length - baseSlots;
-    return { totalGroups: groups, remainder: rem > 0 ? rem : 0 };
+    // 28 ÷ 4 = 7 (7개 조 각 4명) / 31 ÷ 4 = 8 (7개 조 4명 + 1개 조 3명)
+    const groups = Math.ceil(availableMembers.length / maxPerGroup);
+    return { totalGroups: groups, remainder: 0 };
   }, [availableMembers.length, maxPerGroup]);
 
   // 조 테이블 생성 (빈 조만 생성, 나머지 인원은 랜덤 조에 +1 슬롯)

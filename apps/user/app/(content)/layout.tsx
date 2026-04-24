@@ -19,10 +19,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     <>
       <div className="relative mx-auto min-h-screen max-w-xl px-4 pb-28 pt-4">
         <div className="fixed inset-0 gradient-mesh -z-10" />
-        <div className="orbit-line fixed -left-14 top-24 h-72 w-72 -z-10 opacity-70" />
-        <div className="orbit-line fixed right-[-6rem] top-[26rem] h-64 w-64 -z-10 opacity-55" />
-        <div className="orbit-dot fixed left-8 top-40 -z-10" />
-        <div className="orbit-dot fixed right-10 top-[34rem] -z-10" />
 
         <Header />
 

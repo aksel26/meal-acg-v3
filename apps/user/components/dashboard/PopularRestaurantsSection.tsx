@@ -64,7 +64,6 @@ export default function PopularRestaurantsSection() {
       transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
       className="relative overflow-hidden rounded-[24px] bg-[var(--lifted-cream)] px-6 py-6 shadow-[var(--shadow-elevated)]"
     >
-      <div className="orbit-line right-[-3rem] top-6 h-28 w-28 opacity-70" />
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="eyebrow-label">Top Places</p>

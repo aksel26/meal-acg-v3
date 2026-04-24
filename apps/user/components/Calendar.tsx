@@ -202,7 +202,7 @@ export default function CalendarComponent({
         <div>
           <p className="eyebrow-label">Calendar</p>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-[1.8rem] font-medium tracking-[-0.04em] text-[var(--ink-black)]">
+            <span className="text-[1.8rem] font-medium tracking-[-0.025em] text-[var(--ink-black)]">
               {currentMonth}월
             </span>
             <span className="text-sm text-[var(--slate-gray)]">{currentYear}</span>

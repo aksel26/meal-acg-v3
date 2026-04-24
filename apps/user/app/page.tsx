@@ -73,33 +73,32 @@ export default function HomePage() {
     <>
       <PWAInstallPrompt />
       <div className="fixed inset-0 gradient-mesh -z-20" />
-      <div className="orbit-line fixed left-[-8rem] top-20 h-80 w-80 -z-10 opacity-70" />
-      <div className="orbit-line fixed right-[-7rem] top-[22rem] h-72 w-72 -z-10 opacity-55" />
-      <div className="orbit-dot fixed left-12 top-24 -z-10" />
-      <div className="orbit-dot fixed right-10 top-[28rem] -z-10" />
 
-      <div className="mx-auto flex min-h-dvh max-w-xl flex-col overflow-hidden px-4 py-4 md:max-w-5xl lg:max-w-6xl">
-        <main className="flex flex-1 flex-col justify-center py-2">
+      <div className="mx-auto flex min-h-dvh max-w-7xl flex-col px-4 py-4 md:px-6 md:py-6 lg:px-8">
+        <main className="flex flex-1 items-center justify-center py-4">
           <motion.section
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="glass-card-elevated overflow-hidden rounded-[24px] md:grid md:grid-cols-[0.95fr_1.05fr]"
+            className="glass-card-elevated w-full overflow-hidden rounded-[30px] md:grid md:grid-cols-[minmax(360px,420px)_1fr]"
           >
-            <div className="order-2 flex items-center bg-[var(--lifted-cream)] px-5 py-5 md:order-1 lg:px-8 lg:py-8">
-              <div className="w-full space-y-5">
-                <div>
-                  <h2 className="mt-2 text-[1.8rem] font-medium leading-[1] tracking-[-0.04em] text-[var(--ink-black)]">
-                    맛점 하셨나요?
-                  </h2>
-                  <p className="mt-3 text-sm leading-6 text-[var(--granite)]">
-                    알뜰한 식사관리,
+            <div className="order-2 flex items-center bg-[var(--canvas-cream)] px-5 py-6 md:order-1 md:px-8 md:py-10 lg:px-10">
+              <div className="mx-auto w-full max-w-sm space-y-6">
+                <div className="space-y-3">
+                  <p className="eyebrow-label">ACG meal welfare</p>
+                  <h2 className="text-[clamp(2.25rem,4vw,3.4rem)] font-black leading-[1.05] tracking-[-0.025em] text-[var(--ink-black)]">
+                    맛점,
                     <br />
-                    간편하게 시작하세요!
+                    더 똑똑하게
+                  </h2>
+                  <p className="text-[15px] font-semibold leading-[1.55] tracking-[-0.01em] text-[var(--granite)]">
+                    식대 기록과 복지 흐름을
+                    <br />
+                    한 번에 시작하세요.
                   </p>
                 </div>
 
-                <form onSubmit={handleLogin} className="space-y-3.5">
+                <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
                     <Label className="ml-1 text-xs font-medium text-[var(--granite)]" htmlFor="id">
                       아이디
@@ -133,7 +132,7 @@ export default function HomePage() {
                   </div>
 
                   {error && (
-                    <Alert variant="destructive" className="rounded-[16px] border-none bg-[rgba(207,69,0,0.08)] text-[var(--clay-brown)]">
+                    <Alert variant="destructive" className="rounded-[16px] border border-[rgba(208,50,56,0.18)] bg-[rgba(208,50,56,0.06)] text-[#d03238]">
                       <AlertDescription className="text-sm">
                         {error}
                       </AlertDescription>
@@ -142,7 +141,7 @@ export default function HomePage() {
 
                   <Button
                     type="submit"
-                    className="btn-primary h-12 w-full text-sm font-medium"
+                    className="btn-primary h-12 w-full text-[18px]"
                     disabled={loading}
                   >
                     {loading ? (
@@ -161,10 +160,24 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="order-1 flex min-h-full flex-col justify-between border-b border-[rgba(20,20,19,0.08)] bg-white px-5 py-5 md:order-2 md:border-b-0 md:border-t-0 md:border-l md:px-6 md:py-6 lg:px-8 lg:py-8">
-              <div className="space-y-5">
-                <div className="mx-auto w-1/2 min-w-[140px] max-w-[220px] overflow-hidden rounded-[20px] bg-[var(--soft-bone)]">
-                  <div className="relative aspect-square w-full min-w-0">
+            <div className="order-1 flex min-h-full flex-col justify-between border-b border-[rgba(14,15,12,0.12)] bg-white px-5 py-6 md:order-2 md:border-b-0 md:border-l md:px-8 md:py-10 lg:px-10">
+              <div className="space-y-8">
+                <div className="space-y-4">
+                  <p className="eyebrow-label">Money without borders</p>
+                  <h1 className="max-w-[10ch] text-[clamp(3rem,7vw,6rem)] font-black leading-[1.0] tracking-[-0.03em] text-[var(--ink-black)]">
+                    식대와
+                    <br />
+                    복지를
+                    <br />
+                    빠르게.
+                  </h1>
+                  <p className="max-w-[32rem] text-[16px] font-semibold leading-[1.6] tracking-[-0.01em] text-[var(--granite)]">
+                    ACG 식대 앱에서 기록, 확인, 월간 흐름까지 자연스럽게 이어집니다.
+                  </p>
+                </div>
+
+                <div className="mx-auto w-full max-w-[320px] overflow-hidden rounded-[30px] bg-[var(--soft-bone)] ring-1 ring-[rgba(14,15,12,0.12)] md:mx-0">
+                  <div className="relative aspect-[4/3] w-full min-w-0">
                     <Image
                       src="/images/coffee-tea-2.png"
                       alt="Coffee Tea"
@@ -174,42 +187,36 @@ export default function HomePage() {
                     />
                   </div>
                 </div>
-
-                <div className="space-y-3">
-                  <p className="max-w-[22rem] text-sm leading-6 text-[var(--granite)]">
-                    기록과 확인, 월간 흐름까지 한 화면에서 정리하세요
-                  </p>
-                </div>
               </div>
 
-              <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-[16px] bg-[var(--lifted-cream)] px-4 py-4">
-                  <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">
+              <div className="mt-8 grid gap-3 sm:grid-cols-3">
+                <div className="rounded-[20px] border border-[rgba(14,15,12,0.12)] bg-[var(--lifted-cream)] px-4 py-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-[-0.01em] text-[var(--slate-gray)]">
                     Manage
                   </p>
-                  <p className="mt-2 text-sm font-medium text-[var(--ink-black)]">
+                  <p className="mt-2 text-[15px] font-semibold text-[var(--ink-black)]">
                     식비 내역을 쉽게
                   </p>
                   <p className="mt-1 text-xs leading-5 text-[var(--granite)]">
                     관리하고 분석해보세요
                   </p>
                 </div>
-                <div className="rounded-[16px] bg-[var(--lifted-cream)] px-4 py-4">
-                  <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">
+                <div className="rounded-[20px] border border-[rgba(14,15,12,0.12)] bg-[var(--lifted-cream)] px-4 py-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-[-0.01em] text-[var(--slate-gray)]">
                     Lunch
                   </p>
-                  <p className="mt-2 text-sm font-medium text-[var(--ink-black)]">
+                  <p className="mt-2 text-[15px] font-semibold text-[var(--ink-black)]">
                     동료들과 함께
                   </p>
                   <p className="mt-1 text-xs leading-5 text-[var(--granite)]">
                     점심 시간을 즐겨보세요
                   </p>
                 </div>
-                <div className="rounded-[16px] bg-[var(--lifted-cream)] px-4 py-4">
-                  <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">
+                <div className="rounded-[20px] border border-[rgba(14,15,12,0.12)] bg-[var(--lifted-cream)] px-4 py-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-[-0.01em] text-[var(--slate-gray)]">
                     Meeting
                   </p>
-                  <p className="mt-2 text-sm font-medium text-[var(--ink-black)]">
+                  <p className="mt-2 text-[15px] font-semibold text-[var(--ink-black)]">
                     Monthly Meeting
                   </p>
                   <p className="mt-1 text-xs leading-5 text-[var(--granite)]">

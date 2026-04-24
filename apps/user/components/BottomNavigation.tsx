@@ -57,7 +57,7 @@ export function BottomNavigation() {
       transition={{ type: "spring", stiffness: 280, damping: 28, delay: 0.3 }}
       className="fixed bottom-0 left-1/2 z-50 w-full max-w-xl -translate-x-1/2 px-4 pb-4"
     >
-      <div className="glass-card-elevated rounded-[18px] px-2 py-2 shadow-[var(--shadow-float)]">
+      <div className="glass-card-elevated rounded-[20px] px-2 py-2 shadow-[var(--shadow-float)]">
         <div className="flex items-center justify-around pb-safe">
           {navItems.map((item) => {
             const isActive = pathname === `/${item.id}`;
@@ -69,7 +69,7 @@ export function BottomNavigation() {
                 onClick={() => handleNavigation(item.id)}
                 className={`relative flex min-w-[60px] flex-col items-center justify-center rounded-[14px] px-3 py-2 transition-colors ${
                   isActive
-                    ? "bg-[var(--ink-black)] text-[var(--canvas-cream)]"
+                    ? "bg-[var(--signal-orange)] text-[var(--charcoal)]"
                     : "text-[var(--granite)]"
                 }`}
               >
@@ -83,15 +83,15 @@ export function BottomNavigation() {
                     alt={item.label}
                     height={20}
                     width={20}
-                    className={`transition-opacity duration-200 ${
-                      isActive ? "opacity-100" : "opacity-65"
-                    }`}
-                  />
+                  className={`transition-opacity duration-200 ${
+                    isActive ? "opacity-100" : "opacity-65"
+                  }`}
+                />
                 </motion.div>
 
                 <span
                   className={`relative z-10 text-[10px] font-medium tracking-[-0.02em] ${
-                    isActive ? "text-[var(--canvas-cream)]" : "text-[var(--slate-gray)]"
+                    isActive ? "text-[var(--charcoal)]" : "text-[var(--slate-gray)]"
                   }`}
                 >
                   {item.label}

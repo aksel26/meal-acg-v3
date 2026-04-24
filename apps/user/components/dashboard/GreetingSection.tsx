@@ -28,14 +28,12 @@ export default function GreetingSection({ userName }: GreetingSectionProps) {
       className="relative overflow-hidden rounded-[24px] bg-[var(--lifted-cream)] px-6 py-7 shadow-[var(--shadow-elevated)]"
     >
       <div className="absolute -right-10 top-0 h-40 w-40 rounded-full bg-[var(--whisper-cream)]" />
-      <div className="orbit-line -left-16 bottom-4 h-48 w-48 opacity-70" />
-      <div className="orbit-dot right-24 top-24" />
 
       <div className="relative flex items-start justify-between gap-5">
         <div className="max-w-[16rem] space-y-4">
           <p className="eyebrow-label">For You</p>
           <div className="space-y-2">
-            <h1 className="text-[2rem] font-medium leading-[0.98] tracking-[-0.04em] text-[var(--ink-black)]">
+            <h1 className="text-[2rem] font-medium leading-[1.05] tracking-[-0.025em] text-[var(--ink-black)]">
               {getGreeting()},
               <br />
               {userName}님.

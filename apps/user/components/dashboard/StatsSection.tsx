@@ -182,7 +182,7 @@ function CalculationResult({
                 )}
                 <NumberTicker
                   value={Math.abs(data.balance)}
-                  className={`text-[2.5rem] font-medium tracking-[-0.05em] ${
+                  className={`text-[2.5rem] font-medium tracking-[-0.03em] ${
                     isOverBudget
                       ? "text-[var(--signal-orange)]"
                       : isLowBalance

@@ -49,10 +49,10 @@ function CollectionListView({
       className="card-premium rounded-2xl pb-12"
     >
       <header className="px-5 pt-10 pb-5">
-        <h1 className="text-xl font-bold text-gray-900 tracking-tight">
+        <h1 className="text-xl font-bold text-[var(--ink-black)] tracking-tight">
           음료 취합
         </h1>
-        <p className="text-xs text-gray-400 mt-1">
+        <p className="text-xs text-[var(--slate-gray)] mt-1">
           참여할 취합을 선택하세요
         </p>
       </header>
@@ -66,7 +66,7 @@ function CollectionListView({
           </div>
         ) : collections.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-400 text-sm">
+            <p className="text-[var(--slate-gray)] text-sm">
               현재 참여 가능한 취합이 없습니다
             </p>
           </div>
@@ -79,18 +79,18 @@ function CollectionListView({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.04 }}
                 onClick={() => onSelect(col)}
-                className="w-full text-left rounded-xl px-4 py-3.5 bg-gray-50 hover:bg-gray-100 transition-colors active:scale-[0.98]"
+                className="w-full text-left rounded-xl px-4 py-3.5 bg-[var(--soft-bone)] hover:bg-[var(--whisper-cream)] transition-colors active:scale-[0.98]"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     {isNewCollection(col.created_at) && (
-                      <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
+                      <span className="w-2 h-2 rounded-full bg-[#d03238] shrink-0" />
                     )}
                     <div>
-                      <p className="font-semibold text-sm text-gray-900">
+                      <p className="font-semibold text-sm text-[var(--ink-black)]">
                         {col.title}
                       </p>
-                      <p className="text-[11px] text-gray-400 mt-0.5">
+                      <p className="text-[11px] text-[var(--slate-gray)] mt-0.5">
                         {col.is_one_time
                           ? "일회성"
                           : `${col.year}년 ${col.month}월`}
@@ -98,7 +98,7 @@ function CollectionListView({
                     </div>
                   </div>
                   <svg
-                    className="w-4 h-4 text-gray-300"
+                    className="w-4 h-4 text-[rgba(14,15,12,0.2)]"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -205,7 +205,7 @@ function DrinkSelectionView({
       <header className="px-5 pt-10 pb-5">
         <button
           onClick={onBack}
-          className="text-xs text-gray-400 font-medium flex items-center gap-1 mb-3"
+          className="text-xs text-[var(--slate-gray)] font-medium flex items-center gap-1 mb-3"
         >
           <svg
             className="w-3.5 h-3.5"
@@ -222,7 +222,7 @@ function DrinkSelectionView({
           </svg>
           목록
         </button>
-        <h1 className="text-xl font-bold text-gray-900 tracking-tight">
+        <h1 className="text-xl font-bold text-[var(--ink-black)] tracking-tight">
           {collection.title}
         </h1>
       </header>
@@ -232,19 +232,19 @@ function DrinkSelectionView({
         <div className="flex gap-2.5">
           <button
             onClick={() => setIsAllHistoryDialogOpen(true)}
-            className="flex-1 rounded-xl p-3.5 bg-gray-50 text-left transition-colors active:scale-[0.98]"
+            className="flex-1 rounded-xl p-3.5 bg-[var(--soft-bone)] text-left transition-colors active:scale-[0.98]"
           >
             <div className="flex items-center justify-between">
-              <p className="text-[11px] text-gray-400 font-medium">신청현황</p>
-              <p className="text-[10px] text-gray-400">전체보기 &rsaquo;</p>
+              <p className="text-[11px] text-[var(--slate-gray)] font-medium">신청현황</p>
+              <p className="text-[10px] text-[var(--slate-gray)]">전체보기 &rsaquo;</p>
             </div>
-            <p className="text-lg font-bold text-gray-900 mt-1 tabular-nums">
+            <p className="text-lg font-bold text-[var(--ink-black)] mt-1 tabular-nums">
               {isLoading ? (
                 <span className="skeleton inline-block w-10 h-5" />
               ) : (
                 <>
                   {completedCount}
-                  <span className="text-gray-300 text-xs font-medium">
+                  <span className="text-[rgba(14,15,12,0.2)] text-xs font-medium">
                     /{totalCount}
                   </span>
                 </>
@@ -255,7 +255,7 @@ function DrinkSelectionView({
             <Popover>
               <PopoverTrigger asChild>
                 <div
-                  className="flex-1 rounded-xl p-3.5 bg-gray-50 min-w-0 cursor-default"
+                  className="flex-1 rounded-xl p-3.5 bg-[var(--soft-bone)] min-w-0 cursor-default"
                   onMouseEnter={(e) => {
                     const trigger = e.currentTarget;
                     trigger.click();
@@ -265,31 +265,31 @@ function DrinkSelectionView({
                     trigger.click();
                   }}
                 >
-                  <p className="text-[11px] text-gray-400 font-medium">픽업담당</p>
+                  <p className="text-[11px] text-[var(--slate-gray)] font-medium">픽업담당</p>
                   {isLoading ? (
-                    <p className="text-sm font-semibold text-gray-900 mt-1.5">
+                    <p className="text-sm font-semibold text-[var(--ink-black)] mt-1.5">
                       <span className="skeleton inline-block w-14 h-5" />
                     </p>
                   ) : (
-                    <p className="text-sm font-semibold text-gray-900 mt-1.5 truncate">
+                    <p className="text-sm font-semibold text-[var(--ink-black)] mt-1.5 truncate">
                       {pickupPersons.map((p) => p.name).join(", ")}
                     </p>
                   )}
                 </div>
               </PopoverTrigger>
-              <PopoverContent className="w-auto max-w-[200px] bg-gray-900 text-white text-xs rounded-lg px-3 py-2 border-0">
+              <PopoverContent className="w-auto max-w-[200px] bg-[var(--ink-black)] text-white text-xs rounded-lg px-3 py-2 border-0">
                 {pickupPersons.map((p) => p.name).join(", ")}
               </PopoverContent>
             </Popover>
           ) : (
-            <div className="flex-1 rounded-xl p-3.5 bg-gray-50 min-w-0">
-              <p className="text-[11px] text-gray-400 font-medium">픽업담당</p>
+            <div className="flex-1 rounded-xl p-3.5 bg-[var(--soft-bone)] min-w-0">
+              <p className="text-[11px] text-[var(--slate-gray)] font-medium">픽업담당</p>
               {isLoading ? (
-                <p className="text-sm font-semibold text-gray-900 mt-1.5">
+                <p className="text-sm font-semibold text-[var(--ink-black)] mt-1.5">
                   <span className="skeleton inline-block w-14 h-5" />
                 </p>
               ) : (
-                <p className="text-sm font-semibold text-gray-300 mt-1.5">미정</p>
+                <p className="text-sm font-semibold text-[rgba(14,15,12,0.2)] mt-1.5">미정</p>
               )}
             </div>
           )}
@@ -300,24 +300,24 @@ function DrinkSelectionView({
       {currentUserName && (
         <div className="px-5 mb-5">
           {isLoading ? (
-            <div className="rounded-xl p-3.5 bg-gray-50">
+            <div className="rounded-xl p-3.5 bg-[var(--soft-bone)]">
               <div className="skeleton h-4 w-16 mb-2" />
               <div className="skeleton h-5 w-32" />
             </div>
           ) : myDrink ? (
-            <div className="rounded-xl p-3.5 bg-pink-50">
+            <div className="rounded-xl p-3.5 bg-[rgba(255,145,112,0.08)]">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-pink-400 text-[11px] font-medium">
+                  <p className="text-[#ff9170] text-[11px] font-medium">
                     내 선택
                   </p>
-                  <p className="text-pink-700 font-semibold text-sm mt-0.5">
+                  <p className="text-[#e64a2d] font-semibold text-sm mt-0.5">
                     {myDrink}
                   </p>
                 </div>
-                <div className="w-5 h-5 bg-pink-200 rounded-full flex items-center justify-center">
+                <div className="w-5 h-5 bg-[rgba(255,145,112,0.2)] rounded-full flex items-center justify-center">
                   <svg
-                    className="w-3 h-3 text-pink-600"
+                    className="w-3 h-3 text-[#ff5a3d]"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >
@@ -331,9 +331,9 @@ function DrinkSelectionView({
               </div>
             </div>
           ) : (
-            <div className="border border-dashed border-gray-200 rounded-xl p-3.5">
-              <p className="text-gray-400 text-[11px] font-medium">내 선택</p>
-              <p className="text-gray-400 text-sm mt-0.5">
+            <div className="border border-dashed border-[rgba(14,15,12,0.08)] rounded-xl p-3.5">
+              <p className="text-[var(--slate-gray)] text-[11px] font-medium">내 선택</p>
+              <p className="text-[var(--slate-gray)] text-sm mt-0.5">
                 아래에서 음료를 선택해주세요
               </p>
             </div>
@@ -343,7 +343,7 @@ function DrinkSelectionView({
 
       {/* Drink Options */}
       <div className="px-5">
-        <p className="text-[11px] text-gray-400 font-medium mb-3">
+        <p className="text-[11px] text-[var(--slate-gray)] font-medium mb-3">
           음료 선택
         </p>
         <div className="space-y-2">
@@ -371,23 +371,23 @@ function DrinkSelectionView({
                     }}
                     className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
                       isMyDrink || isMyCustomDrink
-                        ? "bg-pink-50 text-pink-700"
+                        ? "bg-[rgba(255,145,112,0.08)] text-[#e64a2d]"
                         : isNoSelection
-                          ? "bg-gray-50 text-gray-400"
-                          : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                          ? "bg-[var(--soft-bone)] text-[var(--slate-gray)]"
+                          : "bg-[var(--soft-bone)] text-[var(--granite)] hover:bg-[var(--whisper-cream)]"
                     }`}
                   >
                     <span>
                       {drink}
                       {isMyCustomDrink && (
-                        <span className="ml-1.5 text-gray-400 text-xs">
+                        <span className="ml-1.5 text-[var(--slate-gray)] text-xs">
                           ({myDrink})
                         </span>
                       )}
                     </span>
                     {(isMyDrink || isMyCustomDrink) && (
                       <svg
-                        className="w-4 h-4 text-pink-500"
+                        className="w-4 h-4 text-[#ff7a5c]"
                         fill="currentColor"
                         viewBox="0 0 20 20"
                       >
@@ -408,10 +408,10 @@ function DrinkSelectionView({
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="w-[calc(100%-2rem)] max-w-xs mx-auto bg-white rounded-2xl shadow-xl border-0 p-5">
           <DialogHeader className="text-center mb-4">
-            <DialogTitle className="text-lg font-bold text-gray-900">
+            <DialogTitle className="text-lg font-bold text-[var(--ink-black)]">
               {selectedDrink === "기타" ? "기타 음료 입력" : selectedDrink}
             </DialogTitle>
-            <DialogDescription className="text-gray-500 text-sm mt-1">
+            <DialogDescription className="text-[var(--granite)] text-sm mt-1">
               {selectedDrink === "기타"
                 ? "원하시는 음료를 입력해주세요"
                 : "이 음료를 선택하시겠습니까?"}
@@ -424,7 +424,7 @@ function DrinkSelectionView({
                 value={customDrink}
                 onChange={(e) => setCustomDrink(e.target.value)}
                 placeholder="예: 카페라떼"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                className="w-full px-4 py-3 rounded-xl border border-[rgba(14,15,12,0.08)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ink-black)] focus:border-transparent"
                 autoFocus
               />
             </div>
@@ -437,7 +437,7 @@ function DrinkSelectionView({
                 setSelectedDrink("");
                 setCustomDrink("");
               }}
-              className="flex-1 h-11 text-gray-500 hover:text-gray-700 hover:bg-gray-100 font-medium rounded-xl"
+              className="flex-1 h-11 text-[var(--granite)] hover:text-[var(--granite)] hover:bg-[var(--whisper-cream)] font-medium rounded-xl"
             >
               취소
             </Button>
@@ -447,7 +447,7 @@ function DrinkSelectionView({
                 isAssigning ||
                 (selectedDrink === "기타" && !customDrink.trim())
               }
-              className="flex-1 h-11 bg-gray-900 hover:bg-gray-800 text-white font-semibold rounded-xl disabled:opacity-40"
+              className="flex-1 h-11 bg-[var(--ink-black)] hover:bg-[var(--ink-black)] text-white font-semibold rounded-xl disabled:opacity-40"
             >
               {isAssigning ? "저장 중..." : "확인"}
             </Button>

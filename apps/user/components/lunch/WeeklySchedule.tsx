@@ -53,9 +53,9 @@ const WeeklySchedule = ({ isLoading }: WeeklyScheduleProps) => {
 
   if (isLoading || schedulesLoading) {
     return (
-      <div className="pt-4 border-t border-gray-100 grid grid-cols-2 gap-2">
+      <div className="pt-4 border-t border-[rgba(14,15,12,0.06)] grid grid-cols-2 gap-2">
         {[1, 2].map((i) => (
-          <div key={i} className="bg-gray-50 rounded-xl p-2">
+          <div key={i} className="bg-[var(--soft-bone)] rounded-xl p-2">
             <div className="skeleton w-6 h-3 rounded mb-1.5 mx-auto" />
             <div className="skeleton w-10 h-3 rounded mx-auto" />
           </div>
@@ -70,7 +70,7 @@ const WeeklySchedule = ({ isLoading }: WeeklyScheduleProps) => {
   }
 
   return (
-    <div className={`pt-4 border-t border-gray-100 grid gap-2 ${
+    <div className={`pt-4 border-t border-[rgba(14,15,12,0.06)] grid gap-2 ${
       daysWithData.length === 1 ? "grid-cols-1" :
       daysWithData.length === 2 ? "grid-cols-2" :
       daysWithData.length === 3 ? "grid-cols-3" :
@@ -83,35 +83,35 @@ const WeeklySchedule = ({ isLoading }: WeeklyScheduleProps) => {
         return (
           <Popover key={day.value}>
             <PopoverTrigger asChild>
-              <button className="w-full rounded-xl p-2.5 text-center transition-colors group bg-gray-50 hover:bg-gray-100">
-                <p className="text-xs font-medium text-gray-700">{day.label}</p>
+              <button className="w-full rounded-xl p-2.5 text-center transition-colors group bg-[var(--soft-bone)] hover:bg-[var(--whisper-cream)]">
+                <p className="text-xs font-medium text-[var(--granite)]">{day.label}</p>
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-64 p-0 rounded-xl border border-gray-100 shadow-lg" align="center">
-              <div className="p-3 border-b border-gray-100">
-                <h4 className="font-medium text-sm text-gray-800">{day.fullLabel} 고정 스케줄</h4>
-                <p className="text-xs text-gray-500 mt-0.5">이번 주 담당자</p>
+            <PopoverContent className="w-64 p-0 rounded-xl border border-[rgba(14,15,12,0.06)] shadow-lg" align="center">
+              <div className="p-3 border-b border-[rgba(14,15,12,0.06)]">
+                <h4 className="font-medium text-sm text-[var(--ink-black)]">{day.fullLabel} 고정 스케줄</h4>
+                <p className="text-xs text-[var(--granite)] mt-0.5">이번 주 담당자</p>
               </div>
               <div className="p-2 max-h-48 overflow-y-auto">
                 <div className="space-y-1.5">
                   {/* 멤버 표시 */}
                   {dayData.members.map((member, index) => (
-                    <div key={`member-${index}`} className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
-                      <div className="w-5 h-5 rounded-full bg-blue-200 flex items-center justify-center text-[10px] font-medium text-blue-700">
+                    <div key={`member-${index}`} className="flex items-center gap-2 p-2 bg-[rgba(56,200,255,0.12)] rounded-lg">
+                      <div className="w-5 h-5 rounded-full bg-[rgba(56,200,255,0.2)] flex items-center justify-center text-[10px] font-medium text-[#0f4c75]">
                         {member.charAt(0)}
                       </div>
-                      <span className="text-xs text-blue-700">{member}</span>
+                      <span className="text-xs text-[#0f4c75]">{member}</span>
                     </div>
                   ))}
                   {/* 라벨 표시 */}
                   {dayData.labels.map((label, index) => (
-                    <div key={`label-${index}`} className="flex items-center gap-2 p-2 bg-amber-50 rounded-lg">
-                      <div className="w-5 h-5 rounded-full bg-amber-200 flex items-center justify-center">
-                        <svg className="w-3 h-3 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div key={`label-${index}`} className="flex items-center gap-2 p-2 bg-[rgba(255,209,26,0.15)] rounded-lg">
+                      <div className="w-5 h-5 rounded-full bg-[rgba(255,209,26,0.3)] flex items-center justify-center">
+                        <svg className="w-3 h-3 text-[#6b4c00]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                         </svg>
                       </div>
-                      <span className="text-xs text-amber-700">{label}</span>
+                      <span className="text-xs text-[#6b4c00]">{label}</span>
                     </div>
                   ))}
                 </div>

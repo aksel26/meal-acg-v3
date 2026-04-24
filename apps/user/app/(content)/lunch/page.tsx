@@ -26,11 +26,11 @@ const WeeklySchedule = dynamic(
     ssr: false,
     loading: () => (
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-gray-50 rounded-xl p-3">
+        <div className="bg-[var(--soft-bone)] rounded-xl p-3">
           <div className="w-12 h-3 skeleton rounded mb-2"></div>
           <div className="w-16 h-3 skeleton rounded"></div>
         </div>
-        <div className="bg-gray-50 rounded-xl p-3">
+        <div className="bg-[var(--soft-bone)] rounded-xl p-3">
           <div className="w-12 h-3 skeleton rounded mb-2"></div>
           <div className="w-16 h-3 skeleton rounded"></div>
         </div>
@@ -111,18 +111,18 @@ const Lunch = () => {
         className="card-premium rounded-2xl mb-4 overflow-hidden"
       >
         {/* 상단 헤더 */}
-        <div className="px-5 py-4 border-b border-gray-50">
+        <div className="px-5 py-4 border-b border-[rgba(14,15,12,0.05)]">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-lg font-semibold text-gray-900">
+              <h1 className="text-lg font-semibold text-[var(--ink-black)]">
                 점심조 편성
               </h1>
               {isLoading ? (
-                <p className="text-xs text-gray-400 mt-0.5">로딩 중...</p>
+                <p className="text-xs text-[var(--slate-gray)] mt-0.5">로딩 중...</p>
               ) : error ? (
-                <p className="text-xs text-red-500 mt-0.5">데이터 로딩 실패</p>
+                <p className="text-xs text-[#d03238] mt-0.5">데이터 로딩 실패</p>
               ) : (
-                <p className="text-xs text-gray-500 mt-0.5">
+                <p className="text-xs text-[var(--granite)] mt-0.5">
                   총 {validGroupCount}개 조 ·{" "}
                   {lunchGroupData?.totalMembers || "0"}명
                 </p>
@@ -133,7 +133,7 @@ const Lunch = () => {
             {!isLoading && !error && unassignedMembers.length > 0 && (
               <Popover>
                 <PopoverTrigger asChild>
-                  <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors">
+                  <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-[#6b4c00] bg-[rgba(255,209,26,0.15)] hover:bg-[rgba(255,209,26,0.2)] transition-colors">
                     <svg
                       className="w-3.5 h-3.5"
                       fill="none"
@@ -151,22 +151,22 @@ const Lunch = () => {
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-72 p-0" align="end">
-                  <div className="p-4 border-b border-gray-100">
-                    <h4 className="font-medium text-sm text-gray-900">
+                  <div className="p-4 border-b border-[rgba(14,15,12,0.06)]">
+                    <h4 className="font-medium text-sm text-[var(--ink-black)]">
                       미추첨 인원
                     </h4>
-                    <p className="text-xs text-gray-500 mt-0.5">
+                    <p className="text-xs text-[var(--granite)] mt-0.5">
                       아직 점심조에 배정되지 않은 인원
                     </p>
                   </div>
 
                   <div className="p-3 max-h-52 overflow-y-auto">
                     {usersLoading ? (
-                      <p className="text-sm text-gray-400 text-center py-4">
+                      <p className="text-sm text-[var(--slate-gray)] text-center py-4">
                         로딩 중...
                       </p>
                     ) : unassignedMembers.length === 0 ? (
-                      <p className="text-sm text-gray-500 text-center py-4">
+                      <p className="text-sm text-[var(--granite)] text-center py-4">
                         모든 인원이 배정됨
                       </p>
                     ) : (
@@ -174,12 +174,12 @@ const Lunch = () => {
                         {unassignedMembers.map((member, index) => (
                           <div
                             key={`unassigned-${index}`}
-                            className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg"
+                            className="flex items-center gap-2 p-2 bg-[var(--soft-bone)] rounded-lg"
                           >
-                            <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-600">
+                            <div className="w-6 h-6 rounded-full bg-[var(--soft-bone)] flex items-center justify-center text-xs font-medium text-[var(--granite)]">
                               {member.charAt(0)}
                             </div>
-                            <span className="text-xs text-gray-700 truncate">
+                            <span className="text-xs text-[var(--granite)] truncate">
                               {member}
                             </span>
                           </div>
@@ -188,8 +188,8 @@ const Lunch = () => {
                     )}
                   </div>
 
-                  <div className="px-4 py-3 bg-gray-50 border-t border-gray-100">
-                    <p className="text-xs text-gray-400 text-center">
+                  <div className="px-4 py-3 bg-[var(--soft-bone)] border-t border-[rgba(14,15,12,0.06)]">
+                    <p className="text-xs text-[var(--slate-gray)] text-center">
                       총 {unassignedMembers.length}명 미배정
                     </p>
                   </div>
@@ -203,14 +203,14 @@ const Lunch = () => {
         <div className="px-5 py-4">
           <div className="flex gap-8 mb-4">
             <div>
-              <p className="text-[11px] text-gray-400 mb-0.5">시작일</p>
-              <p className="text-sm font-medium text-gray-800">
+              <p className="text-[11px] text-[var(--slate-gray)] mb-0.5">시작일</p>
+              <p className="text-sm font-medium text-[var(--ink-black)]">
                 {lunchGroupData?.prevDate || "-"}
               </p>
             </div>
             <div>
-              <p className="text-[11px] text-gray-400 mb-0.5">다음 뽑기</p>
-              <p className="text-sm font-medium text-gray-800">
+              <p className="text-[11px] text-[var(--slate-gray)] mb-0.5">다음 뽑기</p>
+              <p className="text-sm font-medium text-[var(--ink-black)]">
                 {lunchGroupData?.nextDate || "-"}
               </p>
             </div>
@@ -230,8 +230,8 @@ const Lunch = () => {
         <button
           className={`w-full mb-4 py-3.5 rounded-xl text-sm font-semibold transition-all ${
             isExcluded
-              ? "text-gray-400 bg-gray-100 cursor-not-allowed"
-              : "text-white bg-gradient-to-r from-purple-400 via-pink-400 to-orange-300 hover:from-purple-500 hover:via-pink-500 hover:to-orange-400"
+              ? "text-[var(--slate-gray)] bg-[var(--whisper-cream)] cursor-not-allowed"
+              : "text-white bg-gradient-to-r from-[var(--signal-orange)] via-[#ff9170] to-[#ffc091] hover:from-[#72be46] hover:via-[#ff7a5c] hover:to-[#ffa662]"
           }`}
           onClick={() => !isExcluded && setIsLotteryOpen(true)}
           disabled={isExcluded}
@@ -262,7 +262,7 @@ const Lunch = () => {
                   {Array.from({ length: 4 }, (_, i) => (
                     <div
                       key={i}
-                      className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg"
+                      className="flex items-center gap-2 p-2 bg-[var(--soft-bone)] rounded-lg"
                     >
                       <div className="skeleton w-6 h-6 rounded-full" />
                       <div className="skeleton h-4 w-14 rounded" />
@@ -274,10 +274,10 @@ const Lunch = () => {
           </div>
         ) : error ? (
           <div className="card-premium rounded-2xl p-8 text-center">
-            <p className="text-sm text-red-500 mb-1">
+            <p className="text-sm text-[#d03238] mb-1">
               데이터를 불러오는데 실패했습니다
             </p>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-[var(--slate-gray)]">
               {error?.message || "알 수 없는 오류"}
             </p>
           </div>
@@ -292,11 +292,11 @@ const Lunch = () => {
       {/* 점심조 뽑기 다이얼로그 */}
       <Dialog open={isLotteryOpen} onOpenChange={setIsLotteryOpen}>
         <DialogContent className="max-w-sm w-[90vw] p-0 rounded-2xl overflow-hidden">
-          <DialogHeader className="px-6 py-5 border-b border-gray-100">
-            <DialogTitle className="text-base font-semibold text-gray-900">
+          <DialogHeader className="px-6 py-5 border-b border-[rgba(14,15,12,0.06)]">
+            <DialogTitle className="text-base font-semibold text-[var(--ink-black)]">
               점심조 뽑기
             </DialogTitle>
-            <DialogDescription className="text-sm text-gray-500">
+            <DialogDescription className="text-sm text-[var(--granite)]">
               스크래치 카드를 긁어서 배정된 조를 확인하세요
             </DialogDescription>
           </DialogHeader>
@@ -305,7 +305,7 @@ const Lunch = () => {
             <ScratchLottery />
           </div>
 
-          <DialogFooter className="px-6 py-4 border-t border-gray-100 bg-gray-50">
+          <DialogFooter className="px-6 py-4 border-t border-[rgba(14,15,12,0.06)] bg-[var(--soft-bone)]">
             <Button
               variant="outline"
               onClick={() => setIsLotteryOpen(false)}

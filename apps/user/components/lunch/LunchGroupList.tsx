@@ -129,8 +129,8 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
   if (processedTeams.length === 0) {
     return (
       <div className="card-premium rounded-2xl p-8 text-center">
-        <p className="text-sm text-gray-500 mb-1">등록된 점심조가 없습니다.</p>
-        <p className="text-xs text-gray-400">관리자에게 문의해주세요.</p>
+        <p className="text-sm text-[var(--granite)] mb-1">등록된 점심조가 없습니다.</p>
+        <p className="text-xs text-[var(--slate-gray)]">관리자에게 문의해주세요.</p>
       </div>
     );
   }
@@ -149,7 +149,7 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
             transition={{ duration: 0.3, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
             className={`card-premium rounded-2xl overflow-hidden transition-all duration-200 ${
               isMyTeamHighlight
-                ? "ring-1 ring-[oklch(0.68_0.15_250)/0.4]"
+                ? "ring-1 ring-[rgba(14,15,12,0.4)]"
                 : ""
             } ${onTeamClick ? "cursor-pointer" : ""}`}
             onClick={() =>
@@ -165,17 +165,17 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
                 <div className="flex items-center gap-2">
                   <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
                     isMyTeamHighlight
-                      ? "bg-[oklch(0.45_0.18_250)] text-white"
-                      : "bg-gray-100 text-gray-700"
+                      ? "bg-[var(--ink-black)] text-white"
+                      : "bg-[var(--whisper-cream)] text-[var(--granite)]"
                   }`}>
                     {team.name}
                   </span>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-[var(--slate-gray)]">
                     {validMemberCount}명
                   </span>
                 </div>
                 {isMyTeamHighlight && (
-                  <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-orange-300 text-white">
+                  <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-gradient-to-r from-[var(--signal-orange)] via-[#ff9170] to-[#ffc091] text-white">
                     내 조
                   </span>
                 )}
@@ -197,12 +197,12 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
                     return (
                       <div
                         key={`empty-${memberIndex}`}
-                        className="flex items-center gap-2 p-2 rounded-lg bg-gray-50/50"
+                        className="flex items-center gap-2 p-2 rounded-lg bg-[var(--soft-bone)]/50"
                       >
-                        <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">
-                          <span className="text-[10px] text-gray-400">?</span>
+                        <div className="w-6 h-6 rounded-full bg-[var(--soft-bone)] flex items-center justify-center">
+                          <span className="text-[10px] text-[var(--slate-gray)]">?</span>
                         </div>
-                        <span className="text-xs text-gray-400 italic">빈 자리</span>
+                        <span className="text-xs text-[var(--slate-gray)] italic">빈 자리</span>
                       </div>
                     );
                   }
@@ -213,27 +213,27 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
                       key={`${member}-${memberIndex}`}
                       className={`flex items-center gap-2 p-2 rounded-lg ${
                         isMe
-                          ? "bg-[oklch(0.94_0.05_250)]"
-                          : "bg-gray-50"
+                          ? "bg-[var(--whisper-cream)]"
+                          : "bg-[var(--soft-bone)]"
                       }`}
                     >
                       <div
                         className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
                           isMe
-                            ? "bg-[oklch(0.55_0.2_250)] text-white"
-                            : "bg-gray-200 text-gray-600"
+                            ? "bg-[var(--signal-orange)] text-[var(--charcoal)]"
+                            : "bg-[var(--soft-bone)] text-[var(--granite)]"
                         }`}
                       >
                         {member.charAt(0)}
                       </div>
                       <span
                         className={`text-xs truncate ${
-                          isMe ? "text-gray-800 font-semibold" : "text-gray-700"
+                          isMe ? "text-[var(--ink-black)] font-semibold" : "text-[var(--granite)]"
                         }`}
                       >
                         {member}
                         {isMe && (
-                          <span className="ml-1 text-[10px] text-gray-500">(나)</span>
+                          <span className="ml-1 text-[10px] text-[var(--granite)]">(나)</span>
                         )}
                       </span>
                     </div>

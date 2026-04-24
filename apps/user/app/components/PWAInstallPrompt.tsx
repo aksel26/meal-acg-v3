@@ -21,23 +21,18 @@ export default function PWAInstallPrompt() {
   const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
-    // iOS 감지
     const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent);
     setIsIOS(isIOSDevice);
 
-    // 이미 설치된 PWA인지 확인 (standalone 모드)
-    const isStandaloneMode = window.matchMedia("(display-mode: standalone)").matches || (window.navigator as any).standalone === true;
+    const isStandaloneMode = window.matchMedia("(display-mode: standalone)").matches || (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
     setIsStandalone(isStandaloneMode);
 
-    // localStorage에서 dismiss 상태 확인
     const isDismissed = localStorage.getItem("pwa-install-dismissed");
 
-    // beforeinstallprompt 이벤트 리스너 (Android/Chrome)
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
 
-      // 이미 설치되지 않은 경우에만 프롬프트 표시
       if (!isStandaloneMode && !isDismissed) {
         setShowPrompt(true);
       }
@@ -45,34 +40,34 @@ export default function PWAInstallPrompt() {
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
-    // 개발/테스트 환경에서 프롬프트 표시 (실제 배포 시 제거 권장)
     if (process.env.NODE_ENV === "development" && !isStandaloneMode && !isDismissed) {
       setTimeout(() => setShowPrompt(true), 2000);
     }
 
-    // iOS에서 Safari인지 확인하고 standalone 모드가 아닌 경우 프롬프트 표시
     if (isIOSDevice && !isStandaloneMode && !isDismissed) {
       const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
       if (isSafari) {
         setShowPrompt(true);
       }
     }
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    };
   }, []);
 
-  // showPrompt가 true가 되면 1초 후에 애니메이션 시작
   useEffect(() => {
     if (showPrompt) {
       const timer = setTimeout(() => {
         setIsVisible(true);
-      }, 1000);
-      
+      }, 600);
+
       return () => clearTimeout(timer);
     }
   }, [showPrompt]);
 
   const handleInstallClick = async () => {
     if (deferredPrompt) {
-      // Android/Chrome 설치
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
 
@@ -80,9 +75,6 @@ export default function PWAInstallPrompt() {
         setShowPrompt(false);
         setDeferredPrompt(null);
       }
-    } else if (isIOS) {
-      // iOS 설치 안내는 그대로 유지 (사용자가 수동으로 설치해야 함)
-      // 여기서는 단순히 프롬프트를 유지하고 사용자가 직접 설치하도록 안내
     }
   };
 
@@ -91,89 +83,52 @@ export default function PWAInstallPrompt() {
     localStorage.setItem("pwa-install-dismissed", "true");
   };
 
-  // 이미 설치된 경우 또는 표시하지 않는 경우
   if (!showPrompt || isStandalone || !isVisible) {
     return null;
   }
 
   return (
-    <div className="fixed top-4 left-4 right-4 z-50 animate-in fade-in-0 slide-in-from-top-8 duration-700 ease-out">
-      <div className="max-w-md mx-auto">
-        {/* 카드 컨테이너 */}
-        <div className="bg-white/95 backdrop-blur-md border border-gray-200/50 rounded-2xl shadow-xl overflow-hidden animate-in zoom-in-95 duration-700 delay-100 ease-out">
-          {/* 카드 헤더 */}
-          <div className="bg-gradient-to-r from-slate-50 to-gray-50 border-b border-gray-100/80 px-4 py-3 animate-in slide-in-from-left duration-700 delay-200 ease-out">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {/* 앱 아이콘 */}
-                <div className="flex-shrink-0 w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center border border-blue-100/50 animate-in zoom-in-0 duration-500 delay-400 ease-out">
-                  <span className="text-lg">🍙</span>
-                </div>
-
-                {/* 앱 정보 */}
-                <div className="animate-in slide-in-from-left duration-600 delay-300 ease-out">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-semibold text-gray-800">ACG 식대관리</h3>
-                    <span className="px-2 py-0.5 text-xs font-medium bg-blue-50 text-blue-700 rounded-full border border-blue-100/50 animate-in fade-in-0 duration-500 delay-500 ease-out">앱</span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-0.5">식대 관리를 더욱 편리하게</p>
-                </div>
+    <div className="fixed left-4 right-4 top-4 z-50 animate-in fade-in-0 slide-in-from-top-6 duration-500">
+      <div className="mx-auto max-w-xl">
+        <div className="glass-card-elevated overflow-hidden rounded-[24px] border border-[rgba(25,28,31,0.1)]">
+          <div className="flex items-start justify-between gap-4 px-5 py-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--ink-black)] text-white">
+                🍙
               </div>
 
-              {/* 닫기 버튼 */}
-              <button
-                onClick={handleDismiss}
-                className="flex-shrink-0 w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-lg transition-colors duration-200 text-gray-400 hover:text-gray-600 animate-in fade-in-0 duration-500 delay-600 ease-out"
-                aria-label="닫기"
-              >
-                <X size={16} />
-              </button>
-            </div>
-          </div>
-
-          {/* 카드 내용 */}
-          <div className="px-4 py-2 animate-in slide-in-from-bottom duration-700 delay-400 ease-out">
-            <div className="flex items-start justify-between gap-4">
-              {/* 설명 텍스트 */}
-              <div className="flex-1 animate-in fade-in-0 duration-600 delay-500 ease-out">
-                <p className="text-xs text-gray-600 leading-relaxed">
-                  {isIOS ? "Safari에서 공유 버튼을 누르고 '홈 화면에 추가'를 선택하여 앱을 설치하세요" : "홈 화면에 추가하여 네이티브 앱처럼 빠르고 편리하게 이용하세요"}
+              <div>
+                <p className="eyebrow-label">Install app</p>
+                <h3 className="mt-2 text-sm font-medium text-[var(--ink-black)]">
+                  ACG 복지관리 앱으로 빠르게 실행하세요
+                </h3>
+                <p className="mt-2 text-xs leading-6 text-[var(--granite)]">
+                  {isIOS
+                    ? "Safari 공유 메뉴에서 '홈 화면에 추가'를 선택하면 앱처럼 실행할 수 있습니다."
+                    : "홈 화면에 추가하면 더 빠르게 열리고, 앱처럼 바로 접근할 수 있습니다."}
                 </p>
               </div>
-
-              {/* 설치 버튼 */}
-              {!isIOS && deferredPrompt && (
-                <Button
-                  onClick={handleInstallClick}
-                  size="sm"
-                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-4 py-2 rounded-lg shadow-sm transition-all duration-200 hover:shadow-md whitespace-nowrap animate-in slide-in-from-right duration-600 delay-700 ease-out"
-                >
-                  설치하기
-                </Button>
-              )}
             </div>
 
-            {/* iOS 전용 안내 */}
-            {isIOS && (
-              <div className="mt-3 pt-3 border-t border-gray-100 animate-in slide-in-from-bottom duration-500 delay-800 ease-out">
-                <div className="flex items-center gap-2 text-xs text-gray-500">
-                  <div className="flex items-center gap-1 animate-in fade-in-0 duration-400 delay-900 ease-out">
-                    <span className="w-4 h-4 bg-blue-100 rounded flex items-center justify-center">
-                      <span className="text-xs">📤</span>
-                    </span>
-                    <span>공유</span>
-                  </div>
-                  <span className="animate-in fade-in-0 duration-300 delay-1000 ease-out">→</span>
-                  <div className="flex items-center gap-1 animate-in fade-in-0 duration-400 delay-1100 ease-out">
-                    <span className="w-4 h-4 bg-green-100 rounded flex items-center justify-center">
-                      <span className="text-xs">➕</span>
-                    </span>
-                    <span>홈 화면에 추가</span>
-                  </div>
-                </div>
-              </div>
-            )}
+            <button
+              onClick={handleDismiss}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--whisper-cream)] text-[var(--granite)] transition-colors hover:bg-[var(--soft-bone)]"
+              aria-label="닫기"
+            >
+              <X size={16} />
+            </button>
           </div>
+
+          {!isIOS && deferredPrompt && (
+            <div className="border-t border-[rgba(25,28,31,0.08)] px-5 py-4">
+              <Button
+                onClick={handleInstallClick}
+                className="btn-primary w-full"
+              >
+                설치하기
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>

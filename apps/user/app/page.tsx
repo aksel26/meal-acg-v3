@@ -7,7 +7,7 @@ import { Label } from "@repo/ui/src/label";
 import { motion } from "motion/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import { useUserStore } from "@/stores/userStore";
 
@@ -72,39 +72,45 @@ export default function HomePage() {
   return (
     <>
       <PWAInstallPrompt />
-      <div className="fixed inset-0 gradient-mesh -z-20" />
 
-      <div className="mx-auto flex min-h-dvh max-w-7xl flex-col px-4 py-4 md:px-6 md:py-6 lg:px-8">
-        <main className="flex flex-1 items-center justify-center py-4">
-          <motion.section
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="glass-card-elevated w-full overflow-hidden rounded-[30px] md:grid md:grid-cols-[minmax(360px,420px)_1fr]"
-          >
-            <div className="order-2 flex items-center bg-[var(--canvas-cream)] px-5 py-6 md:order-1 md:px-8 md:py-10 lg:px-10">
-              <div className="mx-auto w-full max-w-sm space-y-6">
-                <div className="space-y-3">
-                  <p className="eyebrow-label">ACG meal welfare</p>
-                  <h2 className="text-[clamp(2.25rem,4vw,3.4rem)] font-black leading-[1.05] tracking-[-0.025em] text-[var(--ink-black)]">
-                    맛점,
+      <div className="min-h-dvh bg-white">
+        <div className="mx-auto flex min-h-dvh max-w-6xl flex-col px-5 py-6 sm:px-8 lg:px-10">
+          <header className="flex items-center justify-between">
+            <p className="font-display text-lg font-medium text-[var(--ink-black)]">
+              ACG welfare
+            </p>
+            <p className="text-xs font-medium uppercase tracking-[0.14em] text-[var(--slate-gray)]">
+              ACG 복지관리
+            </p>
+          </header>
+
+          <main className="grid flex-1 items-center gap-12 py-10 md:grid-cols-2 lg:gap-20">
+            <motion.section
+              initial={{ opacity: 0, y: 28 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
+              className="order-2 md:order-1"
+            >
+              <div className="mx-auto w-full max-w-sm md:mx-0">
+                <div className="mb-10 space-y-3">
+                  <p className="text-sm font-medium text-[var(--granite)]">ACG welfare</p>
+                  <h1 className="font-display text-4xl font-medium leading-tight text-[var(--ink-black)]">
+                    사내 복지를,
                     <br />
                     더 똑똑하게
-                  </h2>
-                  <p className="text-[15px] font-semibold leading-[1.55] tracking-[-0.01em] text-[var(--granite)]">
-                    식대 기록과 복지 흐름을
-                    <br />
-                    한 번에 시작하세요.
+                  </h1>
+                  <p className="text-sm leading-6 text-[var(--granite)]">
+                    복지포인트, 식대, Monthly 커피, 점심조까지 한 곳에서 확인하고 관리하세요.
                   </p>
                 </div>
 
-                <form onSubmit={handleLogin} className="space-y-4">
+                <form onSubmit={handleLogin} className="space-y-5">
                   <div className="space-y-2">
-                    <Label className="ml-1 text-xs font-medium text-[var(--granite)]" htmlFor="id">
+                    <Label className="text-xs font-medium text-[var(--granite)]" htmlFor="id">
                       아이디
                     </Label>
                     <Input
-                      className="input-premium h-12 text-sm"
+                      className="input-premium text-sm"
                       id="id"
                       name="id"
                       type="text"
@@ -116,11 +122,11 @@ export default function HomePage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="ml-1 text-xs font-medium text-[var(--granite)]" htmlFor="password">
+                    <Label className="text-xs font-medium text-[var(--granite)]" htmlFor="password">
                       비밀번호
                     </Label>
                     <Input
-                      className="input-premium h-12 text-sm"
+                      className="input-premium text-sm"
                       id="password"
                       name="password"
                       type="password"
@@ -132,7 +138,7 @@ export default function HomePage() {
                   </div>
 
                   {error && (
-                    <Alert variant="destructive" className="rounded-[16px] border border-[rgba(208,50,56,0.18)] bg-[rgba(208,50,56,0.06)] text-[#d03238]">
+                    <Alert className="rounded-[16px] border border-[rgba(226,59,74,0.22)] bg-[rgba(226,59,74,0.06)] text-[var(--danger)]">
                       <AlertDescription className="text-sm">
                         {error}
                       </AlertDescription>
@@ -141,7 +147,7 @@ export default function HomePage() {
 
                   <Button
                     type="submit"
-                    className="btn-primary h-12 w-full text-[18px]"
+                    className="btn-primary h-[3.25rem] w-full text-base"
                     disabled={loading}
                   >
                     {loading ? (
@@ -158,75 +164,33 @@ export default function HomePage() {
                   </Button>
                 </form>
               </div>
-            </div>
+            </motion.section>
 
-            <div className="order-1 flex min-h-full flex-col justify-between border-b border-[rgba(14,15,12,0.12)] bg-white px-5 py-6 md:order-2 md:border-b-0 md:border-l md:px-8 md:py-10 lg:px-10">
-              <div className="space-y-8">
-                <div className="space-y-4">
-                  <p className="eyebrow-label">Money without borders</p>
-                  <h1 className="max-w-[10ch] text-[clamp(3rem,7vw,6rem)] font-black leading-[1.0] tracking-[-0.03em] text-[var(--ink-black)]">
-                    식대와
-                    <br />
-                    복지를
-                    <br />
-                    빠르게.
-                  </h1>
-                  <p className="max-w-[32rem] text-[16px] font-semibold leading-[1.6] tracking-[-0.01em] text-[var(--granite)]">
-                    ACG 식대 앱에서 기록, 확인, 월간 흐름까지 자연스럽게 이어집니다.
-                  </p>
-                </div>
-
-                <div className="mx-auto w-full max-w-[320px] overflow-hidden rounded-[30px] bg-[var(--soft-bone)] ring-1 ring-[rgba(14,15,12,0.12)] md:mx-0">
-                  <div className="relative aspect-[4/3] w-full min-w-0">
-                    <Image
-                      src="/images/coffee-tea-2.png"
-                      alt="Coffee Tea"
-                      fill
-                      className="object-cover"
-                      priority
-                    />
-                  </div>
-                </div>
+            <motion.section
+              initial={{ opacity: 0, y: 28 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
+              className="order-1 flex min-h-[360px] flex-col items-center justify-center text-center md:order-2"
+            >
+              <div className="relative h-56 w-56 overflow-hidden rounded-full bg-[var(--whisper-cream)] sm:h-64 sm:w-64">
+                <Image
+                  src="/images/coffee-tea-2.png"
+                  alt="ACG welfare"
+                  fill
+                  priority
+                  className="object-cover"
+                />
               </div>
 
-              <div className="mt-8 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-[20px] border border-[rgba(14,15,12,0.12)] bg-[var(--lifted-cream)] px-4 py-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-[-0.01em] text-[var(--slate-gray)]">
-                    Manage
-                  </p>
-                  <p className="mt-2 text-[15px] font-semibold text-[var(--ink-black)]">
-                    식비 내역을 쉽게
-                  </p>
-                  <p className="mt-1 text-xs leading-5 text-[var(--granite)]">
-                    관리하고 분석해보세요
-                  </p>
-                </div>
-                <div className="rounded-[20px] border border-[rgba(14,15,12,0.12)] bg-[var(--lifted-cream)] px-4 py-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-[-0.01em] text-[var(--slate-gray)]">
-                    Lunch
-                  </p>
-                  <p className="mt-2 text-[15px] font-semibold text-[var(--ink-black)]">
-                    동료들과 함께
-                  </p>
-                  <p className="mt-1 text-xs leading-5 text-[var(--granite)]">
-                    점심 시간을 즐겨보세요
-                  </p>
-                </div>
-                <div className="rounded-[20px] border border-[rgba(14,15,12,0.12)] bg-[var(--lifted-cream)] px-4 py-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-[-0.01em] text-[var(--slate-gray)]">
-                    Meeting
-                  </p>
-                  <p className="mt-2 text-[15px] font-semibold text-[var(--ink-black)]">
-                    Monthly Meeting
-                  </p>
-                  <p className="mt-1 text-xs leading-5 text-[var(--granite)]">
-                    음료를 기록해보세요
-                  </p>
-                </div>
-              </div>
-            </div>
-          </motion.section>
-        </main>
+              <p className="mt-8 max-w-sm font-display text-3xl font-medium leading-tight text-[var(--ink-black)]">
+                포인트부터 커피 취합까지 빠르게.
+              </p>
+              <p className="mt-3 max-w-sm text-sm leading-6 text-[var(--granite)]">
+                ACG 복지 앱에서 식대 기록, 복지포인트, Monthly 커피, 점심조 흐름까지 자연스럽게 이어집니다.
+              </p>
+            </motion.section>
+          </main>
+        </div>
       </div>
     </>
   );

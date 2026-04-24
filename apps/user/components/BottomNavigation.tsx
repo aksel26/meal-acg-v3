@@ -10,88 +10,97 @@ import MonthlyIcon from "@/public/icons/monthly.png";
 import PointsIcon from "@/public/icons/payer.png";
 import DNAIcon from "@/public/icons/dna.png";
 
-export function BottomNavigation() {
-  const navItems = [
-    {
-      id: "dashboard",
-      label: "홈",
-      icon: HomeIcon,
-    },
-    {
-      id: "points",
-      label: "복지포인트",
-      icon: PointsIcon,
-    },
-    {
-      id: "lunch",
-      label: "점심조",
-      icon: LunchIcon,
-    },
-    {
-      id: "monthly",
-      label: "음료취합",
-      icon: MonthlyIcon,
-    },
-    {
-      id: "workDNA",
-      label: "유형검사",
-      icon: DNAIcon,
-    },
-  ];
+const navItems = [
+  {
+    id: "dashboard",
+    label: "홈",
+    icon: HomeIcon,
+  },
+  {
+    id: "points",
+    label: "복지포인트",
+    icon: PointsIcon,
+  },
+  {
+    id: "lunch",
+    label: "점심조",
+    icon: LunchIcon,
+  },
+  {
+    id: "monthly",
+    label: "음료취합",
+    icon: MonthlyIcon,
+  },
+  {
+    id: "workDNA",
+    label: "유형검사",
+    icon: DNAIcon,
+  },
+];
 
+export function BottomNavigation() {
   const router = useRouter();
   const pathname = usePathname();
 
   const handleNavigation = (id: string) => {
     if (id === "workDNA") {
       window.open("https://workdna.netlify.app/", "_blank");
-    } else {
-      router.push(`/${id}`);
+      return;
     }
+
+    router.push(`/${id}`);
+  };
+
+  const isActivePath = (id: string) => {
+    if (id === "dashboard") {
+      return pathname === "/dashboard";
+    }
+
+    return pathname.startsWith(`/${id}`);
   };
 
   return (
     <motion.nav
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 280, damping: 28, delay: 0.3 }}
-      className="fixed bottom-0 left-1/2 z-50 w-full max-w-xl -translate-x-1/2 px-4 pb-4"
+      transition={{ type: "spring", stiffness: 280, damping: 28, delay: 0.25 }}
+      className="fixed bottom-0 left-1/2 z-50 w-full max-w-[820px] -translate-x-1/2 px-4 pb-4 sm:px-6"
     >
-      <div className="glass-card-elevated rounded-[20px] px-2 py-2 shadow-[var(--shadow-float)]">
-        <div className="flex items-center justify-around pb-safe">
+      <div className="glass-card-elevated rounded-[28px] px-2 py-2">
+        <div className="grid grid-cols-5 gap-1">
           {navItems.map((item) => {
-            const isActive = pathname === `/${item.id}`;
+            const isActive = isActivePath(item.id);
 
             return (
               <motion.button
                 key={item.id}
-                whileTap={{ scale: 0.96 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={() => handleNavigation(item.id)}
-                className={`relative flex min-w-[60px] flex-col items-center justify-center rounded-[14px] px-3 py-2 transition-colors ${
+                className={`nav-item min-h-[64px] ${
                   isActive
-                    ? "bg-[var(--signal-orange)] text-[var(--charcoal)]"
+                    ? "nav-item-active"
                     : "text-[var(--granite)]"
                 }`}
               >
-                <motion.div
-                  animate={isActive ? { scale: 1.04, y: -1 } : { scale: 1, y: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="relative z-10 mb-1"
+                <div
+                  className={`mb-1.5 flex h-9 w-9 items-center justify-center rounded-full ${
+                    isActive ? "bg-white/12" : "bg-[var(--whisper-cream)]"
+                  }`}
                 >
                   <Image
                     src={item.icon}
                     alt={item.label}
-                    height={20}
-                    width={20}
-                  className={`transition-opacity duration-200 ${
-                    isActive ? "opacity-100" : "opacity-65"
-                  }`}
-                />
-                </motion.div>
+                    height={18}
+                    width={18}
+                    className={`transition-opacity duration-200 ${
+                      isActive ? "opacity-100" : "opacity-70"
+                    }`}
+                  />
+                </div>
 
                 <span
-                  className={`relative z-10 text-[10px] font-medium tracking-[-0.02em] ${
-                    isActive ? "text-[var(--charcoal)]" : "text-[var(--slate-gray)]"
+                  className={`text-[10px] font-medium tracking-[0.08em] ${
+                    isActive ? "text-white" : "text-[var(--slate-gray)]"
                   }`}
                 >
                   {item.label}

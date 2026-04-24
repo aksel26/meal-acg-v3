@@ -71,45 +71,45 @@ function BudgetRow({
     <div>
       <div className="flex items-end justify-between mb-1.5">
         <div>
-          <p className="text-[11px] text-gray-400 mb-0.5">{label} 잔액</p>
+          <p className="text-[11px] text-[var(--slate-gray)] mb-0.5">{label} 잔액</p>
           <div className="flex items-baseline gap-1">
             {isOver && (
-              <span className="text-xl font-bold text-red-500">-</span>
+              <span className="text-xl font-bold text-[#d03238]">-</span>
             )}
             <NumberTicker
               value={Math.abs(remaining)}
               className={`text-xl font-bold tracking-tight ${
                 isOver
-                  ? "text-red-500"
+                  ? "text-[#d03238]"
                   : isLow
-                    ? "text-amber-600"
-                    : "text-gray-900"
+                    ? "text-[#8a6d00]"
+                    : "text-[var(--ink-black)]"
               }`}
             />
             <span
               className={`text-xs font-medium ${
                 isOver
-                  ? "text-red-400"
+                  ? "text-[rgba(208,50,56,0.8)]"
                   : isLow
-                    ? "text-amber-500"
-                    : "text-gray-400"
+                    ? "text-[#b08900]"
+                    : "text-[var(--slate-gray)]"
               }`}
             >
               원
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-[11px] text-gray-400">
+        <div className="flex items-center gap-2 text-[11px] text-[var(--slate-gray)]">
           <span>
             {used.toLocaleString()} / {total.toLocaleString()}원
           </span>
           <div
             className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
               isOver
-                ? "bg-red-50 text-red-600"
+                ? "bg-[rgba(208,50,56,0.08)] text-[#d03238]"
                 : isLow
-                  ? "bg-amber-50 text-amber-600"
-                  : "bg-emerald-50 text-emerald-600"
+                  ? "bg-[rgba(255,209,26,0.15)] text-[#8a6d00]"
+                  : "bg-[rgba(5,77,40,0.08)] text-[#054d28]"
             }`}
           >
             {isOver ? "초과" : isLow ? "주의" : "양호"}
@@ -117,7 +117,7 @@ function BudgetRow({
         </div>
       </div>
       {showProgressBar && (
-        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+        <div className="h-2 bg-[var(--whisper-cream)] rounded-full overflow-hidden">
           <motion.div
             initial={{ width: 0, opacity: 0 }}
             animate={{ width: `${percent}%`, opacity: 1 }}
@@ -127,10 +127,10 @@ function BudgetRow({
             }}
             className={`h-full rounded-full ${
               isOver
-                ? "bg-gradient-to-r from-red-400 to-red-500"
+                ? "bg-gradient-to-r from-[rgba(208,50,56,0.7)] to-[#d03238]"
                 : isLow
-                  ? "bg-gradient-to-r from-amber-400 to-amber-500"
-                  : "bg-gradient-to-r from-[oklch(0.55_0.18_250)] to-[oklch(0.48_0.20_270)]"
+                  ? "bg-gradient-to-r from-[rgba(255,209,26,0.8)] to-[#ffd11a]"
+                  : "bg-[var(--ink-black)]"
             }`}
           />
         </div>
@@ -406,12 +406,12 @@ export default function Points() {
           <div className="px-4 pt-4 pb-3 space-y-3">
             <div className="flex justify-between items-start">
               <div className="space-y-1.5">
-                <div className="animate-pulse bg-gray-200 rounded h-3 w-20" />
-                <div className="animate-pulse bg-gray-200 rounded h-6 w-32" />
+                <div className="animate-pulse bg-[var(--soft-bone)] rounded h-3 w-20" />
+                <div className="animate-pulse bg-[var(--soft-bone)] rounded h-6 w-32" />
               </div>
-              <div className="animate-pulse bg-gray-200 rounded h-3 w-28" />
+              <div className="animate-pulse bg-[var(--soft-bone)] rounded h-3 w-28" />
             </div>
-            <div className="animate-pulse bg-gray-100 rounded-full h-2 w-full" />
+            <div className="animate-pulse bg-[var(--whisper-cream)] rounded-full h-2 w-full" />
           </div>
         </div>
       ) : (
@@ -429,21 +429,21 @@ export default function Points() {
               {/* Header */}
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <h1 className="text-base font-semibold text-gray-900">
+                  <h1 className="text-base font-semibold text-[var(--ink-black)]">
                     복지포인트{isManager ? " · 활동비" : ""}
                   </h1>
                   <span onClick={(e) => e.stopPropagation()}>
                     <PointsGuideDialog />
                   </span>
                 </div>
-                <span className="flex items-center gap-0.5 text-sm text-blue-500/100">
+                <span className="flex items-center gap-0.5 text-sm text-[var(--ink-black)]">
                   팀별 활동비 내역
                   <ChevronRight className="w-4 h-4" />
                 </span>
               </div>
 
               {welfareError && (
-                <p className="text-xs text-red-500 mb-2">
+                <p className="text-xs text-[#d03238] mb-2">
                   데이터 로딩 중 오류가 발생했습니다.
                 </p>
               )}
@@ -488,10 +488,10 @@ export default function Points() {
       <div>
         <div className="mb-3 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <h2 className="text-md font-semibold text-gray-900">사용 내역</h2>
+            <h2 className="text-md font-semibold text-[var(--ink-black)]">사용 내역</h2>
             <button
               onClick={() => setIsAllRecordsOpen(true)}
-              className="flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-blue-50 hover:text-blue-700 active:scale-95 transition-all duration-200 text-xs text-gray-600"
+              className="flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-[rgba(22,51,0,0.08)] hover:text-[var(--ink-black)] active:scale-95 transition-all duration-200 text-xs text-[var(--granite)]"
             >
               <Eye className="w-3.5 h-3.5" />
               <span>전체 내역</span>
@@ -530,9 +530,9 @@ export default function Points() {
               <Popover>
                 <PopoverTrigger asChild>
                   <button className="relative h-8.5 w-8.5 flex items-center justify-center rounded-md bg-white shadow-xs border border-input">
-                    <ListFilter className="w-4 h-4 text-gray-600" />
+                    <ListFilter className="w-4 h-4 text-[var(--granite)]" />
                     {typeFilter !== "all" && (
-                      <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-blue-500" />
+                      <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[var(--signal-orange)]" />
                     )}
                   </button>
                 </PopoverTrigger>
@@ -549,8 +549,8 @@ export default function Points() {
                       onClick={() => setTypeFilter(option.value)}
                       className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors ${
                         typeFilter === option.value
-                          ? "bg-gray-100 font-medium text-gray-900"
-                          : "text-gray-600 hover:bg-gray-50"
+                          ? "bg-[var(--whisper-cream)] font-medium text-[var(--ink-black)]"
+                          : "text-[var(--granite)] hover:bg-[var(--soft-bone)]"
                       }`}
                     >
                       {option.label}
@@ -565,24 +565,24 @@ export default function Points() {
         <div className="space-y-3">
           {/* Add New Point */}
           <button
-            className="w-full py-3 bg-white rounded-xl text-sm font-medium text-blue-600 flex items-center justify-center gap-2 border border-dashed border-blue-200 hover:border-blue-300 hover:bg-blue-50/30 active:bg-blue-50 transition-colors"
+            className="w-full py-3 bg-white rounded-xl text-sm font-medium text-[var(--ink-black)] flex items-center justify-center gap-2 border border-dashed border-[rgba(14,15,12,0.2)] hover:border-[var(--ink-black)] hover:bg-[rgba(22,51,0,0.05)] active:bg-[rgba(22,51,0,0.08)] transition-colors"
             onClick={handleAddNewPoint}
           >
             <Plus className="w-4 h-4" />새 내역 추가
           </button>
 
           {isLoading ? (
-            <div className="bg-white rounded-xl divide-y divide-gray-50">
+            <div className="bg-white rounded-xl divide-y divide-[rgba(14,15,12,0.05)]">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="px-4 py-4">
                   <div className="animate-pulse">
                     <div className="flex justify-between mb-2">
-                      <div className="bg-gray-100 rounded h-[15px] w-32" />
-                      <div className="bg-gray-100 rounded h-[15px] w-16" />
+                      <div className="bg-[var(--whisper-cream)] rounded h-[15px] w-32" />
+                      <div className="bg-[var(--whisper-cream)] rounded h-[15px] w-16" />
                     </div>
                     <div className="flex justify-between">
-                      <div className="bg-gray-50 rounded h-3 w-24" />
-                      <div className="bg-gray-50 rounded h-3 w-10" />
+                      <div className="bg-[var(--soft-bone)] rounded h-3 w-24" />
+                      <div className="bg-[var(--soft-bone)] rounded h-3 w-10" />
                     </div>
                   </div>
                 </div>
@@ -597,14 +597,14 @@ export default function Points() {
                 height={40}
                 className="mx-auto mb-3 opacity-40"
               />
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-[var(--slate-gray)]">
                 {welfareError
                   ? "내역을 불러올 수 없습니다."
                   : "이 달에 내역이 없습니다."}
               </p>
             </div>
           ) : (
-            <div className="bg-white rounded-xl divide-y divide-gray-100 overflow-hidden">
+            <div className="bg-white rounded-xl divide-y divide-[rgba(14,15,12,0.08)] overflow-hidden">
               {sortedRecords.map((record) => {
                 const d = dayjs(record.used_at);
                 const dow = ["일", "월", "화", "수", "목", "금", "토"][d.day()];
@@ -620,20 +620,20 @@ export default function Points() {
                         ? "opacity-55"
                         : isLocked
                           ? "opacity-75"
-                          : "cursor-pointer active:bg-gray-50"
+                          : "cursor-pointer active:bg-[var(--soft-bone)]"
                     } transition-colors`}
                     onClick={() => handleEditPoint(record)}
                   >
                     <div className="flex items-start justify-between gap-4">
-                      <p className="text-[15px] font-medium text-gray-900 flex-1 min-w-0 truncate">
+                      <p className="text-[15px] font-medium text-[var(--ink-black)] flex-1 min-w-0 truncate">
                         {record.description}
                       </p>
-                      <p className="text-[15px] font-semibold text-gray-900 tabular-nums shrink-0">
+                      <p className="text-[15px] font-semibold text-[var(--ink-black)] tabular-nums shrink-0">
                         {record.amount.toLocaleString()}원
                       </p>
                     </div>
                     <div className="flex items-center justify-between mt-1.5">
-                      <div className="flex items-center gap-2 text-xs text-gray-400">
+                      <div className="flex items-center gap-2 text-xs text-[var(--slate-gray)]">
                         <span>
                           {d.month() + 1}.{String(d.date()).padStart(2, "0")} (
                           {dow})
@@ -641,8 +641,8 @@ export default function Points() {
                         <span
                           className={`px-1.5 py-px rounded text-[10px] font-medium ${
                             isActivity
-                              ? "bg-amber-50 text-amber-500"
-                              : "bg-blue-50/60 text-blue-600"
+                              ? "bg-[rgba(255,209,26,0.15)] text-[#b08900]"
+                              : "bg-[rgba(56,200,255,0.12)] text-[#0f4c75]"
                           }`}
                         >
                           {record.type}
@@ -650,34 +650,34 @@ export default function Points() {
                       </div>
                       <div className="flex items-center gap-1.5">
                         <span className={`flex items-center gap-1 ${
-                          reviewStatus >= 1 ? "text-blue-500" : "text-gray-300"
+                          reviewStatus >= 1 ? "text-[var(--charcoal)]" : "text-[rgba(14,15,12,0.2)]"
                         }`}>
                           <span className={`inline-block w-[7px] h-[7px] rounded-full border ${
                             reviewStatus >= 1
-                              ? "bg-blue-500 border-blue-500"
-                              : "bg-transparent border-gray-300"
+                              ? "bg-[var(--signal-orange)] border-[var(--signal-orange)]"
+                              : "bg-transparent border-[rgba(14,15,12,0.12)]"
                           }`} />
                           <span className="text-[10px]">P&C</span>
                         </span>
                         <span className={`flex items-center gap-1 ${
-                          reviewStatus >= 2 ? "text-emerald-500" : "text-gray-300"
+                          reviewStatus >= 2 ? "text-[#066634]" : "text-[rgba(14,15,12,0.2)]"
                         }`}>
                           <span className={`inline-block w-[7px] h-[7px] rounded-full border ${
                             reviewStatus >= 2
-                              ? "bg-emerald-500 border-emerald-500"
-                              : "bg-transparent border-gray-300"
+                              ? "bg-[#054d28] border-[#054d28]"
+                              : "bg-transparent border-[rgba(14,15,12,0.12)]"
                           }`} />
                           <span className="text-[10px]">최종</span>
                         </span>
                       </div>
                     </div>
                     {record.companions?.length > 0 && (
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="text-xs text-[var(--slate-gray)] mt-1">
                         카드: {record.companions.map((id: string) => membersData?.find((m) => m.id === id)?.full_name || id).join(", ")}
                       </p>
                     )}
                     {record.co_payers?.length > 0 && (
-                      <p className="text-xs text-gray-400 mt-0.5">
+                      <p className="text-xs text-[var(--slate-gray)] mt-0.5">
                         동반: {record.co_payers.map((id: string) => membersData?.find((m) => m.id === id)?.full_name || id).join(", ")}
                       </p>
                     )}
@@ -691,7 +691,7 @@ export default function Points() {
                     </TooltipTrigger>
                     <TooltipContent
                       side="top"
-                      className="bg-gray-800 text-gray-100 max-w-60"
+                      className="bg-[var(--ink-black)] text-[var(--canvas-cream)] max-w-60"
                     >
                       {reviewStatus === 2
                         ? "최종확인 완료 항목입니다. 수정하려면 P&C에 문의 바랍니다."

@@ -69,6 +69,7 @@ function CalculationResult({
       toast.error("사용자 정보를 불러올 수 없습니다.");
       return;
     }
+
     const allocId = welfareData?.summary?.allocation_id;
     if (!allocId) {
       toast.error("복지포인트 할당 정보가 없습니다.");
@@ -111,8 +112,8 @@ function CalculationResult({
           <div className="skeleton h-12 w-48 rounded-full" />
           <div className="skeleton h-3 w-full rounded-full" />
           <div className="grid grid-cols-2 gap-3">
-            <div className="skeleton h-20 rounded-[18px]" />
-            <div className="skeleton h-20 rounded-[18px]" />
+            <div className="skeleton h-24 rounded-[20px]" />
+            <div className="skeleton h-24 rounded-[20px]" />
           </div>
         </div>
       </div>
@@ -139,7 +140,7 @@ function CalculationResult({
     return (
       <div className="flex items-center justify-center py-8">
         <div className="flex items-center gap-2 text-[var(--slate-gray)]">
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--whisper-cream)] border-t-[var(--signal-orange)]" />
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--whisper-cream)] border-t-[var(--ink-black)]" />
           <span className="text-sm">불러오는 중...</span>
         </div>
       </div>
@@ -155,66 +156,56 @@ function CalculationResult({
     data.balance >= 0 && data.balance < data.allowanceAmount * 0.2;
   const statusLabel = isOverBudget ? "초과" : isLowBalance ? "주의" : "양호";
   const statusTone = isOverBudget
-    ? "bg-[rgba(207,69,0,0.12)] text-[var(--clay-brown)]"
+    ? "bg-[rgba(226,59,74,0.12)] text-[var(--danger)]"
     : isLowBalance
-      ? "bg-[rgba(243,115,56,0.14)] text-[var(--clay-brown)]"
+      ? "bg-[rgba(236,126,0,0.12)] text-[var(--warning)]"
       : "bg-[var(--whisper-cream)] text-[var(--ink-black)]";
   const progressTone = isOverBudget
-    ? "bg-[var(--signal-orange)]"
+    ? "bg-[var(--danger)]"
     : isLowBalance
-      ? "bg-[var(--light-signal-orange)]"
+      ? "bg-[var(--warning)]"
       : "bg-[var(--ink-black)]";
 
   return (
-    <div className="card-premium relative overflow-hidden">
-      <div className="absolute -right-10 top-0 h-40 w-40 rounded-full bg-[var(--whisper-cream)]" />
-      <div className="orbit-line -left-12 top-20 h-56 w-56 opacity-65" />
-
-      <div className="relative px-6 pt-6 pb-5">
+    <div className="card-premium overflow-hidden">
+      <div className="bg-white px-6 py-6 text-[var(--ink-black)] lg:px-5 lg:py-4">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-4">
             <div className="space-y-2">
-              <p className="eyebrow-label">Monthly Balance</p>
-              <p className="text-sm text-[var(--granite)]">{month}월 잔액</p>
+              <p className="eyebrow-label text-[var(--slate-gray)]">Meal Allowance</p>
+              <p className="text-sm text-[var(--granite)] lg:text-xs">{month}월 식대 잔액</p>
               <div className="flex items-end gap-1">
                 {isOverBudget && (
-                  <span className="text-3xl font-medium text-[var(--signal-orange)]">-</span>
+                  <span className="text-3xl font-medium text-[var(--danger)] lg:text-2xl">-</span>
                 )}
                 <NumberTicker
                   value={Math.abs(data.balance)}
-                  className={`text-[2.5rem] font-medium tracking-[-0.03em] ${
+                  className={`font-display text-[2.8rem] font-medium lg:text-[2.1rem] ${
                     isOverBudget
-                      ? "text-[var(--signal-orange)]"
+                      ? "text-[var(--danger)]"
                       : isLowBalance
-                        ? "text-[var(--clay-brown)]"
+                        ? "text-[var(--warning)]"
                         : "text-[var(--ink-black)]"
                   }`}
                 />
-                <span className="pb-1 text-sm font-medium text-[var(--slate-gray)]">
-                  원
-                </span>
+                <span className="pb-1 text-sm font-medium text-[var(--slate-gray)] lg:text-xs">원</span>
               </div>
             </div>
 
-            <div className={`inline-flex rounded-[16px] px-3 py-1.5 text-xs font-medium ${statusTone}`}>
+            <div className={`inline-flex rounded-full px-3 py-1.5 text-xs font-medium ${statusTone}`}>
               {statusLabel}
             </div>
           </div>
 
-          <div className="relative mt-1 hidden h-28 w-28 shrink-0 sm:block">
-            <div className="absolute inset-0 rounded-full bg-white/70" />
-            <div className="absolute inset-[10px] rounded-full border border-[rgba(243,115,56,0.34)]" />
-            <div className="absolute inset-0 flex items-center justify-center text-sm font-medium text-[var(--ink-black)]">
-              {usagePercent}%
-            </div>
-            <div className="absolute -bottom-1 -right-1 flex h-12 w-12 items-center justify-center rounded-full bg-white text-[var(--ink-black)] shadow-[var(--shadow-sm)]">
-              ↗
-            </div>
+          <div className="hidden rounded-[22px] border border-[rgba(25,28,31,0.08)] bg-[var(--whisper-cream)] px-4 py-4 text-right sm:block lg:px-3 lg:py-3">
+            <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">Usage</p>
+            <p className="mt-3 font-display text-[2rem] text-[var(--ink-black)] lg:text-[1.5rem]">{usagePercent}%</p>
+            <p className="mt-1 text-xs text-[var(--granite)]">이번 달 사용률</p>
           </div>
         </div>
 
         <div className="mt-6 space-y-3">
-          <div className="h-3 overflow-hidden rounded-full bg-white/75">
+          <div className="h-3 overflow-hidden rounded-full bg-[var(--whisper-cream)]">
             <motion.div
               initial={{ width: 0, opacity: 0 }}
               animate={{ width: `${Math.min(usagePercent, 100)}%`, opacity: 1 }}
@@ -225,58 +216,60 @@ function CalculationResult({
               className={`h-full rounded-full ${progressTone}`}
             />
           </div>
-          <div className="flex justify-between text-xs text-[var(--slate-gray)]">
+          <div className="flex justify-between text-xs text-[var(--granite)]">
             <span>{usagePercent}% 사용</span>
             <span>{formatCurrency(data.allowanceAmount)}원 중</span>
           </div>
         </div>
+      </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-3">
-          <div className="rounded-[16px] bg-white/72 px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">
-              사용가능액
-            </p>
-            <p className="mt-2 text-base font-medium text-[var(--ink-black)]">
-              {formatCurrency(data.allowanceAmount)}
-              <span className="ml-1 text-xs font-normal text-[var(--slate-gray)]">원</span>
-            </p>
-          </div>
-          <div className="rounded-[16px] bg-white/72 px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">
-              사용금액
-            </p>
-            <p className="mt-2 text-base font-medium text-[var(--ink-black)]">
-              {formatCurrency(data.totalUsed)}
-              <span className="ml-1 text-xs font-normal text-[var(--slate-gray)]">원</span>
-            </p>
-          </div>
+      <div className="grid gap-3 border-t border-[rgba(25,28,31,0.08)] bg-[var(--whisper-cream)] px-6 py-5 sm:grid-cols-2 lg:px-5 lg:py-3">
+        <div className="rounded-[20px] bg-white px-4 py-4">
+          <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">
+            사용가능액
+          </p>
+          <p className="mt-3 font-display text-[1.5rem] text-[var(--ink-black)] lg:text-[1.15rem]">
+            {formatCurrency(data.allowanceAmount)}
+            <span className="ml-1 text-xs text-[var(--slate-gray)]">원</span>
+          </p>
         </div>
+        <div className="rounded-[20px] bg-white px-4 py-4">
+          <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">
+            사용금액
+          </p>
+          <p className="mt-3 font-display text-[1.5rem] text-[var(--ink-black)] lg:text-[1.15rem]">
+            {formatCurrency(data.totalUsed)}
+            <span className="ml-1 text-xs text-[var(--slate-gray)]">원</span>
+          </p>
+        </div>
+      </div>
 
-        {isOverBudget && (
+      {isOverBudget && (
+        <div className="border-t border-[rgba(25,28,31,0.08)] px-6 py-5 lg:px-5 lg:py-3">
           <button
             type="button"
             onClick={handleOpenDialog}
-            className="btn-secondary mt-4 w-full py-2 text-sm"
+            className="btn-primary w-full py-3 text-sm"
           >
             복지포인트로 초과분 정산하기
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {((data.totalDeduction ?? 0) > 0 || (data.weekendWorkCount ?? 0) > 0) && (
-        <div className="relative border-t border-[rgba(20,20,19,0.08)] bg-white/50 px-6 py-4">
+        <div className="border-t border-[rgba(25,28,31,0.08)] px-6 py-5 lg:px-5 lg:py-3">
           <p className="eyebrow-label text-[11px]">Adjustments</p>
-          <div className="mt-3 space-y-2">
+          <div className="mt-4 space-y-3">
             {(data.weekendWorkCount ?? 0) > 0 && (
-              <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center justify-between text-sm lg:text-xs">
                 <span className="text-[var(--granite)]">주말근무 {data.weekendWorkCount}일</span>
-                <span className="font-medium text-[var(--link-blue)]">
+                <span className="font-medium text-[var(--ink-black)]">
                   +{formatCurrency(data.weekendWorkAddition || 0)}원
                 </span>
               </div>
             )}
             {(data.individualMealCount ?? 0) > 0 && (
-              <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center justify-between text-sm lg:text-xs">
                 <span className="text-[var(--granite)]">개별식사 {data.individualMealCount}회</span>
                 <span className="font-medium text-[var(--granite)]">
                   -{formatCurrency(data.individualMealDeduction || 0)}원
@@ -284,7 +277,7 @@ function CalculationResult({
               </div>
             )}
             {(data.noMealFullDayCount ?? 0) > 0 && (
-              <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center justify-between text-sm lg:text-xs">
                 <span className="text-[var(--granite)]">연차/재택/휴무 {data.noMealFullDayCount}일</span>
                 <span className="font-medium text-[var(--granite)]">
                   -{formatCurrency(data.noMealDeduction || 0)}원
@@ -292,7 +285,7 @@ function CalculationResult({
               </div>
             )}
             {(data.halfDayOffCount ?? 0) > 0 && (
-              <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center justify-between text-sm lg:text-xs">
                 <span className="text-[var(--granite)]">반차 {data.halfDayOffCount}일</span>
                 <span className="font-medium text-[var(--granite)]">
                   -{formatCurrency(data.halfDayDeduction || 0)}원
@@ -303,22 +296,26 @@ function CalculationResult({
         </div>
       )}
 
-      <div className="relative border-t border-[rgba(20,20,19,0.08)] px-6 py-4">
+      <div className="border-t border-[rgba(25,28,31,0.08)] px-6 py-5 lg:px-5 lg:py-3">
         <button
           type="button"
           onClick={copyAccount}
-          className="flex w-full items-center justify-between rounded-[16px] bg-white/70 px-4 py-3 text-xs transition-opacity active:opacity-70"
+          className="flex w-full items-center justify-between rounded-[20px] bg-[var(--whisper-cream)] px-4 py-4 text-left transition-opacity active:opacity-80"
         >
-          <div className="flex items-center gap-2">
-            <span className="text-[var(--slate-gray)]">입금계좌</span>
-            <span className="font-medium text-[var(--granite)]">국민 005701-04-142344 ㈜에이시지알</span>
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">
+              입금계좌
+            </p>
+            <p className="mt-2 text-sm font-medium text-[var(--ink-black)] lg:text-xs">
+              국민 005701-04-142344 ㈜에이시지알
+            </p>
           </div>
-          <Copy className="h-3.5 w-3.5 text-[var(--slate-gray)]" />
+          <Copy className="h-4 w-4 text-[var(--slate-gray)]" />
         </button>
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="rounded-[24px] border border-[rgba(25,28,31,0.1)] bg-white p-6">
           <DialogHeader>
             <DialogTitle>복지포인트로 정산하시겠습니까?</DialogTitle>
             <DialogDescription>{month}월 점심식대 초과분</DialogDescription>
@@ -332,6 +329,7 @@ function CalculationResult({
               type="number"
               value={paymentAmount}
               onChange={(e) => setPaymentAmount(Number(e.target.value))}
+              className="input-premium"
             />
           </div>
 
@@ -340,21 +338,17 @@ function CalculationResult({
             const depositAmount = totalOverage - paymentAmount;
             if (depositAmount <= 0) return null;
             return (
-              <div className="space-y-1.5 rounded-[16px] border border-[rgba(243,115,56,0.16)] bg-[rgba(243,115,56,0.08)] p-4">
-                <p className="text-xs font-semibold text-[var(--clay-brown)]">
+              <div className="space-y-2 rounded-[20px] border border-[rgba(236,126,0,0.16)] bg-[rgba(236,126,0,0.08)] p-4">
+                <p className="text-xs font-semibold text-[var(--warning)]">
                   잔금 입금 안내
                 </p>
-                <p className="text-[11px] text-[var(--clay-brown)]">
-                  정산금액({totalOverage.toLocaleString()}원) 중 나머지{" "}
-                  <span className="font-bold">
-                    {depositAmount.toLocaleString()}원
-                  </span>
-                  을 아래 계좌로 입금해주세요.
+                <p className="text-[11px] text-[var(--warning)]">
+                  남은 <span className="font-bold">{depositAmount.toLocaleString()}원</span>은 아래 계좌로 입금해주세요.
                 </p>
                 <button
                   type="button"
                   onClick={copyAccount}
-                  className="flex items-center gap-1.5 rounded-[14px] bg-white px-3 py-2 text-[11px] font-medium text-[var(--clay-brown)]"
+                  className="flex items-center gap-1.5 rounded-full bg-white px-3 py-2 text-[11px] font-medium text-[var(--warning)]"
                 >
                   <span>국민 005701-04-142344 ㈜에이시지알</span>
                   <Copy className="h-3 w-3 shrink-0" />
@@ -368,12 +362,13 @@ function CalculationResult({
           </p>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setDialogOpen(false)} className="btn-secondary">
               취소
             </Button>
             <Button
               onClick={handleConfirmPayment}
               disabled={addMutation.isPending}
+              className="btn-primary"
             >
               확인
             </Button>

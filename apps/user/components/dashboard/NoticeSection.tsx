@@ -5,45 +5,79 @@ import { motion } from "motion/react";
 import Image from "next/image";
 import Notice from "@/public/images/Notice.png";
 
-export default function NoticeSection() {
+interface NoticeSectionProps {
+  variant?: "card" | "icon";
+}
+
+export default function NoticeSection({ variant = "card" }: NoticeSectionProps) {
   const checkNotice = () => {
     window.open("https://aksel26.notion.site/v1-3-25dc8e16fda88016a7b0cf0d12bcbc80?pvs=74", "_blank");
   };
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        duration: 0.6,
-        delay: 0.2,
-        ease: [0.16, 1, 0.3, 1],
-      }}
-    >
+  if (variant === "icon") {
+    return (
       <motion.button
         type="button"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          duration: 0.45,
+          delay: 0.15,
+          ease: [0.16, 1, 0.3, 1],
+        }}
         onClick={checkNotice}
-        className="notice-banner group relative flex w-full items-center justify-between gap-4 overflow-hidden text-left"
-        whileTap={{ scale: 0.99 }}
+        aria-label="공지 보기"
+        className="group flex h-full min-h-[92px] w-full cursor-pointer items-center justify-center rounded-[24px] border border-[rgba(25,28,31,0.1)] bg-white transition-colors duration-200 hover:bg-[var(--whisper-cream)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ink-black)] focus-visible:ring-offset-2 lg:min-h-0"
       >
-        <div className="absolute -left-10 top-1/2 h-24 w-24 -translate-y-1/2 rounded-full border border-[rgba(243,115,56,0.32)]" />
-        <div className="flex min-w-0 items-center gap-4">
-          <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[var(--soft-bone)]">
-            <Image src={Notice} alt="notice" width={28} height={28} />
-            <span className="absolute -right-0.5 top-1 h-3 w-3 rounded-full border-2 border-white bg-[var(--signal-orange)]" />
+        <span className="relative flex h-12 w-12 items-center justify-center rounded-[16px] bg-[var(--whisper-cream)] transition-colors duration-200 group-hover:bg-white">
+          <Image src={Notice} alt="" width={26} height={26} aria-hidden="true" />
+          <span className="absolute -right-0.5 top-1 h-3 w-3 rounded-full border-2 border-white bg-[var(--ink-black)]" />
+        </span>
+      </motion.button>
+    );
+  }
+
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        duration: 0.45,
+        delay: 0.15,
+        ease: [0.16, 1, 0.3, 1],
+      }}
+      className="h-full rounded-[24px] border border-[rgba(25,28,31,0.1)] bg-white p-5"
+    >
+      <div className="flex h-full flex-col justify-between gap-5">
+        <div className="flex items-start gap-4">
+          <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] bg-[var(--whisper-cream)]">
+            <Image src={Notice} alt="notice" width={26} height={26} />
+            <span className="absolute -right-0.5 top-1 h-3 w-3 rounded-full border-2 border-white bg-[var(--ink-black)]" />
           </div>
+
           <div className="min-w-0">
-            <span className="eyebrow-label text-[11px]">Notice</span>
-            <p className="mt-1 truncate text-sm font-medium text-[var(--ink-black)]">
-              식대앱이 업데이트 되었습니다! (v1.3)
+            <p className="text-xs font-medium uppercase tracking-[0.14em] text-[var(--slate-gray)]">
+              Notice
+            </p>
+            <h2 className="mt-2 text-base font-medium text-[var(--ink-black)]">
+              식대앱 업데이트 안내
+            </h2>
+            <p className="mt-1 text-sm leading-6 text-[var(--granite)]">
+              최신 변경사항과 운영 공지를 확인하세요.
             </p>
           </div>
         </div>
 
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-[var(--ink-black)] shadow-[var(--shadow-sm)] transition-transform group-hover:translate-x-0.5">
-          <ChevronRightIcon size={20} />
-        </div>
-      </motion.button>
-    </motion.div>
+        <motion.button
+          type="button"
+          onClick={checkNotice}
+          className="flex w-full items-center justify-between rounded-full bg-[var(--ink-black)] px-4 py-3 text-left text-sm font-medium text-white transition-opacity hover:opacity-85"
+          whileTap={{ scale: 0.99 }}
+        >
+          공지 보기
+          <ChevronRightIcon size={18} />
+        </motion.button>
+      </div>
+    </motion.section>
   );
 }

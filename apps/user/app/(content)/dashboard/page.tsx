@@ -1,10 +1,10 @@
 "use client";
 
-
 import GreetingSection from "@/components/dashboard/GreetingSection";
 import MealSection from "@/components/dashboard/MealSection";
 import NoticeSection from "@/components/dashboard/NoticeSection";
 import PopularRestaurantsSection from "@/components/dashboard/PopularRestaurantsSection";
+import QuickActionsSection from "@/components/dashboard/QuickActionsSection";
 import StatsSection from "@/components/dashboard/StatsSection";
 import { CalculationData } from "@/components/dashboard/types";
 import { Footer } from "@/components/Footer";
@@ -19,7 +19,6 @@ import utc from "dayjs/plugin/utc";
 import React, { lazy, Suspense, useEffect, useState } from "react";
 import { UpdateNotificationDialog } from "@/components/UpdateNotificationDialog";
 import { useRouter } from "next/navigation";
-import { motion } from "motion/react";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -159,12 +158,30 @@ export default function DashboardPage() {
 
   return (
     <React.Fragment>
-      <div className="space-y-6">
-        <GreetingSection userName={displayUserName} />
-        <NoticeSection />
-        <StatsSection userId={currentUserId} month={currentMonth} year={currentYear} onDataChange={setCalculationData} />
-        <PopularRestaurantsSection />
-        <MealSection selectedDate={selectedDate} setSelectedDate={setSelectedDate} handleMonthChange={handleMonthChange} mealData={mealData} />
+      <div className="space-y-4 lg:grid lg:h-[calc(100dvh-6rem)] lg:grid-cols-10 lg:grid-rows-12 lg:gap-4 lg:space-y-0 lg:overflow-hidden">
+        <div className="lg:col-span-3 lg:row-span-2 lg:min-h-0 [&>*]:h-full">
+          <GreetingSection userName={displayUserName} />
+        </div>
+
+        <div className="lg:col-span-6 lg:row-span-2 lg:min-h-0 [&>*]:h-full">
+          <QuickActionsSection />
+        </div>
+
+        <div className="lg:col-span-1 lg:row-span-2 lg:min-h-0">
+          <NoticeSection variant="icon" />
+        </div>
+
+        <div className="lg:col-span-5 lg:row-span-10 lg:min-h-0 lg:overflow-hidden">
+          <MealSection selectedDate={selectedDate} setSelectedDate={setSelectedDate} handleMonthChange={handleMonthChange} mealData={mealData} />
+        </div>
+
+        <div className="lg:col-span-5 lg:row-span-7 lg:min-h-0 lg:overflow-hidden [&>*]:h-full [&>*>*]:h-full">
+          <StatsSection userId={currentUserId} month={currentMonth} year={currentYear} onDataChange={setCalculationData} />
+        </div>
+
+        <div className="lg:col-span-5 lg:row-span-3 lg:min-h-0 lg:overflow-hidden">
+          <PopularRestaurantsSection />
+        </div>
       </div>
 
       {/* Lazy-loaded Meal Entry Drawer */}
@@ -172,19 +189,8 @@ export default function DashboardPage() {
         <MealEntryDrawer onFormSubmit={handleFormSubmit} onDeleteMeal={handleDeleteMeal} />
       </Suspense>
 
-      {/* Bottom Navigation */}
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{
-          duration: 0.6,
-          delay: 0.6,
-          ease: [0.25, 0.46, 0.45, 0.94],
-        }}
-        className="pt-4"
-      >
-        <Footer />
-      </motion.div>
+      <Footer variant="compact" className="mt-4" />
+
       {/* 업데이트 알림 Dialog */}
       <UpdateNotificationDialog />
 

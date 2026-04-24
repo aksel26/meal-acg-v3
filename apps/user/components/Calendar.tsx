@@ -18,6 +18,7 @@ interface Calendar21Props {
   onMonthChange?: (month: number, year: number) => void;
   mealData?: MealData[];
   isLoading?: boolean;
+  className?: string;
 }
 
 export default function CalendarComponent({
@@ -26,6 +27,7 @@ export default function CalendarComponent({
   onMonthChange,
   mealData = EMPTY_MEAL_DATA,
   isLoading = false,
+  className = "",
 }: Calendar21Props) {
   const [date, setDate] = React.useState<Date | undefined>(selectedDate || new Date());
   const [currentMonth, setCurrentMonth] = React.useState<number>((selectedDate || new Date()).getMonth() + 1);
@@ -196,23 +198,25 @@ export default function CalendarComponent({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.2 }}
-      className="card-premium overflow-hidden p-4 sm:p-5 touch-pan-y"
+      className={`overflow-hidden rounded-[24px] border border-[rgba(25,28,31,0.1)] bg-white p-4 touch-pan-y sm:p-5 lg:flex lg:min-h-0 lg:flex-col lg:p-4 ${className}`}
     >
       <div className="mb-4 flex items-start justify-between gap-3 px-1">
         <div>
-          <p className="eyebrow-label">Calendar</p>
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-[var(--slate-gray)]">
+            Calendar
+          </p>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-[1.8rem] font-medium tracking-[-0.025em] text-[var(--ink-black)]">
+            <span className="font-display text-[1.8rem] font-medium text-[var(--ink-black)] lg:text-[1.45rem]">
               {currentMonth}월
             </span>
-            <span className="text-sm text-[var(--slate-gray)]">{currentYear}</span>
+            <span className="text-sm text-[var(--slate-gray)] lg:text-xs">{currentYear}</span>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={handlePrevClick}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(20,20,19,0.08)] bg-white/90 transition-colors hover:bg-white touch-manipulation"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(25,28,31,0.1)] bg-white transition-colors hover:bg-[var(--whisper-cream)] touch-manipulation"
             aria-label="이전 달"
           >
             <svg className="h-5 w-5 text-[var(--ink-black)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -222,7 +226,7 @@ export default function CalendarComponent({
 
           <button
             onClick={handleNextClick}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(20,20,19,0.08)] bg-white/90 transition-colors hover:bg-white touch-manipulation"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(25,28,31,0.1)] bg-white transition-colors hover:bg-[var(--whisper-cream)] touch-manipulation"
             aria-label="다음 달"
           >
             <svg className="h-5 w-5 text-[var(--ink-black)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -230,10 +234,6 @@ export default function CalendarComponent({
             </svg>
           </button>
         </div>
-      </div>
-
-      <div className="mb-4 rounded-[16px] bg-white/70 px-4 py-3 text-xs leading-5 text-[var(--granite)]">
-        날짜를 누르면 해당 일자의 식사 기록을 바로 입력하거나 수정할 수 있습니다.
       </div>
 
       {/* 월 표시 헤더 */}
@@ -270,7 +270,7 @@ export default function CalendarComponent({
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.1}
         onDragEnd={handleDragEnd}
-        className="cursor-grab active:cursor-grabbing rounded-[18px] bg-white/72 p-2"
+        className="cursor-grab rounded-[18px] bg-[var(--whisper-cream)] p-2 active:cursor-grabbing lg:min-h-0 lg:flex-1 lg:overflow-hidden"
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
@@ -291,9 +291,9 @@ export default function CalendarComponent({
               classNames={{
                 month_caption: "hidden",
                 nav: "hidden",
-                day: "relative w-full p-0 text-center min-h-[60px] sm:min-h-[72px] select-none",
+                day: "relative w-full p-0 text-center min-h-[60px] sm:min-h-[72px] lg:min-h-[42px] xl:min-h-[48px] select-none",
                 weekdays: "mb-2",
-                weekday: "text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--slate-gray)]",
+                weekday: "text-[11px] lg:text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--slate-gray)]",
               }}
               components={calendarComponents}
             />

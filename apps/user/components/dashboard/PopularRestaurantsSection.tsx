@@ -6,9 +6,9 @@ import Image from "next/image";
 import { usePopularRestaurants, PopularRestaurant } from "@/hooks/use-popular-restaurants";
 
 const rankStyles = [
-  "bg-[var(--ink-black)] text-[var(--canvas-cream)]",
+  "bg-[var(--ink-black)] text-white",
   "bg-[var(--whisper-cream)] text-[var(--ink-black)]",
-  "bg-[var(--light-signal-orange)] text-white",
+  "bg-[var(--soft-bone)] text-[var(--ink-black)]",
 ];
 
 export default function PopularRestaurantsSection() {
@@ -26,7 +26,7 @@ export default function PopularRestaurantsSection() {
 
   if (isLoading) {
     return (
-      <div className="card-premium p-6">
+      <div className="h-full rounded-[24px] border border-[rgba(25,28,31,0.1)] bg-white p-5">
         <div className="space-y-4">
           <div className="skeleton h-4 w-24 rounded-full" />
           <div className="skeleton h-8 w-44 rounded-full" />
@@ -42,16 +42,18 @@ export default function PopularRestaurantsSection() {
 
   if (popularRestaurants.length === 0) {
     return (
-      <div className="card-premium p-6 text-center">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[var(--soft-bone)]">
+      <div className="h-full rounded-[24px] border border-[rgba(25,28,31,0.1)] bg-white p-5 text-center">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[18px] bg-[var(--whisper-cream)]">
           <Image src="/icons/onigiri.png" alt="restaurant" width={28} height={28} />
         </div>
-        <p className="eyebrow-label mt-4 justify-center">Restaurant</p>
-        <h3 className="mt-2 text-lg font-medium tracking-[-0.03em] text-[var(--ink-black)]">
+        <p className="mt-4 text-xs font-medium uppercase tracking-[0.14em] text-[var(--slate-gray)]">
+          Restaurant
+        </p>
+        <h3 className="mt-2 text-base font-medium text-[var(--ink-black)]">
           아직 등록된 인기 음식점이 없습니다
         </h3>
         <p className="mt-2 text-sm text-[var(--granite)]">
-          첫 식사 기록이 쌓이면 이곳에서 자주 가는 매장을 바로 확인할 수 있습니다.
+          기록이 쌓이면 가장 자주 찾는 매장을 이곳에서 정리합니다.
         </p>
       </div>
     );
@@ -59,19 +61,21 @@ export default function PopularRestaurantsSection() {
 
   return (
     <motion.section
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="relative overflow-hidden rounded-[24px] bg-[var(--lifted-cream)] px-6 py-6 shadow-[var(--shadow-elevated)]"
+      transition={{ duration: 0.45, delay: 0.18, ease: [0.16, 1, 0.3, 1] }}
+      className="h-full rounded-[24px] border border-[rgba(25,28,31,0.1)] bg-white p-5"
     >
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="eyebrow-label">Top Places</p>
-          <h3 className="mt-2 text-[1.6rem] font-medium leading-[1.05] tracking-[-0.03em] text-[var(--ink-black)]">
-            ACG 인기 음식점 랭킹
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-[var(--slate-gray)]">
+            Top Places
+          </p>
+          <h3 className="mt-2 text-base font-medium text-[var(--ink-black)] lg:text-sm">
+            ACG 인기 음식점
           </h3>
-          <p className="mt-2 text-sm leading-6 text-[var(--granite)]">
-            최근 식사 기록을 기준으로 자주 찾는 매장을 정리했습니다.
+          <p className="mt-1 text-sm leading-6 text-[var(--granite)] lg:text-xs">
+            자주 선택된 매장을 확인하세요.
           </p>
         </div>
 
@@ -79,7 +83,7 @@ export default function PopularRestaurantsSection() {
           <button
             type="button"
             onClick={handleToggle}
-            className="btn-secondary shrink-0 px-4 py-2 text-sm"
+            className="shrink-0 rounded-full bg-[var(--whisper-cream)] px-3 py-2 text-xs font-medium text-[var(--ink-black)] transition-colors hover:bg-[var(--soft-bone)]"
           >
             {showAll ? "접기" : "더보기"}
           </button>
@@ -87,7 +91,7 @@ export default function PopularRestaurantsSection() {
       </div>
 
       <motion.div
-        className="mt-6 space-y-3"
+        className="mt-5 space-y-2"
         layout
         transition={{ duration: 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
       >
@@ -127,10 +131,10 @@ function RestaurantItem({
         ease: [0.25, 0.46, 0.45, 0.94],
         layout: { duration: 0.12 },
       }}
-      className="flex items-center gap-4 rounded-[16px] border border-[rgba(20,20,19,0.06)] bg-white/70 px-4 py-3"
+      className="flex items-center gap-3 rounded-[18px] border border-[rgba(25,28,31,0.08)] bg-[var(--white)] px-3 py-3"
     >
       <div
-        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
           rankStyles[index] ?? "bg-[var(--soft-bone)] text-[var(--ink-black)]"
         }`}
       >
@@ -138,7 +142,7 @@ function RestaurantItem({
       </div>
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-[var(--ink-black)]">
+        <p className="truncate text-sm font-medium text-[var(--ink-black)] lg:text-xs">
           {restaurant.name}
         </p>
         <p className="mt-1 text-xs text-[var(--slate-gray)]">
@@ -146,7 +150,7 @@ function RestaurantItem({
         </p>
       </div>
 
-      <div className="rounded-[14px] bg-[var(--canvas-cream)] px-3 py-1.5 text-xs font-medium text-[var(--granite)]">
+      <div className="rounded-full bg-[var(--whisper-cream)] px-2.5 py-1.5 text-xs font-medium text-[var(--granite)]">
         {restaurant.count}회
       </div>
     </motion.div>

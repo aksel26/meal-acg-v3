@@ -35,6 +35,7 @@ interface MealCardsProps {
   ) => void;
   onHolidayEdit?: (mealInfo: MealData) => void;
   mealData?: MealData[];
+  className?: string;
 }
 
 type MealType = "breakfast" | "lunch" | "dinner";
@@ -42,15 +43,15 @@ type MealType = "breakfast" | "lunch" | "dinner";
 const mealStyles: Record<MealType, { tone: string; dot: string }> = {
   breakfast: {
     tone: "bg-[var(--soft-bone)]",
-    dot: "bg-[var(--light-signal-orange)]",
+    dot: "bg-[var(--slate-gray)]",
   },
   lunch: {
     tone: "bg-[var(--whisper-cream)]",
     dot: "bg-[var(--ink-black)]",
   },
   dinner: {
-    tone: "bg-[rgba(243,115,56,0.12)]",
-    dot: "bg-[var(--signal-orange)]",
+    tone: "bg-[var(--soft-bone)]",
+    dot: "bg-[var(--granite)]",
   },
 };
 
@@ -60,7 +61,10 @@ export function MealCards({
   onEditMeal,
   onHolidayEdit,
   mealData = [],
+  className = "",
 }: MealCardsProps) {
+  const cardClassName = (baseClassName: string) => `${baseClassName} ${className}`;
+
   const currentMealData = React.useMemo(() => {
     if (!selectedDate || mealData.length === 0) return null;
     const dateString = dayjs(selectedDate).format("YYYY-MM-DD");
@@ -94,7 +98,7 @@ export function MealCards({
 
   if (!selectedDate) {
     return (
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="card-premium mt-4 p-6 text-center">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={cardClassName("card-premium mt-4 p-6 text-center")}>
         <p className="eyebrow-label justify-center">Meal Entry</p>
         <p className="mt-3 text-sm text-[var(--granite)]">날짜를 선택해주세요</p>
       </motion.div>
@@ -162,7 +166,7 @@ export function MealCards({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="card-premium mt-4 p-5"
+        className={cardClassName("card-premium mt-4 p-5")}
       >
         <div className="py-6 text-center">
           <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--soft-bone)]">
@@ -201,7 +205,7 @@ export function MealCards({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="card-premium mt-4 p-5"
+        className={cardClassName("card-premium mt-4 p-5")}
       >
         <div className="mb-4 flex items-center justify-between gap-4">
           <div>
@@ -231,7 +235,7 @@ export function MealCards({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="card-premium mt-4 p-5"
+        className={cardClassName("card-premium mt-4 p-5")}
       >
         <div className="mb-4 flex items-center justify-between gap-4">
           <div>
@@ -278,7 +282,7 @@ export function MealCards({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="card-premium mt-4 p-5"
+      className={cardClassName("card-premium mt-4 p-5")}
     >
       <div className="mb-4 flex items-center justify-between gap-4 px-1">
         <div>

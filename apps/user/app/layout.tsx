@@ -4,6 +4,7 @@ import "@repo/ui/styles.css";
 import type { Metadata, Viewport } from "next";
 import QueryProvider from "./providers/QueryProvider"; // 위에서 생성한 Provider 임포트
 import { Analytics } from "@vercel/analytics/next";
+import { Inter } from "next/font/google";
 import dayjs from "dayjs";
 
 const APP_NAME = "🍙 ACG 식대";
@@ -12,6 +13,12 @@ const APP_TITLE_TEMPLATE = "%s - PWA App";
 const APP_DESCRIPTION = "ACG 직원을 위한 식대관리 서비스입니다.";
 import "dayjs/locale/ko";
 dayjs.locale("ko");
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-primary",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   applicationName: APP_NAME,
@@ -53,8 +60,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f3f0ee" },
-    { media: "(prefers-color-scheme: dark)", color: "#f3f0ee" },
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#ffffff" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -72,10 +79,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <link rel="apple-touch-icon" href="/ios/AppIcon@2x.png"></link>
-        <link rel="preconnect" href="https://cdn.jsdelivr.net" />
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
       </head>
-      <body className="font-editorial">
+      <body className={`${inter.variable} font-editorial`}>
         <QueryProvider>
           {children}
           <Analytics />

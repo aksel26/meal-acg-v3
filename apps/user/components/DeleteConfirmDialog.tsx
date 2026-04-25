@@ -32,12 +32,12 @@ export function DeleteConfirmDialog({ selectedDate, mealType, isDeleting, onConf
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
-      <AlertDialogContent className="sm:max-w-md max-w-xs!">
+      <AlertDialogContent className="sm:max-w-md max-w-xs! rounded-[24px] border-0 bg-white">
         <AlertDialogHeader className="text-center sm:text-left">
-          <AlertDialogTitle className="text-sm sm:text-lg font-semibold flex items-center gap-2">{deleteTarget} 삭제</AlertDialogTitle>
+          <AlertDialogTitle className="text-sm sm:text-lg font-medium flex items-center gap-2 text-[var(--ink-black)]">{deleteTarget} 삭제</AlertDialogTitle>
           <AlertDialogDescription className="text-left space-y-3 pt-2">
-            <span className="text-xs sm:text-sm">
-              <span className="font-medium text-foreground">
+            <span className="text-xs sm:text-sm text-[var(--granite)]">
+              <span className="font-medium text-[var(--ink-black)]">
                 {selectedDate?.toLocaleDateString("ko-KR", {
                   year: "numeric",
                   month: "long",
@@ -50,13 +50,13 @@ export function DeleteConfirmDialog({ selectedDate, mealType, isDeleting, onConf
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="gap-3 sm:gap-2">
-          <AlertDialogCancel disabled={isDeleting} className="flex-1 sm:flex-none text-xs sm:text-sm">
+          <AlertDialogCancel disabled={isDeleting} className="flex-1 sm:flex-none rounded-full border-0 bg-[var(--whisper-cream)] text-xs text-[var(--ink-black)] hover:bg-[var(--soft-bone)] sm:text-sm">
             취소
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
             disabled={isDeleting}
-            className="flex-1 sm:flex-none bg-red-100 text-red-500 hover:bg-red-700  hover:text-red-50 focus-visible:ring-red-600 text-xs sm:text-sm"
+            className="flex-1 sm:flex-none rounded-full bg-[var(--danger)] text-xs text-white hover:bg-[var(--danger)]/90 focus-visible:ring-[var(--danger)] sm:text-sm"
           >
             {isDeleting ? (
               <div className="flex items-center gap-2">

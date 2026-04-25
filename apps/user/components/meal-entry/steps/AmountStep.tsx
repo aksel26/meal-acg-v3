@@ -71,10 +71,10 @@ export function AmountStep({ onSubmit, isSubmitting }: AmountStepProps) {
       className="space-y-4"
     >
       <div className="space-y-1">
-        <h3 className="text-lg font-semibold text-gray-900">
+        <h3 className="text-lg font-medium text-[var(--ink-black)]">
           {isIndividualMeal ? "개별식사로 처리할게요" : "얼마였나요?"}
         </h3>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-[var(--slate-gray)]">
           {isIndividualMeal
             ? `총 금액에서 ${individualMealAmount.toLocaleString()}원이 차감됩니다`
             : "결제 금액을 입력해주세요"
@@ -99,10 +99,10 @@ export function AmountStep({ onSubmit, isSubmitting }: AmountStepProps) {
               value={formatNumberWithCommas(currentAmount)}
               onChange={handleValueChange}
               onKeyDown={handleKeyDown}
-              className="h-14 text-2xl font-semibold text-right rounded-xl border-2 border-gray-100 bg-white focus:border-gray-300 focus:ring-0 transition-all placeholder:text-gray-300 placeholder:font-normal"
+              className="h-14 text-2xl font-medium text-right rounded-[16px] border-0 bg-[var(--whisper-cream)] focus:bg-white focus:ring-0 transition-all placeholder:text-[var(--slate-gray)] placeholder:font-normal"
               style={{ paddingRight: '2.3rem' }}
             />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-lg text-gray-400 font-medium pointer-events-none">
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-lg text-[var(--slate-gray)] font-medium pointer-events-none">
               원
             </span>
           </motion.div>
@@ -116,15 +116,15 @@ export function AmountStep({ onSubmit, isSubmitting }: AmountStepProps) {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="p-4 rounded-xl bg-blue-50 border border-blue-100"
+            className="p-4 rounded-[16px] bg-[var(--whisper-cream)]"
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center">
                 <span className="text-lg">🍱</span>
               </div>
               <div>
-                <p className="text-sm font-medium text-blue-900">개별식사 처리</p>
-                <p className="text-xs text-blue-700">
+                <p className="text-sm font-medium text-[var(--ink-black)]">개별식사 처리</p>
+                <p className="text-xs text-[var(--granite)]">
                   -{individualMealAmount.toLocaleString()}원 자동 차감
                 </p>
               </div>
@@ -140,7 +140,7 @@ export function AmountStep({ onSubmit, isSubmitting }: AmountStepProps) {
         transition={{ duration: 0.2 }}
         onClick={handleSubmit}
         disabled={!canSubmit || isSubmitting}
-        className="w-full py-4 px-4 rounded-xl bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full py-4 px-4 rounded-full bg-[var(--ink-black)] text-white font-medium hover:bg-[var(--granite)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isSubmitting ? (
           <div className="flex items-center justify-center gap-2">

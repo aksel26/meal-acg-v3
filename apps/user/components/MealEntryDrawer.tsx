@@ -64,7 +64,7 @@ export default function MealEntryDrawer({
   return (
     <Dialog open={isOpen} onOpenChange={closeDrawer}>
       <DialogContent
-        className="max-w-md w-[calc(100%-2rem)] bg-white rounded-2xl border-0 shadow-2xl p-0 gap-0 max-h-[85vh] sm:max-h-[90vh] overflow-visible"
+        className="max-w-md w-[calc(100%-2rem)] bg-white rounded-[24px] border-0 p-0 gap-0 max-h-[85vh] sm:max-h-[90vh] overflow-visible"
         showCloseButton={false}
       >
         <DialogHeader className="px-5 pt-5 pb-4">
@@ -79,9 +79,9 @@ export default function MealEntryDrawer({
                     exit={{ opacity: 0, x: -10 }}
                     type="button"
                     onClick={prevStep}
-                    className="p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    className="p-2 -ml-2 rounded-full hover:bg-[var(--whisper-cream)] transition-colors"
                   >
-                    <ChevronLeft className="w-5 h-5 text-gray-600" />
+                    <ChevronLeft className="w-5 h-5 text-[var(--granite)]" />
                   </motion.button>
                 )}
               </AnimatePresence>
@@ -89,10 +89,10 @@ export default function MealEntryDrawer({
 
             {/* Center: Title and date */}
             <div className="flex-1 text-center">
-              <DialogTitle className="text-base font-semibold text-gray-900">
+              <DialogTitle className="text-base font-medium text-[var(--ink-black)]">
                 {isEditMode ? "식대 기록 수정" : "식대 기록"}
               </DialogTitle>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-xs text-[var(--slate-gray)] mt-0.5">
                 {selectedDate?.toLocaleDateString("ko-KR", {
                   year: "numeric",
                   month: "long",
@@ -114,11 +114,11 @@ export default function MealEntryDrawer({
                   >
                     <button
                       type="button"
-                      className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 transition-colors"
+                      className="px-2.5 py-1.5 rounded-full text-xs font-medium text-[var(--danger)] bg-[rgba(226,59,74,0.1)] hover:bg-[rgba(226,59,74,0.16)] transition-colors"
                       disabled={isSubmitting || isDeleting}
                     >
                       {isDeleting ? (
-                        <div className="animate-spin rounded-full h-3 w-3 border-2 border-red-600 border-t-transparent" />
+                        <div className="animate-spin rounded-full h-3 w-3 border-2 border-[var(--danger)] border-t-transparent" />
                       ) : (
                         "삭제"
                       )}
@@ -129,9 +129,9 @@ export default function MealEntryDrawer({
                 <DialogClose asChild>
                   <button
                     type="button"
-                    className="p-2 -mr-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    className="p-2 -mr-2 rounded-full hover:bg-[var(--whisper-cream)] transition-colors"
                   >
-                    <X className="w-5 h-5 text-gray-400" />
+                    <X className="w-5 h-5 text-[var(--slate-gray)]" />
                   </button>
                 </DialogClose>
               )}

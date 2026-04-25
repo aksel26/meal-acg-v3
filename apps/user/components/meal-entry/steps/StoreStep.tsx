@@ -46,10 +46,10 @@ export function StoreStep() {
       className="space-y-4"
     >
       <div className="space-y-1">
-        <h3 className="text-lg font-semibold text-gray-900">
+        <h3 className="text-lg font-medium text-[var(--ink-black)]">
           어디서 식사했나요?
         </h3>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-[var(--slate-gray)]">
           식당 이름을 입력하거나 선택해주세요
         </p>
       </div>
@@ -71,7 +71,7 @@ export function StoreStep() {
           emptyText="저장된 식당이 없습니다"
           disabled={isLoading}
           onKeyDown={handleKeyDown}
-          className="h-14 text-base rounded-xl border-2 border-gray-100 bg-white focus:border-gray-300 focus:ring-0 transition-all placeholder:text-gray-400"
+          className="h-14 text-base rounded-[16px] border-0 bg-[var(--whisper-cream)] focus:bg-white focus:ring-0 transition-all placeholder:text-[var(--slate-gray)]"
         />
       </motion.div>
 
@@ -82,7 +82,7 @@ export function StoreStep() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
           onClick={() => completeStep("store")}
-          className="w-full py-3.5 px-4 rounded-xl bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors"
+          className="w-full py-3.5 px-4 rounded-full bg-[var(--ink-black)] text-white font-medium hover:bg-[var(--granite)] transition-colors"
         >
           다음
         </motion.button>

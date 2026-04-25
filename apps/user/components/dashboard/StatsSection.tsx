@@ -293,7 +293,13 @@ function CalculationResult({
                         : "text-[var(--ink-black)]"
                   }`}
                 />
-                <span className="pb-1 text-xs font-medium text-[var(--slate-gray)] lg:text-[11px]">원</span>
+                <span
+                  className={`pb-1 text-xs font-medium lg:text-[11px] ${
+                    isOverBudget ? "text-[var(--danger)]" : "text-[var(--slate-gray)]"
+                  }`}
+                >
+                  원
+                </span>
               </div>
             </div>
 

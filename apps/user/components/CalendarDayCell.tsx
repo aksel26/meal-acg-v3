@@ -115,7 +115,7 @@ export const CalendarDayCell = React.memo(function CalendarDayCell({
               ${isToday ? "text-[var(--signal-orange)]" : ""}
               ${isSelected && !isToday ? "text-[var(--ink-black)]" : ""}
               ${isSunday ? "text-[var(--danger)]" : ""}
-              ${!isSunday && !isToday && !isSelected && isHoliday ? "text-[var(--signal-orange)]" : ""}
+              ${!isSunday && !isToday && !isSelected && isHoliday ? "text-[var(--danger)]" : ""}
               ${!isToday && !isSelected && isSaturday && !isHoliday ? "text-[var(--link-blue)]" : ""}
               ${!isToday && !isSelected && !isSunday && !isSaturday && !isHoliday ? "text-[var(--granite)]" : ""}
             `}

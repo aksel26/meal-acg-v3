@@ -153,6 +153,7 @@ export function MealCards({
           const isIndividualLunch =
             meal.type === "lunch" && currentMealData?.attendance?.includes("개별식사");
           const canEdit = Boolean(currentMealData && (hasEntry || isIndividualLunch));
+          const isFilled = hasEntry || isIndividualLunch;
 
           return (
           <motion.button
@@ -168,7 +169,11 @@ export function MealCards({
                 onAddMeal?.(meal.type);
               }
             }}
-            className={`flex min-h-[5.25rem] flex-col justify-between rounded-[15px] bg-[var(--whisper-cream)] p-3 text-left transition-colors hover:bg-[var(--soft-bone)] lg:min-h-0 ${
+            className={`flex min-h-[5.25rem] flex-col justify-between rounded-[15px] p-3 text-left transition-colors lg:min-h-0 ${
+              isFilled
+                ? "bg-[var(--whisper-cream)] hover:bg-[var(--soft-bone)]"
+                : "border border-dashed border-[var(--soft-bone)] bg-transparent hover:border-[var(--slate-gray)] hover:bg-[var(--whisper-cream)]"
+            } ${
               isNonMealDay ? "opacity-70" : ""
             }`}
           >

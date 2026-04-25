@@ -185,7 +185,6 @@ h6,
     "Apple SD Gothic Neo",
     "Noto Sans KR",
     sans-serif;
-  color: var(--ink-black);
   letter-spacing: var(--tracking-heading);
   line-height: var(--leading-heading);
   font-weight: 500;

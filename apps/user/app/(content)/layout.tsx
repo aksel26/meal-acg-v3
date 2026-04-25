@@ -15,12 +15,13 @@ const PushNotificationPrompt = dynamic(
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
   const isDashboard = pathname.startsWith("/dashboard");
+  const usesWideDesktopLayout = isDashboard || pathname.startsWith("/points");
 
   return (
     <>
       <div
         className={`relative mx-auto min-h-dvh w-full px-4 pt-4 sm:px-6 ${
-          isDashboard
+          usesWideDesktopLayout
             ? "max-w-[820px] pb-32 lg:max-w-[1280px] lg:pb-4"
             : "max-w-[820px] pb-32"
         }`}

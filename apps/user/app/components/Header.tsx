@@ -6,11 +6,26 @@ import { motion } from "motion/react";
 import { useHeaderVisibility } from "@/hooks/useHeaderVisibility";
 
 const sectionLabels = [
-  { matcher: (pathname: string) => pathname.startsWith("/points-dashboard"), label: "Points Dashboard" },
-  { matcher: (pathname: string) => pathname.startsWith("/points"), label: "복지포인트" },
-  { matcher: (pathname: string) => pathname.startsWith("/monthly"), label: "음료취합" },
-  { matcher: (pathname: string) => pathname.startsWith("/lunch"), label: "점심조" },
-  { matcher: (pathname: string) => pathname.startsWith("/dashboard"), label: "Dashboard" },
+  {
+    matcher: (pathname: string) => pathname.startsWith("/points-dashboard"),
+    label: "Points Dashboard",
+  },
+  {
+    matcher: (pathname: string) => pathname.startsWith("/points"),
+    label: "복지포인트",
+  },
+  {
+    matcher: (pathname: string) => pathname.startsWith("/monthly"),
+    label: "음료취합",
+  },
+  {
+    matcher: (pathname: string) => pathname.startsWith("/lunch"),
+    label: "점심조",
+  },
+  {
+    matcher: (pathname: string) => pathname.startsWith("/dashboard"),
+    label: "Dashboard",
+  },
 ];
 
 const Header = () => {
@@ -39,11 +54,6 @@ const Header = () => {
           <p className="mt-2 truncate font-display text-[1.375rem] leading-none tracking-[-0.035em] text-[var(--ink-black)]">
             {currentLabel}
           </p>
-        </div>
-
-        <div className="flex shrink-0 items-center gap-2 rounded-full bg-[var(--ink-black)] px-4 py-2 text-xs font-medium text-white">
-          <span className="h-2 w-2 rounded-full bg-[var(--teal)]" />
-          운영중
         </div>
       </div>
     </motion.header>

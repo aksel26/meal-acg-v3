@@ -90,7 +90,7 @@ export default function PWAInstallPrompt() {
   return (
     <div className="fixed left-4 right-4 top-4 z-50 animate-in fade-in-0 slide-in-from-top-6 duration-500">
       <div className="mx-auto max-w-xl">
-        <div className="glass-card-elevated overflow-hidden rounded-[24px] border border-[rgba(25,28,31,0.1)]">
+        <div className="glass-card-elevated overflow-hidden rounded-[24px]">
           <div className="flex items-start justify-between gap-4 px-5 py-4">
             <div className="flex items-start gap-3">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--ink-black)] text-white">

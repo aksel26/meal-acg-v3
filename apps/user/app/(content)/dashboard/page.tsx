@@ -3,7 +3,6 @@
 import GreetingSection from "@/components/dashboard/GreetingSection";
 import MealSection from "@/components/dashboard/MealSection";
 import NoticeSection from "@/components/dashboard/NoticeSection";
-import PopularRestaurantsSection from "@/components/dashboard/PopularRestaurantsSection";
 import QuickActionsSection from "@/components/dashboard/QuickActionsSection";
 import StatsSection from "@/components/dashboard/StatsSection";
 import { CalculationData } from "@/components/dashboard/types";
@@ -126,7 +125,7 @@ export default function DashboardPage() {
     }
   };
 
-  const handleDeleteMeal = async (date: string) => {
+  const handleDeleteMeal = async (date: string, mealType: "breakfast" | "lunch" | "dinner") => {
     if (!userName) {
       return;
     }
@@ -135,6 +134,7 @@ export default function DashboardPage() {
       userName,
       userId: userId || undefined,
       date: date,
+      mealType,
     };
 
     try {
@@ -158,29 +158,27 @@ export default function DashboardPage() {
 
   return (
     <React.Fragment>
-      <div className="space-y-4 lg:grid lg:h-[calc(100dvh-6rem)] lg:grid-cols-10 lg:grid-rows-12 lg:gap-4 lg:space-y-0 lg:overflow-hidden">
-        <div className="lg:col-span-3 lg:row-span-2 lg:min-h-0 [&>*]:h-full">
+      <div className="space-y-3 text-[0.92rem] lg:grid lg:h-[calc(100dvh-3rem)] lg:grid-cols-10 lg:grid-rows-12 lg:gap-3 lg:space-y-0 lg:overflow-hidden">
+        <div className="lg:col-span-9 lg:row-span-1 lg:min-h-0 [&>*]:h-full">
           <GreetingSection userName={displayUserName} />
         </div>
 
-        <div className="lg:col-span-6 lg:row-span-2 lg:min-h-0 [&>*]:h-full">
-          <QuickActionsSection />
-        </div>
-
-        <div className="lg:col-span-1 lg:row-span-2 lg:min-h-0">
+        <div className="lg:col-span-1 lg:row-span-1 lg:min-h-0">
           <NoticeSection variant="icon" />
         </div>
 
-        <div className="lg:col-span-5 lg:row-span-10 lg:min-h-0 lg:overflow-hidden">
+        <div className="lg:col-span-5 lg:row-span-11 lg:min-h-0 lg:overflow-hidden">
           <MealSection selectedDate={selectedDate} setSelectedDate={setSelectedDate} handleMonthChange={handleMonthChange} mealData={mealData} />
         </div>
 
-        <div className="lg:col-span-5 lg:row-span-7 lg:min-h-0 lg:overflow-hidden [&>*]:h-full [&>*>*]:h-full">
-          <StatsSection userId={currentUserId} month={currentMonth} year={currentYear} onDataChange={setCalculationData} />
-        </div>
+        <div className="lg:col-span-5 lg:row-span-11 lg:flex lg:min-h-0 lg:flex-col lg:gap-3 lg:overflow-hidden">
+          <div className="lg:min-h-0 lg:flex-1 lg:overflow-hidden [&>*]:h-full [&>*>*]:h-full">
+            <StatsSection userId={currentUserId} month={currentMonth} year={currentYear} onDataChange={setCalculationData} />
+          </div>
 
-        <div className="lg:col-span-5 lg:row-span-3 lg:min-h-0 lg:overflow-hidden">
-          <PopularRestaurantsSection />
+          <div className="lg:h-[4.25rem] lg:shrink-0">
+            <QuickActionsSection />
+          </div>
         </div>
       </div>
 
@@ -189,7 +187,7 @@ export default function DashboardPage() {
         <MealEntryDrawer onFormSubmit={handleFormSubmit} onDeleteMeal={handleDeleteMeal} />
       </Suspense>
 
-      <Footer variant="compact" className="mt-4" />
+      <Footer variant="compact" className="mt-4 lg:hidden" />
 
       {/* 업데이트 알림 Dialog */}
       <UpdateNotificationDialog />

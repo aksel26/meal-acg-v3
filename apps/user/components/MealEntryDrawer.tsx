@@ -24,7 +24,7 @@ const DeleteConfirmDialog = lazy(() =>
 
 interface MealEntryDrawerProps {
   onFormSubmit: (e: React.FormEvent) => Promise<void>;
-  onDeleteMeal?: (date: string) => Promise<void>;
+  onDeleteMeal?: (date: string, mealType: "breakfast" | "lunch" | "dinner") => Promise<void>;
 }
 
 export default function MealEntryDrawer({
@@ -50,7 +50,7 @@ export default function MealEntryDrawer({
 
     setIsDeleting(true);
     try {
-      await onDeleteMeal(formatDate(selectedDate));
+      await onDeleteMeal(formatDate(selectedDate), selectedMealType);
       closeDrawer();
     } finally {
       setIsDeleting(false);
@@ -108,6 +108,7 @@ export default function MealEntryDrawer({
                 <Suspense fallback={null}>
                   <DeleteConfirmDialog
                     selectedDate={selectedDate}
+                    mealType={selectedMealType}
                     isDeleting={isDeleting}
                     onConfirm={handleDeleteMeal}
                   >

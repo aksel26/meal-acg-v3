@@ -52,28 +52,15 @@ export default function MealSection({
         delay: 0.5,
         ease: [0.25, 0.46, 0.45, 0.94],
       }}
-      className="scroll-mt-24 space-y-3 lg:flex lg:h-full lg:min-h-0 lg:flex-col"
+      className="scroll-mt-24 lg:flex lg:h-full lg:min-h-0 lg:flex-col"
     >
-      <div className="flex items-end justify-between gap-4 px-1">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-[0.14em] text-[var(--slate-gray)]">
-            Meal Calendar
-          </p>
-          <h2 className="mt-1 font-display text-2xl font-medium text-[var(--ink-black)] lg:text-xl">
-            식사 기록
-          </h2>
-        </div>
-        <p className="hidden max-w-[16rem] text-right text-xs leading-5 text-[var(--granite)] lg:text-[11px] sm:block">
-          날짜를 선택해 해당 일자의 식사 기록을 입력하거나 수정합니다.
-        </p>
-      </div>
-      <div className="space-y-4 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
+      <div className="space-y-3 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
         <CalendarComponent
           onDateSelect={setSelectedDate}
           selectedDate={selectedDate}
           onMonthChange={handleMonthChange}
           mealData={mealData}
-          className="lg:min-h-0 lg:flex-[1.45]"
+          className="lg:min-h-0 lg:flex-[1.6]"
         />
         <MealCards
           selectedDate={selectedDate}
@@ -81,7 +68,7 @@ export default function MealSection({
           onAddMeal={handleAddMeal}
           onEditMeal={handleEditMeal}
           onHolidayEdit={handleHolidayAttendanceEdit}
-          className="lg:mt-0 lg:min-h-0 lg:flex-[0.75] lg:overflow-hidden lg:p-4"
+          className="lg:mt-0 lg:min-h-0 lg:flex-[0.55] lg:overflow-hidden lg:p-3"
         />
       </div>
     </motion.div>

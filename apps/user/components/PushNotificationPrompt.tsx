@@ -87,7 +87,7 @@ export default function PushNotificationPrompt() {
           transition={{ type: "spring", stiffness: 120, damping: 16 }}
           className="fixed top-0 z-40 px-4 pt-4 max-xl:inset-x-0 max-xl:mx-auto max-xl:w-full max-xl:max-w-lg xl:left-[calc(50%_+_17rem)] xl:right-4 xl:max-w-md"
         >
-          <div className="glass-card-elevated rounded-[24px] border border-[rgba(25,28,31,0.1)] p-4">
+          <div className="glass-card-elevated rounded-[24px] p-4">
             {iosSafariWarning ? (
               <div className="flex items-start gap-3">
                 <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[var(--ink-black)] text-white">

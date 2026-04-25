@@ -2,10 +2,13 @@
 @import "@repo/tailwind-config";
 
 :root {
-  --canvas-cream: #ffffff;
+  --font-body: "Pretendard Variable";
+  --font-display: "Pretendard Variable";
+
+  --canvas-cream: #f4f4f4;
   --lifted-cream: #ffffff;
   --whisper-cream: #f4f4f4;
-  --soft-bone: #eceef1;
+  --soft-bone: #c9c9cd;
   --white: #ffffff;
   --ink-black: #191c1f;
   --charcoal: #191c1f;
@@ -46,7 +49,7 @@
   --color-neutral-800: #2c3238;
   --color-neutral-900: #191c1f;
 
-  --glass-bg: rgba(255, 255, 255, 0.9);
+  --glass-bg: #ffffff;
   --glass-border: rgba(25, 28, 31, 0.1);
   --glass-shadow: none;
   --shadow-xs: none;
@@ -81,14 +84,14 @@
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  --tracking-display: -0.04em;
-  --tracking-heading: -0.025em;
-  --tracking-body: 0.01em;
-  --tracking-ui: 0;
-  --leading-display: 0.98;
-  --leading-heading: 1.12;
-  --leading-body: 1.56;
-  --leading-ui: 1.45;
+  --tracking-display: -0.022em;
+  --tracking-heading: -0.016em;
+  --tracking-body: -0.012em;
+  --tracking-ui: -0.008em;
+  --leading-display: 1.14;
+  --leading-heading: 1.24;
+  --leading-body: 1.62;
+  --leading-ui: 1.48;
 }
 
 *,
@@ -102,10 +105,17 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  font-family:
+    var(--font-body),
+    "Pretendard Variable",
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
   overflow-x: hidden;
   background:
-    radial-gradient(circle at top right, rgba(25, 28, 31, 0.05), transparent 24rem),
-    linear-gradient(180deg, #ffffff 0%, #f7f8fb 100%);
+    linear-gradient(180deg, #ffffff 0%, var(--canvas-cream) 100%);
   word-break: keep-all;
   line-break: strict;
 }
@@ -115,11 +125,11 @@ body {
   margin: 0;
   color: var(--ink-black);
   background:
-    radial-gradient(circle at top right, rgba(25, 28, 31, 0.05), transparent 24rem),
-    linear-gradient(180deg, #ffffff 0%, #f7f8fb 100%);
+    linear-gradient(180deg, #ffffff 0%, var(--canvas-cream) 100%);
   font-family:
     var(--font-body),
-    "Inter",
+    "Pretendard Variable",
+    Pretendard,
     "Apple SD Gothic Neo",
     "Noto Sans KR",
     "Malgun Gothic",
@@ -128,6 +138,11 @@ body {
   font-weight: 400;
   letter-spacing: var(--tracking-body);
   line-height: var(--leading-body);
+  font-kerning: normal;
+  font-feature-settings:
+    "kern" 1,
+    "liga" 1,
+    "calt" 1;
   overflow-x: hidden;
   position: relative;
   width: 100%;
@@ -136,7 +151,8 @@ body {
 .font-editorial {
   font-family:
     var(--font-body),
-    "Inter",
+    "Pretendard Variable",
+    Pretendard,
     "Apple SD Gothic Neo",
     "Noto Sans KR",
     "Malgun Gothic",
@@ -150,6 +166,8 @@ input,
 textarea,
 select {
   font-family: inherit;
+  letter-spacing: var(--tracking-ui);
+  line-height: var(--leading-ui);
 }
 
 h1,
@@ -162,7 +180,8 @@ h6,
   font-family:
     var(--font-display),
     var(--font-body),
-    "Inter",
+    "Pretendard Variable",
+    Pretendard,
     "Apple SD Gothic Neo",
     "Noto Sans KR",
     sans-serif;
@@ -210,7 +229,7 @@ button {
 .card-premium,
 .notice-banner {
   background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+  border: 0;
   box-shadow: none;
 }
 
@@ -230,11 +249,7 @@ button {
 }
 
 .card-premium {
-  transition: border-color 0.25s var(--ease-out-expo), background-color 0.25s var(--ease-out-expo);
-}
-
-.card-premium:hover {
-  border-color: rgba(25, 28, 31, 0.18);
+  transition: background-color 0.25s var(--ease-out-expo);
 }
 
 .card-interactive {
@@ -262,9 +277,7 @@ button {
 }
 
 .gradient-mesh {
-  background:
-    radial-gradient(circle at top right, rgba(25, 28, 31, 0.06), transparent 22rem),
-    linear-gradient(180deg, #ffffff 0%, #f7f8fb 100%);
+  background: linear-gradient(180deg, #ffffff 0%, var(--canvas-cream) 100%);
 }
 
 .btn-primary,

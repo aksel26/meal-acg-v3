@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronRight, Coffee, UsersRound, Utensils, WalletCards } from "@repo/ui/icons";
+import { Coffee, UsersRound, Utensils, WalletCards } from "@repo/ui/icons";
 import { motion } from "motion/react";
 
 const quickActions = [
@@ -38,12 +38,13 @@ export default function QuickActionsSection() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, delay: 0.16, ease: [0.16, 1, 0.3, 1] }}
       aria-label="Welfare Hub"
-      className="flex flex-col lg:min-h-0"
+      className="flex flex-col lg:h-full lg:min-h-0"
     >
-      <div className="grid gap-3 sm:grid-cols-2 lg:min-h-0 lg:flex-1 lg:grid-cols-4">
+      <div className="grid gap-2 sm:grid-cols-2 lg:h-full lg:min-h-0 lg:flex-1 lg:grid-cols-4">
         {quickActions.map(({ title, description, href, Icon }, index) => (
           <motion.div
             key={title}
+            className="lg:h-full lg:min-h-0"
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{
@@ -54,26 +55,19 @@ export default function QuickActionsSection() {
           >
             <Link
               href={href}
-              className="group flex min-h-[118px] cursor-pointer flex-col justify-between rounded-[22px] border border-[rgba(25,28,31,0.1)] bg-white p-4 transition-colors duration-200 hover:border-[rgba(25,28,31,0.2)] hover:bg-[var(--whisper-cream)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ink-black)] focus-visible:ring-offset-2 lg:h-full lg:min-h-0 lg:p-3"
+              className="group flex min-h-[72px] cursor-pointer items-center justify-between overflow-hidden rounded-[20px] bg-white p-3 transition-colors duration-200 hover:bg-[var(--whisper-cream)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ink-black)] focus-visible:ring-offset-2 lg:h-full lg:min-h-0 lg:p-2.5"
             >
-              <div className="flex items-start justify-between gap-3 lg:items-center">
-                <div className="flex h-11 w-11 items-center justify-center rounded-[16px] bg-[var(--whisper-cream)] text-[var(--ink-black)] transition-colors duration-200 group-hover:bg-white lg:h-9 lg:w-9 lg:rounded-[14px]">
-                  <Icon className="h-5 w-5" aria-hidden="true" />
+              <div className="flex min-w-0 items-center gap-2">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[14px] bg-[var(--whisper-cream)] text-[var(--ink-black)] transition-colors duration-200 group-hover:bg-white lg:h-8 lg:w-8 lg:rounded-[12px]">
+                  <Icon className="h-4 w-4" aria-hidden="true" />
                 </div>
-                <ChevronRight
-                  className="mt-1 h-4 w-4 text-[var(--slate-gray)] transition-colors duration-200 group-hover:text-[var(--ink-black)] lg:hidden"
-                  aria-hidden="true"
-                />
-              </div>
-
-              <div className="pt-4 lg:pt-2">
-                <h3 className="font-display text-lg font-medium text-[var(--ink-black)] lg:text-sm">
+                <h3 className="truncate font-display text-base font-medium text-[var(--ink-black)] lg:text-xs">
                   {title}
                 </h3>
-                <p className="mt-1 text-sm leading-5 text-[var(--granite)] lg:hidden">
-                  {description}
-                </p>
               </div>
+              <span className="ml-2 shrink-0 text-[10px] font-medium text-[var(--slate-gray)] lg:hidden">
+                {description}
+              </span>
             </Link>
           </motion.div>
         ))}

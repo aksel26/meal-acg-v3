@@ -6,6 +6,7 @@ interface MealDeleteData {
   userName: string;
   userId?: string;
   date: string;
+  mealType?: "breakfast" | "lunch" | "dinner";
 }
 
 interface MealDeleteResponse {
@@ -67,7 +68,16 @@ export function useMealDelete() {
       }
 
       // 성공 토스트 표시
-      toast.success("식사 기록이 삭제되었습니다.");
+      const mealTypeLabels = {
+        breakfast: "조식",
+        lunch: "중식",
+        dinner: "석식",
+      } as const;
+      toast.success(
+        variables.mealType
+          ? `${mealTypeLabels[variables.mealType]} 기록이 삭제되었습니다.`
+          : "식사 기록이 삭제되었습니다.",
+      );
 
       // 관련 쿼리 무효화
       const date = new Date(variables.date);
@@ -77,6 +87,9 @@ export function useMealDelete() {
       // 식사 데이터 쿼리 무효화
       queryClient.invalidateQueries({
         queryKey: queryKeys.meals.byUserAndMonth(variables.userName, month, year)
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["meals", "recentActivity"]
       });
 
       // 계산 데이터도 무효화 (식사 금액이 바뀌면 계산도 영향을 받음)
@@ -90,11 +103,6 @@ export function useMealDelete() {
           queryKey: queryKeys.mealStats.byUserAndMonth(variables.userId, month, year)
         });
       }
-
-      // 인기 음식점 랭킹 쿼리 무효화 (음식점이 삭제되면 랭킹도 영향)
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.restaurants.popular()
-      });
 
       console.log("Delete result:", data);
     },

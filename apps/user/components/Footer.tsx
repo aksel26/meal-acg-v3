@@ -21,7 +21,7 @@ export function Footer({ className = "", variant = "default" }: FooterProps) {
   if (variant === "compact") {
     return (
       <footer className={`w-full ${className}`}>
-        <div className="flex flex-col gap-3 rounded-[22px] border border-[rgba(25,28,31,0.1)] bg-white px-4 py-3 text-[var(--ink-black)] sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 rounded-[22px] bg-white px-4 py-3 text-[var(--ink-black)] sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--slate-gray)]">
               Support
@@ -54,7 +54,7 @@ export function Footer({ className = "", variant = "default" }: FooterProps) {
 
   return (
     <footer className={`w-full ${className}`}>
-      <div className="overflow-hidden rounded-[28px] border border-[rgba(25,28,31,0.1)] bg-[var(--ink-black)] text-white">
+      <div className="overflow-hidden rounded-[28px] bg-[var(--ink-black)] text-white">
         <div className="space-y-6 px-6 py-7">
           <div className="space-y-3">
             <p className="eyebrow-label text-white/70 before:bg-[var(--signal-orange)]">Support</p>
@@ -72,7 +72,7 @@ export function Footer({ className = "", variant = "default" }: FooterProps) {
             <motion.button
               whileTap={{ scale: 0.98 }}
               onClick={() => window.open("https://github.com/aksel26", "_blank")}
-              className="flex items-center justify-between rounded-[22px] border border-white/10 bg-white/6 px-4 py-3 text-left transition-colors hover:bg-white/10"
+              className="flex items-center justify-between rounded-[22px] bg-white/6 px-4 py-3 text-left transition-colors hover:bg-white/10"
             >
               <div className="flex items-center gap-3">
                 <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10">
@@ -91,7 +91,7 @@ export function Footer({ className = "", variant = "default" }: FooterProps) {
             <motion.button
               whileTap={{ scale: 0.98 }}
               onClick={handleEmailClick}
-              className="flex items-center justify-between rounded-[22px] border border-white/10 bg-white/6 px-4 py-3 text-left transition-colors hover:bg-white/10"
+              className="flex items-center justify-between rounded-[22px] bg-white/6 px-4 py-3 text-left transition-colors hover:bg-white/10"
             >
               <div className="flex items-center gap-3">
                 <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10">

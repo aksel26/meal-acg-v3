@@ -14,11 +14,13 @@ import { NumberTicker } from "@repo/ui/src/number-ticker";
 import { toast } from "@repo/ui/src/sonner";
 import { Copy } from "@repo/ui/icons";
 import dayjs from "dayjs";
+import Image from "next/image";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { useCalculationData } from "@/hooks/use-calculation-data";
 import { useMemberIdLookup, usePointsWelfare } from "@/hooks/use-points-data";
 import { useAddUsageRecord } from "@/hooks/use-points-mutations";
+import { RecentMealActivity, useRecentMealActivity } from "@/hooks/use-recent-meal-activity";
 import { useUserStore } from "@/stores/userStore";
 import { CalculationData } from "./types";
 
@@ -27,6 +29,109 @@ interface StatsSectionProps {
   month: number;
   year: number;
   onDataChange?: (data: CalculationData | null) => void;
+}
+
+function AdjustmentMarker({
+  type,
+}: {
+  type: "individual" | "holiday" | "halfDay";
+}) {
+  if (type === "individual") {
+    return (
+      <span
+        className="flex h-[18px] w-[18px] shrink-0 items-center justify-center"
+        aria-hidden="true"
+      >
+        <span className="h-3 w-3 rounded-full border border-[var(--signal-orange)] bg-transparent" />
+      </span>
+    );
+  }
+
+  const icon =
+    type === "halfDay"
+      ? { src: "/icons/clock.png", alt: "반차" }
+      : { src: "/icons/holiday.png", alt: "휴가" };
+
+  return (
+    <span className="flex h-[18px] w-[18px] shrink-0 items-center justify-center">
+      <Image
+        src={icon.src}
+        alt={icon.alt}
+        width={18}
+        height={18}
+        className="h-[18px] w-[18px]"
+      />
+    </span>
+  );
+}
+
+function RecentMealTicker({ excludeUserId }: { excludeUserId: string }) {
+  const { data = [], isLoading } = useRecentMealActivity(excludeUserId);
+  const tickerItems = data.length > 0 ? [...data, ...data] : [];
+
+  const formatActivityDate = (date: string) => dayjs(date).format("M.D");
+  const formatActivityText = (activity: RecentMealActivity) => {
+    const mealLabel = activity.mealTypes.join("/");
+    const storeLabel = activity.store ? ` · ${activity.store}` : "";
+    return `${mealLabel}${storeLabel}`;
+  };
+
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="mb-2 flex items-center justify-between">
+        <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">
+          최근 식대 입력
+        </p>
+        <span className="text-[10px] text-[var(--slate-gray)]">LIVE</span>
+      </div>
+
+      <div className="relative min-h-0 flex-1 overflow-hidden px-1 py-2 [mask-image:linear-gradient(to_bottom,transparent_0,black_1.1rem,black_calc(100%-2rem),transparent_100%)]">
+        {isLoading ? (
+          <div className="space-y-2">
+            <div className="skeleton h-5 rounded-full" />
+            <div className="skeleton h-5 rounded-full" />
+          </div>
+        ) : data.length > 0 ? (
+          <motion.div
+            className="space-y-2"
+            animate={data.length > 1 ? { y: ["0%", "-50%"] } : undefined}
+            transition={
+              data.length > 1
+                ? {
+                    duration: Math.max(5.6, data.length * 1.35),
+                    repeat: Infinity,
+                    ease: "linear",
+                  }
+                : undefined
+            }
+          >
+            {tickerItems.map((activity, index) => (
+              <div
+                key={`${activity.id}-${index}`}
+                className="flex h-6 items-center justify-between gap-3 text-sm lg:text-xs"
+              >
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="max-w-[4.5rem] truncate text-[var(--ink-black)]">
+                    {activity.userName}
+                  </span>
+                  <span className="min-w-0 truncate text-[var(--granite)]">
+                    {formatActivityText(activity)}
+                  </span>
+                </div>
+                <span className="shrink-0 text-xs text-[var(--slate-gray)] lg:text-[11px]">
+                  {formatActivityDate(activity.date)}
+                </span>
+              </div>
+            ))}
+          </motion.div>
+        ) : (
+          <div className="flex h-full items-center text-xs text-[var(--slate-gray)]">
+            다른 사람의 최근 입력 내역이 없습니다.
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function CalculationResult({
@@ -167,20 +272,20 @@ function CalculationResult({
       : "bg-[var(--ink-black)]";
 
   return (
-    <div className="card-premium overflow-hidden">
-      <div className="bg-white px-6 py-6 text-[var(--ink-black)] lg:px-5 lg:py-4">
+    <div className="card-premium overflow-hidden lg:flex lg:h-full lg:min-h-0 lg:flex-col">
+      <div className="bg-white px-5 py-5 text-[var(--ink-black)] lg:px-4 lg:py-3">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-4">
             <div className="space-y-2">
               <p className="eyebrow-label text-[var(--slate-gray)]">Meal Allowance</p>
-              <p className="text-sm text-[var(--granite)] lg:text-xs">{month}월 식대 잔액</p>
+              <p className="text-xs text-[var(--granite)] lg:text-[11px]">{month}월 식대 잔액</p>
               <div className="flex items-end gap-1">
                 {isOverBudget && (
-                  <span className="text-3xl font-medium text-[var(--danger)] lg:text-2xl">-</span>
+                  <span className="text-2xl font-medium text-[var(--danger)] lg:text-xl">-</span>
                 )}
                 <NumberTicker
                   value={Math.abs(data.balance)}
-                  className={`font-display text-[2.8rem] font-medium lg:text-[2.1rem] ${
+                  className={`font-display text-[2.35rem] font-medium lg:text-[1.75rem] ${
                     isOverBudget
                       ? "text-[var(--danger)]"
                       : isLowBalance
@@ -188,23 +293,23 @@ function CalculationResult({
                         : "text-[var(--ink-black)]"
                   }`}
                 />
-                <span className="pb-1 text-sm font-medium text-[var(--slate-gray)] lg:text-xs">원</span>
+                <span className="pb-1 text-xs font-medium text-[var(--slate-gray)] lg:text-[11px]">원</span>
               </div>
             </div>
 
-            <div className={`inline-flex rounded-full px-3 py-1.5 text-xs font-medium ${statusTone}`}>
+            <div className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-medium ${statusTone}`}>
               {statusLabel}
             </div>
           </div>
 
-          <div className="hidden rounded-[22px] border border-[rgba(25,28,31,0.08)] bg-[var(--whisper-cream)] px-4 py-4 text-right sm:block lg:px-3 lg:py-3">
+          <div className="hidden rounded-[22px] bg-[var(--whisper-cream)] px-4 py-4 text-right sm:block lg:px-3 lg:py-3">
             <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">Usage</p>
-            <p className="mt-3 font-display text-[2rem] text-[var(--ink-black)] lg:text-[1.5rem]">{usagePercent}%</p>
-            <p className="mt-1 text-xs text-[var(--granite)]">이번 달 사용률</p>
+            <p className="mt-2 font-display text-[1.65rem] text-[var(--ink-black)] lg:text-[1.25rem]">{usagePercent}%</p>
+            <p className="mt-1 text-[11px] text-[var(--granite)]">이번 달 사용률</p>
           </div>
         </div>
 
-        <div className="mt-6 space-y-3">
+        <div className="mt-5 space-y-2.5">
           <div className="h-3 overflow-hidden rounded-full bg-[var(--whisper-cream)]">
             <motion.div
               initial={{ width: 0, opacity: 0 }}
@@ -216,30 +321,30 @@ function CalculationResult({
               className={`h-full rounded-full ${progressTone}`}
             />
           </div>
-          <div className="flex justify-between text-xs text-[var(--granite)]">
+          <div className="flex justify-between text-[11px] text-[var(--granite)]">
             <span>{usagePercent}% 사용</span>
             <span>{formatCurrency(data.allowanceAmount)}원 중</span>
           </div>
         </div>
       </div>
 
-      <div className="grid gap-3 border-t border-[rgba(25,28,31,0.08)] bg-[var(--whisper-cream)] px-6 py-5 sm:grid-cols-2 lg:px-5 lg:py-3">
-        <div className="rounded-[20px] bg-white px-4 py-4">
+      <div className="grid gap-2.5 border-t border-[rgba(25,28,31,0.08)] px-5 py-4 sm:grid-cols-2 lg:px-4 lg:py-3">
+        <div className="px-1 py-2">
           <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">
             사용가능액
           </p>
-          <p className="mt-3 font-display text-[1.5rem] text-[var(--ink-black)] lg:text-[1.15rem]">
+          <p className="mt-2 font-display text-[1.6rem] text-[var(--ink-black)] lg:text-[1.35rem]">
             {formatCurrency(data.allowanceAmount)}
-            <span className="ml-1 text-xs text-[var(--slate-gray)]">원</span>
+            <span className="ml-1 text-sm text-[var(--slate-gray)] lg:text-xs">원</span>
           </p>
         </div>
-        <div className="rounded-[20px] bg-white px-4 py-4">
+        <div className="px-1 py-2">
           <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">
             사용금액
           </p>
-          <p className="mt-3 font-display text-[1.5rem] text-[var(--ink-black)] lg:text-[1.15rem]">
+          <p className="mt-2 font-display text-[1.6rem] text-[var(--ink-black)] lg:text-[1.35rem]">
             {formatCurrency(data.totalUsed)}
-            <span className="ml-1 text-xs text-[var(--slate-gray)]">원</span>
+            <span className="ml-1 text-sm text-[var(--slate-gray)] lg:text-xs">원</span>
           </p>
         </div>
       </div>
@@ -249,7 +354,7 @@ function CalculationResult({
           <button
             type="button"
             onClick={handleOpenDialog}
-            className="btn-primary w-full py-3 text-sm"
+            className="btn-primary w-full py-2.5 text-xs"
           >
             복지포인트로 초과분 정산하기
           </button>
@@ -261,7 +366,7 @@ function CalculationResult({
           <p className="eyebrow-label text-[11px]">Adjustments</p>
           <div className="mt-4 space-y-3">
             {(data.weekendWorkCount ?? 0) > 0 && (
-              <div className="flex items-center justify-between text-sm lg:text-xs">
+              <div className="flex items-center justify-between text-sm lg:text-sm">
                 <span className="text-[var(--granite)]">주말근무 {data.weekendWorkCount}일</span>
                 <span className="font-medium text-[var(--ink-black)]">
                   +{formatCurrency(data.weekendWorkAddition || 0)}원
@@ -269,24 +374,33 @@ function CalculationResult({
               </div>
             )}
             {(data.individualMealCount ?? 0) > 0 && (
-              <div className="flex items-center justify-between text-sm lg:text-xs">
-                <span className="text-[var(--granite)]">개별식사 {data.individualMealCount}회</span>
+              <div className="flex items-center justify-between text-sm lg:text-sm">
+                <span className="flex items-center gap-2 text-[var(--granite)]">
+                  <AdjustmentMarker type="individual" />
+                  <span>개별식사 {data.individualMealCount}회</span>
+                </span>
                 <span className="font-medium text-[var(--granite)]">
                   -{formatCurrency(data.individualMealDeduction || 0)}원
                 </span>
               </div>
             )}
             {(data.noMealFullDayCount ?? 0) > 0 && (
-              <div className="flex items-center justify-between text-sm lg:text-xs">
-                <span className="text-[var(--granite)]">연차/재택/휴무 {data.noMealFullDayCount}일</span>
+              <div className="flex items-center justify-between text-sm lg:text-sm">
+                <span className="flex items-center gap-2 text-[var(--granite)]">
+                  <AdjustmentMarker type="holiday" />
+                  <span>연차/재택/휴무 {data.noMealFullDayCount}일</span>
+                </span>
                 <span className="font-medium text-[var(--granite)]">
                   -{formatCurrency(data.noMealDeduction || 0)}원
                 </span>
               </div>
             )}
             {(data.halfDayOffCount ?? 0) > 0 && (
-              <div className="flex items-center justify-between text-sm lg:text-xs">
-                <span className="text-[var(--granite)]">반차 {data.halfDayOffCount}일</span>
+              <div className="flex items-center justify-between text-sm lg:text-sm">
+                <span className="flex items-center gap-2 text-[var(--granite)]">
+                  <AdjustmentMarker type="halfDay" />
+                  <span>반차 {data.halfDayOffCount}일</span>
+                </span>
                 <span className="font-medium text-[var(--granite)]">
                   -{formatCurrency(data.halfDayDeduction || 0)}원
                 </span>
@@ -300,18 +414,22 @@ function CalculationResult({
         <button
           type="button"
           onClick={copyAccount}
-          className="flex w-full items-center justify-between rounded-[20px] bg-[var(--whisper-cream)] px-4 py-4 text-left transition-opacity active:opacity-80"
+          className="flex w-full items-center justify-between text-left transition-opacity active:opacity-80"
         >
           <div>
             <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">
               입금계좌
             </p>
-            <p className="mt-2 text-sm font-medium text-[var(--ink-black)] lg:text-xs">
+            <p className="mt-2 text-sm font-medium text-[var(--ink-black)] lg:text-sm">
               국민 005701-04-142344 ㈜에이시지알
             </p>
           </div>
           <Copy className="h-4 w-4 text-[var(--slate-gray)]" />
         </button>
+      </div>
+
+      <div className="h-[200px] border-t border-[rgba(25,28,31,0.08)] px-6 pb-7 pt-4 lg:min-h-0 lg:flex-1 lg:px-5 lg:pb-6 lg:pt-3">
+        <RecentMealTicker excludeUserId={userId} />
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

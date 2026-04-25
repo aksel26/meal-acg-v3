@@ -23,10 +23,10 @@ export default function GreetingSection({ userName }: GreetingSectionProps) {
         delay: 0.05,
         ease: [0.16, 1, 0.3, 1],
       }}
-      className="rounded-[24px] border border-[rgba(25,28,31,0.1)] bg-white px-5 py-4 sm:px-6 lg:flex lg:items-center lg:px-4 lg:py-3"
+      className="rounded-[20px] bg-white px-4 py-3 sm:px-5 lg:flex lg:items-center lg:px-3 lg:py-2"
     >
       <div className="min-w-0">
-        <h1 className="truncate font-display text-xl font-medium leading-tight text-[var(--ink-black)] lg:text-base">
+        <h1 className="truncate font-display text-lg font-medium leading-tight text-[var(--ink-black)] lg:text-sm">
           {getGreeting()}, {userName}님
         </h1>
       </div>

@@ -24,6 +24,7 @@ export const queryKeys = {
     byUser: (userName: string) => ["meals", userName] as const,
     byUserAndMonth: (userName: string, month: number, year: number) => ["meals", userName, month, year] as const,
     byUserAndDate: (userName: string, date: string) => ["meals", userName, "date", date] as const,
+    recentActivity: (excludeUserId?: string) => ["meals", "recentActivity", excludeUserId ?? "all"] as const,
   },
 
   // 파일 검증 관련 쿼리
@@ -55,7 +56,6 @@ export const queryKeys = {
   restaurants: {
     all: ["restaurants"] as const,
     list: ["restaurants", "list"] as const,
-    popular: () => ["restaurants", "popular"] as const,
   },
 
   // 월간 음료 신청 관련 쿼리

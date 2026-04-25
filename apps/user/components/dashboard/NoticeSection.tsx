@@ -27,11 +27,11 @@ export default function NoticeSection({ variant = "card" }: NoticeSectionProps) 
         }}
         onClick={checkNotice}
         aria-label="공지 보기"
-        className="group flex h-full min-h-[92px] w-full cursor-pointer items-center justify-center rounded-[24px] border border-[rgba(25,28,31,0.1)] bg-white transition-colors duration-200 hover:bg-[var(--whisper-cream)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ink-black)] focus-visible:ring-offset-2 lg:min-h-0"
+        className="group flex h-full min-h-[64px] w-full cursor-pointer items-center justify-center rounded-[20px] bg-white transition-colors duration-200 hover:bg-[var(--whisper-cream)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ink-black)] focus-visible:ring-offset-2 lg:min-h-0"
       >
-        <span className="relative flex h-12 w-12 items-center justify-center rounded-[16px] bg-[var(--whisper-cream)] transition-colors duration-200 group-hover:bg-white">
-          <Image src={Notice} alt="" width={26} height={26} aria-hidden="true" />
-          <span className="absolute -right-0.5 top-1 h-3 w-3 rounded-full border-2 border-white bg-[var(--ink-black)]" />
+        <span className="relative flex h-9 w-9 items-center justify-center rounded-[13px] bg-[var(--whisper-cream)] transition-colors duration-200 group-hover:bg-white">
+          <Image src={Notice} alt="" width={20} height={20} aria-hidden="true" />
+          <span className="absolute -right-0.5 top-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-[var(--ink-black)]" />
         </span>
       </motion.button>
     );
@@ -46,7 +46,7 @@ export default function NoticeSection({ variant = "card" }: NoticeSectionProps) 
         delay: 0.15,
         ease: [0.16, 1, 0.3, 1],
       }}
-      className="h-full rounded-[24px] border border-[rgba(25,28,31,0.1)] bg-white p-5"
+      className="h-full rounded-[24px] bg-white p-5"
     >
       <div className="flex h-full flex-col justify-between gap-5">
         <div className="flex items-start gap-4">

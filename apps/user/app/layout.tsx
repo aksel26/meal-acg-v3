@@ -4,8 +4,6 @@ import "@repo/ui/styles.css";
 import type { Metadata, Viewport } from "next";
 import QueryProvider from "./providers/QueryProvider"; // 위에서 생성한 Provider 임포트
 import { Analytics } from "@vercel/analytics/next";
-import { Inter } from "next/font/google";
-import localFont from "next/font/local";
 import dayjs from "dayjs";
 
 const APP_NAME = "🍙 ACG 복지";
@@ -14,18 +12,6 @@ const APP_TITLE_TEMPLATE = "%s - PWA App";
 const APP_DESCRIPTION = "ACG 직원을 위한 복지포인트, 식대, Monthly 커피, 점심조 관리 서비스입니다.";
 import "dayjs/locale/ko";
 dayjs.locale("ko");
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-body",
-  display: "swap",
-});
-
-const displayFont = localFont({
-  src: "../fonts/NanumSquareNeo-Variable.ttf",
-  variable: "--font-display",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   applicationName: APP_NAME,
@@ -86,8 +72,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <link rel="apple-touch-icon" href="/ios/AppIcon@2x.png"></link>
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css"
+        />
       </head>
-      <body className={`${inter.variable} ${displayFont.variable} font-editorial`}>
+      <body className="font-editorial">
         <QueryProvider>
           {children}
           <Analytics />

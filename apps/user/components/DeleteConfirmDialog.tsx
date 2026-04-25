@@ -14,18 +14,27 @@ import {
 
 interface DeleteConfirmDialogProps {
   selectedDate?: Date;
+  mealType?: "breakfast" | "lunch" | "dinner";
   isDeleting: boolean;
   onConfirm: () => Promise<void>;
   children: React.ReactNode;
 }
 
-export function DeleteConfirmDialog({ selectedDate, isDeleting, onConfirm, children }: DeleteConfirmDialogProps) {
+const mealTypeLabels = {
+  breakfast: "조식",
+  lunch: "중식",
+  dinner: "석식",
+} as const;
+
+export function DeleteConfirmDialog({ selectedDate, mealType, isDeleting, onConfirm, children }: DeleteConfirmDialogProps) {
+  const deleteTarget = mealType ? `${mealTypeLabels[mealType]} 기록` : "식대 기록";
+
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
       <AlertDialogContent className="sm:max-w-md max-w-xs!">
         <AlertDialogHeader className="text-center sm:text-left">
-          <AlertDialogTitle className="text-sm sm:text-lg font-semibold flex items-center gap-2">식사 기록 삭제</AlertDialogTitle>
+          <AlertDialogTitle className="text-sm sm:text-lg font-semibold flex items-center gap-2">{deleteTarget} 삭제</AlertDialogTitle>
           <AlertDialogDescription className="text-left space-y-3 pt-2">
             <span className="text-xs sm:text-sm">
               <span className="font-medium text-foreground">
@@ -36,7 +45,7 @@ export function DeleteConfirmDialog({ selectedDate, isDeleting, onConfirm, child
                   weekday: "short",
                 })}
               </span>
-              의 식대 기록을 삭제하시겠습니까?
+              의 {deleteTarget}을 삭제하시겠습니까?
             </span>
           </AlertDialogDescription>
         </AlertDialogHeader>

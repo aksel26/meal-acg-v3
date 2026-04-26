@@ -18,6 +18,7 @@ import Image from "next/image";
 import { EditPointDialog } from "@/components/points/EditPointDialog";
 import { ActivityViewDialog } from "../../../components/points/ActivityViewDialog";
 import { PointsGuideDialog } from "@/components/points/PointsGuideDialog";
+import QuickActionsSection from "@/components/dashboard/QuickActionsSection";
 import {
   useMemberIdLookup,
   usePointsWelfare,
@@ -149,97 +150,119 @@ function AllUsageRecordsInline({
   totalCount,
   isLoading,
   error,
+  selectedMonth,
+  months,
+  onMonthChange,
 }: {
   records: AllRecordItem[];
   totalCount: number;
   isLoading: boolean;
   error: Error | null;
+  selectedMonth: string;
+  months: Array<{ value: string; label: string }>;
+  onMonthChange: (value: string) => void;
 }) {
+  const tickerItems = records.length > 0 ? [...records, ...records] : [];
+
   return (
-    <div className="mt-3 rounded-[24px] bg-white px-4 py-4">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div>
-          <p className="text-base font-medium text-[var(--ink-black)]">
-            전체 사용내역
+    <div className="mt-3 flex min-h-0 flex-col rounded-[24px] bg-white px-4 py-4 lg:flex-1">
+      <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-base font-medium text-[var(--ink-black)]">
+            전체인원 사용내역
           </p>
-          <p className="mt-0.5 text-xs text-[var(--slate-gray)]">
-            조직 전체 복지포인트 및 활동비 내역
+          <p className="mt-0.5 text-xs text-[var(--slate-gray)] lg:text-[11px]">
+            해당 월 조직 전체 내역
           </p>
         </div>
-        <span className="shrink-0 rounded-full bg-[var(--whisper-cream)] px-3 py-1 text-xs text-[var(--granite)]">
-          총 {totalCount}건
-        </span>
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="rounded-full bg-[var(--whisper-cream)] px-2.5 py-1 text-[11px] text-[var(--granite)]">
+            총 {totalCount}건
+          </span>
+          <Select value={selectedMonth} onValueChange={onMonthChange}>
+            <SelectTrigger className="h-8 w-[76px] border-0 bg-[var(--whisper-cream)] px-3 text-xs shadow-none">
+              <SelectValue placeholder="월" />
+            </SelectTrigger>
+            <SelectContent>
+              {months.map((month) => (
+                <SelectItem key={month.value} value={month.value}>
+                  {month.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      {isLoading ? (
-        <div className="flex items-center justify-center gap-2 py-10 text-sm text-[var(--slate-gray)]">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          불러오는 중
-        </div>
-      ) : error ? (
-        <div className="py-10 text-center text-sm text-[#d03238]">
-          전체 사용내역을 불러올 수 없습니다.
-        </div>
-      ) : records.length === 0 ? (
-        <div className="py-10 text-center text-sm text-[var(--slate-gray)]">
-          조회 결과가 없습니다
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {records.map((record, index) => (
-            <motion.div
-              key={record.id}
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2, delay: index * 0.025 }}
-              className="rounded-xl bg-[var(--canvas-cream)] p-3 transition-colors hover:bg-[var(--whisper-cream)]"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-[var(--ink-black)]">
+      <div className="relative max-h-[150px] flex-1 overflow-hidden px-1 py-2 [mask-image:linear-gradient(to_bottom,transparent_0,black_1.1rem,black_calc(100%-2rem),transparent_100%)] lg:max-h-none lg:min-h-0">
+        {isLoading ? (
+          <div className="flex h-full items-center justify-center gap-2 text-sm text-[var(--slate-gray)]">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            불러오는 중
+          </div>
+        ) : error ? (
+          <div className="flex h-full items-center justify-center text-sm text-[#d03238]">
+            전체 사용내역을 불러올 수 없습니다.
+          </div>
+        ) : records.length === 0 ? (
+          <div className="flex h-full items-center justify-center text-sm text-[var(--slate-gray)]">
+            조회 결과가 없습니다
+          </div>
+        ) : (
+          <motion.div
+            className="space-y-1.5"
+            animate={records.length > 1 ? { y: ["0%", "-50%"] } : undefined}
+            transition={
+              records.length > 1
+                ? {
+                    duration: Math.max(8, records.length * 1.1),
+                    repeat: Infinity,
+                    ease: "linear",
+                  }
+                : undefined
+            }
+          >
+            {tickerItems.map((record, index) => (
+              <div
+                key={`${record.id}-${index}`}
+                className="flex h-9 items-center justify-between gap-3 rounded-[12px] bg-[rgba(244,241,232,0.42)] px-3 text-xs transition-colors hover:bg-[rgba(244,241,232,0.68)]"
+              >
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="max-w-[4.75rem] truncate text-[var(--ink-black)]">
+                    {record.member_name}
+                  </span>
+                  <span className="min-w-0 truncate text-[var(--granite)]">
                     {record.description}
-                  </p>
-                  <div className="mt-1 flex items-center gap-2">
-                    <span className="text-xs text-[var(--granite)]">
-                      {record.member_name}
-                    </span>
-                    {record.team_name && (
-                      <span className="truncate text-xs text-[var(--slate-gray)]">
-                        · {record.team_name}
-                      </span>
-                    )}
-                  </div>
+                  </span>
                 </div>
-                <div className="shrink-0 text-right">
-                  <p className="text-sm font-medium tabular-nums text-[var(--ink-black)]">
-                    {record.amount.toLocaleString()}원
-                  </p>
-                  <div className="mt-1 flex items-center gap-1.5">
-                    <span className="text-xs text-[var(--slate-gray)]">
-                      {dayjs(record.used_at).format("M.DD")}
-                    </span>
-                    <span
-                      className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
-                        record.type === "활동비"
-                          ? "bg-[rgba(255,209,26,0.15)] text-[#b08900]"
-                          : "bg-[rgba(56,200,255,0.12)] text-[#0f4c75]"
-                      }`}
-                    >
-                      {record.type === "활동비" ? "활동비" : "복지"}
-                    </span>
-                  </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <span
+                    className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
+                      record.type === "활동비"
+                        ? "bg-[rgba(255,209,26,0.15)] text-[#b08900]"
+                        : "bg-[rgba(56,200,255,0.12)] text-[#0f4c75]"
+                    }`}
+                  >
+                    {record.type === "활동비" ? "활동" : "복지"}
+                  </span>
+                  <span className="text-[11px] tabular-nums text-[var(--slate-gray)]">
+                    {dayjs(record.used_at).format("M.DD")}
+                  </span>
                 </div>
               </div>
-            </motion.div>
-          ))}
-        </div>
-      )}
+            ))}
+          </motion.div>
+        )}
+      </div>
     </div>
   );
 }
 
 export default function Points() {
-  const [selectedMonth, setSelectedMonth] = useState<string>(
+  const [usageMonth, setUsageMonth] = useState<string>(
+    dayjs().format("YYYY-MM"),
+  );
+  const [allRecordsMonth, setAllRecordsMonth] = useState<string>(
     dayjs().format("YYYY-MM"),
   );
   const [editingPoint, setEditingPoint] = useState<WelfarePoint | null>(null);
@@ -278,10 +301,10 @@ export default function Points() {
     data: welfareData,
     isLoading: isWelfareLoading,
     error: welfareError,
-  } = usePointsWelfare(currentMemberId, selectedMonth);
+  } = usePointsWelfare(currentMemberId, usageMonth);
 
   const { data: activityData, isLoading: isActivityLoading } =
-    usePointsActivity(isManager ? currentMemberId : null, selectedMonth);
+    usePointsActivity(isManager ? currentMemberId : null, usageMonth);
 
   const { data: membersData } = usePointsMembers(currentMemberId);
 
@@ -347,6 +370,9 @@ export default function Points() {
       label: `${monthNum}월`,
     };
   });
+  const usageMonthLabel =
+    months.find((month) => month.value === usageMonth)?.label ??
+    dayjs(usageMonth).format("M월");
 
   const isLoading = isWelfareLoading || (isManager && isActivityLoading);
   const {
@@ -357,7 +383,8 @@ export default function Points() {
     currentMemberId
       ? {
           memberId: currentMemberId,
-          limit: 8,
+          period: allRecordsMonth,
+          limit: 24,
           offset: 0,
         }
       : null,
@@ -513,9 +540,9 @@ export default function Points() {
 
   return (
     <React.Fragment>
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start">
+      <div className="grid gap-4 lg:h-[calc(100dvh-10rem)] lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start lg:overflow-hidden">
         {/* Points Summary */}
-        <div className="min-w-0">
+        <div className="flex min-w-0 flex-col lg:h-full lg:min-h-0 lg:gap-4 lg:overflow-hidden">
           {isLoading ? (
             <div className="card-premium relative overflow-hidden">
               <div className="px-4 pt-4 pb-3 space-y-3">
@@ -593,7 +620,7 @@ export default function Points() {
               </div>
               <ActivityViewDialog
                 memberId={currentMemberId}
-                period={selectedMonth}
+                period={usageMonth}
                 open={isActivityViewOpen}
                 onOpenChange={setIsActivityViewOpen}
               />
@@ -604,16 +631,22 @@ export default function Points() {
             totalCount={allUsageRecordsData?.total_count ?? 0}
             isLoading={isAllUsageRecordsLoading}
             error={allUsageRecordsError}
+            selectedMonth={allRecordsMonth}
+            months={months}
+            onMonthChange={setAllRecordsMonth}
           />
         </div>
 
         {/* Points List */}
-        <div className="min-w-0">
-          <div className="mb-3 flex justify-between items-center">
+        <div className="flex min-w-0 flex-col lg:h-full lg:min-h-0 lg:overflow-hidden">
+          <div className="mb-3 flex shrink-0 justify-between items-center">
             <div className="flex items-center gap-2">
               <h2 className="text-md font-semibold text-[var(--ink-black)]">
                 사용 내역
               </h2>
+              <span className="rounded-full bg-[var(--whisper-cream)] px-2.5 py-1 text-[11px] font-medium text-[var(--granite)]">
+                {usageMonthLabel}
+              </span>
             </div>
             <div className="flex gap-2">
               <Select
@@ -632,7 +665,7 @@ export default function Points() {
                   <SelectItem value="amount-low">금액 낮은순</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <Select value={usageMonth} onValueChange={setUsageMonth}>
                 <SelectTrigger className="w-auto min-w-[80px] h-11 border-0 bg-white shadow-sm">
                   <SelectValue placeholder="월을 선택하세요" />
                 </SelectTrigger>
@@ -680,7 +713,7 @@ export default function Points() {
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="mb-3 flex min-h-0 flex-col gap-3 lg:flex-1 lg:overflow-hidden">
             {/* Add New Point */}
             <button
               className="w-full py-3 bg-white rounded-xl text-sm font-medium text-[var(--ink-black)] flex items-center justify-center gap-2 border border-dashed border-[rgba(14,15,12,0.2)] hover:border-[var(--ink-black)] hover:bg-[rgba(22,51,0,0.05)] active:bg-[rgba(22,51,0,0.08)] transition-colors"
@@ -722,7 +755,7 @@ export default function Points() {
                 </p>
               </div>
             ) : (
-              <div className="bg-white rounded-xl divide-y divide-[rgba(14,15,12,0.08)] overflow-hidden">
+              <div className="min-h-0 flex-1 overflow-y-auto rounded-xl bg-white divide-y divide-[rgba(14,15,12,0.08)] overscroll-contain">
                 {sortedRecords.map((record) => {
                   const d = dayjs(record.used_at);
                   const dow = ["일", "월", "화", "수", "목", "금", "토"][
@@ -732,6 +765,23 @@ export default function Points() {
 
                   const reviewStatus = record.review_status ?? 0;
                   const isLocked = reviewStatus >= 1;
+                  const statusBadge =
+                    reviewStatus >= 2
+                      ? {
+                          label: "최종",
+                          className: "bg-[rgba(5,77,40,0.12)] text-[#054d28]",
+                        }
+                      : reviewStatus >= 1
+                        ? {
+                            label: "P&C",
+                            className:
+                              "bg-[rgba(236,126,0,0.14)] text-[#9a4f00]",
+                          }
+                        : {
+                            label: "미확인",
+                            className:
+                              "bg-[rgba(105,96,82,0.1)] text-[var(--granite)]",
+                          };
 
                   const recordContent = (
                     <div
@@ -766,6 +816,13 @@ export default function Points() {
                             }`}
                           >
                             {record.type}
+                          </span>
+                        </div>
+                        <div className="flex items-center">
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${statusBadge.className}`}
+                          >
+                            {statusBadge.label}
                           </span>
                         </div>
                       </div>
@@ -816,6 +873,10 @@ export default function Points() {
                 })}
               </div>
             )}
+          </div>
+
+          <div className="mt-5 lg:mt-0 lg:h-[4.25rem] lg:shrink-0">
+            <QuickActionsSection excludeIds={["points"]} />
           </div>
         </div>
       </div>

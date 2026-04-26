@@ -44,8 +44,8 @@ interface WelfarePoint {
   confirmed: boolean;
   notes?: string;
   delay_reason?: string;
-  proxy_payer?: string;         // 대표 결제자 이름 (단일). undefined = 본인
-  companion_names?: string[];   // 동반 결제자 이름들 (UI 전용, DB 저장 안함)
+  proxy_payer?: string; // 대표 결제자 이름 (단일). undefined = 본인
+  companion_names?: string[]; // 동반 결제자 이름들 (UI 전용, DB 저장 안함)
 }
 
 type StepId = "scan" | "type" | "vendor" | "proxy" | "amount";
@@ -78,7 +78,11 @@ function CompletedStepChip({
     <motion.div
       initial={{ opacity: 0, y: 20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.3, delay: index * 0.05, ease: [0.25, 0.46, 0.45, 0.94] }}
+      transition={{
+        duration: 0.3,
+        delay: index * 0.05,
+        ease: [0.25, 0.46, 0.45, 0.94],
+      }}
       className="group relative"
     >
       <div
@@ -138,8 +142,12 @@ export function EditPointDialog({
 }: EditPointDialogProps) {
   // 비매니저는 type 스텝 건너뛰기 (복지포인트 고정)
   const baseStepOrder = isNewPoint ? STEP_ORDER_NEW : STEP_ORDER_EDIT;
-  const stepOrder = isManager ? baseStepOrder : baseStepOrder.filter((s) => s !== "type");
-  const [currentStep, setCurrentStep] = useState<StepId>(stepOrder[0] as StepId);
+  const stepOrder = isManager
+    ? baseStepOrder
+    : baseStepOrder.filter((s) => s !== "type");
+  const [currentStep, setCurrentStep] = useState<StepId>(
+    stepOrder[0] as StepId,
+  );
   const [completedSteps, setCompletedSteps] = useState<StepId[]>([]);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const vendorInputRef = useRef<HTMLInputElement>(null);
@@ -199,7 +207,7 @@ export function EditPointDialog({
       // 스캔 완료 후 다음 스텝으로
       completeAndNext("scan");
     },
-    [editingPoint, onPointChange]
+    [editingPoint, onPointChange],
   );
 
   if (!editingPoint) return null;
@@ -211,7 +219,9 @@ export function EditPointDialog({
   // --- Step navigation ---
 
   const completeAndNext = (stepId: StepId) => {
-    setCompletedSteps((prev) => (prev.includes(stepId) ? prev : [...prev, stepId]));
+    setCompletedSteps((prev) =>
+      prev.includes(stepId) ? prev : [...prev, stepId],
+    );
     const idx = stepOrder.indexOf(stepId);
     const nextStep = stepOrder[idx + 1];
     if (idx < stepOrder.length - 1 && nextStep) {
@@ -238,7 +248,8 @@ export function EditPointDialog({
 
   const formSteps = stepOrder.filter((s) => s !== "scan");
   const allFormCompleted = formSteps.every((s) => completedSteps.includes(s));
-  const isSummaryView = !isNewPoint && allFormCompleted && completedSteps.includes(currentStep);
+  const isSummaryView =
+    !isNewPoint && allFormCompleted && completedSteps.includes(currentStep);
 
   const canGoBack = stepOrder.indexOf(currentStep) > 0 && !isSummaryView;
 
@@ -249,7 +260,10 @@ export function EditPointDialog({
     try {
       await onSave();
     } catch (error) {
-      const msg = error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다.";
+      const msg =
+        error instanceof Error
+          ? error.message
+          : "알 수 없는 오류가 발생했습니다.";
       toast.error(`저장에 실패했습니다: ${msg}`);
     }
   };
@@ -274,7 +288,9 @@ export function EditPointDialog({
       const day = String(selectedDate.getDate()).padStart(2, "0");
       const newDate = `${year}-${month}-${day}`;
       // 1일 이내면 delay_reason 초기화
-      const diffDays = Math.floor((new Date().getTime() - selectedDate.getTime()) / (1000 * 60 * 60 * 24));
+      const diffDays = Math.floor(
+        (new Date().getTime() - selectedDate.getTime()) / (1000 * 60 * 60 * 24),
+      );
       if (diffDays <= 1) {
         updatePoint({ date: newDate, delay_reason: "" });
       } else {
@@ -291,7 +307,9 @@ export function EditPointDialog({
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     usedDate.setHours(0, 0, 0, 0);
-    const diffDays = Math.floor((today.getTime() - usedDate.getTime()) / (1000 * 60 * 60 * 24));
+    const diffDays = Math.floor(
+      (today.getTime() - usedDate.getTime()) / (1000 * 60 * 60 * 24),
+    );
     return diffDays > 1;
   })();
 
@@ -328,9 +346,13 @@ export function EditPointDialog({
 
   const displayedCompletedSteps = isSummaryView
     ? formSteps
-    : stepOrder.filter((s) => completedSteps.includes(s) && s !== currentStep && s !== "scan");
+    : stepOrder.filter(
+        (s) => completedSteps.includes(s) && s !== currentStep && s !== "scan",
+      );
 
-  const selectedDate = editingPoint.date ? new Date(editingPoint.date) : undefined;
+  const selectedDate = editingPoint.date
+    ? new Date(editingPoint.date)
+    : undefined;
 
   // --- Render steps ---
 
@@ -347,8 +369,12 @@ export function EditPointDialog({
             className="space-y-4"
           >
             <div className="text-center space-y-1 mb-2">
-              <h3 className="text-sm font-semibold text-[var(--ink-black)]">영수증을 스캔하시겠어요?</h3>
-              <p className="text-xs text-[var(--granite)]">스캔하면 사용처, 금액, 날짜가 자동 입력됩니다</p>
+              <h3 className="text-sm font-semibold text-[var(--ink-black)]">
+                영수증을 스캔하시겠어요?
+              </h3>
+              <p className="text-xs text-[var(--granite)]">
+                스캔하면 사용처, 금액, 날짜가 자동 입력됩니다
+              </p>
             </div>
             <ReceiptScanner onScanComplete={handleScanComplete} />
             <button
@@ -372,7 +398,9 @@ export function EditPointDialog({
             className="space-y-4"
           >
             <div className="text-center space-y-1 mb-2">
-              <h3 className="text-sm font-semibold text-[var(--ink-black)]">유형을 선택해주세요</h3>
+              <h3 className="text-sm font-semibold text-[var(--ink-black)]">
+                유형을 선택해주세요
+              </h3>
             </div>
             <div className="flex gap-3">
               <button
@@ -418,7 +446,9 @@ export function EditPointDialog({
             className="space-y-4"
           >
             <div className="text-center space-y-1 mb-2">
-              <h3 className="text-sm font-semibold text-[var(--ink-black)]">사용처를 입력해주세요</h3>
+              <h3 className="text-sm font-semibold text-[var(--ink-black)]">
+                사용처를 입력해주세요
+              </h3>
             </div>
             <Input
               ref={vendorInputRef}
@@ -459,29 +489,36 @@ export function EditPointDialog({
             {/* Section A: 대표 결제자 (카드 주인) */}
             <div>
               <div className="text-center space-y-1 mb-3">
-                <h3 className="text-sm font-semibold text-[var(--ink-black)]">대표 결제자 (카드 주인)</h3>
-                <p className="text-xs text-[var(--granite)]">본인 외 다른 카드로 결제한 경우 변경해주세요</p>
+                <h3 className="text-sm font-semibold text-[var(--ink-black)]">
+                  대표 결제자 (카드 주인)
+                </h3>
+                <p className="text-xs text-[var(--granite)]">
+                  본인 외 다른 카드로 결제한 경우 변경해주세요
+                </p>
               </div>
 
               {/* 현재 선택된 대표 결제자 표시 */}
               <div className="flex items-center gap-2 mb-2">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[rgba(56,200,255,0.12)] text-[#0f4c75] text-sm font-medium">
                   {currentPayer}
-                  {editingPoint.proxy_payer && editingPoint.proxy_payer !== userName && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        updatePoint({ proxy_payer: undefined });
-                        setProxySearchValue("");
-                      }}
-                      className="ml-0.5 hover:bg-[rgba(56,200,255,0.15)] rounded-full p-0.5 transition-colors"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  )}
+                  {editingPoint.proxy_payer &&
+                    editingPoint.proxy_payer !== userName && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          updatePoint({ proxy_payer: undefined });
+                          setProxySearchValue("");
+                        }}
+                        className="ml-0.5 hover:bg-[rgba(56,200,255,0.15)] rounded-full p-0.5 transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
                 </span>
                 {!editingPoint.proxy_payer && (
-                  <span className="text-[10px] text-[var(--slate-gray)]">(본인)</span>
+                  <span className="text-[10px] text-[var(--slate-gray)]">
+                    (본인)
+                  </span>
                 )}
               </div>
 
@@ -489,7 +526,7 @@ export function EditPointDialog({
                 ref={proxyInputRef}
                 showOnFocus={false}
                 suggestions={users.filter(
-                  (u) => u !== currentPayer && !selectedCompanions.includes(u)
+                  (u) => u !== currentPayer && !selectedCompanions.includes(u),
                 )}
                 value={proxySearchValue}
                 onValueChange={(value) => setProxySearchValue(value)}
@@ -517,8 +554,12 @@ export function EditPointDialog({
                 <div className="border-t border-[rgba(14,15,12,0.06)]" />
                 <div>
                   <div className="text-center space-y-1 mb-3">
-                    <h3 className="text-sm font-semibold text-[var(--ink-black)]">동반 결제자</h3>
-                    <p className="text-xs text-[var(--slate-gray)]">함께 결제한 인원들을 선택해 주세요.</p>
+                    <h3 className="text-sm font-semibold text-[var(--ink-black)]">
+                      동반 결제자
+                    </h3>
+                    <p className="text-xs text-[var(--slate-gray)]">
+                      함께 결제한 인원들을 선택해 주세요.
+                    </p>
                   </div>
 
                   {/* Selected companion chips */}
@@ -534,7 +575,9 @@ export function EditPointDialog({
                             type="button"
                             onClick={() => {
                               updatePoint({
-                                companion_names: selectedCompanions.filter((n) => n !== name),
+                                companion_names: selectedCompanions.filter(
+                                  (n) => n !== name,
+                                ),
                               });
                             }}
                             className="ml-0.5 hover:bg-[rgba(56,200,255,0.15)] rounded-full p-0.5 transition-colors"
@@ -550,9 +593,7 @@ export function EditPointDialog({
                     ref={companionInputRef}
                     showOnFocus={false}
                     suggestions={users.filter(
-                      (u) =>
-                        !selectedCompanions.includes(u) &&
-                        u !== userName
+                      (u) => !selectedCompanions.includes(u) && u !== userName,
                     )}
                     value={companionSearchValue}
                     onValueChange={(value) => setCompanionSearchValue(value)}
@@ -612,21 +653,31 @@ export function EditPointDialog({
             className="space-y-4"
           >
             <div className="text-center space-y-1 mb-2">
-              <h3 className="text-sm font-semibold text-[var(--ink-black)]">금액과 날짜를 입력해주세요</h3>
+              <h3 className="text-sm font-semibold text-[var(--ink-black)]">
+                금액과 날짜를 입력해주세요
+              </h3>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label className="text-xs font-semibold text-[var(--granite)]">날짜</Label>
+                <Label className="text-xs font-semibold text-[var(--granite)]">
+                  날짜
+                </Label>
                 <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between font-normal text-xs border-[rgba(14,15,12,0.12)] h-12 px-3 py-2">
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between font-normal text-xs border-[rgba(14,15,12,0.12)] h-12 px-3 py-2"
+                    >
                       {selectedDate
                         ? `${selectedDate.getFullYear()}.${String(selectedDate.getMonth() + 1).padStart(2, "0")}.${String(selectedDate.getDate()).padStart(2, "0")}`
                         : "날짜 선택"}
                       <ChevronDownIcon className="w-4 h-4" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+                  <PopoverContent
+                    className="w-auto overflow-hidden p-0"
+                    align="start"
+                  >
                     <Calendar
                       mode="single"
                       selected={selectedDate}
@@ -634,16 +685,22 @@ export function EditPointDialog({
                       onSelect={handleDateSelect}
                       showOutsideDays={false}
                       classNames={{
-                        day_selected: "bg-[rgba(56,200,255,0.12)]0! text-white! hover:bg-[var(--ink-black)] focus:bg-[var(--ink-black)]",
-                        day_today: "bg-orange-100 text-orange-900 font-semibold",
+                        day_selected:
+                          "bg-[rgba(56,200,255,0.12)]0! text-white! hover:bg-[var(--ink-black)] focus:bg-[var(--ink-black)]",
+                        day_today:
+                          "bg-orange-100 text-orange-900 font-semibold",
                         today: "border border-[var(--granite)] rounded-lg",
                       }}
                       components={{
                         YearsDropdown: ({ value }) => (
-                          <div className="p-2 text-sm sm:text-md">{value ?? new Date().getFullYear()}</div>
+                          <div className="p-2 text-sm sm:text-md">
+                            {value ?? new Date().getFullYear()}
+                          </div>
                         ),
                         MonthsDropdown: ({ value }) => (
-                          <div className="p-2 text-sm sm:text-md">{Number(value ?? new Date().getMonth()) + 1}월</div>
+                          <div className="p-2 text-sm sm:text-md">
+                            {Number(value ?? new Date().getMonth()) + 1}월
+                          </div>
                         ),
                       }}
                     />
@@ -651,7 +708,12 @@ export function EditPointDialog({
                 </Popover>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="amount" className="text-xs font-semibold text-[var(--granite)]">금액</Label>
+                <Label
+                  htmlFor="amount"
+                  className="text-xs font-semibold text-[var(--granite)]"
+                >
+                  금액
+                </Label>
                 <div className="relative">
                   <Input
                     ref={amountInputRef}
@@ -663,22 +725,34 @@ export function EditPointDialog({
                     placeholder="금액 입력"
                     min="0"
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" && editingPoint.amount > 0 && !(needsDelayReason && !editingPoint.delay_reason?.trim())) {
+                      if (
+                        e.key === "Enter" &&
+                        editingPoint.amount > 0 &&
+                        !(
+                          needsDelayReason && !editingPoint.delay_reason?.trim()
+                        )
+                      ) {
                         e.preventDefault();
                         handleSave();
                       }
                     }}
                   />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--granite)]">원</span>
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--granite)]">
+                    원
+                  </span>
                 </div>
               </div>
             </div>
             {needsDelayReason && (
               <div className="space-y-2">
-                <Label className="text-xs font-semibold text-[#6b4c00]">지연 사유 (필수)</Label>
+                <Label className="text-xs font-semibold text-[#6b4c00]">
+                  지연 사유 (필수)
+                </Label>
                 <textarea
                   value={editingPoint.delay_reason || ""}
-                  onChange={(e) => updatePoint({ delay_reason: e.target.value })}
+                  onChange={(e) =>
+                    updatePoint({ delay_reason: e.target.value })
+                  }
                   className="flex w-full rounded-xl border border-[rgba(255,209,26,0.4)] bg-[rgba(255,209,26,0.08)] px-3 py-2.5 text-sm placeholder:text-[var(--slate-gray)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#ffd11a] min-h-[72px] resize-none"
                   placeholder="지연 사유를 입력해주세요"
                 />
@@ -686,7 +760,12 @@ export function EditPointDialog({
             )}
             <button
               type="button"
-              disabled={!editingPoint.amount || editingPoint.amount <= 0 || (needsDelayReason && !editingPoint.delay_reason?.trim()) || isSaving}
+              disabled={
+                !editingPoint.amount ||
+                editingPoint.amount <= 0 ||
+                (needsDelayReason && !editingPoint.delay_reason?.trim()) ||
+                isSaving
+              }
               onClick={handleSave}
               className={`w-full py-3.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
                 isNewPoint
@@ -699,8 +778,10 @@ export function EditPointDialog({
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
                   저장 중...
                 </div>
+              ) : isNewPoint ? (
+                "추가하기"
               ) : (
-                isNewPoint ? "추가하기" : "수정하기"
+                "수정하기"
               )}
             </button>
           </motion.div>
@@ -764,30 +845,52 @@ export function EditPointDialog({
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>내역을 삭제하시겠습니까?</AlertDialogTitle>
+                      <AlertDialogTitle>
+                        내역을 삭제하시겠습니까?
+                      </AlertDialogTitle>
                       <AlertDialogDescription>
                         이 작업은 되돌릴 수 없습니다. <br />
                         선택한 내역이 영구적으로 삭제됩니다.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <div className="w-[90%] text-sm mx-auto text-left bg-[var(--soft-bone)] p-3 rounded-md flex flex-col space-y-2">
-                      <strong>삭제할 내역</strong>
-                      <div className="flex flex-col items-start space-y-1">
-                        <div className="text-[var(--slate-gray)]">사용처</div>
-                        <div>{editingPoint.vendor}</div>
+                    <div className="mx-auto w-full rounded-[18px] bg-[rgba(244,241,232,0.58)] p-4 text-sm">
+                      <div className="mb-3 flex items-center justify-between">
+                        <strong className="font-medium text-[var(--ink-black)]">
+                          삭제할 내역
+                        </strong>
+                        <span className="rounded-full bg-[rgba(208,50,56,0.08)] px-2.5 py-1 text-[11px] font-medium text-[#d03238]">
+                          삭제 예정
+                        </span>
                       </div>
-                      <div className="flex flex-col items-start space-y-1">
-                        <div className="text-[var(--slate-gray)]">금액</div>
-                        <div>{editingPoint.amount.toLocaleString()}원</div>
-                      </div>
-                      <div className="flex flex-col items-start space-y-1">
-                        <div className="text-[var(--slate-gray)]">날짜</div>
-                        <div>{new Date(editingPoint.date).toLocaleDateString("ko-KR")}</div>
+                      <div className="space-y-2.5">
+                        <div className="grid grid-cols-[4rem_1fr] gap-3">
+                          <div className="text-[var(--slate-gray)]">사용처</div>
+                          <div className="min-w-0 truncate font-medium text-[var(--ink-black)]">
+                            {editingPoint.vendor}
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-[4rem_1fr] gap-3">
+                          <div className="text-[var(--slate-gray)]">금액</div>
+                          <div className="font-medium tabular-nums text-[var(--ink-black)]">
+                            {editingPoint.amount.toLocaleString()}원
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-[4rem_1fr] gap-3">
+                          <div className="text-[var(--slate-gray)]">날짜</div>
+                          <div className="text-[var(--ink-black)]">
+                            {new Date(editingPoint.date).toLocaleDateString(
+                              "ko-KR",
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
                     <AlertDialogFooter>
                       <AlertDialogCancel>취소</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleDelete} className="bg-[rgba(208,50,56,0.08)] hover:bg-[#a8181e] border border-[rgba(208,50,56,0.3)] text-[#d03238]">
+                      <AlertDialogAction
+                        onClick={handleDelete}
+                        className="bg-[rgba(208,50,56,0.08)] hover:bg-[#a8181e] border border-[rgba(208,50,56,0.3)] text-[#d03238]"
+                      >
                         내역 삭제하기
                       </AlertDialogAction>
                     </AlertDialogFooter>

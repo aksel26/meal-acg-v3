@@ -6,6 +6,7 @@ export interface RecentMealActivity {
   userName: string;
   date: string;
   mealTypes: string[];
+  mealDetails?: { type: string; store: string | null }[];
   store: string | null;
   amount: number;
   attendance: string | null;
@@ -18,7 +19,9 @@ interface RecentMealActivityResponse {
   error?: string;
 }
 
-async function fetchRecentMealActivity(excludeUserId?: string): Promise<RecentMealActivity[]> {
+async function fetchRecentMealActivity(
+  excludeUserId?: string,
+): Promise<RecentMealActivity[]> {
   const params = new URLSearchParams({ limit: "12" });
 
   if (excludeUserId) {

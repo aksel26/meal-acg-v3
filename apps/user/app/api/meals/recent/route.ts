@@ -22,7 +22,11 @@ function getMealTypes(row: MealLogWithMember): string[] {
   if ((row.breakfast_amount ?? 0) > 0 || row.breakfast_store?.trim()) {
     mealTypes.push("조식");
   }
-  if ((row.lunch_amount ?? 0) > 0 || row.lunch_store?.trim() || row.attendance?.includes("개별식사")) {
+  if (
+    (row.lunch_amount ?? 0) > 0 ||
+    row.lunch_store?.trim() ||
+    row.attendance?.includes("개별식사")
+  ) {
     mealTypes.push(row.attendance?.includes("개별식사") ? "개별식사" : "중식");
   }
   if ((row.dinner_amount ?? 0) > 0 || row.dinner_store?.trim()) {
@@ -34,6 +38,29 @@ function getMealTypes(row: MealLogWithMember): string[] {
 
 function getPrimaryStore(row: MealLogWithMember): string | null {
   return row.lunch_store || row.dinner_store || row.breakfast_store || null;
+}
+
+function getMealDetails(row: MealLogWithMember) {
+  const details: { type: string; store: string | null }[] = [];
+
+  if ((row.breakfast_amount ?? 0) > 0 || row.breakfast_store?.trim()) {
+    details.push({ type: "조식", store: row.breakfast_store?.trim() || null });
+  }
+  if (
+    (row.lunch_amount ?? 0) > 0 ||
+    row.lunch_store?.trim() ||
+    row.attendance?.includes("개별식사")
+  ) {
+    details.push({
+      type: row.attendance?.includes("개별식사") ? "개별식사" : "중식",
+      store: row.lunch_store?.trim() || null,
+    });
+  }
+  if ((row.dinner_amount ?? 0) > 0 || row.dinner_store?.trim()) {
+    details.push({ type: "석식", store: row.dinner_store?.trim() || null });
+  }
+
+  return details;
 }
 
 export async function GET(request: NextRequest) {
@@ -78,6 +105,7 @@ export async function GET(request: NextRequest) {
         userName: row.members?.full_name ?? "알 수 없음",
         date: row.entry_date,
         mealTypes: getMealTypes(row),
+        mealDetails: getMealDetails(row),
         store: getPrimaryStore(row),
         amount:
           (row.breakfast_amount ?? 0) +

@@ -20,7 +20,10 @@ import { useEffect, useState } from "react";
 import { useCalculationData } from "@/hooks/use-calculation-data";
 import { useMemberIdLookup, usePointsWelfare } from "@/hooks/use-points-data";
 import { useAddUsageRecord } from "@/hooks/use-points-mutations";
-import { RecentMealActivity, useRecentMealActivity } from "@/hooks/use-recent-meal-activity";
+import {
+  RecentMealActivity,
+  useRecentMealActivity,
+} from "@/hooks/use-recent-meal-activity";
 import { useUserStore } from "@/stores/userStore";
 import { CalculationData } from "./types";
 
@@ -70,10 +73,13 @@ function RecentMealTicker({ excludeUserId }: { excludeUserId: string }) {
   const tickerItems = data.length > 0 ? [...data, ...data] : [];
 
   const formatActivityDate = (date: string) => dayjs(date).format("M.D");
-  const formatActivityText = (activity: RecentMealActivity) => {
+  const getActivityMeals = (activity: RecentMealActivity) => {
+    if (activity.mealDetails?.length) {
+      return activity.mealDetails;
+    }
+
     const mealLabel = activity.mealTypes.join("/");
-    const storeLabel = activity.store ? ` · ${activity.store}` : "";
-    return `${mealLabel}${storeLabel}`;
+    return [{ type: mealLabel, store: activity.store }];
   };
 
   return (
@@ -115,7 +121,24 @@ function RecentMealTicker({ excludeUserId }: { excludeUserId: string }) {
                     {activity.userName}
                   </span>
                   <span className="min-w-0 truncate text-[var(--granite)]">
-                    {formatActivityText(activity)}
+                    {getActivityMeals(activity).map((meal, mealIndex) => (
+                      <span key={`${activity.id}-${meal.type}-${mealIndex}`}>
+                        {mealIndex > 0 && (
+                          <span className="px-1 text-[rgba(92,96,100,0.42)]">
+                            /
+                          </span>
+                        )}
+                        <span className="text-[rgba(92,96,100,0.42)]">
+                          {meal.type}
+                        </span>
+                        {meal.store && (
+                          <span className="text-[var(--granite)]">
+                            {" "}
+                            {meal.store}
+                          </span>
+                        )}
+                      </span>
+                    ))}
                   </span>
                 </div>
                 <span className="shrink-0 text-xs text-[var(--slate-gray)] lg:text-[11px]">
@@ -277,11 +300,17 @@ function CalculationResult({
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-4">
             <div className="space-y-2">
-              <p className="eyebrow-label text-[var(--slate-gray)]">Meal Allowance</p>
-              <p className="text-xs text-[var(--granite)] lg:text-[11px]">{month}월 식대 잔액</p>
+              <p className="eyebrow-label text-[var(--slate-gray)]">
+                Meal Allowance
+              </p>
+              <p className="text-xs text-[var(--granite)] lg:text-[11px]">
+                {month}월 식대 잔액
+              </p>
               <div className="flex items-end gap-1">
                 {isOverBudget && (
-                  <span className="text-2xl font-medium text-[var(--danger)] lg:text-xl">-</span>
+                  <span className="text-2xl font-medium text-[var(--danger)] lg:text-xl">
+                    -
+                  </span>
                 )}
                 <NumberTicker
                   value={Math.abs(data.balance)}
@@ -295,7 +324,9 @@ function CalculationResult({
                 />
                 <span
                   className={`pb-1 text-xs font-medium lg:text-[11px] ${
-                    isOverBudget ? "text-[var(--danger)]" : "text-[var(--slate-gray)]"
+                    isOverBudget
+                      ? "text-[var(--danger)]"
+                      : "text-[var(--slate-gray)]"
                   }`}
                 >
                   원
@@ -303,15 +334,23 @@ function CalculationResult({
               </div>
             </div>
 
-            <div className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-medium ${statusTone}`}>
+            <div
+              className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-medium ${statusTone}`}
+            >
               {statusLabel}
             </div>
           </div>
 
           <div className="hidden rounded-[22px] bg-[var(--whisper-cream)] px-4 py-4 text-right sm:block lg:px-3 lg:py-3">
-            <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">Usage</p>
-            <p className="mt-2 font-display text-[1.65rem] text-[var(--ink-black)] lg:text-[1.25rem]">{usagePercent}%</p>
-            <p className="mt-1 text-[11px] text-[var(--granite)]">이번 달 사용률</p>
+            <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">
+              Usage
+            </p>
+            <p className="mt-2 font-display text-[1.65rem] text-[var(--ink-black)] lg:text-[1.25rem]">
+              {usagePercent}%
+            </p>
+            <p className="mt-1 text-[11px] text-[var(--granite)]">
+              이번 달 사용률
+            </p>
           </div>
         </div>
 
@@ -334,23 +373,27 @@ function CalculationResult({
         </div>
       </div>
 
-      <div className="grid gap-2.5 border-t border-[rgba(25,28,31,0.08)] px-5 py-4 sm:grid-cols-2 lg:px-4 lg:py-3">
+      <div className="grid grid-cols-2 gap-2.5 border-t border-[rgba(25,28,31,0.08)] px-5 py-4 lg:px-4 lg:py-3">
         <div className="px-1 py-2">
           <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">
-            사용가능액
+            지급 총액
           </p>
-          <p className="mt-2 font-display text-[1.6rem] text-[var(--ink-black)] lg:text-[1.35rem]">
+          <p className="mt-2 whitespace-nowrap font-display text-[1.35rem] text-[var(--ink-black)] sm:text-[1.6rem] lg:text-[1.35rem]">
             {formatCurrency(data.allowanceAmount)}
-            <span className="ml-1 text-sm text-[var(--slate-gray)] lg:text-xs">원</span>
+            <span className="ml-1 text-sm text-[var(--slate-gray)] lg:text-xs">
+              원
+            </span>
           </p>
         </div>
         <div className="px-1 py-2">
           <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">
             사용금액
           </p>
-          <p className="mt-2 font-display text-[1.6rem] text-[var(--ink-black)] lg:text-[1.35rem]">
+          <p className="mt-2 whitespace-nowrap font-display text-[1.35rem] text-[var(--ink-black)] sm:text-[1.6rem] lg:text-[1.35rem]">
             {formatCurrency(data.totalUsed)}
-            <span className="ml-1 text-sm text-[var(--slate-gray)] lg:text-xs">원</span>
+            <span className="ml-1 text-sm text-[var(--slate-gray)] lg:text-xs">
+              원
+            </span>
           </p>
         </div>
       </div>
@@ -373,7 +416,9 @@ function CalculationResult({
           <div className="mt-4 space-y-3">
             {(data.weekendWorkCount ?? 0) > 0 && (
               <div className="flex items-center justify-between text-sm lg:text-sm">
-                <span className="text-[var(--granite)]">주말근무 {data.weekendWorkCount}일</span>
+                <span className="text-[var(--granite)]">
+                  주말근무 {data.weekendWorkCount}일
+                </span>
                 <span className="font-medium text-[var(--ink-black)]">
                   +{formatCurrency(data.weekendWorkAddition || 0)}원
                 </span>
@@ -467,7 +512,11 @@ function CalculationResult({
                   잔금 입금 안내
                 </p>
                 <p className="text-[11px] text-[var(--warning)]">
-                  남은 <span className="font-bold">{depositAmount.toLocaleString()}원</span>은 아래 계좌로 입금해주세요.
+                  남은{" "}
+                  <span className="font-bold">
+                    {depositAmount.toLocaleString()}원
+                  </span>
+                  은 아래 계좌로 입금해주세요.
                 </p>
                 <button
                   type="button"
@@ -486,7 +535,11 @@ function CalculationResult({
           </p>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)} className="btn-secondary">
+            <Button
+              variant="outline"
+              onClick={() => setDialogOpen(false)}
+              className="btn-secondary"
+            >
               취소
             </Button>
             <Button

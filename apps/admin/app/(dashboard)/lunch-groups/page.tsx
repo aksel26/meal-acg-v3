@@ -73,7 +73,19 @@ const getWeekStartDate = (date: dayjs.Dayjs) => {
 interface GroupState {
   groupNumber: number;
   memberIds: string[];
-  maxSlots: number; // 해당 조의 최대 인원 (기본 또는 +1)
+  maxSlots: number; // 해당 조의 최대 인원
+}
+
+function calculateLunchGroupPlan(totalMembers: number, maxPerGroup: number) {
+  if (totalMembers === 0 || maxPerGroup <= 0) {
+    return { baseGroups: 0, totalGroups: 0, remainder: 0 };
+  }
+
+  const baseGroups = Math.floor(totalMembers / maxPerGroup);
+  const remainder = totalMembers % maxPerGroup;
+  const totalGroups = baseGroups + (remainder > 0 ? 1 : 0);
+
+  return { baseGroups, totalGroups, remainder };
 }
 
 // 참여인원 목록용 드래그 가능한 멤버 (체크박스 선택 가능)
@@ -189,13 +201,13 @@ function DroppableGroup({
   maxSlots,
   children,
   memberCount,
-  isExtraGroup,
+  isRemainderGroup,
 }: {
   groupNumber: number;
   maxSlots: number;
   children: React.ReactNode;
   memberCount: number;
-  isExtraGroup: boolean;
+  isRemainderGroup: boolean;
 }) {
   const { isOver, setNodeRef } = useDroppable({
     id: `group-${groupNumber}`,
@@ -222,9 +234,9 @@ function DroppableGroup({
             {groupNumber}
           </span>
           <span className="text-sm font-medium text-slate-600">조</span>
-          {isExtraGroup && (
+          {isRemainderGroup && (
             <span className="text-[10px] px-1.5 py-0.5 bg-[#1d1d1f]/5 text-[#1d1d1f] rounded font-medium">
-              +1
+              추가
             </span>
           )}
         </div>
@@ -272,11 +284,19 @@ export default function LunchGroupsPage() {
 
   // 제외 인원 조회 (DB) - 주차별
   const { data: excludedMembersData = [] } = useQuery<
-    { id: string; member_id: string; week_start_date: string; excluded_at: string | null; members: { id: string; full_name: string } | null }[]
+    {
+      id: string;
+      member_id: string;
+      week_start_date: string;
+      excluded_at: string | null;
+      members: { id: string; full_name: string } | null;
+    }[]
   >({
     queryKey: queryKeys.lunchGroups.excludedMembers(weekStartDate),
     queryFn: async () => {
-      const response = await fetch(`/api/lunch-groups/excluded-members?weekStartDate=${weekStartDate}`);
+      const response = await fetch(
+        `/api/lunch-groups/excluded-members?weekStartDate=${weekStartDate}`,
+      );
       if (!response.ok) throw new Error("Failed to fetch excluded members");
       return response.json();
     },
@@ -408,43 +428,26 @@ export default function LunchGroupsPage() {
     return members.filter((m) => !excludedMemberIds.has(m.id));
   }, [members, excludedMemberIds]);
 
-  // 총 조 개수 계산 (조당 최대 인원을 엄격히 상한으로 적용)
-  const { totalGroups, remainder } = useMemo(() => {
-    if (availableMembers.length === 0 || maxPerGroup <= 0) {
-      return { totalGroups: 0, remainder: 0 };
-    }
-    // 28 ÷ 4 = 7 (7개 조 각 4명) / 31 ÷ 4 = 8 (7개 조 4명 + 1개 조 3명)
-    const groups = Math.ceil(availableMembers.length / maxPerGroup);
-    return { totalGroups: groups, remainder: 0 };
-  }, [availableMembers.length, maxPerGroup]);
+  // 총 조 개수 및 나머지 계산
+  const { baseGroups, totalGroups, remainder } = useMemo(
+    () => calculateLunchGroupPlan(availableMembers.length, maxPerGroup),
+    [availableMembers.length, maxPerGroup],
+  );
 
-  // 조 테이블 생성 (빈 조만 생성, 나머지 인원은 랜덤 조에 +1 슬롯)
+  // 조 테이블 생성 (빈 조만 생성, 나머지 인원은 추가 조로 생성)
   const handleCreateTable = useCallback(() => {
     if (totalGroups === 0) {
       toast.error("생성할 조가 없습니다.");
       return;
     }
 
-    // 나머지 인원을 받을 조를 랜덤하게 선택
-    const groupNumbers: number[] = Array.from(
-      { length: totalGroups },
-      (_, i) => i + 1,
-    );
-    // Fisher-Yates shuffle
-    for (let i = groupNumbers.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      const temp = groupNumbers[i]!;
-      groupNumbers[i] = groupNumbers[j]!;
-      groupNumbers[j] = temp;
-    }
-    const groupsWithExtra = new Set(groupNumbers.slice(0, remainder));
-
     const newGroups: GroupState[] = Array.from(
       { length: totalGroups },
       (_, i) => ({
         groupNumber: i + 1,
         memberIds: [],
-        maxSlots: groupsWithExtra.has(i + 1) ? maxPerGroup + 1 : maxPerGroup,
+        maxSlots:
+          remainder > 0 && i === totalGroups - 1 ? remainder : maxPerGroup,
       }),
     );
 
@@ -452,11 +455,11 @@ export default function LunchGroupsPage() {
 
     const successMsg =
       remainder > 0
-        ? `${totalGroups}개 조 생성 (${remainder}개 조는 ${maxPerGroup + 1}명)`
+        ? `${baseGroups}개 기본 조 + 나머지 ${remainder}명 조 1개 생성 (총 ${totalGroups}개 조)`
         : `${totalGroups}개 조 테이블이 생성되었습니다.`;
 
     autoSaveGroups(newGroups, successMsg);
-  }, [totalGroups, maxPerGroup, remainder, autoSaveGroups]);
+  }, [baseGroups, totalGroups, maxPerGroup, remainder, autoSaveGroups]);
 
   // 이미 조에 배정된 멤버 ID 집합
   const assignedMemberIds = useMemo(() => {
@@ -547,7 +550,7 @@ export default function LunchGroupsPage() {
 
       const { summary } = result;
       toast.success(
-        `${summary.total}명에게 뽑기 요청을 전송했습니다. (성공: ${summary.success}, 실패: ${summary.failed})`
+        `${summary.total}명에게 뽑기 요청을 전송했습니다. (성공: ${summary.success}, 실패: ${summary.failed})`,
       );
       setSelectedMemberIds(new Set());
     } catch {
@@ -750,10 +753,10 @@ export default function LunchGroupsPage() {
                   </div>
                 </div>
                 <div className="text-xs text-slate-500">
-                  {availableMembers.length}명 ÷ {maxPerGroup}명 = {totalGroups}
+                  {availableMembers.length}명 ÷ {maxPerGroup}명 = {baseGroups}개
                   조
                   {remainder > 0 &&
-                    ` (나머지 ${remainder}명 → ${remainder}개 조에 +1)`}
+                    ` + 나머지 ${remainder}명 조 1개 (총 ${totalGroups}개 조)`}
                 </div>
                 <Button
                   onClick={handleCreateTable}
@@ -911,9 +914,13 @@ export default function LunchGroupsPage() {
                                 variant="outline"
                                 size="icon"
                                 className="h-8 w-8 bg-red-50 text-red-500 border-red-200 hover:bg-red-100 hover:border-red-300"
-                                disabled={!isTableCreated || resetMutation.isPending}
+                                disabled={
+                                  !isTableCreated || resetMutation.isPending
+                                }
                               >
-                                <RotateCcw className={`h-4 w-4 ${resetMutation.isPending ? "animate-spin" : ""}`} />
+                                <RotateCcw
+                                  className={`h-4 w-4 ${resetMutation.isPending ? "animate-spin" : ""}`}
+                                />
                               </Button>
                             </AlertDialogTrigger>
                           </TooltipTrigger>
@@ -922,9 +929,13 @@ export default function LunchGroupsPage() {
                           </TooltipContent>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>조 테이블 초기화</AlertDialogTitle>
+                              <AlertDialogTitle>
+                                조 테이블 초기화
+                              </AlertDialogTitle>
                               <AlertDialogDescription>
-                                {dayjs(weekStartDate).format("YYYY.MM.DD")} 주차의 모든 조 배정이 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
+                                {dayjs(weekStartDate).format("YYYY.MM.DD")}{" "}
+                                주차의 모든 조 배정이 삭제됩니다. 이 작업은
+                                되돌릴 수 없습니다.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -977,7 +988,7 @@ export default function LunchGroupsPage() {
                         .filter((m): m is Member => m !== undefined);
                       const emptySlots =
                         group.maxSlots - assignedMembers.length;
-                      const isExtraGroup = group.maxSlots > maxPerGroup;
+                      const isRemainderGroup = group.maxSlots !== maxPerGroup;
 
                       return (
                         <DroppableGroup
@@ -985,7 +996,7 @@ export default function LunchGroupsPage() {
                           groupNumber={group.groupNumber}
                           maxSlots={group.maxSlots}
                           memberCount={assignedMembers.length}
-                          isExtraGroup={isExtraGroup}
+                          isRemainderGroup={isRemainderGroup}
                         >
                           {/* 멤버 슬롯 */}
                           <div className="space-y-2">

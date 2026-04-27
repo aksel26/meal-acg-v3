@@ -78,14 +78,26 @@ interface GroupState {
 
 function calculateLunchGroupPlan(totalMembers: number, maxPerGroup: number) {
   if (totalMembers === 0 || maxPerGroup <= 0) {
-    return { baseGroups: 0, totalGroups: 0, remainder: 0 };
+    return {
+      baseGroups: 0,
+      totalGroups: 0,
+      remainder: 0,
+      shouldDistributeSingleRemainder: false,
+    };
   }
 
   const baseGroups = Math.floor(totalMembers / maxPerGroup);
   const remainder = totalMembers % maxPerGroup;
-  const totalGroups = baseGroups + (remainder > 0 ? 1 : 0);
+  const shouldDistributeSingleRemainder = baseGroups > 0 && remainder === 1;
+  const totalGroups =
+    baseGroups + (remainder > 0 && !shouldDistributeSingleRemainder ? 1 : 0);
 
-  return { baseGroups, totalGroups, remainder };
+  return {
+    baseGroups,
+    totalGroups,
+    remainder,
+    shouldDistributeSingleRemainder,
+  };
 }
 
 // 참여인원 목록용 드래그 가능한 멤버 (체크박스 선택 가능)
@@ -429,17 +441,26 @@ export default function LunchGroupsPage() {
   }, [members, excludedMemberIds]);
 
   // 총 조 개수 및 나머지 계산
-  const { baseGroups, totalGroups, remainder } = useMemo(
+  const {
+    baseGroups,
+    totalGroups,
+    remainder,
+    shouldDistributeSingleRemainder,
+  } = useMemo(
     () => calculateLunchGroupPlan(availableMembers.length, maxPerGroup),
     [availableMembers.length, maxPerGroup],
   );
 
-  // 조 테이블 생성 (빈 조만 생성, 나머지 인원은 추가 조로 생성)
+  // 조 테이블 생성 (나머지 1명은 기존 조에 흡수, 그 외 나머지는 추가 조로 생성)
   const handleCreateTable = useCallback(() => {
     if (totalGroups === 0) {
       toast.error("생성할 조가 없습니다.");
       return;
     }
+
+    const groupNumberWithSingleRemainder = shouldDistributeSingleRemainder
+      ? Math.floor(Math.random() * totalGroups) + 1
+      : null;
 
     const newGroups: GroupState[] = Array.from(
       { length: totalGroups },
@@ -447,19 +468,33 @@ export default function LunchGroupsPage() {
         groupNumber: i + 1,
         memberIds: [],
         maxSlots:
-          remainder > 0 && i === totalGroups - 1 ? remainder : maxPerGroup,
+          groupNumberWithSingleRemainder === i + 1
+            ? maxPerGroup + 1
+            : remainder > 0 &&
+                !shouldDistributeSingleRemainder &&
+                i === totalGroups - 1
+              ? remainder
+              : maxPerGroup,
       }),
     );
 
     setIsTableCreated(true);
 
-    const successMsg =
-      remainder > 0
+    const successMsg = shouldDistributeSingleRemainder
+      ? `${totalGroups}개 조 생성 (1개 조는 ${maxPerGroup + 1}명)`
+      : remainder > 0
         ? `${baseGroups}개 기본 조 + 나머지 ${remainder}명 조 1개 생성 (총 ${totalGroups}개 조)`
         : `${totalGroups}개 조 테이블이 생성되었습니다.`;
 
     autoSaveGroups(newGroups, successMsg);
-  }, [baseGroups, totalGroups, maxPerGroup, remainder, autoSaveGroups]);
+  }, [
+    baseGroups,
+    totalGroups,
+    maxPerGroup,
+    remainder,
+    shouldDistributeSingleRemainder,
+    autoSaveGroups,
+  ]);
 
   // 이미 조에 배정된 멤버 ID 집합
   const assignedMemberIds = useMemo(() => {
@@ -755,8 +790,10 @@ export default function LunchGroupsPage() {
                 <div className="text-xs text-slate-500">
                   {availableMembers.length}명 ÷ {maxPerGroup}명 = {baseGroups}개
                   조
-                  {remainder > 0 &&
-                    ` + 나머지 ${remainder}명 조 1개 (총 ${totalGroups}개 조)`}
+                  {shouldDistributeSingleRemainder
+                    ? ` + 나머지 1명은 랜덤 1개 조에 배정 (총 ${totalGroups}개 조)`
+                    : remainder > 0 &&
+                      ` + 나머지 ${remainder}명 조 1개 (총 ${totalGroups}개 조)`}
                 </div>
                 <Button
                   onClick={handleCreateTable}

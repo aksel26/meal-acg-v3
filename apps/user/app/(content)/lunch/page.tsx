@@ -1,25 +1,17 @@
 "use client";
-const ScratchLottery = dynamic(
-  () => import("@/components/lunch/ScratchLottery"),
-  { ssr: false },
-);
 import LunchGroupList from "@/components/lunch/LunchGroupList";
 import { useLunchGroup } from "@/hooks/useLunchGroup";
 import { useUsers } from "@/hooks/useUsers";
-import { Button } from "@repo/ui/src/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@repo/ui/src/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/src/popover";
 import { motion } from "motion/react";
 import dynamic from "next/dynamic";
 import React, { useEffect, useMemo, useState } from "react";
 import QuickActionsSection from "@/components/dashboard/QuickActionsSection";
+
+const ScratchLottery = dynamic(
+  () => import("@/components/lunch/ScratchLottery"),
+  { ssr: false },
+);
 
 const WeeklySchedule = dynamic(
   () => import("@/components/lunch/WeeklySchedule"),
@@ -42,7 +34,6 @@ const WeeklySchedule = dynamic(
 
 const Lunch = () => {
   const [userName, setUserName] = useState<string>("");
-  const [isLotteryOpen, setIsLotteryOpen] = useState(false);
 
   const { data: lunchGroupData, isLoading, error } = useLunchGroup();
   const { users: allUsers, isLoading: usersLoading, fetchUsers } = useUsers();
@@ -224,7 +215,7 @@ const Lunch = () => {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
-            className="card-premium shrink-0 rounded-[24px] px-5 py-4"
+            className="card-premium order-3 shrink-0 rounded-[24px] px-5 py-4 lg:order-none"
           >
             <div className="mb-3 flex items-center justify-between">
               <div>
@@ -244,25 +235,31 @@ const Lunch = () => {
             />
           </motion.div>
 
-          {/* 점심조 뽑기 버튼 */}
+          {/* 점심조 뽑기 */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+            className="order-2 lg:order-none"
           >
-            <button
-              className={`w-full rounded-full py-3.5 text-sm font-medium transition-colors ${
-                isExcluded
-                  ? "cursor-not-allowed bg-[var(--whisper-cream)] text-[var(--slate-gray)]"
-                  : "bg-[var(--ink-black)] text-white hover:bg-[var(--granite)]"
-              }`}
-              onClick={() => !isExcluded && setIsLotteryOpen(true)}
-              disabled={isExcluded}
-            >
-              {isExcluded
-                ? "이번주 점심조 배정 대상이 아닙니다"
-                : "점심조 뽑기"}
-            </button>
+            <div className="card-premium rounded-[24px] px-5 py-3">
+              <div>
+                <h2 className="text-sm font-medium text-[var(--ink-black)]">
+                  점심조 뽑기
+                </h2>
+                <p className="mt-0.5 text-xs text-[var(--granite)]">
+                  스티커를 흔들어 배정된 조를 확인하세요
+                </p>
+              </div>
+
+              {isExcluded ? (
+                <div className="rounded-[18px] bg-[var(--whisper-cream)] px-4 py-5 text-center text-sm font-medium text-[var(--slate-gray)]">
+                  이번주 점심조 배정 대상이 아닙니다
+                </div>
+              ) : (
+                <ScratchLottery />
+              )}
+            </div>
           </motion.div>
         </div>
 
@@ -324,34 +321,6 @@ const Lunch = () => {
           </div>
         </motion.div>
       </div>
-
-      {/* 점심조 뽑기 다이얼로그 */}
-      <Dialog open={isLotteryOpen} onOpenChange={setIsLotteryOpen}>
-        <DialogContent className="max-w-sm w-[90vw] p-0 rounded-2xl overflow-hidden">
-          <DialogHeader className="px-6 py-5 border-b border-[rgba(14,15,12,0.06)]">
-            <DialogTitle className="text-base font-semibold text-[var(--ink-black)]">
-              점심조 뽑기
-            </DialogTitle>
-            <DialogDescription className="text-sm text-[var(--granite)]">
-              스크래치 카드를 긁어서 배정된 조를 확인하세요
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="px-6 py-4 flex items-center justify-center">
-            <ScratchLottery />
-          </div>
-
-          <DialogFooter className="px-6 py-4 border-t border-[rgba(14,15,12,0.06)] bg-[var(--soft-bone)]">
-            <Button
-              variant="outline"
-              onClick={() => setIsLotteryOpen(false)}
-              className="w-full h-11 rounded-xl text-sm font-medium"
-            >
-              닫기
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </React.Fragment>
   );
 };

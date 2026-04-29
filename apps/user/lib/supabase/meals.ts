@@ -30,6 +30,8 @@ export interface MealLogRow {
   total_amount: number | null;
 }
 
+export type MealType = "breakfast" | "lunch" | "dinner";
+
 /**
  * 식대 데이터 저장/수정
  * @param userIdOrName - user_id(UUID) 또는 userName(full_name)
@@ -122,6 +124,7 @@ export async function saveMeal(
 export async function deleteMeal(
   userName: string,
   date: string,
+  mealType?: MealType,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = createServiceClient();
@@ -143,10 +146,120 @@ export async function deleteMeal(
       return { success: true }; // Nothing to delete
     }
 
-    // Delete meal log
+    if (!mealType) {
+      // Delete entire meal log for legacy callers.
+      const { error } = await supabase
+        .from("meal_logs")
+        .delete()
+        .eq("user_id", member.id)
+        .eq("entry_date", entryDate);
+
+      if (error) {
+        console.error("Failed to delete meal:", error);
+        return { success: false, error: error.message };
+      }
+
+      console.log(`Meal deleted: ${entryDate}`);
+      return { success: true };
+    }
+
+    const { data: mealLog, error: mealLogError } = await supabase
+      .from("meal_logs")
+      .select(
+        "attendance, breakfast_store, breakfast_amount, breakfast_payer, lunch_store, lunch_amount, lunch_payer, dinner_store, dinner_amount, dinner_payer",
+      )
+      .eq("user_id", member.id)
+      .eq("entry_date", entryDate)
+      .maybeSingle();
+
+    if (mealLogError) {
+      console.error("Failed to find meal for partial delete:", mealLogError);
+      return { success: false, error: mealLogError.message };
+    }
+
+    if (!mealLog) {
+      return { success: true };
+    }
+
+    const nextMealLog = {
+      ...mealLog,
+      ...(mealType === "breakfast"
+        ? {
+            breakfast_store: null,
+            breakfast_amount: 0,
+            breakfast_payer: null,
+          }
+        : {}),
+      ...(mealType === "lunch"
+        ? {
+            attendance: null,
+            lunch_store: null,
+            lunch_amount: 0,
+            lunch_payer: null,
+          }
+        : {}),
+      ...(mealType === "dinner"
+        ? {
+            dinner_store: null,
+            dinner_amount: 0,
+            dinner_payer: null,
+          }
+        : {}),
+    };
+
+    const hasBreakfast =
+      Number(nextMealLog.breakfast_amount) > 0 ||
+      Boolean(nextMealLog.breakfast_store?.trim()) ||
+      Boolean(nextMealLog.breakfast_payer?.trim());
+    const hasLunch =
+      Boolean(nextMealLog.attendance?.trim()) ||
+      Number(nextMealLog.lunch_amount) > 0 ||
+      Boolean(nextMealLog.lunch_store?.trim()) ||
+      Boolean(nextMealLog.lunch_payer?.trim());
+    const hasDinner =
+      Number(nextMealLog.dinner_amount) > 0 ||
+      Boolean(nextMealLog.dinner_store?.trim()) ||
+      Boolean(nextMealLog.dinner_payer?.trim());
+
+    if (!hasBreakfast && !hasLunch && !hasDinner) {
+      const { error } = await supabase
+        .from("meal_logs")
+        .delete()
+        .eq("user_id", member.id)
+        .eq("entry_date", entryDate);
+
+      if (error) {
+        console.error("Failed to delete empty meal:", error);
+        return { success: false, error: error.message };
+      }
+
+      console.log(`Meal row deleted after clearing ${mealType}: ${entryDate}`);
+      return { success: true };
+    }
+
+    // Clear only the selected meal columns and keep the remaining meal entries.
     const { error } = await supabase
       .from("meal_logs")
-      .delete()
+      .update(
+        mealType === "breakfast"
+          ? {
+              breakfast_store: null,
+              breakfast_amount: 0,
+              breakfast_payer: null,
+            }
+          : mealType === "lunch"
+            ? {
+                attendance: null,
+                lunch_store: null,
+                lunch_amount: 0,
+                lunch_payer: null,
+              }
+            : {
+                dinner_store: null,
+                dinner_amount: 0,
+                dinner_payer: null,
+              },
+      )
       .eq("user_id", member.id)
       .eq("entry_date", entryDate);
 
@@ -155,7 +268,7 @@ export async function deleteMeal(
       return { success: false, error: error.message };
     }
 
-    console.log(`Meal deleted: ${entryDate}`);
+    console.log(`${mealType} meal deleted: ${entryDate}`);
     return { success: true };
   } catch (error) {
     console.error("Delete meal error:", error);

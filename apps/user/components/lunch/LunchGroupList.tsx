@@ -18,7 +18,7 @@ interface ProcessedTeam {
 
 // 멤버 데이터를 처리하는 유틸리티 함수 (빈 문자열도 포함하되 구분)
 const processMemberData = (
-  data: string[]
+  data: string[],
 ): { member: string; isEmpty: boolean }[] => {
   if (!Array.isArray(data)) return [];
 
@@ -34,7 +34,7 @@ const processMemberData = (
 
 // 조 번호를 파싱하고 정리하는 함수
 const parseGroupNumber = (
-  groupNumber: string
+  groupNumber: string,
 ): { id: number; displayName: string } => {
   if (!groupNumber || typeof groupNumber !== "string") {
     return { id: 0, displayName: "미분류" };
@@ -106,11 +106,11 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
         members.some(
           ({ member, isEmpty }) =>
             !isEmpty &&
-            member.trim().toLowerCase() === userName.trim().toLowerCase()
+            member.trim().toLowerCase() === userName.trim().toLowerCase(),
         )
       );
     },
-    [userName]
+    [userName],
   );
 
   // 내 팀을 맨 앞으로 정렬 (memoized)
@@ -128,15 +128,19 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
   // 빈 데이터 처리
   if (processedTeams.length === 0) {
     return (
-      <div className="card-premium rounded-2xl p-8 text-center">
-        <p className="text-sm text-gray-500 mb-1">등록된 점심조가 없습니다.</p>
-        <p className="text-xs text-gray-400">관리자에게 문의해주세요.</p>
+      <div className="card-premium rounded-[24px] p-8 text-center">
+        <p className="mb-1 text-sm text-[var(--granite)]">
+          등록된 점심조가 없습니다.
+        </p>
+        <p className="text-xs text-[var(--slate-gray)]">
+          관리자에게 문의해주세요.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
+    <div className="grid gap-3 lg:grid-cols-2">
       {sortedTeams.map((team, index) => {
         const isMyTeamHighlight = isMyTeam(team.members);
         const validMemberCount = team.members.filter((m) => !m.isEmpty).length;
@@ -146,36 +150,40 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
             key={`${team.rawGroupNumber}-${team.id}`}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
-            className={`card-premium rounded-2xl overflow-hidden transition-all duration-200 ${
-              isMyTeamHighlight
-                ? "ring-1 ring-[oklch(0.68_0.15_250)/0.4]"
-                : ""
+            transition={{
+              duration: 0.3,
+              delay: index * 0.05,
+              ease: [0.16, 1, 0.3, 1],
+            }}
+            className={`card-premium overflow-hidden rounded-[24px] transition-all duration-200 ${
+              isMyTeamHighlight ? "ring-1 ring-[rgba(14,15,12,0.24)]" : ""
             } ${onTeamClick ? "cursor-pointer" : ""}`}
             onClick={() =>
               onTeamClick?.(
                 team.rawGroupNumber,
-                team.members.map((m) => m.member)
+                team.members.map((m) => m.member),
               )
             }
           >
             {/* 헤더 */}
-            <div className={`px-4 py-3`}>
+            <div className="px-3 py-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
-                    isMyTeamHighlight
-                      ? "bg-[oklch(0.45_0.18_250)] text-white"
-                      : "bg-gray-100 text-gray-700"
-                  }`}>
+                  <span
+                    className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                      isMyTeamHighlight
+                        ? "bg-[var(--ink-black)] text-white"
+                        : "bg-[var(--whisper-cream)] text-[var(--granite)]"
+                    }`}
+                  >
                     {team.name}
                   </span>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-[var(--slate-gray)]">
                     {validMemberCount}명
                   </span>
                 </div>
                 {isMyTeamHighlight && (
-                  <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-orange-300 text-white">
+                  <span className="rounded-full bg-[rgba(236,126,0,0.12)] px-2.5 py-1 text-[10px] font-medium text-[#9a4f00]">
                     내 조
                   </span>
                 )}
@@ -183,8 +191,8 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
             </div>
 
             {/* 멤버 목록 */}
-            <div className="p-3">
-              <div className="grid grid-cols-2 gap-2">
+            <div className="p-3 pt-0">
+              <div className="grid grid-cols-1 gap-2 2xl:grid-cols-2">
                 {team.members.map(({ member, isEmpty }, memberIndex) => {
                   const isMe =
                     userName &&
@@ -197,12 +205,16 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
                     return (
                       <div
                         key={`empty-${memberIndex}`}
-                        className="flex items-center gap-2 p-2 rounded-lg bg-gray-50/50"
+                        className="flex items-center gap-2 rounded-[14px] bg-[rgba(244,241,232,0.45)] p-2"
                       >
-                        <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">
-                          <span className="text-[10px] text-gray-400">?</span>
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white">
+                          <span className="text-[10px] text-[var(--slate-gray)]">
+                            ?
+                          </span>
                         </div>
-                        <span className="text-xs text-gray-400 italic">빈 자리</span>
+                        <span className="text-xs italic text-[var(--slate-gray)]">
+                          빈 자리
+                        </span>
                       </div>
                     );
                   }
@@ -211,29 +223,33 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
                   return (
                     <div
                       key={`${member}-${memberIndex}`}
-                      className={`flex items-center gap-2 p-2 rounded-lg ${
+                      className={`flex items-center gap-2 rounded-[14px] p-2 ${
                         isMe
-                          ? "bg-[oklch(0.94_0.05_250)]"
-                          : "bg-gray-50"
+                          ? "bg-[var(--whisper-cream)]"
+                          : "bg-[rgba(244,241,232,0.58)]"
                       }`}
                     >
                       <div
-                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+                        className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium ${
                           isMe
-                            ? "bg-[oklch(0.55_0.2_250)] text-white"
-                            : "bg-gray-200 text-gray-600"
+                            ? "bg-[var(--ink-black)] text-white"
+                            : "bg-white text-[var(--granite)]"
                         }`}
                       >
                         {member.charAt(0)}
                       </div>
                       <span
                         className={`text-xs truncate ${
-                          isMe ? "text-gray-800 font-semibold" : "text-gray-700"
+                          isMe
+                            ? "font-medium text-[var(--ink-black)]"
+                            : "text-[var(--granite)]"
                         }`}
                       >
                         {member}
                         {isMe && (
-                          <span className="ml-1 text-[10px] text-gray-500">(나)</span>
+                          <span className="ml-1 text-[10px] text-[var(--granite)]">
+                            (나)
+                          </span>
                         )}
                       </span>
                     </div>

@@ -10,12 +10,13 @@ dayjs.extend(timezone);
 interface DeleteMealRequest {
   userName: string;
   date: string;
+  mealType?: "breakfast" | "lunch" | "dinner";
 }
 
 export async function DELETE(request: NextRequest) {
   try {
     const body: DeleteMealRequest = await request.json();
-    const { userName, date } = body;
+    const { userName, date, mealType } = body;
 
     if (!userName || !date) {
       return NextResponse.json(
@@ -40,12 +41,22 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    if (mealType && !["breakfast", "lunch", "dinner"].includes(mealType)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "올바르지 않은 식사 타입입니다.",
+        },
+        { status: 400 }
+      );
+    }
+
     console.log(
-      `Processing meal deletion for ${userName} on ${targetDateKST.format("YYYY-MM-DD")} (KST)`
+      `Processing meal deletion for ${userName} on ${targetDateKST.format("YYYY-MM-DD")} (KST), mealType=${mealType ?? "all"}`
     );
 
     // Supabase에서 삭제
-    const result = await deleteMeal(userName, date);
+    const result = await deleteMeal(userName, date, mealType);
 
     if (!result.success) {
       return NextResponse.json(
@@ -64,6 +75,7 @@ export async function DELETE(request: NextRequest) {
       data: {
         userName,
         date: targetDateKST.format("YYYY-MM-DD"),
+        mealType: mealType ?? null,
       },
     });
   } catch (error) {

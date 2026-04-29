@@ -20,16 +20,16 @@ interface AllHistoryDialogProps {
 
 const getDrinkInfo = (drink: string) => {
   if (drink === "선택안함")
-    return { icon: "☕", gradient: "from-slate-100 to-slate-200" };
+    return { icon: "☕", gradient: "from-[var(--whisper-cream)] to-[var(--soft-bone)]" };
   if (drink.includes("바닐라"))
-    return { icon: "🍦", gradient: "from-amber-50 to-orange-100" };
+    return { icon: "🍦", gradient: "from-[rgba(255,209,26,0.15)] to-[rgba(255,192,145,0.2)]" };
   if (drink.includes("자몽"))
-    return { icon: "🍊", gradient: "from-rose-50 to-pink-100" };
+    return { icon: "🍊", gradient: "from-[rgba(208,50,56,0.08)] to-[rgba(255,145,112,0.15)]" };
   if (drink.includes("ICE"))
-    return { icon: "🧊", gradient: "from-sky-50 to-blue-100" };
+    return { icon: "🧊", gradient: "from-[rgba(56,200,255,0.08)] to-[rgba(56,200,255,0.15)]" };
   if (drink.includes("HOT"))
-    return { icon: "🔥", gradient: "from-orange-50 to-red-100" };
-  return { icon: "☕", gradient: "from-gray-50 to-gray-100" };
+    return { icon: "🔥", gradient: "from-[rgba(255,192,145,0.12)] to-[rgba(208,50,56,0.12)]" };
+  return { icon: "☕", gradient: "from-[var(--soft-bone)] to-[var(--whisper-cream)]" };
 };
 
 export const AllHistoryDialog = ({
@@ -67,15 +67,15 @@ export const AllHistoryDialog = ({
         {/* Header */}
         <div className="p-6">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-center text-gray-900">
+            <DialogTitle className="text-xl font-bold text-center text-[var(--ink-black)]">
               전체 신청 현황
             </DialogTitle>
-            <DialogDescription className="text-gray-500 text-center mt-2">
+            <DialogDescription className="text-[var(--granite)] text-center mt-2">
               {isLoading ? (
                 <span className="skeleton inline-block w-24 h-4" />
               ) : (
                 <>
-                  <span className="text-gray-900 font-semibold">
+                  <span className="text-[var(--ink-black)] font-semibold">
                     {completedCount}
                   </span>
                   /{applications.length}명 신청 완료
@@ -86,14 +86,14 @@ export const AllHistoryDialog = ({
 
           {/* Progress bar */}
           {!isLoading && applications.length > 0 && (
-            <div className="mt-4 h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div className="mt-4 h-2 bg-[var(--whisper-cream)] rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{
                   width: `${(completedCount / applications.length) * 100}%`,
                 }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
-                className="h-full bg-gradient-to-r from-[oklch(0.55_0.18_250)] to-[oklch(0.48_0.20_270)] rounded-full"
+                className="h-full bg-[var(--ink-black)] rounded-full"
               />
             </div>
           )}
@@ -122,7 +122,7 @@ export const AllHistoryDialog = ({
                 className="flex flex-col items-center justify-center py-12"
               >
                 <span className="text-4xl mb-3">😢</span>
-                <p className="text-gray-500">오류가 발생했습니다</p>
+                <p className="text-[var(--granite)]">오류가 발생했습니다</p>
               </motion.div>
             ) : applications.length === 0 ? (
               <motion.div
@@ -132,7 +132,7 @@ export const AllHistoryDialog = ({
                 className="flex flex-col items-center justify-center py-12"
               >
                 <span className="text-4xl mb-3">☕</span>
-                <p className="text-gray-500">아직 신청 내역이 없습니다</p>
+                <p className="text-[var(--granite)]">아직 신청 내역이 없습니다</p>
               </motion.div>
             ) : (
               <motion.div
@@ -157,10 +157,10 @@ export const AllHistoryDialog = ({
                         >
                           <span className="text-lg">{info.icon}</span>
                         </div>
-                        <span className="text-sm font-semibold text-gray-800">
+                        <span className="text-sm font-semibold text-[var(--ink-black)]">
                           {drink}
                         </span>
-                        <span className="text-xs text-gray-400 font-medium bg-gray-100 px-2 py-0.5 rounded-full">
+                        <span className="text-xs text-[var(--slate-gray)] font-medium bg-[var(--whisper-cream)] px-2 py-0.5 rounded-full">
                           {users.length}명
                         </span>
                       </div>
@@ -175,13 +175,13 @@ export const AllHistoryDialog = ({
                             transition={{
                               delay: groupIndex * 0.05 + userIndex * 0.02,
                             }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 rounded-full border border-gray-200 transition-colors"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--soft-bone)] hover:bg-[var(--whisper-cream)] rounded-full border border-[rgba(14,15,12,0.08)] transition-colors"
                           >
-                            <span className="text-sm font-medium text-gray-700">
+                            <span className="text-sm font-medium text-[var(--granite)]">
                               {user.name}
                             </span>
                             {user.memo && (
-                              <span className="text-xs text-gray-400">
+                              <span className="text-xs text-[var(--slate-gray)]">
                                 ({user.memo})
                               </span>
                             )}
@@ -197,11 +197,11 @@ export const AllHistoryDialog = ({
         </div>
 
         {/* Footer */}
-        <DialogFooter className="p-4 border-t border-gray-100">
+        <DialogFooter className="p-4 border-t border-[rgba(14,15,12,0.06)]">
           <Button
             variant="ghost"
             onClick={onClose}
-            className="w-full h-12 text-gray-600 hover:text-gray-900 hover:bg-gray-50 font-medium rounded-xl"
+            className="w-full h-12 text-[var(--granite)] hover:text-[var(--ink-black)] hover:bg-[var(--soft-bone)] font-medium rounded-xl"
           >
             닫기
           </Button>

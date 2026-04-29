@@ -1,9 +1,9 @@
 "use client";
 
-
 import GreetingSection from "@/components/dashboard/GreetingSection";
 import MealSection from "@/components/dashboard/MealSection";
-import PopularRestaurantsSection from "@/components/dashboard/PopularRestaurantsSection";
+import NoticeSection from "@/components/dashboard/NoticeSection";
+import QuickActionsSection from "@/components/dashboard/QuickActionsSection";
 import StatsSection from "@/components/dashboard/StatsSection";
 import { CalculationData } from "@/components/dashboard/types";
 import { Footer } from "@/components/Footer";
@@ -18,7 +18,6 @@ import utc from "dayjs/plugin/utc";
 import React, { lazy, Suspense, useEffect, useState } from "react";
 import { UpdateNotificationDialog } from "@/components/UpdateNotificationDialog";
 import { useRouter } from "next/navigation";
-import { motion } from "motion/react";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -26,15 +25,22 @@ dayjs.extend(timezone);
 const MealEntryDrawer = lazy(() =>
   import("@/components/MealEntryDrawer").then((module) => ({
     default: module.default,
-  }))
+  })),
 );
 
 export default function DashboardPage() {
   const [mounted, setMounted] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(dayjs().tz("Asia/Seoul").toDate());
-  const [currentMonth, setCurrentMonth] = useState<number>(dayjs().tz("Asia/Seoul").month() + 1);
-  const [currentYear, setCurrentYear] = useState<number>(dayjs().tz("Asia/Seoul").year());
-  const [calculationData, setCalculationData] = useState<CalculationData | null>(null);
+  const [isDesktop, setIsDesktop] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+    dayjs().tz("Asia/Seoul").toDate(),
+  );
+  const [currentMonth, setCurrentMonth] = useState<number>(
+    dayjs().tz("Asia/Seoul").month() + 1,
+  );
+  const [currentYear, setCurrentYear] = useState<number>(
+    dayjs().tz("Asia/Seoul").year(),
+  );
+  const [, setCalculationData] = useState<CalculationData | null>(null);
 
   const router = useRouter();
 
@@ -50,15 +56,27 @@ export default function DashboardPage() {
   const hasHydrated = useUserStore((s) => s.hasHydrated);
 
   // TanStack Query hooks 사용
-  const { data: mealData = [] } = useMealData(userName || "", currentMonth, currentYear);
+  const { data: mealData = [] } = useMealData(
+    userName || "",
+    currentMonth,
+    currentYear,
+  );
   const mealSubmitMutation = useMealSubmit();
   const mealDeleteMutation = useMealDelete();
 
-
   useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 1024px)");
+    const updateViewport = () => setIsDesktop(mediaQuery.matches);
+
+    updateViewport();
     setMounted(true);
     // userStore hydrate (localStorage에서 상태 복원)
     hydrate();
+
+    mediaQuery.addEventListener("change", updateViewport);
+    return () => {
+      mediaQuery.removeEventListener("change", updateViewport);
+    };
   }, [hydrate]);
 
   useEffect(() => {
@@ -126,7 +144,10 @@ export default function DashboardPage() {
     }
   };
 
-  const handleDeleteMeal = async (date: string) => {
+  const handleDeleteMeal = async (
+    date: string,
+    mealType: "breakfast" | "lunch" | "dinner",
+  ) => {
     if (!userName) {
       return;
     }
@@ -135,6 +156,7 @@ export default function DashboardPage() {
       userName,
       userId: userId || undefined,
       date: date,
+      mealType,
     };
 
     try {
@@ -158,31 +180,81 @@ export default function DashboardPage() {
 
   return (
     <React.Fragment>
-      <GreetingSection userName={displayUserName} />
-      <StatsSection userId={currentUserId} month={currentMonth} year={currentYear} onDataChange={setCalculationData} />
-      <PopularRestaurantsSection />
-      <MealSection selectedDate={selectedDate} setSelectedDate={setSelectedDate} handleMonthChange={handleMonthChange} mealData={mealData} />
+      {isDesktop ? (
+        <div className="grid h-[calc(100dvh-3rem)] grid-cols-10 grid-rows-12 gap-3 overflow-hidden text-[0.92rem]">
+          <div className="col-span-9 row-span-1 min-h-0 [&>*]:h-full">
+            <GreetingSection userName={displayUserName} />
+          </div>
+
+          <div className="col-span-1 row-span-1 min-h-0">
+            <NoticeSection variant="icon" />
+          </div>
+
+          <div className="col-span-5 row-span-11 min-h-0 overflow-hidden">
+            <MealSection
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
+              handleMonthChange={handleMonthChange}
+              mealData={mealData}
+            />
+          </div>
+
+          <div className="col-span-5 row-span-11 flex min-h-0 flex-col gap-3 overflow-hidden">
+            <div className="min-h-0 flex-1 overflow-hidden [&>*]:h-full [&>*>*]:h-full">
+              <StatsSection
+                userId={currentUserId}
+                month={currentMonth}
+                year={currentYear}
+                onDataChange={setCalculationData}
+              />
+            </div>
+
+            <div className="h-[4.25rem] shrink-0">
+              <QuickActionsSection excludeIds={["dashboard"]} />
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3 text-[0.92rem]">
+          <div className="flex min-w-0 items-stretch gap-2">
+            <div className="min-w-0 flex-1">
+              <GreetingSection userName={displayUserName} />
+            </div>
+            <div className="w-16 shrink-0">
+              <NoticeSection variant="icon" />
+            </div>
+          </div>
+
+          <StatsSection
+            userId={currentUserId}
+            month={currentMonth}
+            year={currentYear}
+            onDataChange={setCalculationData}
+          />
+
+          <MealSection
+            selectedDate={selectedDate}
+            setSelectedDate={setSelectedDate}
+            handleMonthChange={handleMonthChange}
+            mealData={mealData}
+          />
+
+          <QuickActionsSection excludeIds={["dashboard"]} />
+        </div>
+      )}
 
       {/* Lazy-loaded Meal Entry Drawer */}
       <Suspense fallback={null}>
-        <MealEntryDrawer onFormSubmit={handleFormSubmit} onDeleteMeal={handleDeleteMeal} />
+        <MealEntryDrawer
+          onFormSubmit={handleFormSubmit}
+          onDeleteMeal={handleDeleteMeal}
+        />
       </Suspense>
 
-      {/* Bottom Navigation */}
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{
-          duration: 0.6,
-          delay: 0.6,
-          ease: [0.25, 0.46, 0.45, 0.94],
-        }}
-      >
-        <Footer />
-      </motion.div>
+      <Footer variant="compact" className="mt-4 lg:hidden" />
+
       {/* 업데이트 알림 Dialog */}
       <UpdateNotificationDialog />
-
     </React.Fragment>
   );
 }

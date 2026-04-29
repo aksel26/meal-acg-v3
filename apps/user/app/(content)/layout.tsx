@@ -1,84 +1,58 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Header from "../components/Header";
-import { BottomNavigation } from "@/components/BottomNavigation";
 import { motion, AnimatePresence } from "motion/react";
 import { usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
-const Snowfall = dynamic(() => import("react-snowfall"), { ssr: false });
+
 const PushNotificationPrompt = dynamic(
   () => import("@/components/PushNotificationPrompt"),
   { ssr: false },
 );
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
-  const [images, setImages] = useState<HTMLImageElement[]>([]);
   const pathname = usePathname();
-
-  useEffect(() => {
-    const snowflake1 = document.createElement("img");
-    snowflake1.onload = () => {
-      setImages([snowflake1]);
-    };
-    snowflake1.onerror = () => {
-      console.error("이미지 로드 실패: /images/snowflake.png 경로를 확인해주세요.");
-    };
-    snowflake1.src = "/images/cherry-blossom.png";
-  }, []);
+  const isDashboard = pathname.startsWith("/dashboard");
+  const usesWideDesktopLayout =
+    isDashboard ||
+    pathname.startsWith("/points") ||
+    pathname.startsWith("/monthly") ||
+    pathname.startsWith("/lunch");
 
   return (
     <>
-      <div className="min-h-screen max-w-lg mx-auto relative">
-        {/* Background Gradient Mesh */}
-        <div className="fixed inset-0 gradient-mesh -z-10" />
+      <div
+        className={`relative mx-auto min-h-dvh w-full px-4 pt-4 sm:px-6 ${
+          usesWideDesktopLayout
+            ? "max-w-[820px] pb-6 lg:max-w-[1280px] lg:pb-4"
+            : "max-w-[820px] pb-6"
+        }`}
+      >
+        <div className="fixed inset-0 gradient-mesh -z-20" />
+        <div className="pointer-events-none fixed inset-x-0 top-0 -z-10 h-80 bg-[radial-gradient(circle_at_top,rgba(25,28,31,0.06),transparent_55%)]" />
 
-        {/* Decorative Background Blobs */}
-        <div className="fixed top-20 right-0 w-64 h-64 bg-[oklch(0.96_0.02_350/0.1)] rounded-full blur-3xl -z-10" />
-        <div className="fixed top-1/2 left-0 w-48 h-48 bg-[oklch(0.97_0.015_340/0.08)] rounded-full blur-3xl -z-10" />
-        <div className="fixed bottom-40 right-0 w-56 h-56 bg-[oklch(0.97_0.012_10/0.08)] rounded-full blur-3xl -z-10" />
+        {!isDashboard && <Header />}
 
-        {/* Header */}
-        <Header />
-
-      {/* Main Content */}
-      <main className="relative px-4 py-6">
-        {/* Snowfall Effect */}
-        <Snowfall
-          snowflakeCount={25}
-          speed={[0.5, 1.5]}
-          radius={[6, 16]}
-          images={images}
-          style={{
-            position: "fixed",
-            width: "100vw",
-            height: "100vh",
-            zIndex: 1,
-            pointerEvents: "none",
-            opacity: 0.7,
-          }}
-        />
-
-        {/* Page Content with Transitions */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={pathname}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{
-              duration: 0.35,
-              ease: [0.16, 1, 0.3, 1],
-            }}
-            className="relative z-10 pb-28"
-          >
-            {children}
-          </motion.div>
-        </AnimatePresence>
-      </main>
-      <BottomNavigation />
-    </div>
-    <PushNotificationPrompt />
+        <main className={`relative ${isDashboard ? "py-0" : "py-5"}`}>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={pathname}
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{
+                duration: 0.35,
+                ease: [0.16, 1, 0.3, 1],
+              }}
+              className="relative z-10"
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
+        </main>
+      </div>
+      <PushNotificationPrompt />
     </>
   );
 };

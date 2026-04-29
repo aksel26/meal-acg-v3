@@ -31,7 +31,7 @@ interface MealSubmitResponse {
     fileName: string;
     date: string;
     mealType: string;
-    updatedData: any;
+    updatedData: unknown;
   };
 }
 
@@ -57,7 +57,7 @@ export function useMealSubmit() {
 
   return useMutation({
     mutationFn: submitMealData,
-    onMutate: (variables) => {
+    onMutate: () => {
       // 로딩 토스트 표시
       const loadingToast = toast.loading(`식사 기록을 저장하는 중...`);
       
@@ -82,6 +82,9 @@ export function useMealSubmit() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.meals.byUserAndMonth(variables.userName, month, year)
       });
+      queryClient.invalidateQueries({
+        queryKey: ["meals", "recentActivity"]
+      });
 
       // 계산 데이터도 무효화 (식사 금액이 바뀌면 계산도 영향을 받음)
       queryClient.invalidateQueries({
@@ -94,11 +97,6 @@ export function useMealSubmit() {
           queryKey: queryKeys.mealStats.byUserAndMonth(variables.userId, month, year)
         });
       }
-
-      // 인기 음식점 랭킹 쿼리 무효화 (음식점이 변경되면 랭킹도 영향)
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.restaurants.popular()
-      });
 
       console.log("Submit result:", data);
     },

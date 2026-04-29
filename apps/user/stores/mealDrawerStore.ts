@@ -2,11 +2,13 @@ import { create } from "zustand";
 import { FormData, MealData } from "@/components/dashboard/types";
 
 // Step definitions
-export type StepId = "mealType" | "attendance" | "receipt" | "payer" | "store" | "amount";
+export type StepId = "mealType" | "attendance" | "payer" | "store" | "amount";
+type MealType = "breakfast" | "lunch" | "dinner";
+type EditableMealField = "payer" | "store" | "amount";
 
 // 중식: 근태 먼저, 그 외: mealType 먼저
-export const STEP_ORDER_LUNCH: StepId[] = ["attendance", "mealType", "receipt", "payer", "store", "amount"];
-export const STEP_ORDER_OTHER: StepId[] = ["mealType", "receipt", "payer", "store", "amount"];
+export const STEP_ORDER_LUNCH: StepId[] = ["attendance", "mealType", "payer", "store", "amount"];
+export const STEP_ORDER_OTHER: StepId[] = ["mealType", "payer", "store", "amount"];
 
 // 기본 스텝 순서 (하위 호환)
 export const STEP_ORDER: StepId[] = STEP_ORDER_LUNCH;
@@ -18,7 +20,6 @@ export const INDIVIDUAL_MEAL_ATTENDANCE = "근무(개별식사 / 식사안함)";
 export const STEP_LABELS: Record<StepId, string> = {
   mealType: "식사 타입",
   attendance: "근태",
-  receipt: "영수증",
   payer: "결제자",
   store: "식당명",
   amount: "금액",
@@ -37,14 +38,13 @@ interface MealDrawerState {
   // Step state
   currentStep: StepId;
   completedSteps: StepId[];
-  isManualInput: boolean; // 영수증 스캔 대신 직접 입력 선택 여부
 
   // Actions
-  openDrawer: (mealType: "breakfast" | "lunch" | "dinner", date: Date | undefined, existingMealData?: MealData) => void;
-  openDrawerForEdit: (mealType: "breakfast" | "lunch" | "dinner", mealInfo: MealData, date: Date | undefined) => void;
+  openDrawer: (mealType: MealType, date: Date | undefined, existingMealData?: MealData) => void;
+  openDrawerForEdit: (mealType: MealType, mealInfo: MealData, date: Date | undefined) => void;
   openDrawerForHolidayEdit: (mealInfo: MealData, date: Date | undefined) => void;
   closeDrawer: () => void;
-  setSelectedMealType: (type: "breakfast" | "lunch" | "dinner") => void;
+  setSelectedMealType: (type: MealType) => void;
   updateFormField: (field: string, value: string) => void;
   resetForm: () => void;
 
@@ -53,7 +53,6 @@ interface MealDrawerState {
   prevStep: () => void;
   goToStep: (step: StepId) => void;
   completeStep: (step: StepId) => void;
-  setManualInput: (value: boolean) => void;
   resetSteps: () => void;
 }
 
@@ -77,14 +76,31 @@ const initialFormData: FormData = {
 };
 
 // Helper to get step order based on meal type
-const getStepOrder = (mealType: "breakfast" | "lunch" | "dinner"): StepId[] => {
+const getStepOrder = (mealType: MealType): StepId[] => {
   return mealType === "lunch" ? STEP_ORDER_LUNCH : STEP_ORDER_OTHER;
+};
+
+const updateMealField = (
+  formData: FormData,
+  mealType: MealType,
+  field: EditableMealField,
+  value: string
+): FormData => ({
+  ...formData,
+  [mealType]: {
+    ...formData[mealType],
+    [field]: value,
+  },
+});
+
+const isEditableMealField = (field: string): field is EditableMealField => {
+  return field === "payer" || field === "store" || field === "amount";
 };
 
 // Helper to get next step based on meal type and attendance
 const getNextStep = (
   currentStep: StepId,
-  mealType: "breakfast" | "lunch" | "dinner",
+  mealType: MealType,
   attendance?: string
 ): StepId | null => {
   const stepOrder = getStepOrder(mealType);
@@ -102,7 +118,7 @@ const getNextStep = (
     }
   }
 
-  let nextIndex = currentIndex + 1;
+  const nextIndex = currentIndex + 1;
   const result = stepOrder[nextIndex];
   return result !== undefined ? result : null;
 };
@@ -110,7 +126,7 @@ const getNextStep = (
 // Helper to get previous step based on meal type
 const getPrevStep = (
   currentStep: StepId,
-  mealType: "breakfast" | "lunch" | "dinner",
+  mealType: MealType,
   attendance?: string
 ): StepId | null => {
   const stepOrder = getStepOrder(mealType);
@@ -121,7 +137,7 @@ const getPrevStep = (
     return "attendance";
   }
 
-  let prevIndex = currentIndex - 1;
+  const prevIndex = currentIndex - 1;
   const result = stepOrder[prevIndex];
   return result !== undefined ? result : null;
 };
@@ -137,7 +153,6 @@ export const useMealDrawerStore = create<MealDrawerState>((set, get) => ({
   // Step state
   currentStep: "mealType",
   completedSteps: [],
-  isManualInput: false,
 
   // Actions
   openDrawer: (mealType, date, existingMealData) => {
@@ -146,7 +161,7 @@ export const useMealDrawerStore = create<MealDrawerState>((set, get) => ({
 
     // 기존 데이터가 있으면 모든 식사 타입의 데이터를 유지
     // (MealTypeStep에서 다른 타입을 선택할 수 있으므로 특정 타입을 초기화하지 않음)
-    let updatedFormData = { ...initialFormData };
+    const updatedFormData = { ...initialFormData };
     if (existingMealData) {
       if (existingMealData.breakfast) {
         updatedFormData.breakfast = {
@@ -186,7 +201,6 @@ export const useMealDrawerStore = create<MealDrawerState>((set, get) => ({
       formData: updatedFormData,
       currentStep: firstStep,
       completedSteps: [],
-      isManualInput: false,
     });
   },
 
@@ -246,7 +260,6 @@ export const useMealDrawerStore = create<MealDrawerState>((set, get) => ({
       formData: updatedFormData,
       currentStep: "mealType",
       completedSteps: allSteps,
-      isManualInput: true,
     });
   },
 
@@ -303,7 +316,6 @@ export const useMealDrawerStore = create<MealDrawerState>((set, get) => ({
       formData: updatedFormData,
       currentStep: "mealType",
       completedSteps: allSteps,
-      isManualInput: true,
     });
   },
 
@@ -314,7 +326,6 @@ export const useMealDrawerStore = create<MealDrawerState>((set, get) => ({
       formData: initialFormData,
       currentStep: "mealType",
       completedSteps: [],
-      isManualInput: false,
     });
   },
 
@@ -341,13 +352,18 @@ export const useMealDrawerStore = create<MealDrawerState>((set, get) => ({
     console.log(`Updating field: ${field} = ${value} for mealType: ${selectedMealType}`);
     console.log("Current formData before update:", formData);
 
-    const updatedFormData = { ...formData };
-
-    // 현재 선택된 식사 타입의 데이터를 복사하고 필드 업데이트
-    updatedFormData[selectedMealType] = {
-      ...updatedFormData[selectedMealType],
-      [field]: value,
-    } as any;
+    let updatedFormData = formData;
+    if (isEditableMealField(field)) {
+      updatedFormData = updateMealField(formData, selectedMealType, field, value);
+    } else if (field === "attendance") {
+      updatedFormData = {
+        ...formData,
+        lunch: {
+          ...formData.lunch,
+          attendance: value,
+        },
+      };
+    }
 
     console.log("Updated formData:", updatedFormData);
     set({ formData: updatedFormData });
@@ -358,7 +374,6 @@ export const useMealDrawerStore = create<MealDrawerState>((set, get) => ({
       formData: initialFormData,
       currentStep: "mealType",
       completedSteps: [],
-      isManualInput: false,
     });
   },
 
@@ -398,24 +413,11 @@ export const useMealDrawerStore = create<MealDrawerState>((set, get) => ({
 
       // Reset form fields for steps after prevStep
       const stepsToReset = stepOrder.slice(prevStepIndex + 1);
-      const updatedFormData = { ...formData };
+      let updatedFormData = formData;
 
       stepsToReset.forEach((step) => {
-        if (step === "payer") {
-          updatedFormData[selectedMealType] = {
-            ...updatedFormData[selectedMealType],
-            payer: "",
-          } as any;
-        } else if (step === "store") {
-          updatedFormData[selectedMealType] = {
-            ...updatedFormData[selectedMealType],
-            store: "",
-          } as any;
-        } else if (step === "amount") {
-          updatedFormData[selectedMealType] = {
-            ...updatedFormData[selectedMealType],
-            amount: "",
-          } as any;
+        if (isEditableMealField(step)) {
+          updatedFormData = updateMealField(updatedFormData, selectedMealType, step, "");
         }
       });
 
@@ -440,28 +442,18 @@ export const useMealDrawerStore = create<MealDrawerState>((set, get) => ({
 
     // Reset form fields for steps at or after target step
     const stepsToReset = stepOrder.slice(targetStepIndex);
-    const updatedFormData = { ...formData };
+    let updatedFormData = formData;
 
     stepsToReset.forEach((s) => {
-      if (s === "payer") {
-        updatedFormData[selectedMealType] = {
-          ...updatedFormData[selectedMealType],
-          payer: "",
-        } as any;
-      } else if (s === "store") {
-        updatedFormData[selectedMealType] = {
-          ...updatedFormData[selectedMealType],
-          store: "",
-        } as any;
-      } else if (s === "amount") {
-        updatedFormData[selectedMealType] = {
-          ...updatedFormData[selectedMealType],
-          amount: "",
-        } as any;
+      if (isEditableMealField(s)) {
+        updatedFormData = updateMealField(updatedFormData, selectedMealType, s, "");
       } else if (s === "attendance" && selectedMealType === "lunch") {
-        updatedFormData.lunch = {
-          ...updatedFormData.lunch,
-          attendance: "",
+        updatedFormData = {
+          ...updatedFormData,
+          lunch: {
+            ...updatedFormData.lunch,
+            attendance: "",
+          },
         };
       }
     });
@@ -488,15 +480,10 @@ export const useMealDrawerStore = create<MealDrawerState>((set, get) => ({
     }
   },
 
-  setManualInput: (value) => {
-    set({ isManualInput: value });
-  },
-
   resetSteps: () => {
     set({
       currentStep: "mealType",
       completedSteps: [],
-      isManualInput: false,
     });
   },
 }));

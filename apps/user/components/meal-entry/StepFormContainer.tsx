@@ -14,7 +14,6 @@ import { CompletedStepItem } from "./CompletedStepItem";
 import {
   MealTypeStep,
   AttendanceStep,
-  ReceiptStep,
   PayerStep,
   StoreStep,
   AmountStep,
@@ -86,13 +85,11 @@ export function StepFormContainer({
           return mealTypeLabels[selectedMealType];
         case "attendance":
           return attendanceShortLabels[formData.lunch.attendance] || formData.lunch.attendance;
-        case "receipt":
-          return "스캔 완료";
         case "payer":
           return currentFormData.payer;
         case "store":
           return currentFormData.store;
-        case "amount":
+        case "amount": {
           const amount = currentFormData.amount;
           if (!amount) {
             if (selectedMealType === "lunch" && formData.lunch.attendance === "근무(개별식사 / 식사안함)") {
@@ -101,6 +98,7 @@ export function StepFormContainer({
             return "";
           }
           return `${Number(amount).toLocaleString()}원`;
+        }
         default:
           return "";
       }
@@ -116,9 +114,9 @@ export function StepFormContainer({
     [completedSteps]
   );
 
-  // Steps that require form input (excluding receipt which is optional)
+  // Steps that require form input
   const formSteps = useMemo(() => {
-    return visibleSteps.filter((step) => step !== "receipt");
+    return visibleSteps;
   }, [visibleSteps]);
 
   // Check if all form steps are completed
@@ -138,7 +136,7 @@ export function StepFormContainer({
     }
     // In edit mode or normal mode, show completed steps except current
     return visibleSteps.filter(
-      (step) => isStepCompleted(step) && step !== currentStep && step !== "receipt"
+      (step) => isStepCompleted(step) && step !== currentStep
     );
   }, [visibleSteps, formSteps, isStepCompleted, currentStep, isShowingSummary]);
 
@@ -194,8 +192,6 @@ export function StepFormContainer({
             isSubmitting={isSubmitting}
           />
         );
-      case "receipt":
-        return <ReceiptStep key="receipt" />;
       case "payer":
         return <PayerStep key="payer" />;
       case "store":
@@ -245,7 +241,7 @@ export function StepFormContainer({
                 type="button"
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="w-full py-4 px-4 rounded-xl bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-4 px-4 rounded-full bg-[var(--ink-black)] text-white font-medium hover:bg-[var(--granite)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
                   <div className="flex items-center justify-center gap-2">

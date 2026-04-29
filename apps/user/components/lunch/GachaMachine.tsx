@@ -103,7 +103,7 @@ const RotarySwitch = ({
   return (
     <div className="absolute -top-8 left-1/2 -translate-x-1/2 z-20">
       {/* 스위치 베이스 */}
-      <div className="w-12 h-12 bg-gradient-to-b from-stone-300 to-stone-400 rounded-full shadow-lg border-4 border-stone-200 flex items-center justify-center">
+      <div className="w-12 h-12 bg-gradient-to-b from-[rgba(14,15,12,0.12)] to-[var(--slate-gray)] rounded-full shadow-lg border-4 border-[rgba(14,15,12,0.08)] flex items-center justify-center">
         {/* 회전하는 스위치 핸들 */}
         <div
           ref={switchRef}
@@ -114,13 +114,13 @@ const RotarySwitch = ({
           style={{ transformOrigin: "center center" }}
         >
           {/* 스위치 손잡이 */}
-          <div className="w-3 h-8 bg-gradient-to-b from-rose-400 to-rose-500 rounded-full shadow-md" />
+          <div className="w-3 h-8 bg-gradient-to-b from-[#e6444a] to-[#d03238] rounded-full shadow-md" />
         </div>
       </div>
       {/* 클릭 안내 */}
       {isClickable && (
         <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap">
-          <span className="text-xs text-rose-500 font-medium animate-pulse">클릭!</span>
+          <span className="text-xs text-[#d03238] font-medium animate-pulse">클릭!</span>
         </div>
       )}
     </div>
@@ -202,7 +202,7 @@ const RevealBall = ({
 
         {/* 결과 뱃지 */}
         <div ref={resultRef} className="absolute opacity-0">
-          <div className="bg-gradient-to-br from-stone-700 to-stone-800 text-white px-8 py-4 rounded-2xl shadow-2xl">
+          <div className="bg-gradient-to-br from-[var(--granite)] to-[var(--ink-black)] text-white px-8 py-4 rounded-2xl shadow-2xl">
             <span className="text-3xl font-bold">{result}조</span>
           </div>
         </div>
@@ -424,7 +424,7 @@ const GachaMachine = () => {
         {/* 머신 본체 */}
         <div
           ref={machineRef}
-          className="relative bg-gradient-to-b from-rose-200 via-rose-300 to-rose-400 rounded-3xl p-4 shadow-xl border-4 border-rose-100"
+          className="relative bg-gradient-to-b from-[rgba(208,50,56,0.2)] via-[rgba(208,50,56,0.3)] to-[#e6444a] rounded-3xl p-4 shadow-xl border-4 border-[rgba(208,50,56,0.12)]"
         >
           {/* 로터리 스위치 */}
           <RotarySwitch phase={phase} onActivate={handleSwitchClick} />
@@ -460,8 +460,8 @@ const GachaMachine = () => {
 
           {/* 출구 */}
           <div className="flex justify-center -mt-1 relative z-10">
-            <div className="w-16 h-8 bg-gradient-to-b from-stone-300 to-stone-400 rounded-b-xl relative shadow-inner">
-              <div className="absolute inset-x-2 top-1.5 h-3 bg-stone-500 rounded" />
+            <div className="w-16 h-8 bg-gradient-to-b from-[rgba(14,15,12,0.12)] to-[var(--slate-gray)] rounded-b-xl relative shadow-inner">
+              <div className="absolute inset-x-2 top-1.5 h-3 bg-[var(--slate-gray)] rounded" />
             </div>
           </div>
 
@@ -471,20 +471,20 @@ const GachaMachine = () => {
               <button
                 onClick={handlePull}
                 disabled={assignMutation.isPending}
-                className="w-full py-3.5 rounded-2xl text-base font-bold text-white bg-gradient-to-r from-[oklch(0.65_0.20_250)] via-[oklch(0.60_0.22_280)] to-[oklch(0.65_0.18_310)] hover:from-[oklch(0.70_0.18_250)] hover:via-[oklch(0.65_0.20_280)] hover:to-[oklch(0.70_0.16_310)] active:scale-[0.98] transition-all shadow-lg disabled:from-stone-400 disabled:to-stone-500 disabled:cursor-not-allowed"
+                className="w-full py-3.5 rounded-2xl text-base font-bold text-white bg-gradient-to-r from-[var(--ink-black)] via-[var(--granite)] to-[#2b2d2b] hover:from-[#2b2d2b] hover:via-[#454745] hover:to-[var(--ink-black)] active:scale-[0.98] transition-all shadow-lg disabled:from-[var(--slate-gray)] disabled:to-[var(--slate-gray)] disabled:cursor-not-allowed"
               >
                 {assignMutation.isPending ? "처리 중..." : "뽑기!"}
               </button>
             )}
 
             {phase === "shaking" && (
-              <div className="w-full py-3.5 rounded-2xl text-base font-bold text-orange-600 bg-amber-50 text-center border-2 border-orange-200 animate-pulse">
+              <div className="w-full py-3.5 rounded-2xl text-base font-bold text-[#cc4f00] bg-[rgba(255,209,26,0.15)] text-center border-2 border-[rgba(255,192,145,0.4)] animate-pulse">
                 흔드는 중...
               </div>
             )}
 
             {(phase === "dropping" || phase === "revealing") && (
-              <div className="w-full py-3.5 rounded-2xl text-base font-bold text-purple-600 bg-purple-50 text-center border-2 border-purple-200 animate-pulse">
+              <div className="w-full py-3.5 rounded-2xl text-base font-bold text-[#4a9b1d] bg-[rgba(159,232,112,0.1)] text-center border-2 border-[rgba(159,232,112,0.3)] animate-pulse">
                 두근두근...
               </div>
             )}
@@ -492,7 +492,7 @@ const GachaMachine = () => {
             {phase === "result" && (
               <button
                 onClick={handleReset}
-                className="w-full py-3.5 rounded-2xl text-base font-medium text-stone-600 bg-stone-100 hover:bg-white transition-colors border-2 border-stone-300"
+                className="w-full py-3.5 rounded-2xl text-base font-medium text-[var(--granite)] bg-[var(--whisper-cream)] hover:bg-white transition-colors border-2 border-[rgba(14,15,12,0.12)]"
               >
                 다시 하기
               </button>
@@ -501,7 +501,7 @@ const GachaMachine = () => {
             {phase === "error" && (
               <button
                 onClick={handleReset}
-                className="w-full py-3.5 rounded-2xl text-base font-medium text-stone-600 bg-stone-100 hover:bg-white transition-colors border-2 border-stone-300"
+                className="w-full py-3.5 rounded-2xl text-base font-medium text-[var(--granite)] bg-[var(--whisper-cream)] hover:bg-white transition-colors border-2 border-[rgba(14,15,12,0.12)]"
               >
                 다시 시도
               </button>
@@ -513,14 +513,14 @@ const GachaMachine = () => {
       {/* 상태 메시지 */}
       <div className="h-12 flex items-center justify-center">
         {phase === "result" && result && (
-          <div className="bg-gradient-to-r from-rose-500 to-orange-500 px-6 py-2.5 rounded-full shadow-lg animate-bounce">
+          <div className="bg-gradient-to-r from-[#d03238] to-[#ff8833] px-6 py-2.5 rounded-full shadow-lg animate-bounce">
             <p className="text-sm font-bold text-white">{result}조에 배정되었습니다!</p>
           </div>
         )}
 
         {phase === "error" && errorMessage && (
-          <div className="bg-rose-50 px-5 py-2.5 rounded-full border border-rose-200">
-            <p className="text-sm font-medium text-rose-600">{errorMessage}</p>
+          <div className="bg-[rgba(208,50,56,0.08)] px-5 py-2.5 rounded-full border border-[rgba(208,50,56,0.2)]">
+            <p className="text-sm font-medium text-[#a8181e]">{errorMessage}</p>
           </div>
         )}
       </div>

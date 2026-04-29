@@ -34,6 +34,8 @@ interface StatsSectionProps {
   onDataChange?: (data: CalculationData | null) => void;
 }
 
+const DEPOSIT_ACCOUNT = "국민 005701-04-142344 ㈜에이시지알";
+
 function AdjustmentMarker({
   type,
 }: {
@@ -88,7 +90,6 @@ function RecentMealTicker({ excludeUserId }: { excludeUserId: string }) {
         <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">
           최근 식대 입력
         </p>
-        <span className="text-[10px] text-[var(--slate-gray)]">LIVE</span>
       </div>
 
       <div className="relative min-h-0 flex-1 overflow-hidden px-1 py-2 [mask-image:linear-gradient(to_bottom,transparent_0,black_1.1rem,black_calc(100%-2rem),transparent_100%)]">
@@ -227,8 +228,15 @@ function CalculationResult({
 
   const copyAccount = () => {
     navigator.clipboard
-      .writeText("국민 005701-04-142344 ㈜에이시지알")
-      .then(() => toast.success("계좌 정보가 복사되었습니다."))
+      .writeText(DEPOSIT_ACCOUNT)
+      .then(() =>
+        toast.success(
+          <div className="ml-1.5 text-[var(--ink-black)]">
+            <p>계좌 정보가 복사되었습니다.</p>
+            <p className="mt-1 font-bold">{DEPOSIT_ACCOUNT}</p>
+          </div>,
+        ),
+      )
       .catch(() => toast.error("복사에 실패했습니다."));
   };
 
@@ -296,7 +304,18 @@ function CalculationResult({
 
   return (
     <div className="card-premium overflow-hidden lg:flex lg:h-full lg:min-h-0 lg:flex-col">
-      <div className="bg-white px-5 py-5 text-[var(--ink-black)] lg:px-4 lg:py-3">
+      <div className="relative bg-white px-5 py-5 text-[var(--ink-black)] lg:px-4 lg:py-3">
+        <button
+          type="button"
+          onClick={copyAccount}
+          className="absolute right-4 top-3 flex h-8 items-center gap-1.5 rounded-full bg-[var(--whisper-cream)] px-3 text-xs font-medium text-[var(--ink-black)] transition-colors hover:bg-[var(--soft-bone)] active:scale-95"
+          aria-label={`입금계좌 복사: ${DEPOSIT_ACCOUNT}`}
+          title={DEPOSIT_ACCOUNT}
+        >
+          <Copy className="h-3.5 w-3.5" />
+          <span>계좌번호 복사</span>
+        </button>
+
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-4">
             <div className="space-y-2">
@@ -341,7 +360,7 @@ function CalculationResult({
             </div>
           </div>
 
-          <div className="hidden rounded-[22px] bg-[var(--whisper-cream)] px-4 py-4 text-right sm:block lg:px-3 lg:py-3">
+          <div className="mt-8 hidden rounded-[22px] bg-[var(--whisper-cream)] px-4 py-4 text-right sm:block lg:px-3 lg:py-3">
             <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">
               Usage
             </p>
@@ -461,24 +480,6 @@ function CalculationResult({
         </div>
       )}
 
-      <div className="border-t border-[rgba(25,28,31,0.08)] px-6 py-5 lg:px-5 lg:py-3">
-        <button
-          type="button"
-          onClick={copyAccount}
-          className="flex w-full items-center justify-between text-left transition-opacity active:opacity-80"
-        >
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">
-              입금계좌
-            </p>
-            <p className="mt-2 text-sm font-medium text-[var(--ink-black)] lg:text-sm">
-              국민 005701-04-142344 ㈜에이시지알
-            </p>
-          </div>
-          <Copy className="h-4 w-4 text-[var(--slate-gray)]" />
-        </button>
-      </div>
-
       <div className="h-[200px] border-t border-[rgba(25,28,31,0.08)] px-6 pb-7 pt-4 lg:min-h-0 lg:flex-1 lg:px-5 lg:pb-6 lg:pt-3">
         <RecentMealTicker excludeUserId={userId} />
       </div>
@@ -523,7 +524,7 @@ function CalculationResult({
                   onClick={copyAccount}
                   className="flex items-center gap-1.5 rounded-full bg-white px-3 py-2 text-[11px] font-medium text-[var(--warning)]"
                 >
-                  <span>국민 005701-04-142344 ㈜에이시지알</span>
+                  <span>{DEPOSIT_ACCOUNT}</span>
                   <Copy className="h-3 w-3 shrink-0" />
                 </button>
               </div>

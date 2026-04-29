@@ -260,7 +260,7 @@ export default function CalendarComponent({
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.1}
         onDragEnd={handleDragEnd}
-        className="cursor-grab rounded-[18px] p-2.5 active:cursor-grabbing lg:min-h-0 lg:flex-1 lg:overflow-hidden lg:p-2"
+        className="cursor-grab rounded-[18px] p-0.5 active:cursor-grabbing lg:min-h-0 lg:flex-1 lg:overflow-hidden lg:p-0.5"
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
@@ -280,14 +280,14 @@ export default function CalendarComponent({
               className="w-full p-0 sm:pb-0"
               classNames={{
                 month_caption: "hidden",
-                month: "flex w-full flex-col gap-2 lg:h-full lg:min-h-0 lg:gap-2",
+                month: "flex w-full flex-col gap-1 lg:h-full lg:min-h-0 lg:gap-1",
                 months: "flex w-full flex-col gap-0 lg:h-full lg:min-h-0",
                 nav: "hidden",
                 table: "w-full border-collapse lg:h-full lg:min-h-0",
-                week: "my-1.5 flex w-full lg:my-1 lg:flex-1 lg:min-h-0",
-                day: "relative w-full p-0 text-center min-h-[64px] sm:min-h-[74px] lg:min-h-0 select-none",
-                weekdays: "mb-2 mt-4 grid grid-cols-7 lg:mt-5",
-                weekday: "flex h-6 items-center justify-center text-center text-sm font-normal uppercase tracking-[0.12em] text-[var(--slate-gray)] lg:h-6 lg:text-sm",
+                week: "my-0 flex w-full lg:my-0 lg:flex-1 lg:min-h-0",
+                day: "relative w-full p-0 text-center min-h-[40px] sm:min-h-[48px] lg:min-h-0 select-none",
+                weekdays: "mb-0 mt-1 grid grid-cols-7 lg:mt-1.5",
+                weekday: "flex h-[14px] items-center justify-center text-center text-sm font-normal uppercase tracking-[0.12em] text-[var(--slate-gray)] lg:h-[14px] lg:text-sm",
               }}
               components={calendarComponents}
             />

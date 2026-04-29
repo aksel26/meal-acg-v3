@@ -248,7 +248,7 @@ const Lunch = () => {
                   점심조 뽑기
                 </h2>
                 <p className="mt-0.5 text-xs text-[var(--granite)]">
-                  스티커를 흔들어 배정된 조를 확인하세요
+                  스티커를 클릭해 점심조를 배정하세요.
                 </p>
               </div>
 

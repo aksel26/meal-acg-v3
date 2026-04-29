@@ -104,7 +104,7 @@ const ScratchLottery: React.FC = () => {
         className="flex flex-col items-center gap-2"
       >
         <div className="relative flex h-40 w-56 items-center justify-center overflow-visible bg-transparent">
-          {phase !== "revealed" && (
+          {(phase === "idle" || phase === "shaking") && (
             <button
               type="button"
               onClick={handleDraw}
@@ -125,6 +125,17 @@ const ScratchLottery: React.FC = () => {
                 draggable={false}
               />
             </button>
+          )}
+
+          {phase === "error" && (
+            <Image
+              src="/images/sticker-bad.webp"
+              alt=""
+              width={112}
+              height={112}
+              className="h-28 w-28 object-contain drop-shadow-[0_12px_24px_rgba(208,50,56,0.18)]"
+              draggable={false}
+            />
           )}
 
           {phase === "revealed" && (
@@ -156,8 +167,8 @@ const ScratchLottery: React.FC = () => {
                   : "text-[#d03238]"
           }`}
         >
-          {phase === "idle" && "스티커를 눌러 점심조를 뽑아보세요"}
-          {phase === "shaking" && "흔드는 중..."}
+          {phase === "idle" && "스티커를 클릭해 점심조를 배정하세요."}
+          {phase === "shaking" && "과연.."}
           {phase === "revealed" && "배정되었습니다!"}
           {phase === "error" && errorMessage}
         </p>
@@ -208,39 +219,6 @@ const ScratchLottery: React.FC = () => {
         </motion.div>
       )}
 
-      {/* error */}
-      {phase === "error" && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex flex-col items-center gap-4"
-        >
-          <div className="flex h-28 w-full max-w-[300px] flex-col items-center justify-center gap-3 rounded-2xl bg-[rgba(208,50,56,0.08)]">
-            <svg
-              className="w-10 h-10 text-[rgba(208,50,56,0.3)]"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
-              />
-            </svg>
-            <p className="text-sm text-[#d03238] font-medium text-center px-4">
-              {errorMessage}
-            </p>
-          </div>
-          <button
-            onClick={handleRetry}
-            className="w-full max-w-[300px] rounded-2xl bg-[var(--whisper-cream)] py-3 text-sm font-medium text-[var(--granite)] transition-colors hover:bg-[var(--soft-bone)]"
-          >
-            다시 시도
-          </button>
-        </motion.div>
-      )}
     </div>
   );
 };

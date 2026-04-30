@@ -8,6 +8,8 @@ interface WeeklyScheduleProps {
   excludedMembers?: string[];
 }
 
+type ScheduleGroup = { members: string[]; labels: string[] };
+
 const DAYS_OF_WEEK = [
   { value: 1, label: "월", fullLabel: "월요일" },
   { value: 2, label: "화", fullLabel: "화요일" },
@@ -76,14 +78,16 @@ const WeeklySchedule = ({
   excludedMembers = [],
 }: WeeklyScheduleProps) => {
   const schedulesByDay = useMemo(() => {
-    const grouped: Record<number, { members: string[]; labels: string[] }> = {};
+    const grouped: Record<number, ScheduleGroup> = {};
 
     DAYS_OF_WEEK.forEach((day) => {
       grouped[day.value] = { members: [], labels: [] };
     });
 
-    grouped[1].members.push(...parseMemberText(mondayMember));
-    grouped[5].members.push(...parseMemberText(fridayMember));
+    const monday = grouped[1];
+    const friday = grouped[5];
+    if (monday) monday.members.push(...parseMemberText(mondayMember));
+    if (friday) friday.members.push(...parseMemberText(fridayMember));
 
     return grouped;
   }, [fridayMember, mondayMember]);
@@ -111,7 +115,7 @@ const WeeklySchedule = ({
           };
 
           return (
-            <div key={day.value}>
+            <div key={day.value} className="min-w-0">
               <div className="min-h-[7rem] rounded-[16px] bg-[rgba(244,241,232,0.58)] p-2.5">
                 <div className="mb-2 flex items-center justify-between">
                   <p className="text-xs font-medium text-[var(--ink-black)]">

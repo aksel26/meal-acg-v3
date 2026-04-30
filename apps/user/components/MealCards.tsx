@@ -59,7 +59,8 @@ export function MealCards({
   mealData = [],
   className = "",
 }: MealCardsProps) {
-  const cardClassName = (baseClassName: string) => `${baseClassName} ${className}`;
+  const cardClassName = (baseClassName: string) =>
+    `${baseClassName} ${className}`.trim();
 
   const currentMealData = React.useMemo(() => {
     if (!selectedDate || mealData.length === 0) return null;
@@ -69,7 +70,11 @@ export function MealCards({
 
   const formatDate = (date: Date) => dayjs(date).format("M월 D일 (ddd)");
 
-  const hasMealEntry = (meal?: { store?: string | null; amount?: number | null; payer?: string | null }): boolean => {
+  const hasMealEntry = (meal?: {
+    store?: string | null;
+    amount?: number | null;
+    payer?: string | null;
+  }): boolean => {
     if (!meal) return false;
     return Number(meal.amount) > 0 || (meal.store ?? "").trim().length > 0;
   };
@@ -89,7 +94,11 @@ export function MealCards({
 
   if (!selectedDate) {
     return (
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={cardClassName("card-premium mt-3 p-4 text-center")}>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className={cardClassName("card-premium mt-3 p-4 text-center")}
+      >
         <p className="eyebrow-label justify-center">Meal Entry</p>
         <p className="mt-2 text-xs text-[var(--granite)]">날짜를 선택해주세요</p>
       </motion.div>
@@ -132,19 +141,20 @@ export function MealCards({
       <div className="mb-3 flex items-center justify-between gap-4 px-1">
         <div>
           <p className="eyebrow-label">Meal Entry</p>
-          <span className="mt-1.5 block text-base font-medium tracking-[-0.03em] text-[var(--ink-black)]">
+          <span className="mt-1.5 block text-base font-medium tracking-normal text-[var(--ink-black)]">
             {formatDate(selectedDate)}
           </span>
         </div>
-        {currentMealData?.attendance && !currentMealData.attendance.includes("근무") && (
-          <button
-            type="button"
-            onClick={() => onHolidayEdit?.(currentMealData)}
-            className="rounded-[14px] bg-white/80 px-3 py-1.5 text-xs text-[var(--granite)] transition-colors hover:bg-white"
-          >
-            {currentMealData.attendance}
-          </button>
-        )}
+        {currentMealData?.attendance &&
+          !currentMealData.attendance.includes("근무") && (
+            <button
+              type="button"
+              onClick={() => onHolidayEdit?.(currentMealData)}
+              className="min-w-0 max-w-[55%] truncate rounded-[14px] bg-white/80 px-3 py-1.5 text-xs text-[var(--granite)] transition-colors hover:bg-white"
+            >
+              {currentMealData.attendance}
+            </button>
+          )}
       </div>
 
       <div className="grid grid-cols-3 gap-2">
@@ -156,56 +166,60 @@ export function MealCards({
           const isFilled = hasEntry || isIndividualLunch;
 
           return (
-          <motion.button
-            type="button"
-            key={meal.type}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.2, delay: index * 0.05 }}
-            onClick={() => {
-              if (canEdit && currentMealData && onEditMeal) {
-                onEditMeal(meal.type, currentMealData);
-              } else {
-                onAddMeal?.(meal.type);
-              }
-            }}
-            className={`flex min-h-[5.25rem] flex-col justify-between rounded-[15px] p-3 text-left transition-colors lg:min-h-0 ${
-              isFilled
-                ? "bg-[var(--whisper-cream)] hover:bg-[var(--soft-bone)]"
-                : "border border-dashed border-[var(--soft-bone)] bg-transparent hover:border-[var(--slate-gray)] hover:bg-[var(--whisper-cream)]"
-            } ${
-              isNonMealDay ? "opacity-70" : ""
-            }`}
-          >
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-semibold text-[var(--ink-black)]">{meal.title}</span>
-              <div className={`h-2 w-2 rounded-full ${meal.dot}`} />
-            </div>
+            <motion.button
+              type="button"
+              key={meal.type}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.2, delay: index * 0.05 }}
+              onClick={() => {
+                if (canEdit && currentMealData && onEditMeal) {
+                  onEditMeal(meal.type, currentMealData);
+                } else {
+                  onAddMeal?.(meal.type);
+                }
+              }}
+              className={`flex min-h-[5.25rem] min-w-0 flex-col justify-between rounded-[15px] p-3 text-left transition-colors lg:min-h-0 ${
+                isFilled
+                  ? "bg-[var(--whisper-cream)] hover:bg-[var(--soft-bone)]"
+                  : "border border-dashed border-[var(--soft-bone)] bg-transparent hover:border-[var(--slate-gray)] hover:bg-[var(--whisper-cream)]"
+              } ${isNonMealDay ? "opacity-70" : ""}`}
+            >
+              <div className="flex min-w-0 items-center justify-between gap-2">
+                <span className="min-w-0 truncate text-xs font-semibold text-[var(--ink-black)]">
+                  {meal.title}
+                </span>
+                <div className={`h-2 w-2 shrink-0 rounded-full ${meal.dot}`} />
+              </div>
 
-            <div className="min-w-0">
-              {hasEntry ? (
-                <p className="truncate text-xs font-medium text-[var(--granite)]">
-                  {meal.data?.store || "매장 미입력"}
-                </p>
-              ) : (
-                <p className="truncate text-xs text-[var(--slate-gray)]">
-                  {isIndividualLunch ? "개별식사" : isNonMealDay ? "식대 미지급" : "기록 없음"}
-                </p>
-              )}
-            </div>
+              <div className="min-w-0">
+                {hasEntry ? (
+                  <p className="truncate text-xs font-medium text-[var(--granite)]">
+                    {meal.data?.store || "매장 미입력"}
+                  </p>
+                ) : (
+                  <p className="truncate text-xs text-[var(--slate-gray)]">
+                    {isIndividualLunch
+                      ? "개별식사"
+                      : isNonMealDay
+                        ? "식대 미지급"
+                        : "기록 없음"}
+                  </p>
+                )}
+              </div>
 
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-semibold text-[var(--ink-black)]">
-                {meal.data?.amount && meal.data.amount > 0
-                  ? `${meal.data.amount.toLocaleString()}원`
-                  : "-"}
-              </span>
-              <span className="text-[10px] font-medium text-[var(--slate-gray)]">
-                {canEdit ? "수정" : "추가"}
-              </span>
-            </div>
-          </motion.button>
-        );
+              <div className="flex min-w-0 items-center justify-between gap-2">
+                <span className="min-w-0 truncate text-xs font-semibold text-[var(--ink-black)]">
+                  {meal.data?.amount && meal.data.amount > 0
+                    ? `${meal.data.amount.toLocaleString()}원`
+                    : "-"}
+                </span>
+                <span className="shrink-0 text-[10px] font-medium text-[var(--slate-gray)]">
+                  {canEdit ? "수정" : "추가"}
+                </span>
+              </div>
+            </motion.button>
+          );
         })}
       </div>
     </motion.div>

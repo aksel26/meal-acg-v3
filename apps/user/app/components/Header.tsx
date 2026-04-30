@@ -51,7 +51,7 @@ const Header = () => {
       <div className="glass-card-elevated flex items-center justify-between gap-4 rounded-[24px] px-5 py-4">
         <div className="min-w-0">
           <p className="eyebrow-label">ACG welfare</p>
-          <p className="mt-2 truncate font-display text-[1.375rem] leading-none tracking-[-0.035em] text-[var(--ink-black)]">
+          <p className="mt-2 truncate font-display text-[1.375rem] leading-none tracking-normal text-[var(--ink-black)]">
             {currentLabel}
           </p>
         </div>

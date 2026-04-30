@@ -39,7 +39,7 @@ export function Footer({ className = "", variant = "default" }: FooterProps) {
         <div className="space-y-6 px-6 py-7">
           <div className="space-y-3">
             <p className="eyebrow-label text-white/70 before:bg-[var(--signal-orange)]">Support</p>
-            <h2 className="max-w-[16rem] text-[1.9rem] leading-[1.02] tracking-[-0.04em] text-white">
+            <h2 className="max-w-[16rem] text-[1.9rem] leading-[1.08] tracking-normal text-white">
               운영과 버그 문의를
               <br />
               안내합니다.

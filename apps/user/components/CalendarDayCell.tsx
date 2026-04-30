@@ -92,7 +92,7 @@ export const CalendarDayCell = React.memo(function CalendarDayCell({
       {...dayButtonProps}
       onClick={handleDayClick}
       className={`
-        relative min-w-0 rounded-[12px] p-0 transition-all duration-200 sm:p-0.5 lg:aspect-auto lg:h-full lg:min-h-0 lg:rounded-[10px] lg:p-0
+        relative h-auto min-h-[clamp(3rem,12.5vw,3.5rem)] min-w-0 rounded-[12px] p-0 transition-all duration-200 sm:min-h-[52px] sm:p-0.5 lg:aspect-auto lg:h-full lg:min-h-0 lg:rounded-[10px] lg:p-0
         ${isSelected ? "bg-[rgba(20,20,19,0.04)]" : "hover:bg-white/60 active:bg-white/80"}
         touch-manipulation
       `}
@@ -107,11 +107,11 @@ export const CalendarDayCell = React.memo(function CalendarDayCell({
       {isToday && (
         <span className="absolute left-2 top-1 h-1.5 w-1.5 rounded-full bg-[var(--signal-orange)]" />
       )}
-      <div className="flex min-h-[40px] flex-col items-center justify-center sm:min-h-[48px] lg:h-full lg:min-h-0">
-        <div className="flex h-[18px] items-center justify-center sm:h-5 lg:h-[18px]">
+      <div className="flex min-h-[clamp(3rem,12.5vw,3.5rem)] min-w-0 flex-col items-center justify-center sm:min-h-[52px] lg:h-full lg:min-h-0">
+        <div className="flex h-[18px] min-w-0 items-center justify-center sm:h-5 lg:h-[18px]">
           <span
             className={`
-              text-base sm:text-lg lg:text-base font-normal transition-all duration-200 leading-none
+              text-[0.94rem] sm:text-lg lg:text-base font-normal transition-all duration-200 leading-none
               ${isToday ? "text-[var(--signal-orange)]" : ""}
               ${isSelected && !isToday ? "text-[var(--ink-black)]" : ""}
               ${isSunday ? "text-[var(--danger)]" : ""}
@@ -125,12 +125,12 @@ export const CalendarDayCell = React.memo(function CalendarDayCell({
         </div>
         <div className="flex h-1.5 w-full items-center justify-center sm:h-2 lg:h-1.5">
           {holiday && (
-            <span className="max-w-full truncate px-0.5 text-[9px] font-normal leading-none text-[var(--danger)] sm:text-[10px] lg:max-w-[3.5rem] lg:text-[9px]">
+            <span className="max-w-full truncate px-0.5 text-[8px] font-normal leading-none text-[var(--danger)] sm:text-[10px] lg:max-w-[3.5rem] lg:text-[9px]">
               {holiday.length > 5 ? `${holiday.slice(0, 5)}..` : holiday}
             </span>
           )}
         </div>
-        <div className="relative flex h-3 min-h-3 items-center justify-center sm:h-3.5 sm:min-h-3.5 lg:h-3 lg:min-h-3">
+        <div className="relative flex h-3 min-h-3 min-w-0 items-center justify-center sm:h-3.5 sm:min-h-3.5 lg:h-3 lg:min-h-3">
           {isLoading ? (
             <div className="flex items-center justify-center gap-1" aria-hidden="true">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--soft-bone)]" />
@@ -149,7 +149,7 @@ export const CalendarDayCell = React.memo(function CalendarDayCell({
             </div>
           ) : mealIndicators.length > 0 ? (
             <div
-              className="grid grid-cols-3 items-center justify-items-center gap-0.5"
+              className="grid min-w-0 grid-cols-3 items-center justify-items-center gap-0.5"
               aria-label={`${mealIndicators.length}개 식사 기록`}
             >
               {(["breakfast", "lunch", "dinner"] as const).map((type) => {

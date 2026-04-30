@@ -218,9 +218,9 @@ export default function CalendarComponent({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.2 }}
-      className={`overflow-hidden rounded-[22px] bg-white p-4 touch-pan-y sm:p-5 lg:flex lg:min-h-0 lg:flex-col lg:p-4 ${className}`}
+      className={`overflow-hidden rounded-[20px] bg-white p-4 touch-pan-y sm:rounded-[22px] sm:p-5 lg:flex lg:min-h-0 lg:flex-col lg:p-4 ${className}`}
     >
-      <div className="mb-4 flex items-center justify-between gap-3 px-1 lg:mb-3">
+      <div className="mb-4 flex items-center justify-between gap-3 px-0.5 sm:px-1 lg:mb-3">
         <div className="flex min-w-0 items-baseline gap-2">
           <p className="text-xs font-medium uppercase tracking-[0.14em] text-[var(--slate-gray)]">
             Calendar
@@ -234,7 +234,7 @@ export default function CalendarComponent({
         <div className="flex items-center gap-2">
           <button
             onClick={handlePrevClick}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--whisper-cream)] transition-colors hover:bg-[var(--soft-bone)] touch-manipulation"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--whisper-cream)] transition-colors hover:bg-[var(--soft-bone)] touch-manipulation sm:h-9 sm:w-9"
             aria-label="이전 달"
           >
             <svg className="h-5 w-5 text-[var(--ink-black)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -244,7 +244,7 @@ export default function CalendarComponent({
 
           <button
             onClick={handleNextClick}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--whisper-cream)] transition-colors hover:bg-[var(--soft-bone)] touch-manipulation"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--whisper-cream)] transition-colors hover:bg-[var(--soft-bone)] touch-manipulation sm:h-9 sm:w-9"
             aria-label="다음 달"
           >
             <svg className="h-5 w-5 text-[var(--ink-black)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -260,7 +260,7 @@ export default function CalendarComponent({
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.1}
         onDragEnd={handleDragEnd}
-        className="cursor-grab rounded-[18px] p-0.5 active:cursor-grabbing lg:min-h-0 lg:flex-1 lg:overflow-hidden lg:p-0.5"
+        className="min-h-[25.5rem] min-w-0 cursor-grab rounded-[18px] p-0.5 active:cursor-grabbing sm:min-h-[26rem] lg:min-h-0 lg:flex-1 lg:overflow-hidden lg:p-0.5"
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
@@ -269,6 +269,7 @@ export default function CalendarComponent({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: direction * -30 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
+            className="min-h-[25.5rem] sm:min-h-[26rem] lg:min-h-0"
           >
             <Calendar
               mode="single"
@@ -277,17 +278,17 @@ export default function CalendarComponent({
               numberOfMonths={1}
               month={displayDate}
               captionLayout="label"
-              className="w-full p-0 sm:pb-0"
+              className="w-full max-w-full p-0 sm:pb-0"
               classNames={{
                 month_caption: "hidden",
-                month: "flex w-full flex-col gap-1 lg:h-full lg:min-h-0 lg:gap-1",
-                months: "flex w-full flex-col gap-0 lg:h-full lg:min-h-0",
+                month: "flex min-h-[25.5rem] w-full min-w-0 flex-col gap-3 sm:min-h-[26rem] lg:h-full lg:min-h-0 lg:gap-1",
+                months: "flex min-h-[25.5rem] w-full flex-col gap-0 sm:min-h-[26rem] lg:h-full lg:min-h-0",
                 nav: "hidden",
-                table: "w-full border-collapse lg:h-full lg:min-h-0",
-                week: "my-0 flex w-full lg:my-0 lg:flex-1 lg:min-h-0",
-                day: "relative w-full p-0 text-center min-h-[40px] sm:min-h-[48px] lg:min-h-0 select-none",
+                table: "w-full border-separate border-spacing-y-3 lg:h-full lg:min-h-0 lg:border-collapse lg:border-spacing-y-0",
+                week: "my-1.5 grid w-full min-w-0 grid-cols-7 gap-x-0 gap-y-3 lg:my-0 lg:flex-1 lg:min-h-0 lg:gap-0.5",
+                day: "relative min-w-0 px-0 py-1 text-center min-h-[clamp(3rem,12.5vw,3.5rem)] sm:min-h-[52px] lg:min-h-0 lg:py-0 select-none",
                 weekdays: "mb-0 mt-1 grid grid-cols-7 lg:mt-1.5",
-                weekday: "flex h-[14px] items-center justify-center text-center text-sm font-normal uppercase tracking-[0.12em] text-[var(--slate-gray)] lg:h-[14px] lg:text-sm",
+                weekday: "flex h-[14px] min-w-0 items-center justify-center text-center text-xs font-normal uppercase tracking-[0.12em] text-[var(--slate-gray)] sm:text-sm lg:h-[14px] lg:text-sm",
               }}
               components={calendarComponents}
             />

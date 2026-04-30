@@ -22,6 +22,8 @@ import {
 } from "@repo/ui/src/popover";
 import { DRINKS } from "@/lib/const/const";
 import { motion } from "motion/react";
+import QuickActionsSection from "@/components/dashboard/QuickActionsSection";
+import { Check, ChevronLeft, ChevronRight, Coffee } from "@repo/ui/icons";
 
 // 3일 이내 생성된 취합 건은 NEW 표시
 function isNewCollection(createdAt: string) {
@@ -46,18 +48,25 @@ function CollectionListView({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-      className="card-premium rounded-2xl pb-12"
+      className="card-premium overflow-hidden rounded-[24px]"
     >
-      <header className="px-5 pt-10 pb-5">
-        <h1 className="text-xl font-bold text-[var(--ink-black)] tracking-tight">
-          음료 취합
-        </h1>
-        <p className="text-xs text-[var(--slate-gray)] mt-1">
-          참여할 취합을 선택하세요
-        </p>
+      <header className="px-5 py-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[16px] bg-[var(--whisper-cream)] text-[var(--ink-black)]">
+            <Coffee className="h-4 w-4" aria-hidden="true" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-lg font-medium text-[var(--ink-black)]">
+              Monthly 커피
+            </h1>
+            <p className="mt-0.5 text-xs text-[var(--granite)]">
+              참여할 음료 취합을 선택하세요
+            </p>
+          </div>
+        </div>
       </header>
 
-      <div className="px-5">
+      <div className="px-5 pb-5">
         {isLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 2 }).map((_, i) => (
@@ -65,7 +74,7 @@ function CollectionListView({
             ))}
           </div>
         ) : collections.length === 0 ? (
-          <div className="text-center py-12">
+          <div className="rounded-[18px] bg-[rgba(244,241,232,0.58)] py-10 text-center">
             <p className="text-[var(--slate-gray)] text-sm">
               현재 참여 가능한 취합이 없습니다
             </p>
@@ -79,7 +88,7 @@ function CollectionListView({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.04 }}
                 onClick={() => onSelect(col)}
-                className="w-full text-left rounded-xl px-4 py-3.5 bg-[var(--soft-bone)] hover:bg-[var(--whisper-cream)] transition-colors active:scale-[0.98]"
+                className="w-full rounded-[18px] bg-[rgba(244,241,232,0.58)] px-4 py-3 text-left transition-colors hover:bg-[var(--whisper-cream)] active:scale-[0.98]"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
@@ -97,19 +106,7 @@ function CollectionListView({
                       </p>
                     </div>
                   </div>
-                  <svg
-                    className="w-4 h-4 text-[rgba(14,15,12,0.2)]"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
+                  <ChevronRight className="h-4 w-4 text-[rgba(14,15,12,0.24)]" />
                 </div>
               </motion.button>
             ))}
@@ -190,49 +187,215 @@ function DrinkSelectionView({
     }
   };
 
-  const completedCount =
-    data?.applications.filter((app) => app.drink).length || 0;
+  const applications = data?.applications || [];
+  const completedCount = applications.filter((app) => app.drink).length || 0;
   const totalCount = data?.totalMembers || 0;
+  const pickupText = pickupPersons.map((p) => p.name).join(", ");
+  const drinkButtonGridClass = "grid grid-cols-4 gap-2";
+
+  const renderDrinkOptions = (gridClass = "space-y-2") => (
+    <div className={gridClass}>
+      {isLoading
+        ? Array.from({ length: 8 }).map((_, index) => (
+            <div key={index} className="skeleton h-11 rounded-[18px]" />
+          ))
+        : displayDrinks.map((drink) => {
+            const isMyDrink = myDrink === drink;
+            const isNoSelection = drink === "선택안함";
+            const isCustom = drink === "기타";
+            const isMyCustomDrink =
+              isCustom &&
+              myDrink &&
+              !displayDrinks.includes(myDrink) &&
+              myDrink !== "기타";
+
+            return (
+              <button
+                key={drink}
+                onClick={() => {
+                  setSelectedDrink(drink);
+                  setCustomDrink("");
+                  setIsDialogOpen(true);
+                }}
+                className={`flex min-h-11 w-full items-center justify-between rounded-[18px] px-4 py-3 text-sm font-medium transition-colors ${
+                  isMyDrink || isMyCustomDrink
+                    ? "bg-[rgba(236,126,0,0.1)] text-[var(--ink-black)]"
+                    : isNoSelection
+                      ? "bg-[rgba(244,241,232,0.58)] text-[var(--slate-gray)]"
+                      : "bg-[rgba(244,241,232,0.58)] text-[var(--granite)] hover:bg-[var(--whisper-cream)]"
+                }`}
+              >
+                <span className="min-w-0 truncate text-left">
+                  {drink}
+                  {isMyCustomDrink && (
+                    <span className="ml-1.5 text-xs text-[var(--slate-gray)]">
+                      ({myDrink})
+                    </span>
+                  )}
+                </span>
+                {(isMyDrink || isMyCustomDrink) && (
+                  <Check className="h-4 w-4 shrink-0 text-[#9a4f00]" strokeWidth={3} />
+                )}
+              </button>
+            );
+          })}
+    </div>
+  );
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-      className="card-premium rounded-2xl pb-12"
+      className="card-premium overflow-hidden rounded-[24px]"
     >
       {/* Header */}
-      <header className="px-5 pt-10 pb-5">
+      <header className="px-5 py-4">
         <button
           onClick={onBack}
-          className="text-xs text-[var(--slate-gray)] font-medium flex items-center gap-1 mb-3"
+          className="mb-3 flex items-center gap-1 text-xs font-medium text-[var(--slate-gray)] transition-colors hover:text-[var(--ink-black)]"
         >
-          <svg
-            className="w-3.5 h-3.5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
+          <ChevronLeft className="h-3.5 w-3.5" />
           목록
         </button>
-        <h1 className="text-xl font-bold text-[var(--ink-black)] tracking-tight">
-          {collection.title}
-        </h1>
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[16px] bg-[var(--whisper-cream)] text-[var(--ink-black)]">
+            <Coffee className="h-4 w-4" aria-hidden="true" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="truncate text-lg font-medium text-[var(--ink-black)]">
+              {collection.title}
+            </h1>
+            <p className="mt-0.5 text-xs text-[var(--granite)]">
+              {collection.is_one_time
+                ? "일회성 음료 취합"
+                : `${collection.year}년 ${collection.month}월 음료 취합`}
+            </p>
+          </div>
+        </div>
       </header>
 
+      <div className="hidden grid-cols-[minmax(260px,0.78fr)_minmax(0,1.22fr)] gap-3 px-5 pb-5 lg:grid lg:h-[min(560px,calc(100dvh-18rem))] lg:min-h-[360px]">
+        <div className="flex min-h-0 flex-col gap-3">
+          <div className="rounded-[18px] bg-[rgba(244,241,232,0.58)] p-3">
+            <p className="text-[11px] font-medium text-[var(--slate-gray)]">
+              픽업담당
+            </p>
+            {isLoading ? (
+              <p className="mt-1.5 text-sm font-semibold text-[var(--ink-black)]">
+                <span className="skeleton inline-block h-5 w-16" />
+              </p>
+            ) : (
+              <p className="mt-1.5 text-sm font-semibold text-[var(--ink-black)]">
+                {pickupText || "미정"}
+              </p>
+            )}
+          </div>
+
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[18px] bg-[rgba(244,241,232,0.58)]">
+            <div className="shrink-0 p-3">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[11px] font-medium text-[var(--slate-gray)]">
+                  신청현황
+                </p>
+                <p className="text-xs font-semibold text-[var(--ink-black)] tabular-nums">
+                  {completedCount}
+                  <span className="font-medium text-[rgba(14,15,12,0.28)]">
+                    /{totalCount}
+                  </span>
+                </p>
+              </div>
+            </div>
+            <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto px-3 pb-3">
+              {isLoading ? (
+                Array.from({ length: 8 }).map((_, index) => (
+                  <div key={index} className="skeleton h-10 rounded-[14px]" />
+                ))
+              ) : applications.length === 0 ? (
+                <p className="py-8 text-center text-xs text-[var(--slate-gray)]">
+                  아직 신청 내역이 없습니다
+                </p>
+              ) : (
+                applications.map((app, index) => (
+                  <div
+                    key={`${app.name}-${index}`}
+                    className="flex items-center justify-between gap-3 rounded-[14px] bg-white px-3 py-2"
+                  >
+                    <span className="min-w-0 truncate text-xs font-medium text-[var(--granite)]">
+                      {app.name}
+                    </span>
+                    <span
+                      className={`max-w-[52%] truncate text-right text-xs font-semibold ${
+                        app.drink
+                          ? "text-[var(--ink-black)]"
+                          : "text-[rgba(14,15,12,0.28)]"
+                      }`}
+                    >
+                      {app.drink || "미선택"}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="grid min-h-0 grid-rows-[auto_auto_minmax(0,1fr)] rounded-[18px] border border-[rgba(14,15,12,0.06)] bg-white/55 p-3">
+          <p className="mb-3 text-[11px] font-medium text-[var(--slate-gray)]">
+            음료 선택
+          </p>
+
+          {currentUserName && (
+            <div className="mb-3 shrink-0">
+              {isLoading ? (
+                <div className="rounded-[18px] bg-[rgba(244,241,232,0.58)] p-3">
+                  <div className="skeleton mb-2 h-4 w-16" />
+                  <div className="skeleton h-5 w-32" />
+                </div>
+              ) : myDrink ? (
+                <div className="rounded-[18px] bg-[rgba(236,126,0,0.1)] p-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[11px] font-medium text-[#9a4f00]">
+                        내 선택
+                      </p>
+                      <p className="mt-0.5 text-sm font-semibold text-[var(--ink-black)]">
+                        {myDrink}
+                      </p>
+                    </div>
+                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[rgba(236,126,0,0.18)]">
+                      <Check
+                        className="h-3 w-3 text-[#9a4f00]"
+                        strokeWidth={3}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-[18px] border border-dashed border-[rgba(14,15,12,0.08)] p-3">
+                  <p className="text-[11px] font-medium text-[var(--slate-gray)]">
+                    내 선택
+                  </p>
+                  <p className="mt-0.5 text-sm text-[var(--slate-gray)]">
+                    아래에서 음료를 선택해주세요
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="min-h-0 flex-1 overflow-y-auto pb-1">
+            {renderDrinkOptions(drinkButtonGridClass)}
+          </div>
+        </div>
+      </div>
+
       {/* Status */}
-      <div className="px-5 mb-5">
+      <div className="mb-5 px-5 lg:hidden">
         <div className="flex gap-2.5">
           <button
             onClick={() => setIsAllHistoryDialogOpen(true)}
-            className="flex-1 rounded-xl p-3.5 bg-[var(--soft-bone)] text-left transition-colors active:scale-[0.98]"
+            className="flex-1 rounded-[18px] bg-[rgba(244,241,232,0.58)] p-3 text-left transition-colors active:scale-[0.98]"
           >
             <div className="flex items-center justify-between">
               <p className="text-[11px] text-[var(--slate-gray)] font-medium">신청현황</p>
@@ -255,7 +418,7 @@ function DrinkSelectionView({
             <Popover>
               <PopoverTrigger asChild>
                 <div
-                  className="flex-1 rounded-xl p-3.5 bg-[var(--soft-bone)] min-w-0 cursor-default"
+                  className="min-w-0 flex-1 cursor-default rounded-[18px] bg-[rgba(244,241,232,0.58)] p-3"
                   onMouseEnter={(e) => {
                     const trigger = e.currentTarget;
                     trigger.click();
@@ -272,17 +435,17 @@ function DrinkSelectionView({
                     </p>
                   ) : (
                     <p className="text-sm font-semibold text-[var(--ink-black)] mt-1.5 truncate">
-                      {pickupPersons.map((p) => p.name).join(", ")}
+                      {pickupText}
                     </p>
                   )}
                 </div>
               </PopoverTrigger>
               <PopoverContent className="w-auto max-w-[200px] bg-[var(--ink-black)] text-white text-xs rounded-lg px-3 py-2 border-0">
-                {pickupPersons.map((p) => p.name).join(", ")}
+                {pickupText}
               </PopoverContent>
             </Popover>
           ) : (
-            <div className="flex-1 rounded-xl p-3.5 bg-[var(--soft-bone)] min-w-0">
+            <div className="min-w-0 flex-1 rounded-[18px] bg-[rgba(244,241,232,0.58)] p-3">
               <p className="text-[11px] text-[var(--slate-gray)] font-medium">픽업담당</p>
               {isLoading ? (
                 <p className="text-sm font-semibold text-[var(--ink-black)] mt-1.5">
@@ -298,42 +461,35 @@ function DrinkSelectionView({
 
       {/* My Selection */}
       {currentUserName && (
-        <div className="px-5 mb-5">
+        <div className="mb-5 px-5 lg:hidden">
           {isLoading ? (
-            <div className="rounded-xl p-3.5 bg-[var(--soft-bone)]">
-              <div className="skeleton h-4 w-16 mb-2" />
+            <div className="rounded-[18px] bg-[rgba(244,241,232,0.58)] p-3">
+              <div className="skeleton mb-2 h-4 w-16" />
               <div className="skeleton h-5 w-32" />
             </div>
           ) : myDrink ? (
-            <div className="rounded-xl p-3.5 bg-[rgba(255,145,112,0.08)]">
+            <div className="rounded-[18px] bg-[rgba(236,126,0,0.1)] p-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[#ff9170] text-[11px] font-medium">
+                  <p className="text-[11px] font-medium text-[#9a4f00]">
                     내 선택
                   </p>
-                  <p className="text-[#e64a2d] font-semibold text-sm mt-0.5">
+                  <p className="mt-0.5 text-sm font-semibold text-[var(--ink-black)]">
                     {myDrink}
                   </p>
                 </div>
-                <div className="w-5 h-5 bg-[rgba(255,145,112,0.2)] rounded-full flex items-center justify-center">
-                  <svg
-                    className="w-3 h-3 text-[#ff5a3d]"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
+                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[rgba(236,126,0,0.18)]">
+                  <Check
+                    className="h-3 w-3 text-[#9a4f00]"
+                    strokeWidth={3}
+                  />
                 </div>
               </div>
             </div>
           ) : (
-            <div className="border border-dashed border-[rgba(14,15,12,0.08)] rounded-xl p-3.5">
-              <p className="text-[var(--slate-gray)] text-[11px] font-medium">내 선택</p>
-              <p className="text-[var(--slate-gray)] text-sm mt-0.5">
+            <div className="rounded-[18px] border border-dashed border-[rgba(14,15,12,0.08)] p-3">
+              <p className="text-[11px] font-medium text-[var(--slate-gray)]">내 선택</p>
+              <p className="mt-0.5 text-sm text-[var(--slate-gray)]">
                 아래에서 음료를 선택해주세요
               </p>
             </div>
@@ -342,66 +498,11 @@ function DrinkSelectionView({
       )}
 
       {/* Drink Options */}
-      <div className="px-5">
-        <p className="text-[11px] text-[var(--slate-gray)] font-medium mb-3">
+      <div className="px-5 pb-5 lg:hidden">
+        <p className="mb-3 text-[11px] font-medium text-[var(--slate-gray)]">
           음료 선택
         </p>
-        <div className="space-y-2">
-          {isLoading
-            ? Array.from({ length: 6 }).map((_, index) => (
-                <div key={index} className="skeleton h-11 rounded-xl" />
-              ))
-            : displayDrinks.map((drink) => {
-                const isMyDrink = myDrink === drink;
-                const isNoSelection = drink === "선택안함";
-                const isCustom = drink === "기타";
-                const isMyCustomDrink =
-                  isCustom &&
-                  myDrink &&
-                  !displayDrinks.includes(myDrink) &&
-                  myDrink !== "기타";
-
-                return (
-                  <button
-                    key={drink}
-                    onClick={() => {
-                      setSelectedDrink(drink);
-                      setCustomDrink("");
-                      setIsDialogOpen(true);
-                    }}
-                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
-                      isMyDrink || isMyCustomDrink
-                        ? "bg-[rgba(255,145,112,0.08)] text-[#e64a2d]"
-                        : isNoSelection
-                          ? "bg-[var(--soft-bone)] text-[var(--slate-gray)]"
-                          : "bg-[var(--soft-bone)] text-[var(--granite)] hover:bg-[var(--whisper-cream)]"
-                    }`}
-                  >
-                    <span>
-                      {drink}
-                      {isMyCustomDrink && (
-                        <span className="ml-1.5 text-[var(--slate-gray)] text-xs">
-                          ({myDrink})
-                        </span>
-                      )}
-                    </span>
-                    {(isMyDrink || isMyCustomDrink) && (
-                      <svg
-                        className="w-4 h-4 text-[#ff7a5c]"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    )}
-                  </button>
-                );
-              })}
-        </div>
+        {renderDrinkOptions()}
       </div>
 
       {/* Confirm Dialog */}
@@ -473,19 +574,29 @@ const MonthlyDrink = () => {
 
   if (selectedCollection) {
     return (
-      <DrinkSelectionView
-        collection={selectedCollection}
-        onBack={() => setSelectedCollection(null)}
-      />
+      <div className="flex flex-col gap-3 lg:h-[calc(100dvh-10rem)] lg:overflow-hidden">
+        <DrinkSelectionView
+          collection={selectedCollection}
+          onBack={() => setSelectedCollection(null)}
+        />
+        <div className="shrink-0">
+          <QuickActionsSection excludeIds={["monthly"]} />
+        </div>
+      </div>
     );
   }
 
   return (
-    <CollectionListView
-      collections={collections || []}
-      isLoading={collectionsLoading}
-      onSelect={setSelectedCollection}
-    />
+    <div className="flex flex-col gap-3 lg:h-[calc(100dvh-10rem)] lg:overflow-hidden">
+      <CollectionListView
+        collections={collections || []}
+        isLoading={collectionsLoading}
+        onSelect={setSelectedCollection}
+      />
+      <div className="shrink-0">
+        <QuickActionsSection excludeIds={["monthly"]} />
+      </div>
+    </div>
   );
 };
 

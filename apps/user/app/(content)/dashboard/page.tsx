@@ -239,7 +239,9 @@ export default function DashboardPage() {
             mealData={mealData}
           />
 
-          <QuickActionsSection excludeIds={["dashboard"]} />
+          <div className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[820px] px-4 pb-4 sm:px-6">
+            <QuickActionsSection excludeIds={["dashboard"]} />
+          </div>
         </div>
       )}
 
@@ -251,7 +253,7 @@ export default function DashboardPage() {
         />
       </Suspense>
 
-      <Footer variant="compact" className="mt-4 lg:hidden" />
+      <Footer variant="compact" className="mt-4 mb-24 lg:hidden" />
 
       {/* 업데이트 알림 Dialog */}
       <UpdateNotificationDialog />

@@ -95,7 +95,7 @@ const Lunch = () => {
 
   return (
     <React.Fragment>
-      <div className="grid gap-4 lg:h-[calc(100dvh-10rem)] lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:overflow-hidden">
+      <div className="grid gap-4 pb-24 lg:h-[calc(100dvh-10rem)] lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:overflow-hidden lg:pb-0">
         <div className="flex min-w-0 flex-col gap-3 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pr-1">
           {/* 헤더 카드 */}
           <motion.div
@@ -315,7 +315,7 @@ const Lunch = () => {
               )}
             </div>
 
-            <div className="shrink-0">
+            <div className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[820px] px-4 pb-4 sm:px-6 lg:static lg:max-w-none lg:shrink-0 lg:px-0 lg:pb-0">
               <QuickActionsSection excludeIds={["lunch"]} />
             </div>
           </div>

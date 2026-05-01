@@ -540,7 +540,7 @@ export default function Points() {
 
   return (
     <React.Fragment>
-      <div className="grid gap-4 lg:h-[calc(100dvh-10rem)] lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start lg:overflow-hidden">
+      <div className="grid gap-4 pb-24 lg:h-[calc(100dvh-10rem)] lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start lg:overflow-hidden lg:pb-0">
         {/* Points Summary */}
         <div className="flex min-w-0 flex-col lg:h-full lg:min-h-0 lg:gap-4 lg:overflow-hidden">
           {isLoading ? (
@@ -755,7 +755,7 @@ export default function Points() {
                 </p>
               </div>
             ) : (
-              <div className="min-h-0 flex-1 overflow-y-auto rounded-xl bg-white divide-y divide-[rgba(14,15,12,0.08)] overscroll-contain">
+              <div className="min-h-0 flex-1 overflow-y-auto rounded-xl bg-white divide-y divide-[rgba(14,15,12,0.08)]">
                 {sortedRecords.map((record) => {
                   const d = dayjs(record.used_at);
                   const dow = ["일", "월", "화", "수", "목", "금", "토"][
@@ -875,7 +875,7 @@ export default function Points() {
             )}
           </div>
 
-          <div className="mt-5 lg:mt-0 lg:h-[4.25rem] lg:shrink-0">
+          <div className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[820px] px-4 pb-4 sm:px-6 lg:static lg:mt-0 lg:h-[4.25rem] lg:max-w-none lg:shrink-0 lg:px-0 lg:pb-0">
             <QuickActionsSection excludeIds={["points"]} />
           </div>
         </div>

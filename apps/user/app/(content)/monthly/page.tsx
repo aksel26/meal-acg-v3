@@ -1,5 +1,6 @@
 "use client";
 import { Button } from "@repo/ui/src/button";
+import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import {
   useMonthlyData,
@@ -15,15 +16,26 @@ import {
   DialogTitle,
 } from "@repo/ui/src/dialog";
 import { AllHistoryDialog } from "@/components/monthly/AllHistoryDialog";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@repo/ui/src/popover";
+import QuickActionsSection from "@/components/dashboard/QuickActionsSection";
+import { Popover, PopoverTrigger, PopoverContent } from "@repo/ui/src/popover";
 import { DRINKS } from "@/lib/const/const";
 import { motion } from "motion/react";
-import QuickActionsSection from "@/components/dashboard/QuickActionsSection";
-import { Check, ChevronLeft, ChevronRight, Coffee } from "@repo/ui/icons";
+import { Check, ChevronLeft, ChevronRight } from "@repo/ui/icons";
+import Image from "next/image";
+import EmptyImage from "@/public/images/empty.png";
+
+function MonthlyPageShell({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex min-h-0 flex-col gap-3 lg:h-[calc(100dvh-10rem)] lg:overflow-hidden">
+      <div className="min-h-0 pb-24 lg:flex-1 lg:overflow-y-auto lg:pb-0">
+        {children}
+      </div>
+      <div className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[820px] px-4 pb-4 sm:px-6 lg:static lg:max-w-none lg:px-0 lg:pb-0 lg:h-[4.25rem] lg:shrink-0">
+        <QuickActionsSection excludeIds={["monthly"]} />
+      </div>
+    </div>
+  );
+}
 
 // 3일 이내 생성된 취합 건은 NEW 표시
 function isNewCollection(createdAt: string) {
@@ -50,23 +62,7 @@ function CollectionListView({
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       className="card-premium overflow-hidden rounded-[24px]"
     >
-      <header className="px-5 py-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[16px] bg-[var(--whisper-cream)] text-[var(--ink-black)]">
-            <Coffee className="h-4 w-4" aria-hidden="true" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="text-lg font-medium text-[var(--ink-black)]">
-              Monthly 커피
-            </h1>
-            <p className="mt-0.5 text-xs text-[var(--granite)]">
-              참여할 음료 취합을 선택하세요
-            </p>
-          </div>
-        </div>
-      </header>
-
-      <div className="px-5 pb-5">
+      <div className="px-5 pt-5">
         {isLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 2 }).map((_, i) => (
@@ -74,7 +70,15 @@ function CollectionListView({
             ))}
           </div>
         ) : collections.length === 0 ? (
-          <div className="rounded-[18px] bg-[rgba(244,241,232,0.58)] py-10 text-center">
+          <div className="flex flex-col items-center py-12 text-center">
+            <Image
+              src={EmptyImage}
+              alt=""
+              width={96}
+              height={96}
+              className="mb-4 opacity-90"
+              priority={false}
+            />
             <p className="text-[var(--slate-gray)] text-sm">
               현재 참여 가능한 취합이 없습니다
             </p>
@@ -131,8 +135,7 @@ function DrinkSelectionView({
   const [isAllHistoryDialogOpen, setIsAllHistoryDialogOpen] = useState(false);
 
   const { data, isLoading } = useMonthlyData(collection.id);
-  const { mutateAsync: assignDrink, isPending: isAssigning } =
-    useAssignDrink();
+  const { mutateAsync: assignDrink, isPending: isAssigning } = useAssignDrink();
 
   const drinkOptions = data?.drinkOptions || [];
   const pickupPersons = data?.pickupPersons || [];
@@ -162,9 +165,7 @@ function DrinkSelectionView({
     }
 
     const drinkValue =
-      selectedDrink === "기타"
-        ? customDrink.trim() || "기타"
-        : selectedDrink;
+      selectedDrink === "기타" ? customDrink.trim() || "기타" : selectedDrink;
 
     if (!drinkValue) {
       alert("음료를 선택해주세요.");
@@ -182,7 +183,7 @@ function DrinkSelectionView({
       setCustomDrink("");
     } catch (error) {
       alert(
-        `음료 선택 중 오류가 발생했습니다: ${error instanceof Error ? error.message : "알 수 없는 오류"}`
+        `음료 선택 중 오류가 발생했습니다: ${error instanceof Error ? error.message : "알 수 없는 오류"}`,
       );
     }
   };
@@ -234,7 +235,10 @@ function DrinkSelectionView({
                   )}
                 </span>
                 {(isMyDrink || isMyCustomDrink) && (
-                  <Check className="h-4 w-4 shrink-0 text-[#9a4f00]" strokeWidth={3} />
+                  <Check
+                    className="h-4 w-4 shrink-0 text-[#9a4f00]"
+                    strokeWidth={3}
+                  />
                 )}
               </button>
             );
@@ -249,31 +253,15 @@ function DrinkSelectionView({
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       className="card-premium overflow-hidden rounded-[24px]"
     >
-      {/* Header */}
-      <header className="px-5 py-4">
+      <div className="px-5 pt-5 pb-3">
         <button
           onClick={onBack}
-          className="mb-3 flex items-center gap-1 text-xs font-medium text-[var(--slate-gray)] transition-colors hover:text-[var(--ink-black)]"
+          className="text-xs text-[var(--slate-gray)] font-medium flex items-center gap-1"
         >
           <ChevronLeft className="h-3.5 w-3.5" />
           목록
         </button>
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[16px] bg-[var(--whisper-cream)] text-[var(--ink-black)]">
-            <Coffee className="h-4 w-4" aria-hidden="true" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="truncate text-lg font-medium text-[var(--ink-black)]">
-              {collection.title}
-            </h1>
-            <p className="mt-0.5 text-xs text-[var(--granite)]">
-              {collection.is_one_time
-                ? "일회성 음료 취합"
-                : `${collection.year}년 ${collection.month}월 음료 취합`}
-            </p>
-          </div>
-        </div>
-      </header>
+      </div>
 
       <div className="hidden grid-cols-[minmax(260px,0.78fr)_minmax(0,1.22fr)] gap-3 px-5 pb-5 lg:grid lg:h-[min(560px,calc(100dvh-18rem))] lg:min-h-[360px]">
         <div className="flex min-h-0 flex-col gap-3">
@@ -398,8 +386,12 @@ function DrinkSelectionView({
             className="flex-1 rounded-[18px] bg-[rgba(244,241,232,0.58)] p-3 text-left transition-colors active:scale-[0.98]"
           >
             <div className="flex items-center justify-between">
-              <p className="text-[11px] text-[var(--slate-gray)] font-medium">신청현황</p>
-              <p className="text-[10px] text-[var(--slate-gray)]">전체보기 &rsaquo;</p>
+              <p className="text-[11px] text-[var(--slate-gray)] font-medium">
+                신청현황
+              </p>
+              <p className="text-[10px] text-[var(--slate-gray)]">
+                전체보기 &rsaquo;
+              </p>
             </div>
             <p className="text-lg font-bold text-[var(--ink-black)] mt-1 tabular-nums">
               {isLoading ? (
@@ -428,7 +420,9 @@ function DrinkSelectionView({
                     trigger.click();
                   }}
                 >
-                  <p className="text-[11px] text-[var(--slate-gray)] font-medium">픽업담당</p>
+                  <p className="text-[11px] text-[var(--slate-gray)] font-medium">
+                    픽업담당
+                  </p>
                   {isLoading ? (
                     <p className="text-sm font-semibold text-[var(--ink-black)] mt-1.5">
                       <span className="skeleton inline-block w-14 h-5" />
@@ -446,13 +440,17 @@ function DrinkSelectionView({
             </Popover>
           ) : (
             <div className="min-w-0 flex-1 rounded-[18px] bg-[rgba(244,241,232,0.58)] p-3">
-              <p className="text-[11px] text-[var(--slate-gray)] font-medium">픽업담당</p>
+              <p className="text-[11px] text-[var(--slate-gray)] font-medium">
+                픽업담당
+              </p>
               {isLoading ? (
                 <p className="text-sm font-semibold text-[var(--ink-black)] mt-1.5">
                   <span className="skeleton inline-block w-14 h-5" />
                 </p>
               ) : (
-                <p className="text-sm font-semibold text-[rgba(14,15,12,0.2)] mt-1.5">미정</p>
+                <p className="text-sm font-semibold text-[rgba(14,15,12,0.2)] mt-1.5">
+                  미정
+                </p>
               )}
             </div>
           )}
@@ -479,16 +477,15 @@ function DrinkSelectionView({
                   </p>
                 </div>
                 <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[rgba(236,126,0,0.18)]">
-                  <Check
-                    className="h-3 w-3 text-[#9a4f00]"
-                    strokeWidth={3}
-                  />
+                  <Check className="h-3 w-3 text-[#9a4f00]" strokeWidth={3} />
                 </div>
               </div>
             </div>
           ) : (
             <div className="rounded-[18px] border border-dashed border-[rgba(14,15,12,0.08)] p-3">
-              <p className="text-[11px] font-medium text-[var(--slate-gray)]">내 선택</p>
+              <p className="text-[11px] font-medium text-[var(--slate-gray)]">
+                내 선택
+              </p>
               <p className="mt-0.5 text-sm text-[var(--slate-gray)]">
                 아래에서 음료를 선택해주세요
               </p>
@@ -545,8 +542,7 @@ function DrinkSelectionView({
             <Button
               onClick={handleDrinkAssign}
               disabled={
-                isAssigning ||
-                (selectedDrink === "기타" && !customDrink.trim())
+                isAssigning || (selectedDrink === "기타" && !customDrink.trim())
               }
               className="flex-1 h-11 bg-[var(--ink-black)] hover:bg-[var(--ink-black)] text-white font-semibold rounded-xl disabled:opacity-40"
             >
@@ -567,36 +563,29 @@ function DrinkSelectionView({
 
 // ─── 메인 페이지 ──────────────────────────────────────────────
 const MonthlyDrink = () => {
-  const { data: collections, isLoading: collectionsLoading } =
-    useCollections();
+  const { data: collections, isLoading: collectionsLoading } = useCollections();
   const [selectedCollection, setSelectedCollection] =
     useState<DrinkCollectionItem | null>(null);
 
   if (selectedCollection) {
     return (
-      <div className="flex flex-col gap-3 lg:h-[calc(100dvh-10rem)] lg:overflow-hidden">
+      <MonthlyPageShell>
         <DrinkSelectionView
           collection={selectedCollection}
           onBack={() => setSelectedCollection(null)}
         />
-        <div className="shrink-0">
-          <QuickActionsSection excludeIds={["monthly"]} />
-        </div>
-      </div>
+      </MonthlyPageShell>
     );
   }
 
   return (
-    <div className="flex flex-col gap-3 lg:h-[calc(100dvh-10rem)] lg:overflow-hidden">
+    <MonthlyPageShell>
       <CollectionListView
         collections={collections || []}
         isLoading={collectionsLoading}
         onSelect={setSelectedCollection}
       />
-      <div className="shrink-0">
-        <QuickActionsSection excludeIds={["monthly"]} />
-      </div>
-    </div>
+    </MonthlyPageShell>
   );
 };
 

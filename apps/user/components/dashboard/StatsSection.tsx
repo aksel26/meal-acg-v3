@@ -16,7 +16,8 @@ import { Copy } from "@repo/ui/icons";
 import dayjs from "dayjs";
 import Image from "next/image";
 import { motion } from "motion/react";
-import { useEffect, useState } from "react";
+import type { PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCalculationData } from "@/hooks/use-calculation-data";
 import { useMemberIdLookup, usePointsWelfare } from "@/hooks/use-points-data";
 import { useAddUsageRecord } from "@/hooks/use-points-mutations";
@@ -73,6 +74,14 @@ function AdjustmentMarker({
 function RecentMealTicker({ excludeUserId }: { excludeUserId: string }) {
   const { data = [], isLoading } = useRecentMealActivity(excludeUserId);
   const tickerItems = data.length > 0 ? [...data, ...data] : [];
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const dragStateRef = useRef<{
+    pointerId: number;
+    startY: number;
+    startScrollTop: number;
+  } | null>(null);
+  const wheelIdleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isInteracting, setIsInteracting] = useState(false);
 
   const formatActivityDate = (date: string) => dayjs(date).format("M.D");
   const getActivityMeals = (activity: RecentMealActivity) => {
@@ -84,6 +93,53 @@ function RecentMealTicker({ excludeUserId }: { excludeUserId: string }) {
     return [{ type: mealLabel, store: activity.store }];
   };
 
+  const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!scrollRef.current || data.length <= 1) return;
+
+    dragStateRef.current = {
+      pointerId: event.pointerId,
+      startY: event.clientY,
+      startScrollTop: scrollRef.current.scrollTop,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setIsInteracting(true);
+  };
+
+  const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!scrollRef.current || !dragStateRef.current) return;
+
+    const deltaY = event.clientY - dragStateRef.current.startY;
+    scrollRef.current.scrollTop = dragStateRef.current.startScrollTop - deltaY;
+  };
+
+  const stopDragging = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (dragStateRef.current?.pointerId === event.pointerId) {
+      dragStateRef.current = null;
+      setIsInteracting(false);
+    }
+  };
+
+  const handleWheel = () => {
+    setIsInteracting(true);
+
+    if (wheelIdleTimerRef.current) {
+      clearTimeout(wheelIdleTimerRef.current);
+    }
+
+    wheelIdleTimerRef.current = setTimeout(() => {
+      setIsInteracting(false);
+      wheelIdleTimerRef.current = null;
+    }, 500);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (wheelIdleTimerRef.current) {
+        clearTimeout(wheelIdleTimerRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="mb-2 flex items-center justify-between">
@@ -92,7 +148,15 @@ function RecentMealTicker({ excludeUserId }: { excludeUserId: string }) {
         </p>
       </div>
 
-      <div className="relative min-h-0 flex-1 overflow-hidden px-1 py-2 [mask-image:linear-gradient(to_bottom,transparent_0,black_1.1rem,black_calc(100%-2rem),transparent_100%)]">
+      <div
+        ref={scrollRef}
+        className="relative min-h-0 flex-1 cursor-grab overflow-y-auto px-1 py-2 [mask-image:linear-gradient(to_bottom,transparent_0,black_1.1rem,black_calc(100%-2rem),transparent_100%)] active:cursor-grabbing"
+        onWheel={handleWheel}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={stopDragging}
+        onPointerCancel={stopDragging}
+      >
         {isLoading ? (
           <div className="space-y-2">
             <div className="skeleton h-5 rounded-full" />
@@ -101,9 +165,13 @@ function RecentMealTicker({ excludeUserId }: { excludeUserId: string }) {
         ) : data.length > 0 ? (
           <motion.div
             className="space-y-2"
-            animate={data.length > 1 ? { y: ["0%", "-50%"] } : undefined}
+            animate={
+              data.length > 1 && !isInteracting
+                ? { y: ["0%", "-50%"] }
+                : { y: 0 }
+            }
             transition={
-              data.length > 1
+              data.length > 1 && !isInteracting
                 ? {
                     duration: Math.max(5.6, data.length * 1.35),
                     repeat: Infinity,

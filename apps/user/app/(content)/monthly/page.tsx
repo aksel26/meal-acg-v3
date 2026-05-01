@@ -30,7 +30,7 @@ function MonthlyPageShell({ children }: { children: ReactNode }) {
       <div className="min-h-0 pb-24 lg:flex-1 lg:overflow-y-auto lg:pb-0">
         {children}
       </div>
-      <div className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[820px] px-4 pb-4 sm:px-6 lg:static lg:max-w-none lg:px-0 lg:pb-0 lg:h-[4.25rem] lg:shrink-0">
+      <div className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[820px] px-4 pb-4 sm:px-6 lg:static lg:inset-auto lg:z-auto lg:mb-2 lg:h-[4.25rem] lg:max-w-[1248px] lg:shrink-0 lg:px-0 lg:pb-0">
         <QuickActionsSection excludeIds={["monthly"]} />
       </div>
     </div>

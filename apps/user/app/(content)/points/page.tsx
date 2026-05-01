@@ -638,7 +638,7 @@ export default function Points() {
         </div>
 
         {/* Points List */}
-        <div className="flex min-w-0 flex-col lg:h-full lg:min-h-0 lg:overflow-hidden">
+        <div className="flex min-w-0 flex-col lg:h-full lg:min-h-0 lg:gap-3 lg:overflow-hidden">
           <div className="mb-3 flex shrink-0 justify-between items-center">
             <div className="flex items-center gap-2">
               <h2 className="text-md font-semibold text-[var(--ink-black)]">
@@ -713,7 +713,7 @@ export default function Points() {
             </div>
           </div>
 
-          <div className="mb-3 flex min-h-0 flex-col gap-3 lg:flex-1 lg:overflow-hidden">
+          <div className="mb-3 flex min-h-0 flex-col gap-3 lg:mb-0 lg:flex-1 lg:overflow-hidden">
             {/* Add New Point */}
             <button
               className="w-full py-3 bg-white rounded-xl text-sm font-medium text-[var(--ink-black)] flex items-center justify-center gap-2 border border-dashed border-[rgba(14,15,12,0.2)] hover:border-[var(--ink-black)] hover:bg-[rgba(22,51,0,0.05)] active:bg-[rgba(22,51,0,0.08)] transition-colors"
@@ -875,7 +875,7 @@ export default function Points() {
             )}
           </div>
 
-          <div className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[820px] px-4 pb-4 sm:px-6 lg:static lg:mt-0 lg:h-[4.25rem] lg:max-w-none lg:shrink-0 lg:px-0 lg:pb-0">
+          <div className="h-[4.25rem] shrink-0">
             <QuickActionsSection excludeIds={["points"]} />
           </div>
         </div>

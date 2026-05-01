@@ -315,7 +315,7 @@ const Lunch = () => {
               )}
             </div>
 
-            <div className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[820px] px-4 pb-4 sm:px-6 lg:static lg:max-w-none lg:shrink-0 lg:px-0 lg:pb-0">
+            <div className="h-[4.25rem] shrink-0">
               <QuickActionsSection excludeIds={["lunch"]} />
             </div>
           </div>

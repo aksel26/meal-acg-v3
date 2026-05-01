@@ -566,6 +566,11 @@ button {
   animation: float 3s ease-in-out infinite;
 }
 
+.empty-icon-waddle {
+  animation: empty-icon-waddle 1s steps(1, end) infinite;
+  transform-origin: 50% 85%;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -604,6 +609,22 @@ button {
   }
   50% {
     transform: translateY(-6px);
+  }
+}
+
+@keyframes empty-icon-waddle {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-5deg);
+  }
+  50% {
+    transform: rotate(0deg);
+  }
+  75% {
+    transform: rotate(-5deg);
   }
 }
 

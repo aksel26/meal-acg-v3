@@ -12,8 +12,9 @@ import { ChevronRight, ListFilter, Loader2, Plus } from "@repo/ui/icons";
 import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/src/popover";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@repo/ui/src/tooltip";
 import { motion } from "motion/react";
-import React, { useState, useEffect, useMemo } from "react";
-import NoDataIcon from "@/public/icons/noData.png";
+import React, { useState, useEffect, useMemo, useRef } from "react";
+import type { PointerEvent as ReactPointerEvent } from "react";
+import NoDataIcon from "@/public/none.png";
 import Image from "next/image";
 import { EditPointDialog } from "@/components/points/EditPointDialog";
 import { ActivityViewDialog } from "../../../components/points/ActivityViewDialog";
@@ -148,6 +149,7 @@ function BudgetRow({
 function AllUsageRecordsInline({
   records,
   totalCount,
+  totalAmount,
   isLoading,
   error,
   selectedMonth,
@@ -156,6 +158,7 @@ function AllUsageRecordsInline({
 }: {
   records: AllRecordItem[];
   totalCount: number;
+  totalAmount: number;
   isLoading: boolean;
   error: Error | null;
   selectedMonth: string;
@@ -163,6 +166,61 @@ function AllUsageRecordsInline({
   onMonthChange: (value: string) => void;
 }) {
   const tickerItems = records.length > 0 ? [...records, ...records] : [];
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const dragStateRef = useRef<{
+    pointerId: number;
+    startY: number;
+    startScrollTop: number;
+  } | null>(null);
+  const wheelIdleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isInteracting, setIsInteracting] = useState(false);
+
+  const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!scrollRef.current || records.length <= 1) return;
+
+    dragStateRef.current = {
+      pointerId: event.pointerId,
+      startY: event.clientY,
+      startScrollTop: scrollRef.current.scrollTop,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setIsInteracting(true);
+  };
+
+  const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!scrollRef.current || !dragStateRef.current) return;
+
+    const deltaY = event.clientY - dragStateRef.current.startY;
+    scrollRef.current.scrollTop = dragStateRef.current.startScrollTop - deltaY;
+  };
+
+  const stopDragging = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (dragStateRef.current?.pointerId === event.pointerId) {
+      dragStateRef.current = null;
+      setIsInteracting(false);
+    }
+  };
+
+  const handleWheel = () => {
+    setIsInteracting(true);
+
+    if (wheelIdleTimerRef.current) {
+      clearTimeout(wheelIdleTimerRef.current);
+    }
+
+    wheelIdleTimerRef.current = setTimeout(() => {
+      setIsInteracting(false);
+      wheelIdleTimerRef.current = null;
+    }, 500);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (wheelIdleTimerRef.current) {
+        clearTimeout(wheelIdleTimerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="mt-3 flex min-h-0 flex-col rounded-[24px] bg-white px-4 py-4 lg:flex-1">
@@ -176,6 +234,9 @@ function AllUsageRecordsInline({
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          <span className="rounded-full bg-[var(--whisper-cream)] px-2.5 py-1 text-[11px] text-[var(--granite)]">
+            {totalAmount.toLocaleString()}원
+          </span>
           <span className="rounded-full bg-[var(--whisper-cream)] px-2.5 py-1 text-[11px] text-[var(--granite)]">
             총 {totalCount}건
           </span>
@@ -194,7 +255,15 @@ function AllUsageRecordsInline({
         </div>
       </div>
 
-      <div className="relative max-h-[150px] flex-1 overflow-hidden px-1 py-2 [mask-image:linear-gradient(to_bottom,transparent_0,black_1.1rem,black_calc(100%-2rem),transparent_100%)] lg:max-h-none lg:min-h-0">
+      <div
+        ref={scrollRef}
+        className="relative max-h-[150px] flex-1 cursor-grab overflow-y-auto px-1 py-2 [mask-image:linear-gradient(to_bottom,transparent_0,black_1.1rem,black_calc(100%-2rem),transparent_100%)] active:cursor-grabbing lg:max-h-none lg:min-h-0"
+        onWheel={handleWheel}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={stopDragging}
+        onPointerCancel={stopDragging}
+      >
         {isLoading ? (
           <div className="flex h-full items-center justify-center gap-2 text-sm text-[var(--slate-gray)]">
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -211,9 +280,13 @@ function AllUsageRecordsInline({
         ) : (
           <motion.div
             className="space-y-1.5"
-            animate={records.length > 1 ? { y: ["0%", "-50%"] } : undefined}
+            animate={
+              records.length > 1 && !isInteracting
+                ? { y: ["0%", "-50%"] }
+                : { y: 0 }
+            }
             transition={
-              records.length > 1
+              records.length > 1 && !isInteracting
                 ? {
                     duration: Math.max(8, records.length * 1.1),
                     repeat: Infinity,
@@ -225,7 +298,7 @@ function AllUsageRecordsInline({
             {tickerItems.map((record, index) => (
               <div
                 key={`${record.id}-${index}`}
-                className="flex h-9 items-center justify-between gap-3 rounded-[12px] bg-[rgba(244,241,232,0.42)] px-3 text-xs transition-colors hover:bg-[rgba(244,241,232,0.68)]"
+                className="flex h-9 items-center justify-between gap-3 rounded-[12px] bg-[rgba(244,241,232,0.42)] px-3 text-xs"
               >
                 <div className="flex min-w-0 items-center gap-2">
                   <span className="max-w-[4.75rem] truncate text-[var(--ink-black)]">
@@ -235,7 +308,10 @@ function AllUsageRecordsInline({
                     {record.description}
                   </span>
                 </div>
-                <div className="flex shrink-0 items-center gap-2">
+                <div className="flex shrink-0 items-center gap-2.5">
+                  <span className="w-[4rem] text-right text-[11px] font-semibold tabular-nums text-[var(--ink-black)]">
+                    {record.amount.toLocaleString()}원
+                  </span>
                   <span
                     className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
                       record.type === "활동비"
@@ -384,8 +460,6 @@ export default function Points() {
       ? {
           memberId: currentMemberId,
           period: allRecordsMonth,
-          limit: 24,
-          offset: 0,
         }
       : null,
     !!currentMemberId,
@@ -629,6 +703,7 @@ export default function Points() {
           <AllUsageRecordsInline
             records={allUsageRecordsData?.records ?? []}
             totalCount={allUsageRecordsData?.total_count ?? 0}
+            totalAmount={allUsageRecordsData?.total_amount ?? 0}
             isLoading={isAllUsageRecordsLoading}
             error={allUsageRecordsError}
             selectedMonth={allRecordsMonth}
@@ -741,17 +816,18 @@ export default function Points() {
               </div>
             ) : sortedRecords.length === 0 ? (
               <div className="bg-white rounded-xl py-12 text-center">
-                <Image
-                  src={NoDataIcon}
-                  alt="No Data"
-                  width={40}
-                  height={40}
-                  className="mx-auto mb-3 opacity-40"
-                />
+                <div className="empty-icon-waddle mx-auto mb-3 h-[54px] w-[54px] opacity-80">
+                  <Image
+                    src={NoDataIcon}
+                    alt="No Data"
+                    width={54}
+                    height={54}
+                  />
+                </div>
                 <p className="text-sm text-[var(--slate-gray)]">
                   {welfareError
                     ? "내역을 불러올 수 없습니다."
-                    : "이 달에 내역이 없습니다."}
+                    : "이 달 사용 내역이 없습니다."}
                 </p>
               </div>
             ) : (

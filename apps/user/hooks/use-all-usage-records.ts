@@ -38,8 +38,10 @@ export interface AllRecordsFilters {
 
 // --- Fetch Function ---
 
-async function fetchAllUsageRecords(
-  filters: AllRecordsFilters
+const AUTO_PAGE_SIZE = 100;
+
+async function fetchAllUsageRecordsPage(
+  filters: AllRecordsFilters,
 ): Promise<AllRecordsResponse> {
   const params = new URLSearchParams({ member_id: filters.memberId });
   if (filters.period) params.set("period", filters.period);
@@ -60,6 +62,44 @@ async function fetchAllUsageRecords(
   return data;
 }
 
+async function fetchAllUsageRecords(
+  filters: AllRecordsFilters,
+): Promise<AllRecordsResponse> {
+  if (filters.limit) {
+    return fetchAllUsageRecordsPage(filters);
+  }
+
+  const records: AllRecordItem[] = [];
+  let offset = filters.offset ?? 0;
+  let totalCount = 0;
+  let totalAmount = 0;
+  let hasMore = true;
+
+  while (hasMore) {
+    const page = await fetchAllUsageRecordsPage({
+      ...filters,
+      limit: AUTO_PAGE_SIZE,
+      offset,
+    });
+
+    records.push(...page.records);
+    totalCount = page.total_count;
+    totalAmount += page.records.reduce((sum, record) => sum + record.amount, 0);
+    hasMore = page.has_more;
+    if (page.records.length === 0) {
+      break;
+    }
+    offset += AUTO_PAGE_SIZE;
+  }
+
+  return {
+    records,
+    total_count: totalCount,
+    total_amount: totalAmount,
+    has_more: false,
+  };
+}
+
 // --- Hook ---
 
 /**
@@ -69,7 +109,7 @@ async function fetchAllUsageRecords(
  */
 export function useAllUsageRecords(
   filters: AllRecordsFilters | null,
-  enabled: boolean = true
+  enabled: boolean = true,
 ) {
   return useQuery({
     queryKey: filters ? queryKeys.points.allRecords.filtered(filters) : [],

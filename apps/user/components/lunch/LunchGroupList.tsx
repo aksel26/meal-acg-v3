@@ -192,7 +192,7 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
 
             {/* 멤버 목록 */}
             <div className="p-3 pt-0">
-              <div className="grid grid-cols-1 gap-2 2xl:grid-cols-2">
+              <div className="grid grid-cols-2 gap-2">
                 {team.members.map(({ member, isEmpty }, memberIndex) => {
                   const isMe =
                     userName &&
@@ -205,7 +205,7 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
                     return (
                       <div
                         key={`empty-${memberIndex}`}
-                        className="flex items-center gap-2 rounded-[14px] bg-[rgba(244,241,232,0.45)] p-2"
+                        className="flex min-w-0 items-center gap-2 rounded-[14px] bg-[rgba(244,241,232,0.45)] p-2"
                       >
                         <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white">
                           <span className="text-[10px] text-[var(--slate-gray)]">
@@ -223,7 +223,7 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
                   return (
                     <div
                       key={`${member}-${memberIndex}`}
-                      className={`flex items-center gap-2 rounded-[14px] p-2 ${
+                      className={`flex min-w-0 items-center gap-2 rounded-[14px] p-2 ${
                         isMe
                           ? "bg-[var(--whisper-cream)]"
                           : "bg-[rgba(244,241,232,0.58)]"

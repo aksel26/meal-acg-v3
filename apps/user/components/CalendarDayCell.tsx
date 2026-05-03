@@ -1,7 +1,6 @@
 import * as React from "react";
 import { CalendarDayButton } from "@repo/ui/src/calendar";
 import Image from "next/image";
-import type { MealData } from "@/components/dashboard/types";
 import dayjs from "dayjs";
 
 // CalendarDayButton에서 day와 modifiers 타입 추출
@@ -9,18 +8,22 @@ type DayButtonProps = React.ComponentProps<typeof CalendarDayButton>;
 type CalendarDay = DayButtonProps["day"];
 type Modifiers = DayButtonProps["modifiers"];
 
-interface MealIcon {
+interface MealIndicator {
+  type: "breakfast" | "lunch" | "dinner";
+  className: string;
+}
+
+interface AttendanceIcon {
   icon: string;
-  label: string | null;
-  type: string;
+  label: string;
 }
 
 interface CalendarDayCellProps {
   children: React.ReactNode;
   day: CalendarDay;
   modifiers: Modifiers;
-  meal: MealData | undefined;
-  mealIcon: MealIcon | null;
+  mealIndicators: MealIndicator[];
+  attendanceIcon: AttendanceIcon | null;
   holiday: string | null;
   isLoading: boolean;
   onDateSelect: (date: Date) => void;
@@ -33,9 +36,10 @@ function arePropsEqual(prev: CalendarDayCellProps, next: CalendarDayCellProps) {
     prev.modifiers.selected === next.modifiers.selected &&
     prev.modifiers.today === next.modifiers.today &&
     prev.modifiers.outside === next.modifiers.outside &&
-    prev.mealIcon?.icon === next.mealIcon?.icon &&
-    prev.mealIcon?.label === next.mealIcon?.label &&
-    prev.mealIcon?.type === next.mealIcon?.type &&
+    prev.mealIndicators.map((indicator) => indicator.type).join(",") ===
+      next.mealIndicators.map((indicator) => indicator.type).join(",") &&
+    prev.attendanceIcon?.icon === next.attendanceIcon?.icon &&
+    prev.attendanceIcon?.label === next.attendanceIcon?.label &&
     prev.holiday === next.holiday &&
     prev.isLoading === next.isLoading &&
     prev.onDateSelect === next.onDateSelect
@@ -46,8 +50,8 @@ export const CalendarDayCell = React.memo(function CalendarDayCell({
   children,
   day,
   modifiers,
-  meal,
-  mealIcon,
+  mealIndicators,
+  attendanceIcon,
   holiday,
   isLoading,
   onDateSelect,
@@ -88,63 +92,81 @@ export const CalendarDayCell = React.memo(function CalendarDayCell({
       {...dayButtonProps}
       onClick={handleDayClick}
       className={`
-        relative p-0.5 sm:p-1 rounded-xl transition-all duration-200
-        ${isSelected ? "" : "hover:bg-gray-50 active:bg-gray-100"}
+        relative h-auto min-h-[clamp(3rem,12.5vw,3.5rem)] min-w-0 rounded-[12px] p-0 transition-all duration-200 sm:min-h-[52px] sm:p-0.5 lg:aspect-auto lg:h-full lg:min-h-0 lg:rounded-[10px] lg:p-0
+        ${isSelected ? "bg-[rgba(20,20,19,0.04)]" : "hover:bg-white/60 active:bg-white/80"}
         touch-manipulation
       `}
       style={
         isSelected
           ? {
-              background:
-                "radial-gradient(circle, oklch(0.92 0.05 250) 10%, transparent 50%)",
+              background: "rgba(232, 226, 218, 0.8)",
             }
           : undefined
       }
     >
       {isToday && (
-        <span className="absolute top-1 left-2.5 w-1.5 h-1.5 rounded-full bg-[oklch(0.45_0.2_250)]" />
+        <span className="absolute left-2 top-1 h-1.5 w-1.5 rounded-full bg-[var(--signal-orange)]" />
       )}
-      <div className="flex flex-col items-center gap-0.5 sm:gap-1 py-1 sm:py-1.5 min-h-[60px] sm:min-h-[72px]">
-        <span
-          className={`
-            text-xs sm:text-sm font-semibold transition-all duration-200 leading-none
-            ${isToday ? "text-[oklch(0.45_0.2_250)] font-bold" : ""}
-            ${isSelected && !isToday ? "text-blue-600" : ""}
-            ${!isToday && !isSelected && (isSunday || isHoliday) ? "text-red-500" : ""}
-            ${!isToday && !isSelected && isSaturday && !isHoliday ? "text-blue-500" : ""}
-            ${!isToday && !isSelected && !isSunday && !isSaturday && !isHoliday ? "text-gray-400" : ""}
-          `}
-        >
-          {children}
-        </span>
-        {holiday && (
-          <span className="text-[8px] sm:text-[9px] text-red-400 font-medium max-w-full px-0.5 leading-tight">
-            {holiday.length > 5 ? `${holiday.slice(0, 5)}..` : holiday}
+      <div className="flex min-h-[clamp(3rem,12.5vw,3.5rem)] min-w-0 flex-col items-center justify-center sm:min-h-[52px] lg:h-full lg:min-h-0">
+        <div className="flex h-[18px] min-w-0 items-center justify-center sm:h-5 lg:h-[18px]">
+          <span
+            className={`
+              text-[0.94rem] sm:text-lg lg:text-base font-normal transition-all duration-200 leading-none
+              ${isToday ? "text-[var(--signal-orange)]" : ""}
+              ${isSelected && !isToday ? "text-[var(--ink-black)]" : ""}
+              ${isSunday ? "text-[var(--danger)]" : ""}
+              ${!isSunday && !isToday && !isSelected && isHoliday ? "text-[var(--danger)]" : ""}
+              ${!isToday && !isSelected && isSaturday && !isHoliday ? "text-[var(--link-blue)]" : ""}
+              ${!isToday && !isSelected && !isSunday && !isSaturday && !isHoliday ? "text-[var(--granite)]" : ""}
+            `}
+          >
+            {children}
           </span>
-        )}
-        <div className="w-7 h-7 sm:w-9 sm:h-9 flex items-center justify-center relative">
+        </div>
+        <div className="flex h-1.5 w-full items-center justify-center sm:h-2 lg:h-1.5">
+          {holiday && (
+            <span className="max-w-full truncate px-0.5 text-[8px] font-normal leading-none text-[var(--danger)] sm:text-[10px] lg:max-w-[3.5rem] lg:text-[9px]">
+              {holiday.length > 5 ? `${holiday.slice(0, 5)}..` : holiday}
+            </span>
+          )}
+        </div>
+        <div className="relative flex h-3 min-h-3 min-w-0 items-center justify-center sm:h-3.5 sm:min-h-3.5 lg:h-3 lg:min-h-3">
           {isLoading ? (
-            <div className="w-5 h-5 rounded-full bg-gray-200 animate-pulse" />
-          ) : mealIcon ? (
-            <div className="relative flex items-center justify-center">
-              <Image
-                src={mealIcon.icon}
-                alt={meal?.attendance || "meal"}
-                width={22}
-                height={22}
-                className="drop-shadow-sm sm:w-[26px] sm:h-[26px]"
-              />
-              {mealIcon.label && (
-                <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[7px] sm:text-[8px] font-bold text-blue-600 bg-blue-50 px-1 rounded">
-                  {mealIcon.label}
-                </span>
-              )}
+            <div className="flex items-center justify-center gap-1" aria-hidden="true">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--soft-bone)]" />
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--soft-bone)] [animation-delay:120ms]" />
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--soft-bone)] [animation-delay:240ms]" />
             </div>
-          ) : !isSunday &&
-            !isSaturday &&
-            !isHoliday &&
-            dayjs(day.date).isBefore(dayjs(), "day") ? (
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-100" />
+          ) : attendanceIcon ? (
+            <div className="relative flex items-center justify-center" aria-label={attendanceIcon.label}>
+              <Image
+                src={attendanceIcon.icon}
+                alt={attendanceIcon.label}
+                width={24}
+                height={24}
+                className="h-[18px] w-[18px] sm:h-5 sm:w-5 lg:h-[18px] lg:w-[18px]"
+              />
+            </div>
+          ) : mealIndicators.length > 0 ? (
+            <div
+              className="grid min-w-0 grid-cols-3 items-center justify-items-center gap-0.5"
+              aria-label={`${mealIndicators.length}개 식사 기록`}
+            >
+              {(["breakfast", "lunch", "dinner"] as const).map((type) => {
+                const indicator = mealIndicators.find((item) => item.type === type);
+
+                return indicator ? (
+                  <span
+                    key={type}
+                    className={`h-2 w-2 rounded-full sm:h-2.5 sm:w-2.5 lg:h-2 lg:w-2 ${indicator.className}`}
+                  />
+                ) : (
+                  <span key={type} className="h-2 w-2 opacity-0 sm:h-2.5 sm:w-2.5 lg:h-2 lg:w-2" />
+                );
+              })}
+            </div>
+          ) : dayjs(day.date).isBefore(dayjs(), "day") ? (
+            <span className="h-2 w-2 rounded-full opacity-0" aria-hidden="true" />
           ) : null}
         </div>
       </div>

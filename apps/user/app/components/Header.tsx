@@ -1,41 +1,60 @@
 "use client";
 
-import Image from "next/image";
 import React from "react";
-import LOGO from "@/public/images/ACG_LOGO_GRAY.png";
-import { useHeaderVisibility } from "@/hooks/useHeaderVisibility";
+import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
+import { useHeaderVisibility } from "@/hooks/useHeaderVisibility";
+
+const sectionLabels = [
+  {
+    matcher: (pathname: string) => pathname.startsWith("/points-dashboard"),
+    label: "Points Dashboard",
+  },
+  {
+    matcher: (pathname: string) => pathname.startsWith("/points"),
+    label: "복지포인트",
+  },
+  {
+    matcher: (pathname: string) => pathname.startsWith("/monthly"),
+    label: "음료취합",
+  },
+  {
+    matcher: (pathname: string) => pathname.startsWith("/lunch"),
+    label: "점심조",
+  },
+  {
+    matcher: (pathname: string) => pathname.startsWith("/dashboard"),
+    label: "Dashboard",
+  },
+];
 
 const Header = () => {
+  const pathname = usePathname();
   const { isHeaderVisible } = useHeaderVisibility({
     threshold: 50,
     scrollDifference: 5,
   });
 
+  const currentLabel =
+    sectionLabels.find(({ matcher }) => matcher(pathname))?.label ?? "User App";
+
   return (
     <motion.header
       initial={{ y: 0 }}
-      animate={{ y: isHeaderVisible ? 0 : -100 }}
+      animate={{ y: isHeaderVisible ? 0 : -110 }}
       transition={{
         duration: 0.3,
         ease: [0.16, 1, 0.3, 1],
       }}
-      className="sticky top-0 px-4 pt-3"
+      className="sticky top-0 z-40 pt-2"
     >
-      <div className="glass-card-elevated rounded-2xl px-5 py-3 flex justify-center items-center">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.1 }}
-        >
-          <Image
-            src={LOGO}
-            alt="ACG Logo"
-            width={48}
-            height={16}
-            className="opacity-70 hover:opacity-100 transition-opacity duration-200"
-          />
-        </motion.div>
+      <div className="glass-card-elevated flex items-center justify-between gap-4 rounded-[24px] px-5 py-4">
+        <div className="min-w-0">
+          <p className="eyebrow-label">ACG welfare</p>
+          <p className="mt-2 truncate font-display text-[1.375rem] leading-none tracking-normal text-[var(--ink-black)]">
+            {currentLabel}
+          </p>
+        </div>
       </div>
     </motion.header>
   );

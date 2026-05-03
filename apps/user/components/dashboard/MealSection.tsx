@@ -44,6 +44,7 @@ export default function MealSection({
 
   return (
     <motion.div
+      id="meal-calendar"
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
@@ -51,20 +52,25 @@ export default function MealSection({
         delay: 0.5,
         ease: [0.25, 0.46, 0.45, 0.94],
       }}
+      className="scroll-mt-24 lg:flex lg:h-full lg:min-h-0 lg:flex-col"
     >
-      <CalendarComponent
-        onDateSelect={setSelectedDate}
-        selectedDate={selectedDate}
-        onMonthChange={handleMonthChange}
-        mealData={mealData}
-      />
-      <MealCards
-        selectedDate={selectedDate}
-        mealData={mealData}
-        onAddMeal={handleAddMeal}
-        onEditMeal={handleEditMeal}
-        onHolidayEdit={handleHolidayAttendanceEdit}
-      />
+      <div className="space-y-3 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
+        <CalendarComponent
+          onDateSelect={setSelectedDate}
+          selectedDate={selectedDate}
+          onMonthChange={handleMonthChange}
+          mealData={mealData}
+          className="lg:min-h-0 lg:flex-[1.6]"
+        />
+        <MealCards
+          selectedDate={selectedDate}
+          mealData={mealData}
+          onAddMeal={handleAddMeal}
+          onEditMeal={handleEditMeal}
+          onHolidayEdit={handleHolidayAttendanceEdit}
+          className="lg:mt-0 lg:min-h-0 lg:flex-[0.55] lg:overflow-hidden lg:p-3"
+        />
+      </div>
     </motion.div>
   );
 }

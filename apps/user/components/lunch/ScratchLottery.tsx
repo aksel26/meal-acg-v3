@@ -1,15 +1,18 @@
 "use client";
 
-import ScratchToReveal from "@/components/lunch/ScratchToReveal";
 import { useLunchGroupAssign } from "@/hooks/useLunchGroupAssign";
 import { useLunchGroup } from "@/hooks/useLunchGroup";
 import { motion } from "motion/react";
+import Image from "next/image";
 import React, { useCallback, useMemo, useState } from "react";
 
-type Phase = "scratch" | "assigning" | "revealed" | "error";
+type Phase = "idle" | "shaking" | "revealed" | "error";
+
+const SHAKE_MS = 1000;
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const ScratchLottery: React.FC = () => {
-  const [phase, setPhase] = useState<Phase>("scratch");
+  const [phase, setPhase] = useState<Phase>("idle");
   const [result, setResult] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -24,13 +27,24 @@ const ScratchLottery: React.FC = () => {
     return group?.person?.filter((p) => p && p.trim()) || [];
   }, [result, lunchGroupData?.groups]);
 
-  // 스크래치 완료 시 API 배정
-  const handleScratchComplete = useCallback(async () => {
-    setPhase("assigning");
+  const handleDraw = useCallback(async () => {
+    if (phase !== "idle") return;
+
+    setPhase("shaking");
+    setResult(null);
+    setErrorMessage(null);
     const userName = localStorage.getItem("name") || "익명";
 
+    if (typeof navigator !== "undefined" && navigator.vibrate) {
+      navigator.vibrate([80, 60, 80, 60, 120, 80, 200]);
+    }
+
     try {
-      const response = await assignMutation.mutateAsync({ userName });
+      const [response] = await Promise.all([
+        assignMutation.mutateAsync({ userName }),
+        delay(SHAKE_MS),
+      ]);
+
       setResult(response.data.groupNumber);
       setPhase("revealed");
     } catch (error) {
@@ -39,108 +53,149 @@ const ScratchLottery: React.FC = () => {
       setErrorMessage(message);
       setPhase("error");
     }
-  }, [assignMutation]);
+  }, [assignMutation, phase]);
 
   const handleRetry = useCallback(() => {
-    setPhase("scratch");
+    setPhase("idle");
     setResult(null);
     setErrorMessage(null);
   }, []);
 
   return (
-    <div className="flex flex-col items-center gap-5 py-4">
-      {/* scratch */}
-      {phase === "scratch" && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="flex flex-col items-center gap-4"
-        >
-          <p className="text-sm text-gray-500 font-medium">
-            카드를 긁어서 점심조를 뽑아보세요!
-          </p>
-          <ScratchToReveal
-            width={300}
-            height={200}
-            minScratchPercentage={15}
-            onComplete={handleScratchComplete}
-            gradientColors={["#A97CF8", "#F38CB8", "#FDCC92"]}
-          >
-            <div className="flex flex-col items-center justify-center gap-2">
-              <span className="text-6xl font-black text-purple-200">?</span>
-              <span className="text-sm font-medium text-gray-300">
-                긁어서 확인하기
-              </span>
-            </div>
-          </ScratchToReveal>
-        </motion.div>
-      )}
+    <div className="flex flex-col items-center gap-3 py-1">
+      <style>{`
+        @keyframes lunch-tremor {
+          0%, 100% { transform: translate(0,0) rotate(0); }
+          10% { transform: translate(-2px, 1px) rotate(-2deg); }
+          20% { transform: translate(3px,-2px) rotate(2deg) scale(1.02); }
+          30% { transform: translate(-3px,2px) rotate(-3deg); }
+          40% { transform: translate(4px,-1px) rotate(3deg) scale(1.04); }
+          50% { transform: translate(-5px,3px) rotate(-4deg) scale(1.03); }
+          60% { transform: translate(5px,-3px) rotate(4deg) scale(1.05); }
+          70% { transform: translate(-6px,2px) rotate(-5deg) scale(1.04); }
+          80% { transform: translate(6px,-4px) rotate(5deg) scale(1.07); }
+          90% { transform: translate(-4px,3px) rotate(-3deg) scale(1.05); }
+        }
+        @keyframes lunch-poof {
+          0% { transform: scale(1.05); opacity: 1; filter: blur(0); }
+          40% { transform: scale(1.45); opacity: 0.75; filter: blur(2px); }
+          100% { transform: scale(2.05); opacity: 0; filter: blur(8px); }
+        }
+        @keyframes lunch-burst {
+          0% { transform: scale(0.2) rotate(-12deg); opacity: 0; }
+          40% { transform: scale(1.25) rotate(4deg); opacity: 1; }
+          60% { transform: scale(0.96) rotate(-2deg); }
+          100% { transform: scale(1) rotate(0); opacity: 1; }
+        }
+        @keyframes lunch-ring {
+          0% { transform: translate(-50%,-50%) scale(0.2); opacity: 0.75; }
+          100% { transform: translate(-50%,-50%) scale(2.8); opacity: 0; }
+        }
+        .lunch-tremor { animation: lunch-tremor 0.18s linear infinite; }
+        .lunch-poof { animation: lunch-poof 0.45s ease-out forwards; }
+        .lunch-burst { animation: lunch-burst 0.7s cubic-bezier(.2,1.2,.4,1) forwards; }
+        .lunch-ring { animation: lunch-ring 0.7s ease-out forwards; }
+      `}</style>
 
-      {/* assigning */}
-      {phase === "assigning" && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex flex-col items-center gap-4"
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="flex flex-col items-center gap-2"
+      >
+        <div className="relative flex h-40 w-56 items-center justify-center overflow-visible bg-transparent">
+          {(phase === "idle" || phase === "shaking") && (
+            <button
+              type="button"
+              onClick={handleDraw}
+              disabled={phase !== "idle" || assignMutation.isPending}
+              className={`relative flex h-28 w-28 items-center justify-center rounded-full bg-transparent transition-transform ${
+                phase === "idle"
+                  ? "cursor-pointer hover:scale-105 active:scale-95"
+                  : "cursor-default"
+              } ${phase === "shaking" ? "lunch-tremor" : ""}`}
+              aria-label="점심조 뽑기"
+            >
+              <Image
+                src="/images/meal-sticker.webp"
+                alt=""
+                width={112}
+                height={112}
+                className="h-full w-full object-contain drop-shadow-[0_12px_24px_rgba(236,126,0,0.24)]"
+                draggable={false}
+              />
+            </button>
+          )}
+
+          {phase === "error" && (
+            <Image
+              src="/images/sticker-bad.webp"
+              alt=""
+              width={112}
+              height={112}
+              className="h-28 w-28 object-contain drop-shadow-[0_12px_24px_rgba(208,50,56,0.18)]"
+              draggable={false}
+            />
+          )}
+
+          {phase === "revealed" && (
+            <>
+              <Image
+                src="/images/meal-sticker.webp"
+                alt=""
+                width={112}
+                height={112}
+                className="lunch-poof pointer-events-none absolute h-28 w-28 object-contain drop-shadow-[0_12px_24px_rgba(236,126,0,0.24)]"
+                draggable={false}
+              />
+              <span className="lunch-ring pointer-events-none absolute left-1/2 top-1/2 h-16 w-16 rounded-full border-4 border-[rgba(236,126,0,0.45)]" />
+              <span className="lunch-burst absolute text-5xl font-black text-[var(--ink-black)] drop-shadow-[0_6px_0_rgba(236,126,0,0.16)]">
+                {result}조
+              </span>
+            </>
+          )}
+        </div>
+
+        <p
+          className={`text-xs font-medium ${
+            phase === "idle"
+              ? "text-[var(--granite)]"
+              : phase === "shaking"
+                ? "animate-pulse text-[var(--signal-orange)]"
+                : phase === "revealed"
+                  ? "text-[var(--ink-black)]"
+                  : "text-[#d03238]"
+          }`}
         >
-          <div className="w-[300px] h-[200px] bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 rounded-2xl flex items-center justify-center">
-            <div className="flex flex-col items-center gap-3">
-              <div className="w-8 h-8 border-3 border-purple-200 border-t-purple-500 rounded-full animate-spin" />
-              <p className="text-sm text-purple-400 font-medium">
-                배정 중...
-              </p>
-            </div>
-          </div>
-        </motion.div>
-      )}
+          {phase === "idle" && "스티커를 클릭해 점심조를 배정하세요."}
+          {phase === "shaking" && "과연.."}
+          {phase === "revealed" && "배정되었습니다!"}
+          {phase === "error" && errorMessage}
+        </p>
+      </motion.div>
 
       {/* revealed */}
       {phase === "revealed" && result !== null && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ type: "spring", damping: 12 }}
-          className="flex flex-col items-center gap-4"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="flex w-full flex-col items-center gap-3"
         >
-          <div className="w-[300px] h-[200px] bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 rounded-2xl flex flex-col items-center justify-center gap-2">
-            <motion.span
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", damping: 8, delay: 0.1 }}
-              className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400"
-            >
-              {result}조
-            </motion.span>
-            <motion.span
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="text-sm font-medium text-gray-500"
-            >
-              배정되었습니다!
-            </motion.span>
-          </div>
-
           {/* 조원 목록 */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="w-[300px]"
-          >
-            <div className="bg-gradient-to-br from-purple-50/50 via-pink-50/50 to-orange-50/50 rounded-xl p-3">
-              <p className="text-xs font-semibold text-gray-500 mb-2">
+          <div className="w-full max-w-[300px]">
+            <div className="rounded-xl bg-[rgba(244,241,232,0.58)] p-3">
+              <p className="mb-2 text-xs font-semibold text-[var(--granite)]">
                 {result}조 멤버
               </p>
               {groupMembers.length > 0 ? (
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex max-h-16 flex-wrap gap-1.5 overflow-y-auto">
                   {groupMembers.map((member, i) => (
                     <span
                       key={i}
-                      className="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-700 rounded-md text-xs font-medium"
+                      className="inline-flex items-center gap-1 rounded-md bg-white px-2 py-1 text-xs font-medium text-[var(--granite)]"
                     >
-                      <span className="w-4 h-4 rounded-full bg-purple-200 flex items-center justify-center text-[10px] font-bold text-purple-600">
+                      <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[rgba(236,126,0,0.12)] text-[10px] font-bold text-[#9a4f00]">
                         {member.charAt(0)}
                       </span>
                       {member}
@@ -148,48 +203,22 @@ const ScratchLottery: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-[var(--slate-gray)]">
                   멤버 정보를 불러오는 중...
                 </p>
               )}
             </div>
-          </motion.div>
-        </motion.div>
-      )}
-
-      {/* error */}
-      {phase === "error" && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex flex-col items-center gap-4"
-        >
-          <div className="w-[300px] h-[200px] bg-red-50 rounded-2xl flex flex-col items-center justify-center gap-3">
-            <svg
-              className="w-10 h-10 text-red-300"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
-              />
-            </svg>
-            <p className="text-sm text-red-500 font-medium text-center px-4">
-              {errorMessage}
-            </p>
           </div>
+
           <button
             onClick={handleRetry}
-            className="w-[300px] py-3 rounded-2xl text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
+            className="w-full max-w-[300px] rounded-xl bg-[var(--whisper-cream)] py-2.5 text-sm font-medium text-[var(--granite)] transition-colors hover:bg-[var(--soft-bone)]"
           >
-            다시 시도
+            다시 하기
           </button>
         </motion.div>
       )}
+
     </div>
   );
 };

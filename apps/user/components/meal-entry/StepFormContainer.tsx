@@ -16,7 +16,6 @@ import { CompletedStepItem } from "./CompletedStepItem";
 import {
   MealTypeStep,
   AttendanceStep,
-  ReceiptStep,
   PayerStep,
   StoreStep,
   AmountStep,
@@ -95,8 +94,6 @@ export function StepFormContainer({
           return mealTypeLabels[selectedMealType];
         case "attendance":
           return attendanceShortLabels[formData.lunch.attendance] || formData.lunch.attendance;
-        case "receipt":
-          return "스캔 완료";
         case "payer":
           return currentFormData.payer;
         case "store":
@@ -126,9 +123,9 @@ export function StepFormContainer({
     [completedSteps]
   );
 
-  // Steps that require form input (excluding receipt which is optional)
+  // Steps that require form input
   const formSteps = useMemo(() => {
-    const base = visibleSteps.filter((step) => step !== "receipt");
+    const base = visibleSteps;
     // 석식 수정 모드에서는 근태 대신 식사 타입 라벨로 대체 (조식과 동일 UX)
     if (isEditMode && selectedMealType === "dinner") {
       return ["mealType" as StepId, ...base.filter((step) => step !== "attendance")];
@@ -153,7 +150,7 @@ export function StepFormContainer({
     }
     // In edit mode or normal mode, show completed steps except current
     const base = visibleSteps.filter(
-      (step) => isStepCompleted(step) && step !== currentStep && step !== "receipt"
+      (step) => isStepCompleted(step) && step !== currentStep
     );
 
     // visibleSteps에 없지만 completedSteps에 포함된 경우에도 라벨 표시
@@ -228,8 +225,6 @@ export function StepFormContainer({
             isSubmitting={isSubmitting}
           />
         );
-      case "receipt":
-        return <ReceiptStep key="receipt" />;
       case "payer":
         return <PayerStep key="payer" />;
       case "store":
@@ -283,7 +278,7 @@ export function StepFormContainer({
                 type="button"
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="w-full py-4 px-4 rounded-xl bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-4 px-4 rounded-full bg-[var(--ink-black)] text-white font-medium hover:bg-[var(--granite)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
                   <div className="flex items-center justify-center gap-2">

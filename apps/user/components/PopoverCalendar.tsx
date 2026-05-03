@@ -9,6 +9,11 @@ import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { cn } from "@repo/ui/lib/utils";
 
+type CalendarSingleProps = Omit<
+  React.ComponentProps<typeof Calendar>,
+  "mode" | "selected" | "onSelect"
+>;
+
 interface PopoverCalendarProps {
   date?: Date;
   onDateChange?: (date: Date | undefined) => void;
@@ -17,7 +22,7 @@ interface PopoverCalendarProps {
   className?: string;
   buttonClassName?: string;
   triggerProps?: React.ComponentProps<typeof Button>;
-  calendarProps?: React.ComponentProps<typeof Calendar>;
+  calendarProps?: CalendarSingleProps;
   popoverProps?: {
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
@@ -61,22 +66,20 @@ export function PopoverCalendar({
             variant="outline"
             disabled={disabled}
             className={cn(
-              "w-full justify-start text-left font-normal",
+              "w-full min-w-0 justify-start text-left font-normal",
               !date && "text-muted-foreground",
               buttonClassName
             )}
             {...triggerProps}
           >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {date ? (
-              format(date, "yyyy.MM.dd", { locale: ko })
-            ) : (
-              <span>{placeholder}</span>
-            )}
+            <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+            <span className="min-w-0 truncate">
+              {date ? format(date, "yyyy.MM.dd", { locale: ko }) : placeholder}
+            </span>
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-auto p-0"
+          className="w-auto max-w-[calc(100vw-2rem)] overflow-x-auto p-0"
           side={popoverProps?.side || "bottom"}
           align={popoverProps?.align || "start"}
         >
@@ -93,5 +96,4 @@ export function PopoverCalendar({
     </div>
   );
 }
-
 

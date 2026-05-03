@@ -61,10 +61,10 @@ export function AttendanceStep({
   return (
     <div className="space-y-4">
       <div className="space-y-1">
-        <h3 className="text-lg font-medium text-gray-900">
+        <h3 className="text-lg font-medium text-[var(--ink-black)]">
           오늘 근태는 어떤가요?
         </h3>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-[var(--slate-gray)]">
           {selectedMealType === "dinner"
             ? "석식 기록에 필요한 근태 정보예요"
             : "중식 기록에 필요한 근태 정보예요"}
@@ -81,10 +81,10 @@ export function AttendanceStep({
               key={option.value}
               type="button"
               onClick={() => handleSelect(option.value)}
-              className={`flex items-center gap-3 py-3.5 px-4 rounded-xl border-2 transition-all duration-200 text-left ${
+              className={`flex items-center gap-3 py-3.5 px-4 rounded-[16px] transition-all duration-200 text-left ${
                 isSelected
-                  ? "bg-gray-900 border-gray-900 text-white shadow-lg shadow-gray-900/20"
-                  : "bg-white border-gray-100 text-gray-700 hover:border-gray-200 hover:bg-gray-50"
+                  ? "bg-[var(--ink-black)] text-white"
+                  : "bg-[var(--whisper-cream)] text-[var(--granite)] hover:bg-[var(--soft-bone)]"
               }`}
             >
               <span className="text-lg">{config?.emoji}</span>
@@ -98,23 +98,23 @@ export function AttendanceStep({
       {showSaveButton && (
         <div className="space-y-3 pt-2">
           {isNoMealSupport && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-              <p className="text-sm text-amber-800 font-medium">
+            <div className="bg-[rgba(236,126,0,0.1)] rounded-[16px] p-4">
+              <p className="text-sm text-[var(--warning)] font-medium">
                 {attendanceConfig[selectedValue]?.shortLabel} 시에는 식대가
                 지원되지 않습니다.
               </p>
-              <p className="text-xs text-amber-600 mt-1">
+              <p className="text-xs text-[var(--warning)]/80 mt-1">
                 근태 정보만 저장됩니다.
               </p>
             </div>
           )}
 
           {isIndividualMeal && (
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-              <p className="text-sm text-blue-800 font-medium">
+            <div className="bg-[var(--whisper-cream)] rounded-[16px] p-4">
+              <p className="text-sm text-[var(--ink-black)] font-medium">
                 개별식사로 기록됩니다.
               </p>
-              <p className="text-xs text-blue-600 mt-1">
+              <p className="text-xs text-[var(--granite)] mt-1">
                 식대 입력 없이 저장됩니다.
               </p>
             </div>
@@ -124,7 +124,7 @@ export function AttendanceStep({
             type="button"
             onClick={handleSave}
             disabled={isSubmitting}
-            className="w-full py-4 px-4 rounded-xl bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-4 px-4 rounded-full bg-[var(--ink-black)] text-white font-medium hover:bg-[var(--granite)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? (
               <div className="flex items-center justify-center gap-2">

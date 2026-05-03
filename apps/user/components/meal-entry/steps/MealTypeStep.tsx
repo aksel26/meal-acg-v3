@@ -8,29 +8,14 @@ const mealTypeConfig = {
   breakfast: {
     label: "조식",
     emoji: "🌅",
-    bgColor: "bg-amber-50",
-    activeColor: "bg-amber-100",
-    textColor: "text-amber-700",
-    borderColor: "border-amber-200",
-    hoverBorder: "hover:border-amber-300",
   },
   lunch: {
     label: "중식",
     emoji: "☀️",
-    bgColor: "bg-blue-50",
-    activeColor: "bg-blue-100",
-    textColor: "text-blue-700",
-    borderColor: "border-blue-200",
-    hoverBorder: "hover:border-blue-300",
   },
   dinner: {
     label: "석식",
     emoji: "🌙",
-    bgColor: "bg-violet-50",
-    activeColor: "bg-violet-100",
-    textColor: "text-violet-700",
-    borderColor: "border-violet-200",
-    hoverBorder: "hover:border-violet-300",
   },
 };
 
@@ -51,10 +36,10 @@ export function MealTypeStep() {
       className="space-y-4"
     >
       <div className="space-y-1">
-        <h3 className="text-lg font-semibold text-gray-900">
+        <h3 className="text-lg font-medium text-[var(--ink-black)]">
           어떤 식사인가요?
         </h3>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-[var(--slate-gray)]">
           기록할 식사 타입을 선택해주세요
         </p>
       </div>
@@ -72,10 +57,10 @@ export function MealTypeStep() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: index * 0.1, duration: 0.3 }}
               onClick={() => handleSelect(meal.value as "breakfast" | "lunch" | "dinner")}
-              className={`relative flex flex-col items-center gap-2 py-5 px-4 rounded-2xl border-2 transition-all duration-200 ${
+              className={`relative flex flex-col items-center gap-2 py-5 px-4 rounded-[18px] transition-all duration-200 ${
                 isSelected
-                  ? `${config.activeColor} ${config.borderColor} ${config.textColor} shadow-sm`
-                  : `bg-white border-gray-100 text-gray-600 ${config.hoverBorder} hover:bg-gray-50`
+                  ? "bg-[var(--ink-black)] text-white"
+                  : "bg-[var(--whisper-cream)] text-[var(--granite)] hover:bg-[var(--soft-bone)]"
               }`}
             >
               <span className="text-2xl">{config.emoji}</span>
@@ -83,12 +68,12 @@ export function MealTypeStep() {
               {isSelected && (
                 <motion.div
                   layoutId="mealTypeIndicator"
-                  className={`absolute -top-1 -right-1 w-4 h-4 rounded-full ${config.activeColor} border-2 ${config.borderColor} flex items-center justify-center`}
+                  className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-white flex items-center justify-center"
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: "spring", stiffness: 500, damping: 30 }}
                 >
-                  <div className={`w-1.5 h-1.5 rounded-full ${config.textColor.replace("text-", "bg-")}`} />
+                  <div className="w-1.5 h-1.5 rounded-full bg-[var(--ink-black)]" />
                 </motion.div>
               )}
             </motion.button>

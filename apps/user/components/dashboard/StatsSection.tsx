@@ -14,11 +14,17 @@ import { NumberTicker } from "@repo/ui/src/number-ticker";
 import { toast } from "@repo/ui/src/sonner";
 import { Copy } from "@repo/ui/icons";
 import dayjs from "dayjs";
+import Image from "next/image";
 import { motion } from "motion/react";
-import { useEffect, useState } from "react";
+import type { PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCalculationData } from "@/hooks/use-calculation-data";
 import { useMemberIdLookup, usePointsWelfare } from "@/hooks/use-points-data";
 import { useAddUsageRecord } from "@/hooks/use-points-mutations";
+import {
+  RecentMealActivity,
+  useRecentMealActivity,
+} from "@/hooks/use-recent-meal-activity";
 import { useUserStore } from "@/stores/userStore";
 import { CalculationData } from "./types";
 
@@ -27,6 +33,197 @@ interface StatsSectionProps {
   month: number;
   year: number;
   onDataChange?: (data: CalculationData | null) => void;
+}
+
+const DEPOSIT_ACCOUNT = "국민 005701-04-142344 ㈜에이시지알";
+
+function AdjustmentMarker({
+  type,
+}: {
+  type: "individual" | "holiday" | "halfDay";
+}) {
+  if (type === "individual") {
+    return (
+      <span
+        className="flex h-[18px] w-[18px] shrink-0 items-center justify-center"
+        aria-hidden="true"
+      >
+        <span className="h-3 w-3 rounded-full border border-[var(--signal-orange)] bg-transparent" />
+      </span>
+    );
+  }
+
+  const icon =
+    type === "halfDay"
+      ? { src: "/icons/clock.png", alt: "반차" }
+      : { src: "/icons/holiday.png", alt: "휴가" };
+
+  return (
+    <span className="flex h-[18px] w-[18px] shrink-0 items-center justify-center">
+      <Image
+        src={icon.src}
+        alt={icon.alt}
+        width={18}
+        height={18}
+        className="h-[18px] w-[18px]"
+      />
+    </span>
+  );
+}
+
+function RecentMealTicker({ excludeUserId }: { excludeUserId: string }) {
+  const { data = [], isLoading } = useRecentMealActivity(excludeUserId);
+  const tickerItems = data.length > 0 ? [...data, ...data] : [];
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const dragStateRef = useRef<{
+    pointerId: number;
+    startY: number;
+    startScrollTop: number;
+  } | null>(null);
+  const wheelIdleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isInteracting, setIsInteracting] = useState(false);
+
+  const formatActivityDate = (date: string) => dayjs(date).format("M.D");
+  const getActivityMeals = (activity: RecentMealActivity) => {
+    if (activity.mealDetails?.length) {
+      return activity.mealDetails;
+    }
+
+    const mealLabel = activity.mealTypes.join("/");
+    return [{ type: mealLabel, store: activity.store }];
+  };
+
+  const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!scrollRef.current || data.length <= 1) return;
+
+    dragStateRef.current = {
+      pointerId: event.pointerId,
+      startY: event.clientY,
+      startScrollTop: scrollRef.current.scrollTop,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setIsInteracting(true);
+  };
+
+  const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!scrollRef.current || !dragStateRef.current) return;
+
+    const deltaY = event.clientY - dragStateRef.current.startY;
+    scrollRef.current.scrollTop = dragStateRef.current.startScrollTop - deltaY;
+  };
+
+  const stopDragging = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (dragStateRef.current?.pointerId === event.pointerId) {
+      dragStateRef.current = null;
+      setIsInteracting(false);
+    }
+  };
+
+  const handleWheel = () => {
+    setIsInteracting(true);
+
+    if (wheelIdleTimerRef.current) {
+      clearTimeout(wheelIdleTimerRef.current);
+    }
+
+    wheelIdleTimerRef.current = setTimeout(() => {
+      setIsInteracting(false);
+      wheelIdleTimerRef.current = null;
+    }, 500);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (wheelIdleTimerRef.current) {
+        clearTimeout(wheelIdleTimerRef.current);
+      }
+    };
+  }, []);
+
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="mb-2 flex items-center justify-between">
+        <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">
+          최근 식대 입력
+        </p>
+      </div>
+
+      <div
+        ref={scrollRef}
+        className="relative min-h-0 flex-1 cursor-grab overflow-y-auto px-1 py-2 [mask-image:linear-gradient(to_bottom,transparent_0,black_1.1rem,black_calc(100%-2rem),transparent_100%)] active:cursor-grabbing"
+        onWheel={handleWheel}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={stopDragging}
+        onPointerCancel={stopDragging}
+      >
+        {isLoading ? (
+          <div className="space-y-2">
+            <div className="skeleton h-5 rounded-full" />
+            <div className="skeleton h-5 rounded-full" />
+          </div>
+        ) : data.length > 0 ? (
+          <motion.div
+            className="space-y-2"
+            animate={
+              data.length > 1 && !isInteracting
+                ? { y: ["0%", "-50%"] }
+                : { y: 0 }
+            }
+            transition={
+              data.length > 1 && !isInteracting
+                ? {
+                    duration: Math.max(5.6, data.length * 1.35),
+                    repeat: Infinity,
+                    ease: "linear",
+                  }
+                : undefined
+            }
+          >
+            {tickerItems.map((activity, index) => (
+              <div
+                key={`${activity.id}-${index}`}
+                className="flex h-6 items-center justify-between gap-3 text-sm lg:text-xs"
+              >
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="max-w-[4.5rem] truncate text-[var(--ink-black)]">
+                    {activity.userName}
+                  </span>
+                  <span className="min-w-0 truncate text-[var(--granite)]">
+                    {getActivityMeals(activity).map((meal, mealIndex) => (
+                      <span key={`${activity.id}-${meal.type}-${mealIndex}`}>
+                        {mealIndex > 0 && (
+                          <span className="px-1 text-[rgba(92,96,100,0.42)]">
+                            /
+                          </span>
+                        )}
+                        <span className="text-[rgba(92,96,100,0.42)]">
+                          {meal.type}
+                        </span>
+                        {meal.store && (
+                          <span className="text-[var(--granite)]">
+                            {" "}
+                            {meal.store}
+                          </span>
+                        )}
+                      </span>
+                    ))}
+                  </span>
+                </div>
+                <span className="shrink-0 text-xs text-[var(--slate-gray)] lg:text-[11px]">
+                  {formatActivityDate(activity.date)}
+                </span>
+              </div>
+            ))}
+          </motion.div>
+        ) : (
+          <div className="flex h-full items-center text-xs text-[var(--slate-gray)]">
+            다른 사람의 최근 입력 내역이 없습니다.
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function CalculationResult({
@@ -41,11 +238,9 @@ function CalculationResult({
     year,
   );
 
-  // 복지포인트 정산 Dialog 상태
   const [dialogOpen, setDialogOpen] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState(0);
 
-  // 복지포인트 관련 hooks (잔액 초과 시에만 조회)
   const isOverBudget = data ? data.balance < 0 : false;
   const { userName, memberId } = useUserStore();
   const { data: memberLookup } = useMemberIdLookup(
@@ -71,6 +266,7 @@ function CalculationResult({
       toast.error("사용자 정보를 불러올 수 없습니다.");
       return;
     }
+
     const allocId = welfareData?.summary?.allocation_id;
     if (!allocId) {
       toast.error("복지포인트 할당 정보가 없습니다.");
@@ -98,19 +294,30 @@ function CalculationResult({
     onDataChange?.(data || null);
   }, [data, onDataChange]);
 
+  const copyAccount = () => {
+    navigator.clipboard
+      .writeText(DEPOSIT_ACCOUNT)
+      .then(() =>
+        toast.success(
+          <div className="ml-1.5 text-[var(--ink-black)]">
+            <p>계좌 정보가 복사되었습니다.</p>
+            <p className="mt-1 font-bold">{DEPOSIT_ACCOUNT}</p>
+          </div>,
+        ),
+      )
+      .catch(() => toast.error("복사에 실패했습니다."));
+  };
+
   if (isLoading) {
     return (
-      <div className="card-premium rounded-2xl p-5 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-[oklch(0.92_0.06_200/0.25)] rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
-        <div className="space-y-4 relative">
-          <div className="flex justify-between items-center">
-            <div className="skeleton h-4 w-16 rounded" />
-            <div className="skeleton h-6 w-24 rounded" />
-          </div>
-          <div className="skeleton h-2 w-full rounded-full" />
-          <div className="flex justify-between">
-            <div className="skeleton h-4 w-20 rounded" />
-            <div className="skeleton h-4 w-20 rounded" />
+      <div className="card-premium overflow-hidden p-6">
+        <div className="space-y-4">
+          <div className="skeleton h-4 w-24 rounded-full" />
+          <div className="skeleton h-12 w-48 rounded-full" />
+          <div className="skeleton h-3 w-full rounded-full" />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="skeleton h-24 rounded-[20px]" />
+            <div className="skeleton h-24 rounded-[20px]" />
           </div>
         </div>
       </div>
@@ -119,13 +326,13 @@ function CalculationResult({
 
   if (error) {
     return (
-      <div className="card-premium rounded-2xl p-6 text-center relative overflow-hidden">
-        <p className="text-sm text-gray-500 mb-3">{error.message}</p>
+      <div className="card-premium overflow-hidden p-6 text-center">
+        <p className="text-sm text-[var(--granite)]">{error.message}</p>
         <Button
           onClick={() => refetch()}
           variant="outline"
           size="sm"
-          className="text-xs rounded-lg px-4"
+          className="btn-secondary mt-4 px-4 py-2 text-xs"
         >
           다시 시도
         </Button>
@@ -136,188 +343,231 @@ function CalculationResult({
   if (!data) {
     return (
       <div className="flex items-center justify-center py-8">
-        <div className="flex items-center gap-2 text-gray-400">
-          <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-500 rounded-full animate-spin" />
+        <div className="flex items-center gap-2 text-[var(--slate-gray)]">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--whisper-cream)] border-t-[var(--ink-black)]" />
           <span className="text-sm">불러오는 중...</span>
         </div>
       </div>
     );
   }
 
-  const formatCurrency = (amount: number) => {
-    return Math.abs(amount).toLocaleString();
-  };
-
-  // 사용 비율 계산 (0~100)
+  const formatCurrency = (amount: number) => Math.abs(amount).toLocaleString();
   const usagePercent =
     data.allowanceAmount > 0
       ? Math.min(100, Math.round((data.totalUsed / data.allowanceAmount) * 100))
       : 0;
-
-  // 잔액 상태 판단
   const isLowBalance =
     data.balance >= 0 && data.balance < data.allowanceAmount * 0.2;
+  const statusLabel = isOverBudget ? "초과" : isLowBalance ? "주의" : "양호";
+  const statusTone = isOverBudget
+    ? "bg-[rgba(226,59,74,0.12)] text-[var(--danger)]"
+    : isLowBalance
+      ? "bg-[rgba(236,126,0,0.12)] text-[var(--warning)]"
+      : "bg-[var(--whisper-cream)] text-[var(--ink-black)]";
+  const progressTone = isOverBudget
+    ? "bg-[var(--danger)]"
+    : isLowBalance
+      ? "bg-[var(--warning)]"
+      : "bg-[var(--ink-black)]";
 
   return (
-    <div className="card-premium rounded-2xl relative">
-      {/* Decorative Elements */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-[oklch(0.92_0.06_200/0.25)] rounded-full blur-2xl -translate-y-1/2 translate-x-1/4" />
-      <div className="absolute bottom-0 left-0 w-24 h-24 bg-[oklch(0.90_0.08_250/0.2)] rounded-full blur-2xl translate-y-1/2 -translate-x-1/4" />
+    <div className="card-premium overflow-hidden lg:flex lg:h-full lg:min-h-0 lg:flex-col">
+      <div className="relative bg-white px-5 py-5 text-[var(--ink-black)] lg:px-4 lg:py-3">
+        <button
+          type="button"
+          onClick={copyAccount}
+          className="absolute right-4 top-3 flex h-8 items-center gap-1.5 rounded-full bg-[var(--whisper-cream)] px-3 text-xs font-medium text-[var(--ink-black)] transition-colors hover:bg-[var(--soft-bone)] active:scale-95"
+          aria-label={`입금계좌 복사: ${DEPOSIT_ACCOUNT}`}
+          title={DEPOSIT_ACCOUNT}
+        >
+          <Copy className="h-3.5 w-3.5" />
+          <span>계좌번호 복사</span>
+        </button>
 
-      {/* 메인 잔액 표시 */}
-      <div className="relative px-5 pt-5 pb-4">
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <p className="text-xs text-gray-500 mb-1">이번 달 잔액</p>
-            <div className="flex items-baseline gap-1 relative">
-              {isOverBudget && (
-                <span className="text-2xl font-bold text-red-500">-</span>
-              )}
-              <NumberTicker
-                value={Math.abs(data.balance)}
-                className={`text-2xl font-bold tracking-tight ${
-                  isOverBudget
-                    ? "text-red-500"
-                    : isLowBalance
-                      ? "text-amber-600"
-                      : "text-gray-900"
-                }`}
-              />
-              <span
-                className={`text-sm font-medium ${
-                  isOverBudget
-                    ? "text-red-400"
-                    : isLowBalance
-                      ? "text-amber-500"
-                      : "text-gray-400"
-                }`}
-              >
-                원
-              </span>
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <p className="eyebrow-label text-[var(--slate-gray)]">
+                Meal Allowance
+              </p>
+              <p className="text-xs text-[var(--granite)] lg:text-[11px]">
+                {month}월 식대 잔액
+              </p>
+              <div className="flex items-end gap-1">
+                {isOverBudget && (
+                  <span className="text-2xl font-medium text-[var(--danger)] lg:text-xl">
+                    -
+                  </span>
+                )}
+                <NumberTicker
+                  value={Math.abs(data.balance)}
+                  className={`font-display text-[2.35rem] font-medium lg:text-[1.75rem] ${
+                    isOverBudget
+                      ? "text-[var(--danger)]"
+                      : isLowBalance
+                        ? "text-[var(--warning)]"
+                        : "text-[var(--ink-black)]"
+                  }`}
+                />
+                <span
+                  className={`pb-1 text-xs font-medium lg:text-[11px] ${
+                    isOverBudget
+                      ? "text-[var(--danger)]"
+                      : "text-[var(--slate-gray)]"
+                  }`}
+                >
+                  원
+                </span>
+              </div>
+            </div>
 
-            
+            <div
+              className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-medium ${statusTone}`}
+            >
+              {statusLabel}
             </div>
           </div>
 
-          {/* 상태 뱃지 */}
-          <div
-            className={`px-2.5 py-1 rounded-full text-[11px] font-medium ${
-              isOverBudget
-                ? "bg-red-50 text-red-600"
-                : isLowBalance
-                  ? "bg-amber-50 text-amber-600"
-                  : "bg-emerald-50 text-emerald-600"
-            }`}
-          >
-            {isOverBudget ? "초과" : isLowBalance ? "주의" : "양호"}
+          <div className="mt-8 hidden rounded-[22px] bg-[var(--whisper-cream)] px-4 py-4 text-right sm:block lg:px-3 lg:py-3">
+            <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">
+              Usage
+            </p>
+            <p className="mt-2 font-display text-[1.65rem] text-[var(--ink-black)] lg:text-[1.25rem]">
+              {usagePercent}%
+            </p>
+            <p className="mt-1 text-[11px] text-[var(--granite)]">
+              이번 달 사용률
+            </p>
           </div>
         </div>
 
-        {/* 사용량 프로그레스 바 */}
-        <div className="space-y-2">
-          <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+        <div className="mt-5 space-y-2.5">
+          <div className="h-3 overflow-hidden rounded-full bg-[var(--whisper-cream)]">
             <motion.div
               initial={{ width: 0, opacity: 0 }}
               animate={{ width: `${Math.min(usagePercent, 100)}%`, opacity: 1 }}
               transition={{
                 width: { duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.2 },
-                opacity: { duration: 0.3 }
+                opacity: { duration: 0.3 },
               }}
-              className={`h-full rounded-full relative ${
-                isOverBudget
-                  ? "bg-gradient-to-r from-red-400 to-red-500"
-                  : isLowBalance
-                    ? "bg-gradient-to-r from-amber-400 to-amber-500"
-                    : "bg-gradient-to-r from-[oklch(0.55_0.18_250)] to-[oklch(0.48_0.20_270)]"
-              }`}
-            >
-              {/* 글로우 효과 */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-white/30 to-transparent"
-              />
-            </motion.div>
+              className={`h-full rounded-full ${progressTone}`}
+            />
           </div>
-          <div className="flex justify-between text-[11px] text-gray-400">
-            <motion.span
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-            >
-              {usagePercent}% 사용
-            </motion.span>
+          <div className="flex justify-between text-[11px] text-[var(--granite)]">
+            <span>{usagePercent}% 사용</span>
             <span>{formatCurrency(data.allowanceAmount)}원 중</span>
           </div>
         </div>
+      </div>
 
-          {/* 잔액 초과 시 둥실둥실 떠다니는 복지포인트 풍선 */}
-          {isOverBudget && (
-                <button
-                  type="button"
-                  onClick={handleOpenDialog}
-                  className="absolute left-42 top-1/2 -translate-y-[25px] ml-2.5 z-10"
-                >
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.5 }}
-                    animate={{
-                      opacity: 1,
-                      scale: 1,
-                      y: [0, -4, 0, 3, 0],
-                    }}
-                    transition={{
-                      opacity: { duration: 0.3, delay: 0.8 },
-                      scale: {
-                        type: "spring",
-                        stiffness: 500,
-                        damping: 15,
-                        delay: 0.8,
-                      },
-                      y: {
-                        duration: 3,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                        delay: 1.2,
-                      },
-                    }}
-                    className="relative whitespace-nowrap"
-                  >
-                    {/* 말풍선 본체 */}
-                    <div className="bg-gradient-to-r from-[oklch(0.55_0.15_270)] to-[oklch(0.55_0.15_300)] text-white rounded-xl px-3 py-1.5 text-[11px] font-semibold shadow-lg shadow-violet-500/25 active:scale-95 transition-transform">
-                      복지포인트로 지불하기
-                    </div>
-                    {/* 왼쪽 삼각형 포인터 */}
-                    <div
-                      className="absolute top-1/2 -translate-y-1/2 -left-[4px]"
-                      style={{
-                        width: 0,
-                        height: 0,
-                        borderTop: "5px solid transparent",
-                        borderBottom: "5px solid transparent",
-                        borderRight: "6px solid oklch(0.55 0.15 270)",
-                      }}
-                    />
-                  </motion.div>
-                </button>
-              )}
+      <div className="grid grid-cols-2 gap-2.5 border-t border-[rgba(25,28,31,0.08)] px-5 py-4 lg:px-4 lg:py-3">
+        <div className="px-1 py-2">
+          <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">
+            지급 총액
+          </p>
+          <p className="mt-2 whitespace-nowrap font-display text-[1.35rem] text-[var(--ink-black)] sm:text-[1.6rem] lg:text-[1.35rem]">
+            {formatCurrency(data.allowanceAmount)}
+            <span className="ml-1 text-sm text-[var(--slate-gray)] lg:text-xs">
+              원
+            </span>
+          </p>
+        </div>
+        <div className="px-1 py-2">
+          <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">
+            사용금액
+          </p>
+          <p className="mt-2 whitespace-nowrap font-display text-[1.35rem] text-[var(--ink-black)] sm:text-[1.6rem] lg:text-[1.35rem]">
+            {formatCurrency(data.totalUsed)}
+            <span className="ml-1 text-sm text-[var(--slate-gray)] lg:text-xs">
+              원
+            </span>
+          </p>
+        </div>
+      </div>
 
-      {/* 복지포인트 정산 확인 Dialog */}
+      {isOverBudget && (
+        <div className="border-t border-[rgba(25,28,31,0.08)] px-6 py-5 lg:px-5 lg:py-3">
+          <button
+            type="button"
+            onClick={handleOpenDialog}
+            className="btn-primary w-full py-2.5 text-xs"
+          >
+            복지포인트로 초과분 정산하기
+          </button>
+        </div>
+      )}
+
+      {((data.totalDeduction ?? 0) > 0 || (data.weekendWorkCount ?? 0) > 0) && (
+        <div className="border-t border-[rgba(25,28,31,0.08)] px-6 py-5 lg:px-5 lg:py-3">
+          <p className="eyebrow-label text-[11px]">Adjustments</p>
+          <div className="mt-4 space-y-3">
+            {(data.weekendWorkCount ?? 0) > 0 && (
+              <div className="flex items-center justify-between text-sm lg:text-sm">
+                <span className="text-[var(--granite)]">
+                  주말근무 {data.weekendWorkCount}일
+                </span>
+                <span className="font-medium text-[var(--ink-black)]">
+                  +{formatCurrency(data.weekendWorkAddition || 0)}원
+                </span>
+              </div>
+            )}
+            {(data.individualMealCount ?? 0) > 0 && (
+              <div className="flex items-center justify-between text-sm lg:text-sm">
+                <span className="flex items-center gap-2 text-[var(--granite)]">
+                  <AdjustmentMarker type="individual" />
+                  <span>개별식사 {data.individualMealCount}회</span>
+                </span>
+                <span className="font-medium text-[var(--granite)]">
+                  -{formatCurrency(data.individualMealDeduction || 0)}원
+                </span>
+              </div>
+            )}
+            {(data.noMealFullDayCount ?? 0) > 0 && (
+              <div className="flex items-center justify-between text-sm lg:text-sm">
+                <span className="flex items-center gap-2 text-[var(--granite)]">
+                  <AdjustmentMarker type="holiday" />
+                  <span>연차/재택/휴무 {data.noMealFullDayCount}일</span>
+                </span>
+                <span className="font-medium text-[var(--granite)]">
+                  -{formatCurrency(data.noMealDeduction || 0)}원
+                </span>
+              </div>
+            )}
+            {(data.halfDayOffCount ?? 0) > 0 && (
+              <div className="flex items-center justify-between text-sm lg:text-sm">
+                <span className="flex items-center gap-2 text-[var(--granite)]">
+                  <AdjustmentMarker type="halfDay" />
+                  <span>반차 {data.halfDayOffCount}일</span>
+                </span>
+                <span className="font-medium text-[var(--granite)]">
+                  -{formatCurrency(data.halfDayDeduction || 0)}원
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="h-[200px] border-t border-[rgba(25,28,31,0.08)] px-6 pb-7 pt-4 lg:min-h-0 lg:flex-1 lg:px-5 lg:pb-6 lg:pt-3">
+        <RecentMealTicker excludeUserId={userId} />
+      </div>
+
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="rounded-[24px] border border-[rgba(25,28,31,0.1)] bg-white p-6">
           <DialogHeader>
             <DialogTitle>복지포인트로 정산하시겠습니까?</DialogTitle>
             <DialogDescription>{month}월 점심식대 초과분</DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
+          <div className="space-y-3">
+            <label className="text-sm font-medium text-[var(--granite)]">
               정산금액
             </label>
             <Input
               type="number"
               value={paymentAmount}
               onChange={(e) => setPaymentAmount(Number(e.target.value))}
+              className="input-premium"
             />
           </div>
 
@@ -326,143 +576,51 @@ function CalculationResult({
             const depositAmount = totalOverage - paymentAmount;
             if (depositAmount <= 0) return null;
             return (
-              <div className="p-3 bg-amber-50 rounded-xl border border-amber-100 space-y-1.5">
-                <p className="text-xs font-semibold text-amber-700">
+              <div className="space-y-2 rounded-[20px] border border-[rgba(236,126,0,0.16)] bg-[rgba(236,126,0,0.08)] p-4">
+                <p className="text-xs font-semibold text-[var(--warning)]">
                   잔금 입금 안내
                 </p>
-                <p className="text-[11px] text-amber-600">
-                  정산금액({totalOverage.toLocaleString()}원) 중 나머지{" "}
+                <p className="text-[11px] text-[var(--warning)]">
+                  남은{" "}
                   <span className="font-bold">
                     {depositAmount.toLocaleString()}원
                   </span>
-                  을 아래 계좌로 입금해주세요.
+                  은 아래 계좌로 입금해주세요.
                 </p>
                 <button
                   type="button"
-                  onClick={() => {
-                    navigator.clipboard
-                      .writeText("국민 005701-04-142344 ㈜에이시지알")
-                      .then(() =>
-                        toast.success("계좌 정보가 복사되었습니다."),
-                      )
-                      .catch(() => toast.error("복사에 실패했습니다."));
-                  }}
-                  className="flex items-center gap-1.5 text-[11px] font-medium text-amber-800 bg-amber-100 rounded-lg px-2.5 py-1.5 active:bg-amber-200 transition-colors"
+                  onClick={copyAccount}
+                  className="flex items-center gap-1.5 rounded-full bg-white px-3 py-2 text-[11px] font-medium text-[var(--warning)]"
                 >
-                  <span>국민 005701-04-142344 ㈜에이시지알</span>
-                  <Copy className="w-3 h-3 shrink-0" />
+                  <span>{DEPOSIT_ACCOUNT}</span>
+                  <Copy className="h-3 w-3 shrink-0" />
                 </button>
               </div>
             );
           })()}
 
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-[var(--slate-gray)]">
             {month}월 점심식대 초과분을 복지포인트에서 차감합니다.
           </p>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setDialogOpen(false)}
+              className="btn-secondary"
+            >
               취소
             </Button>
             <Button
               onClick={handleConfirmPayment}
               disabled={addMutation.isPending}
+              className="btn-primary"
             >
               확인
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      </div>
-
-      {/* 상세 내역 */}
-      <div className="relative grid grid-cols-2 border-t border-white/40">
-        <div className="px-5 py-4 border-r border-white/40">
-          <p className="text-[11px] text-gray-400 mb-1">사용가능액</p>
-          <p className="text-base font-semibold text-gray-700">
-            {formatCurrency(data.allowanceAmount)}
-            <span className="text-xs font-normal text-gray-400 ml-0.5">원</span>
-          </p>
-        </div>
-        <div className="px-5 py-4">
-          <p className="text-[11px] text-gray-400 mb-1">사용금액</p>
-          <p className="text-base font-semibold text-gray-700">
-            {formatCurrency(data.totalUsed)}
-            <span className="text-xs font-normal text-gray-400 ml-0.5">원</span>
-          </p>
-        </div>
-      </div>
-
-      {/* 차감/가산 정보 (있을 경우) */}
-      {((data.totalDeduction ?? 0) > 0 || (data.weekendWorkCount ?? 0) > 0) && (
-        <div className="relative px-5 py-3 bg-white/30 border-t border-white/40 space-y-1.5">
-          {/* 주말 근무 가산 */}
-          {(data.weekendWorkCount ?? 0) > 0 && (
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-500">
-                주말근무 {data.weekendWorkCount}일
-              </span>
-              <span className="font-medium text-blue-600">
-                +{formatCurrency(data.weekendWorkAddition || 0)}원
-              </span>
-            </div>
-          )}
-          {/* 개별식사 차감 */}
-          {(data.individualMealCount ?? 0) > 0 && (
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-500">
-                개별식사 {data.individualMealCount}회
-              </span>
-              <span className="font-medium text-gray-600">
-                -{formatCurrency(data.individualMealDeduction || 0)}원
-              </span>
-            </div>
-          )}
-          {/* 연차/재택/휴무 차감 */}
-          {(data.noMealFullDayCount ?? 0) > 0 && (
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-500">
-                연차/재택/휴무 {data.noMealFullDayCount}일
-              </span>
-              <span className="font-medium text-gray-600">
-                -{formatCurrency(data.noMealDeduction || 0)}원
-              </span>
-            </div>
-          )}
-          {/* 반차 차감 */}
-          {(data.halfDayOffCount ?? 0) > 0 && (
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-500">
-                반차 {data.halfDayOffCount}일
-              </span>
-              <span className="font-medium text-gray-600">
-                -{formatCurrency(data.halfDayDeduction || 0)}원
-              </span>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 계좌 복사 버튼 */}
-      <div className="relative px-5 py-3 border-t border-white/40">
-        <button
-          type="button"
-          onClick={() => {
-            navigator.clipboard
-              .writeText("국민 005701-04-142344 ㈜에이시지알")
-              .then(() => toast.success("계좌 정보가 복사되었습니다."))
-              .catch(() => toast.error("복사에 실패했습니다."));
-          }}
-          className="flex items-center justify-between w-full text-xs active:opacity-70 transition-opacity"
-        >
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px] text-gray-400">입금계좌</span>
-            <span className="font-medium text-gray-600">국민 005701-04-142344 ㈜에이시지알</span>
-          </div>
-          <Copy className="w-3.5 h-3.5 text-gray-400" />
-        </button>
-      </div>
-
     </div>
   );
 }
@@ -478,7 +636,6 @@ export default function StatsSection({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
-      className="mb-6"
     >
       <CalculationResult
         userId={userId}

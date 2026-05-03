@@ -1,70 +1,59 @@
-"use client";
-
-import Image from "next/image";
 import React from "react";
-import GithubIconSvg from "@/public/icons/github.png";
-import { AtSign } from "@repo/ui/icons";
-import { motion } from "motion/react";
 
 interface FooterProps {
   className?: string;
+  variant?: "default" | "compact";
 }
 
-export function Footer({ className = "" }: FooterProps) {
+function SupportMessage({ className = "" }: { className?: string }) {
+  return (
+    <p className={className}>
+      복지 운영 관련 문의는 P&C 팀,
+      <br />
+      기능 오류 및 버그 관련 문의는 HR Tech팀 김현민 선임에게 문의해 주세요.
+    </p>
+  );
+}
+
+export function Footer({ className = "", variant = "default" }: FooterProps) {
   const currentYear = new Date().getFullYear();
 
-  const handleEmailClick = () => {
-    window.location.href = "mailto:hmkim@acghr.co.kr";
-  };
+  if (variant === "compact") {
+    return (
+      <footer className={`w-full ${className}`}>
+        <div className="flex flex-col gap-3 rounded-[22px] bg-white px-4 py-3 text-[var(--ink-black)] sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--slate-gray)]">
+              Support
+            </p>
+            <SupportMessage className="mt-1 text-sm leading-5 text-[var(--granite)]" />
+          </div>
+        </div>
+      </footer>
+    );
+  }
 
   return (
-    <footer className={`w-full mt-8 ${className}`}>
-      <div className="card-premium mx-0 rounded-2xl overflow-hidden">
-        <div className="p-6 space-y-5 relative">
-          {/* Decorative gradient */}
-          <div className="absolute top-0 right-0 w-32 h-32 bg-[oklch(0.92_0.05_250/0.3)] rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
-
-          {/* App Info */}
-          <div className="text-center relative">
-            <h3 className="text-sm font-semibold text-[oklch(0.25_0.02_250)] mb-1.5">
-              ACG 식대관리 서비스
-            </h3>
-            <p className="text-xs text-[oklch(0.55_0.01_250)] leading-relaxed">
-              간편한 식대관리, 점심조 편성, 음료취합을 위한 앱
-            </p>
+    <footer className={`w-full ${className}`}>
+      <div className="overflow-hidden rounded-[28px] bg-[var(--ink-black)] text-white">
+        <div className="space-y-6 px-6 py-7">
+          <div className="space-y-3">
+            <p className="eyebrow-label text-white/70 before:bg-[var(--signal-orange)]">Support</p>
+            <h2 className="max-w-[16rem] text-[1.9rem] leading-[1.08] tracking-normal text-white">
+              운영과 버그 문의를
+              <br />
+              안내합니다.
+            </h2>
+            <SupportMessage className="max-w-[22rem] text-sm leading-6 text-white/64" />
           </div>
 
-          {/* Divider */}
-          <div className="divider" />
+          <div className="divider bg-white/10" />
 
-          {/* Links */}
-          <div className="flex justify-center items-center gap-4 relative">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => window.open("https://github.com/aksel26", "_blank")}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[oklch(0.97_0.01_250)] hover:bg-[oklch(0.95_0.02_250)] transition-colors"
-            >
-              <Image src={GithubIconSvg} alt="GitHub" width={14} height={14} />
-              <span className="text-xs text-[oklch(0.40_0.01_250)]">aksel26</span>
-            </motion.button>
-
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleEmailClick}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[oklch(0.97_0.01_250)] hover:bg-[oklch(0.95_0.02_250)] transition-colors"
-            >
-              <AtSign size={14} className="text-[oklch(0.50_0.01_250)]" />
-              <span className="text-xs text-[oklch(0.40_0.01_250)]">hmkim@acghr.co.kr</span>
-            </motion.button>
-          </div>
-
-          {/* Copyright */}
-          <div className="text-center pt-2 relative">
-            <p className="text-[10px] text-[oklch(0.60_0.01_250)]">
-              © {currentYear} ACG 식대관리 서비스. All rights reserved.
-            </p>
+          <div className="flex items-center justify-between gap-4 text-xs text-white/58">
+            <span>© {currentYear} ACG Welfare Service</span>
+            <span className="rounded-full border border-white/12 px-3 py-1.5 text-white/72">
+              KO • User
+            </span>
           </div>
         </div>
       </div>

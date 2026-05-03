@@ -10,97 +10,97 @@ import MonthlyIcon from "@/public/icons/monthly.png";
 import PointsIcon from "@/public/icons/payer.png";
 import DNAIcon from "@/public/icons/dna.png";
 
-export function BottomNavigation() {
-  const navItems = [
-    {
-      id: "dashboard",
-      label: "홈",
-      icon: HomeIcon,
-    },
-    {
-      id: "points",
-      label: "복지포인트",
-      icon: PointsIcon,
-    },
-    {
-      id: "lunch",
-      label: "점심조",
-      icon: LunchIcon,
-    },
-    {
-      id: "monthly",
-      label: "음료취합",
-      icon: MonthlyIcon,
-    },
-    {
-      id: "workDNA",
-      label: "유형검사",
-      icon: DNAIcon,
-    },
-  ];
+const navItems = [
+  {
+    id: "dashboard",
+    label: "홈",
+    icon: HomeIcon,
+  },
+  {
+    id: "points",
+    label: "복지포인트",
+    icon: PointsIcon,
+  },
+  {
+    id: "lunch",
+    label: "점심조",
+    icon: LunchIcon,
+  },
+  {
+    id: "monthly",
+    label: "음료취합",
+    icon: MonthlyIcon,
+  },
+  {
+    id: "workDNA",
+    label: "유형검사",
+    icon: DNAIcon,
+  },
+];
 
+export function BottomNavigation() {
   const router = useRouter();
   const pathname = usePathname();
 
   const handleNavigation = (id: string) => {
     if (id === "workDNA") {
       window.open("https://workdna.netlify.app/", "_blank");
-    } else {
-      router.push(`/${id}`);
+      return;
     }
+
+    router.push(`/${id}`);
+  };
+
+  const isActivePath = (id: string) => {
+    if (id === "dashboard") {
+      return pathname === "/dashboard";
+    }
+
+    return pathname.startsWith(`/${id}`);
   };
 
   return (
     <motion.nav
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 300, damping: 25, delay: 0.3 }}
-      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg z-50 px-4 pb-2"
+      transition={{ type: "spring", stiffness: 280, damping: 28, delay: 0.25 }}
+      className="fixed bottom-0 left-1/2 z-50 w-full max-w-[820px] -translate-x-1/2 px-4 pb-4 sm:px-6"
     >
-      {/* Glass Background */}
-      <div className="glass-card-elevated rounded-2xl px-2 py-1.5 shadow-xl">
-        <div className="flex justify-around items-center pb-safe">
+      <div className="glass-card-elevated rounded-[28px] px-2 py-2">
+        <div className="grid grid-cols-5 gap-1">
           {navItems.map((item) => {
-            const isActive = pathname === `/${item.id}`;
+            const isActive = isActivePath(item.id);
 
             return (
               <motion.button
                 key={item.id}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.92 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={() => handleNavigation(item.id)}
-                className="relative flex flex-col items-center justify-center py-2 px-3 rounded-xl"
+                className={`nav-item min-h-[64px] ${
+                  isActive
+                    ? "nav-item-active"
+                    : "text-[var(--granite)]"
+                }`}
               >
-                {/* Active Background */}
-                {isActive && (
-                  <div className="absolute inset-0 bg-gradient-to-br from-[oklch(0.94_0.05_250)] to-[oklch(0.91_0.07_270)] rounded-xl" />
-                )}
-
-                {/* Icon */}
-                <motion.div
-                  animate={
-                    isActive ? { scale: 1.1, y: -1 } : { scale: 1, y: 0 }
-                  }
-                  transition={{ duration: 0.2 }}
-                  className="relative z-10 mb-0.5"
+                <div
+                  className={`mb-1.5 flex h-9 w-9 items-center justify-center rounded-full ${
+                    isActive ? "bg-white/12" : "bg-[var(--whisper-cream)]"
+                  }`}
                 >
                   <Image
                     src={item.icon}
                     alt={item.label}
-                    height={22}
-                    width={22}
-                    className={`transition-all duration-200 ${
-                      isActive ? "drop-shadow-sm" : "opacity-70"
+                    height={18}
+                    width={18}
+                    className={`transition-opacity duration-200 ${
+                      isActive ? "opacity-100" : "opacity-70"
                     }`}
                   />
-                </motion.div>
+                </div>
 
-                {/* Label */}
                 <span
-                  className={`relative z-10 text-[10px] font-medium transition-colors duration-200 ${
-                    isActive
-                      ? "text-[oklch(0.40_0.12_250)]"
-                      : "text-[oklch(0.50_0.01_250)]"
+                  className={`text-[10px] font-medium tracking-[0.08em] ${
+                    isActive ? "text-white" : "text-[var(--slate-gray)]"
                   }`}
                 >
                   {item.label}
@@ -110,9 +110,6 @@ export function BottomNavigation() {
           })}
         </div>
       </div>
-
-      {/* Home Indicator Safe Area */}
-      <div className="h-5" />
     </motion.nav>
   );
 }

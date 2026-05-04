@@ -1,4 +1,5 @@
 "use client";
+import QuickActionsSection from "@/components/dashboard/QuickActionsSection";
 import LunchGroupList from "@/components/lunch/LunchGroupList";
 import { useLunchGroup } from "@/hooks/useLunchGroup";
 import { useUsers } from "@/hooks/useUsers";
@@ -6,7 +7,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/src/popover";
 import { motion } from "motion/react";
 import dynamic from "next/dynamic";
 import React, { useEffect, useMemo, useState } from "react";
-import QuickActionsSection from "@/components/dashboard/QuickActionsSection";
 
 const ScratchLottery = dynamic(
   () => import("@/components/lunch/ScratchLottery"),
@@ -106,26 +106,31 @@ const Lunch = () => {
           >
             {/* 상단 헤더 */}
             <div className="px-5 py-4">
-              <div className="flex items-center justify-between gap-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="min-w-0">
-                  <h1 className="text-lg font-medium text-[var(--ink-black)]">
-                    점심조 편성
-                  </h1>
                   {isLoading ? (
-                    <p className="mt-0.5 text-xs text-[var(--slate-gray)]">
+                    <p className="text-lg font-medium text-[var(--slate-gray)]">
                       로딩 중...
                     </p>
                   ) : error ? (
-                    <p className="mt-0.5 text-xs text-[var(--danger)]">
+                    <p className="text-lg font-medium text-[var(--danger)]">
                       데이터 로딩 실패
                     </p>
                   ) : (
-                    <p className="mt-0.5 text-xs text-[var(--granite)]">
+                    <h1 className="text-lg font-medium text-[var(--ink-black)]">
                       총 {validGroupCount}개 조 ·{" "}
                       {lunchGroupData?.totalMembers || "0"}명
-                    </p>
+                    </h1>
                   )}
                 </div>
+
+                {!isLoading && !error && (
+                  <div className="flex shrink-0 items-center gap-2 text-[11px] font-medium text-[var(--slate-gray)]">
+                    <span>시작일 {lunchGroupData?.prevDate || "-"}</span>
+                    <span className="text-[rgba(14,15,12,0.22)]">·</span>
+                    <span>다음 뽑기 {lunchGroupData?.nextDate || "-"}</span>
+                  </div>
+                )}
 
                 {/* 미추첨 인원 Popover */}
                 {!isLoading && !error && unassignedMembers.length > 0 && (
@@ -184,28 +189,6 @@ const Lunch = () => {
                     </PopoverContent>
                   </Popover>
                 )}
-              </div>
-            </div>
-
-            {/* 일정 정보 */}
-            <div className="px-5 pb-5">
-              <div className="mb-4 grid grid-cols-2 gap-3">
-                <div className="rounded-[18px] bg-[rgba(244,241,232,0.58)] p-3">
-                  <p className="mb-0.5 text-[11px] text-[var(--slate-gray)]">
-                    시작일
-                  </p>
-                  <p className="text-sm font-medium text-[var(--ink-black)]">
-                    {lunchGroupData?.prevDate || "-"}
-                  </p>
-                </div>
-                <div className="rounded-[18px] bg-[rgba(244,241,232,0.58)] p-3">
-                  <p className="mb-0.5 text-[11px] text-[var(--slate-gray)]">
-                    다음 뽑기
-                  </p>
-                  <p className="text-sm font-medium text-[var(--ink-black)]">
-                    {lunchGroupData?.nextDate || "-"}
-                  </p>
-                </div>
               </div>
             </div>
           </motion.div>
@@ -268,13 +251,13 @@ const Lunch = () => {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-          className="min-w-0 lg:h-full lg:min-h-0"
+          className="min-w-0 lg:h-full lg:min-h-0 lg:overflow-hidden"
         >
-          <div className="flex min-h-full flex-col gap-3 lg:h-full lg:min-h-0">
-            <div className="min-h-0 flex-1 lg:overflow-y-auto lg:pr-1">
+          <div className="flex min-h-0 flex-col gap-3 lg:h-full lg:min-h-0">
+            <div className="min-h-0 flex-1 overflow-hidden lg:pr-1">
               {isLoading ? (
                 // 로딩 스켈레톤
-                <div className="space-y-3">
+                <div className="h-full space-y-3 overflow-y-auto">
                   {Array.from({ length: 4 }, (_, index) => (
                     <div
                       key={index}
@@ -299,7 +282,7 @@ const Lunch = () => {
                   ))}
                 </div>
               ) : error ? (
-                <div className="card-premium rounded-[24px] p-8 text-center">
+                <div className="card-premium flex h-full flex-col items-center justify-center rounded-[24px] p-8 text-center">
                   <p className="mb-1 text-sm text-[var(--danger)]">
                     데이터를 불러오는데 실패했습니다
                   </p>
@@ -308,15 +291,17 @@ const Lunch = () => {
                   </p>
                 </div>
               ) : (
-                <LunchGroupList
-                  groups={lunchGroupData?.groups || []}
-                  userName={userName}
-                />
+                <div className="h-full overflow-y-auto">
+                  <LunchGroupList
+                    groups={lunchGroupData?.groups || []}
+                    userName={userName}
+                  />
+                </div>
               )}
             </div>
 
-            <div className="h-[4.25rem] shrink-0">
-              <QuickActionsSection excludeIds={["lunch"]} />
+            <div className="h-[4.25rem] w-full shrink-0">
+              <QuickActionsSection />
             </div>
           </div>
         </motion.div>

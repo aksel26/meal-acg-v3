@@ -16,10 +16,10 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import NoDataIcon from "@/public/none.png";
 import Image from "next/image";
+import QuickActionsSection from "@/components/dashboard/QuickActionsSection";
 import { EditPointDialog } from "@/components/points/EditPointDialog";
 import { ActivityViewDialog } from "../../../components/points/ActivityViewDialog";
 import { PointsGuideDialog } from "@/components/points/PointsGuideDialog";
-import QuickActionsSection from "@/components/dashboard/QuickActionsSection";
 import {
   useMemberIdLookup,
   usePointsWelfare,
@@ -614,7 +614,7 @@ export default function Points() {
 
   return (
     <React.Fragment>
-      <div className="grid gap-4 pb-24 lg:h-[calc(100dvh-10rem)] lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start lg:overflow-hidden lg:pb-0">
+      <div className="grid gap-4 pb-24 lg:h-[calc(100dvh-10rem)] lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:overflow-hidden lg:pb-0">
         {/* Points Summary */}
         <div className="flex min-w-0 flex-col lg:h-full lg:min-h-0 lg:gap-4 lg:overflow-hidden">
           {isLoading ? (
@@ -713,8 +713,8 @@ export default function Points() {
         </div>
 
         {/* Points List */}
-        <div className="flex min-w-0 flex-col lg:h-full lg:min-h-0 lg:gap-3 lg:overflow-hidden">
-          <div className="mb-3 flex shrink-0 justify-between items-center">
+        <div className="flex min-w-0 flex-col gap-3 lg:h-full lg:min-h-0 lg:overflow-hidden">
+          <div className="flex shrink-0 justify-between items-center">
             <div className="flex items-center gap-2">
               <h2 className="text-md font-semibold text-[var(--ink-black)]">
                 사용 내역
@@ -788,7 +788,7 @@ export default function Points() {
             </div>
           </div>
 
-          <div className="mb-3 flex min-h-0 flex-col gap-3 lg:mb-0 lg:flex-1 lg:overflow-hidden">
+          <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
             {/* Add New Point */}
             <button
               className="w-full py-3 bg-white rounded-xl text-sm font-medium text-[var(--ink-black)] flex items-center justify-center gap-2 border border-dashed border-[rgba(14,15,12,0.2)] hover:border-[var(--ink-black)] hover:bg-[rgba(22,51,0,0.05)] active:bg-[rgba(22,51,0,0.08)] transition-colors"
@@ -798,7 +798,7 @@ export default function Points() {
             </button>
 
             {isLoading ? (
-              <div className="bg-white rounded-xl divide-y divide-[rgba(14,15,12,0.05)]">
+              <div className="min-h-0 flex-1 rounded-xl bg-white divide-y divide-[rgba(14,15,12,0.05)]">
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="px-4 py-4">
                     <div className="animate-pulse">
@@ -815,7 +815,7 @@ export default function Points() {
                 ))}
               </div>
             ) : sortedRecords.length === 0 ? (
-              <div className="bg-white rounded-xl py-12 text-center">
+              <div className="flex min-h-0 flex-1 flex-col items-center justify-center rounded-xl bg-white py-12 text-center">
                 <div className="empty-icon-waddle mx-auto mb-3 h-[54px] w-[54px] opacity-80">
                   <Image
                     src={NoDataIcon}
@@ -951,8 +951,8 @@ export default function Points() {
             )}
           </div>
 
-          <div className="h-[4.25rem] shrink-0">
-            <QuickActionsSection excludeIds={["points"]} />
+          <div className="h-[4.25rem] w-full shrink-0">
+            <QuickActionsSection />
           </div>
         </div>
       </div>

@@ -2,6 +2,7 @@
 
 import { Alert, AlertDescription } from "@repo/ui/src/alert";
 import { Button } from "@repo/ui/src/button";
+import { Checkbox } from "@repo/ui/src/checkbox";
 import { Input } from "@repo/ui/src/input";
 import { Label } from "@repo/ui/src/label";
 import { motion } from "motion/react";
@@ -11,9 +12,13 @@ import { useEffect, useState } from "react";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import { useUserStore } from "@/stores/userStore";
 
+const REMEMBER_LOGIN_KEY = "acg:user:remember-login";
+const REMEMBERED_CREDENTIALS_KEY = "acg:user:remembered-credentials";
+
 export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [rememberCredentials, setRememberCredentials] = useState(false);
   const [formData, setFormData] = useState({
     id: "",
     password: "",
@@ -24,6 +29,29 @@ export default function HomePage() {
   useEffect(() => {
     router.prefetch("/dashboard");
   }, [router]);
+
+  useEffect(() => {
+    const shouldRemember = localStorage.getItem(REMEMBER_LOGIN_KEY) === "true";
+    const savedCredentials = localStorage.getItem(REMEMBERED_CREDENTIALS_KEY);
+
+    setRememberCredentials(shouldRemember);
+
+    if (shouldRemember && savedCredentials) {
+      try {
+        const parsed = JSON.parse(savedCredentials) as {
+          id?: string;
+          password?: string;
+        };
+
+        setFormData({
+          id: parsed.id ?? "",
+          password: parsed.password ?? "",
+        });
+      } catch {
+        localStorage.removeItem(REMEMBERED_CREDENTIALS_KEY);
+      }
+    }
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -57,6 +85,20 @@ export default function HomePage() {
       }
 
       if (data.data.full_name) {
+        if (rememberCredentials) {
+          localStorage.setItem(REMEMBER_LOGIN_KEY, "true");
+          localStorage.setItem(
+            REMEMBERED_CREDENTIALS_KEY,
+            JSON.stringify({
+              id: formData.id,
+              password: formData.password,
+            }),
+          );
+        } else {
+          localStorage.removeItem(REMEMBER_LOGIN_KEY);
+          localStorage.removeItem(REMEMBERED_CREDENTIALS_KEY);
+        }
+
         login(data.data.user_id, data.data.full_name, data.data.role);
         router.push("/dashboard");
       } else {
@@ -151,6 +193,23 @@ export default function HomePage() {
                       placeholder="비밀번호를 입력하세요"
                       required
                     />
+                  </div>
+
+                  <div className="flex items-center gap-2.5">
+                    <Checkbox
+                      id="rememberCredentials"
+                      checked={rememberCredentials}
+                      onCheckedChange={(checked) =>
+                        setRememberCredentials(checked === true)
+                      }
+                      className="border-[rgba(14,15,12,0.18)] data-[state=checked]:border-[var(--ink-black)] data-[state=checked]:bg-[var(--ink-black)]"
+                    />
+                    <label
+                      htmlFor="rememberCredentials"
+                      className="cursor-pointer select-none text-sm font-medium text-[var(--granite)]"
+                    >
+                      아이디/비밀번호 기억하기
+                    </label>
                   </div>
 
                   {error && (

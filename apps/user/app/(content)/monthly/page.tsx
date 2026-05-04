@@ -1,7 +1,6 @@
 "use client";
 import { Button } from "@repo/ui/src/button";
-import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   useMonthlyData,
   useCollections,
@@ -15,27 +14,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@repo/ui/src/dialog";
-import { AllHistoryDialog } from "@/components/monthly/AllHistoryDialog";
 import QuickActionsSection from "@/components/dashboard/QuickActionsSection";
+import { AllHistoryDialog } from "@/components/monthly/AllHistoryDialog";
 import { Popover, PopoverTrigger, PopoverContent } from "@repo/ui/src/popover";
 import { DRINKS } from "@/lib/const/const";
 import { motion } from "motion/react";
 import { Check, ChevronLeft, ChevronRight } from "@repo/ui/icons";
 import Image from "next/image";
-import EmptyImage from "@/public/images/empty.png";
-
-function MonthlyPageShell({ children }: { children: ReactNode }) {
-  return (
-    <div className="flex min-h-0 flex-col gap-3 lg:h-[calc(100dvh-10rem)] lg:overflow-hidden">
-      <div className="min-h-0 pb-24 lg:flex-1 lg:overflow-y-auto lg:pb-0">
-        {children}
-      </div>
-      <div className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[820px] px-4 pb-4 sm:px-6 lg:static lg:inset-auto lg:z-auto lg:mb-2 lg:h-[4.25rem] lg:max-w-[1248px] lg:shrink-0 lg:px-0 lg:pb-0">
-        <QuickActionsSection excludeIds={["monthly"]} />
-      </div>
-    </div>
-  );
-}
 
 // 3일 이내 생성된 취합 건은 NEW 표시
 function isNewCollection(createdAt: string) {
@@ -45,24 +30,46 @@ function isNewCollection(createdAt: string) {
   return diffMs < 3 * 24 * 60 * 60 * 1000;
 }
 
+function EmptyCollectionsState() {
+  return (
+    <div className="flex h-full flex-col items-center justify-center py-12 text-center">
+      <div className="relative mb-4 h-[212px] w-40 overflow-hidden rounded-[18px]">
+        <Image
+          src="/images/배고픈 숭이.jpeg"
+          alt=""
+          fill
+          sizes="160px"
+          className="object-cover"
+          priority={false}
+        />
+      </div>
+      <p className="text-sm text-[var(--slate-gray)]">
+        현재 참여 가능한 취합이 없습니다
+      </p>
+    </div>
+  );
+}
+
 // ─── 취합 건 리스트 (1단계) ───────────────────────────────────
 function CollectionListView({
   collections,
   isLoading,
   onSelect,
+  selectedCollectionId,
 }: {
   collections: DrinkCollectionItem[];
   isLoading: boolean;
   onSelect: (collection: DrinkCollectionItem) => void;
+  selectedCollectionId?: string | null;
 }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-      className="card-premium overflow-hidden rounded-[24px]"
+      className="card-premium monthly-collection-card flex h-full min-h-0 flex-col overflow-hidden rounded-[24px]"
     >
-      <div className="px-5 pt-5">
+      <div className="monthly-collection-scroll h-full overflow-y-auto px-5 py-5">
         {isLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 2 }).map((_, i) => (
@@ -70,19 +77,7 @@ function CollectionListView({
             ))}
           </div>
         ) : collections.length === 0 ? (
-          <div className="flex flex-col items-center py-12 text-center">
-            <Image
-              src={EmptyImage}
-              alt=""
-              width={96}
-              height={96}
-              className="mb-4 opacity-90"
-              priority={false}
-            />
-            <p className="text-[var(--slate-gray)] text-sm">
-              현재 참여 가능한 취합이 없습니다
-            </p>
-          </div>
+          <EmptyCollectionsState />
         ) : (
           <div className="space-y-2">
             {collections.map((col, index) => (
@@ -92,7 +87,11 @@ function CollectionListView({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.04 }}
                 onClick={() => onSelect(col)}
-                className="w-full rounded-[18px] bg-[rgba(244,241,232,0.58)] px-4 py-3 text-left transition-colors hover:bg-[var(--whisper-cream)] active:scale-[0.98]"
+                className={`group w-full rounded-[18px] px-4 py-3 text-left transition-colors hover:bg-[var(--ink-black)] hover:text-white active:scale-[0.98] ${
+                  selectedCollectionId === col.id
+                    ? "bg-[var(--ink-black)] text-white"
+                    : "bg-[rgba(244,241,232,0.58)]"
+                }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
@@ -100,17 +99,35 @@ function CollectionListView({
                       <span className="w-2 h-2 rounded-full bg-[#d03238] shrink-0" />
                     )}
                     <div>
-                      <p className="font-semibold text-sm text-[var(--ink-black)]">
+                      <p
+                        className={`text-sm font-semibold ${
+                          selectedCollectionId === col.id
+                            ? "text-white"
+                            : "text-[var(--ink-black)] group-hover:text-white"
+                        }`}
+                      >
                         {col.title}
                       </p>
-                      <p className="text-[11px] text-[var(--slate-gray)] mt-0.5">
+                      <p
+                        className={`mt-0.5 text-[11px] ${
+                          selectedCollectionId === col.id
+                            ? "text-white/68"
+                            : "text-[var(--slate-gray)] group-hover:text-white/68"
+                        }`}
+                      >
                         {col.is_one_time
                           ? "일회성"
                           : `${col.year}년 ${col.month}월`}
                       </p>
                     </div>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-[rgba(14,15,12,0.24)]" />
+                  <ChevronRight
+                    className={`h-4 w-4 ${
+                      selectedCollectionId === col.id
+                        ? "text-white/58"
+                        : "text-[rgba(14,15,12,0.24)] group-hover:text-white/58"
+                    }`}
+                  />
                 </div>
               </motion.button>
             ))}
@@ -139,14 +156,20 @@ function DrinkSelectionView({
 
   const drinkOptions = data?.drinkOptions || [];
   const pickupPersons = data?.pickupPersons || [];
-
+  const collectionDrinkOptions = collection.drink_options || [];
   const availableDrinks = drinkOptions
     .filter((option) => option.available)
     .map((option) => option.name);
-  const allDrinks = availableDrinks.length > 0 ? availableDrinks : DRINKS;
+  const allDrinks =
+    availableDrinks.length > 0
+      ? availableDrinks
+      : collectionDrinkOptions.length > 0
+        ? collectionDrinkOptions
+        : DRINKS;
   const displayDrinks = collection.is_one_time
     ? allDrinks
     : allDrinks.filter((d) => d !== "기타");
+  const isOptionsLoading = isLoading && collectionDrinkOptions.length === 0;
 
   const [currentUserName, setCurrentUserName] = useState("");
   const myDrink =
@@ -192,11 +215,11 @@ function DrinkSelectionView({
   const completedCount = applications.filter((app) => app.drink).length || 0;
   const totalCount = data?.totalMembers || 0;
   const pickupText = pickupPersons.map((p) => p.name).join(", ");
-  const drinkButtonGridClass = "grid grid-cols-4 gap-2";
+  const drinkButtonGridClass = "grid grid-cols-2 gap-2";
 
   const renderDrinkOptions = (gridClass = "space-y-2") => (
     <div className={gridClass}>
-      {isLoading
+      {isOptionsLoading
         ? Array.from({ length: 8 }).map((_, index) => (
             <div key={index} className="skeleton h-11 rounded-[18px]" />
           ))
@@ -251,9 +274,9 @@ function DrinkSelectionView({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-      className="card-premium overflow-hidden rounded-[24px]"
+      className="card-premium monthly-drink-card flex h-full min-h-0 flex-col overflow-hidden rounded-[24px]"
     >
-      <div className="px-5 pt-5 pb-3">
+      <div className="hidden">
         <button
           onClick={onBack}
           className="text-xs text-[var(--slate-gray)] font-medium flex items-center gap-1"
@@ -263,123 +286,69 @@ function DrinkSelectionView({
         </button>
       </div>
 
-      <div className="hidden grid-cols-[minmax(260px,0.78fr)_minmax(0,1.22fr)] gap-3 px-5 pb-5 lg:grid lg:h-[min(560px,calc(100dvh-18rem))] lg:min-h-[360px]">
-        <div className="flex min-h-0 flex-col gap-3">
-          <div className="rounded-[18px] bg-[rgba(244,241,232,0.58)] p-3">
-            <p className="text-[11px] font-medium text-[var(--slate-gray)]">
-              픽업담당
-            </p>
-            {isLoading ? (
-              <p className="mt-1.5 text-sm font-semibold text-[var(--ink-black)]">
-                <span className="skeleton inline-block h-5 w-16" />
-              </p>
-            ) : (
-              <p className="mt-1.5 text-sm font-semibold text-[var(--ink-black)]">
-                {pickupText || "미정"}
-              </p>
-            )}
-          </div>
-
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[18px] bg-[rgba(244,241,232,0.58)]">
-            <div className="shrink-0 p-3">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-[11px] font-medium text-[var(--slate-gray)]">
-                  신청현황
-                </p>
-                <p className="text-xs font-semibold text-[var(--ink-black)] tabular-nums">
-                  {completedCount}
-                  <span className="font-medium text-[rgba(14,15,12,0.28)]">
-                    /{totalCount}
-                  </span>
-                </p>
-              </div>
-            </div>
-            <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto px-3 pb-3">
-              {isLoading ? (
-                Array.from({ length: 8 }).map((_, index) => (
-                  <div key={index} className="skeleton h-10 rounded-[14px]" />
-                ))
-              ) : applications.length === 0 ? (
-                <p className="py-8 text-center text-xs text-[var(--slate-gray)]">
-                  아직 신청 내역이 없습니다
-                </p>
-              ) : (
-                applications.map((app, index) => (
-                  <div
-                    key={`${app.name}-${index}`}
-                    className="flex items-center justify-between gap-3 rounded-[14px] bg-white px-3 py-2"
-                  >
-                    <span className="min-w-0 truncate text-xs font-medium text-[var(--granite)]">
-                      {app.name}
-                    </span>
-                    <span
-                      className={`max-w-[52%] truncate text-right text-xs font-semibold ${
-                        app.drink
-                          ? "text-[var(--ink-black)]"
-                          : "text-[rgba(14,15,12,0.28)]"
-                      }`}
-                    >
-                      {app.drink || "미선택"}
-                    </span>
-                  </div>
-                ))
-              )}
-            </div>
+      <div className="flex min-h-0 flex-1 flex-col px-4 py-4 sm:px-5 lg:py-5">
+        <div className="mb-4 shrink-0">
+          <p className="text-[11px] font-medium text-[var(--slate-gray)]">
+            음료 선택
+          </p>
+          <h2 className="mt-1 truncate text-lg font-bold text-[var(--ink-black)]">
+            {collection.title}
+          </h2>
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[var(--slate-gray)]">
+            <span>
+              신청 {completedCount}
+              <span className="text-[rgba(14,15,12,0.28)]">/{totalCount}</span>
+            </span>
+            <span>{pickupText ? `픽업 ${pickupText}` : "픽업 미정"}</span>
           </div>
         </div>
 
-        <div className="grid min-h-0 grid-rows-[auto_auto_minmax(0,1fr)] rounded-[18px] border border-[rgba(14,15,12,0.06)] bg-white/55 p-3">
-          <p className="mb-3 text-[11px] font-medium text-[var(--slate-gray)]">
-            음료 선택
-          </p>
-
-          {currentUserName && (
-            <div className="mb-3 shrink-0">
-              {isLoading ? (
-                <div className="rounded-[18px] bg-[rgba(244,241,232,0.58)] p-3">
-                  <div className="skeleton mb-2 h-4 w-16" />
-                  <div className="skeleton h-5 w-32" />
-                </div>
-              ) : myDrink ? (
-                <div className="rounded-[18px] bg-[rgba(236,126,0,0.1)] p-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-[11px] font-medium text-[#9a4f00]">
-                        내 선택
-                      </p>
-                      <p className="mt-0.5 text-sm font-semibold text-[var(--ink-black)]">
-                        {myDrink}
-                      </p>
-                    </div>
-                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[rgba(236,126,0,0.18)]">
-                      <Check
-                        className="h-3 w-3 text-[#9a4f00]"
-                        strokeWidth={3}
-                      />
-                    </div>
+        {currentUserName && (
+          <div className="mb-4 shrink-0">
+            {isLoading ? (
+              <div className="rounded-[18px] bg-[rgba(244,241,232,0.58)] p-3">
+                <div className="skeleton mb-2 h-4 w-16" />
+                <div className="skeleton h-5 w-32" />
+              </div>
+            ) : myDrink ? (
+              <div className="rounded-[18px] bg-[rgba(236,126,0,0.1)] p-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[11px] font-medium text-[#9a4f00]">
+                      내 선택
+                    </p>
+                    <p className="mt-0.5 text-sm font-semibold text-[var(--ink-black)]">
+                      {myDrink}
+                    </p>
+                  </div>
+                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[rgba(236,126,0,0.18)]">
+                    <Check
+                      className="h-3 w-3 text-[#9a4f00]"
+                      strokeWidth={3}
+                    />
                   </div>
                 </div>
-              ) : (
-                <div className="rounded-[18px] border border-dashed border-[rgba(14,15,12,0.08)] p-3">
-                  <p className="text-[11px] font-medium text-[var(--slate-gray)]">
-                    내 선택
-                  </p>
-                  <p className="mt-0.5 text-sm text-[var(--slate-gray)]">
-                    아래에서 음료를 선택해주세요
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="min-h-0 flex-1 overflow-y-auto pb-1">
-            {renderDrinkOptions(drinkButtonGridClass)}
+              </div>
+            ) : (
+              <div className="rounded-[18px] border border-dashed border-[rgba(14,15,12,0.08)] p-3">
+                <p className="text-[11px] font-medium text-[var(--slate-gray)]">
+                  내 선택
+                </p>
+                <p className="mt-0.5 text-sm text-[var(--slate-gray)]">
+                  아래에서 음료를 선택해주세요
+                </p>
+              </div>
+            )}
           </div>
+        )}
+
+        <div className="monthly-drink-options min-h-0 flex-1 overflow-y-auto pb-1">
+          {renderDrinkOptions(drinkButtonGridClass)}
         </div>
       </div>
 
       {/* Status */}
-      <div className="mb-5 px-5 lg:hidden">
+      <div className="hidden">
         <div className="flex gap-2.5">
           <button
             onClick={() => setIsAllHistoryDialogOpen(true)}
@@ -459,7 +428,7 @@ function DrinkSelectionView({
 
       {/* My Selection */}
       {currentUserName && (
-        <div className="mb-5 px-5 lg:hidden">
+        <div className="hidden">
           {isLoading ? (
             <div className="rounded-[18px] bg-[rgba(244,241,232,0.58)] p-3">
               <div className="skeleton mb-2 h-4 w-16" />
@@ -495,7 +464,7 @@ function DrinkSelectionView({
       )}
 
       {/* Drink Options */}
-      <div className="px-5 pb-5 lg:hidden">
+      <div className="hidden">
         <p className="mb-3 text-[11px] font-medium text-[var(--slate-gray)]">
           음료 선택
         </p>
@@ -566,26 +535,95 @@ const MonthlyDrink = () => {
   const { data: collections, isLoading: collectionsLoading } = useCollections();
   const [selectedCollection, setSelectedCollection] =
     useState<DrinkCollectionItem | null>(null);
+  const visibleCollections = useMemo(() => collections || [], [collections]);
+  const hasCollections = visibleCollections.length > 0;
+  const showsTwoColumns = collectionsLoading || hasCollections;
 
-  if (selectedCollection) {
+  useEffect(() => {
+    const firstCollection = visibleCollections[0];
+
+    if (!firstCollection) {
+      setSelectedCollection(null);
+      return;
+    }
+
+    const selectedExists = visibleCollections.some(
+      (collection) => collection.id === selectedCollection?.id,
+    );
+
+    if (!selectedCollection || !selectedExists) {
+      setSelectedCollection(firstCollection);
+    }
+  }, [selectedCollection, visibleCollections]);
+
+  if (!showsTwoColumns) {
     return (
-      <MonthlyPageShell>
-        <DrinkSelectionView
-          collection={selectedCollection}
-          onBack={() => setSelectedCollection(null)}
-        />
-      </MonthlyPageShell>
+      <div className="monthly-empty-layout grid h-full min-h-0 grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] grid-rows-[minmax(0,1fr)_auto] gap-x-4 gap-y-0 overflow-hidden">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className="card-premium col-span-full min-h-0 overflow-hidden rounded-[24px] rounded-t-none rounded-bl-none"
+          style={{
+            borderTopLeftRadius: 0,
+            borderTopRightRadius: 0,
+            borderBottomLeftRadius: 0,
+          }}
+        >
+          <EmptyCollectionsState />
+        </motion.div>
+
+        <div
+          className="monthly-empty-footer-card card-premium relative h-[4.25rem] overflow-visible rounded-[24px] rounded-t-none"
+          style={{
+            borderTopLeftRadius: 0,
+            borderTopRightRadius: 0,
+          }}
+          aria-hidden="true"
+        >
+          <svg
+            viewBox="0 0 20 34"
+            className="absolute left-full top-0 h-1/2 w-5"
+            preserveAspectRatio="none"
+          >
+            <path
+              d="M0 0H20C4.778 0 0 15.222 0 34V0Z"
+              fill="white"
+            />
+          </svg>
+        </div>
+
+        <div className="monthly-quick-actions col-start-2 h-[4.25rem] w-full shrink-0">
+          <QuickActionsSection />
+        </div>
+      </div>
     );
   }
 
   return (
-    <MonthlyPageShell>
-      <CollectionListView
-        collections={collections || []}
-        isLoading={collectionsLoading}
-        onSelect={setSelectedCollection}
-      />
-    </MonthlyPageShell>
+    <div className="monthly-content-layout grid h-full min-h-0 grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] grid-rows-[minmax(0,1fr)_auto] gap-4 overflow-hidden">
+      <div className="monthly-collection-pane row-span-2 min-h-0 overflow-hidden">
+        <CollectionListView
+          collections={visibleCollections}
+          isLoading={collectionsLoading}
+          onSelect={setSelectedCollection}
+          selectedCollectionId={selectedCollection?.id}
+        />
+      </div>
+
+      <div className="monthly-drink-pane col-start-2 row-start-1 min-h-0 overflow-hidden">
+        {selectedCollection && (
+          <DrinkSelectionView
+            collection={selectedCollection}
+            onBack={() => setSelectedCollection(null)}
+          />
+        )}
+      </div>
+
+      <div className="monthly-quick-actions col-start-2 row-start-2 h-[4.25rem] w-full shrink-0">
+        <QuickActionsSection />
+      </div>
+    </div>
   );
 };
 

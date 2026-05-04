@@ -14,27 +14,39 @@ const PushNotificationPrompt = dynamic(
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
   const isDashboard = pathname.startsWith("/dashboard");
+  const isMonthly = pathname.startsWith("/monthly");
   const usesWideDesktopLayout =
     isDashboard ||
     pathname.startsWith("/points") ||
-    pathname.startsWith("/monthly") ||
+    isMonthly ||
     pathname.startsWith("/lunch");
 
   return (
     <>
       <div
-        className={`relative mx-auto min-h-dvh w-full px-4 pt-4 sm:px-6 ${
+        className={`relative mx-auto w-full px-4 pt-4 sm:px-6 ${
+          isMonthly
+            ? "monthly-layout-frame flex h-dvh flex-col overflow-hidden"
+            : "min-h-dvh"
+        } ${
           usesWideDesktopLayout
             ? "max-w-[820px] pb-6 lg:max-w-[1280px] lg:pb-4"
             : "max-w-[820px] pb-6"
         }`}
       >
         <div className="fixed inset-0 gradient-mesh -z-20" />
-        <div className="pointer-events-none fixed inset-x-0 top-0 -z-10 h-80 bg-[radial-gradient(circle_at_top,rgba(25,28,31,0.06),transparent_55%)]" />
 
         {!isDashboard && <Header />}
 
-        <main className={`relative ${isDashboard ? "py-0" : "py-5"}`}>
+        <main
+          className={`relative ${
+            isDashboard
+              ? "py-0"
+              : isMonthly
+                ? "monthly-layout-main min-h-0 flex-1 py-3"
+                : "py-5"
+          }`}
+        >
           <AnimatePresence mode="wait">
             <motion.div
               key={pathname}
@@ -45,7 +57,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 duration: 0.35,
                 ease: [0.16, 1, 0.3, 1],
               }}
-              className="relative z-10"
+              className={`relative z-10 ${isMonthly ? "monthly-layout-motion h-full min-h-0" : ""}`}
             >
               {children}
             </motion.div>

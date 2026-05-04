@@ -128,7 +128,7 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
   // 빈 데이터 처리
   if (processedTeams.length === 0) {
     return (
-      <div className="card-premium rounded-[24px] p-8 text-center">
+      <div className="card-premium flex h-full min-h-[240px] flex-col items-center justify-center rounded-[24px] p-8 text-center">
         <p className="mb-1 text-sm text-[var(--granite)]">
           등록된 점심조가 없습니다.
         </p>
@@ -140,7 +140,7 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
   }
 
   return (
-    <div className="grid gap-3 lg:grid-cols-2">
+    <div className="grid h-full content-start gap-3 lg:grid-cols-2">
       {sortedTeams.map((team, index) => {
         const isMyTeamHighlight = isMyTeam(team.members);
         const validMemberCount = team.members.filter((m) => !m.isEmpty).length;

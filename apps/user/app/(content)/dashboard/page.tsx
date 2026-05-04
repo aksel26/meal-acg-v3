@@ -226,7 +226,7 @@ export default function DashboardPage() {
             </div>
 
             <div className="h-[4.25rem] shrink-0">
-              <QuickActionsSection excludeIds={["dashboard"]} />
+              <QuickActionsSection />
             </div>
           </div>
         </div>
@@ -256,7 +256,7 @@ export default function DashboardPage() {
           />
 
           <div className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[820px] px-4 pb-4 sm:px-6">
-            <QuickActionsSection excludeIds={["dashboard"]} />
+            <QuickActionsSection />
           </div>
         </div>
       )}

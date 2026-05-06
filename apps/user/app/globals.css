@@ -725,7 +725,23 @@ button {
   padding-top: max(env(safe-area-inset-top), 1rem);
 }
 
+.mobile-nav-footer {
+  padding-bottom: 1rem;
+}
+
 @media (max-width: 767px) {
+  :root {
+    --monthly-mobile-nav-height: 5rem;
+    --monthly-mobile-nav-bottom-offset: max(
+      1.5rem,
+      calc(env(safe-area-inset-bottom, 0px) + 1.5rem)
+    );
+  }
+
+  .mobile-nav-footer {
+    padding-bottom: max(1.5rem, calc(env(safe-area-inset-bottom, 0px) + 1rem));
+  }
+
   .monthly-layout-frame {
     height: auto;
     min-height: 100dvh;
@@ -754,7 +770,10 @@ button {
     flex-direction: column;
     gap: 0.75rem;
     overflow: visible;
-    padding-bottom: calc(6.5rem + env(safe-area-inset-bottom));
+    padding-bottom: calc(
+      var(--monthly-mobile-nav-height) +
+      var(--monthly-mobile-nav-bottom-offset) + 0.5rem
+    );
   }
 
   .monthly-empty-layout {
@@ -764,7 +783,10 @@ button {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr);
     overflow: visible;
-    padding-bottom: calc(6.5rem + env(safe-area-inset-bottom));
+    padding-bottom: calc(
+      var(--monthly-mobile-nav-height) +
+      var(--monthly-mobile-nav-bottom-offset) + 0.5rem
+    );
   }
 
   .monthly-empty-footer-card {
@@ -809,12 +831,17 @@ button {
     position: fixed;
     z-index: 50;
     right: 1rem;
-    bottom: max(1rem, env(safe-area-inset-bottom));
+    bottom: var(--monthly-mobile-nav-bottom-offset);
     left: 1rem;
+    width: auto;
   }
 }
 
 @media (min-width: 640px) and (max-width: 767px) {
+  :root {
+    --monthly-mobile-nav-height: 5.5rem;
+  }
+
   .monthly-quick-actions {
     height: 5.5rem;
     right: 1.5rem;

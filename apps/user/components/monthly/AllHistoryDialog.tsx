@@ -19,11 +19,6 @@ interface AllHistoryDialogProps {
   collectionId?: string;
 }
 
-const getDrinkMarker = (drink: string) => {
-  if (drink === "미선택") return "미";
-  return drink.trim().slice(0, 1) || "-";
-};
-
 export const AllHistoryDialog = ({
   isOpen,
   onClose,
@@ -152,14 +147,9 @@ export const AllHistoryDialog = ({
                       className="rounded-[20px] bg-[rgba(244,241,232,0.42)] p-3"
                     >
                       <div className="mb-3 flex items-center justify-between gap-3">
-                        <div className="flex min-w-0 items-center gap-2.5">
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[12px] bg-white text-xs font-bold text-[var(--ink-black)]">
-                            {getDrinkMarker(drink)}
-                          </div>
-                          <span className="min-w-0 truncate text-sm font-semibold text-[var(--ink-black)]">
-                            {drink}
-                          </span>
-                        </div>
+                        <span className="min-w-0 truncate text-sm font-semibold text-[var(--ink-black)]">
+                          {drink}
+                        </span>
                         <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-xs font-medium text-[var(--slate-gray)]">
                           {users.length}명
                         </span>

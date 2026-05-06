@@ -11,6 +11,7 @@ import {
 import { useMonthlyData } from "@/hooks/useMonthlyData";
 import { useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { AlertCircle, ClipboardList } from "@repo/ui/icons";
 
 interface AllHistoryDialogProps {
   isOpen: boolean;
@@ -18,18 +19,9 @@ interface AllHistoryDialogProps {
   collectionId?: string;
 }
 
-const getDrinkInfo = (drink: string) => {
-  if (drink === "선택안함")
-    return { icon: "☕", gradient: "from-[var(--whisper-cream)] to-[var(--soft-bone)]" };
-  if (drink.includes("바닐라"))
-    return { icon: "🍦", gradient: "from-[rgba(255,209,26,0.15)] to-[rgba(255,192,145,0.2)]" };
-  if (drink.includes("자몽"))
-    return { icon: "🍊", gradient: "from-[rgba(208,50,56,0.08)] to-[rgba(255,145,112,0.15)]" };
-  if (drink.includes("ICE"))
-    return { icon: "🧊", gradient: "from-[rgba(56,200,255,0.08)] to-[rgba(56,200,255,0.15)]" };
-  if (drink.includes("HOT"))
-    return { icon: "🔥", gradient: "from-[rgba(255,192,145,0.12)] to-[rgba(208,50,56,0.12)]" };
-  return { icon: "☕", gradient: "from-[var(--soft-bone)] to-[var(--whisper-cream)]" };
+const getDrinkMarker = (drink: string) => {
+  if (drink === "미선택") return "미";
+  return drink.trim().slice(0, 1) || "-";
 };
 
 export const AllHistoryDialog = ({
@@ -53,29 +45,34 @@ export const AllHistoryDialog = ({
   }, [applications]);
 
   const drinkGroups = Object.entries(groupedByDrink).sort(
-    ([, a], [, b]) => b.length - a.length
+    ([drinkA, usersA], [drinkB, usersB]) => {
+      if (drinkA === "미선택") return 1;
+      if (drinkB === "미선택") return -1;
+      return usersB.length - usersA.length;
+    },
   );
 
   // 완료된 신청 수
   const completedCount = applications.filter(
-    (app) => app.drink && app.drink !== "선택안함"
+    (app) => app.drink && app.drink !== "선택안함",
   ).length;
+  const completionRate =
+    applications.length > 0 ? (completedCount / applications.length) * 100 : 0;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-auto p-0 bg-white rounded-3xl shadow-2xl max-h-[85vh] overflow-hidden border-0">
-        {/* Header */}
-        <div className="p-6">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="mx-auto max-h-[85vh] w-[calc(100%-2rem)] max-w-md overflow-hidden rounded-[24px] border-0 bg-white p-0 shadow-2xl">
+        <div className="px-5 pb-4 pt-5">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-center text-[var(--ink-black)]">
+            <DialogTitle className="text-left text-lg font-bold text-[var(--ink-black)]">
               전체 신청 현황
             </DialogTitle>
-            <DialogDescription className="text-[var(--granite)] text-center mt-2">
+            <DialogDescription className="mt-2 text-left text-sm text-[var(--slate-gray)]">
               {isLoading ? (
-                <span className="skeleton inline-block w-24 h-4" />
+                <span className="skeleton inline-block h-4 w-28" />
               ) : (
                 <>
-                  <span className="text-[var(--ink-black)] font-semibold">
+                  <span className="font-semibold text-[var(--ink-black)]">
                     {completedCount}
                   </span>
                   /{applications.length}명 신청 완료
@@ -84,23 +81,19 @@ export const AllHistoryDialog = ({
             </DialogDescription>
           </DialogHeader>
 
-          {/* Progress bar */}
           {!isLoading && applications.length > 0 && (
-            <div className="mt-4 h-2 bg-[var(--whisper-cream)] rounded-full overflow-hidden">
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-[var(--whisper-cream)]">
               <motion.div
                 initial={{ width: 0 }}
-                animate={{
-                  width: `${(completedCount / applications.length) * 100}%`,
-                }}
+                animate={{ width: `${completionRate}%` }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
-                className="h-full bg-[var(--ink-black)] rounded-full"
+                className="h-full rounded-full bg-[var(--ink-black)]"
               />
             </div>
           )}
         </div>
 
-        {/* Content */}
-        <div className="overflow-y-auto max-h-[50vh] p-4">
+        <div className="max-h-[50vh] overflow-y-auto px-4 py-4">
           <AnimatePresence mode="wait">
             {isLoading ? (
               <motion.div
@@ -119,54 +112,60 @@ export const AllHistoryDialog = ({
                 key="error"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="flex flex-col items-center justify-center py-12"
+                className="flex flex-col items-center justify-center rounded-[20px] bg-[rgba(244,241,232,0.58)] px-4 py-12 text-center"
               >
-                <span className="text-4xl mb-3">😢</span>
-                <p className="text-[var(--granite)]">오류가 발생했습니다</p>
+                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[var(--danger)]">
+                  <AlertCircle className="h-5 w-5" aria-hidden="true" />
+                </div>
+                <p className="text-sm font-medium text-[var(--granite)]">
+                  신청 현황을 불러오지 못했습니다
+                </p>
               </motion.div>
             ) : applications.length === 0 ? (
               <motion.div
                 key="empty"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="flex flex-col items-center justify-center py-12"
+                className="flex flex-col items-center justify-center rounded-[20px] bg-[rgba(244,241,232,0.58)] px-4 py-12 text-center"
               >
-                <span className="text-4xl mb-3">☕</span>
-                <p className="text-[var(--granite)]">아직 신청 내역이 없습니다</p>
+                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[var(--slate-gray)]">
+                  <ClipboardList className="h-5 w-5" aria-hidden="true" />
+                </div>
+                <p className="text-sm font-medium text-[var(--granite)]">
+                  아직 신청 내역이 없습니다
+                </p>
               </motion.div>
             ) : (
               <motion.div
                 key="content"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="space-y-4"
+                className="space-y-3"
               >
                 {drinkGroups.map(([drink, users], groupIndex) => {
-                  const info = getDrinkInfo(drink);
                   return (
                     <motion.div
                       key={drink}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: groupIndex * 0.05 }}
+                      className="rounded-[20px] bg-[rgba(244,241,232,0.42)] p-3"
                     >
-                      {/* Group Header */}
-                      <div className="flex items-center gap-2 mb-2">
-                        <div
-                          className={`w-8 h-8 bg-gradient-to-br ${info.gradient} rounded-lg flex items-center justify-center`}
-                        >
-                          <span className="text-lg">{info.icon}</span>
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-2.5">
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[12px] bg-white text-xs font-bold text-[var(--ink-black)]">
+                            {getDrinkMarker(drink)}
+                          </div>
+                          <span className="min-w-0 truncate text-sm font-semibold text-[var(--ink-black)]">
+                            {drink}
+                          </span>
                         </div>
-                        <span className="text-sm font-semibold text-[var(--ink-black)]">
-                          {drink}
-                        </span>
-                        <span className="text-xs text-[var(--slate-gray)] font-medium bg-[var(--whisper-cream)] px-2 py-0.5 rounded-full">
+                        <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-xs font-medium text-[var(--slate-gray)]">
                           {users.length}명
                         </span>
                       </div>
 
-                      {/* Users */}
-                      <div className="ml-10 flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-2">
                         {users.map((user, userIndex) => (
                           <motion.div
                             key={userIndex}
@@ -175,13 +174,13 @@ export const AllHistoryDialog = ({
                             transition={{
                               delay: groupIndex * 0.05 + userIndex * 0.02,
                             }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--soft-bone)] hover:bg-[var(--whisper-cream)] rounded-full border border-[rgba(14,15,12,0.08)] transition-colors"
+                            className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-white px-3 py-1.5 transition-colors hover:bg-[var(--whisper-cream)]"
                           >
-                            <span className="text-sm font-medium text-[var(--granite)]">
+                            <span className="truncate text-sm font-medium text-[var(--granite)]">
                               {user.name}
                             </span>
                             {user.memo && (
-                              <span className="text-xs text-[var(--slate-gray)]">
+                              <span className="truncate text-xs text-[var(--slate-gray)]">
                                 ({user.memo})
                               </span>
                             )}
@@ -196,12 +195,11 @@ export const AllHistoryDialog = ({
           </AnimatePresence>
         </div>
 
-        {/* Footer */}
-        <DialogFooter className="p-4 border-t border-[rgba(14,15,12,0.06)]">
+        <DialogFooter className="p-4">
           <Button
             variant="ghost"
             onClick={onClose}
-            className="w-full h-12 text-[var(--granite)] hover:text-[var(--ink-black)] hover:bg-[var(--soft-bone)] font-medium rounded-xl"
+            className="h-12 w-full rounded-xl font-medium text-[var(--granite)] hover:bg-[var(--soft-bone)] hover:text-[var(--ink-black)]"
           >
             닫기
           </Button>

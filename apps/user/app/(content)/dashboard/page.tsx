@@ -255,7 +255,7 @@ export default function DashboardPage() {
             mealData={mealData}
           />
 
-          <div className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[820px] px-4 pb-4 sm:px-6">
+          <div className="mobile-nav-footer fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[820px] px-4 sm:px-6">
             <QuickActionsSection />
           </div>
         </div>

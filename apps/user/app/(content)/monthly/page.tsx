@@ -287,20 +287,40 @@ function DrinkSelectionView({
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col px-4 py-4 sm:px-5 lg:py-5">
-        <div className="mb-4 shrink-0">
-          <p className="text-[11px] font-medium text-[var(--slate-gray)]">
-            음료 선택
-          </p>
-          <h2 className="mt-1 truncate text-lg font-bold text-[var(--ink-black)]">
-            {collection.title}
-          </h2>
-          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[var(--slate-gray)]">
-            <span>
-              신청 {completedCount}
-              <span className="text-[rgba(14,15,12,0.28)]">/{totalCount}</span>
-            </span>
-            <span>{pickupText ? `픽업 ${pickupText}` : "픽업 미정"}</span>
+        <div className="mb-4 flex shrink-0 items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium text-[var(--slate-gray)]">
+              음료 선택
+            </p>
+            <h2 className="mt-1 truncate text-lg font-bold text-[var(--ink-black)]">
+              {collection.title}
+            </h2>
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[var(--slate-gray)]">
+              <span>{pickupText ? `픽업 ${pickupText}` : "픽업 미정"}</span>
+            </div>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setIsAllHistoryDialogOpen(true)}
+            className="shrink-0 rounded-[16px] bg-[rgba(244,241,232,0.72)] px-3 py-2 text-right transition-colors hover:bg-[var(--whisper-cream)] active:scale-[0.98]"
+          >
+            <span className="block text-[10px] font-medium text-[var(--slate-gray)]">
+              신청현황
+            </span>
+            <span className="mt-0.5 block text-sm font-bold tabular-nums text-[var(--ink-black)]">
+              {isLoading ? (
+                <span className="skeleton inline-block h-4 w-9" />
+              ) : (
+                <>
+                  {completedCount}
+                  <span className="text-[10px] font-medium text-[rgba(14,15,12,0.32)]">
+                    /{totalCount}
+                  </span>
+                </>
+              )}
+            </span>
+          </button>
         </div>
 
         {currentUserName && (

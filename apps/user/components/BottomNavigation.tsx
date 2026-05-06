@@ -64,7 +64,7 @@ export function BottomNavigation() {
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: "spring", stiffness: 280, damping: 28, delay: 0.25 }}
-      className="fixed bottom-0 left-1/2 z-50 w-full max-w-[820px] -translate-x-1/2 px-4 pb-4 sm:px-6"
+      className="mobile-nav-footer fixed bottom-0 left-1/2 z-50 w-full max-w-[820px] -translate-x-1/2 px-4 sm:px-6"
     >
       <div className="glass-card-elevated rounded-[28px] px-2 py-2">
         <div className="grid grid-cols-5 gap-1">

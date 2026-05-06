@@ -76,6 +76,84 @@ const mapFormValueToAttendance = (formValue: string): string | null => {
   }
 };
 
+const isWeekendDate = (date: string) => {
+  const day = dayjs(date).day();
+  return day === 0 || day === 6;
+};
+
+const isWorkAttendance = (attendance: string | null | undefined) => {
+  if (!attendance) return false;
+  const value = attendance.trim().toLowerCase();
+  return value === "출근" || value === "근무";
+};
+
+const hasLunchEntry = (
+  lunchStore: string | null | undefined,
+  lunchAmount: number | null | undefined,
+  lunchPayer: string | null | undefined,
+) =>
+  Boolean(lunchStore?.trim()) ||
+  Boolean(lunchPayer?.trim()) ||
+  Number(lunchAmount) > 0;
+
+const shouldIgnoreWeekendMealOnlyAttendance = ({
+  entryDate,
+  attendance,
+  lunchStore,
+  lunchAmount,
+  lunchPayer,
+}: {
+  entryDate: string;
+  attendance: string | null | undefined;
+  lunchStore: string | null | undefined;
+  lunchAmount: number | null | undefined;
+  lunchPayer: string | null | undefined;
+}) =>
+  isWeekendDate(entryDate) &&
+  isWorkAttendance(attendance) &&
+  !hasLunchEntry(lunchStore, lunchAmount, lunchPayer);
+
+const mapAttendanceToFormValue = (
+  dbValue: string | null,
+  entryDate?: string,
+  lunchStore?: string | null,
+  lunchAmount?: number | null,
+  lunchPayer?: string | null,
+): string => {
+  if (!dbValue) return "";
+  if (
+    entryDate &&
+    shouldIgnoreWeekendMealOnlyAttendance({
+      entryDate,
+      attendance: dbValue,
+      lunchStore,
+      lunchAmount,
+      lunchPayer,
+    })
+  ) {
+    return "";
+  }
+
+  const value = dbValue.trim();
+  // 개별식사 관련
+  if (value.includes("개별")) return "개별식사";
+  // 출근/근무 관련
+  if (value === "출근" || value === "근무") return "출근";
+  // 재택 관련
+  if (value.includes("재택") || value.includes("홈")) return "재택";
+  // 휴가/연차 관련
+  if (value.includes("휴가") || value.includes("연차") || value === "휴무")
+    return "휴가";
+  // 오전반차
+  if (value.includes("오전") && value.includes("반차")) return "오전반차";
+  // 오후반차
+  if (value.includes("오후") && value.includes("반차")) return "오후반차";
+  // 반차 (오전/오후 구분 없으면 오전반차로 기본)
+  if (value.includes("반차")) return "오전반차";
+  // 매핑되지 않으면 원래 값 반환
+  return value;
+};
+
 const initialFormData: MealFormData = {
   userId: "",
   entryDate: "",
@@ -209,6 +287,14 @@ function CalendarPageContent() {
         ? `/api/meal-logs/${editingLog.id}`
         : "/api/meal-logs";
       const method = editingLog ? "PUT" : "POST";
+      const attendance = mapFormValueToAttendance(data.attendance);
+      const shouldClearAttendance = shouldIgnoreWeekendMealOnlyAttendance({
+        entryDate: data.entryDate,
+        attendance,
+        lunchStore: data.lunchStore,
+        lunchAmount: data.lunchAmount,
+        lunchPayer: data.lunchPayer,
+      });
 
       const response = await fetch(url, {
         method,
@@ -216,7 +302,7 @@ function CalendarPageContent() {
         body: JSON.stringify({
           userId: data.userId,
           entryDate: data.entryDate,
-          attendance: mapFormValueToAttendance(data.attendance),
+          attendance: shouldClearAttendance ? null : attendance,
           breakfastStore: data.breakfastStore || null,
           breakfastAmount: data.breakfastAmount || 0,
           breakfastPayer: data.breakfastPayer || null,
@@ -400,37 +486,17 @@ function CalendarPageContent() {
 
     if (existingLog) {
       setEditingLog(existingLog);
-      // DB 근태 값을 폼 옵션으로 매핑
-      const mapAttendanceToFormValue = (dbValue: string | null): string => {
-        if (!dbValue) return "";
-        const value = dbValue.trim();
-        // 개별식사 관련
-        if (value.includes("개별")) return "개별식사";
-        // 출근/근무 관련
-        if (value === "출근" || value === "근무") return "출근";
-        // 재택 관련
-        if (value.includes("재택") || value.includes("홈")) return "재택";
-        // 휴가/연차 관련
-        if (
-          value.includes("휴가") ||
-          value.includes("연차") ||
-          value === "휴무"
-        )
-          return "휴가";
-        // 오전반차
-        if (value.includes("오전") && value.includes("반차")) return "오전반차";
-        // 오후반차
-        if (value.includes("오후") && value.includes("반차")) return "오후반차";
-        // 반차 (오전/오후 구분 없으면 오전반차로 기본)
-        if (value.includes("반차")) return "오전반차";
-        // 매핑되지 않으면 원래 값 반환
-        return value;
-      };
 
       setFormData({
         userId: existingLog.user_id,
         entryDate: existingLog.entry_date,
-        attendance: mapAttendanceToFormValue(existingLog.attendance),
+        attendance: mapAttendanceToFormValue(
+          existingLog.attendance,
+          existingLog.entry_date,
+          existingLog.lunch_store,
+          existingLog.lunch_amount,
+          existingLog.lunch_payer,
+        ),
         breakfastStore: existingLog.breakfast_store || "",
         breakfastAmount: existingLog.breakfast_amount || 0,
         breakfastPayer: existingLog.breakfast_payer || "",
@@ -632,8 +698,20 @@ function CalendarPageContent() {
                 };
               };
 
-              const attInfo = mealLog?.attendance
-                ? getAttendanceInfo(mealLog.attendance)
+              const effectiveAttendance =
+                mealLog &&
+                shouldIgnoreWeekendMealOnlyAttendance({
+                  entryDate: mealLog.entry_date,
+                  attendance: mealLog.attendance,
+                  lunchStore: mealLog.lunch_store,
+                  lunchAmount: mealLog.lunch_amount,
+                  lunchPayer: mealLog.lunch_payer,
+                })
+                  ? null
+                  : mealLog?.attendance;
+
+              const attInfo = effectiveAttendance
+                ? getAttendanceInfo(effectiveAttendance)
                 : null;
 
               // 금액 포맷
@@ -643,7 +721,8 @@ function CalendarPageContent() {
 
               const isToday = dateStr === dayjs().format("YYYY-MM-DD");
 
-              const normalizedAttendance = mealLog?.attendance?.toLowerCase() ?? "";
+              const normalizedAttendance =
+                effectiveAttendance?.toLowerCase() ?? "";
               const isHalfDayAttendance = normalizedAttendance.includes("반차");
               const isFullDayNonWorkAttendance =
                 !isHalfDayAttendance &&

@@ -56,6 +56,24 @@ interface MealFormData {
   dinnerPayer: string;
 }
 
+interface UserMonthlyStats {
+  user_id: string;
+  full_name: string;
+  work_days: number;
+  holiday_count: number;
+  weekend_work_days: number;
+  individual_meals: number;
+  remote_work_days: number;
+  total_allowance: number;
+  total_used: number;
+  balance: number;
+}
+
+const formatCurrency = (amount: number | null | undefined) => {
+  if (amount === null || amount === undefined) return "-";
+  return new Intl.NumberFormat("ko-KR").format(amount);
+};
+
 /** 폼 UI 값 → DB 저장 값 매핑 */
 const mapFormValueToAttendance = (formValue: string): string | null => {
   switch (formValue) {
@@ -280,6 +298,26 @@ function CalendarPageContent() {
     enabled: !!selectedUserId,
   });
 
+  // Fetch monthly amount summary for selected user
+  const { data: selectedUserStats, isLoading: isLoadingSelectedUserStats } =
+    useQuery<UserMonthlyStats | null>({
+      queryKey: queryKeys.stats.byUser(
+        selectedUserId,
+        currentDate.year(),
+        currentDate.month() + 1,
+      ),
+      queryFn: async () => {
+        if (!selectedUserId) return null;
+        const response = await fetch(
+          `/api/stats/monthly?userId=${selectedUserId}&year=${currentDate.year()}&month=${currentDate.month() + 1}`,
+        );
+        if (!response.ok) throw new Error("Failed to fetch user stats");
+        const data = (await response.json()) as UserMonthlyStats[];
+        return data[0] ?? null;
+      },
+      enabled: !!selectedUserId,
+    });
+
   // Create/Update meal log mutation
   const saveMutation = useMutation({
     mutationFn: async (data: MealFormData) => {
@@ -332,6 +370,13 @@ function CalendarPageContent() {
           currentDate.month() + 1,
         ),
       });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.stats.byUser(
+          selectedUserId,
+          currentDate.year(),
+          currentDate.month() + 1,
+        ),
+      });
       toast.success(
         editingLog
           ? "식대 정보가 수정되었습니다."
@@ -362,6 +407,13 @@ function CalendarPageContent() {
       });
       queryClient.invalidateQueries({
         queryKey: queryKeys.stats.monthly(
+          currentDate.year(),
+          currentDate.month() + 1,
+        ),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.stats.byUser(
+          selectedUserId,
           currentDate.year(),
           currentDate.month() + 1,
         ),
@@ -401,6 +453,13 @@ function CalendarPageContent() {
       });
       queryClient.invalidateQueries({
         queryKey: queryKeys.stats.monthly(
+          currentDate.year(),
+          currentDate.month() + 1,
+        ),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.stats.byUser(
+          selectedUserId,
           currentDate.year(),
           currentDate.month() + 1,
         ),
@@ -551,24 +610,79 @@ function CalendarPageContent() {
     return mealLogs?.find((log) => log.entry_date === dateStr);
   };
 
+  const selectedMember = members?.find((member) => member.id === selectedUserId);
+  const selectedBalance = selectedUserStats?.balance ?? 0;
+
   return (
     <div className="space-y-6">
       {/* User Selection with Search */}
-      <div className="flex gap-1 flex-col">
-        <Label>사용자 선택</Label>
-        <SearchableDropdown<Member>
-          items={members ?? []}
-          value={selectedUserId}
-          getItemKey={(m) => m.id}
-          getItemLabel={(m) => m.full_name}
-          onSelect={(member) => setSelectedUserId(member.id)}
-          onClear={() => setSelectedUserId("")}
-          placeholder="사용자 선택..."
-          searchPlaceholder="이름 또는 초성 검색..."
-          emptyText="검색 결과가 없습니다"
-          allowClear
-          className="h-10 w-44"
-        />
+      <div className="flex max-w-[720px] flex-col items-start gap-3">
+        <div className="flex gap-1 flex-col">
+          <Label>사용자 선택</Label>
+          <SearchableDropdown<Member>
+            items={members ?? []}
+            value={selectedUserId}
+            getItemKey={(m) => m.id}
+            getItemLabel={(m) => m.full_name}
+            onSelect={(member) => setSelectedUserId(member.id)}
+            onClear={() => setSelectedUserId("")}
+            placeholder="사용자 선택..."
+            searchPlaceholder="이름 또는 초성 검색..."
+            emptyText="검색 결과가 없습니다"
+            allowClear
+            className="h-10 w-44"
+          />
+        </div>
+
+        {selectedUserId && (
+          <div className="grid w-full gap-2 sm:grid-cols-3">
+            {isLoadingSelectedUserStats ? (
+              <>
+                <Skeleton className="h-[58px] rounded-md" />
+                <Skeleton className="h-[58px] rounded-md" />
+                <Skeleton className="h-[58px] rounded-md" />
+              </>
+            ) : (
+              <>
+                <div className="rounded-md border border-slate-100 bg-slate-50 px-4 py-2.5">
+                  <div className="text-xs font-medium text-slate-500">
+                    {selectedUserStats?.full_name ||
+                      selectedMember?.full_name ||
+                      "선택 인원"}{" "}
+                    사용가능액
+                  </div>
+                  <div className="mt-1 text-lg font-bold tabular-nums text-slate-900">
+                    {selectedUserStats
+                      ? `${formatCurrency(selectedUserStats.total_allowance)}원`
+                      : "-"}
+                  </div>
+                </div>
+                <div className="rounded-md border border-slate-100 bg-slate-50 px-4 py-2.5">
+                  <div className="text-xs font-medium text-slate-500">
+                    사용액
+                  </div>
+                  <div className="mt-1 text-lg font-bold tabular-nums text-slate-900">
+                    {selectedUserStats
+                      ? `${formatCurrency(selectedUserStats.total_used)}원`
+                      : "-"}
+                  </div>
+                </div>
+                <div className="rounded-md border border-slate-100 bg-slate-50 px-4 py-2.5">
+                  <div className="text-xs font-medium text-slate-500">잔액</div>
+                  <div
+                    className={`mt-1 text-lg font-bold tabular-nums ${
+                      selectedBalance < 0 ? "text-rose-600" : "text-slate-900"
+                    }`}
+                  >
+                    {selectedUserStats
+                      ? `${formatCurrency(selectedUserStats.balance)}원`
+                      : "-"}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Calendar */}

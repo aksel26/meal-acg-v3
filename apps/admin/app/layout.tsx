@@ -3,7 +3,6 @@ import "./globals.css";
 import "@repo/ui/styles.css";
 import type { Metadata, Viewport } from "next";
 import QueryProvider from "./providers/QueryProvider";
-import localFont from "next/font/local";
 import dayjs from "dayjs";
 import "dayjs/locale/ko";
 
@@ -28,15 +27,11 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-const myFont = localFont({
-  src: "./fonts/NanumSquareNeo-Variable.ttf",
-});
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko">
       <head />
-      <body className={myFont.className}>
+      <body>
         <QueryProvider>{children}</QueryProvider>
         <Sonner />
       </body>

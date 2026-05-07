@@ -105,14 +105,14 @@ const isWorkAttendance = (attendance: string | null | undefined) => {
   return value === "출근" || value === "근무";
 };
 
-const hasLunchEntry = (
-  lunchStore: string | null | undefined,
-  lunchAmount: number | null | undefined,
-  lunchPayer: string | null | undefined,
+const hasMealEntry = (
+  store: string | null | undefined,
+  amount: number | null | undefined,
+  payer: string | null | undefined,
 ) =>
-  Boolean(lunchStore?.trim()) ||
-  Boolean(lunchPayer?.trim()) ||
-  Number(lunchAmount) > 0;
+  Boolean(store?.trim()) ||
+  Boolean(payer?.trim()) ||
+  Number(amount) > 0;
 
 const shouldIgnoreWeekendMealOnlyAttendance = ({
   entryDate,
@@ -120,16 +120,23 @@ const shouldIgnoreWeekendMealOnlyAttendance = ({
   lunchStore,
   lunchAmount,
   lunchPayer,
+  dinnerStore,
+  dinnerAmount,
+  dinnerPayer,
 }: {
   entryDate: string;
   attendance: string | null | undefined;
   lunchStore: string | null | undefined;
   lunchAmount: number | null | undefined;
   lunchPayer: string | null | undefined;
+  dinnerStore: string | null | undefined;
+  dinnerAmount: number | null | undefined;
+  dinnerPayer: string | null | undefined;
 }) =>
   isWeekendDate(entryDate) &&
   isWorkAttendance(attendance) &&
-  !hasLunchEntry(lunchStore, lunchAmount, lunchPayer);
+  !hasMealEntry(lunchStore, lunchAmount, lunchPayer) &&
+  !hasMealEntry(dinnerStore, dinnerAmount, dinnerPayer);
 
 const mapAttendanceToFormValue = (
   dbValue: string | null,
@@ -137,6 +144,9 @@ const mapAttendanceToFormValue = (
   lunchStore?: string | null,
   lunchAmount?: number | null,
   lunchPayer?: string | null,
+  dinnerStore?: string | null,
+  dinnerAmount?: number | null,
+  dinnerPayer?: string | null,
 ): string => {
   if (!dbValue) return "";
   if (
@@ -147,6 +157,9 @@ const mapAttendanceToFormValue = (
       lunchStore,
       lunchAmount,
       lunchPayer,
+      dinnerStore,
+      dinnerAmount,
+      dinnerPayer,
     })
   ) {
     return "";
@@ -332,6 +345,9 @@ function CalendarPageContent() {
         lunchStore: data.lunchStore,
         lunchAmount: data.lunchAmount,
         lunchPayer: data.lunchPayer,
+        dinnerStore: data.dinnerStore,
+        dinnerAmount: data.dinnerAmount,
+        dinnerPayer: data.dinnerPayer,
       });
 
       const response = await fetch(url, {
@@ -555,6 +571,9 @@ function CalendarPageContent() {
           existingLog.lunch_store,
           existingLog.lunch_amount,
           existingLog.lunch_payer,
+          existingLog.dinner_store,
+          existingLog.dinner_amount,
+          existingLog.dinner_payer,
         ),
         breakfastStore: existingLog.breakfast_store || "",
         breakfastAmount: existingLog.breakfast_amount || 0,
@@ -820,6 +839,9 @@ function CalendarPageContent() {
                   lunchStore: mealLog.lunch_store,
                   lunchAmount: mealLog.lunch_amount,
                   lunchPayer: mealLog.lunch_payer,
+                  dinnerStore: mealLog.dinner_store,
+                  dinnerAmount: mealLog.dinner_amount,
+                  dinnerPayer: mealLog.dinner_payer,
                 })
                   ? null
                   : mealLog?.attendance;

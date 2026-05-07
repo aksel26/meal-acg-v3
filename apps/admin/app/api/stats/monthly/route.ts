@@ -4,6 +4,43 @@ import { requireAdmin } from "@/lib/auth";
 import { HIDDEN_MEMBER_NAMES } from "@/lib/constants";
 import type { MonthlyAllowancesJson } from "@/lib/supabase/types";
 
+type MealLogWeekendFields = {
+  user_id: string;
+  entry_date: string;
+  attendance: string | null;
+  lunch_store: string | null;
+  lunch_amount: number | null;
+  lunch_payer: string | null;
+  dinner_store: string | null;
+  dinner_amount: number | null;
+  dinner_payer: string | null;
+};
+
+const hasMealEntry = (
+  store: string | null | undefined,
+  amount: number | null | undefined,
+  payer: string | null | undefined,
+) =>
+  Boolean(store?.trim()) ||
+  Boolean(payer?.trim()) ||
+  Number(amount) > 0;
+
+const isWeekendDate = (date: string) => {
+  const day = new Date(`${date}T00:00:00Z`).getUTCDay();
+  return day === 0 || day === 6;
+};
+
+const isWeekendWorkLog = (log: MealLogWeekendFields) => {
+  const attendance = log.attendance?.trim();
+  if (attendance !== "근무" && attendance !== "출근") return false;
+  if (!isWeekendDate(log.entry_date)) return false;
+
+  return (
+    hasMealEntry(log.lunch_store, log.lunch_amount, log.lunch_payer) ||
+    hasMealEntry(log.dinner_store, log.dinner_amount, log.dinner_payer)
+  );
+};
+
 // GET /api/stats/monthly - Get monthly stats per user
 export async function GET(request: NextRequest) {
   try {
@@ -77,6 +114,35 @@ export async function GET(request: NextRequest) {
       ? savedData.allowance / savedData.workdays
       : null;
 
+    const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
+    const endDate = new Date(year, month, 0).toISOString().split("T")[0];
+    let mealLogsQuery = supabase
+      .from("meal_logs")
+      .select(
+        "user_id, entry_date, attendance, lunch_store, lunch_amount, lunch_payer, dinner_store, dinner_amount, dinner_payer",
+      )
+      .gte("entry_date", startDate)
+      .lte("entry_date", endDate);
+
+    if (userId) {
+      mealLogsQuery = mealLogsQuery.eq("user_id", userId);
+    }
+
+    const { data: mealLogsData, error: mealLogsError } = await mealLogsQuery;
+
+    if (mealLogsError) {
+      console.error("Error fetching meal logs for weekend work:", mealLogsError);
+    }
+
+    const weekendWorkDaysByUser = new Map<string, number>();
+    ((mealLogsData || []) as MealLogWeekendFields[]).forEach((log) => {
+      if (!isWeekendWorkLog(log)) return;
+      weekendWorkDaysByUser.set(
+        log.user_id,
+        (weekendWorkDaysByUser.get(log.user_id) || 0) + 1,
+      );
+    });
+
     // Transform data to include computed fields
     // 사용가능액 = 일일단가 × (근무일 - 휴일 - 개별 + 주말)
     const transformedData = (data || []).map((user: {
@@ -95,13 +161,18 @@ export async function GET(request: NextRequest) {
     }) => {
       // 일일 단가: 저장된 값 또는 RPC에서 받은 값
       const dailyAllowance = savedDailyAllowance ?? user.daily_allowance;
+      const weekendWorkDays =
+        mealLogsError
+          ? user.weekend_work_days || 0
+          : weekendWorkDaysByUser.get(user.user_id) || 0;
       // 사용가능액 = 일일단가 × (근무일 - 휴일 - 재택 - 개별 + 주말)
-      const effectiveDays = (user.work_days || 0) - (user.holiday_count || 0) - (user.remote_work_days || 0) - (user.individual_meals || 0) + (user.weekend_work_days || 0);
+      const effectiveDays = (user.work_days || 0) - (user.holiday_count || 0) - (user.remote_work_days || 0) - (user.individual_meals || 0) + weekendWorkDays;
       const totalAllowance = dailyAllowance * effectiveDays;
       const balance = totalAllowance - user.total_used;
 
       return {
         ...user,
+        weekend_work_days: weekendWorkDays,
         // Override with saved allowance if available
         total_allowance: totalAllowance,
         balance: balance,

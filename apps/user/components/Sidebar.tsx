@@ -14,6 +14,7 @@ import {
   Megaphone,
   DoorOpen,
   MessageSquareText,
+  ClipboardList,
   LogOut,
   X,
   Bell,
@@ -98,6 +99,15 @@ const menuGroups: MenuGroup[] = [
     items: [],
     href: "/part-time-supervisor",
     icon: ExternalLink,
+    external: true,
+  },
+  {
+    label: "요청 관리",
+    items: [],
+    href:
+      process.env.NEXT_PUBLIC_REQUEST_MANAGEMENT_APP_URL ||
+      "http://localhost:3013",
+    icon: ClipboardList,
     external: true,
   },
 ];
@@ -449,7 +459,8 @@ export function Sidebar() {
     }
   }, [memberLookup, memberId, setMemberInfo]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" }).catch(() => null);
     logout();
     router.push("/");
   };
@@ -500,7 +511,8 @@ export function MobileSidebar() {
     }
   }, [memberLookup, memberId, setMemberInfo]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" }).catch(() => null);
     close();
     logout();
     router.push("/");

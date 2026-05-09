@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 로그인 성공
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       data: {
         user_id: member.id,
@@ -57,6 +57,24 @@ export async function POST(request: NextRequest) {
         role: member.role,
       },
     });
+
+    response.cookies.set(
+      "user-session",
+      JSON.stringify({
+        userId: member.id,
+        fullName: member.full_name,
+        role: member.role,
+      }),
+      {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 7,
+        path: "/",
+      },
+    );
+
+    return response;
   } catch (error) {
     console.error("Login error:", error);
     return NextResponse.json(

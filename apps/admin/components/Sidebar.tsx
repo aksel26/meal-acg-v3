@@ -132,6 +132,14 @@ const navigation: NavigationItem[] = [
     external: true,
   },
   {
+    name: "요청 관리",
+    href:
+      process.env.NEXT_PUBLIC_REQUEST_MANAGEMENT_APP_URL ||
+      "http://localhost:3013",
+    icon: ClipboardList,
+    external: true,
+  },
+  {
     name: "설정",
     icon: Cog,
     items: [

@@ -247,7 +247,10 @@ INSERT INTO supervisor.clients (id, name, parent_company, contact_name, contact_
   ('f0000000-0000-0000-0000-000000000002', 'LG CNS', 'LG그룹', '이담당', '010-9999-0002', 'lee@lgcns.com', NULL),
   ('f0000000-0000-0000-0000-000000000003', 'SK하이닉스', 'SK그룹', '박담당', '010-9999-0003', 'park@skhynix.com', '반도체 사업부'),
   ('f0000000-0000-0000-0000-000000000004', '현대자동차', '현대차그룹', '최담당', '010-9999-0004', 'choi@hyundai.com', NULL),
-  ('f0000000-0000-0000-0000-000000000005', '네이버', NULL, '정담당', '010-9999-0005', 'jung@naver.com', 'IT 기업')
+  ('f0000000-0000-0000-0000-000000000005', '네이버', NULL, '정담당', '010-9999-0005', 'jung@naver.com', 'IT 기업'),
+  ('f0000000-0000-0000-0000-000000000006', 'CJ제일제당', 'CJ그룹', '문담당', '010-9999-0006', 'moon@cj.co.kr', NULL),
+  ('f0000000-0000-0000-0000-000000000007', 'LG화학', 'LG그룹', '오담당', '010-9999-0007', 'oh@lgchem.com', NULL),
+  ('f0000000-0000-0000-0000-000000000008', '두산에너빌리티', '두산그룹', '한담당', '010-9999-0008', 'han@doosan.com', NULL)
 ON CONFLICT (id) DO NOTHING;
 
 -- 감독관 공고에 고객사 연결
@@ -420,3 +423,264 @@ INSERT INTO approval_requests (id, type, requester_id, approver_id, status, rela
 -- 연차 시드 데이터 (2026년)
 -- ============================================================
 SELECT generate_annual_leave(2026);
+
+-- ============================================================
+-- 요청관리 MVP 시드 데이터
+-- ============================================================
+
+INSERT INTO request_management.requests (
+  id,
+  title,
+  body,
+  priority,
+  status,
+  requester_id,
+  requester_name,
+  assignee_id,
+  assignee_name,
+  assignee_ids,
+  assignee_names,
+  team_name,
+  team_names,
+  customer_names,
+  affiliate_names,
+  request_type,
+  request_type_name,
+  completion_note,
+  completed_at,
+  created_at,
+  updated_at
+) VALUES
+  (
+    '51000000-0000-0000-0000-000000000001',
+    'SK하이닉스 결과레포트 출력 요청',
+    'SK하이닉스 상반기 공채 결과레포트 출력본이 필요합니다. 전달 기한은 금일 16시입니다.',
+    'P1',
+    '진행',
+    'b1000000-0000-0000-0000-000000000002',
+    '이철수',
+    'b1000000-0000-0000-0000-000000000001',
+    '김관리',
+    ARRAY['b1000000-0000-0000-0000-000000000001']::uuid[],
+    ARRAY['김관리']::text[],
+    'HR 운영팀',
+    ARRAY['HR 운영팀']::text[],
+    ARRAY['SK그룹']::text[],
+    ARRAY['SK하이닉스']::text[],
+    'print',
+    '출력',
+    NULL,
+    NULL,
+    '2026-05-09 09:10:00+09',
+    '2026-05-09 09:35:00+09'
+  ),
+  (
+    '51000000-0000-0000-0000-000000000002',
+    'CJ 검사 세팅 확인 요청',
+    'CJ 신규 공고 검사 세팅이 정상 반영되었는지 확인 부탁드립니다.',
+    'P2',
+    '접수',
+    'b1000000-0000-0000-0000-000000000003',
+    '박영희',
+    NULL,
+    NULL,
+    '{}'::uuid[],
+    '{}'::text[],
+    'HR TECH팀',
+    ARRAY['HR TECH팀']::text[],
+    ARRAY['CJ제일제당']::text[],
+    ARRAY['CJ제일제당']::text[],
+    'setup',
+    '세팅',
+    NULL,
+    NULL,
+    '2026-05-09 10:20:00+09',
+    '2026-05-09 10:20:00+09'
+  ),
+  (
+    '51000000-0000-0000-0000-000000000003',
+    'LG 응시자 명단 업로드 오류 문의',
+    '응시자 명단 업로드 중 일부 행이 실패합니다. 첨부한 샘플 파일 기준으로 원인 확인이 필요합니다.',
+    'P2',
+    '대기',
+    'b1000000-0000-0000-0000-000000000004',
+    '최민수',
+    'b1000000-0000-0000-0000-000000000001',
+    '김관리',
+    ARRAY['b1000000-0000-0000-0000-000000000001']::uuid[],
+    ARRAY['김관리']::text[],
+    'HR TECH팀',
+    ARRAY['HR TECH팀']::text[],
+    ARRAY['LG그룹']::text[],
+    ARRAY['LG화학']::text[],
+    'bug',
+    '버그',
+    NULL,
+    NULL,
+    '2026-05-08 15:30:00+09',
+    '2026-05-09 11:00:00+09'
+  ),
+  (
+    '51000000-0000-0000-0000-000000000004',
+    '두산 결과 안내 문구 수정',
+    '결과 안내 메일의 하단 문의 문구를 최신 담당자 정보로 수정했습니다.',
+    'P3',
+    '완료',
+    'b1000000-0000-0000-0000-000000000005',
+    '정수진',
+    'b1000000-0000-0000-0000-000000000001',
+    '김관리',
+    ARRAY['b1000000-0000-0000-0000-000000000001']::uuid[],
+    ARRAY['김관리']::text[],
+    'HR 운영팀',
+    ARRAY['HR 운영팀']::text[],
+    ARRAY['두산그룹']::text[],
+    ARRAY['두산에너빌리티']::text[],
+    'etc',
+    '기타',
+    '메일 템플릿 하단 문의 문구를 최신 담당자/대표번호 기준으로 수정 완료했습니다.',
+    '2026-05-08 17:45:00+09',
+    '2026-05-08 13:00:00+09',
+    '2026-05-08 17:45:00+09'
+  )
+ON CONFLICT (id) DO UPDATE SET
+  title = EXCLUDED.title,
+  body = EXCLUDED.body,
+  priority = EXCLUDED.priority,
+  status = EXCLUDED.status,
+  requester_id = EXCLUDED.requester_id,
+  requester_name = EXCLUDED.requester_name,
+  assignee_id = EXCLUDED.assignee_id,
+  assignee_name = EXCLUDED.assignee_name,
+  assignee_ids = EXCLUDED.assignee_ids,
+  assignee_names = EXCLUDED.assignee_names,
+  team_name = EXCLUDED.team_name,
+  team_names = EXCLUDED.team_names,
+  customer_names = EXCLUDED.customer_names,
+  affiliate_names = EXCLUDED.affiliate_names,
+  request_type = EXCLUDED.request_type,
+  request_type_name = EXCLUDED.request_type_name,
+  completion_note = EXCLUDED.completion_note,
+  completed_at = EXCLUDED.completed_at,
+  updated_at = EXCLUDED.updated_at;
+
+INSERT INTO request_management.comments (
+  id,
+  request_id,
+  author_id,
+  author_name,
+  body,
+  is_system,
+  created_at
+) VALUES
+  (
+    '52000000-0000-0000-0000-000000000001',
+    '51000000-0000-0000-0000-000000000001',
+    'b1000000-0000-0000-0000-000000000002',
+    '이철수',
+    '클라이언트 전달 시간이 촉박해서 우선 확인 부탁드립니다.',
+    false,
+    '2026-05-09 09:12:00+09'
+  ),
+  (
+    '52000000-0000-0000-0000-000000000002',
+    '51000000-0000-0000-0000-000000000001',
+    'b1000000-0000-0000-0000-000000000001',
+    '김관리',
+    '진행 시작했습니다. 출력 조건 확인 후 공유드리겠습니다.',
+    false,
+    '2026-05-09 09:36:00+09'
+  ),
+  (
+    '52000000-0000-0000-0000-000000000003',
+    '51000000-0000-0000-0000-000000000003',
+    'b1000000-0000-0000-0000-000000000001',
+    '김관리',
+    '실패한 행의 원본 값 확인이 필요합니다. 샘플 파일 기준으로 재현 중입니다.',
+    false,
+    '2026-05-09 10:40:00+09'
+  ),
+  (
+    '52000000-0000-0000-0000-000000000004',
+    '51000000-0000-0000-0000-000000000004',
+    'b1000000-0000-0000-0000-000000000001',
+    '김관리',
+    '수정 완료했습니다. 다음 발송분부터 반영됩니다.',
+    false,
+    '2026-05-08 17:45:00+09'
+  )
+ON CONFLICT (id) DO UPDATE SET
+  body = EXCLUDED.body,
+  updated_at = now();
+
+INSERT INTO request_management.attachments (
+  id,
+  request_id,
+  file_name,
+  storage_path,
+  content_type,
+  size_bytes,
+  uploaded_by,
+  uploaded_by_name,
+  created_at
+) VALUES
+  (
+    '53000000-0000-0000-0000-000000000001',
+    '51000000-0000-0000-0000-000000000003',
+    'lg-upload-error-sample.xlsx',
+    '51000000-0000-0000-0000-000000000003/lg-upload-error-sample.xlsx',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    18432,
+    'b1000000-0000-0000-0000-000000000004',
+    '최민수',
+    '2026-05-08 15:32:00+09'
+  )
+ON CONFLICT (id) DO UPDATE SET
+  file_name = EXCLUDED.file_name,
+  storage_path = EXCLUDED.storage_path,
+  content_type = EXCLUDED.content_type,
+  size_bytes = EXCLUDED.size_bytes;
+
+INSERT INTO request_management.events (
+  id,
+  request_id,
+  actor_id,
+  actor_name,
+  event_type,
+  before,
+  after,
+  created_at
+) VALUES
+  (
+    '54000000-0000-0000-0000-000000000001',
+    '51000000-0000-0000-0000-000000000001',
+    'b1000000-0000-0000-0000-000000000002',
+    '이철수',
+    'request_created',
+    NULL,
+    '{"title":"SK하이닉스 결과레포트 출력 요청","priority":"P1"}'::jsonb,
+    '2026-05-09 09:10:00+09'
+  ),
+  (
+    '54000000-0000-0000-0000-000000000002',
+    '51000000-0000-0000-0000-000000000001',
+    'b1000000-0000-0000-0000-000000000001',
+    '김관리',
+    'request_updated',
+    '{"status":"접수","assignee_id":null}'::jsonb,
+    '{"status":"진행","assignee_id":"b1000000-0000-0000-0000-000000000001"}'::jsonb,
+    '2026-05-09 09:35:00+09'
+  ),
+  (
+    '54000000-0000-0000-0000-000000000003',
+    '51000000-0000-0000-0000-000000000004',
+    'b1000000-0000-0000-0000-000000000001',
+    '김관리',
+    'request_updated',
+    '{"status":"진행"}'::jsonb,
+    '{"status":"완료"}'::jsonb,
+    '2026-05-08 17:45:00+09'
+  )
+ON CONFLICT (id) DO UPDATE SET
+  before = EXCLUDED.before,
+  after = EXCLUDED.after;

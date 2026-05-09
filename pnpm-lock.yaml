@@ -305,6 +305,85 @@ importers:
         specifier: 5.8.2
         version: 5.8.2
 
+  apps/request-management:
+    dependencies:
+      '@repo/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@supabase/ssr':
+        specifier: ^0.5.2
+        version: 0.5.2(@supabase/supabase-js@2.91.1)
+      '@supabase/supabase-js':
+        specifier: ^2.49.1
+        version: 2.91.1
+      '@tanstack/react-query':
+        specifier: ^5.84.1
+        version: 5.84.1(react@19.1.0)
+      '@tanstack/react-query-devtools':
+        specifier: ^5.84.1
+        version: 5.84.1(@tanstack/react-query@5.84.1)(react@19.1.0)
+      dayjs:
+        specifier: ^1.11.13
+        version: 1.11.13
+      lucide-react:
+        specifier: ^0.533.0
+        version: 0.533.0(react@19.1.0)
+      next:
+        specifier: 15.4.10
+        version: 15.4.10(react-dom@19.1.0)(react@19.1.0)
+      react:
+        specifier: ^19.1.0
+        version: 19.1.0
+      react-dom:
+        specifier: ^19.1.0
+        version: 19.1.0(react@19.1.0)
+      sonner:
+        specifier: ^2.0.6
+        version: 2.0.7(react-dom@19.1.0)(react@19.1.0)
+      utils:
+        specifier: workspace:*
+        version: link:../../packages/utils
+    devDependencies:
+      '@next/eslint-plugin-next':
+        specifier: ^15.4.2
+        version: 15.4.2
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../packages/eslint-config
+      '@repo/tailwind-config':
+        specifier: workspace:*
+        version: link:../../packages/tailwind-config
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
+      '@tailwindcss/postcss':
+        specifier: ^4.1.5
+        version: 4.1.5
+      '@types/node':
+        specifier: ^22.15.30
+        version: 22.15.30
+      '@types/react':
+        specifier: ^19.1.0
+        version: 19.1.0
+      '@types/react-dom':
+        specifier: ^19.1.1
+        version: 19.1.1(@types/react@19.1.0)
+      autoprefixer:
+        specifier: ^10.4.20
+        version: 10.4.20(postcss@8.5.3)
+      eslint:
+        specifier: ^9.31.0
+        version: 9.31.0
+      postcss:
+        specifier: ^8.5.3
+        version: 8.5.3
+      tailwindcss:
+        specifier: ^4.1.5
+        version: 4.1.5
+      typescript:
+        specifier: 5.8.2
+        version: 5.8.2
+
   apps/user:
     dependencies:
       '@ducanh2912/next-pwa':

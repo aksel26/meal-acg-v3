@@ -18,6 +18,7 @@ interface DateRangePickerProps {
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  modal?: boolean;
 }
 
 function DateRangePicker({
@@ -27,6 +28,7 @@ function DateRangePicker({
   placeholder = "기간 선택",
   className,
   disabled,
+  modal,
 }: DateRangePickerProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -69,7 +71,7 @@ function DateRangePicker({
   const display = formatDisplay();
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal={modal}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"

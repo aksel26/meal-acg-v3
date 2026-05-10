@@ -428,7 +428,7 @@ SELECT generate_annual_leave(2026);
 -- 요청관리 MVP 시드 데이터
 -- ============================================================
 
-INSERT INTO request_management.requests (
+INSERT INTO project_management.requests (
   id,
   title,
   body,
@@ -564,7 +564,7 @@ ON CONFLICT (id) DO UPDATE SET
   completed_at = EXCLUDED.completed_at,
   updated_at = EXCLUDED.updated_at;
 
-INSERT INTO request_management.comments (
+INSERT INTO project_management.comments (
   id,
   request_id,
   author_id,
@@ -613,7 +613,7 @@ ON CONFLICT (id) DO UPDATE SET
   body = EXCLUDED.body,
   updated_at = now();
 
-INSERT INTO request_management.attachments (
+INSERT INTO project_management.attachments (
   id,
   request_id,
   file_name,
@@ -641,7 +641,7 @@ ON CONFLICT (id) DO UPDATE SET
   content_type = EXCLUDED.content_type,
   size_bytes = EXCLUDED.size_bytes;
 
-INSERT INTO request_management.events (
+INSERT INTO project_management.events (
   id,
   request_id,
   actor_id,

@@ -132,8 +132,9 @@ const navigation: NavigationItem[] = [
     external: true,
   },
   {
-    name: "요청 관리",
+    name: "프로젝트 관리",
     href:
+      process.env.NEXT_PUBLIC_PROJECT_MANAGEMENT_APP_URL ||
       process.env.NEXT_PUBLIC_REQUEST_MANAGEMENT_APP_URL ||
       "http://localhost:3013",
     icon: ClipboardList,

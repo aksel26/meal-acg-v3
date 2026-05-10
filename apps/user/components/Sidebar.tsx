@@ -102,9 +102,10 @@ const menuGroups: MenuGroup[] = [
     external: true,
   },
   {
-    label: "요청 관리",
+    label: "프로젝트 관리",
     items: [],
     href:
+      process.env.NEXT_PUBLIC_PROJECT_MANAGEMENT_APP_URL ||
       process.env.NEXT_PUBLIC_REQUEST_MANAGEMENT_APP_URL ||
       "http://localhost:3013",
     icon: ClipboardList,

@@ -16,9 +16,9 @@
     "build:part-time-supervisor": "turbo run build --filter=part-time-supervisor",
     "dev:part-time-supervisor": "turbo run dev --filter=part-time-supervisor",
     "start:part-time-supervisor": "turbo run start --filter=part-time-supervisor",
-    "build:request-management": "turbo run build --filter=request-management",
-    "dev:request-management": "turbo run dev --filter=request-management",
-    "start:request-management": "turbo run start --filter=request-management"
+    "build:project-management": "turbo run build --filter=project-management",
+    "dev:project-management": "turbo run dev --filter=project-management",
+    "start:project-management": "turbo run start --filter=project-management"
   },
   "devDependencies": {
     "prettier": "^3.6.0",

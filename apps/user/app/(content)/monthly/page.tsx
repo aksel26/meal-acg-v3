@@ -75,19 +75,25 @@ interface ThrownEmoji {
   id: number;
   emoji: string;
   startX: number;
+  midX: number;
   endX: number;
+  peakY: number;
   endY: number;
   rotate: number;
 }
 
 function spawnThrownEmoji(id: number): ThrownEmoji {
+  const startX = (Math.random() - 0.5) * 420;
+  const endX = (Math.random() - 0.5) * 110;
   return {
     id,
     emoji: FOOD_EMOJIS[Math.floor(Math.random() * FOOD_EMOJIS.length)] ?? "🍕",
-    startX: (Math.random() - 0.5) * 420,
-    endX: (Math.random() - 0.5) * 110,
+    startX,
+    midX: startX * 0.35 + endX * 0.65,
+    endX,
+    peakY: -80 - Math.random() * 40,
     endY: (Math.random() - 0.5) * 110,
-    rotate: (Math.random() - 0.5) * 720,
+    rotate: (Math.random() - 0.5) * 540,
   };
 }
 
@@ -219,17 +225,36 @@ function EmptyCollectionsState() {
                   }}
                   animate={{
                     opacity: [0, 1, 1, 0],
-                    x: item.endX,
-                    y: item.endY,
-                    scale: [1.9, 1.15, 0.85],
+                    x: [item.startX, item.midX, item.endX],
+                    y: [260, item.peakY, item.endY],
+                    scale: [1.9, 1.4, 1, 0.85],
                     rotate: item.rotate,
                   }}
                   transition={{
                     duration: EMOJI_THROW_DURATION_MS / 1000,
-                    ease: [0.22, 1, 0.36, 1],
+                    ease: [0.34, 0.04, 0.22, 1],
+                    x: {
+                      duration: EMOJI_THROW_DURATION_MS / 1000,
+                      times: [0, 0.55, 1],
+                      ease: "easeOut",
+                    },
+                    y: {
+                      duration: EMOJI_THROW_DURATION_MS / 1000,
+                      times: [0, 0.55, 1],
+                      ease: [0.34, 0, 0.34, 1],
+                    },
+                    scale: {
+                      duration: EMOJI_THROW_DURATION_MS / 1000,
+                      times: [0, 0.35, 0.7, 1],
+                      ease: "easeOut",
+                    },
+                    rotate: {
+                      duration: EMOJI_THROW_DURATION_MS / 1000,
+                      ease: [0.16, 1, 0.3, 1],
+                    },
                     opacity: {
                       duration: EMOJI_THROW_DURATION_MS / 1000,
-                      times: [0, 0.12, 0.93, 1],
+                      times: [0, 0.12, 0.85, 1],
                       ease: "linear",
                     },
                   }}

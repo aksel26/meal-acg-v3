@@ -83,16 +83,17 @@ interface ThrownEmoji {
 }
 
 function spawnThrownEmoji(id: number): ThrownEmoji {
-  const startX = (Math.random() - 0.5) * 420;
-  const endX = (Math.random() - 0.5) * 110;
+  const direction = Math.random() < 0.5 ? -1 : 1;
+  const startX = direction * (110 + Math.random() * 40);
+  const endX = (Math.random() - 0.5) * 90;
   return {
     id,
     emoji: FOOD_EMOJIS[Math.floor(Math.random() * FOOD_EMOJIS.length)] ?? "🍕",
     startX,
     midX: startX * 0.35 + endX * 0.65,
     endX,
-    peakY: -80 - Math.random() * 40,
-    endY: (Math.random() - 0.5) * 110,
+    peakY: -70 - Math.random() * 30,
+    endY: (Math.random() - 0.5) * 90,
     rotate: (Math.random() - 0.5) * 540,
   };
 }
@@ -219,15 +220,15 @@ function EmptyCollectionsState() {
                   initial={{
                     opacity: 0,
                     x: item.startX,
-                    y: 260,
-                    scale: 1.9,
+                    y: 140,
+                    scale: 1.4,
                     rotate: 0,
                   }}
                   animate={{
                     opacity: [0, 1, 1, 0],
                     x: [item.startX, item.midX, item.endX],
-                    y: [260, item.peakY, item.endY],
-                    scale: [1.9, 1.4, 1, 0.85],
+                    y: [140, item.peakY, item.endY],
+                    scale: [1.4, 1.15, 1, 0.9],
                     rotate: item.rotate,
                   }}
                   transition={{

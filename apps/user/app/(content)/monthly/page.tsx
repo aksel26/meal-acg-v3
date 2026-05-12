@@ -20,6 +20,7 @@ import { Popover, PopoverTrigger, PopoverContent } from "@repo/ui/src/popover";
 import { DRINKS } from "@/lib/const/const";
 import {
   motion,
+  AnimatePresence,
   animate,
   useAnimationControls,
   useMotionValue,
@@ -36,6 +37,59 @@ function isNewCollection(createdAt: string) {
 }
 
 const EASTER_EGG_INCREMENT = 10;
+const EMOJI_THROW_DURATION_MS = 1100;
+const FOOD_EMOJIS = [
+  "🍕",
+  "🍔",
+  "🍟",
+  "🌭",
+  "🍣",
+  "🍜",
+  "🍱",
+  "🍙",
+  "🍤",
+  "🥟",
+  "🥖",
+  "🥐",
+  "🧇",
+  "🥞",
+  "🍞",
+  "🍰",
+  "🧁",
+  "🍩",
+  "🍪",
+  "🍫",
+  "🍿",
+  "🍎",
+  "🍇",
+  "🍓",
+  "🍑",
+  "🍌",
+  "🥑",
+  "🥗",
+  "🍖",
+  "🍗",
+];
+
+interface ThrownEmoji {
+  id: number;
+  emoji: string;
+  startX: number;
+  endX: number;
+  endY: number;
+  rotate: number;
+}
+
+function spawnThrownEmoji(id: number): ThrownEmoji {
+  return {
+    id,
+    emoji: FOOD_EMOJIS[Math.floor(Math.random() * FOOD_EMOJIS.length)] ?? "🍕",
+    startX: (Math.random() - 0.5) * 200,
+    endX: (Math.random() - 0.5) * 110,
+    endY: (Math.random() - 0.5) * 110,
+    rotate: (Math.random() - 0.5) * 720,
+  };
+}
 
 function TickerDigit({ digit }: { digit: number }) {
   const y = useMotionValue(`-${digit}em`);
@@ -111,6 +165,8 @@ function NumberTicker({ value }: { value: number }) {
 function EmptyCollectionsState() {
   const controls = useAnimationControls();
   const [total, setTotal] = useState(0);
+  const [thrownEmojis, setThrownEmojis] = useState<ThrownEmoji[]>([]);
+  const throwIdRef = useRef(0);
 
   const handleEasterEggClick = () => {
     setTotal((prev) => prev + EASTER_EGG_INCREMENT);
@@ -119,6 +175,12 @@ function EmptyCollectionsState() {
       x: [0, -2, 2, -1, 1, 0],
       transition: { duration: 0.45, ease: "easeOut" },
     });
+
+    const id = throwIdRef.current++;
+    setThrownEmojis((prev) => [...prev, spawnThrownEmoji(id)]);
+    window.setTimeout(() => {
+      setThrownEmojis((prev) => prev.filter((item) => item.id !== id));
+    }, EMOJI_THROW_DURATION_MS);
   };
 
   return (
@@ -142,6 +204,38 @@ function EmptyCollectionsState() {
             draggable={false}
           />
         </motion.button>
+        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[18px]">
+          <div className="absolute left-1/2 top-1/2">
+            <AnimatePresence>
+              {thrownEmojis.map((item) => (
+                <motion.span
+                  key={item.id}
+                  initial={{
+                    opacity: 0,
+                    x: item.startX,
+                    y: 150,
+                    scale: 1.6,
+                    rotate: 0,
+                  }}
+                  animate={{
+                    opacity: [0, 1, 1, 0],
+                    x: item.endX,
+                    y: item.endY,
+                    scale: [1.6, 1.15, 0.85],
+                    rotate: item.rotate,
+                  }}
+                  transition={{
+                    duration: EMOJI_THROW_DURATION_MS / 1000,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                  className="absolute -ml-4 -mt-4 text-3xl select-none"
+                >
+                  {item.emoji}
+                </motion.span>
+              ))}
+            </AnimatePresence>
+          </div>
+        </div>
         <div className="pointer-events-none absolute left-1/2 top-[-28px] flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 whitespace-nowrap">
           <Image
             src="/images/heart_1.png"

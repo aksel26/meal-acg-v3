@@ -20,11 +20,9 @@ import { Popover, PopoverTrigger, PopoverContent } from "@repo/ui/src/popover";
 import { DRINKS } from "@/lib/const/const";
 import {
   motion,
-  AnimatePresence,
   animate,
   useAnimationControls,
   useMotionValue,
-  useTransform,
 } from "motion/react";
 import { Check, ChevronLeft, ChevronRight } from "@repo/ui/icons";
 import Image from "next/image";
@@ -38,35 +36,86 @@ function isNewCollection(createdAt: string) {
 }
 
 const EASTER_EGG_INCREMENT = 10;
-const FLOAT_DURATION_MS = 1400;
+
+function TickerDigit({ digit }: { digit: number }) {
+  const y = useMotionValue(`-${digit}em`);
+  const prevRef = useRef(digit);
+
+  useEffect(() => {
+    const prev = prevRef.current;
+    if (digit === prev) return;
+
+    const wraps = digit < prev;
+    if (wraps) {
+      const controls = animate(y, "-10em", {
+        duration: 0.5,
+        ease: [0.22, 1, 0.36, 1],
+        onComplete: () => y.set("0em"),
+      });
+      prevRef.current = digit;
+      return () => controls.stop();
+    }
+
+    const controls = animate(y, `-${digit}em`, {
+      duration: 0.5,
+      ease: [0.22, 1, 0.36, 1],
+    });
+    prevRef.current = digit;
+    return () => controls.stop();
+  }, [digit, y]);
+
+  return (
+    <span
+      className="relative inline-block overflow-hidden"
+      style={{ height: "1em", width: "0.62em" }}
+    >
+      <motion.span
+        className="absolute left-0 top-0 flex flex-col items-center"
+        style={{ y }}
+      >
+        {Array.from({ length: 11 }, (_, n) => (
+          <span
+            key={n}
+            className="block w-full text-center"
+            style={{ height: "1em", lineHeight: 1 }}
+          >
+            {n % 10}
+          </span>
+        ))}
+      </motion.span>
+    </span>
+  );
+}
+
+function NumberTicker({ value }: { value: number }) {
+  const formatted = `${value.toLocaleString("ko-KR")}원`;
+  const chars = formatted.split("");
+  return (
+    <span className="inline-flex items-baseline text-lg font-bold leading-none text-white tabular-nums">
+      {chars.map((char, i) => {
+        const fromRight = chars.length - i;
+        if (/\d/.test(char)) {
+          return (
+            <TickerDigit key={`d-${fromRight}`} digit={parseInt(char, 10)} />
+          );
+        }
+        return <span key={`s-${fromRight}-${char}`}>{char}</span>;
+      })}
+    </span>
+  );
+}
 
 function EmptyCollectionsState() {
   const controls = useAnimationControls();
-  const amount = useMotionValue(0);
-  const displayAmount = useTransform(amount, (value) =>
-    `${Math.round(value).toLocaleString("ko-KR")}원`,
-  );
-  const totalRef = useRef(0);
-  const floatIdRef = useRef(0);
-  const [floats, setFloats] = useState<number[]>([]);
+  const [total, setTotal] = useState(0);
 
   const handleEasterEggClick = () => {
-    totalRef.current += EASTER_EGG_INCREMENT;
-    animate(amount, totalRef.current, {
-      duration: 0.45,
-      ease: [0.22, 1, 0.36, 1],
-    });
+    setTotal((prev) => prev + EASTER_EGG_INCREMENT);
     controls.start({
       rotate: [0, -4, 4, -3, 3, -2, 2, 0],
       x: [0, -2, 2, -1, 1, 0],
       transition: { duration: 0.45, ease: "easeOut" },
     });
-
-    const id = floatIdRef.current++;
-    setFloats((prev) => [...prev, id]);
-    window.setTimeout(() => {
-      setFloats((prev) => prev.filter((f) => f !== id));
-    }, FLOAT_DURATION_MS);
   };
 
   return (
@@ -95,39 +144,12 @@ function EmptyCollectionsState() {
           alt=""
           width={40}
           height={40}
-          className="pointer-events-none absolute -top-12 left-3 h-10 w-10 select-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.35)]"
+          className="pointer-events-none absolute left-3 top-[-28px] h-10 w-10 -translate-y-1/2 select-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.35)]"
           priority={false}
           draggable={false}
         />
-        <div className="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap">
-          <motion.p
-            className="text-lg font-bold leading-none text-white tabular-nums"
-            style={{ textShadow: "0 2px 6px rgba(0,0,0,0.45)" }}
-          >
-            {displayAmount}
-          </motion.p>
-          <AnimatePresence>
-            {floats.map((id) => (
-              <motion.span
-                key={id}
-                initial={{ opacity: 0, y: 0, color: "#ffffff" }}
-                animate={{
-                  opacity: [0, 1, 1, 0],
-                  y: -52,
-                  color: ["#ffffff", "#ffffff", "#ec4899", "#ec4899"],
-                }}
-                transition={{
-                  duration: FLOAT_DURATION_MS / 1000,
-                  ease: [0.16, 1, 0.3, 1],
-                  times: [0, 0.2, 0.6, 1],
-                }}
-                className="absolute inset-x-0 top-0 text-center text-lg font-bold leading-none"
-                style={{ textShadow: "0 2px 6px rgba(0,0,0,0.45)" }}
-              >
-                +10
-              </motion.span>
-            ))}
-          </AnimatePresence>
+        <div className="pointer-events-none absolute left-1/2 top-[-28px] -translate-x-1/2 -translate-y-1/2 whitespace-nowrap">
+          <NumberTicker value={total} />
         </div>
       </div>
       <p className="text-sm text-[var(--slate-gray)]">

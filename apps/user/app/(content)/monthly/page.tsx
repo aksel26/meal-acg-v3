@@ -99,21 +99,21 @@ function EmptyCollectionsState() {
           priority={false}
           draggable={false}
         />
-        <motion.p
-          className="pointer-events-none absolute left-1/2 top-2 -translate-x-1/2 text-lg font-bold leading-none text-white tabular-nums"
-          style={{ textShadow: "0 2px 6px rgba(0,0,0,0.45)" }}
-        >
-          {displayAmount}
-        </motion.p>
-        <div className="pointer-events-none absolute inset-x-0 top-2 flex justify-center">
+        <div className="pointer-events-none absolute left-1/2 top-2 -translate-x-1/2 whitespace-nowrap">
+          <motion.p
+            className="text-lg font-bold leading-none text-white tabular-nums"
+            style={{ textShadow: "0 2px 6px rgba(0,0,0,0.45)" }}
+          >
+            {displayAmount}
+          </motion.p>
           <AnimatePresence>
             {floats.map((id) => (
               <motion.span
                 key={id}
-                initial={{ opacity: 0, y: 12, color: "#ffffff" }}
+                initial={{ opacity: 0, y: 0, color: "#ffffff" }}
                 animate={{
                   opacity: [0, 1, 1, 0],
-                  y: -40,
+                  y: -52,
                   color: ["#ffffff", "#ffffff", "#ec4899", "#ec4899"],
                 }}
                 transition={{
@@ -121,7 +121,7 @@ function EmptyCollectionsState() {
                   ease: [0.16, 1, 0.3, 1],
                   times: [0, 0.2, 0.6, 1],
                 }}
-                className="absolute text-xl font-bold"
+                className="absolute inset-x-0 top-0 text-center text-lg font-bold leading-none"
                 style={{ textShadow: "0 2px 6px rgba(0,0,0,0.45)" }}
               >
                 +10

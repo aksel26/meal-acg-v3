@@ -66,9 +66,12 @@ function TickerDigit({ digit }: { digit: number }) {
 
   return (
     <span
-      className="relative inline-block overflow-hidden"
+      className="relative inline-block overflow-hidden align-baseline"
       style={{ height: "1em", width: "0.62em" }}
     >
+      <span aria-hidden className="invisible">
+        0
+      </span>
       <motion.span
         className="absolute left-0 top-0 flex flex-col items-center"
         style={{ y }}
@@ -139,16 +142,16 @@ function EmptyCollectionsState() {
             draggable={false}
           />
         </motion.button>
-        <Image
-          src="/images/heart_1.png"
-          alt=""
-          width={40}
-          height={40}
-          className="pointer-events-none absolute left-3 top-[-28px] h-10 w-10 -translate-y-1/2 select-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.35)]"
-          priority={false}
-          draggable={false}
-        />
-        <div className="pointer-events-none absolute left-1/2 top-[-28px] -translate-x-1/2 -translate-y-1/2 whitespace-nowrap">
+        <div className="pointer-events-none absolute left-1/2 top-[-28px] flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 whitespace-nowrap">
+          <Image
+            src="/images/heart_1.png"
+            alt=""
+            width={40}
+            height={40}
+            className="h-10 w-10 shrink-0 select-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.35)]"
+            priority={false}
+            draggable={false}
+          />
           <NumberTicker value={total} />
         </div>
       </div>

@@ -229,7 +229,7 @@ function EmptyCollectionsState() {
                     ease: [0.22, 1, 0.36, 1],
                     opacity: {
                       duration: EMOJI_THROW_DURATION_MS / 1000,
-                      times: [0, 0.15, 0.85, 1],
+                      times: [0, 0.12, 0.93, 1],
                       ease: "linear",
                     },
                   }}

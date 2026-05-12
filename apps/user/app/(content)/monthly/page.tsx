@@ -84,7 +84,7 @@ function spawnThrownEmoji(id: number): ThrownEmoji {
   return {
     id,
     emoji: FOOD_EMOJIS[Math.floor(Math.random() * FOOD_EMOJIS.length)] ?? "🍕",
-    startX: (Math.random() - 0.5) * 420,
+    startX: (Math.random() - 0.5) * 720,
     endX: (Math.random() - 0.5) * 110,
     endY: (Math.random() - 0.5) * 110,
     rotate: (Math.random() - 0.5) * 720,
@@ -204,7 +204,7 @@ function EmptyCollectionsState() {
             draggable={false}
           />
         </motion.button>
-        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[18px]">
+        <div className="pointer-events-none absolute inset-0">
           <div className="absolute left-1/2 top-1/2">
             <AnimatePresence>
               {thrownEmojis.map((item) => (
@@ -213,15 +213,15 @@ function EmptyCollectionsState() {
                   initial={{
                     opacity: 0,
                     x: item.startX,
-                    y: 260,
-                    scale: 1.9,
+                    y: 440,
+                    scale: 2.4,
                     rotate: 0,
                   }}
                   animate={{
                     opacity: [0, 1, 1, 0],
                     x: item.endX,
                     y: item.endY,
-                    scale: [1.9, 1.15, 0.85],
+                    scale: [2.4, 1.15, 0.85],
                     rotate: item.rotate,
                   }}
                   transition={{

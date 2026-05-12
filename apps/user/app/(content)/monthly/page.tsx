@@ -37,7 +37,7 @@ function isNewCollection(createdAt: string) {
 }
 
 const EASTER_EGG_INCREMENT = 10;
-const EMOJI_THROW_DURATION_MS = 1100;
+const EMOJI_THROW_DURATION_MS = 1600;
 const FOOD_EMOJIS = [
   "🍕",
   "🍔",
@@ -84,7 +84,7 @@ function spawnThrownEmoji(id: number): ThrownEmoji {
   return {
     id,
     emoji: FOOD_EMOJIS[Math.floor(Math.random() * FOOD_EMOJIS.length)] ?? "🍕",
-    startX: (Math.random() - 0.5) * 720,
+    startX: (Math.random() - 0.5) * 420,
     endX: (Math.random() - 0.5) * 110,
     endY: (Math.random() - 0.5) * 110,
     rotate: (Math.random() - 0.5) * 720,
@@ -145,7 +145,7 @@ function TickerDigit({ digit }: { digit: number }) {
 }
 
 function NumberTicker({ value }: { value: number }) {
-  const formatted = `${value.toLocaleString("ko-KR")}원`;
+  const formatted = value.toLocaleString("ko-KR");
   const chars = formatted.split("");
   return (
     <span className="inline-flex items-baseline text-lg font-bold leading-none text-[var(--ink-black)] tabular-nums">
@@ -204,7 +204,7 @@ function EmptyCollectionsState() {
             draggable={false}
           />
         </motion.button>
-        <div className="pointer-events-none absolute inset-0">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[18px]">
           <div className="absolute left-1/2 top-1/2">
             <AnimatePresence>
               {thrownEmojis.map((item) => (
@@ -213,15 +213,15 @@ function EmptyCollectionsState() {
                   initial={{
                     opacity: 0,
                     x: item.startX,
-                    y: 440,
-                    scale: 2.4,
+                    y: 260,
+                    scale: 1.9,
                     rotate: 0,
                   }}
                   animate={{
                     opacity: [0, 1, 1, 0],
                     x: item.endX,
                     y: item.endY,
-                    scale: [2.4, 1.15, 0.85],
+                    scale: [1.9, 1.15, 0.85],
                     rotate: item.rotate,
                   }}
                   transition={{

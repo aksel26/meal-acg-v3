@@ -61,6 +61,9 @@ function EmptyCollectionsState() {
 
   return (
     <div className="flex h-full flex-col items-center justify-center py-12 text-center">
+      <motion.p className="mb-3 text-base font-bold text-[var(--ink-black)] tabular-nums">
+        {displayAmount}
+      </motion.p>
       <motion.button
         type="button"
         onClick={handleEasterEggClick}
@@ -79,9 +82,6 @@ function EmptyCollectionsState() {
           draggable={false}
         />
       </motion.button>
-      <motion.p className="mb-1 text-base font-bold text-[var(--ink-black)] tabular-nums">
-        {displayAmount}
-      </motion.p>
       <p className="text-sm text-[var(--slate-gray)]">
         현재 참여 가능한 취합이 없습니다
       </p>

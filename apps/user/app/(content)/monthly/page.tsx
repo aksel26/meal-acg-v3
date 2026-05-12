@@ -20,6 +20,7 @@ import { Popover, PopoverTrigger, PopoverContent } from "@repo/ui/src/popover";
 import { DRINKS } from "@/lib/const/const";
 import {
   motion,
+  AnimatePresence,
   animate,
   useAnimationControls,
   useMotionValue,
@@ -37,6 +38,7 @@ function isNewCollection(createdAt: string) {
 }
 
 const EASTER_EGG_INCREMENT = 10;
+const FLOAT_DURATION_MS = 1400;
 
 function EmptyCollectionsState() {
   const controls = useAnimationControls();
@@ -45,6 +47,8 @@ function EmptyCollectionsState() {
     `${Math.round(value).toLocaleString("ko-KR")}원`,
   );
   const totalRef = useRef(0);
+  const floatIdRef = useRef(0);
+  const [floats, setFloats] = useState<number[]>([]);
 
   const handleEasterEggClick = () => {
     totalRef.current += EASTER_EGG_INCREMENT;
@@ -57,6 +61,12 @@ function EmptyCollectionsState() {
       x: [0, -2, 2, -1, 1, 0],
       transition: { duration: 0.45, ease: "easeOut" },
     });
+
+    const id = floatIdRef.current++;
+    setFloats((prev) => [...prev, id]);
+    window.setTimeout(() => {
+      setFloats((prev) => prev.filter((f) => f !== id));
+    }, FLOAT_DURATION_MS);
   };
 
   return (
@@ -75,24 +85,46 @@ function EmptyCollectionsState() {
           {displayAmount}
         </motion.p>
       </div>
-      <motion.button
-        type="button"
-        onClick={handleEasterEggClick}
-        animate={controls}
-        whileTap={{ scale: 0.96 }}
-        aria-label="배고픈 숭이에게 용돈 주기"
-        className="relative mb-4 h-[212px] w-40 overflow-hidden rounded-[18px] cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ink-black)]"
-      >
-        <Image
-          src="/images/배고픈 숭이.jpeg"
-          alt=""
-          fill
-          sizes="160px"
-          className="object-cover pointer-events-none"
-          priority={false}
-          draggable={false}
-        />
-      </motion.button>
+      <div className="relative mb-4">
+        <motion.button
+          type="button"
+          onClick={handleEasterEggClick}
+          animate={controls}
+          whileTap={{ scale: 0.96 }}
+          aria-label="배고픈 숭이에게 용돈 주기"
+          className="relative h-[212px] w-40 overflow-hidden rounded-[18px] cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ink-black)]"
+        >
+          <Image
+            src="/images/배고픈 숭이.jpeg"
+            alt=""
+            fill
+            sizes="160px"
+            className="object-cover pointer-events-none"
+            priority={false}
+            draggable={false}
+          />
+        </motion.button>
+        <div className="pointer-events-none absolute inset-x-0 bottom-6 flex justify-center">
+          <AnimatePresence>
+            {floats.map((id) => (
+              <motion.span
+                key={id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: [0, 1, 1, 0], y: -110 }}
+                transition={{
+                  duration: FLOAT_DURATION_MS / 1000,
+                  ease: [0.16, 1, 0.3, 1],
+                  times: [0, 0.2, 0.6, 1],
+                }}
+                className="absolute text-xl font-bold text-white"
+                style={{ textShadow: "0 2px 6px rgba(0,0,0,0.45)" }}
+              >
+                +10
+              </motion.span>
+            ))}
+          </AnimatePresence>
+        </div>
+      </div>
       <p className="text-sm text-[var(--slate-gray)]">
         현재 참여 가능한 취합이 없습니다
       </p>

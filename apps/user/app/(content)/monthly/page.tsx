@@ -104,7 +104,7 @@ function EmptyCollectionsState() {
             draggable={false}
           />
         </motion.button>
-        <div className="pointer-events-none absolute inset-x-0 top-6 flex justify-center">
+        <div className="pointer-events-none absolute inset-x-0 top-2 flex justify-center">
           <AnimatePresence>
             {floats.map((id) => (
               <motion.span

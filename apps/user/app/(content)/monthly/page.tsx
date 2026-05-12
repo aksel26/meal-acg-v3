@@ -109,14 +109,18 @@ function EmptyCollectionsState() {
             {floats.map((id) => (
               <motion.span
                 key={id}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: [0, 1, 1, 0], y: -40 }}
+                initial={{ opacity: 0, y: 12, color: "#ffffff" }}
+                animate={{
+                  opacity: [0, 1, 1, 0],
+                  y: -40,
+                  color: ["#ffffff", "#ffffff", "#ec4899", "#ec4899"],
+                }}
                 transition={{
                   duration: FLOAT_DURATION_MS / 1000,
                   ease: [0.16, 1, 0.3, 1],
                   times: [0, 0.2, 0.6, 1],
                 }}
-                className="absolute text-xl font-bold text-white"
+                className="absolute text-xl font-bold"
                 style={{ textShadow: "0 2px 6px rgba(0,0,0,0.45)" }}
               >
                 +10

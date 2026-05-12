@@ -42,13 +42,17 @@ export async function GET() {
       );
     }
 
-    const table = supabase.from("easter_egg_counter" as never) as unknown as UntypedTable;
-    const { data, error } = await table
+    const supabaseUntyped = supabase as unknown as {
+      from: (table: string) => UntypedTable;
+    };
+    const { data, error } = await supabaseUntyped
+      .from("easter_egg_counter")
       .select("total_amount, updated_at")
       .eq("id", 1)
       .maybeSingle();
 
     if (error) {
+      console.error("[easter-egg] GET supabase error", error);
       return NextResponse.json(
         { success: false, error: error.message },
         { status: 500 },
@@ -67,8 +71,10 @@ export async function GET() {
     );
   } catch (err) {
     console.error("[easter-egg] GET error", err);
+    const message =
+      err instanceof Error ? err.message : "조회 중 오류가 발생했습니다.";
     return NextResponse.json(
-      { success: false, error: "조회 중 오류가 발생했습니다." },
+      { success: false, error: message },
       { status: 500 },
     );
   }
@@ -97,12 +103,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const rpc = supabase.rpc as unknown as UntypedRpc;
-    const { data, error } = await rpc("increment_easter_egg", {
-      delta: Math.floor(delta),
-    });
+    // rpc 메서드의 this 컨텍스트 유지를 위해 직접 호출
+    const supabaseUntyped = supabase as unknown as { rpc: UntypedRpc };
+    const { data, error } = await supabaseUntyped.rpc(
+      "increment_easter_egg",
+      { delta: Math.floor(delta) },
+    );
 
     if (error) {
+      console.error("[easter-egg] RPC error", error);
       return NextResponse.json(
         { success: false, error: error.message },
         { status: 500 },
@@ -118,8 +127,10 @@ export async function POST(request: NextRequest) {
     );
   } catch (err) {
     console.error("[easter-egg] POST error", err);
+    const message =
+      err instanceof Error ? err.message : "증가 처리 중 오류가 발생했습니다.";
     return NextResponse.json(
-      { success: false, error: "증가 처리 중 오류가 발생했습니다." },
+      { success: false, error: message },
       { status: 500 },
     );
   }

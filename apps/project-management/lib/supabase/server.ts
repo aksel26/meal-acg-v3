@@ -38,7 +38,7 @@ export function createServiceClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     {
-      db: { schema: "project_management" },
+      db: { schema: "work" },
       auth: {
         autoRefreshToken: false,
         persistSession: false,

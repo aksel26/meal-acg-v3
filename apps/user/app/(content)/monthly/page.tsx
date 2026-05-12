@@ -227,10 +227,10 @@ function EmptyCollectionsState() {
                   }}
                   transition={{
                     duration: EMOJI_THROW_DURATION_MS / 1000,
-                    ease: [0.22, 1, 0.36, 1],
+                    ease: [0.4, 0, 0.2, 1],
                     opacity: {
                       duration: EMOJI_THROW_DURATION_MS / 1000,
-                      times: [0, 0.12, 0.97, 1],
+                      times: [0, 0.1, 0.55, 0.95],
                       ease: "linear",
                     },
                   }}

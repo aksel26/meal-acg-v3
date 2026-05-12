@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
+import { buildSessionCookie } from "@/lib/auth";
 
 interface LoginRequest {
   login_id: string;
@@ -58,21 +59,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    response.cookies.set(
-      "user-session",
-      JSON.stringify({
-        userId: member.id,
-        fullName: member.full_name,
-        role: member.role,
-      }),
-      {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 7,
-        path: "/",
-      },
-    );
+    response.cookies.set(buildSessionCookie(member.id, member.role ?? null));
 
     return response;
   } catch (error) {

@@ -322,6 +322,9 @@ importers:
       '@tanstack/react-query-devtools':
         specifier: ^5.84.1
         version: 5.84.1(@tanstack/react-query@5.84.1)(react@19.1.0)
+      '@xyflow/react':
+        specifier: ^12.10.2
+        version: 12.10.2(@types/react@19.1.0)(react-dom@19.1.0)(react@19.1.0)
       dayjs:
         specifier: ^1.11.13
         version: 1.11.13
@@ -410,6 +413,9 @@ importers:
       '@vercel/analytics':
         specifier: ^1.5.0
         version: 1.5.0(next@15.5.18)(react@19.1.0)
+      '@xyflow/react':
+        specifier: ^12.10.2
+        version: 12.10.2(@types/react@19.1.0)(react-dom@19.1.0)(react@19.1.0)
       canvas-confetti:
         specifier: ^1.9.4
         version: 1.9.4

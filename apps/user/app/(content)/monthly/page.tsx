@@ -104,13 +104,13 @@ function EmptyCollectionsState() {
             draggable={false}
           />
         </motion.button>
-        <div className="pointer-events-none absolute inset-x-0 bottom-6 flex justify-center">
+        <div className="pointer-events-none absolute inset-x-0 top-6 flex justify-center">
           <AnimatePresence>
             {floats.map((id) => (
               <motion.span
                 key={id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: [0, 1, 1, 0], y: -110 }}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: [0, 1, 1, 0], y: -40 }}
                 transition={{
                   duration: FLOAT_DURATION_MS / 1000,
                   ease: [0.16, 1, 0.3, 1],

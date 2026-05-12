@@ -90,23 +90,21 @@ function EmptyCollectionsState() {
             draggable={false}
           />
         </motion.button>
-        <div className="pointer-events-none absolute inset-x-0 top-2 flex items-center justify-center gap-2">
-          <Image
-            src="/images/heart_1.png"
-            alt=""
-            width={40}
-            height={40}
-            className="h-10 w-10 shrink-0 select-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.35)]"
-            priority={false}
-            draggable={false}
-          />
-          <motion.p
-            className="text-lg font-bold leading-none text-white tabular-nums"
-            style={{ textShadow: "0 2px 6px rgba(0,0,0,0.45)" }}
-          >
-            {displayAmount}
-          </motion.p>
-        </div>
+        <Image
+          src="/images/heart_1.png"
+          alt=""
+          width={40}
+          height={40}
+          className="pointer-events-none absolute left-3 top-2 h-10 w-10 select-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.35)]"
+          priority={false}
+          draggable={false}
+        />
+        <motion.p
+          className="pointer-events-none absolute left-1/2 top-2 -translate-x-1/2 text-lg font-bold leading-none text-white tabular-nums"
+          style={{ textShadow: "0 2px 6px rgba(0,0,0,0.45)" }}
+        >
+          {displayAmount}
+        </motion.p>
         <div className="pointer-events-none absolute inset-x-0 top-2 flex justify-center">
           <AnimatePresence>
             {floats.map((id) => (

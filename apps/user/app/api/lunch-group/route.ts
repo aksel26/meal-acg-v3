@@ -5,6 +5,12 @@ import { createServiceClient } from "@/lib/supabase/client";
 import { NextResponse } from "next/server";
 import dayjs from "dayjs";
 
+type FixedScheduleRow = {
+  day_of_week: number;
+  label: string | null;
+  member: { full_name: string | null } | null;
+};
+
 // 현재 주의 월요일 날짜 계산
 function getWeekStartDate(date: dayjs.Dayjs = dayjs()): string {
   const day = date.day();
@@ -68,7 +74,8 @@ export async function GET() {
       .from("lunch_fixed_schedules")
       .select(`
         day_of_week,
-        members (
+        label,
+        member:members (
           full_name
         )
       `)
@@ -78,15 +85,20 @@ export async function GET() {
       console.error("Fixed schedules error:", schedulesError);
     }
 
+    const getFixedScheduleName = (schedule: FixedScheduleRow) =>
+      schedule.member?.full_name || schedule.label || "";
+
     // 월요일/금요일 담당자 추출
-    const mondayMembers = fixedSchedules
+    const schedules = (fixedSchedules || []) as FixedScheduleRow[];
+
+    const mondayMembers = schedules
       ?.filter((s) => s.day_of_week === 1)
-      .map((s) => (s.members as { full_name: string })?.full_name)
+      .map(getFixedScheduleName)
       .filter(Boolean) || [];
 
-    const fridayMembers = fixedSchedules
+    const fridayMembers = schedules
       ?.filter((s) => s.day_of_week === 5)
-      .map((s) => (s.members as { full_name: string })?.full_name)
+      .map(getFixedScheduleName)
       .filter(Boolean) || [];
 
     // 4. 제외 인원 조회 (주차별)

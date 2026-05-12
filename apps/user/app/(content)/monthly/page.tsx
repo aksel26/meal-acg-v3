@@ -91,7 +91,7 @@ function NumberTicker({ value }: { value: number }) {
   const formatted = `${value.toLocaleString("ko-KR")}원`;
   const chars = formatted.split("");
   return (
-    <span className="inline-flex items-baseline text-lg font-bold leading-none text-white tabular-nums">
+    <span className="inline-flex items-baseline text-lg font-bold leading-none text-[var(--ink-black)] tabular-nums">
       {chars.map((char, i) => {
         const fromRight = chars.length - i;
         if (/\d/.test(char)) {

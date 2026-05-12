@@ -1,6 +1,6 @@
 "use client";
 import { Button } from "@repo/ui/src/button";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   useMonthlyData,
   useCollections,
@@ -18,7 +18,13 @@ import QuickActionsSection from "@/components/dashboard/QuickActionsSection";
 import { AllHistoryDialog } from "@/components/monthly/AllHistoryDialog";
 import { Popover, PopoverTrigger, PopoverContent } from "@repo/ui/src/popover";
 import { DRINKS } from "@/lib/const/const";
-import { motion } from "motion/react";
+import {
+  motion,
+  AnimatePresence,
+  animate,
+  useAnimationControls,
+  useMotionValue,
+} from "motion/react";
 import { Check, ChevronLeft, ChevronRight } from "@repo/ui/icons";
 import Image from "next/image";
 
@@ -30,18 +36,303 @@ function isNewCollection(createdAt: string) {
   return diffMs < 3 * 24 * 60 * 60 * 1000;
 }
 
+const EASTER_EGG_INCREMENT = 10;
+const EMOJI_THROW_DURATION_MS = 1600;
+const FOOD_EMOJIS = [
+  "🍕",
+  "🍔",
+  "🍟",
+  "🌭",
+  "🍣",
+  "🍜",
+  "🍱",
+  "🍙",
+  "🍤",
+  "🥟",
+  "🥖",
+  "🥐",
+  "🧇",
+  "🥞",
+  "🍞",
+  "🍰",
+  "🧁",
+  "🍩",
+  "🍪",
+  "🍫",
+  "🍿",
+  "🍎",
+  "🍇",
+  "🍓",
+  "🍑",
+  "🍌",
+  "🥑",
+  "🥗",
+  "🍖",
+  "🍗",
+];
+
+interface ThrownEmoji {
+  id: number;
+  emoji: string;
+  startX: number;
+  endX: number;
+  endY: number;
+  rotate: number;
+}
+
+function spawnThrownEmoji(id: number): ThrownEmoji {
+  const direction = Math.random() < 0.5 ? -1 : 1;
+  return {
+    id,
+    emoji: FOOD_EMOJIS[Math.floor(Math.random() * FOOD_EMOJIS.length)] ?? "🍕",
+    startX: direction * (110 + Math.random() * 40),
+    endX: (Math.random() - 0.5) * 90,
+    endY: (Math.random() - 0.5) * 90,
+    rotate: (Math.random() - 0.5) * 720,
+  };
+}
+
+function TickerDigit({ digit }: { digit: number }) {
+  const y = useMotionValue(`-${digit}em`);
+  const prevRef = useRef(digit);
+
+  useEffect(() => {
+    const prev = prevRef.current;
+    if (digit === prev) return;
+
+    const wraps = digit < prev;
+    if (wraps) {
+      const controls = animate(y, "-10em", {
+        duration: 0.5,
+        ease: [0.22, 1, 0.36, 1],
+        onComplete: () => y.set("0em"),
+      });
+      prevRef.current = digit;
+      return () => controls.stop();
+    }
+
+    const controls = animate(y, `-${digit}em`, {
+      duration: 0.5,
+      ease: [0.22, 1, 0.36, 1],
+    });
+    prevRef.current = digit;
+    return () => controls.stop();
+  }, [digit, y]);
+
+  return (
+    <span
+      className="relative inline-block overflow-hidden align-baseline"
+      style={{ height: "1em", width: "0.62em" }}
+    >
+      <span aria-hidden className="invisible">
+        0
+      </span>
+      <motion.span
+        className="absolute left-0 top-0 flex flex-col items-center"
+        style={{ y }}
+      >
+        {Array.from({ length: 11 }, (_, n) => (
+          <span
+            key={n}
+            className="block w-full text-center"
+            style={{ height: "1em", lineHeight: 1 }}
+          >
+            {n % 10}
+          </span>
+        ))}
+      </motion.span>
+    </span>
+  );
+}
+
+function NumberTicker({ value }: { value: number }) {
+  const formatted = value.toLocaleString("ko-KR");
+  const chars = formatted.split("");
+  return (
+    <span className="inline-flex items-baseline text-lg font-bold leading-none text-[var(--ink-black)] tabular-nums">
+      {chars.map((char, i) => {
+        const fromRight = chars.length - i;
+        if (/\d/.test(char)) {
+          return (
+            <TickerDigit key={`d-${fromRight}`} digit={parseInt(char, 10)} />
+          );
+        }
+        return <span key={`s-${fromRight}-${char}`}>{char}</span>;
+      })}
+    </span>
+  );
+}
+
+const EASTER_EGG_POLL_INTERVAL_MS = 30_000;
+
+async function fetchEasterEggTotal(signal?: AbortSignal): Promise<number> {
+  const res = await fetch("/api/easter-egg", { signal, cache: "no-store" });
+  if (!res.ok) throw new Error(`fetch failed (${res.status})`);
+  const json = (await res.json()) as {
+    success: boolean;
+    data?: { total: number };
+  };
+  return json.success ? Number(json.data?.total ?? 0) : 0;
+}
+
+async function postEasterEggClick(
+  delta: number,
+  signal?: AbortSignal,
+): Promise<number | null> {
+  try {
+    const res = await fetch("/api/easter-egg", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ delta }),
+      signal,
+    });
+    if (!res.ok) return null;
+    const json = (await res.json()) as {
+      success: boolean;
+      data?: { total: number };
+    };
+    return json.success ? Number(json.data?.total ?? 0) : null;
+  } catch {
+    return null;
+  }
+}
+
 function EmptyCollectionsState() {
+  const controls = useAnimationControls();
+  const [total, setTotal] = useState(0);
+  const [thrownEmojis, setThrownEmojis] = useState<ThrownEmoji[]>([]);
+  const throwIdRef = useRef(0);
+  const pendingDeltaRef = useRef(0);
+
+  // 최초 마운트 시 서버 누적 금액 가져오기 + 주기 폴링 + 포커스 시 재조회
+  useEffect(() => {
+    const ac = new AbortController();
+    let cancelled = false;
+
+    const sync = async () => {
+      try {
+        const serverTotal = await fetchEasterEggTotal(ac.signal);
+        if (cancelled) return;
+        // 폴링 중 다른 사용자 클릭을 반영하면서 내 미반영분은 보존
+        setTotal(serverTotal + pendingDeltaRef.current);
+      } catch {
+        /* 무시 — 다음 폴링에서 재시도 */
+      }
+    };
+
+    void sync();
+
+    const intervalId = window.setInterval(sync, EASTER_EGG_POLL_INTERVAL_MS);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") void sync();
+    };
+    window.addEventListener("focus", sync);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      cancelled = true;
+      ac.abort();
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", sync);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, []);
+
+  const handleEasterEggClick = () => {
+    setTotal((prev) => prev + EASTER_EGG_INCREMENT);
+    pendingDeltaRef.current += EASTER_EGG_INCREMENT;
+    controls.start({
+      rotate: [0, -4, 4, -3, 3, -2, 2, 0],
+      x: [0, -2, 2, -1, 1, 0],
+      transition: { duration: 0.45, ease: "easeOut" },
+    });
+
+    const id = throwIdRef.current++;
+    setThrownEmojis((prev) => [...prev, spawnThrownEmoji(id)]);
+    window.setTimeout(() => {
+      setThrownEmojis((prev) => prev.filter((item) => item.id !== id));
+    }, EMOJI_THROW_DURATION_MS);
+
+    void postEasterEggClick(EASTER_EGG_INCREMENT).then((serverTotal) => {
+      pendingDeltaRef.current = Math.max(
+        0,
+        pendingDeltaRef.current - EASTER_EGG_INCREMENT,
+      );
+      if (serverTotal === null) return;
+      setTotal((prev) => Math.max(prev, serverTotal));
+    });
+  };
+
   return (
     <div className="flex h-full flex-col items-center justify-center py-12 text-center">
-      <div className="relative mb-4 h-[212px] w-40 overflow-hidden rounded-[18px]">
-        <Image
-          src="/images/배고픈 숭이.jpeg"
-          alt=""
-          fill
-          sizes="160px"
-          className="object-cover"
-          priority={false}
-        />
+      <div className="relative mb-4">
+        <motion.button
+          type="button"
+          onClick={handleEasterEggClick}
+          animate={controls}
+          whileTap={{ scale: 0.96 }}
+          aria-label="배고픈 숭이에게 용돈 주기"
+          className="relative h-[212px] w-40 overflow-hidden rounded-[18px] cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ink-black)]"
+        >
+          <Image
+            src="/images/배고픈 숭이.jpeg"
+            alt=""
+            fill
+            sizes="160px"
+            className="object-cover pointer-events-none"
+            priority={false}
+            draggable={false}
+          />
+        </motion.button>
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute left-1/2 top-1/2">
+            <AnimatePresence>
+              {thrownEmojis.map((item) => (
+                <motion.span
+                  key={item.id}
+                  initial={{
+                    opacity: 0,
+                    x: item.startX,
+                    y: 140,
+                    scale: 1.4,
+                    rotate: 0,
+                  }}
+                  animate={{
+                    opacity: [0, 1, 1, 0],
+                    x: item.endX,
+                    y: item.endY,
+                    scale: [1.4, 1.15, 0.9],
+                    rotate: item.rotate,
+                  }}
+                  transition={{
+                    duration: EMOJI_THROW_DURATION_MS / 1000,
+                    ease: [0.4, 0, 0.2, 1],
+                    opacity: {
+                      duration: EMOJI_THROW_DURATION_MS / 1000,
+                      times: [0, 0.1, 0.55, 0.95],
+                      ease: "linear",
+                    },
+                  }}
+                  className="absolute -ml-4 -mt-4 text-3xl select-none"
+                >
+                  {item.emoji}
+                </motion.span>
+              ))}
+            </AnimatePresence>
+          </div>
+        </div>
+        <div className="pointer-events-none absolute left-1/2 top-[-28px] flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 whitespace-nowrap">
+          <Image
+            src="/images/heart_1.png"
+            alt=""
+            width={40}
+            height={40}
+            className="h-10 w-10 shrink-0 select-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.35)]"
+            priority={false}
+            draggable={false}
+          />
+          <NumberTicker value={total} />
+        </div>
       </div>
       <p className="text-sm text-[var(--slate-gray)]">
         현재 참여 가능한 취합이 없습니다

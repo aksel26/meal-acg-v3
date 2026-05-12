@@ -61,9 +61,20 @@ function EmptyCollectionsState() {
 
   return (
     <div className="flex h-full flex-col items-center justify-center py-12 text-center">
-      <motion.p className="mb-3 text-base font-bold text-[var(--ink-black)] tabular-nums">
-        {displayAmount}
-      </motion.p>
+      <div className="mb-3 flex items-center gap-1.5">
+        <Image
+          src="/images/heart_1.png"
+          alt=""
+          width={20}
+          height={20}
+          className="h-5 w-5 select-none"
+          priority={false}
+          draggable={false}
+        />
+        <motion.p className="text-base font-bold text-[var(--ink-black)] tabular-nums">
+          {displayAmount}
+        </motion.p>
+      </div>
       <motion.button
         type="button"
         onClick={handleEasterEggClick}

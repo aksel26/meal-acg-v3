@@ -71,20 +71,6 @@ function EmptyCollectionsState() {
 
   return (
     <div className="flex h-full flex-col items-center justify-center py-12 text-center">
-      <div className="mb-3 flex w-40 items-center justify-center gap-2">
-        <Image
-          src="/images/heart_1.png"
-          alt=""
-          width={40}
-          height={40}
-          className="h-10 w-10 shrink-0 select-none"
-          priority={false}
-          draggable={false}
-        />
-        <motion.p className="text-lg font-bold leading-none text-[var(--ink-black)] tabular-nums">
-          {displayAmount}
-        </motion.p>
-      </div>
       <div className="relative mb-4">
         <motion.button
           type="button"
@@ -104,6 +90,23 @@ function EmptyCollectionsState() {
             draggable={false}
           />
         </motion.button>
+        <div className="pointer-events-none absolute inset-x-0 top-2 flex items-center justify-center gap-2">
+          <Image
+            src="/images/heart_1.png"
+            alt=""
+            width={40}
+            height={40}
+            className="h-10 w-10 shrink-0 select-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.35)]"
+            priority={false}
+            draggable={false}
+          />
+          <motion.p
+            className="text-lg font-bold leading-none text-white tabular-nums"
+            style={{ textShadow: "0 2px 6px rgba(0,0,0,0.45)" }}
+          >
+            {displayAmount}
+          </motion.p>
+        </div>
         <div className="pointer-events-none absolute inset-x-0 top-2 flex justify-center">
           <AnimatePresence>
             {floats.map((id) => (

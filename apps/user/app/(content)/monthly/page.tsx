@@ -95,11 +95,11 @@ function EmptyCollectionsState() {
           alt=""
           width={40}
           height={40}
-          className="pointer-events-none absolute left-3 top-2 h-10 w-10 select-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.35)]"
+          className="pointer-events-none absolute -top-3 left-3 h-10 w-10 select-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.35)]"
           priority={false}
           draggable={false}
         />
-        <div className="pointer-events-none absolute left-1/2 top-2 -translate-x-1/2 whitespace-nowrap">
+        <div className="pointer-events-none absolute -top-1 left-1/2 -translate-x-1/2 whitespace-nowrap">
           <motion.p
             className="text-lg font-bold leading-none text-white tabular-nums"
             style={{ textShadow: "0 2px 6px rgba(0,0,0,0.45)" }}

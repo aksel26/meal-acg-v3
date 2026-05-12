@@ -210,7 +210,7 @@ function EmptyCollectionsState() {
             draggable={false}
           />
         </motion.button>
-        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[18px]">
+        <div className="pointer-events-none absolute inset-0">
           <div className="absolute left-1/2 top-1/2">
             <AnimatePresence>
               {thrownEmojis.map((item) => (

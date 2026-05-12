@@ -86,15 +86,36 @@ function DateRangePicker({
           {display ?? placeholder}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
-        <Calendar
-          mode="range"
-          selected={selected}
-          onSelect={handleSelect}
-          locale={ko}
-          defaultMonth={selected?.from}
-          numberOfMonths={2}
-        />
+      <PopoverContent
+        className="w-auto p-0"
+        align="start"
+        onPointerDownOutside={(event) => {
+          const target = event.target as HTMLElement | null;
+          if (target?.closest("[data-slot='popover-content']")) {
+            event.preventDefault();
+          }
+        }}
+        onInteractOutside={(event) => {
+          const target = event.target as HTMLElement | null;
+          if (target?.closest("[data-slot='popover-content']")) {
+            event.preventDefault();
+          }
+        }}
+      >
+        <div
+          onPointerDown={(event) => event.stopPropagation()}
+          onMouseDown={(event) => event.stopPropagation()}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <Calendar
+            mode="range"
+            selected={selected}
+            onSelect={handleSelect}
+            locale={ko}
+            defaultMonth={selected?.from}
+            numberOfMonths={2}
+          />
+        </div>
       </PopoverContent>
     </Popover>
   );

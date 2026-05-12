@@ -22,6 +22,11 @@ import {
   ChevronDown,
   ChevronRight,
   ExternalLink,
+  FolderKanban,
+  Network,
+  Inbox,
+  Send,
+  CheckSquare,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import LOGO from "@/public/images/ACG_LOGO_GRAY.png";
@@ -102,14 +107,14 @@ const menuGroups: MenuGroup[] = [
     external: true,
   },
   {
-    label: "프로젝트 관리",
-    items: [],
-    href:
-      process.env.NEXT_PUBLIC_PROJECT_MANAGEMENT_APP_URL ||
-      process.env.NEXT_PUBLIC_REQUEST_MANAGEMENT_APP_URL ||
-      "http://localhost:3013",
-    icon: ClipboardList,
-    external: true,
+    label: "업무 / 프로젝트",
+    items: [
+      { id: "projects", label: "프로젝트", href: "/projects", icon: FolderKanban },
+      { id: "overview", label: "한눈에 보기", href: "/overview", icon: Network },
+      { id: "requests", label: "업무 요청", href: "/requests", icon: Inbox },
+      { id: "requests-mine", label: "내 업무 요청", href: "/requests/mine", icon: Send },
+      { id: "queue", label: "처리할 업무 요청", href: "/queue", icon: CheckSquare },
+    ],
   },
 ];
 

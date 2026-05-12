@@ -3,6 +3,7 @@
 import Image from "next/image";
 import React from "react";
 import { useHeaderVisibility } from "@/hooks/useHeaderVisibility";
+import { SearchLauncher } from "@/components/search/SearchLauncher";
 import { motion } from "motion/react";
 import { Menu, Bell, Clock, Send, FileText, Users } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/src/popover";
@@ -121,6 +122,7 @@ const Header = () => {
               </span>
             </div>
           )}
+          <SearchLauncher />
           <ApprovalBell />
         </div>
       </div>

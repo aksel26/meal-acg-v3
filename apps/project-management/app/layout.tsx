@@ -2,6 +2,7 @@ import { Sonner } from "@repo/ui/src/sonner";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "@repo/ui/styles.css";
+import "@xyflow/react/dist/style.css";
 
 const APP_NAME = "ACG 프로젝트관리";
 const APP_DEFAULT_TITLE = "ACG 프로젝트관리";

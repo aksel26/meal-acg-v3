@@ -6,15 +6,28 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Check,
   ChevronLeft,
+  Download,
   LinkIcon,
+  Paperclip,
+  Pencil,
   Plus,
   Search,
   Trash2,
+  Upload,
   X,
 } from "lucide-react";
 import { toast } from "@repo/ui/src/sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@repo/ui/src/dialog";
 import type {
   LinkedRequestSummary,
+  ProjectAttachment,
   ProjectChecklistItem,
   ProjectRecord,
   ProjectStatus,
@@ -22,6 +35,7 @@ import type {
 import type { RequestRecord } from "@/lib/requests";
 import { PriorityBadge, StatusBadge } from "@/components/requests/RequestBadge";
 import { ProjectStatusBadge } from "@/components/projects/ProjectBadge";
+import { EditProjectDialog } from "@/components/projects/EditProjectDialog";
 
 const PROJECT_STATUSES: ProjectStatus[] = ["계획", "진행", "대기", "완료"];
 
@@ -37,14 +51,22 @@ export function ProjectDetailClient({
   project,
   linkedRequests,
   checklistItems,
+  attachments,
+  canEdit,
+  canDelete,
 }: {
   project: ProjectRecord;
   linkedRequests: LinkedRequestSummary[];
   checklistItems: ProjectChecklistItem[];
+  attachments: ProjectAttachment[];
+  canEdit: boolean;
+  canDelete: boolean;
 }) {
   const router = useRouter();
   const [status, setStatus] = useState<ProjectStatus>(project.status);
   const [submitting, setSubmitting] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   async function updateStatus(nextStatus: ProjectStatus) {
     if (nextStatus === status) return;
@@ -71,6 +93,31 @@ export function ProjectDetailClient({
     }
   }
 
+  async function deleteProject() {
+    setSubmitting(true);
+    try {
+      const response = await fetch(`/api/projects/${project.id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "프로젝트 삭제에 실패했습니다.");
+      }
+      toast.success("프로젝트를 삭제했습니다.");
+      setDeleteOpen(false);
+      router.push("/projects");
+      router.refresh();
+    } catch (deleteError) {
+      toast.error(
+        deleteError instanceof Error
+          ? deleteError.message
+          : "프로젝트 삭제에 실패했습니다.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
       <nav className="flex items-center gap-1 text-xs text-slate-500">
@@ -78,7 +125,7 @@ export function ProjectDetailClient({
           href="/projects"
           className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 transition-colors hover:bg-[#f5f5f5] hover:text-[#111111]"
         >
-          <ChevronLeft size={13} />
+          <ChevronLeft size={13} strokeWidth={1.5} />
           프로젝트 목록
         </Link>
       </nav>
@@ -87,7 +134,11 @@ export function ProjectDetailClient({
         project={project}
         status={status}
         submitting={submitting}
+        canEdit={canEdit}
+        canDelete={canDelete}
         onStatusChange={updateStatus}
+        onEdit={() => setEditOpen(true)}
+        onDelete={() => setDeleteOpen(true)}
       />
 
       <MetaStrip project={project} checklistItems={checklistItems} />
@@ -98,9 +149,59 @@ export function ProjectDetailClient({
         </div>
         <div className="space-y-4 md:col-span-2">
           <ChecklistPanel projectId={project.id} items={checklistItems} />
+          <AttachmentsPanel
+            projectId={project.id}
+            attachments={attachments}
+            canEdit={canEdit}
+          />
           <LinkedRequestsPanel projectId={project.id} requests={linkedRequests} />
         </div>
       </div>
+
+      {canEdit && (
+        <EditProjectDialog
+          project={project}
+          open={editOpen}
+          onOpenChange={setEditOpen}
+        />
+      )}
+
+      <Dialog
+        open={deleteOpen}
+        onOpenChange={(open) => {
+          if (!open && !submitting) setDeleteOpen(false);
+        }}
+      >
+        <DialogContent
+          className="gap-0 p-0"
+          style={{ maxWidth: "min(440px, calc(100% - 2rem))" }}
+        >
+          <DialogHeader className="border-b border-[#f3f3f3] px-5 py-4">
+            <DialogTitle>프로젝트 삭제</DialogTitle>
+            <DialogDescription className="mt-1 text-sm text-slate-500">
+              이 프로젝트를 삭제하시겠습니까? 연결된 체크리스트와 요청 연결이 함께 제거되며 복구할 수 없습니다.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex items-center justify-end gap-2 px-5 py-4">
+            <button
+              className="h-9 rounded-md border border-[#e5e7eb] bg-white px-3.5 text-sm font-medium text-slate-600 transition-colors hover:bg-[#f9f9fa] disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={submitting}
+              onClick={() => setDeleteOpen(false)}
+              type="button"
+            >
+              취소
+            </button>
+            <button
+              className="h-9 rounded-md bg-rose-600 px-3.5 text-sm font-medium text-white transition-colors hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={submitting}
+              onClick={deleteProject}
+              type="button"
+            >
+              삭제
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -109,21 +210,61 @@ function HeaderCard({
   project,
   status,
   submitting,
+  canEdit,
+  canDelete,
   onStatusChange,
+  onEdit,
+  onDelete,
 }: {
   project: ProjectRecord;
   status: ProjectStatus;
   submitting: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
   onStatusChange: (next: ProjectStatus) => void;
+  onEdit: () => void;
+  onDelete: () => void;
 }) {
   return (
     <div className={`${cardClass} px-6 py-6`}>
-      <div className="mb-3">
-        <ProjectStatusBadge status={status} />
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="mb-3">
+            <ProjectStatusBadge status={status} />
+          </div>
+          <h1 className="text-2xl font-semibold leading-tight text-[#111111]">
+            {project.title}
+          </h1>
+        </div>
+        {(canEdit || canDelete) && (
+          <div className="flex shrink-0 items-center gap-2">
+            {canEdit && (
+              <button
+                aria-label="프로젝트 수정"
+                className="inline-flex h-9 items-center gap-1.5 rounded-md border border-[#e5e7eb] bg-white px-3 text-sm font-medium text-slate-600 transition-colors hover:border-slate-300 hover:bg-[#f9f9fa] hover:text-[#111111] disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={submitting}
+                onClick={onEdit}
+                type="button"
+              >
+                <Pencil size={15} strokeWidth={1.5} />
+                수정
+              </button>
+            )}
+            {canDelete && (
+              <button
+                aria-label="프로젝트 삭제"
+                className="inline-flex h-9 items-center gap-1.5 rounded-md border border-rose-200 bg-white px-3 text-sm font-medium text-rose-600 transition-colors hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={submitting}
+                onClick={onDelete}
+                type="button"
+              >
+                <Trash2 size={15} strokeWidth={1.5} />
+                삭제
+              </button>
+            )}
+          </div>
+        )}
       </div>
-      <h1 className="text-2xl font-semibold leading-tight text-[#111111]">
-        {project.title}
-      </h1>
 
       <div className="mt-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
@@ -139,7 +280,7 @@ function HeaderCard({
             <button
               key={item}
               type="button"
-              disabled={submitting}
+              disabled={submitting || !canEdit}
               onClick={() => onStatusChange(item)}
               className={`h-9 min-w-[64px] rounded-md border px-4 text-xs font-medium transition-colors disabled:cursor-not-allowed ${
                 status === item
@@ -401,7 +542,37 @@ function ChecklistPanel({
     }
   }
 
+  async function updateTitle(item: ProjectChecklistItem, nextTitle: string) {
+    const trimmed = nextTitle.trim();
+    if (!trimmed || trimmed === item.title) return false;
+    try {
+      const response = await fetch(
+        `/api/projects/${projectId}/checklist/${item.id}`,
+        {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ title: trimmed }),
+        },
+      );
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "체크리스트 수정에 실패했습니다.");
+      }
+      toast.success("체크리스트를 수정했습니다.");
+      router.refresh();
+      return true;
+    } catch (editError) {
+      toast.error(
+        editError instanceof Error
+          ? editError.message
+          : "체크리스트 수정에 실패했습니다.",
+      );
+      return false;
+    }
+  }
+
   async function deleteItem(item: ProjectChecklistItem) {
+    if (!window.confirm("이 체크리스트 항목을 삭제하시겠습니까?")) return;
     try {
       const response = await fetch(
         `/api/projects/${projectId}/checklist/${item.id}`,
@@ -451,43 +622,13 @@ function ChecklistPanel({
           </li>
         ) : (
           items.map((item) => (
-            <li
+            <ChecklistItemRow
               key={item.id}
-              className="group flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-[#fafafa]"
-            >
-              <button
-                type="button"
-                aria-label={item.is_done ? "완료 취소" : "완료 표시"}
-                onClick={() => toggleItem(item)}
-                className={`flex size-5 shrink-0 items-center justify-center rounded border transition-colors ${
-                  item.is_done
-                    ? "border-[#111111] bg-[#111111] text-white"
-                    : "border-[#d1d5db] text-transparent hover:border-slate-400"
-                }`}
-              >
-                <Check size={13} strokeWidth={3} />
-              </button>
-              <span
-                className={`min-w-0 flex-1 text-sm ${
-                  item.is_done ? "text-slate-400 line-through" : "text-slate-700"
-                }`}
-              >
-                {item.title}
-              </span>
-              {item.due_date && (
-                <span className="shrink-0 text-xs tabular-nums text-slate-400">
-                  {formatShortDate(item.due_date)}
-                </span>
-              )}
-              <button
-                type="button"
-                aria-label="삭제"
-                onClick={() => deleteItem(item)}
-                className="shrink-0 rounded-md p-1 text-slate-400 opacity-0 transition-opacity hover:bg-rose-50 hover:text-rose-600 focus:opacity-100 group-hover:opacity-100"
-              >
-                <Trash2 size={14} />
-              </button>
-            </li>
+              item={item}
+              onToggle={() => toggleItem(item)}
+              onSaveTitle={(nextTitle) => updateTitle(item, nextTitle)}
+              onDelete={() => deleteItem(item)}
+            />
           ))
         )}
       </ul>
@@ -504,10 +645,328 @@ function ChecklistPanel({
           disabled={submitting || !title.trim()}
           type="submit"
         >
-          <Plus size={15} />
+          <Plus size={15} strokeWidth={1.5} />
           추가
         </button>
       </form>
+    </section>
+  );
+}
+
+function ChecklistItemRow({
+  item,
+  onToggle,
+  onSaveTitle,
+  onDelete,
+}: {
+  item: ProjectChecklistItem;
+  onToggle: () => void;
+  onSaveTitle: (nextTitle: string) => Promise<boolean>;
+  onDelete: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(item.title);
+  const [saving, setSaving] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editing) {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }
+  }, [editing]);
+
+  useEffect(() => {
+    setDraft(item.title);
+  }, [item.title]);
+
+  const isEdited =
+    item.updated_at && item.updated_at !== item.created_at;
+
+  async function saveDraft() {
+    setSaving(true);
+    const ok = await onSaveTitle(draft);
+    setSaving(false);
+    if (ok || draft.trim() === item.title) {
+      setEditing(false);
+    }
+  }
+
+  function cancelEdit() {
+    setDraft(item.title);
+    setEditing(false);
+  }
+
+  return (
+    <li className="group rounded-lg px-2 py-2 transition-colors hover:bg-[#fafafa]">
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          aria-label={item.is_done ? "완료 취소" : "완료 표시"}
+          onClick={onToggle}
+          disabled={editing}
+          className={`flex size-5 shrink-0 items-center justify-center rounded border transition-colors ${
+            item.is_done
+              ? "border-[#111111] bg-[#111111] text-white"
+              : "border-[#d1d5db] text-transparent hover:border-slate-400"
+          } disabled:opacity-50`}
+        >
+          <Check size={13} strokeWidth={3} />
+        </button>
+        {editing ? (
+          <input
+            ref={inputRef}
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                void saveDraft();
+              } else if (event.key === "Escape") {
+                event.preventDefault();
+                cancelEdit();
+              }
+            }}
+            disabled={saving}
+            className="min-w-0 flex-1 rounded-md border border-[#e5e7eb] bg-white px-2 py-1 text-sm text-slate-700 outline-none focus:border-[#111111] disabled:opacity-50"
+          />
+        ) : (
+          <span
+            className={`min-w-0 flex-1 text-sm ${
+              item.is_done ? "text-slate-400 line-through" : "text-slate-700"
+            }`}
+          >
+            {item.title}
+          </span>
+        )}
+        {item.due_date && !editing && (
+          <span className="shrink-0 text-xs tabular-nums text-slate-400">
+            {formatShortDate(item.due_date)}
+          </span>
+        )}
+        {editing ? (
+          <div className="flex shrink-0 items-center gap-1">
+            <button
+              type="button"
+              aria-label="저장"
+              onClick={() => void saveDraft()}
+              disabled={saving || !draft.trim() || draft.trim() === item.title}
+              className="rounded-md p-1 text-slate-500 transition-colors hover:bg-[#f3f3f3] hover:text-[#111111] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <Check size={14} strokeWidth={2} />
+            </button>
+            <button
+              type="button"
+              aria-label="취소"
+              onClick={cancelEdit}
+              disabled={saving}
+              className="rounded-md p-1 text-slate-400 transition-colors hover:bg-[#f3f3f3] hover:text-[#111111]"
+            >
+              <X size={14} strokeWidth={1.6} />
+            </button>
+          </div>
+        ) : (
+          <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+            <button
+              type="button"
+              aria-label="수정"
+              onClick={() => setEditing(true)}
+              className="rounded-md p-1 text-slate-400 transition-colors hover:bg-[#f3f3f3] hover:text-[#111111]"
+            >
+              <Pencil size={14} strokeWidth={1.5} />
+            </button>
+            <button
+              type="button"
+              aria-label="삭제"
+              onClick={onDelete}
+              className="rounded-md p-1 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
+            >
+              <Trash2 size={14} strokeWidth={1.5} />
+            </button>
+          </div>
+        )}
+      </div>
+      <p className="mt-1 ml-8 flex flex-wrap gap-x-2 text-[11px] text-slate-400">
+        <span>등록 {formatDate(item.created_at)}</span>
+        {isEdited && (
+          <span>· 수정 {formatRelative(item.updated_at)}</span>
+        )}
+      </p>
+    </li>
+  );
+}
+
+function AttachmentsPanel({
+  projectId,
+  attachments,
+  canEdit,
+}: {
+  projectId: string;
+  attachments: ProjectAttachment[];
+  canEdit: boolean;
+}) {
+  const router = useRouter();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  async function uploadFiles(event: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0) return;
+
+    setUploading(true);
+    try {
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append("file", file);
+        const response = await fetch(`/api/projects/${projectId}/attachments`, {
+          method: "POST",
+          body: formData,
+        });
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(
+            payload.error || `${file.name} 업로드에 실패했습니다.`,
+          );
+        }
+      }
+      toast.success("첨부파일을 업로드했습니다.");
+      router.refresh();
+    } catch (uploadError) {
+      toast.error(
+        uploadError instanceof Error
+          ? uploadError.message
+          : "첨부파일 업로드에 실패했습니다.",
+      );
+    } finally {
+      setUploading(false);
+      event.target.value = "";
+    }
+  }
+
+  async function deleteFile(attachment: ProjectAttachment) {
+    if (!window.confirm(`'${attachment.file_name}'을(를) 삭제하시겠습니까?`)) {
+      return;
+    }
+
+    setDeletingId(attachment.id);
+    try {
+      const response = await fetch(
+        `/api/projects/${projectId}/attachments/${attachment.id}`,
+        { method: "DELETE" },
+      );
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "첨부파일 삭제에 실패했습니다.");
+      }
+      toast.success("첨부파일을 삭제했습니다.");
+      router.refresh();
+    } catch (deleteError) {
+      toast.error(
+        deleteError instanceof Error
+          ? deleteError.message
+          : "첨부파일 삭제에 실패했습니다.",
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  return (
+    <section className={`${cardClass} px-5 py-5`}>
+      <header className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Paperclip size={15} strokeWidth={1.5} className="text-slate-400" />
+          <h2 className="text-sm font-semibold text-[#111111]">첨부파일</h2>
+          {attachments.length > 0 && (
+            <span className="rounded-full bg-[#f5f5f5] px-2 py-0.5 text-xs font-medium text-slate-600">
+              {attachments.length}
+            </span>
+          )}
+        </div>
+        {canEdit && (
+          <>
+            <input
+              ref={inputRef}
+              className="sr-only"
+              multiple
+              type="file"
+              onChange={uploadFiles}
+            />
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              disabled={uploading}
+              className={ghostBtnClass}
+            >
+              <Upload size={14} strokeWidth={1.5} />
+              {uploading ? "업로드 중..." : "업로드"}
+            </button>
+          </>
+        )}
+      </header>
+
+      <div className="mt-4">
+        {attachments.length === 0 ? (
+          <div className="rounded-lg bg-[#fafafa] px-4 py-8 text-center">
+            <p className="text-sm text-slate-500">첨부파일이 없습니다.</p>
+            {canEdit && (
+              <p className="mt-1 text-xs text-slate-400">
+                상단 &lsquo;업로드&rsquo; 버튼으로 파일을 추가하세요.
+              </p>
+            )}
+          </div>
+        ) : (
+          <ul className="space-y-1.5">
+            {attachments.map((item) => (
+              <li
+                key={item.id}
+                className="group flex items-center gap-3 rounded-lg border border-[#f3f3f3] px-3 py-2.5 transition-colors hover:border-slate-200 hover:bg-[#fafafa]"
+              >
+                <Paperclip
+                  size={14}
+                  strokeWidth={1.5}
+                  className="shrink-0 text-slate-400"
+                />
+                <a
+                  href={`/api/projects/${projectId}/attachments/${item.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="min-w-0 flex-1"
+                >
+                  <p className="truncate text-sm font-medium text-slate-700">
+                    {item.file_name}
+                  </p>
+                  <p className="mt-0.5 truncate text-xs text-slate-500">
+                    {formatFileSize(item.size_bytes)} · {item.uploaded_by_name} ·{" "}
+                    {formatRelative(item.created_at)}
+                  </p>
+                </a>
+                <a
+                  href={`/api/projects/${projectId}/attachments/${item.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="다운로드"
+                  className="shrink-0 rounded-md p-1 text-slate-400 transition-colors hover:bg-[#f3f3f3] hover:text-[#111111]"
+                >
+                  <Download size={14} strokeWidth={1.5} />
+                </a>
+                {canEdit && (
+                  <button
+                    type="button"
+                    aria-label="삭제"
+                    disabled={deletingId === item.id}
+                    onClick={() => deleteFile(item)}
+                    className="shrink-0 rounded-md p-1 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40"
+                  >
+                    <Trash2 size={14} strokeWidth={1.5} />
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </section>
   );
 }
@@ -557,7 +1016,7 @@ function LinkedRequestsPanel({
           onClick={() => setModalOpen(true)}
           className={ghostBtnClass}
         >
-          <LinkIcon size={14} />
+          <LinkIcon size={14} strokeWidth={1.5} />
           요청 연결
         </button>
       </header>
@@ -604,7 +1063,7 @@ function LinkedRequestsPanel({
                   onClick={() => unlink(request.id)}
                   className="shrink-0 rounded-md p-1.5 text-slate-400 opacity-0 transition-opacity hover:bg-rose-50 hover:text-rose-600 focus:opacity-100 group-hover:opacity-100"
                 >
-                  <X size={15} />
+                  <X size={15} strokeWidth={1.5} />
                 </button>
               </li>
             ))}
@@ -726,16 +1185,15 @@ function LinkRequestModal({
             onClick={onClose}
             className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-[#f5f5f5] hover:text-slate-700"
           >
-            <X size={16} />
+            <X size={16} strokeWidth={1.5} />
           </button>
         </header>
 
         <div className="px-5 pt-4">
           <div className="relative">
             <Search
-              size={14}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-            />
+              size={14} strokeWidth={1.5}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               ref={inputRef}
               className="h-10 w-full rounded-lg border border-[#e5e7eb] bg-white pl-9 pr-3 text-sm outline-none transition-colors focus:border-[#111111]"
@@ -828,6 +1286,13 @@ function formatDate(value: string) {
 
 function formatShortDate(value: string) {
   return value.replace(/^\d{4}-/, "");
+}
+
+function formatFileSize(bytes: number) {
+  if (!Number.isFinite(bytes) || bytes < 0) return "0 B";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function formatRelative(value: string) {

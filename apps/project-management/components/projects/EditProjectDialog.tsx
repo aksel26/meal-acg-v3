@@ -2,16 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, ChevronDown, Plus } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@repo/ui/src/dialog";
 import { DateRangePicker } from "@repo/ui/src/date-range-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/src/popover";
+import { toast } from "@repo/ui/src/sonner";
+import type { ProjectRecord } from "@/lib/projects";
 
 type MasterMember = {
   id: string;
@@ -36,30 +37,49 @@ const inputClass =
   "h-10 w-full rounded-md border border-[#e5e7eb] bg-white px-3 text-sm text-slate-700 outline-none transition-colors focus:border-[#111111]";
 const labelClass = "text-xs font-medium text-slate-600";
 
-export function CreateProjectDialog() {
+export function EditProjectDialog({
+  project,
+  open,
+  onOpenChange,
+}: {
+  project: ProjectRecord;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
   const [members, setMembers] = useState<MasterMember[]>([]);
   const [teams, setTeams] = useState<MasterTeam[]>([]);
   const [clients, setClients] = useState<MasterClient[]>([]);
   const [memberSearch, setMemberSearch] = useState("");
   const [stakeholderSearch, setStakeholderSearch] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
-    title: "",
-    description: "",
-    customerNames: [] as string[],
-    affiliateNames: [] as string[],
-    managerIds: [] as string[],
-    stakeholderIds: [] as string[],
-    stakeholderTeamIds: [] as string[],
-    startDate: "",
-    dueDate: "",
+    title: project.title,
+    description: project.description ?? "",
+    customerNames: project.customer_names ?? [],
+    affiliateNames: project.affiliate_names ?? [],
+    managerIds: project.manager_ids ?? [],
+    stakeholderIds: project.stakeholder_ids ?? [],
+    stakeholderTeamIds: project.stakeholder_team_ids ?? [],
+    startDate: project.start_date ?? "",
+    dueDate: project.due_date ?? "",
   });
 
   useEffect(() => {
     if (!open) return;
+    setForm({
+      title: project.title,
+      description: project.description ?? "",
+      customerNames: project.customer_names ?? [],
+      affiliateNames: project.affiliate_names ?? [],
+      managerIds: project.manager_ids ?? [],
+      stakeholderIds: project.stakeholder_ids ?? [],
+      stakeholderTeamIds: project.stakeholder_team_ids ?? [],
+      startDate: project.start_date ?? "",
+      dueDate: project.due_date ?? "",
+    });
+    setMemberSearch("");
+    setStakeholderSearch("");
     fetch("/api/masters")
       .then((response) => response.json())
       .then((payload) => {
@@ -72,7 +92,7 @@ export function CreateProjectDialog() {
         setTeams([]);
         setClients([]);
       });
-  }, [open]);
+  }, [open, project]);
 
   const customerOptions = useMemo(
     () =>
@@ -105,7 +125,6 @@ export function CreateProjectDialog() {
   const filteredMembers = useMemo(() => {
     const keyword = memberSearch.trim().toLowerCase();
     if (!keyword) return members;
-
     return members.filter((member) =>
       [member.full_name, member.member_role, member.role]
         .filter((value): value is string => Boolean(value))
@@ -116,7 +135,6 @@ export function CreateProjectDialog() {
   const filteredStakeholders = useMemo(() => {
     const keyword = stakeholderSearch.trim().toLowerCase();
     if (!keyword) return members;
-
     return members.filter((member) =>
       [member.full_name, member.member_role, member.role]
         .filter((value): value is string => Boolean(value))
@@ -126,47 +144,45 @@ export function CreateProjectDialog() {
 
   async function submitProject(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError(null);
+    if (!form.title.trim()) {
+      toast.error("프로젝트명은 비울 수 없습니다.");
+      return;
+    }
     setSubmitting(true);
 
     try {
-      const response = await fetch("/api/projects", {
-        method: "POST",
+      const response = await fetch(`/api/projects/${project.id}`, {
+        method: "PATCH",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          ...form,
+          title: form.title.trim(),
+          description: form.description,
+          customerNames: form.customerNames,
+          affiliateNames: form.affiliateNames,
+          managerIds: form.managerIds,
           managerNames: selectedManagers.map((member) => member.full_name),
+          stakeholderIds: form.stakeholderIds,
           stakeholderNames: selectedStakeholders.map((member) => member.full_name),
+          stakeholderTeamIds: form.stakeholderTeamIds,
           stakeholderTeamNames: selectedStakeholderTeams.map((team) => team.name),
           ownerId: form.managerIds[0] ?? null,
           ownerName: selectedManagers[0]?.full_name ?? null,
+          startDate: form.startDate || null,
+          dueDate: form.dueDate || null,
         }),
       });
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(payload.error || "프로젝트 생성에 실패했습니다.");
+        throw new Error(payload.error || "프로젝트 수정에 실패했습니다.");
       }
-      setOpen(false);
-      setForm({
-        title: "",
-        description: "",
-        customerNames: [],
-        affiliateNames: [],
-        managerIds: [],
-        stakeholderIds: [],
-        stakeholderTeamIds: [],
-        startDate: "",
-        dueDate: "",
-      });
-      setMemberSearch("");
-      setStakeholderSearch("");
-      router.push(`/projects/${payload.id}`);
+      toast.success("프로젝트를 수정했습니다.");
+      onOpenChange(false);
       router.refresh();
     } catch (submitError) {
-      setError(
+      toast.error(
         submitError instanceof Error
           ? submitError.message
-          : "프로젝트 생성에 실패했습니다.",
+          : "프로젝트 수정에 실패했습니다.",
       );
     } finally {
       setSubmitting(false);
@@ -195,16 +211,7 @@ export function CreateProjectDialog() {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <button
-          type="button"
-          className="inline-flex h-10 items-center gap-1.5 rounded-md bg-[#111111] px-3.5 text-sm font-medium text-white transition-colors hover:bg-[#222222]"
-        >
-          <Plus size={16} strokeWidth={1.5} />
-          새 프로젝트
-        </button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className="max-h-[85vh] gap-0 overflow-hidden p-0"
         style={{
@@ -216,14 +223,10 @@ export function CreateProjectDialog() {
           if (
             target?.closest("[data-radix-popper-content-wrapper]") ||
             target?.closest("[data-radix-popover-content]") ||
-            target?.closest("[data-slot='popover-content']") ||
-            target?.closest("[role='dialog'][data-state='open']") !== event.currentTarget
+            target?.closest("[data-slot='popover-content']")
           ) {
             event.preventDefault();
           }
-        }}
-        onFocusOutside={(event) => {
-          event.preventDefault();
         }}
         onInteractOutside={(event) => {
           const target = event.target as HTMLElement | null;
@@ -237,7 +240,7 @@ export function CreateProjectDialog() {
         }}
       >
         <DialogHeader className="border-b border-[#f3f3f3] px-5 py-4">
-          <DialogTitle>새 프로젝트</DialogTitle>
+          <DialogTitle>프로젝트 수정</DialogTitle>
         </DialogHeader>
         <form
           className="max-h-[calc(85vh-73px)] space-y-4 overflow-y-auto px-5 py-5"
@@ -341,17 +344,11 @@ export function CreateProjectDialog() {
             />
           </section>
 
-          {error && (
-            <div className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700">
-              {error}
-            </div>
-          )}
-
           <div className="flex justify-end gap-2 pt-2">
             <button
               className="h-10 rounded-md border border-[#e5e7eb] px-4 text-sm font-medium text-slate-600"
               type="button"
-              onClick={() => setOpen(false)}
+              onClick={() => onOpenChange(false)}
             >
               취소
             </button>
@@ -360,7 +357,7 @@ export function CreateProjectDialog() {
               disabled={submitting || !form.title.trim()}
               type="submit"
             >
-              생성
+              저장
             </button>
           </div>
         </form>
@@ -529,22 +526,14 @@ function MemberDropdown({
 function SelectionGroup({
   label,
   options,
-  optionKeys,
   selected,
-  searchValue,
-  searchPlaceholder,
   emptyText = "선택 가능한 항목이 없습니다.",
-  onSearchChange,
   onToggle,
 }: {
   label: string;
   options: string[];
-  optionKeys?: string[];
   selected: string[];
-  searchValue?: string;
-  searchPlaceholder?: string;
   emptyText?: string;
-  onSearchChange?: (value: string) => void;
   onToggle: (value: string) => void;
 }) {
   return (
@@ -555,33 +544,24 @@ function SelectionGroup({
           <span className="text-xs text-slate-400">{selected.length}개 선택</span>
         )}
       </div>
-      {onSearchChange && (
-        <input
-          className={`mb-2 ${inputClass}`}
-          value={searchValue ?? ""}
-          onChange={(event) => onSearchChange(event.target.value)}
-          placeholder={searchPlaceholder}
-        />
-      )}
       {options.length === 0 ? (
         <p className="rounded-md bg-[#f9f9fa] px-3 py-3 text-sm text-slate-500">
           {emptyText}
         </p>
       ) : (
         <div className="max-h-36 overflow-y-auto rounded-md border border-[#e5e7eb] bg-white p-2">
-          {options.map((option, index) => {
-            const value = optionKeys?.[index] ?? option;
-            const checked = selected.includes(value);
+          {options.map((option) => {
+            const checked = selected.includes(option);
             return (
               <label
-                key={value}
+                key={option}
                 className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-slate-700 hover:bg-[#f9f9fa]"
               >
                 <input
                   checked={checked}
                   className="size-4"
                   type="checkbox"
-                  onChange={() => onToggle(value)}
+                  onChange={() => onToggle(option)}
                 />
                 <span className="truncate">{option}</span>
               </label>

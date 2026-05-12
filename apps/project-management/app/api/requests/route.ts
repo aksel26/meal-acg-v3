@@ -23,10 +23,6 @@ export async function GET(request: Request) {
       query = query.eq("requester_id", session.id);
     } else if (view === "queue") {
       query = query.or(`assignee_id.eq.${session.id},assignee_ids.cs.{${session.id}}`);
-    } else if (session.role !== "admin" && session.role !== "team_lead") {
-      query = query.or(
-        `requester_id.eq.${session.id},assignee_id.eq.${session.id},assignee_ids.cs.{${session.id}}`,
-      );
     }
 
     if (status) {

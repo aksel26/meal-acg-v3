@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/server";
 import { canUpdateProject, getProjectById } from "@/lib/projects";
+import { canUpdateRequest, getRequestById } from "@/lib/requests";
 
 type RouteContext = {
   params: Promise<{ id: string; requestId: string }>;
@@ -22,6 +23,15 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
     if (!canUpdateProject(session, project)) {
       return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
+    }
+
+    const requestRecord = await getRequestById(requestId);
+    if (!requestRecord) {
+      return NextResponse.json({ error: "요청을 찾을 수 없습니다." }, { status: 404 });
+    }
+
+    if (!canUpdateRequest(session, requestRecord)) {
+      return NextResponse.json({ error: "요청 권한이 없습니다." }, { status: 403 });
     }
 
     const supabase = createServiceClient();

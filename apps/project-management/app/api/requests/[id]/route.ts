@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/server";
+import { deleteAttachment } from "@/lib/storage";
 import {
-  canManageRequest,
+  canDeleteRequest,
+  canReadRequest,
   canUpdateRequest,
   getRequestById,
   isRequestPriority,
@@ -24,7 +26,7 @@ export async function GET(_request: Request, context: RouteContext) {
       return NextResponse.json({ error: "요청을 찾을 수 없습니다." }, { status: 404 });
     }
 
-    if (!canManageRequest(session, requestRecord)) {
+    if (!canReadRequest(session, requestRecord)) {
       return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
     }
 
@@ -63,6 +65,46 @@ export async function GET(_request: Request, context: RouteContext) {
     console.error("GET /api/requests/[id] error:", error);
     return NextResponse.json(
       { error: "요청 상세를 불러오지 못했습니다." },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(_request: Request, context: RouteContext) {
+  try {
+    const session = await requireAuth();
+    const { id } = await context.params;
+    const current = await getRequestById(id);
+
+    if (!current) {
+      return NextResponse.json({ error: "요청을 찾을 수 없습니다." }, { status: 404 });
+    }
+
+    if (!canDeleteRequest(session, current)) {
+      return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
+    }
+
+    const supabase = createServiceClient();
+    const { data: attachments, error: attachmentsError } = await supabase
+      .from("attachments")
+      .select("storage_path")
+      .eq("request_id", id);
+
+    if (attachmentsError) throw attachmentsError;
+
+    await Promise.all(
+      (attachments ?? []).map((attachment) => deleteAttachment(attachment.storage_path)),
+    );
+
+    const { error } = await supabase.from("requests").delete().eq("id", id);
+
+    if (error) throw error;
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("DELETE /api/requests/[id] error:", error);
+    return NextResponse.json(
+      { error: "요청을 삭제하지 못했습니다." },
       { status: 500 },
     );
   }
@@ -207,13 +249,27 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (error) throw error;
 
+    const eventAfter = { ...updates };
+    if (typeof eventAfter.completion_note === "string") {
+      delete eventAfter.completion_note;
+    }
+
     await recordEvent({
       requestId: id,
       actor: session,
       eventType: "request_updated",
       before: current,
-      after: updates,
+      after: eventAfter,
     });
+
+    if (typeof updates.completion_note === "string" && updates.completion_note.trim()) {
+      await recordEvent({
+        requestId: id,
+        actor: session,
+        eventType: "completion_note_created",
+        after: { body: updates.completion_note.trim() },
+      });
+    }
 
     return NextResponse.json(data);
   } catch (error) {

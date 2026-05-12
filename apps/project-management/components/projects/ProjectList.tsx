@@ -1,8 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { CalendarDays, KanbanSquare, ListFilter, Users } from "lucide-react";
+import { CalendarDays, KanbanSquare, Search, Users } from "lucide-react";
+import { toast } from "@repo/ui/src/sonner";
 import type { ProjectStatus, ProjectSummary } from "@/lib/projects";
 import { ProjectStatusBadge } from "@/components/projects/ProjectBadge";
 
@@ -10,13 +12,57 @@ type ViewMode = "list" | "board" | "timeline";
 const PROJECT_STATUSES: ProjectStatus[] = ["계획", "진행", "대기", "완료"];
 
 export function ProjectList({ projects }: { projects: ProjectSummary[] }) {
+  const router = useRouter();
   const [view, setView] = useState<ViewMode>("list");
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "all">("all");
   const [keyword, setKeyword] = useState("");
+  const [projectsState, setProjectsState] = useState(projects);
+  const [pendingId, setPendingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setProjectsState(projects);
+  }, [projects]);
+
+  async function handleStatusChange(
+    projectId: string,
+    nextStatus: ProjectStatus,
+  ) {
+    const previous = projectsState;
+    const target = previous.find((project) => project.id === projectId);
+    if (!target || target.status === nextStatus) return;
+
+    setProjectsState((current) =>
+      current.map((project) =>
+        project.id === projectId ? { ...project, status: nextStatus } : project,
+      ),
+    );
+    setPendingId(projectId);
+
+    try {
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "상태 변경에 실패했습니다.");
+      }
+      toast.success(`'${target.title}' 상태를 ${nextStatus}(으)로 변경했습니다.`);
+      router.refresh();
+    } catch (error) {
+      setProjectsState(previous);
+      toast.error(
+        error instanceof Error ? error.message : "상태 변경에 실패했습니다.",
+      );
+    } finally {
+      setPendingId(null);
+    }
+  }
 
   const filteredProjects = useMemo(() => {
     const normalized = keyword.trim().toLowerCase();
-    return projects.filter((project) => {
+    return projectsState.filter((project) => {
       const statusMatches = statusFilter === "all" || project.status === statusFilter;
       if (!statusMatches) return false;
       if (!normalized) return true;
@@ -34,7 +80,7 @@ export function ProjectList({ projects }: { projects: ProjectSummary[] }) {
         .filter((value): value is string => Boolean(value))
         .some((value) => value.toLowerCase().includes(normalized));
     });
-  }, [keyword, projects, statusFilter]);
+  }, [keyword, projectsState, statusFilter]);
 
   if (projects.length === 0) {
     return (
@@ -46,17 +92,23 @@ export function ProjectList({ projects }: { projects: ProjectSummary[] }) {
 
   return (
     <section className="space-y-3">
-      <div className="flex flex-col gap-3 rounded-xl border border-[#f3f3f3] bg-white p-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <ListFilter size={16} className="shrink-0 text-slate-400" />
-          <input
-            className="h-9 min-w-0 flex-1 rounded-lg border border-[#e5e7eb] px-3 text-sm outline-none focus:border-[#111111]"
-            value={keyword}
-            onChange={(event) => setKeyword(event.target.value)}
-            placeholder="프로젝트, 고객사, 담당자 검색"
-          />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="relative min-w-0 flex-1">
+            <Search
+              size={15}
+              strokeWidth={1.5}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            />
+            <input
+              className="h-9 w-full rounded-lg border border-[#e5e7eb] bg-white pl-9 pr-3 text-sm text-slate-700 placeholder:text-slate-400 outline-none transition-colors focus:border-[#111111]"
+              value={keyword}
+              onChange={(event) => setKeyword(event.target.value)}
+              placeholder="프로젝트, 고객사, 담당자 검색"
+            />
+          </div>
           <select
-            className="h-9 rounded-lg border border-[#e5e7eb] bg-white px-3 text-sm text-slate-600 outline-none focus:border-[#111111]"
+            className="h-9 shrink-0 rounded-lg border border-[#e5e7eb] bg-white px-3 text-sm text-slate-600 outline-none transition-colors focus:border-[#111111]"
             value={statusFilter}
             onChange={(event) =>
               setStatusFilter(event.target.value as ProjectStatus | "all")
@@ -70,7 +122,11 @@ export function ProjectList({ projects }: { projects: ProjectSummary[] }) {
             ))}
           </select>
         </div>
-        <div className="grid grid-cols-3 gap-1 rounded-lg bg-[#f9f9fa] p-1">
+        <div
+          role="tablist"
+          aria-label="보기 전환"
+          className="inline-flex shrink-0 items-center gap-0.5 rounded-lg border border-[#f3f3f3] bg-[#fafafa] p-0.5"
+        >
           <ViewButton active={view === "list"} onClick={() => setView("list")}>
             목록
           </ViewButton>
@@ -87,7 +143,13 @@ export function ProjectList({ projects }: { projects: ProjectSummary[] }) {
       </div>
 
       {view === "list" && <ProjectTable projects={filteredProjects} />}
-      {view === "board" && <ProjectBoard projects={filteredProjects} />}
+      {view === "board" && (
+        <ProjectBoard
+          projects={filteredProjects}
+          onStatusChange={handleStatusChange}
+          pendingId={pendingId}
+        />
+      )}
       {view === "timeline" && <ProjectTimeline projects={filteredProjects} />}
     </section>
   );
@@ -104,11 +166,15 @@ function ViewButton({
 }) {
   return (
     <button
-      className={`h-8 rounded-md px-3 text-sm transition-colors ${
-        active ? "bg-white font-medium text-[#111111] shadow-sm" : "text-slate-500"
-      }`}
+      role="tab"
       type="button"
+      aria-selected={active}
       onClick={onClick}
+      className={`h-8 rounded-md px-3.5 text-xs font-medium transition-all ${
+        active
+          ? "bg-white text-[#111111] shadow-[0_1px_2px_rgba(15,23,42,0.06),0_1px_3px_rgba(15,23,42,0.04)]"
+          : "text-slate-500 hover:text-[#111111]"
+      }`}
     >
       {children}
     </button>
@@ -123,16 +189,18 @@ function ProjectTable({ projects }: { projects: ProjectSummary[] }) {
   return (
     <div className="overflow-hidden rounded-xl border border-[#f3f3f3] bg-white">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[1280px] table-fixed text-left">
+        <table className="w-full min-w-[1180px] table-fixed text-left">
           <colgroup>
-            <col className="w-[26%]" />
-            <col className="w-[9%]" />
-            <col className="w-[14%]" />
-            <col className="w-[14%]" />
-            <col className="w-[13%]" />
-            <col className="w-[8%]" />
-            <col className="w-[8%]" />
-            <col className="w-[8%]" />
+            <col className="w-[28%]" />
+            <col className="w-[68px]" />
+            <col className="w-[112px]" />
+            <col className="w-[10%]" />
+            <col className="w-[10%]" />
+            <col className="w-[88px]" />
+            <col className="w-[104px]" />
+            <col className="w-[104px]" />
+            <col className="w-[104px]" />
+            <col className="w-[120px]" />
           </colgroup>
           <thead className="border-b border-[#f3f3f3] bg-[#fafafa]">
             <tr className="text-[11px] font-medium uppercase tracking-widest text-slate-400">
@@ -141,8 +209,10 @@ function ProjectTable({ projects }: { projects: ProjectSummary[] }) {
               <th className="px-4 py-2.5">담당</th>
               <th className="px-4 py-2.5">관련자</th>
               <th className="px-4 py-2.5">관련팀</th>
-              <th className="px-4 py-2.5">등록일</th>
+              <th className="px-4 py-2.5">작성자</th>
               <th className="px-4 py-2.5">마감일</th>
+              <th className="px-4 py-2.5">등록일</th>
+              <th className="px-4 py-2.5">수정일</th>
               <th className="px-4 py-2.5">연결</th>
             </tr>
           </thead>
@@ -167,7 +237,7 @@ function ProjectTable({ projects }: { projects: ProjectSummary[] }) {
                 </td>
                 <td className="px-4 py-3 align-middle">
                   <div className="flex min-w-0 items-center gap-1.5 text-xs text-slate-500">
-                    <Users size={13} className="shrink-0 text-slate-300" />
+                    <Users size={13} strokeWidth={1.5} className="shrink-0 text-slate-300" />
                     <span className="truncate">
                       {displayNames(project.manager_names) || "미지정"}
                     </span>
@@ -183,11 +253,23 @@ function ProjectTable({ projects }: { projects: ProjectSummary[] }) {
                     {displayNames(project.stakeholder_team_names) || "-"}
                   </p>
                 </td>
+                <td className="px-4 py-3 align-middle">
+                  <p className="truncate text-xs text-slate-600">
+                    {project.created_by_name || "-"}
+                  </p>
+                </td>
+                <td className="px-4 py-3 align-middle text-xs text-slate-600 tabular-nums">
+                  {project.due_date ?? <span className="text-slate-300">-</span>}
+                </td>
                 <td className="px-4 py-3 align-middle text-xs text-slate-600 tabular-nums">
                   {formatDate(project.created_at)}
                 </td>
                 <td className="px-4 py-3 align-middle text-xs text-slate-600 tabular-nums">
-                  {project.due_date ?? <span className="text-slate-300">-</span>}
+                  {project.updated_at ? (
+                    formatDate(project.updated_at)
+                  ) : (
+                    <span className="text-slate-300">-</span>
+                  )}
                 </td>
                 <td className="px-4 py-3 align-middle">
                   <div className="flex flex-wrap gap-1.5 text-xs text-slate-500">
@@ -208,42 +290,107 @@ function ProjectTable({ projects }: { projects: ProjectSummary[] }) {
   );
 }
 
-function ProjectBoard({ projects }: { projects: ProjectSummary[] }) {
+function ProjectBoard({
+  projects,
+  onStatusChange,
+  pendingId,
+}: {
+  projects: ProjectSummary[];
+  onStatusChange: (projectId: string, nextStatus: ProjectStatus) => void;
+  pendingId: string | null;
+}) {
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dragOverStatus, setDragOverStatus] = useState<ProjectStatus | null>(
+    null,
+  );
+
   return (
     <div className="grid gap-3 xl:grid-cols-4">
       {PROJECT_STATUSES.map((status) => {
-        const statusProjects = projects.filter((project) => project.status === status);
+        const statusProjects = projects.filter(
+          (project) => project.status === status,
+        );
+        const isDropTarget = dragOverStatus === status;
+        const draggingProject = draggingId
+          ? projects.find((project) => project.id === draggingId)
+          : null;
+        const canAcceptDrop =
+          Boolean(draggingProject) && draggingProject?.status !== status;
+
         return (
           <section
             key={status}
-            className="min-h-48 rounded-xl border border-[#f3f3f3] bg-white"
+            onDragOver={(event) => {
+              if (!canAcceptDrop) return;
+              event.preventDefault();
+              event.dataTransfer.dropEffect = "move";
+              if (dragOverStatus !== status) setDragOverStatus(status);
+            }}
+            onDragLeave={(event) => {
+              if (event.currentTarget.contains(event.relatedTarget as Node)) {
+                return;
+              }
+              if (dragOverStatus === status) setDragOverStatus(null);
+            }}
+            onDrop={(event) => {
+              event.preventDefault();
+              const id = event.dataTransfer.getData("text/plain");
+              setDragOverStatus(null);
+              setDraggingId(null);
+              if (id) onStatusChange(id, status);
+            }}
+            className={`min-h-48 rounded-xl border bg-white transition-colors ${
+              isDropTarget && canAcceptDrop
+                ? "border-[#111111] bg-[#fafafa]"
+                : "border-[#f3f3f3]"
+            }`}
           >
             <div className="flex items-center justify-between border-b border-[#f3f3f3] px-3 py-3">
               <ProjectStatusBadge status={status} />
-              <span className="text-xs text-slate-400">{statusProjects.length}</span>
+              <span className="text-xs text-slate-400">
+                {statusProjects.length}
+              </span>
             </div>
             <div className="space-y-2 p-2">
               {statusProjects.length === 0 ? (
-                <p className="px-2 py-6 text-center text-sm text-slate-400">비어있음</p>
+                <p className="px-2 py-6 text-center text-sm text-slate-400">
+                  {isDropTarget && canAcceptDrop ? "여기에 놓기" : "비어있음"}
+                </p>
               ) : (
-                statusProjects.map((project) => (
-                  <Link
-                    key={project.id}
-                    className="block rounded-lg border border-[#f3f3f3] px-3 py-3 transition-colors hover:border-slate-300 hover:bg-[#fafafa]"
-                    href={`/projects/${project.id}`}
-                  >
-                    <p className="line-clamp-2 text-sm font-medium text-[#111111]">
-                      {project.title}
-                    </p>
-                    <p className="mt-2 truncate text-xs text-slate-500">
-                      {displayNames(project.customer_names) || "고객사 미지정"}
-                    </p>
-                    <div className="mt-3 flex items-center justify-between gap-2 text-xs text-slate-400">
-                      <span>{project.due_date ?? "마감 미정"}</span>
-                      <KanbanSquare size={14} />
-                    </div>
-                  </Link>
-                ))
+                statusProjects.map((project) => {
+                  const isPending = pendingId === project.id;
+                  const isDragging = draggingId === project.id;
+                  return (
+                    <Link
+                      key={project.id}
+                      draggable={!isPending}
+                      onDragStart={(event) => {
+                        event.dataTransfer.setData("text/plain", project.id);
+                        event.dataTransfer.effectAllowed = "move";
+                        setDraggingId(project.id);
+                      }}
+                      onDragEnd={() => {
+                        setDraggingId(null);
+                        setDragOverStatus(null);
+                      }}
+                      className={`block rounded-lg border border-[#f3f3f3] px-3 py-3 transition-colors hover:border-slate-300 hover:bg-[#fafafa] ${
+                        isDragging ? "opacity-50" : ""
+                      } ${isPending ? "pointer-events-none opacity-60" : ""}`}
+                      href={`/projects/${project.id}`}
+                    >
+                      <p className="line-clamp-2 text-sm font-medium text-[#111111]">
+                        {project.title}
+                      </p>
+                      <p className="mt-2 truncate text-xs text-slate-500">
+                        {displayNames(project.customer_names) || "고객사 미지정"}
+                      </p>
+                      <div className="mt-3 flex items-center justify-between gap-2 text-xs text-slate-400">
+                        <span>{project.due_date ?? "마감 미정"}</span>
+                        <KanbanSquare size={14} strokeWidth={1.5} />
+                      </div>
+                    </Link>
+                  );
+                })
               )}
             </div>
           </section>
@@ -263,7 +410,7 @@ function ProjectTimeline({ projects }: { projects: ProjectSummary[] }) {
   if (datedProjects.length === 0) {
     return (
       <div className="rounded-xl border border-[#f3f3f3] bg-white px-6 py-10 text-center">
-        <CalendarDays className="mx-auto text-slate-300" size={24} />
+        <CalendarDays className="mx-auto text-slate-300" size={24} strokeWidth={1.5} />
         <p className="mt-2 text-sm text-slate-500">
           일정이 있는 프로젝트가 없습니다.
         </p>

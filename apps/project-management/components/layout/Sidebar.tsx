@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  Boxes,
   ClipboardList,
   ExternalLink,
   FolderKanban,
@@ -24,6 +25,11 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
+  {
+    label: "한눈에 보기",
+    href: "/overview",
+    icon: Boxes,
+  },
   {
     label: "프로젝트",
     href: "/projects",
@@ -74,7 +80,7 @@ function NavMenu({ onItemClick }: { onItemClick?: () => void }) {
             "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-500 transition-colors hover:bg-[#f9f9fa] hover:text-[#111111]";
           const content = (
             <>
-              <Icon size={18} className="shrink-0" />
+              <Icon size={18} strokeWidth={1.5} className="shrink-0" />
               <span className="flex-1 truncate">{item.label}</span>
               {item.external && (
                 <ExternalLink
@@ -125,7 +131,7 @@ function LogoutButton({ onAfterLogout }: { onAfterLogout?: () => void }) {
       onClick={handleLogout}
       className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-400 transition-colors hover:bg-[#f9f9fa] hover:text-slate-500"
     >
-      <LogOut size={18} />
+      <LogOut size={18} strokeWidth={1.5} />
       로그아웃
     </button>
   );
@@ -203,7 +209,7 @@ export function MobileSidebar({
             className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-[#f9f9fa] hover:text-slate-600"
             aria-label="메뉴 닫기"
           >
-            <X size={20} />
+            <X size={20} strokeWidth={1.5} />
           </button>
         </div>
 

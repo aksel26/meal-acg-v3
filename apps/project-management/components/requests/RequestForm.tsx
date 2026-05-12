@@ -3,6 +3,7 @@
 import { Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import type { RequestPriority, RequestRecord } from "@/lib/requests";
 
 type MasterMember = {
   id: string;
@@ -41,35 +42,47 @@ interface RequestFormProps {
   onSuccess?: (id: string) => void;
   initialDueDate?: string;
   initialAssignees?: { id: string; fullName: string }[];
+  initialRequest?: RequestRecord;
   hideSubmitRow?: boolean;
+  submitLabel?: string;
 }
 
 export function RequestForm({
   onSuccess,
   initialDueDate,
   initialAssignees = [],
+  initialRequest,
   hideSubmitRow,
+  submitLabel,
 }: RequestFormProps = {}) {
   const router = useRouter();
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
-  const [priority, setPriority] = useState("P3");
-  const [requestType, setRequestType] = useState("");
+  const isEditMode = Boolean(initialRequest);
+  const [title, setTitle] = useState(initialRequest?.title ?? "");
+  const [body, setBody] = useState(initialRequest?.body ?? "");
+  const [priority, setPriority] = useState<RequestPriority>(
+    initialRequest?.priority ?? "P3",
+  );
+  const [requestType, setRequestType] = useState(initialRequest?.request_type ?? "");
   const [projectId, setProjectId] = useState("");
-  const [customerNames, setCustomerNames] = useState<string[]>([]);
+  const [customerNames, setCustomerNames] = useState<string[]>(
+    initialRequest?.customer_names ?? [],
+  );
   const [customerOtherEnabled, setCustomerOtherEnabled] = useState(false);
   const [customerOtherInput, setCustomerOtherInput] = useState("");
-  const [affiliateNames, setAffiliateNames] = useState<string[]>([]);
+  const [affiliateNames, setAffiliateNames] = useState<string[]>(
+    initialRequest?.affiliate_names ?? [],
+  );
   const [affiliateOtherEnabled, setAffiliateOtherEnabled] = useState(false);
   const [affiliateOtherInput, setAffiliateOtherInput] = useState("");
-  const [teamNames, setTeamNames] = useState<string[]>([]);
+  const [teamNames, setTeamNames] = useState<string[]>(initialRequest?.team_names ?? []);
   const [assigneeIds, setAssigneeIds] = useState<string[]>(
-    initialAssignees.map((assignee) => assignee.id),
+    initialRequest?.assignee_ids ?? initialAssignees.map((assignee) => assignee.id),
   );
   const [assigneeNames, setAssigneeNames] = useState<string[]>(
-    initialAssignees.map((assignee) => assignee.fullName),
+    initialRequest?.assignee_names ??
+      initialAssignees.map((assignee) => assignee.fullName),
   );
-  const [dueDate, setDueDate] = useState(initialDueDate ?? "");
+  const [dueDate, setDueDate] = useState(initialRequest?.due_date ?? initialDueDate ?? "");
   const [files, setFiles] = useState<File[]>([]);
   const [members, setMembers] = useState<MasterMember[]>([]);
   const [memberSearch, setMemberSearch] = useState("");
@@ -134,7 +147,7 @@ export function RequestForm({
     setRequestType(value);
     const nextType = requestTypes.find((type) => type.id === value);
     if (nextType?.defaultPriority) {
-      setPriority(nextType.defaultPriority);
+      setPriority(nextType.defaultPriority as RequestPriority);
     }
     if (nextType?.defaultTeamName) {
       setTeamNames((current) =>
@@ -214,23 +227,26 @@ export function RequestForm({
           ? [...affiliateNames, manualAffiliateName]
           : affiliateNames;
 
-      const response = await fetch("/api/requests", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          title,
-          body,
-          priority,
-          requestType,
-          projectId: projectId || null,
-          customerNames: [...new Set(nextCustomerNames)],
-          affiliateNames: [...new Set(nextAffiliateNames)],
-          teamNames,
-          assigneeIds,
-          assigneeNames,
-          dueDate: dueDate || null,
-        }),
-      });
+      const response = await fetch(
+        initialRequest ? `/api/requests/${initialRequest.id}` : "/api/requests",
+        {
+          method: initialRequest ? "PATCH" : "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            title,
+            body,
+            priority,
+            requestType,
+            ...(initialRequest ? {} : { projectId: projectId || null }),
+            customerNames: [...new Set(nextCustomerNames)],
+            affiliateNames: [...new Set(nextAffiliateNames)],
+            teamNames,
+            assigneeIds,
+            assigneeNames,
+            dueDate: dueDate || null,
+          }),
+        },
+      );
 
       const payload = await response.json();
       if (!response.ok) {
@@ -253,6 +269,8 @@ export function RequestForm({
       if (onSuccess) {
         onSuccess(payload.id);
         router.refresh();
+      } else if (initialRequest) {
+        router.refresh();
       } else {
         router.push(`/requests/${payload.id}`);
         router.refresh();
@@ -270,6 +288,11 @@ export function RequestForm({
     customerNames.length > 0 || customerOtherEnabled || Boolean(customerOtherInput.trim());
   const hasAffiliateSelection =
     affiliateNames.length > 0 || affiliateOtherEnabled || Boolean(affiliateOtherInput.trim());
+  const priorityOptions: { value: RequestPriority; label: string }[] = [
+    { value: "P1", label: "P1 - 긴급" },
+    { value: "P2", label: "P2 - 보통" },
+    { value: "P3", label: "P3 - 낮음" },
+  ];
 
   return (
     <form id="request-form" className="space-y-4" onSubmit={handleSubmit}>
@@ -315,27 +338,29 @@ export function RequestForm({
             />
           </div>
 
-          <div>
-            <label className="text-xs font-medium text-slate-600" htmlFor="projectId">
-              연결 프로젝트
-            </label>
-            <select
-              id="projectId"
-              className={`mt-1.5 ${inputClass}`}
-              value={projectId}
-              onChange={(event) => setProjectId(event.target.value)}
-            >
-              <option value="">선택 안 함</option>
-              {projects.map((project) => (
-                <option key={project.id} value={project.id}>
-                  {project.title}
-                  {project.customer_names?.length
-                    ? ` · ${project.customer_names.join(", ")}`
-                    : ""}
-                </option>
-              ))}
-            </select>
-          </div>
+          {!isEditMode && (
+            <div>
+              <label className="text-xs font-medium text-slate-600" htmlFor="projectId">
+                연결 프로젝트
+              </label>
+              <select
+                id="projectId"
+                className={`mt-1.5 ${inputClass}`}
+                value={projectId}
+                onChange={(event) => setProjectId(event.target.value)}
+              >
+                <option value="">선택 안 함</option>
+                {projects.map((project) => (
+                  <option key={project.id} value={project.id}>
+                    {project.title}
+                    {project.customer_names?.length
+                      ? ` · ${project.customer_names.join(", ")}`
+                      : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div>
             <label className="text-xs font-medium text-slate-600" htmlFor="requestType">
@@ -366,11 +391,7 @@ export function RequestForm({
               우선순위
             </label>
             <div className="mt-1.5 grid grid-cols-3 gap-2">
-              {[
-                { value: "P1", label: "P1 - 긴급" },
-                { value: "P2", label: "P2 - 보통" },
-                { value: "P3", label: "P3 - 낮음" },
-              ].map((option) => (
+              {priorityOptions.map((option) => (
                 <button
                   key={option.value}
                   type="button"
@@ -635,7 +656,7 @@ export function RequestForm({
             disabled={submitting}
             type="submit"
           >
-            {submitting ? "등록 중" : "요청 등록"}
+            {submitting ? "저장 중" : submitLabel ?? (isEditMode ? "요청 수정" : "요청 등록")}
           </button>
         </div>
       )}

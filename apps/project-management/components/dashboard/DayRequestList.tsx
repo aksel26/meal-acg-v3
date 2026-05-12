@@ -42,7 +42,7 @@ export function DayRequestList({ selectedDate, requests }: DayRequestListProps) 
       <div className="flex-1 overflow-y-auto">
         {dayRequests.length === 0 ? (
           <div className="flex flex-col items-center justify-center px-4 py-10 text-center">
-            <CalendarOff size={20} className="mb-2 text-slate-300" />
+            <CalendarOff size={20} strokeWidth={1.5} className="mb-2 text-slate-300" />
             <p className="text-sm text-slate-500">
               이 날 마감인 요청이 없습니다.
             </p>

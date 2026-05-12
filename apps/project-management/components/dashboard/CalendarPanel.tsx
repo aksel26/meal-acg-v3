@@ -63,7 +63,7 @@ export function CalendarPanel({
             aria-label="이전 달"
             className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-[#f9f9fa]"
           >
-            <ChevronLeft size={16} />
+            <ChevronLeft size={16} strokeWidth={1.5} />
           </button>
           <button
             type="button"
@@ -78,7 +78,7 @@ export function CalendarPanel({
             aria-label="다음 달"
             className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-[#f9f9fa]"
           >
-            <ChevronRight size={16} />
+            <ChevronRight size={16} strokeWidth={1.5} />
           </button>
         </div>
       </div>

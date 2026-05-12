@@ -32,7 +32,10 @@ export default async function QueuePage() {
         <CreateRequestDialog />
       </div>
 
-      <RequestList requests={sorted} emptyText="현재 담당 중인 요청이 없습니다." />
+      <RequestList
+        requests={sorted}
+        emptyText="현재 담당 중인 요청이 없습니다."
+      />
     </div>
   );
 }

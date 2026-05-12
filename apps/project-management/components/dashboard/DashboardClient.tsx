@@ -18,7 +18,7 @@ export function DashboardClient({ requests, rightTopSlot }: DashboardClientProps
   );
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
+    <div className="grid gap-4 lg:grid-cols-[6fr_4fr]">
       <CalendarPanel
         requests={requests}
         selectedDate={selectedDate}

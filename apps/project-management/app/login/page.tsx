@@ -45,33 +45,33 @@ function LoginForm() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#f6f7f9] px-6">
-      <section className="w-full max-w-md rounded-lg border border-[#dde3ea] bg-white p-8">
-        <div className="mb-8 text-center">
+    <main className="flex min-h-screen items-center justify-center bg-white px-6">
+      <section className="w-full max-w-sm">
+        <div className="mb-10">
           <Image
             src="/images/ACG_LOGO_GRAY.png"
             alt="ACG"
-            width={80}
-            height={32}
-            className="mx-auto h-auto w-auto"
+            width={72}
+            height={28}
+            className="h-auto w-auto"
             priority
           />
-          <p className="mt-5 text-xs font-medium uppercase tracking-[0.18em] text-[#667085]">
+          <p className="mt-6 text-[11px] font-medium uppercase tracking-[0.2em] text-slate-500">
             Project Management
           </p>
-          <h1 className="mt-3 text-2xl font-semibold text-[#172033]">
+          <h1 className="mt-2 text-2xl font-semibold text-[#111111]">
             프로젝트관리 로그인
           </h1>
-          <p className="mt-2 text-sm leading-6 text-[#667085]">
-            계정 정보를 입력하면 현재 페이지에서 바로 접속됩니다.
+          <p className="mt-2 text-sm leading-6 text-slate-500">
+            계정 정보를 입력하면 바로 접속됩니다.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1.5">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
             <label
               htmlFor="loginId"
-              className="block text-sm font-medium text-[#344054]"
+              className="block text-sm font-medium text-slate-700"
             >
               아이디
             </label>
@@ -84,14 +84,14 @@ function LoginForm() {
               required
               disabled={isLoading}
               autoComplete="username"
-              className="w-full rounded-md border border-[#cfd8e3] px-3 py-2.5 text-sm text-[#172033] placeholder:text-[#98a2b3] outline-none transition focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/15 disabled:bg-[#f2f4f7] disabled:opacity-70"
+              className="w-full border-b border-slate-200 bg-transparent py-2.5 text-sm text-[#111111] placeholder:text-slate-400 outline-none transition-colors focus:border-[#111111] disabled:opacity-50"
             />
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-[#344054]"
+              className="block text-sm font-medium text-slate-700"
             >
               비밀번호
             </label>
@@ -105,21 +105,21 @@ function LoginForm() {
                 required
                 disabled={isLoading}
                 autoComplete="current-password"
-                className="w-full rounded-md border border-[#cfd8e3] px-3 py-2.5 pr-10 text-sm text-[#172033] placeholder:text-[#98a2b3] outline-none transition focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/15 disabled:bg-[#f2f4f7] disabled:opacity-70"
+                className="w-full border-b border-slate-200 bg-transparent py-2.5 pr-8 text-sm text-[#111111] placeholder:text-slate-400 outline-none transition-colors focus:border-[#111111] disabled:opacity-50"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((current) => !current)}
                 disabled={isLoading}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#667085] transition hover:text-[#172033] disabled:opacity-50"
+                className="absolute right-0 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-[#111111] disabled:opacity-50"
                 aria-label={
                   showPassword ? "비밀번호 숨기기" : "비밀번호 보기"
                 }
               >
                 {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
+                  <EyeOff className="size-4" />
                 ) : (
-                  <Eye className="h-4 w-4" />
+                  <Eye className="size-4" />
                 )}
               </button>
             </div>
@@ -128,12 +128,12 @@ function LoginForm() {
           <button
             type="submit"
             disabled={isLoading}
-            className="flex h-10 w-full items-center justify-center rounded-md bg-[#2563eb] px-4 text-sm font-medium text-white transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:opacity-70"
+            className="mt-2 flex h-11 w-full items-center justify-center rounded-md bg-[#111111] px-4 text-sm font-medium text-white transition-colors hover:bg-[#222222] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isLoading ? (
               <span className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                로그인 중...
+                <Loader2 className="size-4 animate-spin" />
+                로그인 중
               </span>
             ) : (
               "로그인"
@@ -147,14 +147,15 @@ function LoginForm() {
 
 function LoginFallback() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#f6f7f9] px-6">
-      <section className="w-full max-w-md rounded-lg border border-[#dde3ea] bg-white p-8">
-        <div className="h-6 w-36 animate-pulse rounded bg-[#eef2f6]" />
-        <div className="mt-5 h-8 w-56 animate-pulse rounded bg-[#eef2f6]" />
-        <div className="mt-8 space-y-4">
-          <div className="h-10 animate-pulse rounded bg-[#eef2f6]" />
-          <div className="h-10 animate-pulse rounded bg-[#eef2f6]" />
-          <div className="h-10 animate-pulse rounded bg-[#d7e3ff]" />
+    <main className="flex min-h-screen items-center justify-center bg-white px-6">
+      <section className="w-full max-w-sm">
+        <div className="h-7 w-20 bg-slate-100" />
+        <div className="mt-6 h-3 w-32 bg-slate-100" />
+        <div className="mt-3 h-7 w-48 bg-slate-100" />
+        <div className="mt-10 space-y-6">
+          <div className="h-10 bg-slate-100" />
+          <div className="h-10 bg-slate-100" />
+          <div className="h-11 bg-[#111111]" />
         </div>
       </section>
     </main>

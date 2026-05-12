@@ -37,6 +37,18 @@ export type ProjectRequestLink = {
   created_at: string;
 };
 
+export type ProjectAttachment = {
+  id: string;
+  project_id: string;
+  file_name: string;
+  storage_path: string;
+  content_type: string | null;
+  size_bytes: number;
+  uploaded_by: string;
+  uploaded_by_name: string;
+  created_at: string;
+};
+
 export type ProjectChecklistItem = {
   id: string;
   project_id: string;
@@ -73,6 +85,7 @@ export type ProjectDetail = {
   project: ProjectRecord;
   linkedRequests: LinkedRequestSummary[];
   checklistItems: ProjectChecklistItem[];
+  attachments: ProjectAttachment[];
 };
 
 export function isProjectStatus(value: unknown): value is ProjectStatus {
@@ -92,6 +105,10 @@ export function canManageProject(user: SessionUser, project: ProjectRecord) {
 
 export function canUpdateProject(user: SessionUser, project: ProjectRecord) {
   return canManageProject(user, project);
+}
+
+export function canDeleteProject(user: SessionUser, project: ProjectRecord) {
+  return user.role === "admin" || project.created_by === user.id;
 }
 
 export async function getProjectById(id: string): Promise<ProjectRecord | null> {
@@ -158,20 +175,40 @@ export async function getProjectDetailForUser(
   if (!project || !canManageProject(user, project)) return null;
 
   const supabase = createServiceClient();
-  const [{ data: linkedRows, error: linkedError }, { data: checklistItems, error: checklistError }] =
-    await Promise.all([
-      supabase
-        .from("project_requests")
-        .select("request_id")
-        .eq("project_id", id)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("project_checklist_items")
-        .select("*")
-        .eq("project_id", id)
-        .order("sort_order", { ascending: true })
-        .order("created_at", { ascending: true }),
-    ]);
+  const [
+    { data: linkedRows, error: linkedError },
+    { data: checklistItems, error: checklistError },
+    attachmentRows,
+  ] = await Promise.all([
+    supabase
+      .from("project_requests")
+      .select("request_id")
+      .eq("project_id", id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("project_checklist_items")
+      .select("*")
+      .eq("project_id", id)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("project_attachments")
+      .select("*")
+      .eq("project_id", id)
+      .order("created_at", { ascending: false })
+      .then(({ data, error }) => {
+        if (error) {
+          if (error.code === "PGRST205" || error.code === "42P01") {
+            console.warn(
+              "project_attachments 테이블이 없어 첨부파일을 빈 값으로 처리합니다. 마이그레이션 적용이 필요합니다.",
+            );
+            return [] as ProjectAttachment[];
+          }
+          throw error;
+        }
+        return (data ?? []) as ProjectAttachment[];
+      }),
+  ]);
 
   if (linkedError) throw linkedError;
   if (checklistError) throw checklistError;
@@ -196,6 +233,7 @@ export async function getProjectDetailForUser(
     project,
     linkedRequests,
     checklistItems: (checklistItems ?? []) as ProjectChecklistItem[],
+    attachments: attachmentRows,
   };
 }
 

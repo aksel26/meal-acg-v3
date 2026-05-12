@@ -36,7 +36,7 @@ export function CreateRequestDialog({
             "inline-flex h-10 items-center gap-1.5 rounded-md bg-[#111111] px-3.5 text-sm font-medium text-white transition-colors hover:bg-[#222222]"
           }
         >
-          <Plus size={16} />
+          <Plus size={16} strokeWidth={1.5} />
           {triggerLabel}
         </button>
       </DialogTrigger>

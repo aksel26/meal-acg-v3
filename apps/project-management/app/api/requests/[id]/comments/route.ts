@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/server";
-import { canManageRequest, getRequestById, recordEvent } from "@/lib/requests";
+import { canUpdateRequest, getRequestById, recordEvent } from "@/lib/requests";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -17,7 +17,7 @@ export async function POST(request: Request, context: RouteContext) {
       return NextResponse.json({ error: "요청을 찾을 수 없습니다." }, { status: 404 });
     }
 
-    if (!canManageRequest(session, requestRecord)) {
+    if (!canUpdateRequest(session, requestRecord)) {
       return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
     }
 

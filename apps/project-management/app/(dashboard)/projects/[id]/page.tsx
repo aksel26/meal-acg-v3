@@ -1,7 +1,11 @@
 import { notFound } from "next/navigation";
 import { ProjectDetailClient } from "@/components/projects/ProjectDetailClient";
 import { requireAuth } from "@/lib/auth";
-import { getProjectDetailForUser } from "@/lib/projects";
+import {
+  canDeleteProject,
+  canUpdateProject,
+  getProjectDetailForUser,
+} from "@/lib/projects";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -16,5 +20,11 @@ export default async function ProjectDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  return <ProjectDetailClient {...detail} />;
+  return (
+    <ProjectDetailClient
+      {...detail}
+      canEdit={canUpdateProject(user, detail.project)}
+      canDelete={canDeleteProject(user, detail.project)}
+    />
+  );
 }

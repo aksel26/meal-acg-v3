@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/server";
 import {
+  canDeleteProject,
   canUpdateProject,
   getProjectById,
   getProjectDetailForUser,
@@ -137,6 +138,38 @@ export async function PATCH(request: Request, context: RouteContext) {
     console.error("PATCH /api/projects/[id] error:", error);
     return NextResponse.json(
       { error: "프로젝트를 수정하지 못했습니다." },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(_request: Request, context: RouteContext) {
+  try {
+    const session = await requireAuth();
+    const { id } = await context.params;
+    const current = await getProjectById(id);
+
+    if (!current) {
+      return NextResponse.json(
+        { error: "프로젝트를 찾을 수 없습니다." },
+        { status: 404 },
+      );
+    }
+
+    if (!canDeleteProject(session, current)) {
+      return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
+    }
+
+    const supabase = createServiceClient();
+    const { error } = await supabase.from("projects").delete().eq("id", id);
+
+    if (error) throw error;
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("DELETE /api/projects/[id] error:", error);
+    return NextResponse.json(
+      { error: "프로젝트를 삭제하지 못했습니다." },
       { status: 500 },
     );
   }

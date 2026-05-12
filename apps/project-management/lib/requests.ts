@@ -68,6 +68,18 @@ export type RequestEvent = {
   created_at: string;
 };
 
+export type CompletionMemo = {
+  id: string;
+  request_id: string;
+  author_name: string;
+  body: string;
+  created_at: string;
+  editable: boolean;
+  source: "event" | "legacy";
+  edited_at: string | null;
+  edited_by_name: string | null;
+};
+
 export type LinkedProjectSummary = {
   id: string;
   title: string;
@@ -84,25 +96,15 @@ export function isRequestPriority(value: unknown): value is RequestPriority {
   return typeof value === "string" && REQUEST_PRIORITIES.includes(value as RequestPriority);
 }
 
-export function canManageRequest(user: SessionUser, request: RequestRecord) {
-  return (
-    user.role === "admin" ||
-    user.role === "team_lead" ||
-    request.requester_id === user.id ||
-    request.assignee_id === user.id ||
-    (request.assignee_ids?.includes(user.id) ?? false)
-  );
+export function canReadRequest(_user: SessionUser, _request: RequestRecord) {
+  return true;
 }
 
 export function canUpdateRequest(user: SessionUser, request: RequestRecord) {
-  return (
-    user.role === "admin" ||
-    user.role === "team_lead" ||
-    request.assignee_id === user.id ||
-    (request.assignee_ids?.includes(user.id) ?? false) ||
-    (request.requester_id === user.id && request.status === "접수")
-  );
+  return request.requester_id === user.id;
 }
+
+export const canDeleteRequest = canUpdateRequest;
 
 export async function getRequestById(id: string): Promise<RequestRecord | null> {
   const supabase = createServiceClient();
@@ -164,10 +166,6 @@ export async function listRequestsForUser(
     query = query.eq("requester_id", user.id);
   } else if (view === "queue") {
     query = query.or(`assignee_id.eq.${user.id},assignee_ids.cs.{${user.id}}`);
-  } else if (user.role !== "admin" && user.role !== "team_lead") {
-    query = query.or(
-      `requester_id.eq.${user.id},assignee_id.eq.${user.id},assignee_ids.cs.{${user.id}}`,
-    );
   }
 
   const { data, error } = await query;
@@ -181,7 +179,7 @@ export async function listRequestsForUser(
 export async function getRequestDetailForUser(id: string, user: SessionUser) {
   const request = await getRequestById(id);
 
-  if (!request || !canManageRequest(user, request)) {
+  if (!request || !canReadRequest(user, request)) {
     return null;
   }
 
@@ -272,23 +270,24 @@ export type RelatedRequestSummary = {
 
 async function getRelatedRequests(
   current: RequestRecord,
-  user: SessionUser,
+  _user: SessionUser,
 ): Promise<RelatedRequestSummary[]> {
-  const supabase = createServiceClient();
-  const restrictByAccess = user.role !== "admin" && user.role !== "team_lead";
+  const customerNames = (current.customer_names ?? [])
+    .map((name) => name.trim())
+    .filter(Boolean);
 
-  let query = supabase
+  if (customerNames.length === 0) {
+    return [];
+  }
+
+  const supabase = createServiceClient();
+  const query = supabase
     .from("requests")
     .select("id, title, status, priority, created_at, due_date, requester_name")
     .neq("id", current.id)
+    .overlaps("customer_names", customerNames)
     .order("created_at", { ascending: false })
     .limit(20);
-
-  if (restrictByAccess) {
-    query = query.or(
-      `requester_id.eq.${user.id},assignee_id.eq.${user.id},assignee_ids.cs.{${user.id}}`,
-    );
-  }
 
   const { data, error } = await query;
   if (error) throw error;

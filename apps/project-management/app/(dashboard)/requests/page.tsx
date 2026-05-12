@@ -19,7 +19,10 @@ export default async function RequestsPage() {
         <CreateRequestDialog />
       </div>
 
-      <RequestList requests={requests} emptyText="표시할 요청이 없습니다." />
+      <RequestList
+        requests={requests}
+        emptyText="표시할 요청이 없습니다."
+      />
     </div>
   );
 }

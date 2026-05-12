@@ -84,7 +84,7 @@ function spawnThrownEmoji(id: number): ThrownEmoji {
   return {
     id,
     emoji: FOOD_EMOJIS[Math.floor(Math.random() * FOOD_EMOJIS.length)] ?? "🍕",
-    startX: (Math.random() - 0.5) * 200,
+    startX: (Math.random() - 0.5) * 420,
     endX: (Math.random() - 0.5) * 110,
     endY: (Math.random() - 0.5) * 110,
     rotate: (Math.random() - 0.5) * 720,
@@ -213,15 +213,15 @@ function EmptyCollectionsState() {
                   initial={{
                     opacity: 0,
                     x: item.startX,
-                    y: 150,
-                    scale: 1.6,
+                    y: 260,
+                    scale: 1.9,
                     rotate: 0,
                   }}
                   animate={{
                     opacity: [0, 1, 1, 0],
                     x: item.endX,
                     y: item.endY,
-                    scale: [1.6, 1.15, 0.85],
+                    scale: [1.9, 1.15, 0.85],
                     rotate: item.rotate,
                   }}
                   transition={{

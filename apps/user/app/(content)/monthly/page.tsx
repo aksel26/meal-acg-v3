@@ -1,6 +1,6 @@
 "use client";
 import { Button } from "@repo/ui/src/button";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   useMonthlyData,
   useCollections,
@@ -18,7 +18,13 @@ import QuickActionsSection from "@/components/dashboard/QuickActionsSection";
 import { AllHistoryDialog } from "@/components/monthly/AllHistoryDialog";
 import { Popover, PopoverTrigger, PopoverContent } from "@repo/ui/src/popover";
 import { DRINKS } from "@/lib/const/const";
-import { motion } from "motion/react";
+import {
+  motion,
+  animate,
+  useAnimationControls,
+  useMotionValue,
+  useTransform,
+} from "motion/react";
 import { Check, ChevronLeft, ChevronRight } from "@repo/ui/icons";
 import Image from "next/image";
 
@@ -30,19 +36,52 @@ function isNewCollection(createdAt: string) {
   return diffMs < 3 * 24 * 60 * 60 * 1000;
 }
 
+const EASTER_EGG_INCREMENT = 10;
+
 function EmptyCollectionsState() {
+  const controls = useAnimationControls();
+  const amount = useMotionValue(0);
+  const displayAmount = useTransform(amount, (value) =>
+    `${Math.round(value).toLocaleString("ko-KR")}원`,
+  );
+  const totalRef = useRef(0);
+
+  const handleEasterEggClick = () => {
+    totalRef.current += EASTER_EGG_INCREMENT;
+    animate(amount, totalRef.current, {
+      duration: 0.45,
+      ease: [0.22, 1, 0.36, 1],
+    });
+    controls.start({
+      rotate: [0, -4, 4, -3, 3, -2, 2, 0],
+      x: [0, -2, 2, -1, 1, 0],
+      transition: { duration: 0.45, ease: "easeOut" },
+    });
+  };
+
   return (
     <div className="flex h-full flex-col items-center justify-center py-12 text-center">
-      <div className="relative mb-4 h-[212px] w-40 overflow-hidden rounded-[18px]">
+      <motion.button
+        type="button"
+        onClick={handleEasterEggClick}
+        animate={controls}
+        whileTap={{ scale: 0.96 }}
+        aria-label="배고픈 숭이에게 용돈 주기"
+        className="relative mb-4 h-[212px] w-40 overflow-hidden rounded-[18px] cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ink-black)]"
+      >
         <Image
           src="/images/배고픈 숭이.jpeg"
           alt=""
           fill
           sizes="160px"
-          className="object-cover"
+          className="object-cover pointer-events-none"
           priority={false}
+          draggable={false}
         />
-      </div>
+      </motion.button>
+      <motion.p className="mb-1 text-base font-bold text-[var(--ink-black)] tabular-nums">
+        {displayAmount}
+      </motion.p>
       <p className="text-sm text-[var(--slate-gray)]">
         현재 참여 가능한 취합이 없습니다
       </p>

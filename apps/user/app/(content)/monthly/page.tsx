@@ -163,14 +163,84 @@ function NumberTicker({ value }: { value: number }) {
   );
 }
 
+const EASTER_EGG_POLL_INTERVAL_MS = 30_000;
+
+async function fetchEasterEggTotal(signal?: AbortSignal): Promise<number> {
+  const res = await fetch("/api/easter-egg", { signal, cache: "no-store" });
+  if (!res.ok) throw new Error(`fetch failed (${res.status})`);
+  const json = (await res.json()) as {
+    success: boolean;
+    data?: { total: number };
+  };
+  return json.success ? Number(json.data?.total ?? 0) : 0;
+}
+
+async function postEasterEggClick(
+  delta: number,
+  signal?: AbortSignal,
+): Promise<number | null> {
+  try {
+    const res = await fetch("/api/easter-egg", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ delta }),
+      signal,
+    });
+    if (!res.ok) return null;
+    const json = (await res.json()) as {
+      success: boolean;
+      data?: { total: number };
+    };
+    return json.success ? Number(json.data?.total ?? 0) : null;
+  } catch {
+    return null;
+  }
+}
+
 function EmptyCollectionsState() {
   const controls = useAnimationControls();
   const [total, setTotal] = useState(0);
   const [thrownEmojis, setThrownEmojis] = useState<ThrownEmoji[]>([]);
   const throwIdRef = useRef(0);
+  const pendingDeltaRef = useRef(0);
+
+  // 최초 마운트 시 서버 누적 금액 가져오기 + 주기 폴링 + 포커스 시 재조회
+  useEffect(() => {
+    const ac = new AbortController();
+    let cancelled = false;
+
+    const sync = async () => {
+      try {
+        const serverTotal = await fetchEasterEggTotal(ac.signal);
+        if (cancelled) return;
+        // 폴링 중 다른 사용자 클릭을 반영하면서 내 미반영분은 보존
+        setTotal(serverTotal + pendingDeltaRef.current);
+      } catch {
+        /* 무시 — 다음 폴링에서 재시도 */
+      }
+    };
+
+    void sync();
+
+    const intervalId = window.setInterval(sync, EASTER_EGG_POLL_INTERVAL_MS);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") void sync();
+    };
+    window.addEventListener("focus", sync);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      cancelled = true;
+      ac.abort();
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", sync);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, []);
 
   const handleEasterEggClick = () => {
     setTotal((prev) => prev + EASTER_EGG_INCREMENT);
+    pendingDeltaRef.current += EASTER_EGG_INCREMENT;
     controls.start({
       rotate: [0, -4, 4, -3, 3, -2, 2, 0],
       x: [0, -2, 2, -1, 1, 0],
@@ -182,6 +252,15 @@ function EmptyCollectionsState() {
     window.setTimeout(() => {
       setThrownEmojis((prev) => prev.filter((item) => item.id !== id));
     }, EMOJI_THROW_DURATION_MS);
+
+    void postEasterEggClick(EASTER_EGG_INCREMENT).then((serverTotal) => {
+      pendingDeltaRef.current = Math.max(
+        0,
+        pendingDeltaRef.current - EASTER_EGG_INCREMENT,
+      );
+      if (serverTotal === null) return;
+      setTotal((prev) => Math.max(prev, serverTotal));
+    });
   };
 
   return (

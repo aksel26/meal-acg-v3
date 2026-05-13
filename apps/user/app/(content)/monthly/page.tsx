@@ -164,15 +164,23 @@ function NumberTicker({ value }: { value: number }) {
 }
 
 const EASTER_EGG_POLL_INTERVAL_MS = 30_000;
+let easterEggTotalRequest: Promise<number> | null = null;
 
-async function fetchEasterEggTotal(signal?: AbortSignal): Promise<number> {
-  const res = await fetch("/api/easter-egg", { signal, cache: "no-store" });
-  if (!res.ok) throw new Error(`fetch failed (${res.status})`);
-  const json = (await res.json()) as {
-    success: boolean;
-    data?: { total: number };
-  };
-  return json.success ? Number(json.data?.total ?? 0) : 0;
+function fetchEasterEggTotal(): Promise<number> {
+  easterEggTotalRequest ??= fetch("/api/easter-egg", { cache: "no-store" })
+    .then(async (res) => {
+      if (!res.ok) throw new Error(`fetch failed (${res.status})`);
+      const json = (await res.json()) as {
+        success: boolean;
+        data?: { total: number };
+      };
+      return json.success ? Number(json.data?.total ?? 0) : 0;
+    })
+    .finally(() => {
+      easterEggTotalRequest = null;
+    });
+
+  return easterEggTotalRequest;
 }
 
 async function postEasterEggClick(
@@ -206,13 +214,12 @@ function EmptyCollectionsState() {
 
   // 최초 마운트 시 서버 누적 금액 가져오기 + 주기 폴링 + 포커스 시 재조회
   useEffect(() => {
-    const ac = new AbortController();
-    let cancelled = false;
+    let active = true;
 
     const sync = async () => {
       try {
-        const serverTotal = await fetchEasterEggTotal(ac.signal);
-        if (cancelled) return;
+        const serverTotal = await fetchEasterEggTotal();
+        if (!active) return;
         // 폴링 중 다른 사용자 클릭을 반영하면서 내 미반영분은 보존
         setTotal(serverTotal + pendingDeltaRef.current);
       } catch {
@@ -230,8 +237,7 @@ function EmptyCollectionsState() {
     document.addEventListener("visibilitychange", onVisibilityChange);
 
     return () => {
-      cancelled = true;
-      ac.abort();
+      active = false;
       window.clearInterval(intervalId);
       window.removeEventListener("focus", sync);
       document.removeEventListener("visibilitychange", onVisibilityChange);

@@ -3,6 +3,7 @@
 import { Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { DatePicker } from "@repo/ui/src/date-picker";
 import type { RequestPriority, RequestRecord } from "@/lib/requests";
 
 type MasterMember = {
@@ -62,7 +63,9 @@ export function RequestForm({
   const [priority, setPriority] = useState<RequestPriority>(
     initialRequest?.priority ?? "P3",
   );
-  const [requestType, setRequestType] = useState(initialRequest?.request_type ?? "");
+  const [requestType, setRequestType] = useState(
+    initialRequest?.request_type ?? "",
+  );
   const [projectId, setProjectId] = useState("");
   const [customerNames, setCustomerNames] = useState<string[]>(
     initialRequest?.customer_names ?? [],
@@ -74,15 +77,20 @@ export function RequestForm({
   );
   const [affiliateOtherEnabled, setAffiliateOtherEnabled] = useState(false);
   const [affiliateOtherInput, setAffiliateOtherInput] = useState("");
-  const [teamNames, setTeamNames] = useState<string[]>(initialRequest?.team_names ?? []);
+  const [teamNames, setTeamNames] = useState<string[]>(
+    initialRequest?.team_names ?? [],
+  );
   const [assigneeIds, setAssigneeIds] = useState<string[]>(
-    initialRequest?.assignee_ids ?? initialAssignees.map((assignee) => assignee.id),
+    initialRequest?.assignee_ids ??
+      initialAssignees.map((assignee) => assignee.id),
   );
   const [assigneeNames, setAssigneeNames] = useState<string[]>(
     initialRequest?.assignee_names ??
       initialAssignees.map((assignee) => assignee.fullName),
   );
-  const [dueDate, setDueDate] = useState(initialRequest?.due_date ?? initialDueDate ?? "");
+  const [dueDate, setDueDate] = useState(
+    initialRequest?.due_date ?? initialDueDate ?? "",
+  );
   const [files, setFiles] = useState<File[]>([]);
   const [members, setMembers] = useState<MasterMember[]>([]);
   const [memberSearch, setMemberSearch] = useState("");
@@ -140,7 +148,9 @@ export function RequestForm({
     if (customerNames.length === 0) return;
 
     const optionNames = new Set(affiliateOptions.map((client) => client.name));
-    setAffiliateNames((current) => current.filter((name) => optionNames.has(name)));
+    setAffiliateNames((current) =>
+      current.filter((name) => optionNames.has(name)),
+    );
   }, [affiliateOptions, customerNames.length]);
 
   function handleRequestTypeChange(value: string) {
@@ -256,13 +266,18 @@ export function RequestForm({
       for (const file of files) {
         const formData = new FormData();
         formData.append("file", file);
-        const uploadResponse = await fetch(`/api/requests/${payload.id}/attachments`, {
-          method: "POST",
-          body: formData,
-        });
+        const uploadResponse = await fetch(
+          `/api/requests/${payload.id}/attachments`,
+          {
+            method: "POST",
+            body: formData,
+          },
+        );
         if (!uploadResponse.ok) {
           const uploadPayload = await uploadResponse.json();
-          throw new Error(uploadPayload.error || `${file.name} 업로드에 실패했습니다.`);
+          throw new Error(
+            uploadPayload.error || `${file.name} 업로드에 실패했습니다.`,
+          );
         }
       }
 
@@ -276,7 +291,11 @@ export function RequestForm({
         router.refresh();
       }
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "요청 생성에 실패했습니다.");
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "요청 생성에 실패했습니다.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -285,9 +304,13 @@ export function RequestForm({
   const inputClass =
     "h-10 w-full rounded-md border border-[#e5e7eb] bg-white px-3 text-sm text-slate-700 outline-none transition-colors focus:border-[#111111]";
   const hasCustomerSelection =
-    customerNames.length > 0 || customerOtherEnabled || Boolean(customerOtherInput.trim());
+    customerNames.length > 0 ||
+    customerOtherEnabled ||
+    Boolean(customerOtherInput.trim());
   const hasAffiliateSelection =
-    affiliateNames.length > 0 || affiliateOtherEnabled || Boolean(affiliateOtherInput.trim());
+    affiliateNames.length > 0 ||
+    affiliateOtherEnabled ||
+    Boolean(affiliateOtherInput.trim());
   const priorityOptions: { value: RequestPriority; label: string }[] = [
     { value: "P1", label: "P1 - 긴급" },
     { value: "P2", label: "P2 - 보통" },
@@ -299,7 +322,10 @@ export function RequestForm({
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-4">
           <div>
-            <label className="text-xs font-medium text-slate-600" htmlFor="title">
+            <label
+              className="text-xs font-medium text-slate-600"
+              htmlFor="title"
+            >
               제목
             </label>
             <input
@@ -313,7 +339,10 @@ export function RequestForm({
           </div>
 
           <div>
-            <label className="text-xs font-medium text-slate-600" htmlFor="body">
+            <label
+              className="text-xs font-medium text-slate-600"
+              htmlFor="body"
+            >
               요청 내용
             </label>
             <textarea
@@ -326,21 +355,32 @@ export function RequestForm({
           </div>
 
           <div>
-            <label className="text-xs font-medium text-slate-600" htmlFor="dueDate">
-              마감일
-            </label>
-            <input
-              id="dueDate"
-              type="date"
-              className={`mt-1.5 ${inputClass}`}
-              value={dueDate}
-              onChange={(event) => setDueDate(event.target.value)}
-            />
+            <label className="text-xs font-medium text-slate-600">마감일</label>
+            <div className="mt-1.5 flex items-center gap-2">
+              <DatePicker
+                className="h-10 border-[#e5e7eb] text-sm text-slate-700 hover:bg-white"
+                placeholder="마감일 선택"
+                value={dueDate}
+                onChange={setDueDate}
+              />
+              {dueDate && (
+                <button
+                  className="h-10 shrink-0 rounded-md border border-[#e5e7eb] px-3 text-xs font-medium text-slate-500 transition-colors hover:border-[#111111] hover:text-[#111111]"
+                  type="button"
+                  onClick={() => setDueDate("")}
+                >
+                  해제
+                </button>
+              )}
+            </div>
           </div>
 
           {!isEditMode && (
             <div>
-              <label className="text-xs font-medium text-slate-600" htmlFor="projectId">
+              <label
+                className="text-xs font-medium text-slate-600"
+                htmlFor="projectId"
+              >
                 연결 프로젝트
               </label>
               <select
@@ -363,7 +403,10 @@ export function RequestForm({
           )}
 
           <div>
-            <label className="text-xs font-medium text-slate-600" htmlFor="requestType">
+            <label
+              className="text-xs font-medium text-slate-600"
+              htmlFor="requestType"
+            >
               요청 유형
             </label>
             <select
@@ -409,9 +452,7 @@ export function RequestForm({
           </div>
 
           <div>
-            <label className="text-xs font-medium text-slate-600">
-              담당팀
-            </label>
+            <label className="text-xs font-medium text-slate-600">담당팀</label>
             <div className="mt-1.5 max-h-32 overflow-y-auto rounded-md border border-[#e5e7eb] bg-white p-2">
               {teams.map((team) => (
                 <label
@@ -428,7 +469,9 @@ export function RequestForm({
                 </label>
               ))}
               {teams.length === 0 && (
-                <p className="px-2 py-1.5 text-sm text-slate-400">팀 데이터가 없습니다.</p>
+                <p className="px-2 py-1.5 text-sm text-slate-400">
+                  팀 데이터가 없습니다.
+                </p>
               )}
             </div>
             {teamNames.length > 0 && (
@@ -439,9 +482,7 @@ export function RequestForm({
           </div>
 
           <div>
-            <label className="text-xs font-medium text-slate-600">
-              담당자
-            </label>
+            <label className="text-xs font-medium text-slate-600">담당자</label>
             <input
               className={`mt-1.5 ${inputClass}`}
               value={memberSearch}
@@ -461,13 +502,16 @@ export function RequestForm({
                     onChange={() => toggleAssignee(member)}
                   />
                   <span className="truncate">
-                    {member.full_name} {member.member_role ? `(${member.member_role})` : ""}
+                    {member.full_name}{" "}
+                    {member.member_role ? `(${member.member_role})` : ""}
                   </span>
                 </label>
               ))}
               {filteredMembers.length === 0 && (
                 <p className="px-2 py-1.5 text-sm text-slate-400">
-                  {members.length === 0 ? "직원 데이터가 없습니다." : "검색 결과가 없습니다."}
+                  {members.length === 0
+                    ? "직원 데이터가 없습니다."
+                    : "검색 결과가 없습니다."}
                 </p>
               )}
             </div>
@@ -480,144 +524,169 @@ export function RequestForm({
         </div>
 
         <div className="space-y-4">
-        <div>
-          <div className="flex items-center justify-between gap-2">
-            <label className="text-xs font-medium text-slate-600">
-              고객사
-            </label>
-            {hasCustomerSelection && (
-              <button
-                type="button"
-                className="text-xs font-medium text-slate-400 transition-colors hover:text-[#111111]"
-                onClick={clearCustomers}
-              >
-                전체해제
-              </button>
-            )}
-          </div>
-          <div className="mt-1.5 max-h-36 overflow-y-auto rounded-md border border-[#e5e7eb] bg-white p-2">
-            {customerGroups.map((customerName) => (
-              <label
-                key={customerName}
-                className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-slate-700 hover:bg-[#f9f9fa]"
-              >
-                <input
-                  checked={customerNames.includes(customerName)}
-                  className="size-4"
-                  type="checkbox"
-                  onChange={() => toggleCustomer(customerName)}
-                />
-                <span className="truncate">{customerName}</span>
+          <div>
+            <div className="flex items-center justify-between gap-2">
+              <label className="text-xs font-medium text-slate-600">
+                고객사
               </label>
-            ))}
-            <label className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-slate-700 hover:bg-[#f9f9fa]">
-              <input
-                checked={customerOtherEnabled}
-                className="size-4"
-                type="checkbox"
-                onChange={(event) => setCustomerOtherEnabled(event.target.checked)}
-              />
-              <span>기타</span>
-            </label>
-            {customerGroups.length === 0 && (
-              <p className="px-2 py-1.5 text-sm text-slate-400">고객사 데이터가 없습니다.</p>
-            )}
-          </div>
-          {customerOtherEnabled && (
-            <input
-              className={`mt-2 ${inputClass}`}
-              value={customerOtherInput}
-              onChange={(event) => setCustomerOtherInput(event.target.value)}
-              placeholder="고객사명을 입력하세요"
-            />
-          )}
-          {(customerNames.length > 0 || (customerOtherEnabled && customerOtherInput.trim())) && (
-            <p className="mt-1 text-[11px] text-slate-400">
-              선택됨: {[...customerNames, customerOtherInput.trim()].filter(Boolean).join(", ")}
-            </p>
-          )}
-        </div>
-
-        <div>
-          <div className="flex items-center justify-between gap-2">
-            <label className="text-xs font-medium text-slate-600">
-              계열사
-            </label>
-            {hasAffiliateSelection && (
-              <button
-                type="button"
-                className="text-xs font-medium text-slate-400 transition-colors hover:text-[#111111]"
-                onClick={clearAffiliates}
-              >
-                전체해제
-              </button>
-            )}
-          </div>
-          {customerNames.length === 0 ? (
-            <div className="mt-1.5 flex h-36 items-center justify-center rounded-md border border-dashed border-[#e5e7eb] bg-[#fafafa] px-4 text-center text-sm text-slate-400">
-              고객사를 선택하면 계열사 목록이 표시됩니다.
+              {hasCustomerSelection && (
+                <button
+                  type="button"
+                  className="text-xs font-medium text-slate-400 transition-colors hover:text-[#111111]"
+                  onClick={clearCustomers}
+                >
+                  전체해제
+                </button>
+              )}
             </div>
-          ) : (
-            <>
-              <div className="mt-1.5 max-h-36 overflow-y-auto rounded-md border border-[#e5e7eb] bg-white p-2">
-                {affiliateOptions.map((client) => (
-                  <label
-                    key={client.id}
-                    className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-slate-700 hover:bg-[#f9f9fa]"
-                  >
-                    <input
-                      checked={affiliateNames.includes(client.name)}
-                      className="size-4"
-                      type="checkbox"
-                      onChange={() => toggleAffiliate(client.name)}
-                    />
-                    <span className="truncate">{client.name}</span>
-                  </label>
-                ))}
-                <label className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-slate-700 hover:bg-[#f9f9fa]">
+            <div className="mt-1.5 max-h-36 overflow-y-auto rounded-md border border-[#e5e7eb] bg-white p-2">
+              {customerGroups.map((customerName) => (
+                <label
+                  key={customerName}
+                  className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-slate-700 hover:bg-[#f9f9fa]"
+                >
                   <input
-                    checked={affiliateOtherEnabled}
+                    checked={customerNames.includes(customerName)}
                     className="size-4"
                     type="checkbox"
-                    onChange={(event) => setAffiliateOtherEnabled(event.target.checked)}
+                    onChange={() => toggleCustomer(customerName)}
                   />
-                  <span>기타</span>
+                  <span className="truncate">{customerName}</span>
                 </label>
-                {affiliateOptions.length === 0 && (
-                  <p className="px-2 py-1.5 text-sm text-slate-400">계열사 데이터가 없습니다.</p>
-                )}
-              </div>
-              {affiliateOtherEnabled && (
+              ))}
+              <label className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-slate-700 hover:bg-[#f9f9fa]">
                 <input
-                  className={`mt-2 ${inputClass}`}
-                  value={affiliateOtherInput}
-                  onChange={(event) => setAffiliateOtherInput(event.target.value)}
-                  placeholder="계열사명을 입력하세요"
+                  checked={customerOtherEnabled}
+                  className="size-4"
+                  type="checkbox"
+                  onChange={(event) =>
+                    setCustomerOtherEnabled(event.target.checked)
+                  }
                 />
-              )}
-              {(affiliateNames.length > 0 || (affiliateOtherEnabled && affiliateOtherInput.trim())) && (
-                <p className="mt-1 text-[11px] text-slate-400">
-                  선택됨: {[...affiliateNames, affiliateOtherInput.trim()].filter(Boolean).join(", ")}
+                <span>기타</span>
+              </label>
+              {customerGroups.length === 0 && (
+                <p className="px-2 py-1.5 text-sm text-slate-400">
+                  고객사 데이터가 없습니다.
                 </p>
               )}
-            </>
-          )}
-        </div>
+            </div>
+            {customerOtherEnabled && (
+              <input
+                className={`mt-2 ${inputClass}`}
+                value={customerOtherInput}
+                onChange={(event) => setCustomerOtherInput(event.target.value)}
+                placeholder="고객사명을 입력하세요"
+              />
+            )}
+            {(customerNames.length > 0 ||
+              (customerOtherEnabled && customerOtherInput.trim())) && (
+              <p className="mt-1 text-[11px] text-slate-400">
+                선택됨:{" "}
+                {[...customerNames, customerOtherInput.trim()]
+                  .filter(Boolean)
+                  .join(", ")}
+              </p>
+            )}
+          </div>
 
           <div>
-            <label className="text-xs font-medium text-slate-600" htmlFor="files">
+            <div className="flex items-center justify-between gap-2">
+              <label className="text-xs font-medium text-slate-600">
+                계열사
+              </label>
+              {hasAffiliateSelection && (
+                <button
+                  type="button"
+                  className="text-xs font-medium text-slate-400 transition-colors hover:text-[#111111]"
+                  onClick={clearAffiliates}
+                >
+                  전체해제
+                </button>
+              )}
+            </div>
+            {customerNames.length === 0 ? (
+              <div className="mt-1.5 flex h-36 items-center justify-center rounded-md border border-dashed border-[#e5e7eb] bg-[#fafafa] px-4 text-center text-sm text-slate-400">
+                고객사를 선택하면 계열사 목록이 표시됩니다.
+              </div>
+            ) : (
+              <>
+                <div className="mt-1.5 max-h-36 overflow-y-auto rounded-md border border-[#e5e7eb] bg-white p-2">
+                  {affiliateOptions.map((client) => (
+                    <label
+                      key={client.id}
+                      className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-slate-700 hover:bg-[#f9f9fa]"
+                    >
+                      <input
+                        checked={affiliateNames.includes(client.name)}
+                        className="size-4"
+                        type="checkbox"
+                        onChange={() => toggleAffiliate(client.name)}
+                      />
+                      <span className="truncate">{client.name}</span>
+                    </label>
+                  ))}
+                  <label className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-slate-700 hover:bg-[#f9f9fa]">
+                    <input
+                      checked={affiliateOtherEnabled}
+                      className="size-4"
+                      type="checkbox"
+                      onChange={(event) =>
+                        setAffiliateOtherEnabled(event.target.checked)
+                      }
+                    />
+                    <span>기타</span>
+                  </label>
+                  {affiliateOptions.length === 0 && (
+                    <p className="px-2 py-1.5 text-sm text-slate-400">
+                      계열사 데이터가 없습니다.
+                    </p>
+                  )}
+                </div>
+                {affiliateOtherEnabled && (
+                  <input
+                    className={`mt-2 ${inputClass}`}
+                    value={affiliateOtherInput}
+                    onChange={(event) =>
+                      setAffiliateOtherInput(event.target.value)
+                    }
+                    placeholder="계열사명을 입력하세요"
+                  />
+                )}
+                {(affiliateNames.length > 0 ||
+                  (affiliateOtherEnabled && affiliateOtherInput.trim())) && (
+                  <p className="mt-1 text-[11px] text-slate-400">
+                    선택됨:{" "}
+                    {[...affiliateNames, affiliateOtherInput.trim()]
+                      .filter(Boolean)
+                      .join(", ")}
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+
+          <div>
+            <label
+              className="text-xs font-medium text-slate-600"
+              htmlFor="files"
+            >
               첨부파일
             </label>
             <label className="mt-1.5 flex cursor-pointer flex-col items-center justify-center rounded-md border border-dashed border-[#d4d8de] px-4 py-5 text-center transition-colors hover:bg-[#f9f9fa]">
               <Upload className="size-4 text-slate-400" />
               <span className="mt-1.5 text-xs text-slate-600">파일 선택</span>
-              <span className="mt-0.5 text-[11px] text-slate-400">파일당 20MB 이하</span>
+              <span className="mt-0.5 text-[11px] text-slate-400">
+                파일당 20MB 이하
+              </span>
               <input
                 id="files"
                 className="sr-only"
                 type="file"
                 multiple
-                onChange={(event) => setFiles(Array.from(event.target.files ?? []))}
+                onChange={(event) =>
+                  setFiles(Array.from(event.target.files ?? []))
+                }
               />
             </label>
             {files.length > 0 && (
@@ -631,7 +700,11 @@ export function RequestForm({
                     <button
                       className="text-slate-400 hover:text-slate-600"
                       type="button"
-                      onClick={() => setFiles((current) => current.filter((item) => item !== file))}
+                      onClick={() =>
+                        setFiles((current) =>
+                          current.filter((item) => item !== file),
+                        )
+                      }
                     >
                       <X className="size-3.5" />
                     </button>
@@ -656,7 +729,9 @@ export function RequestForm({
             disabled={submitting}
             type="submit"
           >
-            {submitting ? "저장 중" : submitLabel ?? (isEditMode ? "요청 수정" : "요청 등록")}
+            {submitting
+              ? "저장 중"
+              : (submitLabel ?? (isEditMode ? "요청 수정" : "요청 등록"))}
           </button>
         </div>
       )}

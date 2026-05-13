@@ -5,13 +5,21 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { CalendarDays, KanbanSquare, Search, Users } from "lucide-react";
 import { toast } from "@repo/ui/src/sonner";
+import { OverviewFlow } from "@/components/overview/OverviewFlow";
+import type { OverviewProject } from "@/lib/overview";
 import type { ProjectStatus, ProjectSummary } from "@/lib/projects";
 import { ProjectStatusBadge } from "@/components/projects/ProjectBadge";
 
-type ViewMode = "list" | "board" | "timeline";
+type ViewMode = "list" | "board" | "timeline" | "graph";
 const PROJECT_STATUSES: ProjectStatus[] = ["계획", "진행", "대기", "완료"];
 
-export function ProjectList({ projects }: { projects: ProjectSummary[] }) {
+export function ProjectList({
+  projects,
+  overviewProjects,
+}: {
+  projects: ProjectSummary[];
+  overviewProjects: OverviewProject[];
+}) {
   const router = useRouter();
   const [view, setView] = useState<ViewMode>("list");
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "all">("all");
@@ -81,6 +89,10 @@ export function ProjectList({ projects }: { projects: ProjectSummary[] }) {
         .some((value) => value.toLowerCase().includes(normalized));
     });
   }, [keyword, projectsState, statusFilter]);
+  const filteredOverviewProjects = useMemo(() => {
+    const projectIds = new Set(filteredProjects.map((project) => project.id));
+    return overviewProjects.filter((project) => projectIds.has(project.id));
+  }, [filteredProjects, overviewProjects]);
 
   if (projects.length === 0) {
     return (
@@ -139,6 +151,9 @@ export function ProjectList({ projects }: { projects: ProjectSummary[] }) {
           >
             타임라인
           </ViewButton>
+          <ViewButton active={view === "graph"} onClick={() => setView("graph")}>
+            그래프
+          </ViewButton>
         </div>
       </div>
 
@@ -151,6 +166,7 @@ export function ProjectList({ projects }: { projects: ProjectSummary[] }) {
         />
       )}
       {view === "timeline" && <ProjectTimeline projects={filteredProjects} />}
+      {view === "graph" && <OverviewFlow projects={filteredOverviewProjects} />}
     </section>
   );
 }
@@ -189,13 +205,15 @@ function ProjectTable({ projects }: { projects: ProjectSummary[] }) {
   return (
     <div className="overflow-hidden rounded-xl border border-[#f3f3f3] bg-white">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[1180px] table-fixed text-left">
+        <table className="w-full min-w-[1320px] table-fixed text-left">
           <colgroup>
-            <col className="w-[28%]" />
+            <col className="w-[22%]" />
+            <col className="w-[12%]" />
+            <col className="w-[12%]" />
             <col className="w-[68px]" />
             <col className="w-[112px]" />
-            <col className="w-[10%]" />
-            <col className="w-[10%]" />
+            <col className="w-[9%]" />
+            <col className="w-[9%]" />
             <col className="w-[88px]" />
             <col className="w-[104px]" />
             <col className="w-[104px]" />
@@ -205,6 +223,8 @@ function ProjectTable({ projects }: { projects: ProjectSummary[] }) {
           <thead className="border-b border-[#f3f3f3] bg-[#fafafa]">
             <tr className="text-[11px] font-medium uppercase tracking-widest text-slate-400">
               <th className="px-4 py-2.5">프로젝트</th>
+              <th className="px-4 py-2.5">고객사</th>
+              <th className="px-4 py-2.5">계열사</th>
               <th className="px-4 py-2.5">상태</th>
               <th className="px-4 py-2.5">담당</th>
               <th className="px-4 py-2.5">관련자</th>
@@ -224,13 +244,17 @@ function ProjectTable({ projects }: { projects: ProjectSummary[] }) {
                     <p className="truncate text-sm font-medium text-[#111111]">
                       {project.title}
                     </p>
-                    <p className="mt-1 truncate text-xs text-slate-500">
-                      {displayNames(project.customer_names) || "고객사 미지정"}
-                      {project.affiliate_names.length > 0
-                        ? ` · ${displayNames(project.affiliate_names)}`
-                        : ""}
-                    </p>
                   </Link>
+                </td>
+                <td className="px-4 py-3 align-middle">
+                  <p className="truncate text-xs text-slate-500">
+                    {displayNames(project.customer_names) || "-"}
+                  </p>
+                </td>
+                <td className="px-4 py-3 align-middle">
+                  <p className="truncate text-xs text-slate-500">
+                    {displayNames(project.affiliate_names) || "-"}
+                  </p>
                 </td>
                 <td className="px-4 py-3 align-middle">
                   <ProjectStatusBadge status={project.status} />

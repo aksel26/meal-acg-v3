@@ -28,7 +28,9 @@ import {
 import type {
   LinkedRequestSummary,
   ProjectAttachment,
+  ProjectFeedAttachment,
   ProjectChecklistItem,
+  ProjectFeedItem,
   ProjectRecord,
   ProjectStatus,
 } from "@/lib/projects";
@@ -52,6 +54,7 @@ export function ProjectDetailClient({
   linkedRequests,
   checklistItems,
   attachments,
+  feedItems,
   canEdit,
   canDelete,
 }: {
@@ -59,6 +62,7 @@ export function ProjectDetailClient({
   linkedRequests: LinkedRequestSummary[];
   checklistItems: ProjectChecklistItem[];
   attachments: ProjectAttachment[];
+  feedItems: ProjectFeedItem[];
   canEdit: boolean;
   canDelete: boolean;
 }) {
@@ -145,7 +149,11 @@ export function ProjectDetailClient({
 
       <div className="grid gap-4 md:grid-cols-5">
         <div className="md:col-span-3">
-          <DescriptionCard description={project.description} />
+          <ProjectFeedPanel
+            projectId={project.id}
+            items={feedItems}
+            canEdit={canEdit}
+          />
         </div>
         <div className="space-y-4 md:col-span-2">
           <ChecklistPanel projectId={project.id} items={checklistItems} />
@@ -235,6 +243,13 @@ function HeaderCard({
           <h1 className="text-2xl font-semibold leading-tight text-[#111111]">
             {project.title}
           </h1>
+          <div className="mt-3 max-w-3xl whitespace-pre-wrap text-sm leading-7 text-slate-600">
+            {project.description ? (
+              project.description
+            ) : (
+              <span className="text-slate-400">등록된 안내문이 없습니다.</span>
+            )}
+          </div>
         </div>
         {(canEdit || canDelete) && (
           <div className="flex shrink-0 items-center gap-2">
@@ -461,18 +476,547 @@ function namesToList(names: string[]) {
   return `${filtered.slice(0, 3).join(", ")} 외 ${filtered.length - 3}명`;
 }
 
-function DescriptionCard({ description }: { description: string | null }) {
+function ProjectFeedPanel({
+  projectId,
+  items,
+  canEdit,
+}: {
+  projectId: string;
+  items: ProjectFeedItem[];
+  canEdit: boolean;
+}) {
+  const router = useRouter();
+  const [content, setContent] = useState("");
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const initialAttachmentInputRef = useRef<HTMLInputElement>(null);
+
+  async function addFeedItem(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const trimmed = content.trim();
+    if (!trimmed) return;
+
+    setSubmitting(true);
+    try {
+      const response = await fetch(`/api/projects/${projectId}/feed`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ content: trimmed }),
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "피드 추가에 실패했습니다.");
+      }
+      const feedItem = (await response.json()) as ProjectFeedItem;
+      for (const file of selectedFiles) {
+        const formData = new FormData();
+        formData.append("file", file);
+        const uploadResponse = await fetch(
+          `/api/projects/${projectId}/feed/${feedItem.id}/attachments`,
+          {
+            method: "POST",
+            body: formData,
+          },
+        );
+        if (!uploadResponse.ok) {
+          const payload = await uploadResponse.json().catch(() => ({}));
+          throw new Error(
+            payload.error || `${file.name} 업로드에 실패했습니다.`,
+          );
+        }
+      }
+      setContent("");
+      setSelectedFiles([]);
+      if (initialAttachmentInputRef.current) {
+        initialAttachmentInputRef.current.value = "";
+      }
+      router.refresh();
+    } catch (feedError) {
+      toast.error(
+        feedError instanceof Error ? feedError.message : "피드 추가에 실패했습니다.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function updateFeedItem(item: ProjectFeedItem, nextContent: string) {
+    const trimmed = nextContent.trim();
+    if (!trimmed || trimmed === item.content) return false;
+
+    try {
+      const response = await fetch(`/api/projects/${projectId}/feed/${item.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ content: trimmed }),
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "피드 수정에 실패했습니다.");
+      }
+      toast.success("피드를 수정했습니다.");
+      router.refresh();
+      return true;
+    } catch (feedError) {
+      toast.error(
+        feedError instanceof Error ? feedError.message : "피드 수정에 실패했습니다.",
+      );
+      return false;
+    }
+  }
+
+  async function deleteFeedItem(item: ProjectFeedItem) {
+    if (!window.confirm("이 피드를 삭제하시겠습니까?")) return;
+
+    try {
+      const response = await fetch(`/api/projects/${projectId}/feed/${item.id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "피드 삭제에 실패했습니다.");
+      }
+      toast.success("피드를 삭제했습니다.");
+      router.refresh();
+    } catch (feedError) {
+      toast.error(
+        feedError instanceof Error ? feedError.message : "피드 삭제에 실패했습니다.",
+      );
+    }
+  }
+
   return (
     <section className={`${cardClass} px-5 py-5`}>
-      <h2 className="mb-3 text-sm font-semibold text-[#111111]">설명</h2>
-      <div className="whitespace-pre-wrap text-sm leading-7 text-slate-700">
-        {description ? (
-          description
+      <header className="flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold text-[#111111]">프로젝트 피드</h2>
+          <p className="mt-1 text-xs text-slate-400">
+            진행 내용과 의사결정을 시간순으로 기록합니다.
+          </p>
+        </div>
+        {items.length > 0 && (
+          <span className="rounded-full bg-[#f5f5f5] px-2 py-0.5 text-xs font-medium text-slate-600">
+            {items.length}
+          </span>
+        )}
+      </header>
+
+      {canEdit && (
+        <form className="mt-4 space-y-2" onSubmit={addFeedItem}>
+          <textarea
+            className="min-h-24 w-full resize-y rounded-lg border border-[#e5e7eb] bg-white px-3 py-2.5 text-sm leading-6 text-slate-700 outline-none transition-colors focus:border-[#111111] disabled:opacity-50"
+            value={content}
+            onChange={(event) => setContent(event.target.value)}
+            disabled={submitting}
+            placeholder="프로젝트 진행 내용, 결정사항, 후속 액션을 입력하세요."
+          />
+          {selectedFiles.length > 0 && (
+            <ul className="space-y-1 rounded-lg bg-[#fafafa] px-3 py-2">
+              {selectedFiles.map((file, index) => (
+                <li
+                  key={`${file.name}-${file.size}-${index}`}
+                  className="flex items-center gap-2 text-xs text-slate-500"
+                >
+                  <Paperclip
+                    size={13}
+                    strokeWidth={1.5}
+                    className="shrink-0 text-slate-400"
+                  />
+                  <span className="min-w-0 flex-1 truncate">{file.name}</span>
+                  <span className="shrink-0 text-slate-400">
+                    {formatFileSize(file.size)}
+                  </span>
+                  <button
+                    type="button"
+                    aria-label="첨부 예정 파일 제거"
+                    disabled={submitting}
+                    onClick={() =>
+                      setSelectedFiles((current) =>
+                        current.filter((_, fileIndex) => fileIndex !== index),
+                      )
+                    }
+                    className="shrink-0 rounded-md p-0.5 text-slate-400 transition-colors hover:bg-white hover:text-rose-600 disabled:opacity-40"
+                  >
+                    <X size={13} strokeWidth={1.6} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="flex items-center justify-between gap-2">
+            <input
+              ref={initialAttachmentInputRef}
+              className="sr-only"
+              multiple
+              type="file"
+              onChange={(event) => {
+                const files = Array.from(event.target.files ?? []);
+                setSelectedFiles(files);
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => initialAttachmentInputRef.current?.click()}
+              disabled={submitting}
+              className="inline-flex h-9 items-center gap-1.5 rounded-md border border-[#e5e7eb] bg-white px-3 text-sm font-medium text-slate-600 transition-colors hover:bg-[#fafafa] hover:text-[#111111] disabled:opacity-50"
+            >
+              <Paperclip size={14} strokeWidth={1.5} />
+              첨부파일
+              {selectedFiles.length > 0 && (
+                <span className="text-xs text-slate-400">
+                  {selectedFiles.length}
+                </span>
+              )}
+            </button>
+            <button
+              className={primaryBtnClass}
+              disabled={submitting || !content.trim()}
+              type="submit"
+            >
+              <Plus size={15} strokeWidth={1.5} />
+              등록
+            </button>
+          </div>
+        </form>
+      )}
+
+      <div className="mt-5">
+        {items.length === 0 ? (
+          <div className="rounded-lg bg-[#fafafa] px-4 py-10 text-center">
+            <p className="text-sm text-slate-500">아직 등록된 피드가 없습니다.</p>
+            {canEdit && (
+              <p className="mt-1 text-xs text-slate-400">
+                위 입력창에서 첫 피드를 남겨보세요.
+              </p>
+            )}
+          </div>
         ) : (
-          <span className="text-slate-400">프로젝트 설명이 없습니다.</span>
+          <ol className="relative space-y-4 border-l border-[#e5e7eb] pl-4">
+            {items.map((item) => (
+              <ProjectFeedItemRow
+                key={item.id}
+                projectId={projectId}
+                item={item}
+                canEdit={canEdit}
+                onSave={(nextContent) => updateFeedItem(item, nextContent)}
+                onDelete={() => deleteFeedItem(item)}
+              />
+            ))}
+          </ol>
         )}
       </div>
     </section>
+  );
+}
+
+function ProjectFeedItemRow({
+  projectId,
+  item,
+  canEdit,
+  onSave,
+  onDelete,
+}: {
+  projectId: string;
+  item: ProjectFeedItem;
+  canEdit: boolean;
+  onSave: (nextContent: string) => Promise<boolean>;
+  onDelete: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(item.content);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [replacingId, setReplacingId] = useState<string | null>(null);
+  const [deletingAttachmentId, setDeletingAttachmentId] = useState<string | null>(
+    null,
+  );
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const attachmentInputRef = useRef<HTMLInputElement>(null);
+  const replaceInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const router = useRouter();
+
+  useEffect(() => {
+    setDraft(item.content);
+  }, [item.content]);
+
+  useEffect(() => {
+    if (editing) {
+      textareaRef.current?.focus();
+      textareaRef.current?.setSelectionRange(draft.length, draft.length);
+    }
+  }, [draft.length, editing]);
+
+  const isEdited = item.updated_at && item.updated_at !== item.created_at;
+
+  async function saveDraft() {
+    setSaving(true);
+    const ok = await onSave(draft);
+    setSaving(false);
+    if (ok || draft.trim() === item.content) {
+      setEditing(false);
+    }
+  }
+
+  function cancelEdit() {
+    setDraft(item.content);
+    setEditing(false);
+  }
+
+  async function uploadAttachments(event: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0) return;
+
+    setUploading(true);
+    try {
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append("file", file);
+        const response = await fetch(
+          `/api/projects/${projectId}/feed/${item.id}/attachments`,
+          {
+            method: "POST",
+            body: formData,
+          },
+        );
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(
+            payload.error || `${file.name} 업로드에 실패했습니다.`,
+          );
+        }
+      }
+      toast.success("피드 첨부파일을 업로드했습니다.");
+      router.refresh();
+    } catch (uploadError) {
+      toast.error(
+        uploadError instanceof Error
+          ? uploadError.message
+          : "피드 첨부파일 업로드에 실패했습니다.",
+      );
+    } finally {
+      setUploading(false);
+      event.target.value = "";
+    }
+  }
+
+  async function replaceAttachment(
+    attachment: ProjectFeedAttachment,
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setReplacingId(attachment.id);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await fetch(
+        `/api/projects/${projectId}/feed/${item.id}/attachments/${attachment.id}`,
+        {
+          method: "PATCH",
+          body: formData,
+        },
+      );
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "첨부파일 수정에 실패했습니다.");
+      }
+      toast.success("첨부파일을 교체했습니다.");
+      router.refresh();
+    } catch (replaceError) {
+      toast.error(
+        replaceError instanceof Error
+          ? replaceError.message
+          : "첨부파일 수정에 실패했습니다.",
+      );
+    } finally {
+      setReplacingId(null);
+      event.target.value = "";
+    }
+  }
+
+  async function deleteAttachment(attachment: ProjectFeedAttachment) {
+    if (!window.confirm(`'${attachment.file_name}'을(를) 삭제하시겠습니까?`)) {
+      return;
+    }
+
+    setDeletingAttachmentId(attachment.id);
+    try {
+      const response = await fetch(
+        `/api/projects/${projectId}/feed/${item.id}/attachments/${attachment.id}`,
+        { method: "DELETE" },
+      );
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "첨부파일 삭제에 실패했습니다.");
+      }
+      toast.success("첨부파일을 삭제했습니다.");
+      router.refresh();
+    } catch (deleteError) {
+      toast.error(
+        deleteError instanceof Error
+          ? deleteError.message
+          : "첨부파일 삭제에 실패했습니다.",
+      );
+    } finally {
+      setDeletingAttachmentId(null);
+    }
+  }
+
+  return (
+    <li className="relative">
+      <span className="absolute -left-[21px] top-2 size-2 rounded-full bg-slate-300 ring-4 ring-white" />
+      <div className="group rounded-lg border border-[#f3f3f3] bg-white px-4 py-3 transition-colors hover:border-slate-200 hover:bg-[#fafafa]">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs text-slate-400">
+              {item.created_by_name} · {formatDateTime(item.created_at)}
+              {isEdited && ` · 수정 ${formatRelative(item.updated_at)}`}
+            </p>
+            {editing ? (
+              <textarea
+                ref={textareaRef}
+                className="mt-2 min-h-24 w-full resize-y rounded-md border border-[#e5e7eb] bg-white px-3 py-2 text-sm leading-6 text-slate-700 outline-none focus:border-[#111111] disabled:opacity-50"
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                disabled={saving}
+              />
+            ) : (
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-slate-700">
+                {item.content}
+              </p>
+            )}
+            {item.attachments.length > 0 && (
+              <ul className="mt-3 space-y-1.5">
+                {item.attachments.map((attachment) => (
+                  <li
+                    key={attachment.id}
+                    className="flex items-center gap-2 rounded-md border border-[#f3f3f3] bg-[#fafafa] px-2.5 py-2"
+                  >
+                    <Paperclip
+                      size={13}
+                      strokeWidth={1.5}
+                      className="shrink-0 text-slate-400"
+                    />
+                    <a
+                      href={`/api/projects/${projectId}/feed/${item.id}/attachments/${attachment.id}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="min-w-0 flex-1"
+                    >
+                      <p className="truncate text-xs font-medium text-slate-700">
+                        {attachment.file_name}
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-slate-400">
+                        {formatFileSize(attachment.size_bytes)} ·{" "}
+                        {attachment.uploaded_by_name}
+                      </p>
+                    </a>
+                    {canEdit && (
+                      <>
+                        <input
+                          ref={(node) => {
+                            replaceInputRefs.current[attachment.id] = node;
+                          }}
+                          className="sr-only"
+                          type="file"
+                          onChange={(event) => replaceAttachment(attachment, event)}
+                        />
+                        <button
+                          type="button"
+                          aria-label="첨부파일 수정"
+                          disabled={replacingId === attachment.id}
+                          onClick={() =>
+                            replaceInputRefs.current[attachment.id]?.click()
+                          }
+                          className="shrink-0 rounded-md p-1 text-slate-400 transition-colors hover:bg-white hover:text-[#111111] disabled:opacity-40"
+                        >
+                          <Upload size={13} strokeWidth={1.5} />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label="첨부파일 삭제"
+                          disabled={deletingAttachmentId === attachment.id}
+                          onClick={() => deleteAttachment(attachment)}
+                          className="shrink-0 rounded-md p-1 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40"
+                        >
+                          <Trash2 size={13} strokeWidth={1.5} />
+                        </button>
+                      </>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {canEdit && (
+              <div className="mt-3">
+                <input
+                  ref={attachmentInputRef}
+                  className="sr-only"
+                  multiple
+                  type="file"
+                  onChange={uploadAttachments}
+                />
+                <button
+                  type="button"
+                  onClick={() => attachmentInputRef.current?.click()}
+                  disabled={uploading}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#e5e7eb] bg-white px-2.5 text-xs font-medium text-slate-500 transition-colors hover:bg-[#fafafa] hover:text-[#111111] disabled:opacity-50"
+                >
+                  <Paperclip size={13} strokeWidth={1.5} />
+                  {uploading ? "업로드 중..." : "첨부파일"}
+                </button>
+              </div>
+            )}
+          </div>
+          {canEdit && (
+            <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+              {editing ? (
+                <>
+                  <button
+                    type="button"
+                    aria-label="저장"
+                    onClick={() => void saveDraft()}
+                    disabled={saving || !draft.trim() || draft.trim() === item.content}
+                    className="rounded-md p-1 text-slate-500 transition-colors hover:bg-[#f3f3f3] hover:text-[#111111] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <Check size={14} strokeWidth={2} />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="취소"
+                    onClick={cancelEdit}
+                    disabled={saving}
+                    className="rounded-md p-1 text-slate-400 transition-colors hover:bg-[#f3f3f3] hover:text-[#111111]"
+                  >
+                    <X size={14} strokeWidth={1.6} />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    aria-label="수정"
+                    onClick={() => setEditing(true)}
+                    className="rounded-md p-1 text-slate-400 transition-colors hover:bg-[#f3f3f3] hover:text-[#111111]"
+                  >
+                    <Pencil size={14} strokeWidth={1.5} />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="삭제"
+                    onClick={onDelete}
+                    className="rounded-md p-1 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                  >
+                    <Trash2 size={14} strokeWidth={1.5} />
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </li>
   );
 }
 
@@ -1281,6 +1825,16 @@ function formatDate(value: string) {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
+  });
+}
+
+function formatDateTime(value: string) {
+  return new Date(value).toLocaleString("ko-KR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 

@@ -9,6 +9,7 @@ export type OverviewRequest = {
   status: RequestStatus;
   priority: RequestPriority;
   due_date: string | null;
+  customer_names: string[];
 };
 
 export type OverviewProject = Pick<
@@ -45,7 +46,7 @@ export async function getOverviewProjects(
   if (requestIds.length > 0) {
     const { data: requests, error: requestsError } = await supabase
       .from("requests")
-      .select("id, title, status, priority, due_date")
+      .select("id, title, status, priority, due_date, customer_names")
       .in("id", requestIds);
 
     if (requestsError) throw requestsError;

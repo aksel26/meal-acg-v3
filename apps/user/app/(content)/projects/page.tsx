@@ -1,11 +1,15 @@
 import { ProjectList } from "@/components/projects/ProjectList";
 import { CreateProjectDialog } from "@/components/projects/CreateProjectDialog";
 import { requireAuth } from "@/lib/auth";
+import { getOverviewProjects } from "@/lib/overview";
 import { listProjectsForUser } from "@/lib/projects";
 
 export default async function ProjectsPage() {
   const user = await requireAuth();
-  const projects = await listProjectsForUser(user);
+  const [projects, overviewProjects] = await Promise.all([
+    listProjectsForUser(user),
+    getOverviewProjects(user),
+  ]);
 
   return (
     <div className="space-y-5 p-4 md:p-6">
@@ -18,7 +22,7 @@ export default async function ProjectsPage() {
         </div>
         <CreateProjectDialog />
       </div>
-      <ProjectList projects={projects} />
+      <ProjectList projects={projects} overviewProjects={overviewProjects} />
     </div>
   );
 }

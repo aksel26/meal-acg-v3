@@ -313,7 +313,7 @@ export function EditProjectDialog({
             </div>
 
             <label className="block">
-              <span className={labelClass}>내용</span>
+              <span className={labelClass}>안내문</span>
               <textarea
                 className="mt-1.5 min-h-28 w-full resize-y rounded-md border border-[#e5e7eb] bg-white px-3 py-2.5 text-sm leading-6 text-slate-700 outline-none transition-colors focus:border-[#111111]"
                 value={form.description}
@@ -323,7 +323,7 @@ export function EditProjectDialog({
                     description: event.target.value,
                   }))
                 }
-                placeholder="프로젝트 범위, 주요 요청, 보고 맥락을 적어주세요."
+                placeholder="프로젝트 목적, 범위, 참고해야 할 고정 안내를 적어주세요."
               />
             </label>
           </section>

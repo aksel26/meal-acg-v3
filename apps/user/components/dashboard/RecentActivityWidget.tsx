@@ -32,6 +32,16 @@ export function RecentActivityWidget() {
         ) : (
           <>
             <ActivityGroup
+              title="프로젝트"
+              emptyText="최근 프로젝트가 없습니다."
+              items={data.projects.map((project) => ({
+                href: `/projects/${project.id}`,
+                title: project.title,
+                meta: `${project.ownerName ?? "담당자 미지정"} · ${project.status}`,
+                date: project.createdAt,
+              }))}
+            />
+            <ActivityGroup
               title="요청"
               emptyText="최근 요청이 없습니다."
               items={data.requests.map((request) => ({
@@ -49,16 +59,6 @@ export function RecentActivityWidget() {
                 title: comment.body,
                 meta: `${comment.authorName} · ${comment.requestTitle}`,
                 date: comment.createdAt,
-              }))}
-            />
-            <ActivityGroup
-              title="프로젝트"
-              emptyText="최근 프로젝트가 없습니다."
-              items={data.projects.map((project) => ({
-                href: `/projects/${project.id}`,
-                title: project.title,
-                meta: `${project.ownerName ?? "담당자 미지정"} · ${project.status}`,
-                date: project.createdAt,
               }))}
             />
           </>

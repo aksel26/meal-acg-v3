@@ -81,7 +81,7 @@ export function DayRequestList({ selectedDate, requests }: DayRequestListProps) 
       {undatedCount > 0 && (
         <div className="border-t border-[#f3f3f3] px-4 py-3">
           <Link
-            href="/queue"
+            href="/requests"
             className="flex items-center justify-between text-xs text-slate-500 transition-colors hover:text-[#111111]"
           >
             <span>마감일 미정 {undatedCount}건</span>

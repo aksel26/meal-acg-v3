@@ -36,6 +36,9 @@ const PAGE_TITLES: Record<string, string> = {
   "/notices": "공지/일정",
   "/profile": "내 정보 수정",
   "/acg-life": "ACG 라이프",
+  "/project-dashboard": "대시보드",
+  "/projects": "프로젝트",
+  "/requests": "업무 요청",
 };
 
 const Header = () => {

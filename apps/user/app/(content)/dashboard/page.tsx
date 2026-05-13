@@ -1,9 +1,6 @@
 "use client";
 
 import DashboardGridCalendar from "@/components/dashboard/DashboardGridCalendar";
-import { ProjectSummaryCards } from "@/components/dashboard/ProjectSummaryCards";
-import { RecentActivityWidget } from "@/components/dashboard/RecentActivityWidget";
-import { MyCalendarPanel } from "@/components/dashboard/MyCalendarPanel";
 import { useMealData } from "@/hooks/use-meal-data";
 import { useUserStore } from "@/stores/userStore";
 import { CalendarPlus, UtensilsCrossed, Wallet, Cake, Coffee, Bell } from "lucide-react";
@@ -210,7 +207,6 @@ function SelectedDateDetail({
 }) {
   if (!date) return null;
   const dateStr = dayjs(date).tz("Asia/Seoul").format("M월 D일 (ddd)");
-  const hasData = postings.length > 0 || dayoffs.length > 0;
 
   return (
     <div>
@@ -436,20 +432,6 @@ export default function DashboardPage() {
             </motion.div>
           </div>
         </div>
-
-      <motion.section
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-        className="mt-6 space-y-4"
-      >
-        <h2 className="text-base font-semibold text-slate-900">업무 / 프로젝트</h2>
-        <ProjectSummaryCards />
-        <div className="grid gap-4 lg:grid-cols-[6fr_4fr]">
-          <MyCalendarPanel />
-          <RecentActivityWidget />
-        </div>
-      </motion.section>
 
       <UpdateNotificationDialog />
     </React.Fragment>

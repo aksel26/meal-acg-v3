@@ -64,6 +64,31 @@ export type ProjectChecklistItem = {
   updated_at: string;
 };
 
+export type ProjectFeedItem = {
+  id: string;
+  project_id: string;
+  content: string;
+  created_by: string;
+  created_by_name: string;
+  created_at: string;
+  updated_at: string;
+  attachments: ProjectFeedAttachment[];
+};
+
+export type ProjectFeedAttachment = {
+  id: string;
+  project_id: string;
+  feed_item_id: string;
+  file_name: string;
+  storage_path: string;
+  content_type: string | null;
+  size_bytes: number;
+  uploaded_by: string;
+  uploaded_by_name: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export type LinkedRequestSummary = {
   id: string;
   title: string;
@@ -86,6 +111,7 @@ export type ProjectDetail = {
   linkedRequests: LinkedRequestSummary[];
   checklistItems: ProjectChecklistItem[];
   attachments: ProjectAttachment[];
+  feedItems: ProjectFeedItem[];
 };
 
 export function isProjectStatus(value: unknown): value is ProjectStatus {
@@ -181,6 +207,7 @@ export async function getProjectDetailForUser(
     { data: linkedRows, error: linkedError },
     { data: checklistItems, error: checklistError },
     attachmentRows,
+    feedRows,
   ] = await Promise.all([
     supabase
       .from("project_requests")
@@ -198,7 +225,7 @@ export async function getProjectDetailForUser(
       .select("*")
       .eq("project_id", id)
       .order("created_at", { ascending: false })
-      .then(({ data, error }) => {
+      .then(async ({ data, error }) => {
         if (error) {
           if (error.code === "PGRST205" || error.code === "42P01") {
             console.warn(
@@ -209,6 +236,54 @@ export async function getProjectDetailForUser(
           throw error;
         }
         return (data ?? []) as ProjectAttachment[];
+      }),
+    supabase
+      .from("project_feed_items")
+      .select("*")
+      .eq("project_id", id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .then(async ({ data, error }) => {
+        if (error) {
+          if (error.code === "PGRST205" || error.code === "42P01") {
+            console.warn(
+              "project_feed_items 테이블이 없어 프로젝트 피드를 빈 값으로 처리합니다. 마이그레이션 적용이 필요합니다.",
+            );
+            return [] as ProjectFeedItem[];
+          }
+          throw error;
+        }
+        const feedItems = (data ?? []) as Omit<ProjectFeedItem, "attachments">[];
+        if (feedItems.length === 0) return [];
+
+        const feedIds = feedItems.map((item) => item.id);
+        const { data: attachments, error: attachmentError } = await supabase
+          .from("project_feed_attachments")
+          .select("*")
+          .in("feed_item_id", feedIds)
+          .order("created_at", { ascending: true });
+
+        if (attachmentError) {
+          if (attachmentError.code === "PGRST205" || attachmentError.code === "42P01") {
+            console.warn(
+              "project_feed_attachments 테이블이 없어 프로젝트 피드 첨부파일을 빈 값으로 처리합니다. 마이그레이션 적용이 필요합니다.",
+            );
+            return feedItems.map((item) => ({ ...item, attachments: [] }));
+          }
+          throw attachmentError;
+        }
+
+        const attachmentsByFeedId = new Map<string, ProjectFeedAttachment[]>();
+        for (const attachment of (attachments ?? []) as ProjectFeedAttachment[]) {
+          const current = attachmentsByFeedId.get(attachment.feed_item_id) ?? [];
+          current.push(attachment);
+          attachmentsByFeedId.set(attachment.feed_item_id, current);
+        }
+
+        return feedItems.map((item) => ({
+          ...item,
+          attachments: attachmentsByFeedId.get(item.id) ?? [],
+        }));
       }),
   ]);
 
@@ -238,6 +313,7 @@ export async function getProjectDetailForUser(
     linkedRequests,
     checklistItems: (checklistItems ?? []) as ProjectChecklistItem[],
     attachments: attachmentRows,
+    feedItems: feedRows,
   };
 }
 

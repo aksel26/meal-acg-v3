@@ -14,7 +14,6 @@ import {
   Megaphone,
   DoorOpen,
   MessageSquareText,
-  ClipboardList,
   LogOut,
   X,
   Bell,
@@ -23,10 +22,8 @@ import {
   ChevronRight,
   ExternalLink,
   FolderKanban,
-  Network,
   Inbox,
-  Send,
-  CheckSquare,
+  LayoutDashboard,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import LOGO from "@/public/images/ACG_LOGO_GRAY.png";
@@ -95,6 +92,19 @@ const menuGroups: MenuGroup[] = [
     ],
   },
   {
+    label: "업무 / 프로젝트",
+    items: [
+      {
+        id: "project-dashboard",
+        label: "대시보드",
+        href: "/project-dashboard",
+        icon: LayoutDashboard,
+      },
+      { id: "projects", label: "프로젝트", href: "/projects", icon: FolderKanban },
+      { id: "requests", label: "업무 요청", href: "/requests", icon: Inbox },
+    ],
+  },
+  {
     label: "ACG 라이프",
     items: [],
     href: "/acg-life",
@@ -106,19 +116,11 @@ const menuGroups: MenuGroup[] = [
     icon: ExternalLink,
     external: true,
   },
-  {
-    label: "업무 / 프로젝트",
-    items: [
-      { id: "projects", label: "프로젝트", href: "/projects", icon: FolderKanban },
-      { id: "overview", label: "한눈에 보기", href: "/overview", icon: Network },
-      { id: "requests", label: "업무 요청", href: "/requests", icon: Inbox },
-      { id: "requests-mine", label: "내 업무 요청", href: "/requests/mine", icon: Send },
-      { id: "queue", label: "처리할 업무 요청", href: "/queue", icon: CheckSquare },
-    ],
-  },
 ];
 
 // ─── Helpers ───
+
+const SIDEBAR_ICON_STROKE_WIDTH = 1.25;
 
 function formatTime(isoString: string) {
   return dayjs(isoString).tz("Asia/Seoul").format("HH:mm");
@@ -281,6 +283,7 @@ function NavMenu() {
                   {Icon && (
                     <Icon
                       size={14}
+                      strokeWidth={SIDEBAR_ICON_STROKE_WIDTH}
                       className="text-slate-300 group-hover:text-slate-400"
                     />
                   )}
@@ -298,6 +301,7 @@ function NavMenu() {
                   </p>
                   <ChevronRight
                     size={14}
+                    strokeWidth={SIDEBAR_ICON_STROKE_WIDTH}
                     className="text-slate-300 transition-colors duration-200 group-hover:text-slate-500"
                   />
                 </Link>
@@ -318,6 +322,7 @@ function NavMenu() {
               </p>
               <ChevronDown
                 size={14}
+                strokeWidth={SIDEBAR_ICON_STROKE_WIDTH}
                 className={`text-slate-300 transition-transform duration-200 group-hover:text-slate-400 ${
                   isCollapsed ? "-rotate-90" : ""
                 }`}
@@ -335,7 +340,11 @@ function NavMenu() {
 
                   const content = (
                     <>
-                      <item.icon size={18} className="shrink-0" />
+                      <item.icon
+                        size={18}
+                        strokeWidth={SIDEBAR_ICON_STROKE_WIDTH}
+                        className="shrink-0"
+                      />
                       <span className="flex-1 truncate">{item.label}</span>
                       {item.badge && (
                         <span className="rounded-full bg-rose-500 px-1.5 py-0.5 text-[9px] font-bold leading-none text-white">
@@ -385,7 +394,11 @@ function NotificationToggle() {
   useEffect(() => {
     if (!userId) return;
 
-    if (isIOSSafari() && !("standalone" in navigator && (navigator as any).standalone)) {
+    const isStandalone =
+      "standalone" in navigator &&
+      Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
+
+    if (isIOSSafari() && !isStandalone) {
       setStatus("unsupported");
       return;
     }
@@ -441,7 +454,11 @@ function NotificationToggle() {
       disabled={isSubscribed || isDenied}
       className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-400 transition-colors hover:bg-[#f9f9fa] hover:text-slate-500 disabled:hover:bg-transparent disabled:hover:text-slate-400"
     >
-      {isSubscribed ? <Bell size={18} /> : <BellOff size={18} />}
+      {isSubscribed ? (
+        <Bell size={18} strokeWidth={SIDEBAR_ICON_STROKE_WIDTH} />
+      ) : (
+        <BellOff size={18} strokeWidth={SIDEBAR_ICON_STROKE_WIDTH} />
+      )}
       <span className="flex-1 text-left">
         {isSubscribed ? "알림 켜짐" : isDenied ? "알림 차단됨" : "알림 받기"}
       </span>
@@ -495,7 +512,7 @@ export function Sidebar() {
           onClick={handleLogout}
           className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-400 transition-colors hover:bg-[#f9f9fa] hover:text-slate-500"
         >
-          <LogOut size={18} />
+          <LogOut size={18} strokeWidth={SIDEBAR_ICON_STROKE_WIDTH} />
           로그아웃
         </button>
       </div>
@@ -556,7 +573,7 @@ export function MobileSidebar() {
                 onClick={close}
                 className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-[#f9f9fa] hover:text-slate-600"
               >
-                <X size={20} />
+                <X size={20} strokeWidth={SIDEBAR_ICON_STROKE_WIDTH} />
               </button>
             </div>
 
@@ -576,7 +593,7 @@ export function MobileSidebar() {
                 onClick={handleLogout}
                 className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-400 transition-colors hover:bg-[#f9f9fa] hover:text-slate-500"
               >
-                <LogOut size={18} />
+                <LogOut size={18} strokeWidth={SIDEBAR_ICON_STROKE_WIDTH} />
                 로그아웃
               </button>
             </div>

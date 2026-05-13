@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PROTECTED_PREFIXES = ["/projects", "/overview", "/requests", "/queue"];
+const PROTECTED_PREFIXES = [
+  "/project-dashboard",
+  "/projects",
+  "/requests",
+];
 const COOKIE_NAME = "acg_session";
 
 export function middleware(request: NextRequest) {
@@ -24,8 +28,7 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/projects/:path*",
-    "/overview/:path*",
+    "/project-dashboard/:path*",
     "/requests/:path*",
-    "/queue/:path*",
   ],
 };

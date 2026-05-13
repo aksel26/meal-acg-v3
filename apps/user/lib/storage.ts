@@ -50,6 +50,22 @@ export async function uploadProjectAttachment(
   );
 }
 
+export async function uploadProjectFeedAttachment(
+  projectId: string,
+  feedId: string,
+  fileBuffer: Buffer,
+  fileName: string,
+  contentType: string,
+): Promise<UploadResult> {
+  return uploadToBucket(
+    PROJECT_BUCKET,
+    `${projectId}/feed/${feedId}`,
+    fileBuffer,
+    fileName,
+    contentType,
+  );
+}
+
 export async function getProjectAttachmentSignedUrl(
   path: string,
 ): Promise<string | null> {

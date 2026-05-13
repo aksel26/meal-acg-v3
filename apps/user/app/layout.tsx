@@ -4,8 +4,6 @@ import "@repo/ui/styles.css";
 import type { Metadata, Viewport } from "next";
 import QueryProvider from "./providers/QueryProvider"; // 위에서 생성한 Provider 임포트
 import { Analytics } from "@vercel/analytics/next";
-// import { Geist } from "next/font/google";
-import localFont from "next/font/local";
 import dayjs from "dayjs";
 
 const APP_NAME = "🍙 ACG 식대";
@@ -63,15 +61,6 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
 };
-const myFont = localFont({
-  src: [
-    { path: "../fonts/NanumSquareRoundL.ttf", weight: "300" },
-    { path: "../fonts/NanumSquareRoundR.ttf", weight: "400" },
-    { path: "../fonts/NanumSquareRoundB.ttf", weight: "700" },
-    { path: "../fonts/NanumSquareRoundEB.ttf", weight: "800" },
-  ],
-});
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko">
@@ -83,7 +72,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <link rel="apple-touch-icon" href="/ios/AppIcon@2x.png"></link>
       </head>
-      <body className={myFont.className}>
+      <body>
         <QueryProvider>
           {children}
           <Analytics />

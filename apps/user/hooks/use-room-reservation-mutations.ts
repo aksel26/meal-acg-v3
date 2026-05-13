@@ -22,7 +22,10 @@ export function useCreateRoomReservation() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      if (!res.ok) throw new Error("Failed to create");
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || "Failed to create");
+      }
       return res.json();
     },
     onSuccess: () => {
@@ -40,7 +43,10 @@ export function useUpdateRoomReservation() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      if (!res.ok) throw new Error("Failed to update");
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || "Failed to update");
+      }
       return res.json();
     },
     onSuccess: () => {

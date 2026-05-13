@@ -8,7 +8,7 @@ function isValidTime(t: string): boolean {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function db(supabase: any) {
-  return supabase.from("room_reservations");
+  return supabase.schema("supervisor").from("room_reservations");
 }
 
 export async function GET(request: NextRequest) {
@@ -42,7 +42,17 @@ export async function POST(request: NextRequest) {
     const { room_id, date, start_time, end_time, type, title, content, reserved_by, cc_members } = body;
 
     if (!room_id || !date || !start_time || !end_time || !type) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      const missing = [
+        !room_id ? "room_id" : null,
+        !date ? "date" : null,
+        !start_time ? "start_time" : null,
+        !end_time ? "end_time" : null,
+        !type ? "type" : null,
+      ].filter(Boolean);
+      return NextResponse.json(
+        { error: "Missing required fields", missing },
+        { status: 400 }
+      );
     }
     if (!isValidTime(start_time) || !isValidTime(end_time)) {
       return NextResponse.json({ error: "Times must be on 30-min boundaries" }, { status: 400 });

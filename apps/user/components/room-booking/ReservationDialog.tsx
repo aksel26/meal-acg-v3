@@ -155,6 +155,11 @@ export default function ReservationDialog({
         }
       );
     } else {
+      if (!effectiveRoomId || !effectiveStart || !effectiveEnd) {
+        toast.error("회의실과 예약 시간을 다시 선택해주세요");
+        return;
+      }
+
       createMutation.mutate(
         {
           room_id: effectiveRoomId,

@@ -12,34 +12,34 @@ type Props = {
   onResizeStart: (edge: "left" | "right") => void;
 };
 
-const TYPE_STYLES: Record<string, { bg: string; border: string; text: string; label: string }> = {
+const TYPE_STYLES: Record<string, { bg: string; indicator: string; text: string; label: string }> = {
   supervisor: {
-    bg: "bg-blue-100",
-    border: "border-l-blue-500",
+    bg: "bg-blue-50",
+    indicator: "bg-blue-500",
     text: "text-blue-800",
     label: "감독관",
   },
   interview: {
-    bg: "bg-indigo-100",
-    border: "border-l-indigo-500",
+    bg: "bg-indigo-50",
+    indicator: "bg-indigo-500",
     text: "text-indigo-800",
     label: "면접",
   },
   meeting: {
-    bg: "bg-emerald-100",
-    border: "border-l-emerald-500",
+    bg: "bg-emerald-50",
+    indicator: "bg-emerald-500",
     text: "text-emerald-800",
     label: "회의",
   },
   client_meeting: {
-    bg: "bg-amber-100",
-    border: "border-l-amber-500",
+    bg: "bg-amber-50",
+    indicator: "bg-amber-500",
     text: "text-amber-800",
     label: "고객사 미팅",
   },
   partner_meeting: {
-    bg: "bg-rose-100",
-    border: "border-l-rose-500",
+    bg: "bg-rose-50",
+    indicator: "bg-rose-500",
     text: "text-rose-800",
     label: "협력사 미팅",
   },
@@ -59,7 +59,7 @@ export function ReservationBlock({
   return (
     <div
       data-reservation={reservation.id}
-      className={`group absolute top-1 bottom-1 flex items-center overflow-hidden rounded border-l-[3px] px-2 text-xs transition-shadow ${style.bg} ${style.border} ${style.text} ${isDragging ? "opacity-50 shadow-lg" : "cursor-grab hover:shadow-md"}`}
+      className={`group absolute top-1 bottom-1 flex items-center gap-1.5 overflow-hidden rounded px-2 text-xs transition-shadow ${style.bg} ${style.text} ${isDragging ? "opacity-50 shadow-lg" : "cursor-grab"}`}
       style={{ left, width }}
       onMouseDown={(e) => {
         e.stopPropagation();
@@ -80,6 +80,8 @@ export function ReservationBlock({
           onResizeStart("left");
         }}
       />
+
+      <span className={`h-3.5 w-1.5 shrink-0 rounded-sm ${style.indicator}`} />
 
       <span className="truncate font-medium">
         {style.label}

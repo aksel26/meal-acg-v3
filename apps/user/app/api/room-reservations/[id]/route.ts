@@ -8,7 +8,7 @@ function isValidTime(t: string): boolean {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function db(supabase: any) {
-  return supabase.from("room_reservations");
+  return supabase.schema("supervisor").from("room_reservations");
 }
 
 export async function PATCH(

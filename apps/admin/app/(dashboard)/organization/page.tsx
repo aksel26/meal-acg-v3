@@ -116,7 +116,7 @@ const MemberRow = memo(function MemberRow({
       </div>
       <button
         onClick={() => onEdit(member)}
-        className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-400 opacity-0 transition-all hover:bg-white hover:text-[#135bec] group-hover:opacity-100"
+        className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-400 opacity-0 transition-all hover:bg-white hover:text-[#1d1d1f] group-hover:opacity-100"
         title="멤버 편집"
       >
         <Edit2 className="h-3.5 w-3.5" />
@@ -174,7 +174,7 @@ function TeamSection({
         <div className="flex items-center gap-1">
           <button
             onClick={() => onEditTeam(team)}
-            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-[#135bec]"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-[#1d1d1f]"
             title="팀 편집"
           >
             <Edit2 className="h-3.5 w-3.5" />
@@ -236,24 +236,24 @@ function DivisionSection({
   const teams = division.teams || [];
 
   return (
-    <div className="glass-panel overflow-hidden rounded-xl">
+    <div className="admin-card overflow-hidden rounded-xl">
       <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="flex flex-1 items-center gap-2.5 text-left"
         >
           {isOpen ? (
-            <ChevronDown className="h-4 w-4 text-[#135bec]" />
+            <ChevronDown className="h-4 w-4 text-[#1d1d1f]" />
           ) : (
-            <ChevronRight className="h-4 w-4 text-[#135bec]" />
+            <ChevronRight className="h-4 w-4 text-[#1d1d1f]" />
           )}
-          <Building2 className="h-4.5 w-4.5 text-[#135bec]" />
+          <Building2 className="h-4.5 w-4.5 text-[#1d1d1f]" />
           <span className="text-base font-bold text-slate-900">
             {division.name}
           </span>
           <Badge
             variant="secondary"
-            className="text-xs py-0 px-2 bg-[#135bec]/10 text-[#135bec]"
+            className="text-xs py-0 px-2 bg-[#1d1d1f]/10 text-[#1d1d1f]"
           >
             {teams.length}개 팀
           </Badge>
@@ -261,7 +261,7 @@ function DivisionSection({
         <div className="flex items-center gap-1">
           <button
             onClick={() => onAddTeam(division.id)}
-            className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium text-[#135bec] transition-colors hover:bg-[#135bec]/10"
+            className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium text-[#1d1d1f] transition-colors hover:bg-[#1d1d1f]/10"
             title="팀 추가"
           >
             <Plus className="h-3.5 w-3.5" />
@@ -269,7 +269,7 @@ function DivisionSection({
           </button>
           <button
             onClick={() => onEditDivision(division)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-[#135bec]"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-[#1d1d1f]"
             title="본부 편집"
           >
             <Edit2 className="h-3.5 w-3.5" />
@@ -714,13 +714,13 @@ export default function OrganizationPage() {
       {/* Loading State */}
       {isLoading && (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-[#135bec]" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#1d1d1f]" />
         </div>
       )}
 
       {/* Empty State */}
       {!isLoading && !orgTree && (
-        <div className="glass-panel rounded-xl py-16 text-center">
+        <div className="admin-card rounded-xl py-16 text-center">
           <Building2 className="mx-auto h-12 w-12 text-slate-300" />
           <p className="mt-4 text-lg font-medium text-slate-600">
             등록된 조직이 없습니다
@@ -733,7 +733,7 @@ export default function OrganizationPage() {
 
       {/* Org Chart View */}
       {!isLoading && orgTree && viewMode === "chart" && (
-        <div className="glass-panel overflow-hidden rounded-xl">
+        <div className="admin-card overflow-hidden rounded-xl">
           <OrgChart
             tree={orgTree}
             organizationId={orgTree.id}
@@ -766,7 +766,7 @@ export default function OrganizationPage() {
           {(directTeams.length > 0 || unassignedMembers.length > 0) && (
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               {/* Direct Teams */}
-              <div className="glass-panel overflow-hidden rounded-xl">
+              <div className="admin-card overflow-hidden rounded-xl">
                 <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
                   <div className="flex items-center gap-2.5">
                     <FolderTree className="h-4.5 w-4.5 text-slate-400" />
@@ -782,7 +782,7 @@ export default function OrganizationPage() {
                   </div>
                   <button
                     onClick={() => openDialog({ type: "createTeam" })}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium text-[#135bec] transition-colors hover:bg-[#135bec]/10"
+                    className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium text-[#1d1d1f] transition-colors hover:bg-[#1d1d1f]/10"
                   >
                     <Plus className="h-3.5 w-3.5" />
                     팀 추가
@@ -811,7 +811,7 @@ export default function OrganizationPage() {
               </div>
 
               {/* Unassigned Members */}
-              <div className="glass-panel flex flex-col overflow-hidden rounded-xl">
+              <div className="admin-card flex flex-col overflow-hidden rounded-xl">
                 <div className="flex items-center justify-between border-b border-orange-100 px-5 py-4">
                   <div className="flex items-center gap-2.5">
                     <UserX className="h-4.5 w-4.5 text-orange-500" />

@@ -549,7 +549,7 @@ function CalendarPageContent() {
               <div
                 key={day}
                 className={`text-center text-sm font-medium py-2 ${
-                  i === 0 ? "text-red-500" : i === 6 ? "text-blue-500" : ""
+                  i === 0 ? "text-red-500" : i === 6 ? "text-slate-700" : ""
                 }`}
               >
                 {day}
@@ -595,8 +595,8 @@ function CalendarPageContent() {
                 if (lower.includes("출근") || lower.includes("근무"))
                   return {
                     Icon: Briefcase,
-                    bg: "bg-blue-50",
-                    text: "text-blue-600",
+                    bg: "bg-slate-100",
+                    text: "text-slate-800",
                     label: "출근",
                   };
                 if (lower.includes("재택") || lower.includes("홈"))
@@ -653,7 +653,7 @@ function CalendarPageContent() {
                   onClick={() => handleDateClick(dateStr)}
                   className={`h-28 flex flex-col rounded-lg p-1.5 cursor-pointer transition-all duration-150 hover:-translate-y-1 ${
                     isToday
-                      ? "ring-2 ring-blue-500 bg-blue-50/30"
+                      ? "ring-2 ring-slate-700 bg-slate-100/30"
                       : isHoliday
                         ? "bg-rose-50/60"
                         : isWeekend
@@ -666,11 +666,11 @@ function CalendarPageContent() {
                     <span
                       className={`text-xs font-bold leading-none ${
                         isToday
-                          ? "text-blue-600"
+                          ? "text-slate-800"
                           : isHoliday || dayOfWeek === 0
                             ? "text-rose-500"
                             : dayOfWeek === 6
-                              ? "text-blue-500"
+                              ? "text-slate-700"
                               : "text-slate-600"
                       }`}
                     >
@@ -685,7 +685,7 @@ function CalendarPageContent() {
                       </span>
                     )}
                     {isToday && (
-                      <span className="rounded-full bg-blue-500 px-1 py-px text-[7px] font-bold text-white leading-none">
+                      <span className="rounded-full bg-slate-1000 px-1 py-px text-[7px] font-bold text-white leading-none">
                         오늘
                       </span>
                     )}

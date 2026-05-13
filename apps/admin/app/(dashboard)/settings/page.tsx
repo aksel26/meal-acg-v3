@@ -197,7 +197,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-8">
       {/* 일일 식대 단가 설정 */}
-      <section className="glass-panel rounded-xl border border-slate-200 p-6">
+      <section className="admin-card rounded-xl border border-slate-200 p-6">
         <div className="mb-5 border-b border-slate-100 pb-4">
           <h2 className="text-lg font-bold text-slate-900">일일 식대 단가</h2>
           <p className="mt-1 text-sm text-slate-500">
@@ -240,7 +240,7 @@ export default function SettingsPage() {
               className={cn(
                 "flex items-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold transition-all",
                 hasChanges
-                  ? "bg-[#135bec]/5 text-[#135bec] hover:bg-[#135bec]/10"
+                  ? "bg-[#1d1d1f]/5 text-[#1d1d1f] hover:bg-[#1d1d1f]/10"
                   : "cursor-not-allowed bg-slate-100 text-slate-400",
               )}
             >
@@ -254,7 +254,7 @@ export default function SettingsPage() {
       {/* 월별 지원금 계산 & 연간 현황 */}
       <div className="grid grid-cols-12 gap-6">
         {/* 월별 지원금 계산 */}
-        <section className="col-span-6 glass-panel rounded-xl border border-slate-200 p-6">
+        <section className="col-span-6 admin-card rounded-xl border border-slate-200 p-6">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
             <div>
               <h2 className="text-lg font-bold text-slate-900">
@@ -266,19 +266,19 @@ export default function SettingsPage() {
             </div>
 
             {/* 월 선택 */}
-            <div className="flex items-center gap-1 rounded-lg bg-[#135bec]/5 p-1">
+            <div className="flex items-center gap-1 rounded-lg bg-[#1d1d1f]/5 p-1">
               <button
                 onClick={handlePrevMonth}
-                className="flex h-9 w-9 items-center justify-center rounded-md text-[#135bec] transition-colors hover:bg-[#135bec]/10"
+                className="flex h-9 w-9 items-center justify-center rounded-md text-[#1d1d1f] transition-colors hover:bg-[#1d1d1f]/10"
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
-              <span className="min-w-[100px] text-center text-sm font-semibold text-[#135bec]">
+              <span className="min-w-[100px] text-center text-sm font-semibold text-[#1d1d1f]">
                 {currentYear}년 {currentMonth}월
               </span>
               <button
                 onClick={handleNextMonth}
-                className="flex h-9 w-9 items-center justify-center rounded-md text-[#135bec] transition-colors hover:bg-[#135bec]/10"
+                className="flex h-9 w-9 items-center justify-center rounded-md text-[#1d1d1f] transition-colors hover:bg-[#1d1d1f]/10"
               >
                 <ChevronRight className="h-5 w-5" />
               </button>
@@ -381,17 +381,17 @@ export default function SettingsPage() {
                   </div>
 
                   {/* 지원금 계산 */}
-                  <div className="rounded-lg bg-[#135bec]/5 p-4">
-                    <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-[#135bec]/60">
+                  <div className="rounded-lg bg-[#1d1d1f]/5 p-4">
+                    <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-[#1d1d1f]/60">
                       총 지원금
                     </div>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-bold text-[#135bec]">
+                      <span className="text-3xl font-bold text-[#1d1d1f]">
                         {formatCurrency(totalAllowance)}
                       </span>
-                      <span className="text-[#135bec]/60">원</span>
+                      <span className="text-[#1d1d1f]/60">원</span>
                     </div>
-                    <div className="mt-2 text-sm text-[#135bec]/60">
+                    <div className="mt-2 text-sm text-[#1d1d1f]/60">
                       {formatCurrency(dailyAllowance)}원 ×{" "}
                       {workdaysData?.actualWorkdays || 0}일
                     </div>
@@ -438,7 +438,7 @@ export default function SettingsPage() {
                     className={cn(
                       "flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold transition-all",
                       workdaysData?.actualWorkdays
-                        ? "bg-[#135bec]/5 text-[#135bec] hover:bg-[#135bec]/10"
+                        ? "bg-[#1d1d1f]/5 text-[#1d1d1f] hover:bg-[#1d1d1f]/10"
                         : "cursor-not-allowed bg-slate-100 text-slate-400",
                     )}
                   >
@@ -454,7 +454,7 @@ export default function SettingsPage() {
         </section>
 
         {/* 연간 현황 */}
-        <section className="col-span-6 glass-panel rounded-xl border border-slate-200 p-6">
+        <section className="col-span-6 admin-card rounded-xl border border-slate-200 p-6">
           <div className="mb-5 border-b border-slate-100 pb-4">
             <h2 className="text-lg font-bold text-slate-900">
               {currentYear}년 현황
@@ -477,7 +477,7 @@ export default function SettingsPage() {
                   className={cn(
                     "relative rounded-lg p-3 text-center transition-all",
                     isCurrentMonth
-                      ? "bg-[#135bec]/5 text-[#135bec] ring-1 ring-[#135bec]/20"
+                      ? "bg-[#1d1d1f]/5 text-[#1d1d1f] ring-1 ring-[#1d1d1f]/20"
                       : isSaved
                         ? "bg-slate-50 text-slate-900 hover:bg-slate-100"
                         : "bg-white text-slate-400 ring-1 ring-slate-100 hover:ring-slate-200",
@@ -488,14 +488,14 @@ export default function SettingsPage() {
                     <div
                       className={cn(
                         "mt-1 text-xs",
-                        isCurrentMonth ? "text-[#135bec]/70" : "text-slate-500",
+                        isCurrentMonth ? "text-[#1d1d1f]/70" : "text-slate-500",
                       )}
                     >
                       {(monthData.allowance / 10000).toFixed(0)}만
                     </div>
                   )}
                   {isSaved && !isCurrentMonth && (
-                    <div className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-[#135bec]" />
+                    <div className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-[#1d1d1f]" />
                   )}
                 </button>
               );

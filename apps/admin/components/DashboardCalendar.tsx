@@ -14,7 +14,7 @@ const LEAVE_TYPE_COLORS: Record<string, string> = {
   "지각/조퇴": "bg-orange-50 text-orange-700",
   반차: "bg-purple-50 text-purple-700",
   연차: "bg-yellow-50 text-yellow-700",
-  대체휴무: "bg-blue-50 text-blue-700",
+  대체휴무: "bg-slate-100 text-slate-800",
   경조휴무: "bg-pink-50 text-pink-700",
   특별휴무: "bg-teal-50 text-teal-700",
   훈련: "bg-slate-50 text-slate-700",
@@ -157,7 +157,7 @@ export default function DashboardCalendar() {
             <LegendDot color="bg-purple-500" label="휴가" />
             <LegendDot color="bg-orange-400" label="특이사항" />
             <LegendDot color="bg-emerald-500" label="감독관 공고" />
-            <LegendDot color="bg-blue-500" label="교육운영 공고" />
+            <LegendDot color="bg-slate-1000" label="교육운영 공고" />
           </div>
         </div>
 
@@ -166,7 +166,7 @@ export default function DashboardCalendar() {
           {["일", "월", "화", "수", "목", "금", "토"].map((day, i) => (
             <div key={day} className={cn(
               "bg-slate-50 p-2 text-center text-xs font-semibold",
-              i === 0 ? "text-red-500" : i === 6 ? "text-blue-500" : "text-slate-600"
+              i === 0 ? "text-red-500" : i === 6 ? "text-slate-700" : "text-slate-600"
             )}>
               {day}
             </div>
@@ -188,15 +188,15 @@ export default function DashboardCalendar() {
                 className={cn(
                   "min-h-[90px] bg-white p-1.5 cursor-pointer transition-colors",
                   !day.isCurrentMonth && "opacity-40",
-                  isSelected && "ring-2 ring-blue-500 ring-inset",
+                  isSelected && "ring-2 ring-slate-700 ring-inset",
                   !isSelected && "hover:bg-slate-50"
                 )}
                 onClick={() => day.isCurrentMonth && setSelectedDate(day.date)}
               >
                 <div className={cn(
                   "text-xs font-medium mb-0.5 w-5 h-5 flex items-center justify-center rounded-full",
-                  dow === 0 ? "text-red-500" : dow === 6 ? "text-blue-500" : "text-slate-700",
-                  isToday && "bg-blue-600 text-white"
+                  dow === 0 ? "text-red-500" : dow === 6 ? "text-slate-700" : "text-slate-700",
+                  isToday && "bg-slate-900 text-white"
                 )}>
                   {day.dayOfMonth}
                 </div>
@@ -234,7 +234,7 @@ export default function DashboardCalendar() {
                   {ivPostings.length > 0 && shown < maxShow && ivPostings.slice(0, maxShow - shown).map((ip) => {
                     shown++;
                     return (
-                      <div key={ip.id} className="truncate rounded px-1 py-0.5 text-[10px] bg-blue-50 text-blue-700">
+                      <div key={ip.id} className="truncate rounded px-1 py-0.5 text-[10px] bg-slate-100 text-slate-800">
                         {ip.title}
                       </div>
                     );

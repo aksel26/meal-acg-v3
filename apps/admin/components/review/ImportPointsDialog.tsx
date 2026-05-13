@@ -54,7 +54,7 @@ interface ImportPointsDialogProps {
 function typeBadgeStyle(type: string) {
   switch (type) {
     case "복지포인트":
-      return "bg-blue-50/60 text-blue-600 border-transparent";
+      return "bg-slate-100/60 text-slate-800 border-transparent";
     case "활동비":
       return "bg-amber-50 text-amber-500 border-transparent";
     default:
@@ -292,14 +292,14 @@ export function ImportPointsDialog({
               className={cn(
                 "border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-all",
                 isDragActive
-                  ? "border-blue-400 bg-blue-50"
+                  ? "border-slate-500 bg-slate-100"
                   : "border-slate-300 hover:border-slate-400 hover:bg-slate-50"
               )}
             >
               <input {...getInputProps()} />
               <FileSpreadsheet className="mx-auto h-12 w-12 text-slate-400 mb-3" />
               {isDragActive ? (
-                <p className="text-blue-600 font-medium">파일을 여기에 놓으세요</p>
+                <p className="text-slate-800 font-medium">파일을 여기에 놓으세요</p>
               ) : (
                 <>
                   <p className="text-slate-600 font-medium">
@@ -420,7 +420,7 @@ export function ImportPointsDialog({
                             : status === "no-member"
                               ? "bg-amber-50/50"
                               : isSelected
-                                ? "bg-blue-50/30"
+                                ? "bg-slate-100/30"
                                 : "hover:bg-slate-50/60"
                         )}
                       >

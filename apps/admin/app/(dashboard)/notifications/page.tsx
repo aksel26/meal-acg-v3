@@ -281,7 +281,7 @@ export default function NotificationsPage() {
       </div>
 
       {/* Subscription Table */}
-      <div className="glass-card overflow-hidden rounded-xl">
+      <div className="admin-card overflow-hidden rounded-xl">
         {isLoading ? (
           <div className="space-y-1 p-4">
             {[...Array(8)].map((_, i) => (
@@ -382,7 +382,7 @@ export default function NotificationsPage() {
                           className={cn(
                             "rounded p-1 transition-colors",
                             member.subscribed
-                              ? "text-blue-500 hover:bg-blue-50 hover:text-blue-600"
+                              ? "text-slate-700 hover:bg-slate-100 hover:text-slate-800"
                               : "cursor-not-allowed text-slate-200"
                           )}
                           title="알림 발송"
@@ -567,7 +567,7 @@ export default function NotificationsPage() {
                               {log.title}
                             </span>
                             {log.send_to_all ? (
-                              <span className="shrink-0 inline-flex items-center rounded-full bg-blue-500/10 px-1.5 py-px text-[10px] font-medium text-blue-600">
+                              <span className="shrink-0 inline-flex items-center rounded-full bg-slate-1000/10 px-1.5 py-px text-[10px] font-medium text-slate-800">
                                 전체
                               </span>
                             ) : (

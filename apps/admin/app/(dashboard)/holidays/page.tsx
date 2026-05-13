@@ -201,7 +201,7 @@ export default function HolidaysPage() {
       </div>
 
       {/* Holidays Table */}
-      <Card className="glass-panel border-0">
+      <Card className="admin-card border-0">
         <CardHeader>
           <CardTitle>공휴일 목록</CardTitle>
           <CardDescription>
@@ -243,7 +243,7 @@ export default function HolidaysPage() {
                           date.day() === 0
                             ? "text-red-500"
                             : date.day() === 6
-                            ? "text-blue-500"
+                            ? "text-slate-700"
                             : "text-gray-500"
                         }`}>({dayOfWeek})</span>
                       </TableCell>

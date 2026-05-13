@@ -51,7 +51,7 @@ function roleBadgeStyle(role: string) {
     case "본부장":
       return "bg-purple-50 text-purple-700 border-purple-200";
     case "팀장":
-      return "bg-blue-50 text-blue-700 border-blue-200";
+      return "bg-slate-100 text-slate-800 border-slate-300";
     default:
       return "bg-slate-50 text-slate-600 border-slate-200";
   }
@@ -221,7 +221,7 @@ export default function PointsOverviewPage() {
                   </TableHead>
                   <TableHead
                     colSpan={months.length}
-                    className="text-center text-xs font-semibold text-blue-400"
+                    className="text-center text-xs font-semibold text-slate-600"
                   >
                     복지포인트 월별
                   </TableHead>
@@ -231,19 +231,19 @@ export default function PointsOverviewPage() {
                   <TableHead className="text-center text-[11px] font-medium text-amber-500">
                     활동비
                   </TableHead>
-                  <TableHead className="text-center text-[11px] font-medium text-blue-400">
+                  <TableHead className="text-center text-[11px] font-medium text-slate-600">
                     복지
                   </TableHead>
                   <TableHead className="text-center text-[11px] font-medium text-amber-500">
                     활동비
                   </TableHead>
-                  <TableHead className="text-center text-[11px] font-medium text-blue-400">
+                  <TableHead className="text-center text-[11px] font-medium text-slate-600">
                     복지
                   </TableHead>
                   <TableHead className="text-center text-[11px] font-medium text-amber-500">
                     활동비
                   </TableHead>
-                  <TableHead className="text-center text-[11px] font-medium text-blue-400">
+                  <TableHead className="text-center text-[11px] font-medium text-slate-600">
                     복지
                   </TableHead>
                   {months.map((mo) => (
@@ -257,7 +257,7 @@ export default function PointsOverviewPage() {
                   {months.map((mo) => (
                     <TableHead
                       key={`welfare-${mo}`}
-                      className="text-center text-[11px] font-medium text-blue-400"
+                      className="text-center text-[11px] font-medium text-slate-600"
                     >
                       {mo}월
                     </TableHead>
@@ -287,7 +287,7 @@ export default function PointsOverviewPage() {
                     <TableCell className="text-center text-sm font-medium whitespace-nowrap">
                       <Link
                         href={`/review?member=${row.member_id}`}
-                        className="text-slate-900 hover:text-[#135bec] hover:underline"
+                        className="text-slate-900 hover:text-[#1d1d1f] hover:underline"
                       >
                         {row.member_name}
                       </Link>

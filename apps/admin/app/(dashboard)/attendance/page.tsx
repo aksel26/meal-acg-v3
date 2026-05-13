@@ -175,7 +175,7 @@ export default function AttendancePage() {
             <span>출근 <strong className="text-base text-green-600">{summary.checkedIn}</strong></span>
             <span>미출근 <strong className="text-base text-slate-700">{summary.notCheckedIn}</strong></span>
             <span>지각 <strong className="text-base text-red-600">{summary.late}</strong></span>
-            <span>휴가 <strong className="text-base text-blue-600">{summary.onLeave}</strong></span>
+            <span>휴가 <strong className="text-base text-slate-800">{summary.onLeave}</strong></span>
             {summary.lateMembers.length > 0 && (
               <span className="text-red-500">
                 지각: {summary.lateMembers.map((m) => m.name).join(", ")}
@@ -411,7 +411,7 @@ function InlineRow({ record }: { record: AttendanceRecord }) {
   const cellClass = "px-3 py-1.5 text-slate-600";
 
   return (
-    <tr className={cn("hover:bg-slate-50", editing && "bg-blue-50/30")}>
+    <tr className={cn("hover:bg-slate-50", editing && "bg-slate-100/30")}>
       {/* 이름 */}
       <td className="px-3 py-1.5 font-medium text-slate-800">
         {record.member.full_name}
@@ -464,7 +464,7 @@ function InlineRow({ record }: { record: AttendanceRecord }) {
         ) : (
           <>
             <button
-              className="text-xs text-slate-600 hover:text-blue-600 hover:underline underline-offset-2 decoration-dashed"
+              className="text-xs text-slate-600 hover:text-slate-800 hover:underline underline-offset-2 decoration-dashed"
               onClick={() => setEditingField("checkIn")}
             >
               {formatTime(record.check_in_at) || "-"}
@@ -500,7 +500,7 @@ function InlineRow({ record }: { record: AttendanceRecord }) {
         ) : (
           <>
             <button
-              className="text-xs text-slate-600 hover:text-blue-600 hover:underline underline-offset-2 decoration-dashed"
+              className="text-xs text-slate-600 hover:text-slate-800 hover:underline underline-offset-2 decoration-dashed"
               onClick={() => setEditingField("checkOut")}
             >
               {formatTime(record.check_out_at) || "-"}

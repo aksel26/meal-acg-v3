@@ -135,9 +135,9 @@ export function AdminDashboardCalendar({
             !modifiers.range_middle
           }
           className={cn(
-            "flex h-auto w-full min-w-0 flex-col items-center rounded-xl p-1 leading-none font-normal transition-all duration-200",
+            "flex h-auto w-full min-w-0 flex-col items-center rounded-lg p-1 leading-none font-normal transition-all duration-200",
             "justify-center",
-            "hover:bg-blue-50",
+            "hover:bg-[#f5f5f7]",
             defaultClassNames.day,
             className,
           )}
@@ -149,10 +149,10 @@ export function AdminDashboardCalendar({
                 "flex size-8 items-center justify-center rounded-full text-sm tabular-nums",
                 modifiers.selected &&
                   !modifiers.outside &&
-                  "bg-slate-900 text-white",
+                  "bg-[#1d1d1f] text-white",
                 !modifiers.selected &&
                   modifiers.today &&
-                  "font-bold text-blue-600",
+                  "font-semibold text-[#1d1d1f] underline underline-offset-4",
                 modifiers.outside && "text-muted-foreground/40",
               )}
             >
@@ -162,13 +162,13 @@ export function AdminDashboardCalendar({
               (hasSupervisor || hasInterview || hasDayoff) && (
                 <span className="mt-0.5 flex flex-col items-center gap-0.5">
                   {hasDayoff && (
-                    <span className="block size-1.5 rounded-full bg-purple-500" />
+                    <span className="block size-1.5 rounded-full bg-[#1d1d1f]" />
                   )}
                   {hasSupervisor && (
-                    <span className="block h-[3px] w-3 rounded-full bg-blue-500" />
+                    <span className="block h-[3px] w-3 rounded-full bg-[#1d1d1f]" />
                   )}
                   {hasInterview && (
-                    <span className="block h-[3px] w-3 rounded-full bg-amber-500" />
+                    <span className="block h-[3px] w-3 rounded-full bg-[#d2d2d7]" />
                   )}
                 </span>
               )}
@@ -198,17 +198,17 @@ export function AdminDashboardCalendar({
   }, []);
 
   return (
-    <div className="snow-panel rounded-xl p-3">
+    <div className="admin-card p-4">
       <div className="mb-3 flex items-center justify-between px-2 pt-1">
         <div>
-          <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-slate-500">
+          <p className="text-xs font-normal tracking-[-0.01em] text-[#7a7a7a]">
             Calendar
           </p>
-          <p className="mt-1 text-sm font-semibold text-slate-900">
+          <p className="mt-1 text-[21px] font-semibold leading-tight tracking-[-0.02em] text-[#1d1d1f]">
             일정 중심 보기
           </p>
         </div>
-        <div className="snow-pill rounded-full px-3 py-1 text-[11px] font-medium">
+        <div className="rounded-full border border-black/5 bg-[#fafafc] px-3 py-1 text-xs font-normal tracking-[-0.01em] text-[#333333]">
           {dateLabel} 기준 현황
         </div>
       </div>
@@ -223,8 +223,8 @@ export function AdminDashboardCalendar({
             }
             className={
               activePreset === preset.label
-                ? "h-8 rounded-full bg-slate-900 px-3 text-xs text-white shadow-none hover:bg-slate-800"
-                : "h-8 rounded-full bg-[#f9f9fa] px-3 text-xs text-slate-600 hover:bg-[#f1f1f2]"
+                ? "admin-primary-pill h-8 px-3 text-xs shadow-none"
+                : "admin-secondary-pill h-8 px-3 text-xs hover:bg-[#f5f5f7]"
             }
           >
             {preset.label}
@@ -239,7 +239,7 @@ export function AdminDashboardCalendar({
           month={displayMonth}
           onMonthChange={onDisplayMonthChange}
           showOutsideDays
-          className="snow-grid rounded-xl bg-white p-3 [--cell-size:--spacing(9)]"
+          className="rounded-[18px] border border-black/8 bg-white p-3 [--cell-size:--spacing(9)]"
           formatters={{
             formatCaption: (date) =>
               `${date.getFullYear()}년 ${date.getMonth() + 1}월`,
@@ -285,8 +285,8 @@ export function AdminDashboardCalendar({
             weekdays: cn("flex", defaultClassNames.weekdays),
             weekday: cn(
               "rounded-md flex-1 font-normal text-[0.8rem] select-none",
-              "[&:first-child]:text-red-500",
-              "[&:last-child]:text-blue-500",
+              "[&:first-child]:text-[#7a7a7a]",
+              "[&:last-child]:text-[#7a7a7a]",
               "[&:not(:first-child):not(:last-child)]:text-muted-foreground",
               defaultClassNames.weekday,
             ),
@@ -303,7 +303,7 @@ export function AdminDashboardCalendar({
               "relative w-full p-0 text-center group/day select-none",
               defaultClassNames.day,
             ),
-            today: cn("rounded-lg", defaultClassNames.today),
+            today: cn("rounded-md", defaultClassNames.today),
             outside: cn("text-muted-foreground", defaultClassNames.outside),
             disabled: cn(
               "text-muted-foreground opacity-50",
@@ -322,7 +322,7 @@ export function AdminDashboardCalendar({
         <button
           type="button"
           onClick={() => setIsCollapsed((prev) => !prev)}
-          className="snow-pill flex w-full items-center justify-center gap-1 rounded-xl py-2 text-xs font-medium transition-colors hover:text-slate-900"
+          className="admin-pressable flex w-full items-center justify-center gap-1 rounded-full border border-black/5 bg-[#fafafc] py-2 text-xs font-normal text-[#333333] hover:border-[#1d1d1f] hover:text-[#1d1d1f]"
         >
           {isCollapsed ? (
             <>

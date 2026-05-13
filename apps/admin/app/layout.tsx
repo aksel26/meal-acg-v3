@@ -1,11 +1,15 @@
 import { Sonner } from "@repo/ui/src/sonner";
-import "./globals.css";
 import "@repo/ui/styles.css";
+import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import QueryProvider from "./providers/QueryProvider";
-import localFont from "next/font/local";
 import dayjs from "dayjs";
 import "dayjs/locale/ko";
+import { Inter } from "next/font/google";
+import { cn } from "@/lib/utils";
+
+const inter = Inter({subsets:['latin'],variable:'--font-sans'});
+
 
 dayjs.locale("ko");
 
@@ -28,15 +32,11 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-const myFont = localFont({
-  src: "./fonts/NanumSquareNeo-Variable.ttf",
-});
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko">
+    <html lang="ko" className={cn("font-sans", inter.variable)}>
       <head />
-      <body className={myFont.className}>
+      <body>
         <QueryProvider>{children}</QueryProvider>
         <Sonner />
       </body>

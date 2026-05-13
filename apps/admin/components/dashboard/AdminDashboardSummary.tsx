@@ -49,21 +49,18 @@ export function AdminDashboardSummary({
       label: "총 인원",
       value: totalMembers,
       icon: Users,
-      cardClassName: "bg-[#eef5fe]",
       suffix: "",
     },
     {
       label: "출근",
       value: checkedIn,
       icon: UserCheck,
-      cardClassName: "bg-[#eaf7ee]",
       suffix: "",
     },
     {
       label: "미출근 / 휴가",
       value: notCheckedIn + onLeave,
       icon: UserX,
-      cardClassName: "bg-[#f9f9fa]",
       suffix: "",
       detail: onLeave > 0 ? `휴가 ${onLeave}` : undefined,
     },
@@ -71,14 +68,12 @@ export function AdminDashboardSummary({
       label: "승인 대기",
       value: pendingApprovals,
       icon: ClipboardCheck,
-      cardClassName: "bg-[#f9f9fa]",
       suffix: "건",
     },
     {
       label: "식대 사용률",
       value: usageRate,
       icon: Banknote,
-      cardClassName: "bg-[#eef5fe]",
       suffix: "%",
       isPercent: true,
     },
@@ -87,30 +82,27 @@ export function AdminDashboardSummary({
   return (
     <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
       {cards.map((card) => (
-        <div
-          key={card.label}
-          className={`rounded-xl p-4 ${card.cardClassName}`}
-        >
+        <div key={card.label} className="admin-card admin-pressable p-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <p className="mb-1 text-xs font-medium leading-5 tracking-[-0.01em] text-slate-600">
+              <p className="mb-1 text-sm font-normal leading-5 tracking-[-0.01em] text-[#7a7a7a]">
                 {card.label}
               </p>
               <div className="flex items-baseline gap-1">
-                <span className="tabular-nums text-2xl font-extrabold leading-none tracking-[-0.03em] text-slate-900">
+                <span className="tabular-nums text-[34px] font-semibold leading-none tracking-[-0.02em] text-[#1d1d1f]">
                   <NumberTicker value={card.value} />
                 </span>
                 {card.suffix && (
-                  <span className="text-sm leading-5 tracking-[-0.01em] text-slate-500">
+                  <span className="text-sm leading-5 tracking-[-0.01em] text-[#7a7a7a]">
                     {card.suffix}
                   </span>
                 )}
               </div>
               {"detail" in card && card.detail && (
-                <p className="mt-1 text-[11px] text-slate-400">{card.detail}</p>
+                <p className="mt-1 text-xs text-[#7a7a7a]">{card.detail}</p>
               )}
             </div>
-            <div className="flex size-11 shrink-0 items-center justify-center text-[#111111]">
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#f5f5f7] text-[#1d1d1f]">
               <card.icon size={18} />
             </div>
           </div>

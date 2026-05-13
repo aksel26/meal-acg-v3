@@ -71,7 +71,7 @@ const LEAVE_TYPE_COLORS: Record<string, string> = {
   "지각/조퇴": "bg-orange-50 text-orange-700 border-orange-200",
   반차: "bg-purple-50 text-purple-700 border-purple-200",
   연차: "bg-yellow-50 text-yellow-700 border-yellow-200",
-  대체휴무: "bg-blue-50 text-blue-700 border-blue-200",
+  대체휴무: "bg-slate-100 text-slate-800 border-slate-300",
   경조휴무: "bg-pink-50 text-pink-700 border-pink-200",
   특별휴무: "bg-teal-50 text-teal-700 border-teal-200",
   훈련: "bg-slate-50 text-slate-700 border-slate-200",
@@ -370,7 +370,7 @@ export default function DayoffsPage() {
         <div className="rounded-xl border bg-white p-4">
             <div className="grid grid-cols-7 gap-px rounded-lg bg-slate-200 overflow-hidden">
               {["일", "월", "화", "수", "목", "금", "토"].map((day, i) => (
-                <div key={day} className={`bg-slate-50 p-2 text-center text-xs font-semibold ${i === 0 ? "text-red-500" : i === 6 ? "text-blue-500" : "text-slate-600"}`}>
+                <div key={day} className={`bg-slate-50 p-2 text-center text-xs font-semibold ${i === 0 ? "text-red-500" : i === 6 ? "text-slate-700" : "text-slate-600"}`}>
                   {day}
                 </div>
               ))}
@@ -383,7 +383,7 @@ export default function DayoffsPage() {
                     className={`min-h-[100px] bg-white p-1 ${!day.isCurrentMonth ? "opacity-40" : ""} cursor-pointer hover:bg-slate-50 transition-colors`}
                     onClick={() => day.isCurrentMonth && handleOpenCreate(day.date)}
                   >
-                    <div className={`text-xs font-medium mb-0.5 ${dow === 0 ? "text-red-500" : dow === 6 ? "text-blue-500" : "text-slate-700"}`}>
+                    <div className={`text-xs font-medium mb-0.5 ${dow === 0 ? "text-red-500" : dow === 6 ? "text-slate-700" : "text-slate-700"}`}>
                       {day.dayOfMonth}
                     </div>
                     <div className="space-y-0.5">
@@ -445,14 +445,14 @@ export default function DayoffsPage() {
                       <td className="px-3 py-1.5 text-xs text-slate-400">{index + 1}</td>
                       <td className="px-3 py-1.5 text-slate-600">
                         {date.format("MM-DD")}
-                        <span className={cn("ml-1 text-xs", date.day() === 0 ? "text-red-500" : date.day() === 6 ? "text-blue-500" : "text-slate-400")}>
+                        <span className={cn("ml-1 text-xs", date.day() === 0 ? "text-red-500" : date.day() === 6 ? "text-slate-700" : "text-slate-400")}>
                           ({dayOfWeek})
                         </span>
                       </td>
                       <td className="px-3 py-1.5 font-medium text-slate-800">
                         <Link
                           href={`/dayoffs/${record.target_id}`}
-                          className="text-blue-600 hover:text-blue-800 hover:underline"
+                          className="text-slate-800 hover:text-slate-900 hover:underline"
                         >
                           {record.target?.full_name}
                         </Link>

@@ -162,11 +162,11 @@ function NavItemComponent({
   collapsed: boolean;
 }) {
   const linkClassName = cn(
-    "group flex items-center rounded-xl text-sm transition-colors",
-    collapsed ? "justify-center px-0 py-3" : "gap-2.5 px-4 py-3",
+    "admin-pressable group flex items-center rounded-lg border border-transparent text-[13px] leading-tight",
+    collapsed ? "justify-center px-0 py-2.5" : "gap-2.5 px-3 py-2.5",
     isActive
-      ? "bg-white font-semibold text-slate-900"
-      : "font-medium text-slate-400 hover:bg-white/60 hover:text-slate-600",
+      ? "bg-[#f5f5f7] font-semibold text-[#1d1d1f]"
+      : "font-medium text-[#7a7a7a] hover:bg-[#f5f5f7] hover:text-[#1d1d1f]",
   );
 
   const linkContent = (
@@ -174,14 +174,16 @@ function NavItemComponent({
       <item.icon
         className={cn(
           "flex-shrink-0 transition-all",
-          collapsed ? "h-5 w-5" : "h-4 w-4",
+          collapsed ? "h-[18px] w-[18px]" : "h-[14px] w-[14px]",
         )}
       />
       {!collapsed && (
         <>
-          <span className={item.external ? "flex-1" : ""}>{item.name}</span>
+          <span className={cn("text-[13px]", item.external && "flex-1")}>
+            {item.name}
+          </span>
           {item.external && (
-            <ExternalLink className="h-3 w-3 text-slate-400" />
+            <ExternalLink className="h-[14px] w-[14px] text-slate-400" />
           )}
         </>
       )}
@@ -238,27 +240,27 @@ function NavGroupComponent({
       type="button"
       onClick={() => setIsOpen(!isOpen)}
       className={cn(
-        "flex w-full items-center rounded-xl text-sm transition-colors",
-        collapsed ? "justify-center px-0 py-3" : "gap-2.5 px-4 py-3",
+        "admin-pressable flex w-full items-center rounded-lg border border-transparent text-[13px] leading-tight",
+        collapsed ? "justify-center px-0 py-2.5" : "gap-2.5 px-3 py-2.5",
         hasActiveItem
-          ? "font-semibold text-slate-900"
-          : "font-medium text-slate-400 hover:bg-white/60 hover:text-slate-600",
+          ? "bg-[#f5f5f7] font-semibold text-[#1d1d1f]"
+          : "font-medium text-[#7a7a7a] hover:bg-[#f5f5f7] hover:text-[#1d1d1f]",
       )}
     >
       <group.icon
         className={cn(
           "flex-shrink-0 transition-all",
-          collapsed ? "h-5 w-5" : "h-4 w-4",
+          collapsed ? "h-[18px] w-[18px]" : "h-[14px] w-[14px]",
         )}
       />
       {!collapsed && (
         <>
-          <span className="flex-1 text-left">{group.name}</span>
+          <span className="flex-1 text-left text-[13px]">{group.name}</span>
           <ChevronDown
             className={cn(
-              "h-4 w-4 transition-transform duration-200",
+              "h-[14px] w-[14px] transition-transform duration-200",
               isOpen ? "rotate-180" : "",
-              hasActiveItem ? "text-slate-500" : "text-slate-400",
+              hasActiveItem ? "text-[#1d1d1f]" : "text-[#cccccc]",
             )}
           />
         </>
@@ -292,7 +294,7 @@ function NavGroupComponent({
             return (
               <div
                 key={item.name}
-                className="px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400"
+                className="px-3 pt-2.5 pb-1 text-[13px] font-semibold uppercase tracking-wider text-[#cccccc]"
               >
                 {item.name}
               </div>
@@ -307,22 +309,22 @@ function NavGroupComponent({
               key={item.name}
               href={item.href}
               className={cn(
-                "flex items-center rounded-xl text-sm transition-colors",
+                "admin-pressable flex items-center rounded-lg border border-transparent text-[13px] leading-tight",
                 collapsed
                   ? "justify-center px-0 py-2.5"
-                  : "gap-2 px-4 py-2.5",
+                  : "gap-2.5 px-3 py-2",
                 isActive
-                  ? "bg-white font-bold text-slate-900"
-                  : "font-medium text-slate-400 hover:bg-white/60 hover:text-slate-600",
+                  ? "bg-[#f5f5f7] font-semibold text-[#1d1d1f]"
+                  : "font-medium text-[#7a7a7a] hover:bg-[#f5f5f7] hover:text-[#1d1d1f]",
               )}
             >
               <item.icon
                 className={cn(
                   "flex-shrink-0 transition-all",
-                  collapsed ? "h-4.5 w-4.5" : "h-3.5 w-3.5",
+                  collapsed ? "h-[18px] w-[18px]" : "h-[14px] w-[14px]",
                 )}
               />
-              {!collapsed && <span>{item.name}</span>}
+              {!collapsed && <span className="text-[13px]">{item.name}</span>}
             </Link>
           );
 
@@ -413,7 +415,7 @@ export default function Sidebar() {
   return (
     <aside
       className={cn(
-        "glass-sidebar z-20 flex flex-col justify-between py-5 transition-all duration-300",
+        "admin-sidebar z-20 flex flex-col justify-between py-5 transition-all duration-300",
         collapsed ? "w-16" : "w-56",
       )}
     >
@@ -439,7 +441,7 @@ export default function Sidebar() {
               )}
             />
             {!collapsed && (
-              <h1 className="text-sm font-medium tracking-tight text-slate-900">
+              <h1 className="text-[13px] font-medium tracking-[-0.01em] text-[#1d1d1f]">
                 비용 관리 Admin
               </h1>
             )}
@@ -448,14 +450,14 @@ export default function Sidebar() {
             type="button"
             onClick={() => setCollapsed(!collapsed)}
             className={cn(
-              "flex items-center justify-center rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/60 hover:text-slate-600",
+              "admin-pressable flex items-center justify-center rounded-lg border border-transparent p-1.5 text-[#7a7a7a] hover:bg-[#f5f5f7] hover:text-[#1d1d1f]",
               collapsed ? "mt-2" : "absolute right-0 top-0",
             )}
           >
             {collapsed ? (
-              <PanelLeftOpen className="h-5 w-5" />
+              <PanelLeftOpen className="h-[18px] w-[18px]" />
             ) : (
-              <PanelLeftClose className="h-4 w-4" />
+              <PanelLeftClose className="h-[14px] w-[14px]" />
             )}
           </button>
         </div>
@@ -490,7 +492,7 @@ export default function Sidebar() {
 
       {/* User Profile Bottom */}
       <div className={cn("flex flex-col gap-4", collapsed ? "px-2" : "")}>
-        <div className="h-[1px] w-full bg-slate-200/50" />
+        <div className="h-px w-full bg-black/8" />
 
         {collapsed ? (
           <Tooltip>
@@ -498,9 +500,9 @@ export default function Sidebar() {
               <button
                 type="button"
                 onClick={() => setIsPasswordDialogOpen(true)}
-                className="flex w-full cursor-pointer items-center justify-center rounded-lg p-2 transition-colors hover:bg-white/60"
+                className="admin-pressable flex w-full cursor-pointer items-center justify-center rounded-lg border border-transparent p-2 hover:bg-[#f5f5f7]"
               >
-                <span className="text-xs font-bold text-slate-700">
+                <span className="text-[13px] font-bold text-[#1d1d1f]">
                   {user?.fullName?.charAt(0) || "A"}
                 </span>
               </button>
@@ -513,18 +515,18 @@ export default function Sidebar() {
           <button
             type="button"
             onClick={() => setIsPasswordDialogOpen(true)}
-            className="flex w-full cursor-pointer items-center justify-between rounded-lg px-3 py-2.5 transition-colors hover:bg-white/60"
+            className="admin-pressable flex w-full cursor-pointer items-center justify-between rounded-lg border border-transparent px-3 py-2.5 hover:bg-[#f5f5f7]"
           >
-            <div className="flex flex-col items-start">
-              <p className="text-xs font-bold text-slate-900">
+            <div className="flex flex-col items-start leading-tight">
+              <p className="text-[13px] font-semibold text-[#1d1d1f]">
                 {user?.fullName || "Admin"}
               </p>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[13px] text-[#7a7a7a]">
                 {user?.role === "admin" ? "관리자" : "사용자"}
               </p>
             </div>
             {user?.hireDate && (
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
+              <span className="rounded-full border border-black/8 bg-[#fafafc] px-2 py-0.5 text-[13px] font-semibold text-[#7a7a7a]">
                 D+{dayjs().diff(dayjs(user.hireDate), "day")}
               </span>
             )}
@@ -536,9 +538,9 @@ export default function Sidebar() {
             <TooltipTrigger asChild>
               <button
                 onClick={logout}
-                className="flex w-full items-center justify-center rounded-lg border border-slate-200/50 py-3 text-xs font-medium text-slate-500 transition-colors hover:bg-white/60 hover:text-slate-700"
+                className="admin-pressable flex w-full items-center justify-center rounded-lg border border-black/8 py-2.5 text-[13px] font-medium text-[#7a7a7a] hover:bg-[#f5f5f7] hover:text-[#1d1d1f]"
               >
-                <LogOut className="h-4 w-4" />
+                <LogOut className="h-[14px] w-[14px]" />
               </button>
             </TooltipTrigger>
             <TooltipContent side="right" sideOffset={8}>
@@ -548,9 +550,9 @@ export default function Sidebar() {
         ) : (
           <button
             onClick={logout}
-            className="flex w-full items-center justify-start gap-2 rounded-lg border border-slate-200/50 px-4 py-3.5 text-xs font-medium text-slate-500 transition-colors hover:bg-white/60 hover:text-slate-700"
+            className="admin-pressable flex w-full items-center justify-start gap-2 rounded-lg border border-black/8 px-3 py-2.5 text-[13px] font-medium text-[#7a7a7a] hover:bg-[#f5f5f7] hover:text-[#1d1d1f]"
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="h-[14px] w-[14px]" />
             <span>로그아웃</span>
           </button>
         )}

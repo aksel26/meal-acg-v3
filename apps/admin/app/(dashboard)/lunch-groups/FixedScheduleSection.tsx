@@ -203,7 +203,7 @@ export default function FixedScheduleSection({ members }: FixedScheduleSectionPr
             size="sm"
             onClick={handleSave}
             disabled={saveMutation.isPending}
-            className="bg-[#135bec]/5 text-[#135bec] hover:bg-[#135bec]/10"
+            className="bg-[#1d1d1f]/5 text-[#1d1d1f] hover:bg-[#1d1d1f]/10"
           >
             <Save className="w-4 h-4 mr-1" />
             {saveMutation.isPending ? "저장 중..." : "저장"}
@@ -230,7 +230,7 @@ export default function FixedScheduleSection({ members }: FixedScheduleSectionPr
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 text-xs text-[#135bec] hover:bg-[#135bec]/10"
+                    className="h-7 text-xs text-[#1d1d1f] hover:bg-[#1d1d1f]/10"
                     onClick={() => {
                       setAddingMemberDay(isAddingMember ? null : day.value);
                       setAddingLabelDay(null);
@@ -242,7 +242,7 @@ export default function FixedScheduleSection({ members }: FixedScheduleSectionPr
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 text-xs text-[#135bec] hover:bg-[#135bec]/10"
+                    className="h-7 text-xs text-[#1d1d1f] hover:bg-[#1d1d1f]/10"
                     onClick={() => {
                       setAddingLabelDay(isAddingLabel ? null : day.value);
                       setAddingMemberDay(null);
@@ -287,7 +287,7 @@ export default function FixedScheduleSection({ members }: FixedScheduleSectionPr
                   />
                   <Button
                     size="sm"
-                    className="h-9 bg-[#135bec]/5 text-[#135bec] hover:bg-[#135bec]/10"
+                    className="h-9 bg-[#1d1d1f]/5 text-[#1d1d1f] hover:bg-[#1d1d1f]/10"
                     onClick={() => handleAddLabel(day.value)}
                     disabled={!newLabel.trim()}
                   >
@@ -306,7 +306,7 @@ export default function FixedScheduleSection({ members }: FixedScheduleSectionPr
                       key={item.user_id || item.label || index}
                       className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
                         item.user_id
-                          ? "bg-blue-100 text-blue-700"
+                          ? "bg-slate-200 text-slate-800"
                           : "bg-amber-100 text-amber-700"
                       }`}
                     >

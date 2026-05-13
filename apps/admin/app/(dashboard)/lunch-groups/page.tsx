@@ -102,9 +102,9 @@ function DraggableMemberInList({
       style={style}
       className={`flex items-center gap-2 px-3 py-2 rounded-md border transition-all ${
         isDragging
-          ? "opacity-50 border-[#135bec] bg-[#135bec]/10 shadow-lg z-50"
+          ? "opacity-50 border-[#1d1d1f] bg-[#1d1d1f]/10 shadow-lg z-50"
           : isSelected
-            ? "bg-[#135bec]/10 border-[#135bec]/40"
+            ? "bg-[#1d1d1f]/10 border-[#1d1d1f]/40"
             : "bg-white border-slate-200 hover:border-slate-300"
       }`}
     >
@@ -157,25 +157,25 @@ function DraggableMemberInGroup({
       style={style}
       className={`flex items-center gap-2 px-3 py-2 rounded-md border transition-all ${
         isDragging
-          ? "opacity-50 border-[#135bec] bg-[#135bec]/10 shadow-lg z-50"
-          : "bg-[#135bec]/5 border-[#135bec]/20"
+          ? "opacity-50 border-[#1d1d1f] bg-[#1d1d1f]/10 shadow-lg z-50"
+          : "bg-[#1d1d1f]/5 border-[#1d1d1f]/20"
       }`}
     >
       {/* 드래그 핸들 */}
       <div
-        className="p-1 -ml-1 cursor-grab active:cursor-grabbing rounded hover:bg-[#135bec]/10"
+        className="p-1 -ml-1 cursor-grab active:cursor-grabbing rounded hover:bg-[#1d1d1f]/10"
         {...listeners}
         {...attributes}
       >
-        <GripVertical className="w-3 h-3 text-[#135bec]/60" />
+        <GripVertical className="w-3 h-3 text-[#1d1d1f]/60" />
       </div>
-      <span className="text-sm font-medium flex-1 text-[#135bec]">
+      <span className="text-sm font-medium flex-1 text-[#1d1d1f]">
         {member.full_name}
       </span>
       {/* X 버튼 - 클릭으로 제거 */}
       <button
         onClick={onRemove}
-        className="p-0.5 rounded hover:bg-[#135bec]/10 text-[#135bec]/60 hover:text-[#135bec]"
+        className="p-0.5 rounded hover:bg-[#1d1d1f]/10 text-[#1d1d1f]/60 hover:text-[#1d1d1f]"
       >
         <X className="w-3 h-3" />
       </button>
@@ -209,7 +209,7 @@ function DroppableGroup({
       ref={setNodeRef}
       className={`p-4 rounded-lg border-2 bg-white min-h-[180px] transition-all ${
         isOver && !isFull
-          ? "border-[#135bec] bg-[#135bec]/5 scale-[1.02]"
+          ? "border-[#1d1d1f] bg-[#1d1d1f]/5 scale-[1.02]"
           : isOver && isFull
             ? "border-red-300 bg-red-50/50"
             : "border-slate-200"
@@ -218,18 +218,18 @@ function DroppableGroup({
       {/* 조 번호 헤더 */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <span className="w-7 h-7 flex items-center justify-center text-[#135bec] text-sm font-bold rounded-md bg-[#135bec]/5">
+          <span className="w-7 h-7 flex items-center justify-center text-[#1d1d1f] text-sm font-bold rounded-md bg-[#1d1d1f]/5">
             {groupNumber}
           </span>
           <span className="text-sm font-medium text-slate-600">조</span>
           {isExtraGroup && (
-            <span className="text-[10px] px-1.5 py-0.5 bg-[#135bec]/5 text-[#135bec] rounded font-medium">
+            <span className="text-[10px] px-1.5 py-0.5 bg-[#1d1d1f]/5 text-[#1d1d1f] rounded font-medium">
               +1
             </span>
           )}
         </div>
         <span
-          className={`text-xs ${isFull ? "text-[#135bec] font-medium" : "text-slate-400"}`}
+          className={`text-xs ${isFull ? "text-[#1d1d1f] font-medium" : "text-slate-400"}`}
         >
           {memberCount}/{maxSlots}명
         </span>
@@ -249,7 +249,7 @@ function DroppableUnassigned({ children }: { children: React.ReactNode }) {
     <div
       ref={setNodeRef}
       className={`space-y-1 max-h-[300px] overflow-y-auto p-1 rounded-md transition-all ${
-        isOver ? "bg-[#135bec]/10 ring-2 ring-[#135bec]/40" : ""
+        isOver ? "bg-[#1d1d1f]/10 ring-2 ring-[#1d1d1f]/40" : ""
       }`}
     >
       {children}
@@ -700,18 +700,18 @@ export default function LunchGroupsPage() {
               variant="outline"
               size="icon"
               onClick={handlePrevWeek}
-              className="bg-[#135bec]/5 text-[#135bec] border-[#135bec]/20 hover:bg-[#135bec]/10 hover:border-[#135bec]/30"
+              className="bg-[#1d1d1f]/5 text-[#1d1d1f] border-[#1d1d1f]/20 hover:bg-[#1d1d1f]/10 hover:border-[#1d1d1f]/30"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <div className="px-4 py-2 bg-[#135bec]/5 rounded-md text-sm font-medium text-[#135bec]">
+            <div className="px-4 py-2 bg-[#1d1d1f]/5 rounded-md text-sm font-medium text-[#1d1d1f]">
               {dayjs(weekStartDate).format("YYYY.MM.DD")} 주차
             </div>
             <Button
               variant="outline"
               size="icon"
               onClick={handleNextWeek}
-              className="bg-[#135bec]/5 text-[#135bec] border-[#135bec]/20 hover:bg-[#135bec]/10 hover:border-[#135bec]/30"
+              className="bg-[#1d1d1f]/5 text-[#1d1d1f] border-[#1d1d1f]/20 hover:bg-[#1d1d1f]/10 hover:border-[#1d1d1f]/30"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -759,7 +759,7 @@ export default function LunchGroupsPage() {
                 </div>
                 <Button
                   onClick={handleCreateTable}
-                  className="w-full bg-[#135bec]/5 text-[#135bec] hover:bg-[#135bec]/10"
+                  className="w-full bg-[#1d1d1f]/5 text-[#1d1d1f] hover:bg-[#1d1d1f]/10"
                   disabled={totalGroups === 0}
                 >
                   <Table className="w-4 h-4 mr-2" />조 테이블 생성
@@ -768,7 +768,7 @@ export default function LunchGroupsPage() {
             </Card>
 
             {/* 인원 목록 카드 */}
-            <Card className="glass-panel">
+            <Card className="admin-card">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base flex items-center gap-2">
@@ -794,7 +794,7 @@ export default function LunchGroupsPage() {
                     size="sm"
                     onClick={handleExcludeMembers}
                     disabled={!hasSelectedMembers}
-                    className="flex-1 bg-[#135bec]/5 text-[#135bec] border-[#135bec]/20 hover:bg-[#135bec]/10 hover:border-[#135bec]/30"
+                    className="flex-1 bg-[#1d1d1f]/5 text-[#1d1d1f] border-[#1d1d1f]/20 hover:bg-[#1d1d1f]/10 hover:border-[#1d1d1f]/30"
                   >
                     <UserMinus className="w-4 h-4 mr-1" />
                     인원 제외하기
@@ -803,7 +803,7 @@ export default function LunchGroupsPage() {
                     size="sm"
                     onClick={handleSendLotteryRequest}
                     disabled={!hasSelectedMembers}
-                    className="flex-1 bg-[#135bec]/5 text-[#135bec] hover:bg-[#135bec]/10"
+                    className="flex-1 bg-[#1d1d1f]/5 text-[#1d1d1f] hover:bg-[#1d1d1f]/10"
                   >
                     <Send className="w-4 h-4 mr-1" />
                     뽑기 요청하기
@@ -861,7 +861,7 @@ export default function LunchGroupsPage() {
 
             {/* 제외된 인원 */}
             {excludedMemberIds.size > 0 && (
-              <Card className="glass-panel">
+              <Card className="admin-card">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base text-slate-500">
                     제외된 인원 ({excludedMemberIds.size}명)
@@ -896,7 +896,7 @@ export default function LunchGroupsPage() {
 
           {/* 오른쪽: 조 테이블 */}
           <div className="col-span-7">
-            <Card className="glass-panel">
+            <Card className="admin-card">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base">조 테이블</CardTitle>
@@ -945,7 +945,7 @@ export default function LunchGroupsPage() {
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-8 w-8 bg-[#135bec]/5 text-[#135bec] border-[#135bec]/20 hover:bg-[#135bec]/10 hover:border-[#135bec]/30"
+                      className="h-8 w-8 bg-[#1d1d1f]/5 text-[#1d1d1f] border-[#1d1d1f]/20 hover:bg-[#1d1d1f]/10 hover:border-[#1d1d1f]/30"
                       disabled={isGroupsFetching}
                       onClick={() => {
                         queryClient.invalidateQueries({
@@ -1027,9 +1027,9 @@ export default function LunchGroupsPage() {
       {/* 드래그 오버레이 */}
       <DragOverlay>
         {activeMember && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-md border border-[#135bec] bg-[#135bec]/10 shadow-xl">
-            <GripVertical className="w-3 h-3 text-[#135bec] flex-shrink-0" />
-            <span className="text-sm font-medium text-[#135bec]">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-md border border-[#1d1d1f] bg-[#1d1d1f]/10 shadow-xl">
+            <GripVertical className="w-3 h-3 text-[#1d1d1f] flex-shrink-0" />
+            <span className="text-sm font-medium text-[#1d1d1f]">
               {activeMember.full_name}
             </span>
           </div>

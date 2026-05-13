@@ -503,7 +503,7 @@ function UsersPageContent() {
                   className={cn(
                     "flex w-full items-center rounded-md px-3 py-2 text-sm transition-colors",
                     year === selectedYear
-                      ? "bg-[#135bec]/10 font-medium text-[#135bec]"
+                      ? "bg-[#1d1d1f]/10 font-medium text-[#1d1d1f]"
                       : "text-slate-600 hover:bg-slate-50",
                   )}
                 >
@@ -543,7 +543,7 @@ function UsersPageContent() {
                   className={cn(
                     "flex items-center justify-center rounded-md py-2 text-sm transition-colors",
                     month === selectedMonth
-                      ? "bg-[#135bec]/10 font-medium text-[#135bec]"
+                      ? "bg-[#1d1d1f]/10 font-medium text-[#1d1d1f]"
                       : "text-slate-600 hover:bg-slate-50",
                   )}
                 >
@@ -676,7 +676,7 @@ function UsersPageContent() {
                         <div className="flex items-center gap-1.5">
                           <button
                             onClick={() => handleUserClick(user.user_id)}
-                            className="text-sm text-[#135bec] hover:text-[#135bec]/80 underline underline-offset-2 decoration-[#135bec]/30 hover:decoration-[#135bec]/60 transition-colors"
+                            className="text-sm text-[#1d1d1f] hover:text-[#1d1d1f]/80 underline underline-offset-2 decoration-[#1d1d1f]/30 hover:decoration-[#1d1d1f]/60 transition-colors"
                           >
                             {user.full_name}
                           </button>

@@ -27,7 +27,7 @@ const LEAVE_TYPE_COLORS: Record<string, string> = {
   "지각/조퇴": "bg-orange-50 text-orange-700 border-orange-200",
   반차: "bg-purple-50 text-purple-700 border-purple-200",
   연차: "bg-yellow-50 text-yellow-700 border-yellow-200",
-  대체휴무: "bg-blue-50 text-blue-700 border-blue-200",
+  대체휴무: "bg-slate-100 text-slate-800 border-slate-300",
   경조휴무: "bg-pink-50 text-pink-700 border-pink-200",
   특별휴무: "bg-teal-50 text-teal-700 border-teal-200",
   훈련: "bg-slate-50 text-slate-700 border-slate-200",

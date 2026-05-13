@@ -233,7 +233,7 @@ function CollectionListView({
           ))}
         </div>
       ) : !collections?.length ? (
-        <Card className="glass-panel">
+        <Card className="admin-card">
           <CardContent className="flex flex-col items-center justify-center py-16 text-slate-400">
             <Coffee className="h-10 w-10 mb-3 opacity-40" />
             <p className="text-sm">아직 취합 건이 없습니다</p>
@@ -256,7 +256,7 @@ function CollectionListView({
             <Card
               key={col.id}
               className={cn(
-                "glass-panel cursor-pointer transition-all hover:ring-1 hover:ring-slate-300",
+                "admin-card cursor-pointer transition-all hover:ring-1 hover:ring-slate-300",
                 !col.is_active && "opacity-50"
               )}
               onClick={() => onSelect(col.id)}
@@ -729,7 +729,7 @@ function CollectionDetailView({
       )}
 
       {/* Applications List */}
-      <Card className="glass-panel">
+      <Card className="admin-card">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>

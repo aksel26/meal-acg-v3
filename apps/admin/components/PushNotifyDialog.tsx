@@ -184,7 +184,7 @@ export function PushNotifyDialog({
                     className={cn(
                       "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
                       notificationType === type
-                        ? "bg-blue-600 text-white"
+                        ? "bg-slate-900 text-white"
                         : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                     )}
                   >

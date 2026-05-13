@@ -24,7 +24,7 @@ export function GroupCard({ groupNumber, memberIds, members }: GroupCardProps) {
       ref={setNodeRef}
       className={`p-4 rounded-lg border-2 transition-all min-h-[160px] ${
         isOver
-          ? "border-blue-400 bg-blue-50"
+          ? "border-slate-500 bg-slate-100"
           : "border-gray-200 bg-white hover:border-gray-300"
       }`}
     >

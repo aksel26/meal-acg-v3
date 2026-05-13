@@ -1,205 +1,318 @@
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css");
 @import "tailwindcss";
 @import "@repo/tailwind-config";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Primary Palette - Deep Slate */
-  --color-slate-950: #0a0f1a;
-  --color-slate-900: #0f172a;
-  --color-slate-800: #1e293b;
-  --color-slate-700: #334155;
-  --color-slate-600: #475569;
-  --color-slate-500: #64748b;
-  --color-slate-400: #94a3b8;
-  --color-slate-300: #cbd5e1;
-  --color-slate-200: #e2e8f0;
-  --color-slate-100: #f1f5f9;
-  --color-slate-50: #f8fafc;
+  /* === Apple Design System: White-tone === */
+  /* Surface */
+  --admin-canvas: #ffffff;          /* Pure white surface */
+  --admin-parchment: #f5f5f7;       /* Off-white canvas */
+  --admin-pearl: #fafafc;           /* Near-white button fill */
+  --admin-tile-dark: #272729;       /* Reserved for dark tile variants */
+  --admin-tile-dark-2: #2a2a2c;
+  --admin-black: #000000;
 
-  /* BentoAdmin Primary - Blue */
-  --color-primary-bento: #135bec;
-  --color-primary-light-bento: #5c8df6;
-  --color-accent-purple: #a855f7;
-  --color-background-light: #f0f2f5;
+  /* Ink / Text */
+  --admin-ink: #1d1d1f;             /* Near-black headline & body */
+  --admin-ink-muted-80: #333333;    /* Body on pearl */
+  --admin-ink-muted-48: #7a7a7a;    /* Disabled / fine-print */
+  --admin-muted: #7a7a7a;
+  --admin-muted-dark: #cccccc;
 
-  /* Accent - Warm Amber (legacy support) */
-  --color-amber-500: #f59e0b;
-  --color-amber-400: #fbbf24;
-  --color-amber-300: #fcd34d;
-  --color-amber-600: #d97706;
+  /* Hairlines */
+  --admin-hairline: rgba(0, 0, 0, 0.08);
+  --admin-hairline-soft: rgba(0, 0, 0, 0.04);
+  --admin-divider: #e0e0e0;
+  --admin-card-border: #ececef;
 
-  /* Success - Emerald */
-  --color-emerald-500: #10b981;
-  --color-emerald-400: #34d399;
-  --color-emerald-600: #059669;
+  /* Accent — B&W mode (no chromatic accent) */
+  --admin-action-blue: #1d1d1f;
+  --admin-focus-blue: #1d1d1f;
+  --admin-action-blue-dark: #ffffff;
 
-  /* Danger - Rose */
-  --color-rose-500: #f43f5e;
-  --color-rose-400: #fb7185;
-  --color-rose-600: #e11d48;
+  /* shadcn-style aliases */
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: #ffffff;
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --radius: 0.375rem;
 
-  /* Info - Sky */
-  --color-sky-500: #0ea5e9;
-  --color-sky-400: #38bdf8;
-  --color-sky-600: #0284c7;
+  --color-primary-bento: var(--admin-action-blue);
+  --color-primary-light-bento: var(--admin-focus-blue);
+  --color-accent-purple: var(--admin-action-blue);
+  --color-background-light: var(--admin-parchment);
 
-  /* Spacing */
+  /* Layout */
   --sidebar-width: 280px;
   --sidebar-width-collapsed: 80px;
-  --header-height: 72px;
+  --header-height: 52px;
 
-  /* Shadows */
-  --shadow-soft:
-    0 2px 8px -2px rgba(0, 0, 0, 0.08), 0 4px 16px -4px rgba(0, 0, 0, 0.12);
-  --shadow-elevated:
-    0 8px 24px -8px rgba(0, 0, 0, 0.15), 0 16px 48px -16px rgba(0, 0, 0, 0.2);
-  --shadow-glow-amber: 0 0 24px rgba(245, 158, 11, 0.25);
-  --shadow-glow-emerald: 0 0 24px rgba(16, 185, 129, 0.25);
-  --shadow-glow-primary: 0 0 24px rgba(19, 91, 236, 0.25);
-  --shadow-glass: 0 4px 30px rgba(0, 0, 0, 0.1);
+  /* Apple: zero decorative shadows */
+  --shadow-soft: none;
+  --shadow-elevated: none;
+  --shadow-glow-amber: none;
+  --shadow-glow-emerald: none;
+  --shadow-glow-primary: none;
+  --shadow-glass: none;
+  --shadow-product: 3px 5px 30px rgba(0, 0, 0, 0.22);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
 }
 
 html {
-  font-size: 87.5%; /* 16px → 14px */
+  font-size: 87.5%;
 }
 
 body {
-  background: linear-gradient(
-    135deg,
-    #e8ecf3 0%,
-    #ececf1 30%,
-    #e9f1ec 60%,
-    #e8ecf3 100%
-  );
-  background-attachment: fixed;
   min-height: 100vh;
-  color: var(--color-slate-800);
+  background: transparent;
+  color: var(--admin-ink);
+  font-family:
+    "Pretendard Variable",
+    Pretendard,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  word-break: keep-all;
 }
 
-/* Scrollbar Styling */
+:where(button, input, textarea, select) {
+  font: inherit;
+}
+
+::selection {
+  background: var(--admin-action-blue);
+  color: #ffffff;
+}
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-slate-100);
+  background: var(--admin-parchment);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-slate-300);
-  border-radius: 4px;
+  background: #d2d2d7;
+  border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-slate-400);
+  background: #b8b8bd;
 }
 
-/* Snow Theme */
-.snow-page {
-  position: relative;
-  isolation: isolate;
+/* === Shell === */
+.admin-shell {
+  background: transparent;
 }
 
-.snow-panel {
-  background: #f9f9fa;
+/* Sidebar: white-tone (parchment surface, ink text) */
+.admin-sidebar {
+  background: transparent;
+  color: var(--admin-ink);
+  border-right: 1px solid var(--admin-hairline);
+}
+
+/* Main: transparent — lets page background show through */
+.admin-main {
+  background: transparent;
+}
+
+/* Header: transparent — relies on page background */
+.admin-topbar {
+  min-height: var(--header-height);
+  background: transparent;
+  border-bottom: 1px solid var(--admin-hairline);
+}
+
+/* Dialog: borderless (B&W tone — content stands on the overlay) */
+[data-slot="dialog-content"] {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Popover / Calendar: soft card-border gray frame */
+[data-slot="popover-content"] {
+  border-color: var(--admin-card-border) !important;
+}
+
+/* Calendar: disable scale(0.95) micro-interaction on day/nav buttons */
+[data-slot="calendar"] button:active,
+[data-slot="calendar"] [role="button"]:active {
+  transform: none !important;
+}
+
+/* Tables: unify border color to the soft card-border gray */
+table,
+thead,
+tbody,
+tfoot,
+tr,
+th,
+td {
+  border-color: var(--admin-card-border);
+}
+
+/* /evaluations page: remove table borders AND the wrapper border around tables */
+.evaluations-page table,
+.evaluations-page thead,
+.evaluations-page tbody,
+.evaluations-page tfoot,
+.evaluations-page tr,
+.evaluations-page th,
+.evaluations-page td,
+.evaluations-page :has(> table),
+.evaluations-page :has(> div > table),
+.evaluations-page :has(> .relative > table) {
+  border-width: 0 !important;
+  border-style: none !important;
+}
+
+/* /evaluations page: button outlines use light slate */
+.evaluations-page button {
+  border-color: rgb(226 232 240); /* slate-200 */
+}
+
+/* /evaluations page: shadcn Card (rounded-xl border bg-card) → fully borderless, transparent */
+.evaluations-page .bg-card.rounded-xl {
+  border-width: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+/* /evaluations page: tbody rows get a soft bottom divider (overrides table-border-strip) */
+.evaluations-page tbody tr {
+  border-bottom-width: 1px !important;
+  border-bottom-style: solid !important;
+  border-bottom-color: var(--admin-card-border) !important;
+}
+
+/* Cards: store-utility-card spec */
+.admin-card {
+  background: var(--admin-canvas);
+  border: 1px solid var(--admin-card-border);
+  border-radius: var(--radius);
   box-shadow: none;
-  backdrop-filter: none;
 }
 
-.snow-pill {
-  background: #f9f9fa;
-  color: #5f728f;
+.admin-card-soft {
+  background: var(--admin-pearl);
+  border: 1px solid var(--admin-card-border);
+  border-radius: var(--radius);
   box-shadow: none;
 }
 
-.snow-kpi {
-  background: #f9f9fa;
-  box-shadow: none;
+.admin-tile-dark {
+  background: var(--admin-tile-dark);
+  color: #ffffff;
 }
 
-.snow-grid {
-  background-image: none;
+/* Pill grammar */
+.admin-pill {
+  border-radius: 9999px;
 }
 
-/* Custom Utilities */
-.glass-card {
-  background: #ffffff;
+.admin-primary-pill {
+  border-radius: 9999px;
+  background: var(--admin-action-blue);
+  color: #ffffff;
 }
 
-/* Card shadow 전역 제거 */
+.admin-secondary-pill {
+  border: 1px solid var(--admin-action-blue);
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--admin-action-blue);
+}
+
+/* Links */
+.admin-link {
+  color: var(--admin-action-blue);
+}
+
+.admin-link-on-dark {
+  color: var(--admin-action-blue-dark);
+}
+
+/* System-wide micro-interaction: scale(0.95) on press */
+.admin-pressable {
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease,
+    opacity 0.16s ease,
+    transform 0.16s ease;
+}
+
+.admin-pressable:active {
+  transform: scale(0.95);
+}
+
+/* Sidebar nav-item states — light theme */
+.admin-nav-item {
+  color: var(--admin-ink-muted-48);
+}
+
+.admin-nav-item:hover {
+  background: var(--admin-parchment);
+  color: var(--admin-ink);
+}
+
+.admin-nav-item-active {
+  background: var(--admin-parchment);
+  color: var(--admin-ink);
+  font-weight: 600;
+}
+
+.gradient-text {
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  color: var(--admin-ink);
+}
+
 .bg-card {
   box-shadow: none;
 }
 
-/* BentoAdmin Glass Panel */
-.glass-panel {
-  background: #ffffff;
-  border-radius: 12px;
-  border: 1px solid #f0f0f0;
-}
-
-/* BentoAdmin Glass Sidebar */
-.glass-sidebar {
-  background: transparent;
-}
-
-.gradient-text {
-  background: linear-gradient(
-    135deg,
-    var(--color-primary-bento) 0%,
-    var(--color-accent-purple) 100%
-  );
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.stat-card {
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.stat-card::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(
-    90deg,
-    var(--color-primary-bento) 0%,
-    var(--color-accent-purple) 100%
-  );
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.stat-card:hover::before {
-  opacity: 1;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-}
-
-/* Sidebar Navigation Item */
-.nav-item {
-  position: relative;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.nav-item.active {
-  background: #ffffff;
-  color: var(--color-slate-900);
-  border-radius: 8px;
-  font-weight: 700;
-}
-
-/* Badge animations */
 .badge-pulse {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
@@ -214,29 +327,23 @@ body {
   }
 }
 
-/* Table row hover effect */
 .table-row-interactive {
-  transition: all 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .table-row-interactive:hover {
-  background: #f8fafc;
+  background: var(--admin-parchment);
 }
 
-/* Button hover glow */
-.btn-glow:hover {
-  box-shadow: var(--shadow-glow-primary);
-}
-
-.btn-glow-success:hover {
-  box-shadow: var(--shadow-glow-emerald);
-}
-
+.btn-glow:hover,
+.btn-glow-success:hover,
 .btn-glow-amber:hover {
-  box-shadow: var(--shadow-glow-amber);
+  background: var(--admin-action-blue);
+  color: #ffffff;
 }
 
-/* Page transitions */
 .page-enter {
   opacity: 0;
   transform: translateY(8px);
@@ -248,7 +355,6 @@ body {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Number counter animation */
 @keyframes countUp {
   from {
     opacity: 0;
@@ -264,7 +370,6 @@ body {
   animation: countUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-/* Skeleton shimmer */
 @keyframes shimmer {
   0% {
     background-position: -200% 0;
@@ -275,25 +380,16 @@ body {
 }
 
 .skeleton-shimmer {
-  background: linear-gradient(
-    90deg,
-    var(--color-slate-200) 25%,
-    var(--color-slate-100) 50%,
-    var(--color-slate-200) 75%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
+  background: #ececef;
+  animation: pulse 1.5s ease-in-out infinite;
 }
 
-/* Focus ring */
 .focus-ring:focus-visible {
-  outline: none;
-  box-shadow:
-    0 0 0 2px var(--color-slate-50),
-    0 0 0 4px var(--color-primary-bento);
+  outline: 2px solid var(--admin-focus-blue);
+  outline-offset: 2px;
+  box-shadow: none;
 }
 
-/* Tooltip */
 .tooltip {
   position: relative;
 }
@@ -305,10 +401,10 @@ body {
   left: 50%;
   transform: translateX(-50%) translateY(-4px);
   padding: 6px 12px;
-  background: var(--color-slate-900);
+  background: var(--admin-ink);
   color: white;
   font-size: 12px;
-  border-radius: 6px;
+  border-radius: var(--radius);
   white-space: nowrap;
   opacity: 0;
   visibility: hidden;
@@ -319,4 +415,121 @@ body {
   opacity: 1;
   visibility: visible;
   transform: translateX(-50%) translateY(-8px);
+}
+
+@layer base {
+  :where(button, [role="button"]) {
+    border-color: var(--admin-card-border);
+  }
+
+  :where(button, a, input, textarea, select, [role="button"]) {
+    transition:
+      background-color 0.16s ease,
+      border-color 0.16s ease,
+      color 0.16s ease,
+      opacity 0.16s ease,
+      transform 0.16s ease;
+  }
+
+  :where(button, a, [role="button"]):active {
+    transform: scale(0.95);
+  }
+
+  :where(input, textarea, select) {
+    border-radius: 9999px;
+  }
+
+  :where(input, textarea, select):focus-visible {
+    outline: 2px solid var(--admin-focus-blue);
+    outline-offset: 2px;
+  }
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  button:not(:disabled), [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
 }

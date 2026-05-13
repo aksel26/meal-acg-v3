@@ -783,7 +783,7 @@ export default function MemberStatusPage() {
                         className={cn(
                           "h-3 w-3",
                           sortKey === "member_role"
-                            ? "text-[#135bec]"
+                            ? "text-[#1d1d1f]"
                             : "text-slate-300",
                         )}
                       />
@@ -814,7 +814,7 @@ export default function MemberStatusPage() {
                         className={cn(
                           "h-3 w-3",
                           sortKey === "current_status"
-                            ? "text-[#135bec]"
+                            ? "text-[#1d1d1f]"
                             : "text-slate-300",
                         )}
                       />
@@ -830,7 +830,7 @@ export default function MemberStatusPage() {
                         className={cn(
                           "h-3 w-3",
                           sortKey === "team_name"
-                            ? "text-[#135bec]"
+                            ? "text-[#1d1d1f]"
                             : "text-slate-300",
                         )}
                       />
@@ -854,7 +854,7 @@ export default function MemberStatusPage() {
                       <TableCell className="pl-6 text-sm font-medium w-24 text-center">
                         <button
                           onClick={() => handleEditMemberOpen(row)}
-                          className="text-blue-600 hover:text-blue-800 hover:underline"
+                          className="text-slate-800 hover:text-slate-900 hover:underline"
                           title="인원 정보 수정"
                         >
                           {row.full_name}
@@ -905,7 +905,7 @@ export default function MemberStatusPage() {
                             colorClass,
                             row.current_status
                               ? "hover:ring-slate-300"
-                              : "hover:ring-[#135bec]/30",
+                              : "hover:ring-[#1d1d1f]/30",
                           )}
                           onClick={() => handleStatusCellClick(row)}
                         >
@@ -1741,7 +1741,7 @@ export default function MemberStatusPage() {
                           </span>
                           <button
                             onClick={() => handleHistoryEditOpen(record)}
-                            className="inline-flex h-6 w-6 items-center justify-center rounded text-slate-400 transition-colors hover:bg-[#135bec]/10 hover:text-[#135bec]"
+                            className="inline-flex h-6 w-6 items-center justify-center rounded text-slate-400 transition-colors hover:bg-[#1d1d1f]/10 hover:text-[#1d1d1f]"
                             title="수정"
                           >
                             <Pencil className="h-3 w-3" />

@@ -82,7 +82,7 @@ export default function ExportPage() {
         {/* 왼쪽: 설정 및 내보내기 정보 */}
         <div className="col-span-5 space-y-4">
           {/* 기간 선택 */}
-          <Card className="glass-panel border border-slate-200 shadow-none">
+          <Card className="admin-card border border-slate-200 shadow-none">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">기준 기간</CardTitle>
             </CardHeader>
@@ -121,7 +121,7 @@ export default function ExportPage() {
           </Card>
 
           {/* 내보내기 정보 */}
-          <Card className="glass-panel border border-slate-200 shadow-none">
+          <Card className="admin-card border border-slate-200 shadow-none">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">내보내기 정보</CardTitle>
             </CardHeader>
@@ -181,7 +181,7 @@ export default function ExportPage() {
 
         {/* 오른쪽: 멤버 선택 */}
         <div className="col-span-7">
-          <Card className="glass-panel border border-slate-200 shadow-none h-full">
+          <Card className="admin-card border border-slate-200 shadow-none h-full">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div>
@@ -216,12 +216,12 @@ export default function ExportPage() {
                       className={cn(
                         "flex items-center gap-2 p-2 rounded-md border cursor-pointer transition-all",
                         isSelected
-                          ? "border-[#135bec] bg-[#135bec]/10"
+                          ? "border-[#1d1d1f] bg-[#1d1d1f]/10"
                           : "border-gray-200 hover:border-gray-300",
                       )}
                     >
                       {isSelected ? (
-                        <CheckCircle2 className="h-4 w-4 text-[#135bec] flex-shrink-0" />
+                        <CheckCircle2 className="h-4 w-4 text-[#1d1d1f] flex-shrink-0" />
                       ) : (
                         <div className="h-4 w-4 rounded-full border border-gray-300 flex-shrink-0" />
                       )}

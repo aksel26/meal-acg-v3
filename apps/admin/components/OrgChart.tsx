@@ -237,7 +237,7 @@ function MemberNode({
       className={cn(
         "flex items-center gap-2 rounded-lg px-3 py-2",
         data.pendingMove
-          ? "bg-blue-50 outline-dashed outline-1 outline-blue-300"
+          ? "bg-slate-100 outline-dashed outline-1 outline-blue-300"
           : "bg-slate-50"
       )}
     >
@@ -259,7 +259,7 @@ function MemberNode({
         )}
       </div>
       {data.pendingMove && (
-        <span className="text-[10px] text-blue-400 shrink-0">이동</span>
+        <span className="text-[10px] text-slate-600 shrink-0">이동</span>
       )}
     </div>
   );
@@ -1011,7 +1011,7 @@ export default function OrgChart({
 
               <Button
                 size="sm"
-                className="h-8 gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                className="h-8 gap-1.5 text-xs bg-slate-900 hover:bg-black text-white"
                 onClick={handleSave}
                 disabled={isSaving}
               >
@@ -1030,14 +1030,14 @@ export default function OrgChart({
         {hasPending && (
           <Panel
             position="bottom-left"
-            className="max-w-xs rounded-lg border border-blue-200 bg-blue-50/95 px-3 py-2 shadow-sm backdrop-blur"
+            className="max-w-xs rounded-lg border border-slate-300 bg-slate-100/95 px-3 py-2 shadow-sm backdrop-blur"
           >
-            <p className="mb-1 text-xs font-semibold text-blue-800">
+            <p className="mb-1 text-xs font-semibold text-slate-900">
               대기 중인 변경 ({pendingChanges.length})
             </p>
             <ul className="space-y-0.5">
               {pendingChanges.map((c, i) => (
-                <li key={i} className="text-[11px] text-blue-700">
+                <li key={i} className="text-[11px] text-slate-800">
                   {c.type === "addDivision" && `+ 본부: ${c.name}`}
                   {c.type === "addTeam" && `+ 팀: ${c.name}`}
                   {c.type === "moveMember" &&

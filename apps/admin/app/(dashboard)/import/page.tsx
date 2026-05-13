@@ -329,7 +329,7 @@ export default function ImportPage() {
         {/* 왼쪽: 업로드 영역 */}
         <div className="col-span-5 space-y-4">
           {/* 드롭존 */}
-          <Card className="glass-panel border border-gray-100 shadow-none">
+          <Card className="admin-card border border-gray-100 shadow-none">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <Upload className="w-4 h-4" />
@@ -344,14 +344,14 @@ export default function ImportPage() {
                 {...getRootProps()}
                 className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all ${
                   isDragActive
-                    ? "border-blue-400 bg-blue-50"
+                    ? "border-slate-500 bg-slate-100"
                     : "border-gray-300 hover:border-gray-400 hover:bg-gray-50"
                 }`}
               >
                 <input {...getInputProps()} />
                 <FileSpreadsheet className="w-12 h-12 mx-auto text-gray-400 mb-3" />
                 {isDragActive ? (
-                  <p className="text-blue-600 font-medium">
+                  <p className="text-slate-800 font-medium">
                     파일을 여기에 놓으세요
                   </p>
                 ) : (
@@ -369,7 +369,7 @@ export default function ImportPage() {
           </Card>
 
           {/* 옵션 */}
-          <Card className="glass-panel border border-gray-100 shadow-none">
+          <Card className="admin-card border border-gray-100 shadow-none">
             <CardContent className="pt-4">
               <div className="flex items-center space-x-2">
                 <Checkbox
@@ -389,7 +389,7 @@ export default function ImportPage() {
 
           {/* 파일 목록 */}
           {uploadedFiles.length > 0 && (
-            <Card className="glass-panel border border-gray-100 shadow-none">
+            <Card className="admin-card border border-gray-100 shadow-none">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base">
@@ -415,14 +415,14 @@ export default function ImportPage() {
                     key={fileState.file.name}
                     className={`flex items-center gap-3 p-3 rounded-md border cursor-pointer transition-all ${
                       selectedPreview === fileState.file.name
-                        ? "border-blue-400 bg-blue-50"
+                        ? "border-slate-500 bg-slate-100"
                         : "border-gray-200 hover:border-gray-300"
                     }`}
                     onClick={() => setSelectedPreview(fileState.file.name)}
                   >
                     {/* 상태 아이콘 */}
                     {fileState.status === "importing" ? (
-                      <Loader2 className="w-5 h-5 text-blue-500 animate-spin flex-shrink-0" />
+                      <Loader2 className="w-5 h-5 text-slate-700 animate-spin flex-shrink-0" />
                     ) : fileState.status === "success" ? (
                       <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
                     ) : fileState.status === "error" ? (
@@ -501,7 +501,7 @@ export default function ImportPage() {
 
         {/* 오른쪽: 미리보기 */}
         <div className="col-span-7">
-          <Card className="glass-panel border border-gray-100 shadow-none h-full">
+          <Card className="admin-card border border-gray-100 shadow-none h-full">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">데이터 미리보기</CardTitle>
               <CardDescription>

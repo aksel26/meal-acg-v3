@@ -87,7 +87,7 @@ export default function Header() {
     pageTitles["/"] ?? { title: "대시보드", subtitle: "" };
 
   return (
-    <header className="z-10 flex w-full items-center justify-between px-6 py-6">
+    <header className="admin-topbar z-10 flex w-full items-center justify-between px-6 py-3.5">
       {/* Mobile menu button */}
       {/* <div className="flex items-center gap-4 lg:hidden">
         <button className="flex items-center justify-center rounded-md p-2 text-slate-500 hover:bg-white/50">
@@ -96,11 +96,13 @@ export default function Header() {
       </div> */}
 
       {/* Left - Page Title & Search */}
-      <div className="flex flex-1 gap-1 md:px-2 flex-col">
-        <h2 className="text-xl font-semibold tracking-tight text-slate-800 md:block">
+      <div className="flex flex-1 flex-col gap-1 md:px-2">
+        <h2 className="text-[21px] font-semibold leading-tight tracking-[-0.02em] text-[#1d1d1f] md:block">
           {pageInfo.title}
         </h2>
-        <p className="text-slate-500">{pageInfo.subtitle}</p>
+        <p className="text-sm leading-5 tracking-[-0.01em] text-[#7a7a7a]">
+          {pageInfo.subtitle}
+        </p>
 
         {/* Search Bar */}
         {/* <div className="relative max-w-md flex-1 md:block">
@@ -108,7 +110,7 @@ export default function Header() {
           <input
             type="text"
             placeholder="검색..."
-            className="h-10 w-full rounded-lg border-none bg-white/60 pl-10 pr-4 text-sm text-slate-700 shadow-sm ring-1 ring-white/60 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#135bec]/20"
+            className="h-10 w-full rounded-lg border-none bg-white/60 pl-10 pr-4 text-sm text-slate-700 shadow-sm ring-1 ring-white/60 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1d1d1f]/20"
           />
         </div> */}
       </div>

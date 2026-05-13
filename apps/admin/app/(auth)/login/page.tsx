@@ -52,8 +52,8 @@ function LoginForm() {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
-      className="w-full bg-white p-10 rounded-2xl shadow-xl border border-slate-100"
+      transition={{ duration: 0.28, ease: "easeOut" }}
+      className="w-full rounded-[18px] border border-black/8 bg-white p-10"
     >
       <div className="mb-8 text-center">
         <motion.div
@@ -96,7 +96,7 @@ function LoginForm() {
               onChange={(e) => setLoginId(e.target.value)}
               required
               disabled={isLoading}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-slate-900 placeholder:text-slate-400 transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full rounded-full border border-black/8 bg-white px-5 py-3.5 text-[#1d1d1f] placeholder:text-[#7a7a7a] transition-all focus:border-[#1d1d1f] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
             />
           </motion.div>
         </div>
@@ -118,7 +118,7 @@ function LoginForm() {
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={isLoading}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-12 text-slate-900 placeholder:text-slate-400 transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full rounded-full border border-black/8 bg-white px-5 py-3.5 pr-12 text-[#1d1d1f] placeholder:text-[#7a7a7a] transition-all focus:border-[#1d1d1f] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
             />
             <button
               type="button"
@@ -148,9 +148,9 @@ function LoginForm() {
         <motion.button
           type="submit"
           disabled={isLoading}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className="group relative w-full overflow-hidden rounded-xl bg-indigo-600 px-4 py-4 text-sm font-bold text-white shadow-lg shadow-indigo-600/25 transition-all hover:bg-indigo-500 hover:shadow-indigo-600/40 disabled:opacity-70 disabled:cursor-not-allowed"
+          whileHover={{ y: -1 }}
+          whileTap={{ y: 1 }}
+          className="group relative w-full overflow-hidden rounded-full bg-[#1d1d1f] px-5 py-4 text-sm font-normal text-white transition-all hover:bg-black disabled:cursor-not-allowed disabled:opacity-70"
         >
           <span className="relative z-10 flex items-center justify-center gap-2">
             {isLoading ? (
@@ -173,7 +173,7 @@ function LoginForm() {
           문제가 있으신가요?{" "}
           <a
             href="#"
-            className="font-medium text-indigo-600 hover:text-indigo-500 hover:underline decoration-2 underline-offset-2 transition-colors"
+            className="font-medium text-[#1d1d1f] underline-offset-2 transition-colors hover:underline"
           >
             관리자에게 문의하기
           </a>
@@ -185,7 +185,7 @@ function LoginForm() {
 
 function LoginFormSkeleton() {
   return (
-    <div className="w-full bg-white p-10 rounded-2xl shadow-xl border border-slate-100">
+    <div className="w-full rounded-[18px] border border-black/8 bg-white p-10">
       <div className="mb-8 text-center">
         <div className="mx-auto h-10 w-24 animate-pulse rounded bg-slate-100" />
         <div className="mx-auto mt-4 h-8 w-32 animate-pulse rounded bg-slate-100" />
@@ -194,13 +194,13 @@ function LoginFormSkeleton() {
       <div className="space-y-6">
         <div className="space-y-2">
           <div className="h-4 w-12 animate-pulse rounded bg-slate-100" />
-          <div className="h-12 w-full animate-pulse rounded-xl bg-slate-100" />
+          <div className="h-12 w-full animate-pulse rounded-full bg-slate-100" />
         </div>
         <div className="space-y-2">
           <div className="h-4 w-16 animate-pulse rounded bg-slate-100" />
-          <div className="h-12 w-full animate-pulse rounded-xl bg-slate-100" />
+          <div className="h-12 w-full animate-pulse rounded-full bg-slate-100" />
         </div>
-        <div className="h-12 w-full animate-pulse rounded-xl bg-slate-100" />
+        <div className="h-12 w-full animate-pulse rounded-full bg-slate-100" />
       </div>
       <div className="mt-8 mx-auto h-4 w-32 animate-pulse rounded bg-slate-100" />
     </div>
@@ -209,14 +209,7 @@ function LoginFormSkeleton() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
-      {/* Animated Pastel Gradient Background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[20%] -left-[10%] w-[70%] h-[70%] rounded-full bg-blue-100/40 blur-[100px] animate-pulse" />
-        <div className="absolute top-[20%] -right-[10%] w-[60%] h-[60%] rounded-full bg-purple-100/40 blur-[100px] animate-pulse delay-700" />
-        <div className="absolute -bottom-[20%] left-[20%] w-[60%] h-[60%] rounded-full bg-pink-100/40 blur-[100px] animate-pulse delay-1000" />
-      </div>
-
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden">
       {/* Login Container */}
       <div className="relative z-10 w-full max-w-[420px] px-4">
         <Suspense fallback={<LoginFormSkeleton />}>

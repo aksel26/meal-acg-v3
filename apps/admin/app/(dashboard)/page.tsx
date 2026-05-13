@@ -64,7 +64,7 @@ const LEAVE_TYPE_COLORS: Record<string, string> = {
   "지각/조퇴": "bg-orange-50 text-orange-700",
   반차: "bg-purple-50 text-purple-700",
   연차: "bg-yellow-50 text-yellow-700",
-  대체휴무: "bg-blue-50 text-blue-700",
+  대체휴무: "bg-slate-100 text-slate-800",
   경조휴무: "bg-pink-50 text-pink-700",
   특별휴무: "bg-teal-50 text-teal-700",
   훈련: "bg-slate-50 text-slate-700",
@@ -99,9 +99,9 @@ const formatCurrencyShort = (amount: number) => {
 function ProgressBar({ percent }: { percent: number }) {
   const clamped = Math.min(Math.max(percent, 0), 100);
   return (
-    <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+    <div className="h-2 w-full overflow-hidden rounded-sm bg-slate-100">
       <div
-        className="h-full rounded-full bg-blue-600 transition-all duration-500 ease-out"
+        className="h-full rounded-sm bg-slate-900 transition-all duration-500 ease-out"
         style={{ width: `${clamped}%` }}
       />
     </div>
@@ -111,10 +111,10 @@ function ProgressBar({ percent }: { percent: number }) {
 // ── Detail Panel Sections ──
 
 const accentBorder: Record<string, string> = {
-  purple: "border-l-purple-400",
-  orange: "border-l-orange-400",
-  emerald: "border-l-emerald-400",
-  blue: "border-l-blue-400",
+  purple: "border-l-slate-900",
+  orange: "border-l-slate-700",
+  emerald: "border-l-slate-500",
+  blue: "border-l-slate-400",
 };
 
 function Section({
@@ -152,20 +152,20 @@ function DashboardSkeleton() {
     <div className="animate-pulse space-y-6">
       <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="snow-kpi rounded-xl p-4">
+          <div key={i} className="admin-card p-4">
             <div className="flex items-center gap-3">
               <div className="flex-1 space-y-1.5">
                 <div className="h-3 w-16 rounded bg-white" />
                 <div className="h-6 w-12 rounded bg-white" />
               </div>
-              <div className="h-11 w-11 rounded-xl bg-white" />
+              <div className="h-11 w-11 rounded-md bg-white" />
             </div>
           </div>
         ))}
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {Array.from({ length: 2 }).map((_, i) => (
-          <div key={i} className="snow-panel rounded-xl p-5">
+          <div key={i} className="admin-card p-5">
             <div className="h-4 w-24 rounded bg-white mb-3" />
             <div className="h-16 rounded bg-white" />
           </div>
@@ -406,12 +406,13 @@ export default function DashboardPage() {
 
   // ── Styles ──
 
-  const cardClass = "snow-panel rounded-xl p-5";
+  const cardClass =
+    "admin-card admin-pressable p-5 hover:border-black/20";
   const rowClass =
     "flex items-center justify-between border-t border-slate-100 py-2.5";
 
   return (
-    <div className="snow-page grid grid-cols-1 gap-6 pb-6 lg:grid-cols-[420px_1fr]">
+    <div className="grid grid-cols-1 gap-6 pb-6 lg:grid-cols-[420px_1fr]">
       {/* ── Left Column: Calendar + Detail ── */}
       <div className="space-y-4">
         <AdminDashboardCalendar
@@ -603,29 +604,29 @@ export default function DashboardPage() {
                 {attendanceToday ? (
                   <div className="space-y-2">
                     <div className="grid grid-cols-4 gap-2">
-                      <div className="rounded-lg bg-green-50 px-3 py-2 text-center">
-                        <p className="text-lg font-bold tabular-nums text-green-700">
+                      <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-center">
+                        <p className="text-lg font-bold tabular-nums text-slate-900">
                           {attendanceToday.checkedIn}
                         </p>
-                        <p className="text-[11px] text-green-600">출근</p>
+                        <p className="text-[11px] text-slate-500">출근</p>
                       </div>
-                      <div className="rounded-lg bg-slate-50 px-3 py-2 text-center">
+                      <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-center">
                         <p className="text-lg font-bold tabular-nums text-slate-700">
                           {attendanceToday.notCheckedIn}
                         </p>
                         <p className="text-[11px] text-slate-500">미출근</p>
                       </div>
-                      <div className="rounded-lg bg-red-50 px-3 py-2 text-center">
-                        <p className="text-lg font-bold tabular-nums text-red-700">
+                      <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-center">
+                        <p className="text-lg font-bold tabular-nums text-slate-900">
                           {attendanceToday.late}
                         </p>
-                        <p className="text-[11px] text-red-600">지각</p>
+                        <p className="text-[11px] text-slate-500">지각</p>
                       </div>
-                      <div className="rounded-lg bg-blue-50 px-3 py-2 text-center">
-                        <p className="text-lg font-bold tabular-nums text-blue-700">
+                      <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-center">
+                        <p className="text-lg font-bold tabular-nums text-slate-900">
                           {attendanceToday.onLeave}
                         </p>
-                        <p className="text-[11px] text-blue-600">휴가</p>
+                        <p className="text-[11px] text-slate-500">휴가</p>
                       </div>
                     </div>
                     {attendanceToday.lateMembers.length > 0 && (
@@ -636,7 +637,7 @@ export default function DashboardPage() {
                         {attendanceToday.lateMembers.map((m) => (
                           <span
                             key={m.id}
-                            className="rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-medium text-red-600"
+                            className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-700"
                           >
                             {m.name}
                           </span>

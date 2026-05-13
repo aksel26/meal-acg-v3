@@ -52,7 +52,7 @@ const CATEGORY_TABS: { key: Category; label: string }[] = [
 
 const EARLY_LEAVE_STATUS_BADGE: Record<string, { label: string; className: string }> = {
   pending: { label: "대기", className: "bg-amber-100 text-amber-700" },
-  pre_approved: { label: "가승인", className: "bg-blue-100 text-blue-700" },
+  pre_approved: { label: "가승인", className: "bg-slate-200 text-slate-800" },
   approved: { label: "최종승인", className: "bg-green-100 text-green-700" },
   rejected: { label: "반려", className: "bg-red-100 text-red-700" },
 };
@@ -316,7 +316,7 @@ function EarlyLeaveCard({
               <Button
                 size="sm"
                 variant="outline"
-                className="gap-1 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                className="gap-1 text-slate-800 hover:bg-slate-100 hover:text-slate-800"
                 onClick={() => onAction(req.id, "pre_approve")}
                 disabled={isPending}
               >
@@ -411,7 +411,7 @@ function ApprovalCard({
             >
               {badge.label}
             </span>
-            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-800">
               {TYPE_LABEL[approval.type] || approval.type}
             </span>
           </div>

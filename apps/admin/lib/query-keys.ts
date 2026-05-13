@@ -167,6 +167,17 @@ export const queryKeys = {
     all: ["titles"] as const,
   },
 
+  // Multisource Evaluations
+  evaluations: {
+    rounds: ["evaluations", "rounds"] as const,
+    round: (id: string) => ["evaluations", "rounds", id] as const,
+    validation: (id: string) => ["evaluations", "rounds", id, "validation"] as const,
+    auditLogs: (roundId?: string) =>
+      roundId
+        ? ["evaluations", "auditLogs", roundId] as const
+        : ["evaluations", "auditLogs"] as const,
+  },
+
   // Leave Balances (연차 현황)
   leaveBalances: {
     all: ["leaveBalances"] as const,

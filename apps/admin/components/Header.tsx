@@ -44,6 +44,10 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
     title: "직급/직책 관리",
     subtitle: "조직의 직급과 직책을 관리합니다",
   },
+  "/evaluations": {
+    title: "다면평가",
+    subtitle: "회차별 문항, 대상자, 평가자 배정을 설정합니다",
+  },
   "/attendance": {
     title: "출퇴근 현황",
     subtitle: "조직원의 출퇴근 기록을 관리합니다",
@@ -76,7 +80,10 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
 
 export default function Header() {
   const pathname = usePathname();
-  const pageInfo = pageTitles[pathname] ??
+  const normalizedPathname = pathname.startsWith("/evaluations/")
+    ? "/evaluations"
+    : pathname;
+  const pageInfo = pageTitles[normalizedPathname] ??
     pageTitles["/"] ?? { title: "대시보드", subtitle: "" };
 
   return (

@@ -163,6 +163,26 @@ function NumberTicker({ value }: { value: number }) {
   );
 }
 
+function CounterLoading() {
+  return (
+    <span className="flex h-[1.125rem] w-16 items-end gap-1">
+      {[0, 1, 2].map((item) => (
+        <motion.span
+          key={item}
+          className="block h-3 flex-1 rounded-full bg-[var(--ink-black)]/20"
+          animate={{ opacity: [0.35, 0.85, 0.35], scaleY: [0.75, 1, 0.75] }}
+          transition={{
+            duration: 0.9,
+            delay: item * 0.12,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
+    </span>
+  );
+}
+
 const EASTER_EGG_POLL_INTERVAL_MS = 30_000;
 let easterEggTotalRequest: Promise<number> | null = null;
 
@@ -208,9 +228,24 @@ async function postEasterEggClick(
 function EmptyCollectionsState() {
   const controls = useAnimationControls();
   const [total, setTotal] = useState(0);
+  const [isTotalLoading, setIsTotalLoading] = useState(true);
   const [thrownEmojis, setThrownEmojis] = useState<ThrownEmoji[]>([]);
   const throwIdRef = useRef(0);
   const pendingDeltaRef = useRef(0);
+  const hasLoadedTotalRef = useRef(false);
+
+  useEffect(() => {
+    const hintTimerId = window.setTimeout(() => {
+      void controls.start({
+        rotate: [0, -2.5, 2.5, -1.5, 1.5, 0],
+        x: [0, -1, 1, -0.5, 0.5, 0],
+        scale: [1, 1.015, 1],
+        transition: { duration: 0.7, ease: "easeInOut" },
+      });
+    }, 900);
+
+    return () => window.clearTimeout(hintTimerId);
+  }, [controls]);
 
   // 최초 마운트 시 서버 누적 금액 가져오기 + 주기 폴링 + 포커스 시 재조회
   useEffect(() => {
@@ -224,6 +259,11 @@ function EmptyCollectionsState() {
         setTotal(serverTotal + pendingDeltaRef.current);
       } catch {
         /* 무시 — 다음 폴링에서 재시도 */
+      } finally {
+        if (active && !hasLoadedTotalRef.current) {
+          hasLoadedTotalRef.current = true;
+          setIsTotalLoading(false);
+        }
       }
     };
 
@@ -245,6 +285,7 @@ function EmptyCollectionsState() {
   }, []);
 
   const handleEasterEggClick = () => {
+    setIsTotalLoading(false);
     setTotal((prev) => prev + EASTER_EGG_INCREMENT);
     pendingDeltaRef.current += EASTER_EGG_INCREMENT;
     controls.start({
@@ -337,7 +378,29 @@ function EmptyCollectionsState() {
             priority={false}
             draggable={false}
           />
-          <NumberTicker value={total} />
+          <AnimatePresence mode="wait" initial={false}>
+            {isTotalLoading ? (
+              <motion.span
+                key="loading"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.18 }}
+              >
+                <CounterLoading />
+              </motion.span>
+            ) : (
+              <motion.span
+                key="total"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.18 }}
+              >
+                <NumberTicker value={total} />
+              </motion.span>
+            )}
+          </AnimatePresence>
         </div>
       </div>
       <p className="text-sm text-[var(--slate-gray)]">

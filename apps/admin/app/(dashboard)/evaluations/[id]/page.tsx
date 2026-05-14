@@ -7,29 +7,20 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
   CheckCircle2,
-  ChevronDown,
   ChevronLeft,
-  ClipboardList,
   History,
   Loader2,
   Pencil,
-  Plus,
   RefreshCw,
   Save,
-  Trash2,
   Users,
 } from "lucide-react";
 import { toast } from "@repo/ui/src/sonner";
 import { cn } from "@repo/ui/lib/utils";
 import { Badge } from "@repo/ui/src/badge";
 import { Button } from "@repo/ui/src/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/src/card";
+import { Card, CardContent } from "@repo/ui/src/card";
 import { Checkbox } from "@repo/ui/src/checkbox";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@repo/ui/src/popover";
 import {
   Dialog,
   DialogContent,
@@ -40,13 +31,6 @@ import {
 } from "@repo/ui/src/dialog";
 import { Input } from "@repo/ui/src/input";
 import { Label } from "@repo/ui/src/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@repo/ui/src/select";
 import { Textarea } from "@repo/ui/src/textarea";
 import {
   Tooltip,
@@ -55,13 +39,11 @@ import {
   TooltipTrigger,
 } from "@repo/ui/src/tooltip";
 import { queryKeys } from "@/lib/query-keys";
-import { usePositions } from "@/hooks/usePositions";
 import type { MemberCurrentStatus } from "@/lib/supabase/types";
 
 type RoundStatus = "draft" | "confirmed" | "closed";
 type QuestionType = "score" | "subjective";
 type AssignmentSource = "auto_same_team" | "auto_leader" | "manual";
-type SectionKey = "questions" | "subjects" | "assignments" | "history";
 
 type EvaluationRound = {
   id: string;
@@ -72,6 +54,8 @@ type EvaluationRound = {
   status: RoundStatus;
   is_deployed: boolean;
   config_version: number;
+  question_set_id: string | null;
+  question_set_applied_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -145,11 +129,10 @@ type MemberRow = MemberCurrentStatus & {
   current_status: string | null;
 };
 
-const SECTIONS: { key: SectionKey; label: string }[] = [
-  { key: "subjects", label: "대상자" },
-  { key: "questions", label: "문항" },
-  { key: "assignments", label: "평가자 배정" },
-];
+const EMPTY_MEMBERS: MemberRow[] = [];
+const EMPTY_AUDIT_LOGS: EvaluationAuditLog[] = [];
+const ALL_TEAMS_KEY = "__all__";
+const NO_TEAM_KEY = "__none__";
 
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init);
@@ -180,6 +163,7 @@ const ACTION_LABELS: Record<string, string> = {
   DELETE_ROUND: "회차 삭제",
   REPLACE_SUBJECTS: "대상자 저장",
   REPLACE_QUESTIONS: "문항 저장",
+  APPLY_QUESTION_SET: "문항 SET 적용",
   GENERATE_ASSIGNMENTS: "평가자 자동 생성",
   REPLACE_ASSIGNMENTS: "평가자 배정 저장",
   CONFIRM_ROUND: "회차 확정",
@@ -191,6 +175,7 @@ const TARGET_LABELS: Record<string, string> = {
   multisource_evaluation_rounds: "회차",
   multisource_evaluation_subjects: "대상자",
   multisource_evaluation_questions: "문항",
+  multisource_evaluation_question_sets: "문항 SET",
   multisource_evaluation_assignments: "평가자 배정",
   multisource_evaluation_audit_logs: "변경 이력",
 };
@@ -205,6 +190,16 @@ function titleSortRank(titleName?: string | null) {
   return index === -1 ? TITLE_SORT_ORDER.length : index;
 }
 
+function teamKey(teamName?: string | null) {
+  return teamName?.trim() || NO_TEAM_KEY;
+}
+
+function teamLabel(key: string) {
+  if (key === ALL_TEAMS_KEY) return "전체";
+  if (key === NO_TEAM_KEY) return "팀 미지정";
+  return key;
+}
+
 function actionLabel(action: string) {
   return ACTION_LABELS[action] || action;
 }
@@ -217,7 +212,6 @@ export default function EvaluationDetailPage() {
   const { id: roundId } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
 
-  const [activeSection, setActiveSection] = useState<SectionKey>("subjects");
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const [roundForm, setRoundForm] = useState({
@@ -229,11 +223,12 @@ export default function EvaluationDetailPage() {
   const [questions, setQuestions] = useState<EvaluationQuestion[]>([]);
   const [subjectIds, setSubjectIds] = useState<string[]>([]);
   const [assignments, setAssignments] = useState<EvaluationAssignment[]>([]);
+  const [selectedTeamKey, setSelectedTeamKey] = useState(ALL_TEAMS_KEY);
+  const [selectedSubjectId, setSelectedSubjectId] = useState("");
   const [subjectSearch, setSubjectSearch] = useState("");
+  const [evaluatorSearch, setEvaluatorSearch] = useState("");
 
-  const { data: positions = [] } = usePositions();
-
-  const { data: members = [] } = useQuery<MemberRow[]>({
+  const { data: members = EMPTY_MEMBERS } = useQuery<MemberRow[]>({
     queryKey: queryKeys.memberStatuses.list({}),
     queryFn: async () => requestJson<MemberRow[]>("/api/member-statuses"),
     staleTime: 60 * 1000,
@@ -256,7 +251,7 @@ export default function EvaluationDetailPage() {
     enabled: !!roundId,
   });
 
-  const { data: auditLogs = [] } = useQuery<EvaluationAuditLog[]>({
+  const { data: auditLogs = EMPTY_AUDIT_LOGS } = useQuery<EvaluationAuditLog[]>({
     queryKey: queryKeys.evaluations.auditLogs(roundId || undefined),
     queryFn: async () =>
       requestJson<EvaluationAuditLog[]>(
@@ -281,45 +276,139 @@ export default function EvaluationDetailPage() {
     setAssignments(roundDetail.assignments);
   }, [roundDetail]);
 
+  useEffect(() => {
+    if (members.length === 0) return;
+    setSubjectIds((prev) => {
+      const next = members.map((member) => member.member_id);
+      if (
+        prev.length === next.length &&
+        prev.every((id, index) => id === next[index])
+      ) {
+        return prev;
+      }
+      return next;
+    });
+  }, [members]);
+
   const isLocked = Boolean(roundDetail?.is_deployed);
-  const activeSubjects = subjectIds;
   const membersById = useMemo(
     () => new Map(members.map((member) => [member.member_id, member])),
     [members],
   );
-  const positionsById = useMemo(
-    () => new Map(positions.map((position) => [position.id, position])),
-    [positions],
-  );
-  const representedPositionIds = useMemo(() => {
-    return Array.from(
-      new Set(
-        activeSubjects
-          .map((memberId) => membersById.get(memberId)?.position_id)
-          .filter(Boolean) as string[],
-      ),
-    );
-  }, [activeSubjects, membersById]);
-  const filteredMembers = useMemo(() => {
+  const teamOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const member of members) {
+      const key = teamKey(member.team_name);
+      counts.set(key, (counts.get(key) || 0) + 1);
+    }
+
+    const teams = Array.from(counts.entries())
+      .map(([key, count]) => ({ key, label: teamLabel(key), count }))
+      .sort((a, b) => a.label.localeCompare(b.label, "ko"));
+
+    return [
+      { key: ALL_TEAMS_KEY, label: "전체", count: members.length },
+      ...teams,
+    ];
+  }, [members]);
+
+  const selectedTeamMembers = useMemo(() => {
     const keyword = subjectSearch.trim().toLowerCase();
-    const source = keyword
-      ? members.filter((member) => {
-          const fields = [
-            member.full_name,
-            member.team_name,
-            member.position_name,
-            member.title_name,
-          ];
-          return fields.some((field) => field?.toLowerCase().includes(keyword));
-        })
-      : members;
+    const source = members.filter((member) => {
+      if (
+        selectedTeamKey !== ALL_TEAMS_KEY &&
+        teamKey(member.team_name) !== selectedTeamKey
+      ) {
+        return false;
+      }
+
+      if (!keyword) return true;
+
+      const fields = [
+        member.full_name,
+        member.team_name,
+        member.position_name,
+        member.title_name,
+      ];
+      return fields.some((field) => field?.toLowerCase().includes(keyword));
+    });
 
     return [...source].sort((a, b) => {
-      const titleDiff = titleSortRank(a.title_name) - titleSortRank(b.title_name);
+      const titleDiff =
+        titleSortRank(a.title_name) - titleSortRank(b.title_name);
       if (titleDiff !== 0) return titleDiff;
       return a.full_name.localeCompare(b.full_name, "ko");
     });
-  }, [members, subjectSearch]);
+  }, [members, selectedTeamKey, subjectSearch]);
+
+  useEffect(() => {
+    if (
+      selectedSubjectId &&
+      selectedTeamMembers.some(
+        (member) => member.member_id === selectedSubjectId,
+      )
+    ) {
+      return;
+    }
+
+    setSelectedSubjectId(selectedTeamMembers[0]?.member_id || "");
+  }, [selectedSubjectId, selectedTeamMembers]);
+
+  const selectedSubject = selectedSubjectId
+    ? membersById.get(selectedSubjectId)
+    : undefined;
+  const selectedSubjectAssignments = useMemo(
+    () =>
+      assignments.filter(
+        (assignment) =>
+          assignment.subject_member_id === selectedSubjectId &&
+          !assignment.is_excluded,
+      ),
+    [assignments, selectedSubjectId],
+  );
+  const assignedEvaluatorIds = useMemo(
+    () =>
+      new Set(
+        selectedSubjectAssignments.map(
+          (assignment) => assignment.evaluator_member_id,
+        ),
+      ),
+    [selectedSubjectAssignments],
+  );
+  const evaluatorCandidates = useMemo(() => {
+    const keyword = evaluatorSearch.trim().toLowerCase();
+
+    return members
+      .filter((member) => {
+        if (member.member_id === selectedSubjectId) return false;
+        if (!keyword) return true;
+
+        const fields = [
+          member.full_name,
+          member.team_name,
+          member.position_name,
+          member.title_name,
+        ];
+        return fields.some((field) => field?.toLowerCase().includes(keyword));
+      })
+      .sort((a, b) => {
+        const checkedDiff =
+          Number(assignedEvaluatorIds.has(b.member_id)) -
+          Number(assignedEvaluatorIds.has(a.member_id));
+        if (checkedDiff !== 0) return checkedDiff;
+
+        const teamDiff = (a.team_name || "").localeCompare(
+          b.team_name || "",
+          "ko",
+        );
+        if (teamDiff !== 0) return teamDiff;
+
+        const titleDiff =
+          titleSortRank(a.title_name) - titleSortRank(b.title_name);
+        if (titleDiff !== 0) return titleDiff;
+        return a.full_name.localeCompare(b.full_name, "ko");
+      });
+  }, [assignedEvaluatorIds, evaluatorSearch, members, selectedSubjectId]);
 
   function invalidateRound() {
     queryClient.invalidateQueries({ queryKey: queryKeys.evaluations.rounds });
@@ -346,32 +435,6 @@ export default function EvaluationDetailPage() {
     onSuccess: () => {
       toast.success("회차 정보가 저장되었습니다.");
       setEditDialogOpen(false);
-      invalidateRound();
-    },
-    onError: (error: Error) => toast.error(error.message),
-  });
-
-  const saveQuestionsMutation = useMutation({
-    mutationFn: async () =>
-      requestJson<EvaluationQuestion[]>(
-        `/api/evaluations/rounds/${roundId}/questions`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            questions: questions.map((question, index) => ({
-              positionId: question.position_id,
-              questionType: question.question_type,
-              prompt: question.prompt,
-              weight: question.question_type === "score" ? question.weight : null,
-              sortOrder: index + 1,
-              isRequired: question.is_required,
-            })),
-          }),
-        },
-      ),
-    onSuccess: () => {
-      toast.success("문항이 저장되었습니다.");
       invalidateRound();
     },
     onError: (error: Error) => toast.error(error.message),
@@ -526,47 +589,6 @@ export default function EvaluationDetailPage() {
     },
     onError: (error: Error) => toast.error(error.message),
   });
-
-  function toggleSubject(memberId: string) {
-    const isSelected = subjectIds.includes(memberId);
-    if (isSelected) {
-      setAssignments((current) =>
-        current.filter(
-          (assignment) => assignment.subject_member_id !== memberId,
-        ),
-      );
-    }
-
-    setSubjectIds((prev) =>
-      isSelected ? prev.filter((id) => id !== memberId) : [...prev, memberId],
-    );
-  }
-
-  function addQuestion(positionId: string) {
-    setQuestions((prev) => [
-      ...prev,
-      {
-        position_id: positionId,
-        question_type: "score",
-        prompt: "",
-        weight: 1,
-        sort_order: prev.length + 1,
-        is_required: true,
-      },
-    ]);
-  }
-
-  function updateQuestion(index: number, patch: Partial<EvaluationQuestion>) {
-    setQuestions((prev) =>
-      prev.map((question, i) => {
-        if (i !== index) return question;
-        const next = { ...question, ...patch };
-        if (patch.question_type === "score" && !next.weight) next.weight = 1;
-        if (patch.question_type === "subjective") next.weight = null;
-        return next;
-      }),
-    );
-  }
 
   function toggleAssignment(subjectId: string, evaluatorId: string) {
     if (subjectId === evaluatorId) return;
@@ -752,34 +774,7 @@ export default function EvaluationDetailPage() {
         </CardContent>
       </Card>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex gap-1 rounded-lg border border-slate-200 bg-white p-1">
-          {SECTIONS.map((section, index) => (
-            <button
-              key={section.key}
-              type="button"
-              onClick={() => setActiveSection(section.key)}
-              className={cn(
-                "inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors",
-                activeSection === section.key
-                  ? "bg-slate-900 text-white"
-                  : "text-slate-500 hover:bg-slate-50 hover:text-slate-900",
-              )}
-            >
-              <span
-                className={cn(
-                  "flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-semibold",
-                  activeSection === section.key
-                    ? "bg-white/15 text-white"
-                    : "bg-slate-100 text-slate-500",
-                )}
-              >
-                {index + 1}
-              </span>
-              {section.label}
-            </button>
-          ))}
-        </div>
+      <div className="flex justify-end">
         <Button
           onClick={() => saveAllMutation.mutate()}
           disabled={isLocked || saveAllMutation.isPending}
@@ -793,455 +788,232 @@ export default function EvaluationDetailPage() {
         </Button>
       </div>
 
-      {activeSection === "questions" && (
-        <Card>
-          <CardContent className="space-y-5 p-0">
-            {representedPositionIds.length === 0 ? (
-              <EmptyState
-                icon={ClipboardList}
-                title="대상자를 먼저 선택하세요"
-                description="이번 회차 대상자에 포함된 직급 기준으로 문항을 설정합니다."
-              />
-            ) : (
-              representedPositionIds.map((positionId) => {
-                const positionQuestions = questions
-                  .map((question, index) => ({ question, index }))
-                  .filter(({ question }) => question.position_id === positionId);
-
-                return (
-                  <div key={positionId} className="rounded-lg border border-slate-200 p-4">
-                    <div className="mb-3 flex items-center justify-between">
-                      <div>
-                        <h3 className="font-medium text-slate-900">
-                          {positionsById.get(positionId)?.name || "직급 미지정"}
-                        </h3>
-                        <p className="text-xs text-slate-500">
-                          {positionQuestions.length}개 문항
-                        </p>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => addQuestion(positionId)}
-                        disabled={isLocked}
-                      >
-                        <Plus className="mr-1 h-4 w-4" />
-                        문항 추가
-                      </Button>
-                    </div>
-                    <div className="space-y-3">
-                      {positionQuestions.length === 0 ? (
-                        <p className="rounded bg-slate-50 px-3 py-4 text-sm text-slate-400">
-                          이 직급의 문항이 없습니다.
-                        </p>
-                      ) : (
-                        positionQuestions.map(({ question, index }) => (
-                          <div
-                            key={`${question.position_id}-${index}`}
-                            className="grid gap-3 rounded-lg bg-slate-50 p-3 md:grid-cols-[140px_1fr_110px_40px]"
-                          >
-                            <Select
-                              value={question.question_type}
-                              disabled={isLocked}
-                              onValueChange={(value) =>
-                                updateQuestion(index, {
-                                  question_type: value as QuestionType,
-                                })
-                              }
-                            >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="score">점수형</SelectItem>
-                                <SelectItem value="subjective">주관식</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <Input
-                              value={question.prompt}
-                              disabled={isLocked}
-                              placeholder="문항 내용을 입력하세요"
-                              onChange={(event) =>
-                                updateQuestion(index, {
-                                  prompt: event.target.value,
-                                })
-                              }
-                            />
-                            <Input
-                              type="number"
-                              min={0}
-                              step="0.1"
-                              value={question.weight ?? ""}
-                              disabled={isLocked || question.question_type === "subjective"}
-                              placeholder="가중치"
-                              onChange={(event) =>
-                                updateQuestion(index, {
-                                  weight: Number(event.target.value),
-                                })
-                              }
-                            />
-                            <button
-                              type="button"
-                              className="inline-flex h-10 w-10 items-center justify-center rounded-md text-slate-400 hover:bg-white hover:text-rose-500 disabled:opacity-40"
-                              disabled={isLocked}
-                              onClick={() =>
-                                setQuestions((prev) =>
-                                  prev.filter((_, i) => i !== index),
-                                )
-                              }
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {activeSection === "subjects" && (
-        <Card>
-          <CardContent className="space-y-4 p-0">
-            <div className="flex items-center justify-between gap-3">
-              <Input
-                value={subjectSearch}
-                placeholder="이름, 팀, 직급, 직책 검색"
-                onChange={(event) => setSubjectSearch(event.target.value)}
-              />
-              <div className="flex shrink-0 gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={
-                    isLocked ||
-                    subjectIds.length === 0 ||
-                    generateAssignmentsMutation.isPending
-                  }
-                  onClick={() => generateAssignmentsMutation.mutate()}
-                >
-                  {generateAssignmentsMutation.isPending ? (
-                    <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-                  ) : (
-                    <RefreshCw className="mr-1 h-4 w-4" />
-                  )}
-                  자동 배정
-                </Button>
-              </div>
+      <Card>
+        <CardContent className="space-y-5 p-0">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900">
+                대상자 / 평가자 배정
+              </h2>
+              <p className="mt-1 text-xs text-slate-400">
+                팀을 선택하고 대상자 멤버별 평가자를 체크합니다.
+              </p>
             </div>
-            <div className="overflow-x-auto rounded-lg border border-slate-200">
-              <table className="w-full min-w-[1120px] text-sm">
-                <thead className="bg-slate-50 text-left text-xs text-slate-500">
-                  <tr>
-                    <th className="w-[120px] px-3 py-3">이름</th>
-                    <th className="w-[120px] px-3 py-3">팀</th>
-                    <th className="w-[90px] px-3 py-3">직급</th>
-                    <th className="w-[90px] px-3 py-3">직책</th>
-                    <th className="w-[90px] px-3 py-3">상태</th>
-                    <th className="px-4 py-3">평가자 배정</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredMembers.map((member) => {
-                    const checked = subjectIds.includes(member.member_id);
-                    const subjectAssignments = assignments.filter(
-                      (assignment) =>
-                        assignment.subject_member_id === member.member_id &&
-                        !assignment.is_excluded,
-                    );
-                    const assignedEvaluatorIds = new Set(
-                      subjectAssignments.map(
-                        (assignment) => assignment.evaluator_member_id,
-                      ),
-                    );
-                    const candidates = members.filter(
-                      (candidate) =>
-                        candidate.member_id !== member.member_id,
-                    );
+            <Button
+              type="button"
+              variant="outline"
+              disabled={
+                isLocked ||
+                subjectIds.length === 0 ||
+                generateAssignmentsMutation.isPending
+              }
+              onClick={() => generateAssignmentsMutation.mutate()}
+            >
+              {generateAssignmentsMutation.isPending ? (
+                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="mr-1 h-4 w-4" />
+              )}
+              자동 배정
+            </Button>
+          </div>
+
+          {members.length === 0 ? (
+            <EmptyState
+              icon={Users}
+              title="표시할 구성원이 없습니다"
+              description="구성원 정보를 불러오면 배정 화면이 표시됩니다."
+            />
+          ) : (
+            <div className="grid gap-4 lg:grid-cols-[240px_320px_1fr]">
+              <section className="rounded-lg border border-slate-200 bg-white">
+                <div className="border-b border-slate-100 px-4 py-3">
+                  <h3 className="text-sm font-medium text-slate-900">
+                    1. 팀 선택
+                  </h3>
+                  <p className="mt-1 text-xs text-slate-400">
+                    대상자 후보를 팀 단위로 좁힙니다.
+                  </p>
+                </div>
+                <div className="max-h-[560px] space-y-1 overflow-auto p-2">
+                  {teamOptions.map((team) => {
+                    const isSelected = selectedTeamKey === team.key;
+
                     return (
-                      <tr key={member.member_id} className="border-t">
-                        <td className="px-3 py-3 font-medium">
-                          <button
-                            type="button"
-                            disabled={isLocked}
-                            onClick={() => toggleSubject(member.member_id)}
-                            className={cn(
-                              "max-w-full truncate rounded-md px-2 py-1 text-left font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60",
-                              checked
-                                ? "bg-slate-900 text-white"
-                                : "text-slate-900 hover:bg-slate-100",
-                            )}
-                          >
-                            {member.full_name}
-                          </button>
-                        </td>
-                        <td className="px-3 py-3 text-slate-500">
-                          {member.team_name || "-"}
-                        </td>
-                        <td className="px-3 py-3 text-slate-500">
-                          {member.position_name || "-"}
-                        </td>
-                        <td className="px-3 py-3 text-slate-500">
-                          {member.title_name || "-"}
-                        </td>
-                        <td className="px-3 py-3 text-slate-500">
-                          {member.current_status || "정상"}
-                        </td>
-                        <td className="px-4 py-3">
-                          {checked && (
-                            <div className="space-y-2">
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={isLocked}
-                                    className="min-w-[160px] justify-between"
-                                  >
-                                    <span className="truncate">
-                                      {subjectAssignments.length > 0
-                                        ? `${subjectAssignments.length}명 배정됨`
-                                        : "평가자 선택"}
-                                    </span>
-                                    <ChevronDown className="ml-2 h-4 w-4 shrink-0 text-slate-400" />
-                                  </Button>
-                                </PopoverTrigger>
-                                <PopoverContent align="start" className="w-80 p-0">
-                                  <div className="max-h-72 overflow-auto p-2">
-                                    {candidates.map((candidate) => {
-                                      const evaluatorChecked =
-                                        assignedEvaluatorIds.has(
-                                          candidate.member_id,
-                                        );
-                                      return (
-                                        <label
-                                          key={candidate.member_id}
-                                          className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-sm hover:bg-slate-50"
-                                        >
-                                          <Checkbox
-                                            checked={evaluatorChecked}
-                                            onCheckedChange={() =>
-                                              toggleAssignment(
-                                                member.member_id,
-                                                candidate.member_id,
-                                              )
-                                            }
-                                          />
-                                          <span className="min-w-0 flex-1">
-                                            <span className="block truncate font-medium text-slate-800">
-                                              {candidate.full_name}
-                                            </span>
-                                            <span className="block truncate text-xs text-slate-400">
-                                              {candidate.team_name || "-"} ·{" "}
-                                              {candidate.position_name || "-"}
-                                            </span>
-                                          </span>
-                                        </label>
-                                      );
-                                    })}
-                                  </div>
-                                </PopoverContent>
-                              </Popover>
-                              <div className="flex flex-wrap gap-1.5">
-                                {subjectAssignments.map((assignment) => {
-                                  const evaluator = membersById.get(
-                                    assignment.evaluator_member_id,
-                                  );
-                                  return (
-                                    <span
-                                      key={`${assignment.subject_member_id}-${assignment.evaluator_member_id}`}
-                                      className="inline-flex items-center gap-1.5 rounded-md border bg-slate-50 px-2 py-1 text-xs"
-                                    >
-                                      <span>
-                                        {evaluator?.full_name ||
-                                          assignment.evaluator?.full_name ||
-                                          "평가자"}
-                                      </span>
-                                      {assignment.source !== "manual" && (
-                                        <span className="text-slate-400">
-                                          {sourceLabel(assignment.source)}
-                                        </span>
-                                      )}
-                                      <button
-                                        type="button"
-                                        className="text-slate-400 hover:text-rose-500 disabled:opacity-40"
-                                        disabled={isLocked}
-                                        onClick={() =>
-                                          toggleAssignment(
-                                            assignment.subject_member_id,
-                                            assignment.evaluator_member_id,
-                                          )
-                                        }
-                                      >
-                                        <Trash2 className="h-3 w-3" />
-                                      </button>
-                                    </span>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
+                      <button
+                        key={team.key}
+                        type="button"
+                        onClick={() => setSelectedTeamKey(team.key)}
+                        className={cn(
+                          "flex w-full items-center justify-between gap-3 rounded-md border px-3 py-2 text-left transition-colors",
+                          isSelected
+                            ? "border-slate-900 bg-white text-slate-900"
+                            : "border-transparent text-slate-600 hover:border-slate-200",
+                        )}
+                      >
+                        <span className="truncate text-sm font-medium">
+                          {team.label}
+                        </span>
+                        <Badge variant="outline" className="shrink-0">
+                          {team.count}
+                        </Badge>
+                      </button>
                     );
                   })}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                </div>
+              </section>
 
-      {activeSection === "assignments" && (
-        <Card>
-          <CardContent className="space-y-4 p-0">
-            <div className="flex flex-wrap items-center justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => generateAssignmentsMutation.mutate()}
-                disabled={isLocked || generateAssignmentsMutation.isPending}
-              >
-                <RefreshCw className="mr-1 h-4 w-4" />
-                자동 생성
-              </Button>
-            </div>
-            {activeSubjects.length === 0 ? (
-              <EmptyState
-                icon={Users}
-                title="대상자를 먼저 선택하세요"
-                description="대상자 저장 후 같은 팀과 상위자 기준으로 평가자 초안을 생성할 수 있습니다."
-              />
-            ) : (
-              activeSubjects.map((subjectId) => {
-                const subject = membersById.get(subjectId);
-                const subjectAssignments = assignments.filter(
-                  (assignment) =>
-                    assignment.subject_member_id === subjectId &&
-                    !assignment.is_excluded,
-                );
-                const candidates = members.filter(
-                  (member) => member.member_id !== subjectId,
-                );
-                const assignedEvaluatorIds = new Set(
-                  subjectAssignments.map(
-                    (assignment) => assignment.evaluator_member_id,
-                  ),
-                );
-
-                return (
-                  <div key={subjectId} className="rounded-lg border border-slate-200 p-4">
-                    <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <h3 className="font-medium text-slate-900">
-                          {subject?.full_name || "대상자"}
-                        </h3>
-                        <p className="text-xs text-slate-500">
-                          {subject?.team_name || "-"} / {subject?.position_name || "-"}
-                        </p>
-                      </div>
-                      <div className="min-w-[260px]">
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              disabled={isLocked}
-                              className="w-full justify-between"
-                            >
-                              <span className="truncate">
-                                {subjectAssignments.length > 0
-                                  ? `${subjectAssignments.length}명 배정됨`
-                                  : "평가자 선택"}
-                              </span>
-                              <ChevronDown className="ml-2 h-4 w-4 shrink-0 text-slate-400" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent align="end" className="w-80 p-0">
-                            <div className="max-h-72 overflow-auto p-2">
-                              {candidates.map((member) => {
-                                const checked = assignedEvaluatorIds.has(
-                                  member.member_id,
-                                );
-                                return (
-                                  <label
-                                    key={member.member_id}
-                                    className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-sm hover:bg-slate-50"
-                                  >
-                                    <Checkbox
-                                      checked={checked}
-                                      onCheckedChange={() =>
-                                        toggleAssignment(
-                                          subjectId,
-                                          member.member_id,
-                                        )
-                                      }
-                                    />
-                                    <span className="min-w-0 flex-1">
-                                      <span className="block truncate font-medium text-slate-800">
-                                        {member.full_name}
-                                      </span>
-                                      <span className="block truncate text-xs text-slate-400">
-                                        {member.team_name || "-"} ·{" "}
-                                        {member.position_name || "-"}
-                                      </span>
-                                    </span>
-                                  </label>
-                                );
-                              })}
-                            </div>
-                          </PopoverContent>
-                        </Popover>
-                      </div>
+              <section className="rounded-lg border border-slate-200 bg-white">
+                <div className="border-b border-slate-100 px-4 py-3">
+                  <h3 className="text-sm font-medium text-slate-900">
+                    2. 멤버 선택
+                  </h3>
+                  <p className="mt-1 text-xs text-slate-400">
+                    현재 표시된 모든 멤버는 평가 대상자입니다.
+                  </p>
+                </div>
+                <div className="border-b border-slate-100 p-3">
+                  <Input
+                    value={subjectSearch}
+                    placeholder="이름, 직급, 직책 검색"
+                    onChange={(event) => setSubjectSearch(event.target.value)}
+                  />
+                </div>
+                <div className="max-h-[500px] space-y-1 overflow-auto p-2">
+                  {selectedTeamMembers.length === 0 ? (
+                    <div className="py-12 text-center text-sm text-slate-400">
+                      선택한 조건에 맞는 멤버가 없습니다.
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      {subjectAssignments.map((assignment) => {
-                        const evaluator = membersById.get(
-                          assignment.evaluator_member_id,
-                        );
-                        return (
-                          <span
-                            key={`${assignment.subject_member_id}-${assignment.evaluator_member_id}`}
-                            className="inline-flex items-center gap-2 rounded-md border bg-slate-50 px-2 py-1 text-sm"
-                          >
-                            <span>
-                              {evaluator?.full_name ||
-                                assignment.evaluator?.full_name ||
-                                "평가자"}
+                  ) : (
+                    selectedTeamMembers.map((member) => {
+                      const isSelected = selectedSubjectId === member.member_id;
+                      const evaluatorCount = assignments.filter(
+                        (assignment) =>
+                          assignment.subject_member_id === member.member_id &&
+                          !assignment.is_excluded,
+                      ).length;
+
+                      return (
+                        <button
+                          key={member.member_id}
+                          type="button"
+                          onClick={() => setSelectedSubjectId(member.member_id)}
+                          className={cn(
+                            "w-full rounded-md border px-3 py-2 text-left transition-colors",
+                            isSelected
+                              ? "border-slate-900 bg-white"
+                              : "border-transparent hover:border-slate-200",
+                          )}
+                        >
+                          <span className="flex items-center justify-between gap-2">
+                            <span className="truncate text-sm font-medium text-slate-900">
+                              {member.full_name}
                             </span>
-                            {assignment.source !== "manual" && (
-                              <span className="text-xs text-slate-400">
-                                {sourceLabel(assignment.source)}
-                              </span>
-                            )}
-                            <button
-                              type="button"
-                              className="text-slate-400 hover:text-rose-500 disabled:opacity-40"
-                              disabled={isLocked}
-                              onClick={() =>
-                                toggleAssignment(
-                                  assignment.subject_member_id,
-                                  assignment.evaluator_member_id,
-                                )
-                              }
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
+                            <span className="shrink-0 text-xs text-slate-400">
+                              {evaluatorCount}명
+                            </span>
                           </span>
-                        );
-                      })}
-                    </div>
+                          <span className="mt-0.5 block truncate text-xs text-slate-400">
+                            {member.team_name || "-"} ·{" "}
+                            {member.position_name || "-"} ·{" "}
+                            {member.title_name || "-"}
+                          </span>
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              </section>
+
+              <section className="rounded-lg border border-slate-200 bg-white">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
+                  <div>
+                    <h3 className="text-sm font-medium text-slate-900">
+                      3. 평가자 선택
+                    </h3>
+                    <p className="mt-1 text-xs text-slate-400">
+                      {selectedSubject
+                        ? `${selectedSubject.full_name} 대상 평가자`
+                        : "대상자를 먼저 선택하세요."}
+                    </p>
                   </div>
-                );
-              })
-            )}
-          </CardContent>
-        </Card>
-      )}
+                  <Badge className="border-0 bg-slate-100 text-slate-600">
+                    {selectedSubjectAssignments.length}명 선택
+                  </Badge>
+                </div>
+                <div className="border-b border-slate-100 p-3">
+                  <Input
+                    value={evaluatorSearch}
+                    placeholder="평가자 이름, 팀, 직급, 직책 검색"
+                    onChange={(event) => setEvaluatorSearch(event.target.value)}
+                    disabled={!selectedSubject}
+                  />
+                </div>
+                <div className="max-h-[500px] space-y-1 overflow-auto p-2">
+                  {!selectedSubject ? (
+                    <div className="py-12 text-center text-sm text-slate-400">
+                      대상자 멤버를 선택하면 평가자 목록이 표시됩니다.
+                    </div>
+                  ) : evaluatorCandidates.length === 0 ? (
+                    <div className="py-12 text-center text-sm text-slate-400">
+                      선택 가능한 평가자가 없습니다.
+                    </div>
+                  ) : (
+                    evaluatorCandidates.map((member) => {
+                      const assignment = selectedSubjectAssignments.find(
+                        (item) => item.evaluator_member_id === member.member_id,
+                      );
+                      const checked = Boolean(assignment);
+
+                      return (
+                        <label
+                          key={member.member_id}
+                          className={cn(
+                            "flex cursor-pointer items-start gap-3 rounded-md border px-3 py-2 transition-colors",
+                            checked
+                              ? "border-slate-900 bg-white"
+                              : "border-transparent hover:border-slate-200",
+                            isLocked && "cursor-not-allowed opacity-60",
+                          )}
+                        >
+                          <Checkbox
+                            checked={checked}
+                            disabled={isLocked}
+                            onCheckedChange={() =>
+                              toggleAssignment(
+                                selectedSubjectId,
+                                member.member_id,
+                              )
+                            }
+                            className="mt-0.5"
+                          />
+                          <span className="min-w-0 flex-1">
+                            <span className="flex items-center gap-2">
+                              <span className="truncate text-sm font-medium text-slate-900">
+                                {member.full_name}
+                              </span>
+                              {assignment && assignment.source !== "manual" && (
+                                <Badge variant="outline" className="shrink-0">
+                                  {sourceLabel(assignment.source)}
+                                </Badge>
+                              )}
+                            </span>
+                            <span className="mt-0.5 block truncate text-xs text-slate-400">
+                              {member.team_name || "-"} ·{" "}
+                              {member.position_name || "-"} ·{" "}
+                              {member.title_name || "-"}
+                            </span>
+                          </span>
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
+              </section>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="sm:max-w-[480px]">

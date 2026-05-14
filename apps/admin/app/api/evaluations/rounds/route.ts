@@ -11,7 +11,9 @@ export async function GET() {
 
     const { data, error } = await supabase
       .from("multisource_evaluation_rounds")
-      .select("*")
+      .select(
+        "*, question_set:multisource_evaluation_question_sets(id, name, is_active, is_default)",
+      )
       .order("created_at", { ascending: false });
 
     if (error) {

@@ -170,6 +170,19 @@ body {
   box-shadow: none !important;
 }
 
+body:has(.question-set-editor-sheet) [data-slot="sheet-overlay"] {
+  background: transparent !important;
+  pointer-events: none !important;
+}
+
+.question-set-editor-sheet {
+  pointer-events: auto;
+}
+
+.question-set-editor-sheet > button.absolute {
+  display: none;
+}
+
 /* Popover / Calendar: soft card-border gray frame */
 [data-slot="popover-content"] {
   border-color: var(--admin-card-border) !important;

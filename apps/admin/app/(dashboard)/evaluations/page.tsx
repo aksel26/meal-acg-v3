@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { Loader2, Plus } from "lucide-react";
+import { BarChart3, Loader2, Plus } from "lucide-react";
 import { toast } from "@repo/ui/src/sonner";
 import { cn } from "@repo/ui/lib/utils";
 import { Badge } from "@repo/ui/src/badge";
@@ -38,9 +38,11 @@ import {
   TableRow,
 } from "@repo/ui/src/table";
 import { Textarea } from "@repo/ui/src/textarea";
+import { QuestionSetManager } from "@/components/evaluations/QuestionSetManager";
 import { queryKeys } from "@/lib/query-keys";
 
 type RoundStatus = "draft" | "confirmed" | "closed";
+type PageTab = "rounds" | "questionSets";
 
 type EvaluationRound = {
   id: string;
@@ -50,6 +52,14 @@ type EvaluationRound = {
   end_date: string;
   status: RoundStatus;
   is_deployed: boolean;
+  question_set_id: string | null;
+  question_set_applied_at: string | null;
+  question_set: {
+    id: string;
+    name: string;
+    is_active: boolean;
+    is_default: boolean;
+  } | null;
   config_version: number;
   created_at: string;
   updated_at: string;
@@ -85,6 +95,7 @@ function today() {
 export default function EvaluationsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<PageTab>("rounds");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({
     name: "",
@@ -142,89 +153,163 @@ export default function EvaluationsPage() {
 
   return (
     <div className="evaluations-page space-y-5 p-6">
-      <div className="flex items-center justify-end">
-        <Button onClick={openCreateDialog}>
-          <Plus className="mr-1 h-4 w-4" />
-          신규 회차
-        </Button>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="inline-flex gap-1 rounded-lg border border-slate-200 bg-white p-1">
+          <button
+            type="button"
+            onClick={() => setActiveTab("rounds")}
+            className={cn(
+              "rounded-md px-4 py-2 text-sm font-medium transition-colors",
+              activeTab === "rounds"
+                ? "bg-slate-900 text-white"
+                : "text-slate-500 hover:bg-slate-50 hover:text-slate-900",
+            )}
+          >
+            회차 관리
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("questionSets")}
+            className={cn(
+              "rounded-md px-4 py-2 text-sm font-medium transition-colors",
+              activeTab === "questionSets"
+                ? "bg-slate-900 text-white"
+                : "text-slate-500 hover:bg-slate-50 hover:text-slate-900",
+            )}
+          >
+            문항 SET 관리
+          </button>
+        </div>
+        {activeTab === "rounds" && (
+          <Button onClick={openCreateDialog}>
+            <Plus className="mr-1 h-4 w-4" />
+            신규 회차
+          </Button>
+        )}
       </div>
 
-      <div className="rounded-xl bg-white">
-        <Table>
-          <TableHeader>
-            <TableRow className="border-b bg-slate-50 hover:bg-slate-50">
-              <TableHead className="w-16 text-xs text-slate-500">순번</TableHead>
-              <TableHead className="text-xs text-slate-500">회차명</TableHead>
-              <TableHead className="w-56 text-xs text-slate-500">기간</TableHead>
-              <TableHead className="w-24 text-xs text-slate-500">상태</TableHead>
-              <TableHead className="w-24 text-xs text-slate-500">배포</TableHead>
-              <TableHead className="w-20 text-xs text-slate-500">버전</TableHead>
-              <TableHead className="w-44 text-xs text-slate-500">수정일</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={7} className="py-12 text-center text-sm text-slate-400">
-                  <Loader2 className="mx-auto h-5 w-5 animate-spin" />
-                </TableCell>
+      {activeTab === "rounds" ? (
+        <div className="rounded-xl bg-white">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-b bg-slate-50 hover:bg-slate-50">
+                <TableHead className="w-16 text-xs text-slate-500">순번</TableHead>
+                <TableHead className="text-xs text-slate-500">회차명</TableHead>
+                <TableHead className="w-56 text-xs text-slate-500">기간</TableHead>
+                <TableHead className="w-56 text-xs text-slate-500">적용 SET</TableHead>
+                <TableHead className="w-24 text-xs text-slate-500">상태</TableHead>
+                <TableHead className="w-24 text-xs text-slate-500">배포</TableHead>
+                <TableHead className="w-20 text-xs text-slate-500">버전</TableHead>
+                <TableHead className="w-44 text-xs text-slate-500">수정일</TableHead>
+                <TableHead className="w-14 text-xs text-slate-500" />
               </TableRow>
-            ) : rounds.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="py-12 text-center text-sm text-slate-400">
-                  등록된 회차가 없습니다. 우측 상단의 &quot;신규 회차&quot;로 생성하세요.
-                </TableCell>
-              </TableRow>
-            ) : (
-              rounds.map((round, index) => (
-                <TableRow
-                  key={round.id}
-                  className="cursor-pointer border-b last:border-0"
-                  onClick={() => router.push(`/evaluations/${round.id}`)}
-                >
-                  <TableCell className="py-3 text-sm text-slate-500">
-                    {rounds.length - index}
-                  </TableCell>
-                  <TableCell className="py-3">
-                    <div className="font-medium text-slate-900">{round.name}</div>
-                    {round.description && (
-                      <div className="mt-0.5 line-clamp-1 text-xs text-slate-400">
-                        {round.description}
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell className="py-3 text-sm text-slate-600">
-                    {round.start_date} ~ {round.end_date}
-                  </TableCell>
-                  <TableCell className="py-3">
-                    <Badge className={cn("text-[11px]", statusBadgeClass(round.status))}>
-                      {statusLabel(round.status)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="py-3">
-                    <Badge
-                      className={cn(
-                        "border-0 text-[11px]",
-                        round.is_deployed
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-slate-100 text-slate-500",
-                      )}
-                    >
-                      {round.is_deployed ? "배포 ON" : "배포 OFF"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="py-3 text-sm text-slate-500">
-                    v{round.config_version}
-                  </TableCell>
-                  <TableCell className="py-3 text-sm text-slate-500">
-                    {dayjs(round.updated_at).format("YYYY-MM-DD HH:mm")}
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={9} className="py-12 text-center text-sm text-slate-400">
+                    <Loader2 className="mx-auto h-5 w-5 animate-spin" />
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              ) : rounds.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={9} className="py-12 text-center text-sm text-slate-400">
+                    등록된 회차가 없습니다. 우측 상단의 &quot;신규 회차&quot;로 생성하세요.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                rounds.map((round, index) => (
+                  <TableRow
+                    key={round.id}
+                    className="cursor-pointer border-b last:border-0"
+                    onClick={() => router.push(`/evaluations/${round.id}`)}
+                  >
+                    <TableCell className="py-3 text-sm text-slate-500">
+                      {rounds.length - index}
+                    </TableCell>
+                    <TableCell className="py-3">
+                      <div className="font-medium text-slate-900">{round.name}</div>
+                      {round.description && (
+                        <div className="mt-0.5 line-clamp-1 text-xs text-slate-400">
+                          {round.description}
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell className="py-3 text-sm text-slate-600">
+                      {round.start_date} ~ {round.end_date}
+                    </TableCell>
+                    <TableCell className="py-3">
+                      {round.question_set ? (
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="line-clamp-1 text-sm font-medium text-slate-700">
+                              {round.question_set.name}
+                            </span>
+                            {round.question_set.is_default && (
+                              <Badge className="border-0 bg-amber-100 text-[10px] text-amber-700">
+                                기본
+                              </Badge>
+                            )}
+                          </div>
+                          {round.question_set_applied_at && (
+                            <div className="text-xs text-slate-400">
+                              {dayjs(round.question_set_applied_at).format(
+                                "YYYY-MM-DD HH:mm",
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-slate-400">미적용</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="py-3">
+                      <Badge className={cn("text-[11px]", statusBadgeClass(round.status))}>
+                        {statusLabel(round.status)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="py-3">
+                      <Badge
+                        className={cn(
+                          "border-0 text-[11px]",
+                          round.is_deployed
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-slate-100 text-slate-500",
+                        )}
+                      >
+                        {round.is_deployed ? "배포 ON" : "배포 OFF"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="py-3 text-sm text-slate-500">
+                      v{round.config_version}
+                    </TableCell>
+                    <TableCell className="py-3 text-sm text-slate-500">
+                      {dayjs(round.updated_at).format("YYYY-MM-DD HH:mm")}
+                    </TableCell>
+                    <TableCell className="py-3 text-right">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 text-slate-500 hover:text-slate-900"
+                        aria-label={`${round.name} 통계`}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          toast.info("통계 화면은 준비 중입니다.");
+                        }}
+                      >
+                        <BarChart3 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      ) : (
+        <QuestionSetManager />
+      )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-[480px]">

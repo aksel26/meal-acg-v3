@@ -166,7 +166,7 @@ function NavItemComponent({
     collapsed ? "justify-center px-0 py-2.5" : "gap-2.5 px-3 py-2.5",
     isActive
       ? "bg-[#f5f5f7] font-semibold text-[#1d1d1f]"
-      : "font-medium text-[#7a7a7a] hover:bg-[#f5f5f7] hover:text-[#1d1d1f]",
+      : "font-normal text-[#7a7a7a] hover:bg-[#f5f5f7] hover:text-[#1d1d1f]",
   );
 
   const linkContent = (
@@ -242,9 +242,7 @@ function NavGroupComponent({
       className={cn(
         "admin-pressable flex w-full items-center rounded-lg border border-transparent text-[13px] leading-tight",
         collapsed ? "justify-center px-0 py-2.5" : "gap-2.5 px-3 py-2.5",
-        hasActiveItem
-          ? "bg-[#f5f5f7] font-semibold text-[#1d1d1f]"
-          : "font-medium text-[#7a7a7a] hover:bg-[#f5f5f7] hover:text-[#1d1d1f]",
+        "font-normal text-[#7a7a7a] hover:bg-[#f5f5f7] hover:text-[#1d1d1f]",
       )}
     >
       <group.icon
@@ -260,7 +258,7 @@ function NavGroupComponent({
             className={cn(
               "h-[14px] w-[14px] transition-transform duration-200",
               isOpen ? "rotate-180" : "",
-              hasActiveItem ? "text-[#1d1d1f]" : "text-[#cccccc]",
+              "text-[#cccccc]",
             )}
           />
         </>
@@ -283,9 +281,11 @@ function NavGroupComponent({
 
       <div
         className={cn(
-          "space-y-1 overflow-hidden transition-all duration-200",
-          collapsed ? "pl-0" : "pl-4",
+          "overflow-hidden transition-all duration-200",
+          collapsed ? "space-y-1 pl-0" : "relative ml-4 space-y-1 pl-4",
           isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0",
+          !collapsed &&
+            "before:absolute before:top-2 before:bottom-2 before:left-1 before:w-px before:bg-[#eeeeee]",
         )}
       >
         {group.items.map((item) => {
@@ -294,7 +294,7 @@ function NavGroupComponent({
             return (
               <div
                 key={item.name}
-                className="px-3 pt-2.5 pb-1 text-[13px] font-semibold uppercase tracking-wider text-[#cccccc]"
+                className="relative px-3 pt-2.5 pb-1 text-[13px] font-semibold uppercase tracking-wider text-[#cccccc] before:absolute before:left-[-12px] before:top-[18px] before:h-px before:w-3 before:bg-[#eeeeee]"
               >
                 {item.name}
               </div>
@@ -312,18 +312,15 @@ function NavGroupComponent({
                 "admin-pressable flex items-center rounded-lg border border-transparent text-[13px] leading-tight",
                 collapsed
                   ? "justify-center px-0 py-2.5"
-                  : "gap-2.5 px-3 py-2",
+                  : "relative px-3 py-2 before:absolute before:left-[-12px] before:top-1/2 before:h-px before:w-3 before:bg-[#eeeeee]",
                 isActive
                   ? "bg-[#f5f5f7] font-semibold text-[#1d1d1f]"
-                  : "font-medium text-[#7a7a7a] hover:bg-[#f5f5f7] hover:text-[#1d1d1f]",
+                  : "font-normal text-[#7a7a7a] hover:bg-[#f5f5f7] hover:text-[#1d1d1f]",
               )}
             >
-              <item.icon
-                className={cn(
-                  "flex-shrink-0 transition-all",
-                  collapsed ? "h-[18px] w-[18px]" : "h-[14px] w-[14px]",
-                )}
-              />
+              {collapsed && (
+                <item.icon className="h-[18px] w-[18px] flex-shrink-0 transition-all" />
+              )}
               {!collapsed && <span className="text-[13px]">{item.name}</span>}
             </Link>
           );

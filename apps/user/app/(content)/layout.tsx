@@ -12,7 +12,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <>
-      <div className="flex min-h-screen bg-white">
+      <div className="flex h-dvh min-h-dvh overflow-hidden bg-white">
         {/* ── Sidebar (desktop only) ── */}
         <div className="max-md:hidden">
           <Sidebar />
@@ -24,12 +24,12 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         </div>
 
         {/* ── Main Area ── */}
-        <div className="flex flex-1 flex-col min-w-0">
+        <div className="flex min-h-0 flex-1 flex-col min-w-0">
           {/* Header */}
           <Header />
 
           {/* Content */}
-          <main className="relative flex-1 px-4 py-6 md:px-8 md:py-8">
+          <main className="relative min-h-0 flex-1 overflow-y-auto px-4 py-6 md:px-8 md:py-8">
             <div className="mx-auto">
               <AnimatePresence mode="wait">
                 <motion.div

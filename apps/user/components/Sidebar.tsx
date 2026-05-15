@@ -14,6 +14,7 @@ import {
   Megaphone,
   DoorOpen,
   MessageSquareText,
+  ClipboardCheck,
   LogOut,
   X,
   Bell,
@@ -89,6 +90,7 @@ const menuGroups: MenuGroup[] = [
       { id: "notices", label: "공지/일정", href: "/notices", icon: Megaphone, badge: "New" },
       { id: "room", label: "회의실 예약", href: "/room-booking", icon: DoorOpen },
       { id: "sms", label: "SMS 전송", href: "/sms", icon: MessageSquareText },
+      { id: "evaluations", label: "다면평가", href: "/evaluations", icon: ClipboardCheck },
     ],
   },
   {
@@ -331,7 +333,8 @@ function NavMenu() {
             {!isCollapsed && (
               <div className="space-y-0.5">
                 {group.items.map((item) => {
-                  const isActive = pathname === item.href;
+                  const isActive =
+                    pathname === item.href || pathname.startsWith(`${item.href}/`);
                   const className = `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
                     isActive
                       ? "bg-[#111111] font-medium text-white"

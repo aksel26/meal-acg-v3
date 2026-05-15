@@ -4,6 +4,7 @@ const PROTECTED_PREFIXES = [
   "/project-dashboard",
   "/projects",
   "/requests",
+  "/evaluations",
 ];
 const COOKIE_NAME = "acg_session";
 
@@ -30,5 +31,6 @@ export const config = {
     "/projects/:path*",
     "/project-dashboard/:path*",
     "/requests/:path*",
+    "/evaluations/:path*",
   ],
 };

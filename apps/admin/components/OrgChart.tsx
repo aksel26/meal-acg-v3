@@ -15,7 +15,6 @@ import {
   type Connection,
   Handle,
   Position,
-  MarkerType,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import Dagre from "dagre";
@@ -63,6 +62,13 @@ type PendingChange =
       parentDivisionId: string | null;
     }
   | {
+      type: "moveTeam";
+      teamId: string;
+      teamName: string;
+      targetDivisionId: string | null;
+      targetDivisionName: string;
+    }
+  | {
       type: "moveMember";
       memberId: string;
       memberName: string;
@@ -84,16 +90,30 @@ interface OrgChartProps {
 // ── Layout constants ──
 
 const NODE_WIDTH = 220;
+const TEAM_NODE_HEIGHT = 70;
+const MEMBER_NODE_HEIGHT = 52;
 const NODE_HEIGHTS: Record<string, number> = {
   org: 56,
   ceo: 64,
   division: 48,
-  team: 48,
-  member: 52,
+  team: TEAM_NODE_HEIGHT,
+  member: MEMBER_NODE_HEIGHT,
+  memberRank: 1,
   unassignedGroup: 40,
 };
-const RANK_SEP = 80;
-const NODE_SEP = 30;
+const RANK_SEP = 54;
+const NODE_SEP = 18;
+const TEAM_MEMBER_GAP = 24;
+const MEMBER_RANK_SEP = 14;
+const MEMBER_COLUMN_GAP = 16;
+
+const POSITION_ORDER: Record<string, number> = {
+  수석: 0,
+  책임: 1,
+  선임: 2,
+  위원: 3,
+  인턴: 4,
+};
 
 // ── Dagre auto-layout ──
 
@@ -103,8 +123,8 @@ function getLayoutedElements(nodes: Node[], edges: Edge[]) {
     rankdir: "TB",
     ranksep: RANK_SEP,
     nodesep: NODE_SEP,
-    marginx: 40,
-    marginy: 40,
+    marginx: 28,
+    marginy: 28,
   });
 
   nodes.forEach((node) => {
@@ -120,16 +140,19 @@ function getLayoutedElements(nodes: Node[], edges: Edge[]) {
 
   Dagre.layout(g);
 
+  const layoutedNodes = nodes.map((node) => {
+    const pos = g.node(node.id);
+    const w = NODE_WIDTH;
+    const h = NODE_HEIGHTS[node.type || "member"] || 52;
+    return {
+      ...node,
+      position: { x: pos.x - w / 2, y: pos.y - h / 2 },
+      style: { ...node.style, width: w },
+    };
+  });
+
   return {
-    nodes: nodes.map((node) => {
-      const pos = g.node(node.id);
-      const w = NODE_WIDTH;
-      const h = NODE_HEIGHTS[node.type || "member"] || 52;
-      return {
-        ...node,
-        position: { x: pos.x - w / 2, y: pos.y - h / 2 },
-      };
-    }),
+    nodes: alignTeamMembers(alignSingleChildSubtrees(layoutedNodes, edges)),
     edges,
   };
 }
@@ -143,6 +166,133 @@ const pendingEdgeStyle = {
   strokeDasharray: "5,4",
 };
 
+function applyEdgeTypes(edges: Edge[]) {
+  const outgoingCounts = new Map<string, number>();
+
+  for (const edge of edges) {
+    outgoingCounts.set(edge.source, (outgoingCounts.get(edge.source) ?? 0) + 1);
+  }
+
+  return edges.map((edge) => ({
+    ...edge,
+    type: outgoingCounts.get(edge.source) === 1 ? "straight" : "smoothstep",
+  }));
+}
+
+function alignSingleChildSubtrees(nodes: Node[], edges: Edge[]) {
+  const nodeMap = new Map(nodes.map((node) => [node.id, node]));
+  const childIdsBySource = new Map<string, string[]>();
+  const incomingCounts = new Map<string, number>();
+
+  for (const edge of edges) {
+    childIdsBySource.set(edge.source, [
+      ...(childIdsBySource.get(edge.source) ?? []),
+      edge.target,
+    ]);
+    incomingCounts.set(edge.target, (incomingCounts.get(edge.target) ?? 0) + 1);
+  }
+
+  const moveSubtree = (
+    nodeId: string,
+    deltaX: number,
+    visited = new Set<string>()
+  ) => {
+    if (visited.has(nodeId)) return;
+    visited.add(nodeId);
+
+    const node = nodeMap.get(nodeId);
+    if (!node) return;
+
+    node.position = {
+      ...node.position,
+      x: node.position.x + deltaX,
+    };
+
+    for (const childId of childIdsBySource.get(nodeId) ?? []) {
+      if ((incomingCounts.get(childId) ?? 0) > 1) continue;
+      moveSubtree(childId, deltaX, visited);
+    }
+  };
+
+  const straightEdges = edges
+    .filter((edge) => edge.type === "straight")
+    .sort((a, b) => {
+      const sourceA = nodeMap.get(a.source);
+      const sourceB = nodeMap.get(b.source);
+      return (sourceA?.position.y ?? 0) - (sourceB?.position.y ?? 0);
+    });
+
+  for (const edge of straightEdges) {
+    if ((incomingCounts.get(edge.target) ?? 0) > 1) continue;
+
+    const source = nodeMap.get(edge.source);
+    const target = nodeMap.get(edge.target);
+    if (!source || !target) continue;
+
+    const deltaX = source.position.x - target.position.x;
+    if (Math.abs(deltaX) < 1) continue;
+    moveSubtree(edge.target, deltaX);
+  }
+
+  return nodes;
+}
+
+function alignTeamMembers(nodes: Node[]) {
+  const nodeMap = new Map(nodes.map((node) => [node.id, node]));
+  const rankNodes = nodes
+    .filter((node) => node.type === "memberRank")
+    .sort((a, b) => {
+      const teamA = String((a.data as { teamId?: string }).teamId ?? "");
+      const teamB = String((b.data as { teamId?: string }).teamId ?? "");
+      const teamCompare = teamA.localeCompare(teamB);
+      if (teamCompare !== 0) return teamCompare;
+      return (
+        Number((a.data as { order?: number }).order ?? 0) -
+        Number((b.data as { order?: number }).order ?? 0)
+      );
+    });
+
+  for (const rankNode of rankNodes) {
+    const data = rankNode.data as {
+      memberIds?: string[];
+      row?: number;
+      teamId?: string;
+    };
+    const teamNode = data.teamId ? nodeMap.get(data.teamId) : null;
+    if (!teamNode) continue;
+
+    const row = data.row ?? 0;
+    rankNode.position = {
+      ...rankNode.position,
+      x: teamNode.position.x + NODE_WIDTH / 2,
+      y:
+        teamNode.position.y +
+        TEAM_NODE_HEIGHT +
+        TEAM_MEMBER_GAP +
+        row * (MEMBER_NODE_HEIGHT + MEMBER_RANK_SEP),
+    };
+
+    const memberIds = data.memberIds ?? [];
+    const visibleMembers = memberIds
+      .map((id) => nodeMap.get(id))
+      .filter((node): node is Node => Boolean(node));
+    const totalWidth =
+      visibleMembers.length * NODE_WIDTH +
+      Math.max(visibleMembers.length - 1, 0) * MEMBER_COLUMN_GAP;
+    const startX = teamNode.position.x + NODE_WIDTH / 2 - totalWidth / 2;
+
+    visibleMembers.forEach((memberNode, index) => {
+      memberNode.position = {
+        ...memberNode.position,
+        x: startX + index * (NODE_WIDTH + MEMBER_COLUMN_GAP),
+        y: rankNode.position.y + MEMBER_RANK_SEP,
+      };
+    });
+  }
+
+  return nodes;
+}
+
 // ── Handle style (invisible) ──
 
 const handleClass = "!w-2 !h-2 !border-0 !bg-slate-300";
@@ -151,7 +301,7 @@ const handleClass = "!w-2 !h-2 !border-0 !bg-slate-300";
 
 function OrgNode({ data }: { data: { label: string } }) {
   return (
-    <div className="rounded-lg bg-slate-800 px-5 py-2.5">
+    <div className="w-full rounded-lg bg-slate-800 px-5 py-2.5 text-center">
       <span className="text-sm font-semibold text-white">{data.label}</span>
       <Handle type="source" position={Position.Bottom} className={handleClass} />
     </div>
@@ -160,12 +310,9 @@ function OrgNode({ data }: { data: { label: string } }) {
 
 function CeoNode({ data }: { data: { label: string; sub: string } }) {
   return (
-    <div className="flex items-center gap-2.5 rounded-lg bg-slate-700 px-4 py-2.5">
+    <div className="w-full rounded-lg bg-slate-700 px-4 py-2.5 text-center">
       <Handle type="target" position={Position.Top} className={handleClass} />
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/20 text-xs font-bold text-white">
-        {data.label.charAt(0)}
-      </div>
-      <div>
+      <div className="min-w-0">
         <p className="text-sm font-semibold text-white">{data.label}</p>
         {data.sub && (
           <p className="text-[11px] text-slate-300">{data.sub}</p>
@@ -184,7 +331,7 @@ function DivisionNode({
   return (
     <div
       className={cn(
-        "rounded-lg px-4 py-2",
+        "w-full rounded-lg px-4 py-2 text-center",
         data.pending
           ? "bg-slate-200/60 outline-dashed outline-1 outline-slate-400"
           : "bg-slate-200"
@@ -203,24 +350,44 @@ function DivisionNode({
 function TeamNode({
   data,
 }: {
-  data: { label: string; count: number; pending?: boolean };
+  data: {
+    label: string;
+    count: number;
+    pending?: boolean;
+    leaderName?: string;
+    leaderSub?: string;
+  };
 }) {
   return (
     <div
       className={cn(
-        "rounded-lg px-3.5 py-1.5",
+        "w-full rounded-lg px-3.5 py-1.5 text-center",
         data.pending
           ? "bg-slate-100/60 outline-dashed outline-1 outline-slate-300"
           : "bg-slate-100"
       )}
     >
       <Handle type="target" position={Position.Top} className={handleClass} />
-      <span className="text-[13px] font-medium text-slate-600">
-        {data.label}
-      </span>
-      <span className="ml-1.5 text-xs text-slate-400">{data.count}명</span>
-      {data.pending && (
-        <span className="ml-1.5 text-[10px] text-slate-400">NEW</span>
+      <div>
+        <span className="text-[13px] font-medium text-slate-600">
+          {data.label}
+        </span>
+        <span className="ml-1.5 text-xs text-slate-400">{data.count}명</span>
+        {data.pending && (
+          <span className="ml-1.5 text-[10px] text-slate-400">NEW</span>
+        )}
+      </div>
+      {data.leaderName && (
+        <div className="mt-1 border-t border-slate-200 pt-1">
+          <p className="truncate text-[12px] font-semibold text-slate-700">
+            {data.leaderName}
+          </p>
+          {data.leaderSub && (
+            <p className="truncate text-[10px] text-slate-400">
+              {data.leaderSub}
+            </p>
+          )}
+        </div>
       )}
       <Handle type="source" position={Position.Bottom} className={handleClass} />
     </div>
@@ -230,26 +397,18 @@ function TeamNode({
 function MemberNode({
   data,
 }: {
-  data: { label: string; sub: string; isHead: boolean; pendingMove?: boolean };
+  data: { label: string; sub: string; pendingMove?: boolean };
 }) {
   return (
     <div
       className={cn(
-        "flex items-center gap-2 rounded-lg px-3 py-2",
+        "flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-center",
         data.pendingMove
           ? "bg-slate-100 outline-dashed outline-1 outline-blue-300"
           : "bg-slate-50"
       )}
     >
       <Handle type="target" position={Position.Top} className={handleClass} />
-      <div
-        className={cn(
-          "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white",
-          data.isHead ? "bg-slate-600" : "bg-slate-400"
-        )}
-      >
-        {data.label.charAt(0)}
-      </div>
       <div className="min-w-0">
         <p className="text-[13px] font-medium text-slate-800 truncate">
           {data.label}
@@ -261,18 +420,23 @@ function MemberNode({
       {data.pendingMove && (
         <span className="text-[10px] text-slate-600 shrink-0">이동</span>
       )}
+      <Handle type="source" position={Position.Bottom} className={handleClass} />
     </div>
   );
 }
 
 function UnassignedGroupNode({ data }: { data: { label: string } }) {
   return (
-    <div className="rounded-lg bg-slate-50 px-3 py-1.5 outline-dashed outline-1 outline-slate-200">
+    <div className="w-full rounded-lg bg-slate-50 px-3 py-1.5 text-center outline-dashed outline-1 outline-slate-200">
       <Handle type="target" position={Position.Top} className={handleClass} />
       <span className="text-xs font-medium text-slate-400">{data.label}</span>
       <Handle type="source" position={Position.Bottom} className={handleClass} />
     </div>
   );
+}
+
+function HiddenRankNode() {
+  return <div className="h-px w-px" />;
 }
 
 const nodeTypes: NodeTypes = {
@@ -281,6 +445,7 @@ const nodeTypes: NodeTypes = {
   division: DivisionNode,
   team: TeamNode,
   member: MemberNode,
+  memberRank: HiddenRankNode,
   unassignedGroup: UnassignedGroupNode,
 };
 
@@ -330,6 +495,24 @@ function buildGraph(
       memberMoveTargets.set(c.memberId, c.targetTeamId);
     }
   }
+  const movedMembersByTarget = new Map<string, OrgMember[]>();
+  for (const c of pendingChanges) {
+    if (c.type !== "moveMember") continue;
+
+    const member = allMembers.find((m) => m.id === c.memberId);
+    if (!member) continue;
+
+    movedMembersByTarget.set(c.targetTeamId, [
+      ...(movedMembersByTarget.get(c.targetTeamId) ?? []),
+      member,
+    ]);
+  }
+  const teamMoveTargets = new Map<string, string | null>();
+  for (const c of pendingChanges) {
+    if (c.type === "moveTeam") {
+      teamMoveTargets.set(c.teamId, c.targetDivisionId);
+    }
+  }
 
   let parentId = orgId;
 
@@ -373,7 +556,9 @@ function buildGraph(
 
     // Division head
     let divHeadNodeId: string | null = null;
-    for (const team of div.teams || []) {
+    for (const team of (div.teams || []).filter(
+      (t) => !teamMoveTargets.has(t.id)
+    )) {
       const head = (team.members || []).find(
         (m) =>
           m.id !== ceoExcludeId &&
@@ -391,7 +576,6 @@ function buildGraph(
               [head.position?.name, head.title?.name]
                 .filter(Boolean)
                 .join(" / ") || head.member_role,
-            isHead: true,
             pendingMove: false,
           },
         });
@@ -406,7 +590,9 @@ function buildGraph(
     }
 
     const teamParent = divHeadNodeId || divNodeId;
-    for (const team of div.teams || []) {
+    for (const team of (div.teams || []).filter(
+      (t) => !teamMoveTargets.has(t.id)
+    )) {
       addTeamNodes(
         team,
         teamParent,
@@ -414,13 +600,16 @@ function buildGraph(
         edges,
         ceoExcludeId,
         pendingMoves,
-        memberMoveTargets
+        memberMoveTargets,
+        movedMembersByTarget.get(team.id) ?? []
       );
     }
   }
 
   // Direct teams
-  for (const team of (tree.teams || []).filter((t) => !t.division_id)) {
+  for (const team of (tree.teams || []).filter(
+    (t) => !t.division_id && !teamMoveTargets.has(t.id)
+  )) {
     addTeamNodes(
       team,
       parentId,
@@ -428,7 +617,31 @@ function buildGraph(
       edges,
       ceoExcludeId,
       pendingMoves,
-      memberMoveTargets
+      memberMoveTargets,
+      movedMembersByTarget.get(team.id) ?? []
+    );
+  }
+
+  // Moved teams
+  for (const c of pendingChanges) {
+    if (c.type !== "moveTeam") continue;
+
+    const team = findTeam(tree, c.teamId);
+    if (!team) continue;
+
+    const teamParent = c.targetDivisionId
+      ? `div-${c.targetDivisionId}`
+      : parentId;
+    addTeamNodes(
+      team,
+      teamParent,
+      nodes,
+      edges,
+      ceoExcludeId,
+      pendingMoves,
+      memberMoveTargets,
+      movedMembersByTarget.get(team.id) ?? [],
+      pendingEdgeStyle
     );
   }
 
@@ -473,24 +686,6 @@ function buildGraph(
     }
   }
 
-  // Pending member moves — add edges to new teams
-  for (const c of pendingChanges) {
-    if (c.type === "moveMember") {
-      const mId = `member-${c.memberId}`;
-      const targetId = `team-${c.targetTeamId}`;
-      // Only add edge if both nodes exist
-      if (nodes.some((n) => n.id === mId) && nodes.some((n) => n.id === targetId)) {
-        edges.push({
-          id: `e-pending-${targetId}-${mId}`,
-          source: targetId,
-          target: mId,
-          style: pendingEdgeStyle,
-          markerEnd: { type: MarkerType.ArrowClosed, color: "#94a3b8" },
-        });
-      }
-    }
-  }
-
   // Unassigned members (exclude moved ones)
   const unassigned = (tree.unassignedMembers || []).filter(
     (m) => m.id !== ceoExcludeId
@@ -523,7 +718,6 @@ function buildGraph(
           sub:
             [m.position?.name, m.title?.name].filter(Boolean).join(" / ") ||
             m.member_role,
-          isHead: false,
           pendingMove: isPendingMove,
         },
       });
@@ -538,7 +732,7 @@ function buildGraph(
     }
   }
 
-  return getLayoutedElements(nodes, edges);
+  return getLayoutedElements(nodes, applyEdgeTypes(edges));
 }
 
 function addTeamNodes(
@@ -548,11 +742,30 @@ function addTeamNodes(
   edges: Edge[],
   ceoExcludeId?: string,
   pendingMoves?: Set<string>,
-  memberMoveTargets?: Map<string, string>
+  memberMoveTargets?: Map<string, string>,
+  incomingMembers: OrgMember[] = [],
+  edgeStyle: Edge["style"] = defaultEdgeStyle
 ) {
   const teamNodeId = `team-${team.id}`;
-  const members = (team.members || []).filter((m) => m.id !== ceoExcludeId);
-  const filteredMembers = members.filter(
+  const ownMembers = (team.members || [])
+    .filter((m) => m.id !== ceoExcludeId)
+    .filter((m) => {
+      const targetTeamId = memberMoveTargets?.get(m.id);
+      return !targetTeamId || targetTeamId === team.id;
+    });
+  const incoming = incomingMembers
+    .filter((m) => m.id !== ceoExcludeId)
+    .filter((m) => !ownMembers.some((own) => own.id === m.id));
+  const members = [...ownMembers, ...incoming];
+  const teamLeader = ownMembers.find(
+    (m) => m.title?.name === "팀장" || m.member_role === "팀장"
+  );
+  const filteredMembers = ownMembers.filter(
+    (m) =>
+      m.id !== teamLeader?.id &&
+      !nodes.some((n) => n.id === `member-${m.id}`)
+  );
+  const incomingDisplayMembers = incoming.filter(
     (m) => !nodes.some((n) => n.id === `member-${m.id}`)
   );
 
@@ -560,13 +773,23 @@ function addTeamNodes(
     id: teamNodeId,
     type: "team",
     position: { x: 0, y: 0 },
-    data: { label: team.name, count: members.length, pending: false },
+    data: {
+      label: team.name,
+      count: members.length,
+      pending: false,
+      leaderName: teamLeader?.full_name,
+      leaderSub: teamLeader
+        ? [teamLeader.position?.name, teamLeader.title?.name]
+            .filter(Boolean)
+            .join(" / ") || teamLeader.member_role
+        : undefined,
+    },
   });
   edges.push({
     id: `e-${parentNodeId}-${teamNodeId}`,
     source: parentNodeId,
     target: teamNodeId,
-    style: defaultEdgeStyle,
+    style: edgeStyle,
   });
 
   const roleOrder: Record<string, number> = {
@@ -577,35 +800,87 @@ function addTeamNodes(
   };
   const sorted = [...filteredMembers].sort(
     (a, b) =>
-      (roleOrder[a.member_role] ?? 9) - (roleOrder[b.member_role] ?? 9)
+      (POSITION_ORDER[a.position?.name ?? ""] ?? 99) -
+        (POSITION_ORDER[b.position?.name ?? ""] ?? 99) ||
+      (roleOrder[a.member_role] ?? 9) - (roleOrder[b.member_role] ?? 9) ||
+      a.full_name.localeCompare(b.full_name, "ko")
   );
+  const memberRows: OrgMember[][] = [];
+  const membersByPosition = new Map<string, OrgMember[]>();
 
-  for (const m of sorted) {
-    const mId = `member-${m.id}`;
-    const isHead = m.title?.name === "팀장" || m.member_role === "팀장";
-    const isPendingMove = pendingMoves?.has(m.id) ?? false;
-    // If member is being moved elsewhere, show as pending but keep original edge
-    const isMovedAway =
-      isPendingMove && memberMoveTargets?.get(m.id) !== team.id;
+  for (const member of sorted) {
+    const positionName = member.position?.name || "직급 없음";
+    membersByPosition.set(positionName, [
+      ...(membersByPosition.get(positionName) ?? []),
+      member,
+    ]);
+  }
 
+  for (const group of membersByPosition.values()) {
+    for (let i = 0; i < group.length; i += 2) {
+      memberRows.push(group.slice(i, i + 2));
+    }
+  }
+  for (const incomingMember of incomingDisplayMembers) {
+    memberRows.push([incomingMember]);
+  }
+
+  for (const [rowIndex, rowMembers] of memberRows.entries()) {
+    const rankNodeId = `${teamNodeId}-member-rank-${rowIndex}`;
+    const previousRowMembers = memberRows[rowIndex - 1] ?? [];
     nodes.push({
-      id: mId,
-      type: "member",
+      id: rankNodeId,
+      type: "memberRank",
       position: { x: 0, y: 0 },
       data: {
-        label: m.full_name,
-        sub:
-          [m.position?.name, m.title?.name].filter(Boolean).join(" / ") ||
-          m.member_role,
-        isHead,
-        pendingMove: isPendingMove,
+        teamId: teamNodeId,
+        memberIds: rowMembers.map((m) => `member-${m.id}`),
+        order: rowIndex,
+        row: rowIndex,
       },
     });
+    edges.push({
+      id: `e-${teamNodeId}-${rankNodeId}`,
+      source: teamNodeId,
+      target: rankNodeId,
+      style: { ...defaultEdgeStyle, opacity: 0 },
+    });
 
-    if (!isMovedAway) {
+    for (const [columnIndex, m] of rowMembers.entries()) {
+      const mId = `member-${m.id}`;
+      const isPendingMove = pendingMoves?.has(m.id) ?? false;
+      // If member is being moved elsewhere, show as pending but keep original edge
+      const isMovedAway =
+        isPendingMove && memberMoveTargets?.get(m.id) !== team.id;
+
+      nodes.push({
+        id: mId,
+        type: "member",
+        position: { x: 0, y: 0 },
+        data: {
+          label: m.full_name,
+          sub:
+            [m.position?.name, m.title?.name].filter(Boolean).join(" / ") ||
+            m.member_role,
+          pendingMove: isPendingMove,
+        },
+      });
+
+      if (isMovedAway) continue;
       edges.push({
-        id: `e-${teamNodeId}-${mId}`,
-        source: teamNodeId,
+        id: `e-${rankNodeId}-${mId}`,
+        source: rankNodeId,
+        target: mId,
+        style: { ...defaultEdgeStyle, opacity: 0 },
+      });
+
+      const previousMember = previousRowMembers[columnIndex];
+      const sourceNodeId = previousMember
+        ? `member-${previousMember.id}`
+        : teamNodeId;
+      edges.push({
+        id: `e-${sourceNodeId}-${mId}`,
+        source: sourceNodeId,
         target: mId,
         style: defaultEdgeStyle,
       });
@@ -651,6 +926,15 @@ function getAllTeams(
     }
   }
   return teams;
+}
+
+function findTeam(tree: OrganizationTree, teamId: string) {
+  for (const div of tree.divisions || []) {
+    const team = (div.teams || []).find((t) => t.id === teamId);
+    if (team) return team;
+  }
+
+  return (tree.teams || []).find((t) => t.id === teamId);
 }
 
 // ── Main Component ──
@@ -699,9 +983,84 @@ export default function OrgChart({
       const targetNode = nodes.find((n) => n.id === connection.target);
       if (!sourceNode || !targetNode) return;
 
-      // Team/Division source → Member target: assign member to team
+      // Division ↔ Team: move team under division
       if (
-        (sourceNode.type === "team" || sourceNode.type === "division") &&
+        sourceNode.type === "division" &&
+        targetNode.type === "team"
+      ) {
+        const divisionId = sourceNode.id.replace(/^div-/, "");
+        const teamId = targetNode.id.replace(/^team-/, "");
+        const divisionName =
+          (sourceNode.data as { label: string }).label || "";
+        const teamName =
+          (targetNode.data as { label: string }).label || "";
+
+        if (teamId.startsWith("temp-")) {
+          setPendingChanges((prev) =>
+            prev.map((c) =>
+              c.type === "addTeam" && c.tempId === teamId
+                ? { ...c, parentDivisionId: divisionId }
+                : c
+            )
+          );
+          return;
+        }
+
+        setPendingChanges((prev) => [
+          ...prev.filter(
+            (c) => !(c.type === "moveTeam" && c.teamId === teamId)
+          ),
+          {
+            type: "moveTeam",
+            teamId,
+            teamName,
+            targetDivisionId: divisionId,
+            targetDivisionName: divisionName,
+          },
+        ]);
+        return;
+      }
+
+      if (
+        sourceNode.type === "team" &&
+        targetNode.type === "division"
+      ) {
+        const divisionId = targetNode.id.replace(/^div-/, "");
+        const teamId = sourceNode.id.replace(/^team-/, "");
+        const divisionName =
+          (targetNode.data as { label: string }).label || "";
+        const teamName =
+          (sourceNode.data as { label: string }).label || "";
+
+        if (teamId.startsWith("temp-")) {
+          setPendingChanges((prev) =>
+            prev.map((c) =>
+              c.type === "addTeam" && c.tempId === teamId
+                ? { ...c, parentDivisionId: divisionId }
+                : c
+            )
+          );
+          return;
+        }
+
+        setPendingChanges((prev) => [
+          ...prev.filter(
+            (c) => !(c.type === "moveTeam" && c.teamId === teamId)
+          ),
+          {
+            type: "moveTeam",
+            teamId,
+            teamName,
+            targetDivisionId: divisionId,
+            targetDivisionName: divisionName,
+          },
+        ]);
+        return;
+      }
+
+      // Team source → Member target: assign member to team
+      if (
+        sourceNode.type === "team" &&
         targetNode.type === "member"
       ) {
         const teamId = sourceNode.id.replace(/^team-/, "");
@@ -730,7 +1089,7 @@ export default function OrgChart({
       // Member source → Team target: same as above (reverse direction)
       if (
         sourceNode.type === "member" &&
-        (targetNode.type === "team" || targetNode.type === "division")
+        targetNode.type === "team"
       ) {
         const teamId = targetNode.id.replace(/^team-/, "");
         const memberId = sourceNode.id.replace(/^member-/, "");
@@ -861,6 +1220,23 @@ export default function OrgChart({
       }
 
       // 3. Move members
+      for (const c of pendingChanges) {
+        if (c.type !== "moveTeam") continue;
+        const divisionId = c.targetDivisionId
+          ? idMap[c.targetDivisionId] || c.targetDivisionId
+          : null;
+        const res = await fetch(`/api/teams/${c.teamId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: c.teamName,
+            division_id: divisionId,
+          }),
+        });
+        if (!res.ok) throw new Error("팀 이동 실패: " + c.teamName);
+      }
+
+      // 4. Move members
       for (const c of pendingChanges) {
         if (c.type !== "moveMember") continue;
         const teamId = idMap[c.targetTeamId] || c.targetTeamId;
@@ -1040,6 +1416,8 @@ export default function OrgChart({
                 <li key={i} className="text-[11px] text-slate-800">
                   {c.type === "addDivision" && `+ 본부: ${c.name}`}
                   {c.type === "addTeam" && `+ 팀: ${c.name}`}
+                  {c.type === "moveTeam" &&
+                    `↳ ${c.teamName} → ${c.targetDivisionName}`}
                   {c.type === "moveMember" &&
                     `↳ ${c.memberName} → ${c.targetTeamName}`}
                 </li>

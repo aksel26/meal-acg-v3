@@ -1,6 +1,6 @@
 -- ============================================================
 -- 시드 데이터: 로컬 개발 환경용
--- 5명 멤버 (1 admin + 4 user), 근태/출퇴근 샘플
+-- 본부 없는 조직도 샘플 (팀 5개, 팀장 5명, 팀원 6명)
 -- ============================================================
 
 -- 1. 조직 (ACG - 기존 ID 사용)
@@ -8,46 +8,95 @@ INSERT INTO organizations (id, name)
 VALUES ('6a521219-f6fc-483d-96d8-3fa12a77af20', 'ACG')
 ON CONFLICT (id) DO NOTHING;
 
--- 2. 본부 (경영지원본부)
-INSERT INTO divisions (id, name, organization_id)
-VALUES ('d1000000-0000-0000-0000-000000000001', '경영지원본부', '6a521219-f6fc-483d-96d8-3fa12a77af20')
-ON CONFLICT (id) DO NOTHING;
+-- 2. 본부 없음
+UPDATE members
+SET division_id = NULL
+WHERE organization_id = '6a521219-f6fc-483d-96d8-3fa12a77af20';
 
--- 3. 팀 (P&C팀)
+UPDATE teams
+SET division_id = NULL
+WHERE organization_id = '6a521219-f6fc-483d-96d8-3fa12a77af20';
+
+DELETE FROM divisions
+WHERE organization_id = '6a521219-f6fc-483d-96d8-3fa12a77af20';
+
+-- 3. 직급 보강
+INSERT INTO positions (name, sort_order, annual_leave_days, leave_accrual_rule)
+VALUES ('위원', 2, 15, 'fixed')
+ON CONFLICT (name) DO UPDATE SET
+  sort_order = EXCLUDED.sort_order,
+  annual_leave_days = EXCLUDED.annual_leave_days,
+  leave_accrual_rule = EXCLUDED.leave_accrual_rule;
+
+-- 4. 팀 5개 (본부 없이 조직 직속)
 INSERT INTO teams (id, name, organization_id, division_id)
-VALUES ('a1000000-0000-0000-0000-000000000001', 'P&C팀', '6a521219-f6fc-483d-96d8-3fa12a77af20', 'd1000000-0000-0000-0000-000000000001')
-ON CONFLICT (id) DO NOTHING;
+VALUES
+  ('a1000000-0000-0000-0000-000000000001', 'HR 운영팀', '6a521219-f6fc-483d-96d8-3fa12a77af20', NULL),
+  ('a1000000-0000-0000-0000-000000000002', 'HR TECH팀', '6a521219-f6fc-483d-96d8-3fa12a77af20', NULL),
+  ('a1000000-0000-0000-0000-000000000003', '채용컨설팅팀', '6a521219-f6fc-483d-96d8-3fa12a77af20', NULL),
+  ('a1000000-0000-0000-0000-000000000004', '운영지원팀', '6a521219-f6fc-483d-96d8-3fa12a77af20', NULL),
+  ('a1000000-0000-0000-0000-000000000005', '플랫폼팀', '6a521219-f6fc-483d-96d8-3fa12a77af20', NULL)
+ON CONFLICT (id) DO UPDATE SET
+  name = EXCLUDED.name,
+  organization_id = EXCLUDED.organization_id,
+  division_id = EXCLUDED.division_id;
 
--- 4. 멤버 5명
+-- 5. 멤버 11명 (팀장 5명 + 팀원 6명)
 INSERT INTO members (id, full_name, login_id, password, role, member_role, organization_id, division_id, team_id) VALUES
-  ('b1000000-0000-0000-0000-000000000001', '김관리', 'admin', 'admin123', 'admin', '팀장', '6a521219-f6fc-483d-96d8-3fa12a77af20', 'd1000000-0000-0000-0000-000000000001', 'a1000000-0000-0000-0000-000000000001'),
-  ('b1000000-0000-0000-0000-000000000002', '이철수', 'user1', 'user123', 'user', '팀원', '6a521219-f6fc-483d-96d8-3fa12a77af20', 'd1000000-0000-0000-0000-000000000001', 'a1000000-0000-0000-0000-000000000001'),
-  ('b1000000-0000-0000-0000-000000000003', '박영희', 'user2', 'user123', 'user', '팀원', '6a521219-f6fc-483d-96d8-3fa12a77af20', 'd1000000-0000-0000-0000-000000000001', 'a1000000-0000-0000-0000-000000000001'),
-  ('b1000000-0000-0000-0000-000000000004', '최민수', 'user3', 'user123', 'user', '팀원', '6a521219-f6fc-483d-96d8-3fa12a77af20', 'd1000000-0000-0000-0000-000000000001', 'a1000000-0000-0000-0000-000000000001'),
-  ('b1000000-0000-0000-0000-000000000005', '정수진', 'user4', 'user123', 'user', '팀원', '6a521219-f6fc-483d-96d8-3fa12a77af20', 'd1000000-0000-0000-0000-000000000001', 'a1000000-0000-0000-0000-000000000001')
-ON CONFLICT (id) DO NOTHING;
+  ('b1000000-0000-0000-0000-000000000001', '김관리', 'admin', 'admin123', 'admin', '팀장', '6a521219-f6fc-483d-96d8-3fa12a77af20', NULL, 'a1000000-0000-0000-0000-000000000001'),
+  ('b1000000-0000-0000-0000-000000000002', '이철수', 'user1', 'user123', 'user', '팀장', '6a521219-f6fc-483d-96d8-3fa12a77af20', NULL, 'a1000000-0000-0000-0000-000000000002'),
+  ('b1000000-0000-0000-0000-000000000003', '박영희', 'user2', 'user123', 'user', '팀장', '6a521219-f6fc-483d-96d8-3fa12a77af20', NULL, 'a1000000-0000-0000-0000-000000000003'),
+  ('b1000000-0000-0000-0000-000000000004', '최민수', 'user3', 'user123', 'user', '팀장', '6a521219-f6fc-483d-96d8-3fa12a77af20', NULL, 'a1000000-0000-0000-0000-000000000004'),
+  ('b1000000-0000-0000-0000-000000000005', '정수진', 'user4', 'user123', 'user', '팀장', '6a521219-f6fc-483d-96d8-3fa12a77af20', NULL, 'a1000000-0000-0000-0000-000000000005'),
+  ('b1000000-0000-0000-0000-000000000006', '한지훈', 'user5', 'user123', 'user', '팀원', '6a521219-f6fc-483d-96d8-3fa12a77af20', NULL, 'a1000000-0000-0000-0000-000000000001'),
+  ('b1000000-0000-0000-0000-000000000007', '오민재', 'user6', 'user123', 'user', '팀원', '6a521219-f6fc-483d-96d8-3fa12a77af20', NULL, 'a1000000-0000-0000-0000-000000000002'),
+  ('b1000000-0000-0000-0000-000000000008', '서지원', 'user7', 'user123', 'user', '팀원', '6a521219-f6fc-483d-96d8-3fa12a77af20', NULL, 'a1000000-0000-0000-0000-000000000002'),
+  ('b1000000-0000-0000-0000-000000000009', '윤하늘', 'user8', 'user123', 'user', '팀원', '6a521219-f6fc-483d-96d8-3fa12a77af20', NULL, 'a1000000-0000-0000-0000-000000000003'),
+  ('b1000000-0000-0000-0000-000000000010', '장도윤', 'user9', 'user123', 'user', '인턴', '6a521219-f6fc-483d-96d8-3fa12a77af20', NULL, 'a1000000-0000-0000-0000-000000000004'),
+  ('b1000000-0000-0000-0000-000000000011', '문서연', 'user10', 'user123', 'user', '팀원', '6a521219-f6fc-483d-96d8-3fa12a77af20', NULL, 'a1000000-0000-0000-0000-000000000005')
+ON CONFLICT (id) DO UPDATE SET
+  full_name = EXCLUDED.full_name,
+  login_id = EXCLUDED.login_id,
+  password = EXCLUDED.password,
+  role = EXCLUDED.role,
+  member_role = EXCLUDED.member_role,
+  organization_id = EXCLUDED.organization_id,
+  division_id = EXCLUDED.division_id,
+  team_id = EXCLUDED.team_id;
 
--- 직급/직책 매핑 (시드 데이터용)
+-- 직급/직책 매핑 (조직도 시드 데이터용)
 UPDATE members SET position_id = (SELECT id FROM positions WHERE name = '책임'), title_id = (SELECT id FROM titles WHERE name = '팀장')
   WHERE id = 'b1000000-0000-0000-0000-000000000001'; -- 김관리 (admin)
-UPDATE members SET position_id = (SELECT id FROM positions WHERE name = '사원')
+UPDATE members SET position_id = (SELECT id FROM positions WHERE name = '수석'), title_id = (SELECT id FROM titles WHERE name = '팀장')
   WHERE id = 'b1000000-0000-0000-0000-000000000002'; -- 이철수
-UPDATE members SET position_id = (SELECT id FROM positions WHERE name = '선임')
+UPDATE members SET position_id = (SELECT id FROM positions WHERE name = '책임'), title_id = (SELECT id FROM titles WHERE name = '팀장')
   WHERE id = 'b1000000-0000-0000-0000-000000000003'; -- 박영희
-UPDATE members SET position_id = (SELECT id FROM positions WHERE name = '사원')
+UPDATE members SET position_id = (SELECT id FROM positions WHERE name = '선임'), title_id = (SELECT id FROM titles WHERE name = '팀장')
   WHERE id = 'b1000000-0000-0000-0000-000000000004'; -- 최민수
-UPDATE members SET position_id = (SELECT id FROM positions WHERE name = '인턴')
+UPDATE members SET position_id = (SELECT id FROM positions WHERE name = '위원'), title_id = (SELECT id FROM titles WHERE name = '팀장')
   WHERE id = 'b1000000-0000-0000-0000-000000000005'; -- 정수진
+UPDATE members SET position_id = (SELECT id FROM positions WHERE name = '수석'), title_id = NULL
+  WHERE id = 'b1000000-0000-0000-0000-000000000006'; -- 한지훈
+UPDATE members SET position_id = (SELECT id FROM positions WHERE name = '책임'), title_id = NULL
+  WHERE id = 'b1000000-0000-0000-0000-000000000007'; -- 오민재
+UPDATE members SET position_id = (SELECT id FROM positions WHERE name = '선임'), title_id = NULL
+  WHERE id = 'b1000000-0000-0000-0000-000000000008'; -- 서지원
+UPDATE members SET position_id = (SELECT id FROM positions WHERE name = '위원'), title_id = NULL
+  WHERE id = 'b1000000-0000-0000-0000-000000000009'; -- 윤하늘
+UPDATE members SET position_id = (SELECT id FROM positions WHERE name = '인턴'), title_id = NULL
+  WHERE id = 'b1000000-0000-0000-0000-000000000010'; -- 장도윤
+UPDATE members SET position_id = (SELECT id FROM positions WHERE name = '선임'), title_id = NULL
+  WHERE id = 'b1000000-0000-0000-0000-000000000011'; -- 문서연
 
--- 5. member_statuses: 전원 재직 중이므로 레코드 불필요
+-- 6. member_statuses: 전원 재직 중이므로 레코드 불필요
 -- (member_current_status VIEW에서 status 없으면 재직으로 처리)
 
--- 6. holidays (2026년 3월 공휴일)
+-- 7. holidays (2026년 3월 공휴일)
 INSERT INTO holidays (holiday_date, description) VALUES
   ('2026-03-01', '삼일절')
 ON CONFLICT DO NOTHING;
 
--- 7. dayoffs 샘플 (다양한 유형, 승인/미승인 혼합)
+-- 8. dayoffs 샘플 (다양한 유형, 승인/미승인 혼합)
 -- leave_types는 마이그레이션(20260308)에서 이미 INSERT됨
 INSERT INTO dayoffs (author_id, target_id, leave_date, leave_type_id, reason, approver_id, approved_at) VALUES
   -- 이철수: 연차 2건 (승인됨)
@@ -240,8 +289,6 @@ WHERE id IN (
 -- ============================================================
 -- 고객사 시드 데이터
 -- ============================================================
-DELETE FROM supervisor.clients;
-
 INSERT INTO supervisor.clients (id, name, parent_company, contact_name, contact_phone, contact_email, memo) VALUES
   ('f0000000-0000-0000-0000-000000000001', '삼성전자', '삼성그룹', '김담당', '010-9999-0001', 'kim@samsung.com', '주요 고객사'),
   ('f0000000-0000-0000-0000-000000000002', 'LG CNS', 'LG그룹', '이담당', '010-9999-0002', 'lee@lgcns.com', NULL),
@@ -251,7 +298,13 @@ INSERT INTO supervisor.clients (id, name, parent_company, contact_name, contact_
   ('f0000000-0000-0000-0000-000000000006', 'CJ제일제당', 'CJ그룹', '문담당', '010-9999-0006', 'moon@cj.co.kr', NULL),
   ('f0000000-0000-0000-0000-000000000007', 'LG화학', 'LG그룹', '오담당', '010-9999-0007', 'oh@lgchem.com', NULL),
   ('f0000000-0000-0000-0000-000000000008', '두산에너빌리티', '두산그룹', '한담당', '010-9999-0008', 'han@doosan.com', NULL)
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET
+  name = EXCLUDED.name,
+  parent_company = EXCLUDED.parent_company,
+  contact_name = EXCLUDED.contact_name,
+  contact_phone = EXCLUDED.contact_phone,
+  contact_email = EXCLUDED.contact_email,
+  memo = EXCLUDED.memo;
 
 -- 감독관 공고에 고객사 연결
 UPDATE supervisor.job_postings SET client_id = 'f0000000-0000-0000-0000-000000000001' WHERE id = 'b0000000-0000-0000-0000-000000000001';
@@ -358,16 +411,24 @@ INSERT INTO supervisor.room_reservations (id, room_id, date, start_time, end_tim
 -- Phase 4: 승인 워크플로 시드 데이터
 -- ============================================================
 
--- 대표/본부장 추가 (승인라인 테스트)
+-- 추가 멤버 보정 (조직도 테스트 데이터와 기존 승인 샘플 ID 유지)
 INSERT INTO members (id, full_name, login_id, password, role, member_role, organization_id, division_id, team_id) VALUES
-  ('b1000000-0000-0000-0000-000000000006', '한대표', 'ceo', 'admin123', 'admin', '팀장', '6a521219-f6fc-483d-96d8-3fa12a77af20', 'd1000000-0000-0000-0000-000000000001', 'a1000000-0000-0000-0000-000000000001'),
-  ('b1000000-0000-0000-0000-000000000007', '오본부장', 'director', 'admin123', 'admin', '본부장', '6a521219-f6fc-483d-96d8-3fa12a77af20', 'd1000000-0000-0000-0000-000000000001', 'a1000000-0000-0000-0000-000000000001')
-ON CONFLICT (id) DO NOTHING;
+  ('b1000000-0000-0000-0000-000000000006', '한지훈', 'user5', 'user123', 'user', '팀원', '6a521219-f6fc-483d-96d8-3fa12a77af20', NULL, 'a1000000-0000-0000-0000-000000000001'),
+  ('b1000000-0000-0000-0000-000000000007', '오민재', 'user6', 'user123', 'user', '팀원', '6a521219-f6fc-483d-96d8-3fa12a77af20', NULL, 'a1000000-0000-0000-0000-000000000002')
+ON CONFLICT (id) DO UPDATE SET
+  full_name = EXCLUDED.full_name,
+  login_id = EXCLUDED.login_id,
+  password = EXCLUDED.password,
+  role = EXCLUDED.role,
+  member_role = EXCLUDED.member_role,
+  organization_id = EXCLUDED.organization_id,
+  division_id = EXCLUDED.division_id,
+  team_id = EXCLUDED.team_id;
 
 -- 직급/직책 매핑
-UPDATE members SET position_id = (SELECT id FROM positions WHERE name = '대표'), title_id = (SELECT id FROM titles WHERE name = '대표')
+UPDATE members SET position_id = (SELECT id FROM positions WHERE name = '수석'), title_id = NULL
   WHERE id = 'b1000000-0000-0000-0000-000000000006';
-UPDATE members SET position_id = (SELECT id FROM positions WHERE name = '수석'), title_id = (SELECT id FROM titles WHERE name = '본부장')
+UPDATE members SET position_id = (SELECT id FROM positions WHERE name = '책임'), title_id = NULL
   WHERE id = 'b1000000-0000-0000-0000-000000000007';
 
 -- hire_date 추가 (승인라인 + 연차 계산에 필요)
@@ -376,11 +437,35 @@ UPDATE members SET hire_date = '2023-07-15' WHERE id = 'b1000000-0000-0000-0000-
 UPDATE members SET hire_date = '2022-01-10' WHERE id = 'b1000000-0000-0000-0000-000000000003'; -- 박영희
 UPDATE members SET hire_date = '2024-03-01' WHERE id = 'b1000000-0000-0000-0000-000000000004'; -- 최민수
 UPDATE members SET hire_date = '2025-09-01' WHERE id = 'b1000000-0000-0000-0000-000000000005'; -- 정수진
-UPDATE members SET hire_date = '2015-01-05' WHERE id = 'b1000000-0000-0000-0000-000000000006'; -- 한대표
-UPDATE members SET hire_date = '2018-06-01' WHERE id = 'b1000000-0000-0000-0000-000000000007'; -- 오본부장
+UPDATE members SET hire_date = '2021-05-10' WHERE id = 'b1000000-0000-0000-0000-000000000006'; -- 한지훈
+UPDATE members SET hire_date = '2022-09-01' WHERE id = 'b1000000-0000-0000-0000-000000000007'; -- 오민재
+UPDATE members SET hire_date = '2023-02-13' WHERE id = 'b1000000-0000-0000-0000-000000000008'; -- 서지원
+UPDATE members SET hire_date = '2024-01-08' WHERE id = 'b1000000-0000-0000-0000-000000000009'; -- 윤하늘
+UPDATE members SET hire_date = '2026-01-05' WHERE id = 'b1000000-0000-0000-0000-000000000010'; -- 장도윤
+UPDATE members SET hire_date = '2023-11-20' WHERE id = 'b1000000-0000-0000-0000-000000000011'; -- 문서연
 
 -- 승인 요청 샘플 데이터
--- 승인라인: 팀원/파트장 → 김관리(팀장), 김관리(팀장) → 오본부장, 오본부장 → 한대표
+-- 승인라인: 팀원/파트장 → 김관리(팀장), 김관리(팀장) → 오민재
+
+DELETE FROM approval_requests
+WHERE id IN (
+  'e4000000-0000-0000-0000-000000000001',
+  'e4000000-0000-0000-0000-000000000002',
+  'e4000000-0000-0000-0000-000000000003',
+  'e4000000-0000-0000-0000-000000000004',
+  'e4000000-0000-0000-0000-000000000005',
+  'e4000000-0000-0000-0000-000000000006'
+);
+
+DELETE FROM dayoffs
+WHERE id IN (
+  'd4000000-0000-0000-0000-000000000001',
+  'd4000000-0000-0000-0000-000000000002',
+  'd4000000-0000-0000-0000-000000000003',
+  'd4000000-0000-0000-0000-000000000004',
+  'd4000000-0000-0000-0000-000000000005',
+  'd4000000-0000-0000-0000-000000000006'
+);
 
 -- 1) 이철수 연차 신청 → 김관리 승인 대기 (pending)
 INSERT INTO dayoffs (id, author_id, target_id, leave_date, leave_type_id, reason, approval_status) VALUES
@@ -412,7 +497,7 @@ INSERT INTO dayoffs (id, author_id, target_id, leave_date, leave_type_id, reason
 INSERT INTO approval_requests (id, type, requester_id, approver_id, status, related_table, related_id, reject_reason, requested_at, resolved_at, resolved_by) VALUES
   ('e4000000-0000-0000-0000-000000000005', 'leave', 'b1000000-0000-0000-0000-000000000005', 'b1000000-0000-0000-0000-000000000001', 'rejected', 'dayoffs', 'd4000000-0000-0000-0000-000000000005', '해당 날짜는 프로젝트 마감일입니다.', '2026-03-30 09:00:00+09', '2026-03-30 16:00:00+09', 'b1000000-0000-0000-0000-000000000001');
 
--- 5) 김관리(팀장) 연차 → 오본부장 승인 대기 (팀장→본부장 승인라인 테스트)
+-- 5) 김관리(팀장) 연차 → 오민재 승인 대기
 INSERT INTO dayoffs (id, author_id, target_id, leave_date, leave_type_id, reason, approval_status) VALUES
   ('d4000000-0000-0000-0000-000000000006', 'b1000000-0000-0000-0000-000000000001', 'b1000000-0000-0000-0000-000000000001', '2026-04-15', 5, '개인 사유', 'pending');
 

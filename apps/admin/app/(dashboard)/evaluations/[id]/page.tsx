@@ -31,6 +31,13 @@ import {
 } from "@repo/ui/src/dialog";
 import { Input } from "@repo/ui/src/input";
 import { Label } from "@repo/ui/src/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/src/select";
 import { Textarea } from "@repo/ui/src/textarea";
 import {
   Tooltip,
@@ -66,6 +73,7 @@ type EvaluationQuestion = {
   position_id: string;
   question_type: QuestionType;
   prompt: string;
+  evaluator_types?: string[] | null;
   weight: number | null;
   sort_order: number;
   is_required: boolean;
@@ -104,6 +112,15 @@ type EvaluationRoundDetail = EvaluationRound & {
   assignments: EvaluationAssignment[];
 };
 
+type EvaluationQuestionSet = {
+  id: string;
+  name: string;
+  description: string | null;
+  is_active: boolean;
+  is_default: boolean;
+  items: unknown[];
+};
+
 type EvaluationAuditLog = {
   id: string;
   action: string;
@@ -133,6 +150,8 @@ const EMPTY_MEMBERS: MemberRow[] = [];
 const EMPTY_AUDIT_LOGS: EvaluationAuditLog[] = [];
 const ALL_TEAMS_KEY = "__all__";
 const NO_TEAM_KEY = "__none__";
+const NO_POSITION_KEY = "__none__";
+const POSITION_SORT_ORDER = ["인턴", "사원", "선임", "책임", "수석", "대표"];
 
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init);
@@ -200,6 +219,59 @@ function teamLabel(key: string) {
   return key;
 }
 
+function positionKey(positionName?: string | null) {
+  return positionName?.trim() || NO_POSITION_KEY;
+}
+
+function positionLabel(key: string) {
+  if (key === NO_POSITION_KEY) return "직급 미지정";
+  return key;
+}
+
+function positionSortRank(positionName?: string | null) {
+  const position = positionName || "";
+  const index = POSITION_SORT_ORDER.findIndex((keyword) =>
+    position.includes(keyword),
+  );
+  return index === -1 ? POSITION_SORT_ORDER.length : index;
+}
+
+function sortMembersByPosition(a: MemberRow, b: MemberRow) {
+  const positionDiff =
+    positionSortRank(a.position_name) - positionSortRank(b.position_name);
+  if (positionDiff !== 0) return positionDiff;
+
+  const titleDiff = titleSortRank(a.title_name) - titleSortRank(b.title_name);
+  if (titleDiff !== 0) return titleDiff;
+
+  return a.full_name.localeCompare(b.full_name, "ko");
+}
+
+function groupMembersByPosition(members: MemberRow[]) {
+  const groups = new Map<string, MemberRow[]>();
+
+  members.forEach((member) => {
+    const key = positionKey(member.position_name);
+    const group = groups.get(key) || [];
+    group.push(member);
+    groups.set(key, group);
+  });
+
+  return Array.from(groups.entries())
+    .map(([key, items]) => ({
+      key,
+      label: positionLabel(key),
+      items,
+    }))
+    .sort((a, b) => {
+      const positionDiff =
+        positionSortRank(a.items[0]?.position_name) -
+        positionSortRank(b.items[0]?.position_name);
+      if (positionDiff !== 0) return positionDiff;
+      return a.label.localeCompare(b.label, "ko");
+    });
+}
+
 function actionLabel(action: string) {
   return ACTION_LABELS[action] || action;
 }
@@ -220,13 +292,17 @@ export default function EvaluationDetailPage() {
     startDate: "",
     endDate: "",
   });
+  const [selectedQuestionSetId, setSelectedQuestionSetId] = useState("");
   const [questions, setQuestions] = useState<EvaluationQuestion[]>([]);
   const [subjectIds, setSubjectIds] = useState<string[]>([]);
   const [assignments, setAssignments] = useState<EvaluationAssignment[]>([]);
+  const [assignmentSourceMemory, setAssignmentSourceMemory] = useState<
+    Record<string, AssignmentSource>
+  >({});
   const [selectedTeamKey, setSelectedTeamKey] = useState(ALL_TEAMS_KEY);
-  const [selectedSubjectId, setSelectedSubjectId] = useState("");
-  const [subjectSearch, setSubjectSearch] = useState("");
+  const [selectedEvaluatorId, setSelectedEvaluatorId] = useState("");
   const [evaluatorSearch, setEvaluatorSearch] = useState("");
+  const [targetSearch, setTargetSearch] = useState("");
 
   const { data: members = EMPTY_MEMBERS } = useQuery<MemberRow[]>({
     queryKey: queryKeys.memberStatuses.list({}),
@@ -234,13 +310,16 @@ export default function EvaluationDetailPage() {
     staleTime: 60 * 1000,
   });
 
-  const { data: roundDetail, isFetching: detailFetching, isLoading } =
-    useQuery<EvaluationRoundDetail>({
-      queryKey: queryKeys.evaluations.round(roundId || ""),
-      queryFn: async () =>
-        requestJson<EvaluationRoundDetail>(`/api/evaluations/rounds/${roundId}`),
-      enabled: !!roundId,
-    });
+  const {
+    data: roundDetail,
+    isFetching: detailFetching,
+    isLoading,
+  } = useQuery<EvaluationRoundDetail>({
+    queryKey: queryKeys.evaluations.round(roundId || ""),
+    queryFn: async () =>
+      requestJson<EvaluationRoundDetail>(`/api/evaluations/rounds/${roundId}`),
+    enabled: !!roundId,
+  });
 
   const { data: validation } = useQuery<ValidationResult>({
     queryKey: queryKeys.evaluations.validation(roundId || ""),
@@ -251,14 +330,22 @@ export default function EvaluationDetailPage() {
     enabled: !!roundId,
   });
 
-  const { data: auditLogs = EMPTY_AUDIT_LOGS } = useQuery<EvaluationAuditLog[]>({
-    queryKey: queryKeys.evaluations.auditLogs(roundId || undefined),
+  const { data: questionSets = [] } = useQuery<EvaluationQuestionSet[]>({
+    queryKey: queryKeys.evaluations.questionSets,
     queryFn: async () =>
-      requestJson<EvaluationAuditLog[]>(
-        `/api/evaluations/audit-logs?roundId=${roundId}`,
-      ),
-    enabled: !!roundId,
+      requestJson<EvaluationQuestionSet[]>("/api/evaluations/question-sets"),
   });
+
+  const { data: auditLogs = EMPTY_AUDIT_LOGS } = useQuery<EvaluationAuditLog[]>(
+    {
+      queryKey: queryKeys.evaluations.auditLogs(roundId || undefined),
+      queryFn: async () =>
+        requestJson<EvaluationAuditLog[]>(
+          `/api/evaluations/audit-logs?roundId=${roundId}`,
+        ),
+      enabled: !!roundId,
+    },
+  );
 
   useEffect(() => {
     if (!roundDetail) return;
@@ -274,7 +361,17 @@ export default function EvaluationDetailPage() {
     );
     setSubjectIds(roundDetail.subjects.map((subject) => subject.member_id));
     setAssignments(roundDetail.assignments);
+    setAssignmentSourceMemory({});
+    setSelectedQuestionSetId(roundDetail.question_set_id || "");
   }, [roundDetail]);
+
+  useEffect(() => {
+    if (selectedQuestionSetId || questionSets.length === 0) return;
+    const defaultSet = questionSets.find(
+      (questionSet) => questionSet.is_active && questionSet.is_default,
+    );
+    setSelectedQuestionSetId(defaultSet?.id || "");
+  }, [questionSets, selectedQuestionSetId]);
 
   useEffect(() => {
     if (members.length === 0) return;
@@ -313,7 +410,7 @@ export default function EvaluationDetailPage() {
   }, [members]);
 
   const selectedTeamMembers = useMemo(() => {
-    const keyword = subjectSearch.trim().toLowerCase();
+    const keyword = evaluatorSearch.trim().toLowerCase();
     const source = members.filter((member) => {
       if (
         selectedTeamKey !== ALL_TEAMS_KEY &&
@@ -333,54 +430,82 @@ export default function EvaluationDetailPage() {
       return fields.some((field) => field?.toLowerCase().includes(keyword));
     });
 
-    return [...source].sort((a, b) => {
-      const titleDiff =
-        titleSortRank(a.title_name) - titleSortRank(b.title_name);
-      if (titleDiff !== 0) return titleDiff;
-      return a.full_name.localeCompare(b.full_name, "ko");
-    });
-  }, [members, selectedTeamKey, subjectSearch]);
+    return [...source].sort(sortMembersByPosition);
+  }, [members, selectedTeamKey, evaluatorSearch]);
+
+  const selectedTeamMemberGroups = useMemo(
+    () => groupMembersByPosition(selectedTeamMembers),
+    [selectedTeamMembers],
+  );
 
   useEffect(() => {
     if (
-      selectedSubjectId &&
+      selectedEvaluatorId &&
       selectedTeamMembers.some(
-        (member) => member.member_id === selectedSubjectId,
+        (member) => member.member_id === selectedEvaluatorId,
       )
     ) {
       return;
     }
 
-    setSelectedSubjectId(selectedTeamMembers[0]?.member_id || "");
-  }, [selectedSubjectId, selectedTeamMembers]);
+    setSelectedEvaluatorId(selectedTeamMembers[0]?.member_id || "");
+  }, [selectedEvaluatorId, selectedTeamMembers]);
 
-  const selectedSubject = selectedSubjectId
-    ? membersById.get(selectedSubjectId)
+  const selectedEvaluator = selectedEvaluatorId
+    ? membersById.get(selectedEvaluatorId)
     : undefined;
-  const selectedSubjectAssignments = useMemo(
+  const selectedEvaluatorAssignments = useMemo(
     () =>
       assignments.filter(
         (assignment) =>
-          assignment.subject_member_id === selectedSubjectId &&
+          assignment.evaluator_member_id === selectedEvaluatorId &&
           !assignment.is_excluded,
       ),
-    [assignments, selectedSubjectId],
+    [assignments, selectedEvaluatorId],
   );
-  const assignedEvaluatorIds = useMemo(
+  const assignedSubjectIds = useMemo(
     () =>
       new Set(
-        selectedSubjectAssignments.map(
-          (assignment) => assignment.evaluator_member_id,
+        selectedEvaluatorAssignments.map(
+          (assignment) => assignment.subject_member_id,
         ),
       ),
-    [selectedSubjectAssignments],
+    [selectedEvaluatorAssignments],
   );
-  const evaluatorCandidates = useMemo(() => {
-    const keyword = evaluatorSearch.trim().toLowerCase();
+  const assignedSubjectIdsForSave = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          assignments
+            .filter((assignment) => !assignment.is_excluded)
+            .map((assignment) => assignment.subject_member_id),
+        ),
+      ),
+    [assignments],
+  );
+  const activeQuestionSets = useMemo(
+    () => questionSets.filter((questionSet) => questionSet.is_active),
+    [questionSets],
+  );
+  const selectedQuestionSet = useMemo(
+    () =>
+      questionSets.find((questionSet) => questionSet.id === selectedQuestionSetId) ||
+      null,
+    [questionSets, selectedQuestionSetId],
+  );
+  const appliedQuestionSet = useMemo(
+    () =>
+      questionSets.find(
+        (questionSet) => questionSet.id === roundDetail?.question_set_id,
+      ) || null,
+    [questionSets, roundDetail?.question_set_id],
+  );
+  const targetCandidates = useMemo(() => {
+    const keyword = targetSearch.trim().toLowerCase();
 
     return members
       .filter((member) => {
-        if (member.member_id === selectedSubjectId) return false;
+        if (member.member_id === selectedEvaluatorId) return false;
         if (!keyword) return true;
 
         const fields = [
@@ -392,10 +517,18 @@ export default function EvaluationDetailPage() {
         return fields.some((field) => field?.toLowerCase().includes(keyword));
       })
       .sort((a, b) => {
+        const positionDiff =
+          positionSortRank(a.position_name) - positionSortRank(b.position_name);
+        if (positionDiff !== 0) return positionDiff;
+
         const checkedDiff =
-          Number(assignedEvaluatorIds.has(b.member_id)) -
-          Number(assignedEvaluatorIds.has(a.member_id));
+          Number(assignedSubjectIds.has(b.member_id)) -
+          Number(assignedSubjectIds.has(a.member_id));
         if (checkedDiff !== 0) return checkedDiff;
+
+        const titleDiff =
+          titleSortRank(a.title_name) - titleSortRank(b.title_name);
+        if (titleDiff !== 0) return titleDiff;
 
         const teamDiff = (a.team_name || "").localeCompare(
           b.team_name || "",
@@ -403,12 +536,35 @@ export default function EvaluationDetailPage() {
         );
         if (teamDiff !== 0) return teamDiff;
 
-        const titleDiff =
-          titleSortRank(a.title_name) - titleSortRank(b.title_name);
-        if (titleDiff !== 0) return titleDiff;
         return a.full_name.localeCompare(b.full_name, "ko");
       });
-  }, [assignedEvaluatorIds, evaluatorSearch, members, selectedSubjectId]);
+  }, [assignedSubjectIds, members, selectedEvaluatorId, targetSearch]);
+
+  const targetCandidateGroups = useMemo(
+    () => groupMembersByPosition(targetCandidates),
+    [targetCandidates],
+  );
+
+  function normalizeAssignmentSource(
+    assignment: Pick<
+      EvaluationAssignment,
+      "subject_member_id" | "evaluator_member_id" | "source"
+    >,
+  ): AssignmentSource {
+    if (assignment.source !== "auto_same_team") {
+      return assignment.source;
+    }
+
+    const subject = membersById.get(assignment.subject_member_id);
+    const evaluator = membersById.get(assignment.evaluator_member_id);
+    if (!subject || !evaluator) {
+      return assignment.source;
+    }
+
+    return subject.team_id && subject.team_id === evaluator.team_id
+      ? assignment.source
+      : "manual";
+  }
 
   function invalidateRound() {
     queryClient.invalidateQueries({ queryKey: queryKeys.evaluations.rounds });
@@ -447,7 +603,10 @@ export default function EvaluationDetailPage() {
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ subjectIds, excludedIds: [] }),
+          body: JSON.stringify({
+            subjectIds: assignedSubjectIdsForSave,
+            excludedIds: [],
+          }),
         },
       ),
     onSuccess: () => {
@@ -481,6 +640,29 @@ export default function EvaluationDetailPage() {
     onError: (error: Error) => toast.error(error.message),
   });
 
+  const applyQuestionSetMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedQuestionSetId) {
+        throw new Error("적용할 문항 SET을 선택해주세요.");
+      }
+
+      return requestJson<EvaluationQuestion[]>(
+        `/api/evaluations/rounds/${roundId}/questions/apply-set`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ questionSetId: selectedQuestionSetId }),
+        },
+      );
+    },
+    onSuccess: (data) => {
+      toast.success("문항 SET이 적용되었습니다.");
+      setQuestions([...data].sort((a, b) => a.sort_order - b.sort_order));
+      invalidateRound();
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
   const saveAssignmentsMutation = useMutation({
     mutationFn: async () =>
       requestJson<EvaluationAssignment[]>(
@@ -492,7 +674,7 @@ export default function EvaluationDetailPage() {
             assignments: assignments.map((assignment) => ({
               subjectMemberId: assignment.subject_member_id,
               evaluatorMemberId: assignment.evaluator_member_id,
-              source: assignment.source,
+              source: normalizeAssignmentSource(assignment),
               isExcluded: assignment.is_excluded,
               excludedReason: assignment.excluded_reason || null,
             })),
@@ -543,7 +725,10 @@ export default function EvaluationDetailPage() {
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ subjectIds, excludedIds: [] }),
+          body: JSON.stringify({
+            subjectIds: assignedSubjectIdsForSave,
+            excludedIds: [],
+          }),
         },
       );
 
@@ -557,7 +742,9 @@ export default function EvaluationDetailPage() {
               positionId: question.position_id,
               questionType: question.question_type,
               prompt: question.prompt,
-              weight: question.question_type === "score" ? question.weight : null,
+              evaluatorTypes: question.evaluator_types || ["상사", "동료"],
+              weight:
+                question.question_type === "score" ? question.weight : null,
               sortOrder: index + 1,
               isRequired: question.is_required,
             })),
@@ -574,7 +761,7 @@ export default function EvaluationDetailPage() {
             assignments: assignments.map((assignment) => ({
               subjectMemberId: assignment.subject_member_id,
               evaluatorMemberId: assignment.evaluator_member_id,
-              source: assignment.source,
+              source: normalizeAssignmentSource(assignment),
               isExcluded: assignment.is_excluded,
               excludedReason: assignment.excluded_reason || null,
             })),
@@ -593,6 +780,23 @@ export default function EvaluationDetailPage() {
   function toggleAssignment(subjectId: string, evaluatorId: string) {
     if (subjectId === evaluatorId) return;
 
+    const sourceKey = `${subjectId}:${evaluatorId}`;
+    const currentAssignment = assignments.find(
+      (assignment) =>
+        assignment.subject_member_id === subjectId &&
+        assignment.evaluator_member_id === evaluatorId,
+    );
+
+    if (currentAssignment) {
+      const currentSource = normalizeAssignmentSource(currentAssignment);
+      if (currentSource !== "manual") {
+        setAssignmentSourceMemory((prev) => ({
+          ...prev,
+          [sourceKey]: currentSource,
+        }));
+      }
+    }
+
     setAssignments((prev) => {
       const exists = prev.some(
         (assignment) =>
@@ -610,12 +814,28 @@ export default function EvaluationDetailPage() {
         );
       }
 
+      const rememberedSource = assignmentSourceMemory[sourceKey];
+      const originalAssignment = roundDetail?.assignments.find(
+        (assignment) =>
+          assignment.subject_member_id === subjectId &&
+          assignment.evaluator_member_id === evaluatorId,
+      );
+      const restoredSource = rememberedSource
+        ? normalizeAssignmentSource({
+            subject_member_id: subjectId,
+            evaluator_member_id: evaluatorId,
+            source: rememberedSource,
+          })
+        : originalAssignment
+          ? normalizeAssignmentSource(originalAssignment)
+          : "manual";
+
       return [
         ...prev,
         {
           subject_member_id: subjectId,
           evaluator_member_id: evaluatorId,
-          source: "manual",
+          source: restoredSource,
           is_excluded: false,
         },
       ];
@@ -677,7 +897,8 @@ export default function EvaluationDetailPage() {
             )}
           </div>
           <p className="mt-1 text-xs text-slate-500">
-            {roundDetail.start_date} ~ {roundDetail.end_date} · 배포 ON 상태에서는 설정을 수정할 수 없습니다.
+            {roundDetail.start_date} ~ {roundDetail.end_date} · 배포 ON
+            상태에서는 설정을 수정할 수 없습니다.
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
@@ -739,10 +960,7 @@ export default function EvaluationDetailPage() {
             <Pencil className="mr-1 h-4 w-4" />
             수정
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => setHistoryDialogOpen(true)}
-          >
+          <Button variant="outline" onClick={() => setHistoryDialogOpen(true)}>
             <History className="mr-1 h-4 w-4" />
             변경 이력
           </Button>
@@ -774,66 +992,154 @@ export default function EvaluationDetailPage() {
         </CardContent>
       </Card>
 
-      <div className="flex justify-end">
-        <Button
-          onClick={() => saveAllMutation.mutate()}
-          disabled={isLocked || saveAllMutation.isPending}
-        >
-          {saveAllMutation.isPending ? (
-            <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-          ) : (
-            <Save className="mr-1 h-4 w-4" />
-          )}
-          전체 저장
-        </Button>
-      </div>
-
-      <Card>
+      <Card className="border-0 shadow-none">
         <CardContent className="space-y-5 p-0">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-sm font-semibold text-slate-900">
-                대상자 / 평가자 배정
+                적용 SET / 평가자 / 대상자 배정
               </h2>
               <p className="mt-1 text-xs text-slate-400">
-                팀을 선택하고 대상자 멤버별 평가자를 체크합니다.
+                문항 SET을 먼저 적용한 뒤 팀, 평가자, 대상자를 순서대로 배정합니다.
               </p>
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={
-                isLocked ||
-                subjectIds.length === 0 ||
-                generateAssignmentsMutation.isPending
-              }
-              onClick={() => generateAssignmentsMutation.mutate()}
-            >
-              {generateAssignmentsMutation.isPending ? (
-                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-              ) : (
-                <RefreshCw className="mr-1 h-4 w-4" />
-              )}
-              자동 배정
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={
+                  isLocked ||
+                  subjectIds.length === 0 ||
+                  generateAssignmentsMutation.isPending
+                }
+                onClick={() => generateAssignmentsMutation.mutate()}
+              >
+                {generateAssignmentsMutation.isPending ? (
+                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="mr-1 h-4 w-4" />
+                )}
+                자동 배정
+              </Button>
+              <Button
+                onClick={() => saveAllMutation.mutate()}
+                disabled={
+                  isLocked ||
+                  assignedSubjectIdsForSave.length === 0 ||
+                  saveAllMutation.isPending
+                }
+              >
+                {saveAllMutation.isPending ? (
+                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-1 h-4 w-4" />
+                )}
+                전체 저장
+              </Button>
+            </div>
           </div>
 
-          {members.length === 0 ? (
-            <EmptyState
-              icon={Users}
-              title="표시할 구성원이 없습니다"
-              description="구성원 정보를 불러오면 배정 화면이 표시됩니다."
-            />
-          ) : (
-            <div className="grid gap-4 lg:grid-cols-[240px_320px_1fr]">
-              <section className="rounded-lg border border-slate-200 bg-white">
-                <div className="border-b border-slate-100 px-4 py-3">
-                  <h3 className="text-sm font-medium text-slate-900">
-                    1. 팀 선택
-                  </h3>
-                  <p className="mt-1 text-xs text-slate-400">
-                    대상자 후보를 팀 단위로 좁힙니다.
+          <div className="grid overflow-hidden rounded-lg bg-white lg:grid-cols-[280px_220px_300px_1fr]">
+            <section>
+              <div className="relative flex min-h-[82px] items-center bg-slate-50/70 px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">
+                    1
+                  </span>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-medium text-slate-900">
+                      적용 SET 설정
+                    </h3>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      회차 문항을 SET 기준으로 구성합니다.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-3 p-3">
+                <Select
+                  value={selectedQuestionSetId}
+                  onValueChange={setSelectedQuestionSetId}
+                  disabled={isLocked || activeQuestionSets.length === 0}
+                >
+                  <SelectTrigger className="h-10 w-full bg-white">
+                    <SelectValue placeholder="문항 SET 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {activeQuestionSets.map((questionSet) => (
+                      <SelectItem key={questionSet.id} value={questionSet.id}>
+                        {questionSet.name}
+                        {questionSet.is_default ? " · 기본" : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  className="w-full"
+                  onClick={() => applyQuestionSetMutation.mutate()}
+                  disabled={
+                    isLocked ||
+                    !selectedQuestionSetId ||
+                    applyQuestionSetMutation.isPending
+                  }
+                >
+                  {applyQuestionSetMutation.isPending ? (
+                    <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="mr-1 h-4 w-4" />
+                  )}
+                  SET 적용
+                </Button>
+                <div className="rounded-md bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-500">
+                  <p>
+                    현재 적용 SET:{" "}
+                    <span className="font-medium text-slate-700">
+                      {appliedQuestionSet?.name || "없음"}
+                    </span>
                   </p>
+                  {roundDetail.question_set_applied_at && (
+                    <p className="text-slate-400">
+                      {new Date(
+                        roundDetail.question_set_applied_at,
+                      ).toLocaleString("ko-KR")}
+                    </p>
+                  )}
+                  {selectedQuestionSet &&
+                    selectedQuestionSet.id !== roundDetail.question_set_id && (
+                      <p className="text-blue-600">
+                        선택됨: {selectedQuestionSet.name}
+                      </p>
+                    )}
+                </div>
+              </div>
+            </section>
+
+            {members.length === 0 ? (
+              <div className="p-4 lg:col-span-3">
+                <EmptyState
+                  icon={Users}
+                  title="표시할 구성원이 없습니다"
+                  description="구성원 정보를 불러오면 배정 화면이 표시됩니다."
+                />
+              </div>
+            ) : (
+              <>
+              <section>
+                <div className="relative flex min-h-[82px] items-center bg-slate-50/70 px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">
+                      2
+                    </span>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-medium text-slate-900">
+                        팀 선택
+                      </h3>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">
+                        멤버 후보를 팀 단위로 좁힙니다.
+                      </p>
+                    </div>
+                  </div>
                 </div>
                 <div className="max-h-[560px] space-y-1 overflow-auto p-2">
                   {teamOptions.map((team) => {
@@ -845,10 +1151,10 @@ export default function EvaluationDetailPage() {
                         type="button"
                         onClick={() => setSelectedTeamKey(team.key)}
                         className={cn(
-                          "flex w-full items-center justify-between gap-3 rounded-md border px-3 py-2 text-left transition-colors",
+                          "flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left transition-colors",
                           isSelected
-                            ? "border-slate-900 bg-white text-slate-900"
-                            : "border-transparent text-slate-600 hover:border-slate-200",
+                            ? "bg-slate-100 text-slate-900"
+                            : "bg-slate-50/60 text-slate-600 hover:bg-slate-100/80",
                         )}
                       >
                         <span className="truncate text-sm font-medium">
@@ -863,155 +1169,203 @@ export default function EvaluationDetailPage() {
                 </div>
               </section>
 
-              <section className="rounded-lg border border-slate-200 bg-white">
-                <div className="border-b border-slate-100 px-4 py-3">
-                  <h3 className="text-sm font-medium text-slate-900">
-                    2. 멤버 선택
-                  </h3>
-                  <p className="mt-1 text-xs text-slate-400">
-                    현재 표시된 모든 멤버는 평가 대상자입니다.
-                  </p>
+              <section>
+                <div className="relative flex min-h-[82px] items-center bg-slate-50/70 px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">
+                      3
+                    </span>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-medium text-slate-900">
+                        평가자 선택
+                      </h3>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">
+                        평가 주체(평가하는 사람)를 선택합니다.
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="border-b border-slate-100 p-3">
+                <div className="p-3">
                   <Input
-                    value={subjectSearch}
+                    value={evaluatorSearch}
                     placeholder="이름, 직급, 직책 검색"
-                    onChange={(event) => setSubjectSearch(event.target.value)}
+                    onChange={(event) => setEvaluatorSearch(event.target.value)}
                   />
                 </div>
-                <div className="max-h-[500px] space-y-1 overflow-auto p-2">
+                <div className="max-h-[500px] space-y-3 overflow-auto p-2">
                   {selectedTeamMembers.length === 0 ? (
                     <div className="py-12 text-center text-sm text-slate-400">
                       선택한 조건에 맞는 멤버가 없습니다.
                     </div>
                   ) : (
-                    selectedTeamMembers.map((member) => {
-                      const isSelected = selectedSubjectId === member.member_id;
-                      const evaluatorCount = assignments.filter(
-                        (assignment) =>
-                          assignment.subject_member_id === member.member_id &&
-                          !assignment.is_excluded,
-                      ).length;
+                    selectedTeamMemberGroups.map((group) => (
+                      <div key={group.key} className="space-y-1">
+                        <div className="flex items-center justify-between px-2 py-1">
+                          <span className="text-xs font-semibold text-slate-500">
+                            {group.label}
+                          </span>
+                          <span className="text-[11px] text-slate-400">
+                            {group.items.length}명
+                          </span>
+                        </div>
+                        {group.items.map((member) => {
+                          const isSelected =
+                            selectedEvaluatorId === member.member_id;
+                          const targetCount = assignments.filter(
+                            (assignment) =>
+                              assignment.evaluator_member_id ===
+                                member.member_id && !assignment.is_excluded,
+                          ).length;
 
-                      return (
-                        <button
-                          key={member.member_id}
-                          type="button"
-                          onClick={() => setSelectedSubjectId(member.member_id)}
-                          className={cn(
-                            "w-full rounded-md border px-3 py-2 text-left transition-colors",
-                            isSelected
-                              ? "border-slate-900 bg-white"
-                              : "border-transparent hover:border-slate-200",
-                          )}
-                        >
-                          <span className="flex items-center justify-between gap-2">
-                            <span className="truncate text-sm font-medium text-slate-900">
-                              {member.full_name}
-                            </span>
-                            <span className="shrink-0 text-xs text-slate-400">
-                              {evaluatorCount}명
-                            </span>
-                          </span>
-                          <span className="mt-0.5 block truncate text-xs text-slate-400">
-                            {member.team_name || "-"} ·{" "}
-                            {member.position_name || "-"} ·{" "}
-                            {member.title_name || "-"}
-                          </span>
-                        </button>
-                      );
-                    })
+                          return (
+                            <button
+                              key={member.member_id}
+                              type="button"
+                              onClick={() =>
+                                setSelectedEvaluatorId(member.member_id)
+                              }
+                              className={cn(
+                                "w-full rounded-md px-3 py-2 text-left transition-colors",
+                                isSelected
+                                  ? "bg-slate-100"
+                                  : "bg-slate-50/60 hover:bg-slate-100/80",
+                              )}
+                            >
+                              <span className="flex items-center justify-between gap-2">
+                                <span className="truncate text-sm font-medium text-slate-900">
+                                  {member.full_name}
+                                </span>
+                                <span className="shrink-0 text-xs text-slate-400">
+                                  {targetCount}명
+                                </span>
+                              </span>
+                              <span className="mt-0.5 block truncate text-xs text-slate-400">
+                                {member.team_name || "-"} ·{" "}
+                                {member.position_name || "-"} ·{" "}
+                                {member.title_name || "-"}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ))
                   )}
                 </div>
               </section>
 
-              <section className="rounded-lg border border-slate-200 bg-white">
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
-                  <div>
-                    <h3 className="text-sm font-medium text-slate-900">
-                      3. 평가자 선택
-                    </h3>
-                    <p className="mt-1 text-xs text-slate-400">
-                      {selectedSubject
-                        ? `${selectedSubject.full_name} 대상 평가자`
-                        : "대상자를 먼저 선택하세요."}
-                    </p>
+              <section>
+                <div className="flex min-h-[82px] flex-wrap items-center justify-between gap-2 bg-slate-50/70 px-4 py-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">
+                      4
+                    </span>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-medium text-slate-900">
+                        대상자 선택
+                      </h3>
+                      <p className="mt-1 truncate text-xs leading-5 text-slate-500">
+                        {selectedEvaluator
+                          ? `${selectedEvaluator.full_name}님이 평가할 대상자`
+                          : "평가 주체를 먼저 선택하세요."}
+                      </p>
+                    </div>
                   </div>
                   <Badge className="border-0 bg-slate-100 text-slate-600">
-                    {selectedSubjectAssignments.length}명 선택
+                    {selectedEvaluatorAssignments.length}명 선택
                   </Badge>
                 </div>
-                <div className="border-b border-slate-100 p-3">
+                <div className="p-3">
                   <Input
-                    value={evaluatorSearch}
-                    placeholder="평가자 이름, 팀, 직급, 직책 검색"
-                    onChange={(event) => setEvaluatorSearch(event.target.value)}
-                    disabled={!selectedSubject}
+                    value={targetSearch}
+                    placeholder="대상자 이름, 팀, 직급, 직책 검색"
+                    onChange={(event) => setTargetSearch(event.target.value)}
+                    disabled={!selectedEvaluator}
                   />
                 </div>
-                <div className="max-h-[500px] space-y-1 overflow-auto p-2">
-                  {!selectedSubject ? (
+                <div className="max-h-[500px] space-y-3 overflow-auto p-2">
+                  {!selectedEvaluator ? (
                     <div className="py-12 text-center text-sm text-slate-400">
-                      대상자 멤버를 선택하면 평가자 목록이 표시됩니다.
+                      평가 주체를 선택하면 대상자 목록이 표시됩니다.
                     </div>
-                  ) : evaluatorCandidates.length === 0 ? (
+                  ) : targetCandidates.length === 0 ? (
                     <div className="py-12 text-center text-sm text-slate-400">
-                      선택 가능한 평가자가 없습니다.
+                      선택 가능한 대상자가 없습니다.
                     </div>
                   ) : (
-                    evaluatorCandidates.map((member) => {
-                      const assignment = selectedSubjectAssignments.find(
-                        (item) => item.evaluator_member_id === member.member_id,
-                      );
-                      const checked = Boolean(assignment);
-
-                      return (
-                        <label
-                          key={member.member_id}
-                          className={cn(
-                            "flex cursor-pointer items-start gap-3 rounded-md border px-3 py-2 transition-colors",
-                            checked
-                              ? "border-slate-900 bg-white"
-                              : "border-transparent hover:border-slate-200",
-                            isLocked && "cursor-not-allowed opacity-60",
-                          )}
-                        >
-                          <Checkbox
-                            checked={checked}
-                            disabled={isLocked}
-                            onCheckedChange={() =>
-                              toggleAssignment(
-                                selectedSubjectId,
-                                member.member_id,
-                              )
-                            }
-                            className="mt-0.5"
-                          />
-                          <span className="min-w-0 flex-1">
-                            <span className="flex items-center gap-2">
-                              <span className="truncate text-sm font-medium text-slate-900">
-                                {member.full_name}
-                              </span>
-                              {assignment && assignment.source !== "manual" && (
-                                <Badge variant="outline" className="shrink-0">
-                                  {sourceLabel(assignment.source)}
-                                </Badge>
-                              )}
-                            </span>
-                            <span className="mt-0.5 block truncate text-xs text-slate-400">
-                              {member.team_name || "-"} ·{" "}
-                              {member.position_name || "-"} ·{" "}
-                              {member.title_name || "-"}
-                            </span>
+                    targetCandidateGroups.map((group) => (
+                      <div key={group.key} className="space-y-1">
+                        <div className="flex items-center justify-between px-2 py-1">
+                          <span className="text-xs font-semibold text-slate-500">
+                            {group.label}
                           </span>
-                        </label>
-                      );
-                    })
+                          <span className="text-[11px] text-slate-400">
+                            {group.items.length}명
+                          </span>
+                        </div>
+                        {group.items.map((member) => {
+                          const assignment = selectedEvaluatorAssignments.find(
+                            (item) =>
+                              item.subject_member_id === member.member_id,
+                          );
+                          const checked = Boolean(assignment);
+                          const displaySource = assignment
+                            ? normalizeAssignmentSource(assignment)
+                            : null;
+
+                          return (
+                            <label
+                              key={member.member_id}
+                              className={cn(
+                                "flex cursor-pointer items-start gap-3 rounded-md px-3 py-2 transition-colors",
+                                checked
+                                  ? "bg-slate-100"
+                                  : "bg-slate-50/60 hover:bg-slate-100/80",
+                                isLocked && "cursor-not-allowed opacity-60",
+                              )}
+                            >
+                              <Checkbox
+                                checked={checked}
+                                disabled={isLocked}
+                                onCheckedChange={() =>
+                                  toggleAssignment(
+                                    member.member_id,
+                                    selectedEvaluatorId,
+                                  )
+                                }
+                                className="mt-0.5"
+                              />
+                              <span className="min-w-0 flex-1">
+                                <span className="flex items-center gap-2">
+                                  <span className="truncate text-sm font-medium text-slate-900">
+                                    {member.full_name}
+                                  </span>
+                                  {displaySource &&
+                                    displaySource !== "manual" && (
+                                      <Badge
+                                        variant="outline"
+                                        className="shrink-0"
+                                      >
+                                        {sourceLabel(displaySource)}
+                                      </Badge>
+                                    )}
+                                </span>
+                                <span className="mt-0.5 block truncate text-xs text-slate-400">
+                                  {member.team_name || "-"} ·{" "}
+                                  {member.position_name || "-"} ·{" "}
+                                  {member.title_name || "-"}
+                                </span>
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    ))
                   )}
                 </div>
               </section>
-            </div>
-          )}
+              </>
+            )}
+          </div>
         </CardContent>
       </Card>
 
@@ -1020,7 +1374,8 @@ export default function EvaluationDetailPage() {
           <DialogHeader>
             <DialogTitle>회차 정보 수정</DialogTitle>
             <DialogDescription>
-              회차명, 기간, 설명을 수정합니다. 배포 ON 상태에서는 수정할 수 없습니다.
+              회차명, 기간, 설명을 수정합니다. 배포 ON 상태에서는 수정할 수
+              없습니다.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -1032,7 +1387,10 @@ export default function EvaluationDetailPage() {
                 disabled={isLocked}
                 placeholder="2026 상반기 다면평가"
                 onChange={(event) =>
-                  setRoundForm((prev) => ({ ...prev, name: event.target.value }))
+                  setRoundForm((prev) => ({
+                    ...prev,
+                    name: event.target.value,
+                  }))
                 }
               />
             </div>

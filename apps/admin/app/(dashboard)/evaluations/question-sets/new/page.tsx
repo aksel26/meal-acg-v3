@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronDown,
   ChevronLeft,
@@ -14,7 +14,6 @@ import {
   Plus,
   Save,
   Trash2,
-  Undo2,
 } from "lucide-react";
 import { toast } from "@repo/ui/src/sonner";
 import { cn } from "@repo/ui/lib/utils";
@@ -34,36 +33,6 @@ import { queryKeys } from "@/lib/query-keys";
 
 type QuestionType = "score" | "subjective";
 
-type QuestionSetItem = {
-  id: string;
-  position_id: string;
-  question_type: QuestionType;
-  prompt: string;
-  category: string | null;
-  subcategory: string | null;
-  detail: string | null;
-  scale_guide: string | null;
-  scale_min: number | null;
-  scale_max: number | null;
-  scale_weights: Record<string, number | string | null> | null;
-  evaluator_types: string[] | null;
-  weight: number | null;
-  sort_order: number;
-  is_required: boolean;
-  position?: { id: string; name: string } | null;
-};
-
-type QuestionSet = {
-  id: string;
-  name: string;
-  description: string | null;
-  is_active: boolean;
-  is_default: boolean;
-  created_at: string;
-  updated_at: string;
-  items: QuestionSetItem[];
-};
-
 type EditableQuestionRow = {
   no: number;
   category: string;
@@ -80,9 +49,13 @@ type EditableQuestionRow = {
   isRequired: boolean;
 };
 
-type EditorSnapshot = {
-  rows: EditableQuestionRow[];
-  selectedNo: number | null;
+type QuestionSet = {
+  id: string;
+  name: string;
+  description: string | null;
+  is_active: boolean;
+  is_default: boolean;
+  items: unknown[];
 };
 
 type EvaluatorSection = {
@@ -127,37 +100,6 @@ async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   return payload as T;
 }
 
-function questionIdentity(item: QuestionSetItem) {
-  return [
-    item.question_type,
-    item.prompt,
-    JSON.stringify(item.scale_weights || {}),
-    [...(item.evaluator_types || [])].sort().join(","),
-  ].join("|");
-}
-
-function splitPrompt(prompt: string) {
-  const lines = prompt.split("\n");
-  const [category = "", subcategory = ""] = (lines[0] || "").split(">");
-  const bodyLines = lines.slice(1).filter((line) => line.trim().length > 0);
-  const scaleStartIndex = bodyLines.findIndex((line) =>
-    /^(1점|3점|5점|응답 안내|운영 기준)/.test(line.trim()),
-  );
-
-  return {
-    category: category.trim(),
-    subcategory: subcategory.trim(),
-    detail:
-      scaleStartIndex === -1
-        ? bodyLines.join("\n").trim()
-        : bodyLines.slice(0, scaleStartIndex).join("\n").trim(),
-    scaleGuide:
-      scaleStartIndex === -1
-        ? ""
-        : bodyLines.slice(scaleStartIndex).join("\n").trim(),
-  };
-}
-
 function makeEmptyRow(no: number): EditableQuestionRow {
   return {
     no,
@@ -183,99 +125,8 @@ function sectionLabelForKey(sectionKey: EvaluatorSection["key"]) {
   );
 }
 
-function cloneRows(rows: EditableQuestionRow[]) {
-  return rows.map((row) => ({
-    ...row,
-    evaluatorTypes: [...row.evaluatorTypes],
-    scaleWeights: { ...row.scaleWeights },
-    scaleLabels: { ...row.scaleLabels },
-  }));
-}
-
-function toEditableRows(questionSet?: QuestionSet): EditableQuestionRow[] {
-  const groups = new Map<string, QuestionSetItem[]>();
-  for (const item of [...(questionSet?.items || [])].sort(
-    (a, b) => a.sort_order - b.sort_order,
-  )) {
-    const key = questionIdentity(item);
-    const current = groups.get(key) || [];
-    current.push(item);
-    groups.set(key, current);
-  }
-
-  return Array.from(groups.values())
-    .map((items, index) => {
-      const sortedItems = [...items].sort(
-        (a, b) => a.sort_order - b.sort_order,
-      );
-      const source = sortedItems[0];
-      if (!source) return null;
-
-      const parsed = splitPrompt(source.prompt);
-      const scaleMin = source.scale_min || 1;
-      const scaleMax = source.scale_max || 5;
-      const scaleWeights = buildScaleWeights(
-        source.scale_weights,
-        scaleMin,
-        scaleMax,
-        source.weight || 1,
-      );
-      const scaleLabels = buildScaleLabels(
-        source.scale_weights,
-        scaleMin,
-        scaleMax,
-      );
-
-      return {
-        no: index + 1,
-        category: source.category || parsed.category,
-        subcategory: source.subcategory || parsed.subcategory,
-        evaluatorTypes:
-          source.evaluator_types && source.evaluator_types.length > 0
-            ? source.evaluator_types
-            : ["상사", "동료"],
-        detail: source.detail || parsed.detail || source.prompt,
-        questionType: source.question_type,
-        scaleMin,
-        scaleMax,
-        weight: source.question_type === "score" ? source.weight || 1 : null,
-        scaleWeights,
-        scaleLabels,
-        scaleGuide:
-          source.scale_guide ||
-          parsed.scaleGuide ||
-          (source.question_type === "score" ? "5점 척도" : "주관식"),
-        isRequired: source.is_required,
-      };
-    })
-    .filter((row): row is EditableQuestionRow => Boolean(row));
-}
-
-function buildScaleWeights(
-  source: Record<string, number | string | null> | null,
-  min: number,
-  max: number,
-  fallback: number,
-) {
-  const result: Record<string, number> = {};
-  for (let score = min; score <= max; score += 1) {
-    const value = source?.[String(score)];
-    result[String(score)] = Number(value ?? fallback);
-  }
-  return result;
-}
-
-function buildScaleLabels(
-  source: Record<string, number | string | null> | null,
-  min: number,
-  max: number,
-) {
-  const result: Record<string, string> = {};
-  for (let score = min; score <= max; score += 1) {
-    const value = source?.[`label:${score}`];
-    result[String(score)] = typeof value === "string" ? value : "";
-  }
-  return result;
+function isKeywordReady(row: EditableQuestionRow) {
+  return row.category.trim().length > 0 && row.subcategory.trim().length > 0;
 }
 
 function normalizeScaleWeights(
@@ -334,12 +185,8 @@ function serializeScaleWeights(row: EditableQuestionRow) {
   return scaleWeights;
 }
 
-function isKeywordReady(row: EditableQuestionRow) {
-  return row.category.trim().length > 0 && row.subcategory.trim().length > 0;
-}
-
-export default function QuestionSetDetailPage() {
-  const { id } = useParams<{ id: string }>();
+export default function NewQuestionSetPage() {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -351,298 +198,6 @@ export default function QuestionSetDetailPage() {
   const [collapsedSectionKeys, setCollapsedSectionKeys] = useState<
     EvaluatorSection["key"][]
   >([]);
-  const [undoStack, setUndoStack] = useState<EditorSnapshot[]>([]);
-
-  const {
-    data: questionSet,
-    isLoading,
-    error,
-  } = useQuery<QuestionSet>({
-    queryKey: [...queryKeys.evaluations.questionSets, id],
-    queryFn: async () =>
-      requestJson<QuestionSet>(`/api/evaluations/question-sets/${id}`),
-    enabled: !!id,
-  });
-
-  useEffect(() => {
-    const nextRows = toEditableRows(questionSet);
-    setName(questionSet?.name ?? "");
-    setDescription(questionSet?.description ?? "");
-    setIsActive(questionSet?.is_active ?? true);
-    setIsDefault(questionSet?.is_default ?? false);
-    setRows(nextRows);
-    setUndoStack([]);
-    setSelectedNo((current) =>
-      current && nextRows.some((row) => row.no === current)
-        ? current
-        : (nextRows[0]?.no ?? null),
-    );
-  }, [questionSet]);
-
-  function createSnapshot(): EditorSnapshot {
-    return {
-      rows: cloneRows(rows),
-      selectedNo,
-    };
-  }
-
-  function pushUndoSnapshot() {
-    const snapshot = createSnapshot();
-    setUndoStack((prev) => [...prev.slice(-49), snapshot]);
-  }
-
-  function restoreSnapshot(snapshot: EditorSnapshot) {
-    setRows(cloneRows(snapshot.rows));
-    setSelectedNo(snapshot.selectedNo);
-  }
-
-  function undoLastChange() {
-    const snapshot = undoStack[undoStack.length - 1];
-    if (!snapshot) return;
-
-    restoreSnapshot(snapshot);
-    setUndoStack((prev) => prev.slice(0, -1));
-  }
-
-  const saveMutation = useMutation({
-    mutationFn: async () => {
-      if (!questionSet) throw new Error("문항 SET을 찾을 수 없습니다.");
-      const validationMessage = validateBeforeSave();
-      if (validationMessage) throw new Error(validationMessage);
-
-      const items = rows.map((row) => ({
-        questionType: row.questionType,
-        category: row.category,
-        subcategory: row.subcategory,
-        detail: row.detail,
-        scaleGuide: row.scaleGuide,
-        scaleMin: row.scaleMin,
-        scaleMax: row.scaleMax,
-        scaleWeights:
-          row.questionType === "score" ? serializeScaleWeights(row) : {},
-        evaluatorTypes: row.evaluatorTypes,
-        weight: row.questionType === "score" ? row.weight || 1 : null,
-        sortOrder: row.no,
-        isRequired: row.isRequired,
-      }));
-
-      return requestJson<QuestionSet>(`/api/evaluations/question-sets/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          description,
-          isActive,
-          isDefault,
-          items,
-        }),
-      });
-    },
-    onSuccess: () => {
-      setPreviewOpen(false);
-      setUndoStack([]);
-      toast.success("문항 SET이 저장되었습니다.");
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.evaluations.questionSets,
-      });
-      queryClient.invalidateQueries({
-        queryKey: [...queryKeys.evaluations.questionSets, id],
-      });
-    },
-    onError: (error: Error) => toast.error(error.message),
-  });
-
-  function validateBeforeSave() {
-    if (!name.trim()) return "SET명을 입력하세요.";
-    if (isDefault && !isActive) {
-      return "비활성 SET은 기본 SET으로 지정할 수 없습니다.";
-    }
-
-    const incompleteKeywordRow = rows.find((row) => !isKeywordReady(row));
-    if (incompleteKeywordRow) {
-      return `${incompleteKeywordRow.no}번 문항의 상위/하위 키워드를 먼저 입력해주세요.`;
-    }
-
-    return null;
-  }
-
-  function openPreview() {
-    const validationMessage = validateBeforeSave();
-    if (validationMessage) {
-      toast.error(validationMessage);
-      return;
-    }
-    setPreviewOpen(true);
-  }
-
-  function updateRow(
-    no: number,
-    patch: Partial<EditableQuestionRow>,
-    shouldRecordUndo = true,
-  ) {
-    if (shouldRecordUndo) {
-      pushUndoSnapshot();
-    }
-
-    setRows((prev) =>
-      prev.map((row) => {
-        if (row.no !== no) return row;
-        const next = { ...row, ...patch };
-        if (
-          patch.scaleMin !== undefined ||
-          patch.scaleMax !== undefined ||
-          patch.weight !== undefined
-        ) {
-          next.scaleWeights = normalizeScaleWeights(row, patch);
-        }
-        if (patch.scaleMin !== undefined || patch.scaleMax !== undefined) {
-          next.scaleLabels = normalizeScaleLabels(row, patch);
-        }
-        return next;
-      }),
-    );
-  }
-
-  function updateScaleWeight(no: number, score: string, value: number) {
-    pushUndoSnapshot();
-
-    setRows((prev) =>
-      prev.map((row) =>
-        row.no === no
-          ? {
-              ...row,
-              scaleWeights: {
-                ...row.scaleWeights,
-                [score]: value,
-              },
-            }
-          : row,
-      ),
-    );
-  }
-
-  function scaleValues(row: EditableQuestionRow) {
-    const values: number[] = [];
-    for (let score = row.scaleMin; score <= row.scaleMax; score += 1) {
-      values.push(score);
-    }
-    return values;
-  }
-
-  function updateScaleCount(row: EditableQuestionRow, value: string) {
-    const nextScaleCount = Math.max(1, Number(value || 1));
-    updateRow(row.no, {
-      scaleMin: 1,
-      scaleMax: nextScaleCount,
-    });
-  }
-
-  function updateScaleLabel(no: number, score: string, value: string) {
-    pushUndoSnapshot();
-
-    setRows((prev) =>
-      prev.map((row) =>
-        row.no === no
-          ? {
-              ...row,
-              scaleLabels: {
-                ...row.scaleLabels,
-                [score]: value,
-              },
-            }
-          : row,
-      ),
-    );
-  }
-
-  function updateQuestionType(
-    row: EditableQuestionRow,
-    questionType: QuestionType,
-  ) {
-    updateRow(row.no, {
-      questionType,
-      weight: questionType === "score" ? row.weight || 1 : null,
-      scaleGuide:
-        questionType === "score" && row.scaleGuide === "주관식"
-          ? "5점 척도"
-          : row.scaleGuide,
-    });
-  }
-
-  function appendRow(section: EvaluatorSection) {
-    pushUndoSnapshot();
-
-    const nextNo =
-      rows.length > 0 ? Math.max(...rows.map((row) => row.no)) + 1 : 1;
-    const nextRow = {
-      ...makeEmptyRow(nextNo),
-      category: "",
-      subcategory: "",
-      evaluatorTypes: [...section.evaluatorTypes],
-    };
-    setRows((prev) => [...prev, nextRow]);
-    setSelectedNo(nextRow.no);
-    setCollapsedSectionKeys((prev) =>
-      prev.filter((key) => key !== section.key),
-    );
-  }
-
-  function toggleSection(sectionKey: EvaluatorSection["key"]) {
-    setCollapsedSectionKeys((prev) =>
-      prev.includes(sectionKey)
-        ? prev.filter((key) => key !== sectionKey)
-        : [...prev, sectionKey],
-    );
-  }
-
-  function deleteRow(no: number) {
-    pushUndoSnapshot();
-
-    const nextRows = rows
-      .filter((row) => row.no !== no)
-      .map((row, index) => ({ ...row, no: index + 1 }));
-
-    setRows(nextRows);
-    setSelectedNo((current) =>
-      current === no || !nextRows.some((row) => row.no === current)
-        ? (nextRows[Math.min(no - 1, nextRows.length - 1)]?.no ?? null)
-        : current,
-    );
-  }
-
-  function duplicateRow(no: number) {
-    const sourceIndex = rows.findIndex((row) => row.no === no);
-    const source = rows[sourceIndex];
-    if (!source) return;
-
-    pushUndoSnapshot();
-
-    const duplicate = {
-      ...source,
-      evaluatorTypes: [...source.evaluatorTypes],
-      scaleWeights: { ...source.scaleWeights },
-      scaleLabels: { ...source.scaleLabels },
-    };
-    const nextRows = [
-      ...rows.slice(0, sourceIndex + 1),
-      duplicate,
-      ...rows.slice(sourceIndex + 1),
-    ].map((row, index) => ({ ...row, no: index + 1 }));
-
-    setRows(nextRows);
-    setSelectedNo(sourceIndex + 2);
-    setCollapsedSectionKeys((prev) =>
-      prev.filter((key) => key !== sectionForRow(source)),
-    );
-  }
-
-  function sectionForRow(row: EditableQuestionRow): EvaluatorSection["key"] {
-    const hasManager = row.evaluatorTypes.includes("상사");
-    const hasPeer = row.evaluatorTypes.includes("동료");
-    if (hasManager && hasPeer) return "common";
-    if (hasPeer) return "peer";
-    return "manager";
-  }
 
   const tableSummary = useMemo(() => {
     const scoreCount = rows.filter(
@@ -675,37 +230,219 @@ export default function QuestionSetDetailPage() {
     [rows],
   );
 
-  if (isLoading) {
-    return (
-      <div className="evaluations-page space-y-4 p-6">
-        <Link href="/evaluations">
-          <Button variant="outline" size="sm">
-            <ChevronLeft className="mr-1 h-4 w-4" />
-            목록
-          </Button>
-        </Link>
-        <div className="flex h-60 items-center justify-center text-slate-400">
-          <Loader2 className="h-6 w-6 animate-spin" />
-        </div>
-      </div>
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      const validationMessage = validateBeforeSave();
+      if (validationMessage) throw new Error(validationMessage);
+
+      const items = rows.map((row) => ({
+        questionType: row.questionType,
+        category: row.category,
+        subcategory: row.subcategory,
+        detail: row.detail,
+        scaleGuide: row.scaleGuide,
+        scaleMin: row.scaleMin,
+        scaleMax: row.scaleMax,
+        scaleWeights:
+          row.questionType === "score" ? serializeScaleWeights(row) : {},
+        evaluatorTypes: row.evaluatorTypes,
+        weight: row.questionType === "score" ? row.weight || 1 : null,
+        sortOrder: row.no,
+        isRequired: row.isRequired,
+      }));
+
+      return requestJson<QuestionSet>("/api/evaluations/question-sets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          description,
+          isActive,
+          isDefault,
+          items,
+        }),
+      });
+    },
+    onSuccess: (questionSet) => {
+      setPreviewOpen(false);
+      toast.success("문항 SET이 생성되었습니다.");
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.evaluations.questionSets,
+      });
+      router.replace(`/evaluations/question-sets/${questionSet.id}`);
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  function validateBeforeSave() {
+    if (!name.trim()) return "SET명을 입력하세요.";
+    if (isDefault && !isActive) {
+      return "비활성 SET은 기본 SET으로 지정할 수 없습니다.";
+    }
+
+    const incompleteKeywordRow = rows.find((row) => !isKeywordReady(row));
+    if (incompleteKeywordRow) {
+      return `${incompleteKeywordRow.no}번 문항의 상위/하위 키워드를 먼저 입력해주세요.`;
+    }
+
+    return null;
+  }
+
+  function openPreview() {
+    const validationMessage = validateBeforeSave();
+    if (validationMessage) {
+      toast.error(validationMessage);
+      return;
+    }
+    setPreviewOpen(true);
+  }
+
+  function updateRow(no: number, patch: Partial<EditableQuestionRow>) {
+    setRows((prev) =>
+      prev.map((row) => {
+        if (row.no !== no) return row;
+        const next = { ...row, ...patch };
+        if (
+          patch.scaleMin !== undefined ||
+          patch.scaleMax !== undefined ||
+          patch.weight !== undefined
+        ) {
+          next.scaleWeights = normalizeScaleWeights(row, patch);
+        }
+        if (patch.scaleMin !== undefined || patch.scaleMax !== undefined) {
+          next.scaleLabels = normalizeScaleLabels(row, patch);
+        }
+        return next;
+      }),
     );
   }
 
-  if (error || !questionSet) {
-    return (
-      <div className="evaluations-page space-y-4 p-6">
-        <Link href="/evaluations">
-          <Button variant="outline" size="sm">
-            <ChevronLeft className="mr-1 h-4 w-4" />
-            목록
-          </Button>
-        </Link>
-        <Card>
-          <CardContent className="py-12 text-center text-sm text-slate-400">
-            문항 SET을 찾을 수 없습니다.
-          </CardContent>
-        </Card>
-      </div>
+  function updateScaleWeight(no: number, score: string, value: number) {
+    setRows((prev) =>
+      prev.map((row) =>
+        row.no === no
+          ? {
+              ...row,
+              scaleWeights: {
+                ...row.scaleWeights,
+                [score]: value,
+              },
+            }
+          : row,
+      ),
+    );
+  }
+
+  function scaleValues(row: EditableQuestionRow) {
+    const values: number[] = [];
+    for (let score = row.scaleMin; score <= row.scaleMax; score += 1) {
+      values.push(score);
+    }
+    return values;
+  }
+
+  function updateScaleCount(row: EditableQuestionRow, value: string) {
+    const nextScaleCount = Math.max(1, Number(value || 1));
+    updateRow(row.no, {
+      scaleMin: 1,
+      scaleMax: nextScaleCount,
+    });
+  }
+
+  function updateScaleLabel(no: number, score: string, value: string) {
+    setRows((prev) =>
+      prev.map((row) =>
+        row.no === no
+          ? {
+              ...row,
+              scaleLabels: {
+                ...row.scaleLabels,
+                [score]: value,
+              },
+            }
+          : row,
+      ),
+    );
+  }
+
+  function sectionForRow(row: EditableQuestionRow): EvaluatorSection["key"] {
+    const hasManager = row.evaluatorTypes.includes("상사");
+    const hasPeer = row.evaluatorTypes.includes("동료");
+    if (hasManager && hasPeer) return "common";
+    if (hasPeer) return "peer";
+    return "manager";
+  }
+
+  function updateQuestionType(
+    row: EditableQuestionRow,
+    questionType: QuestionType,
+  ) {
+    updateRow(row.no, {
+      questionType,
+      weight: questionType === "score" ? row.weight || 1 : null,
+      scaleGuide:
+        questionType === "score" && row.scaleGuide === "주관식"
+          ? "5점 척도"
+          : row.scaleGuide,
+    });
+  }
+
+  function appendRow(section: EvaluatorSection) {
+    const nextNo =
+      rows.length > 0 ? Math.max(...rows.map((row) => row.no)) + 1 : 1;
+    const nextRow = {
+      ...makeEmptyRow(nextNo),
+      evaluatorTypes: [...section.evaluatorTypes],
+    };
+    setRows((prev) => [...prev, nextRow]);
+    setSelectedNo(nextRow.no);
+    setCollapsedSectionKeys((prev) =>
+      prev.filter((key) => key !== section.key),
+    );
+  }
+
+  function toggleSection(sectionKey: EvaluatorSection["key"]) {
+    setCollapsedSectionKeys((prev) =>
+      prev.includes(sectionKey)
+        ? prev.filter((key) => key !== sectionKey)
+        : [...prev, sectionKey],
+    );
+  }
+
+  function deleteRow(no: number) {
+    const nextRows = rows
+      .filter((row) => row.no !== no)
+      .map((row, index) => ({ ...row, no: index + 1 }));
+
+    setRows(nextRows);
+    setSelectedNo((current) =>
+      current === no || !nextRows.some((row) => row.no === current)
+        ? (nextRows[Math.min(no - 1, nextRows.length - 1)]?.no ?? null)
+        : current,
+    );
+  }
+
+  function duplicateRow(no: number) {
+    const sourceIndex = rows.findIndex((row) => row.no === no);
+    const source = rows[sourceIndex];
+    if (!source) return;
+
+    const duplicate = {
+      ...source,
+      evaluatorTypes: [...source.evaluatorTypes],
+      scaleWeights: { ...source.scaleWeights },
+      scaleLabels: { ...source.scaleLabels },
+    };
+    const nextRows = [
+      ...rows.slice(0, sourceIndex + 1),
+      duplicate,
+      ...rows.slice(sourceIndex + 1),
+    ].map((row, index) => ({ ...row, no: index + 1 }));
+
+    setRows(nextRows);
+    setSelectedNo(sourceIndex + 2);
+    setCollapsedSectionKeys((prev) =>
+      prev.filter((key) => key !== sectionForRow(source)),
     );
   }
 
@@ -725,21 +462,11 @@ export default function QuestionSetDetailPage() {
           </Link>
           <div className="min-w-0">
             <h1 className="text-2xl font-semibold text-slate-900">
-              문항 SET 수정
+              문항 SET 등록
             </h1>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            className={CONTROL_FOCUS_CLASS}
-            onClick={undoLastChange}
-            disabled={undoStack.length === 0}
-          >
-            <Undo2 className="mr-1 h-4 w-4" />
-            실행취소
-          </Button>
           <Button
             type="button"
             variant="outline"
@@ -776,15 +503,15 @@ export default function QuestionSetDetailPage() {
           <Button
             type="button"
             onClick={openPreview}
-            disabled={saveMutation.isPending}
+            disabled={createMutation.isPending}
             className={CONTROL_FOCUS_CLASS}
           >
-            {saveMutation.isPending ? (
+            {createMutation.isPending ? (
               <Loader2 className="mr-1 h-4 w-4 animate-spin" />
             ) : (
               <Save className="mr-1 h-4 w-4" />
             )}
-            저장
+            등록
           </Button>
         </div>
       </div>
@@ -1282,10 +1009,10 @@ export default function QuestionSetDetailPage() {
             </Button>
             <Button
               type="button"
-              onClick={() => saveMutation.mutate()}
-              disabled={saveMutation.isPending}
+              onClick={() => createMutation.mutate()}
+              disabled={createMutation.isPending}
             >
-              {saveMutation.isPending && (
+              {createMutation.isPending && (
                 <Loader2 className="mr-1 h-4 w-4 animate-spin" />
               )}
               저장

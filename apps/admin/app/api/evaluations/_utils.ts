@@ -2,6 +2,17 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
+type EvaluatorType = "상사" | "동료";
+
+const EVALUATOR_TYPES: EvaluatorType[] = ["상사", "동료"];
+const LEADER_TITLE_KEYWORDS = ["팀장", "리더", "본부장", "대표", "파트장"];
+
+type EvaluationMember = {
+  id: string;
+  position_id: string | null;
+  team_id: string | null;
+  titleName: string | null;
+};
 
 export type ValidationResult = {
   valid: boolean;
@@ -113,6 +124,53 @@ export async function bumpRoundVersion(
   }
 }
 
+export function normalizeEvaluatorTypes(value: unknown): EvaluatorType[] {
+  if (!Array.isArray(value)) return [...EVALUATOR_TYPES];
+
+  const types = value.filter((item): item is EvaluatorType =>
+    EVALUATOR_TYPES.includes(item as EvaluatorType)
+  );
+
+  return types.length > 0 ? Array.from(new Set(types)) : [...EVALUATOR_TYPES];
+}
+
+export function isLeaderTitleName(titleName?: string | null) {
+  const title = titleName || "";
+  return LEADER_TITLE_KEYWORDS.some((keyword) => title.includes(keyword));
+}
+
+export function evaluatorTypeForMember(member: Pick<EvaluationMember, "titleName">) {
+  return isLeaderTitleName(member.titleName) ? "상사" : "동료";
+}
+
+export function buildRequiredEvaluatorTypes(questions: Array<{ evaluator_types?: unknown }>) {
+  const result = new Set<EvaluatorType>();
+
+  for (const question of questions) {
+    for (const evaluatorType of normalizeEvaluatorTypes(question.evaluator_types)) {
+      result.add(evaluatorType);
+    }
+  }
+
+  return result;
+}
+
+export async function getFallbackQuestionPositionId(supabase: ServiceClient) {
+  const { data, error } = await supabase
+    .from("positions")
+    .select("id")
+    .order("sort_order", { ascending: true })
+    .order("name", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data?.id) {
+    throw error || new Error("문항 저장에 사용할 기본 직급을 찾을 수 없습니다.");
+  }
+
+  return data.id as string;
+}
+
 export async function validateRound(
   supabase: ServiceClient,
   roundId: string
@@ -154,45 +212,6 @@ export async function validateRound(
     errors.push("평가 대상자를 1명 이상 선택해야 합니다.");
   }
 
-  const { data: subjectMembers, error: membersError } = subjectIds.length
-    ? await supabase
-        .from("members")
-        .select("id, position_id")
-        .in("id", subjectIds)
-    : { data: [], error: null };
-
-  if (membersError) {
-    throw membersError;
-  }
-
-  const representedPositionIds = Array.from(
-    new Set(
-      (subjectMembers || [])
-        .map((member) => member.position_id as string | null)
-        .filter(Boolean) as string[]
-    )
-  );
-
-  const { data: questions, error: questionsError } = await supabase
-    .from("multisource_evaluation_questions")
-    .select("position_id")
-    .eq("round_id", roundId);
-
-  if (questionsError) {
-    throw questionsError;
-  }
-
-  const questionPositionIds = new Set(
-    (questions || []).map((question) => question.position_id as string)
-  );
-  const missingPositionIds = representedPositionIds.filter(
-    (positionId) => !questionPositionIds.has(positionId)
-  );
-
-  if (missingPositionIds.length > 0) {
-    errors.push("이번 회차 평가 대상자에 포함된 모든 직급에 문항이 필요합니다.");
-  }
-
   const { data: assignments, error: assignmentsError } = subjectIds.length
     ? await supabase
         .from("multisource_evaluation_assignments")
@@ -220,6 +239,6 @@ export async function validateRound(
   return {
     valid: errors.length === 0,
     errors,
-    missingPositionIds,
+    missingPositionIds: [],
   };
 }

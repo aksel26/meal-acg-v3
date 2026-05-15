@@ -5,12 +5,29 @@ import {
   apiError,
   assertRoundEditable,
   bumpRoundVersion,
+  getFallbackQuestionPositionId,
   logEvaluationAudit,
+  normalizeEvaluatorTypes,
   resolveActorMemberId,
 } from "../../../../_utils";
 import { buildQuestionPrompt } from "../../../../question-sets/_utils";
 
 type Params = { params: Promise<{ id: string }> };
+
+type QuestionSetItemRow = {
+  position_id?: string | null;
+  question_type: "score" | "subjective";
+  prompt: string;
+  category?: string | null;
+  subcategory?: string | null;
+  detail?: string | null;
+  scale_guide?: string | null;
+  scale_weights?: Record<string, number | string | null>;
+  evaluator_types?: string[] | null;
+  weight: number | string | null;
+  sort_order: number;
+  is_required: boolean;
+};
 
 // POST /api/evaluations/rounds/[id]/questions/apply-set - Replace round questions from a reusable set
 export async function POST(request: NextRequest, { params }: Params) {
@@ -37,10 +54,11 @@ export async function POST(request: NextRequest, { params }: Params) {
       return apiError("활성화된 문항 SET을 찾을 수 없습니다.", 404);
     }
 
-    const items = questionSet.items || [];
+    const items = (questionSet.items || []) as QuestionSetItemRow[];
     if (items.length === 0) {
       return apiError("문항이 없는 SET은 적용할 수 없습니다.");
     }
+    const fallbackPositionId = await getFallbackQuestionPositionId(supabase);
 
     const { data: oldData } = await supabase
       .from("multisource_evaluation_questions")
@@ -57,21 +75,28 @@ export async function POST(request: NextRequest, { params }: Params) {
       return apiError("Failed to replace round questions", 500);
     }
 
-    const rows = items.map((item: {
-      position_id: string;
-      question_type: "score" | "subjective";
-      prompt: string;
-      category?: string | null;
-      subcategory?: string | null;
-      detail?: string | null;
-      scale_guide?: string | null;
-      scale_weights?: Record<string, number | string | null>;
-      weight: number | string | null;
-      sort_order: number;
-      is_required: boolean;
-    }) => ({
+    const uniqueItems = Array.from(
+      new Map(
+        items.map((item) => [
+          [
+            item.question_type,
+            buildQuestionPrompt({
+              prompt: item.prompt,
+              category: item.category,
+              subcategory: item.subcategory,
+              detail: item.detail,
+              scaleGuide: item.scale_guide,
+            }),
+            normalizeEvaluatorTypes(item.evaluator_types).join(","),
+          ].join("|"),
+          item,
+        ])
+      ).values()
+    );
+
+    const rows = uniqueItems.map((item) => ({
       round_id: roundId,
-      position_id: item.position_id,
+      position_id: item.position_id || fallbackPositionId,
       question_type: item.question_type,
       prompt: buildQuestionPrompt({
         prompt: item.prompt,
@@ -82,6 +107,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       }),
       weight: item.question_type === "score" ? Number(item.weight) : null,
       scale_weights: item.question_type === "score" ? item.scale_weights || {} : {},
+      evaluator_types: normalizeEvaluatorTypes(item.evaluator_types),
       sort_order: item.sort_order,
       is_required: item.is_required,
     }));

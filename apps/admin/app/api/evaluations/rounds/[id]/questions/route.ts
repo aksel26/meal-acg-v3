@@ -5,7 +5,9 @@ import {
   apiError,
   assertRoundEditable,
   bumpRoundVersion,
+  getFallbackQuestionPositionId,
   logEvaluationAudit,
+  normalizeEvaluatorTypes,
   resolveActorMemberId,
 } from "../../../_utils";
 
@@ -22,10 +24,11 @@ export async function PUT(request: NextRequest, { params }: Params) {
     const questions = Array.isArray(body.questions) ? body.questions : [];
 
     await assertRoundEditable(supabase, id);
+    const fallbackPositionId = await getFallbackQuestionPositionId(supabase);
 
     for (const question of questions) {
-      if (!question.positionId || !question.questionType || !question.prompt) {
-        return apiError("positionId, questionType, and prompt are required for every question");
+      if (!question.questionType || !question.prompt) {
+        return apiError("questionType and prompt are required for every question");
       }
       if (!["score", "subjective"].includes(question.questionType)) {
         return apiError("questionType must be score or subjective");
@@ -54,15 +57,17 @@ export async function PUT(request: NextRequest, { params }: Params) {
       positionId: string;
       questionType: "score" | "subjective";
       prompt: string;
+      evaluatorTypes?: string[];
       weight?: number | string | null;
       sortOrder?: number;
       isRequired?: boolean;
     }, index: number) => ({
       round_id: id,
-      position_id: question.positionId,
+      position_id: question.positionId || fallbackPositionId,
       question_type: question.questionType,
       prompt: question.prompt,
       weight: question.questionType === "score" ? Number(question.weight) : null,
+      evaluator_types: normalizeEvaluatorTypes(question.evaluatorTypes),
       sort_order: question.sortOrder ?? index + 1,
       is_required: question.isRequired ?? true,
     }));

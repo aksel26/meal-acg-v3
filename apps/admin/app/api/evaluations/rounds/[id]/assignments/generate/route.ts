@@ -4,8 +4,11 @@ import { requireAdmin } from "@/lib/auth";
 import {
   apiError,
   assertRoundEditable,
+  buildRequiredEvaluatorTypes,
   bumpRoundVersion,
+  evaluatorTypeForMember,
   logEvaluationAudit,
+  normalizeEvaluatorTypes,
   resolveActorMemberId,
 } from "../../../../_utils";
 
@@ -15,16 +18,10 @@ type MemberRow = {
   id: string;
   full_name: string;
   team_id: string | null;
+  position_id: string | null;
   title_id: string | null;
   titleName: string | null;
 };
-
-function isLeaderTitle(member: MemberRow) {
-  const title = member.titleName || "";
-  return ["팀장", "리더", "본부장", "대표", "파트장"].some((keyword) =>
-    title.includes(keyword)
-  );
-}
 
 // POST /api/evaluations/rounds/[id]/assignments/generate
 // Generate default assignments: same team members + team lead/superior.
@@ -53,9 +50,23 @@ export async function POST(request: NextRequest, { params }: Params) {
       return apiError("평가 대상자를 먼저 선택해주세요.");
     }
 
+    const { data: questions, error: questionsError } = await supabase
+      .from("multisource_evaluation_questions")
+      .select("evaluator_types")
+      .eq("round_id", id);
+
+    if (questionsError) {
+      console.error("Error fetching evaluation questions for assignments:", questionsError);
+      return apiError("Failed to generate assignments", 500);
+    }
+
+    const requiredEvaluatorTypes = buildRequiredEvaluatorTypes(
+      (questions || []) as Array<{ evaluator_types?: unknown }>
+    );
+
     const { data: members, error: membersError } = await supabase
       .from("members")
-      .select("id, full_name, team_id, title_id, titles(name)")
+      .select("id, full_name, team_id, position_id, title_id, titles(name)")
       .not("team_id", "is", null);
 
     if (membersError) {
@@ -69,6 +80,7 @@ export async function POST(request: NextRequest, { params }: Params) {
         id: member.id as string,
         full_name: member.full_name as string,
         team_id: member.team_id as string | null,
+        position_id: member.position_id as string | null,
         title_id: member.title_id as string | null,
         titleName: (title?.name as string | undefined) ?? null,
       };
@@ -81,9 +93,17 @@ export async function POST(request: NextRequest, { params }: Params) {
       if (!subject?.team_id) {
         continue;
       }
+      const requiredTypes =
+        requiredEvaluatorTypes.size > 0
+          ? requiredEvaluatorTypes
+          : new Set(normalizeEvaluatorTypes(null));
 
       for (const candidate of memberRows) {
         if (candidate.id === subject.id || candidate.team_id !== subject.team_id) {
+          continue;
+        }
+        const evaluatorType = evaluatorTypeForMember(candidate);
+        if (!requiredTypes.has(evaluatorType)) {
           continue;
         }
 
@@ -91,7 +111,7 @@ export async function POST(request: NextRequest, { params }: Params) {
           round_id: id,
           subject_member_id: subject.id,
           evaluator_member_id: candidate.id,
-          source: isLeaderTitle(candidate) ? "auto_leader" : "auto_same_team",
+          source: evaluatorType === "상사" ? "auto_leader" : "auto_same_team",
           is_excluded: false,
         });
       }

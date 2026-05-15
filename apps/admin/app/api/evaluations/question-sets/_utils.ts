@@ -39,8 +39,8 @@ export function validateQuestionSetInput(input: QuestionSetInput) {
   const items = Array.isArray(input.items) ? input.items : [];
   for (const item of items) {
     const prompt = item.prompt || buildQuestionPrompt(item);
-    if (!item.positionId || !item.questionType || !prompt.trim()) {
-      return "모든 문항에 직급, 유형, 문항 내용을 입력하세요.";
+    if (!item.questionType || !prompt.trim()) {
+      return "모든 문항에 유형과 문항 내용을 입력하세요.";
     }
     if (!["score", "subjective"].includes(item.questionType)) {
       return "문항 유형은 점수형 또는 주관식이어야 합니다.";
@@ -67,10 +67,47 @@ export function buildQuestionPrompt(item: QuestionSetItemInput) {
   return parts.join("\n");
 }
 
-export function toQuestionSetItemRows(questionSetId: string, items?: QuestionSetItemInput[]) {
-  return (items || []).map((item, index) => ({
+async function getFallbackQuestionPositionId(supabase: ServiceClient) {
+  const { data, error } = await supabase
+    .from("positions")
+    .select("id")
+    .order("sort_order", { ascending: true })
+    .order("name", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data?.id) {
+    throw error || new Error("문항 저장에 사용할 기본 직급을 찾을 수 없습니다.");
+  }
+
+  return data.id as string;
+}
+
+async function toQuestionSetItemRowsWithFallback(
+  supabase: ServiceClient,
+  questionSetId: string,
+  items?: QuestionSetItemInput[],
+) {
+  const fallbackPositionId = await getFallbackQuestionPositionId(supabase);
+  const uniqueItems = Array.from(
+    new Map(
+      (items || []).map((item) => [
+        [
+          item.questionType,
+          item.category || item.subcategory || item.detail || item.scaleGuide
+            ? buildQuestionPrompt(item)
+            : item.prompt,
+          JSON.stringify(item.scaleWeights || {}),
+          [...(item.evaluatorTypes || [])].sort().join(","),
+        ].join("|"),
+        item,
+      ]),
+    ).values(),
+  );
+
+  return uniqueItems.map((item, index) => ({
     question_set_id: questionSetId,
-    position_id: item.positionId,
+    position_id: item.positionId || fallbackPositionId,
     question_type: item.questionType,
     prompt:
       item.category || item.subcategory || item.detail || item.scaleGuide
@@ -103,7 +140,7 @@ export async function replaceQuestionSetItems(
 
   if (deleteError) throw deleteError;
 
-  const rows = toQuestionSetItemRows(questionSetId, items);
+  const rows = await toQuestionSetItemRowsWithFallback(supabase, questionSetId, items);
   if (rows.length === 0) return [];
 
   const { data, error } = await supabase

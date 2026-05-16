@@ -551,7 +551,7 @@ export default function NewQuestionSetPage() {
         </div>
       </div>
 
-      <div className="rounded-xl bg-slate-50 p-4">
+      <div className="rounded-xl border border-slate-200 bg-transparent p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-sm font-semibold text-slate-900">
@@ -568,7 +568,7 @@ export default function NewQuestionSetPage() {
                 key={section.key}
                 type="button"
                 variant="outline"
-                className={cn("border-0 bg-white", CONTROL_FOCUS_CLASS)}
+                className={cn("border-slate-200 bg-white", CONTROL_FOCUS_CLASS)}
                 onClick={() => appendRow(section)}
               >
                 <Plus className="mr-1 h-4 w-4" />

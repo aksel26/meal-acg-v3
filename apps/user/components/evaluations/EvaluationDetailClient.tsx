@@ -3,7 +3,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
-import { ArrowLeft, CheckCircle2, ClipboardCheck, Loader2, Send } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  ClipboardCheck,
+  Loader2,
+  Send,
+} from "lucide-react";
 import { toast } from "@repo/ui/src/sonner";
 
 type ScaleOption = {
@@ -46,6 +52,12 @@ type EvaluationDetail = {
 
 type AnswerState = Record<string, { scoreValue?: number; textAnswer?: string }>;
 type QuestionSectionKey = "common" | "manager" | "peer";
+type ParsedQuestionPrompt = {
+  category: string | null;
+  subcategory: string | null;
+  detail: string;
+  guideLines: string[];
+};
 
 const QUESTION_SECTIONS: Array<{
   key: QuestionSectionKey;
@@ -60,57 +72,70 @@ const QUESTION_SECTIONS: Array<{
 export function EvaluationDetailClient({ roundId }: { roundId: string }) {
   const router = useRouter();
   const [detail, setDetail] = useState<EvaluationDetail | null>(null);
-  const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null);
-  const [selectedSectionKey, setSelectedSectionKey] = useState<QuestionSectionKey>("common");
-  const [answersBySubject, setAnswersBySubject] = useState<Record<string, AnswerState>>({});
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(
+    null,
+  );
+  const [selectedSectionKey, setSelectedSectionKey] =
+    useState<QuestionSectionKey>("common");
+  const [answersBySubject, setAnswersBySubject] = useState<
+    Record<string, AnswerState>
+  >({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const loadDetail = useCallback(async (nextSelectedSubjectId?: string | null) => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(`/api/evaluations/rounds/${roundId}`);
-      const body = await response.json().catch(() => null);
+  const loadDetail = useCallback(
+    async (nextSelectedSubjectId?: string | null) => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`/api/evaluations/rounds/${roundId}`);
+        const body = await response.json().catch(() => null);
 
-      if (!response.ok) {
-        if (response.status === 403) {
-          toast.error(body?.error || "평가자로 배정된 회차만 작성할 수 있습니다.");
-          router.replace("/evaluations");
-          return;
+        if (!response.ok) {
+          if (response.status === 403) {
+            toast.error(
+              body?.error || "평가자로 배정된 회차만 작성할 수 있습니다.",
+            );
+            router.replace("/evaluations");
+            return;
+          }
+          throw new Error(
+            body?.error || "다면평가 상세를 불러오지 못했습니다.",
+          );
         }
-        throw new Error(body?.error || "다면평가 상세를 불러오지 못했습니다.");
-      }
 
-      const nextDetail = body as EvaluationDetail;
-      setDetail(nextDetail);
-      setAnswersBySubject((prev) => ({
-        ...prev,
-        ...Object.fromEntries(
-          nextDetail.subjects.map((subject) => [
-            subject.subjectMemberId,
-            {
-              ...prev[subject.subjectMemberId],
-              ...subject.answers,
-            },
-          ]),
-        ),
-      }));
-      setSelectedSubjectId(
-        nextSelectedSubjectId ??
-          nextDetail.subjects.find((subject) => !subject.submittedAt)?.subjectMemberId ??
-          nextDetail.subjects[0]?.subjectMemberId ??
-          null,
-      );
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "다면평가 상세를 불러오지 못했습니다.",
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, [roundId, router]);
+        const nextDetail = body as EvaluationDetail;
+        setDetail(nextDetail);
+        setAnswersBySubject((prev) => ({
+          ...prev,
+          ...Object.fromEntries(
+            nextDetail.subjects.map((subject) => [
+              subject.subjectMemberId,
+              {
+                ...prev[subject.subjectMemberId],
+                ...subject.answers,
+              },
+            ]),
+          ),
+        }));
+        setSelectedSubjectId(
+          nextSelectedSubjectId ??
+            nextDetail.subjects.find((subject) => !subject.submittedAt)
+              ?.subjectMemberId ??
+            nextDetail.subjects[0]?.subjectMemberId ??
+            null,
+        );
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "다면평가 상세를 불러오지 못했습니다.",
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [roundId, router],
+  );
 
   useEffect(() => {
     loadDetail();
@@ -151,7 +176,9 @@ export function EvaluationDetailClient({ roundId }: { roundId: string }) {
       }),
     [selectedAnswers, selectedSubject?.questions],
   );
-  const visibleSections = questionSections.filter((section) => section.questions.length > 0);
+  const visibleSections = questionSections.filter(
+    (section) => section.questions.length > 0,
+  );
   const selectedSection =
     visibleSections.find((section) => section.key === selectedSectionKey) ||
     visibleSections[0] ||
@@ -167,7 +194,10 @@ export function EvaluationDetailClient({ roundId }: { roundId: string }) {
     setSelectedSectionKey(visibleSections[0]?.key || "common");
   }, [selectedSectionKey, visibleSections]);
 
-  function updateAnswer(questionId: string, patch: { scoreValue?: number; textAnswer?: string }) {
+  function updateAnswer(
+    questionId: string,
+    patch: { scoreValue?: number; textAnswer?: string },
+  ) {
     if (!selectedSubjectId) return;
 
     setAnswersBySubject((prev) => ({
@@ -223,7 +253,9 @@ export function EvaluationDetailClient({ roundId }: { roundId: string }) {
       await loadDetail(selectedSubject.subjectMemberId);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "다면평가를 제출하지 못했습니다.",
+        error instanceof Error
+          ? error.message
+          : "다면평가를 제출하지 못했습니다.",
       );
     } finally {
       setIsSubmitting(false);
@@ -246,11 +278,12 @@ export function EvaluationDetailClient({ roundId }: { roundId: string }) {
     );
   }
 
-  const submittedCount = detail.subjects.filter((subject) => subject.submittedAt).length;
+  const submittedCount = detail.subjects.filter(
+    (subject) => subject.submittedAt,
+  ).length;
   const otherSubjects = detail.subjects.filter(
     (subject) => subject.subjectMemberId !== selectedSubjectId,
   );
-
   return (
     <div className="space-y-5">
       <button
@@ -264,9 +297,12 @@ export function EvaluationDetailClient({ roundId }: { roundId: string }) {
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-[#111111]">{detail.name}</h1>
+          <h1 className="text-xl font-semibold text-[#111111]">
+            {detail.name}
+          </h1>
           <p className="mt-1 text-sm text-slate-500">
-            {formatFullDate(detail.startDate)} - {formatFullDate(detail.endDate)}
+            {formatFullDate(detail.startDate)} -{" "}
+            {formatFullDate(detail.endDate)}
           </p>
           {detail.description && (
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
@@ -292,7 +328,9 @@ export function EvaluationDetailClient({ roundId }: { roundId: string }) {
               <SubjectCard
                 subject={selectedSubject}
                 isActive
-                onClick={() => setSelectedSubjectId(selectedSubject.subjectMemberId)}
+                onClick={() =>
+                  setSelectedSubjectId(selectedSubject.subjectMemberId)
+                }
               />
             </div>
           )}
@@ -325,6 +363,28 @@ export function EvaluationDetailClient({ roundId }: { roundId: string }) {
                     selectedKey={selectedSection?.key || "common"}
                     onSelect={setSelectedSectionKey}
                   />
+                  {selectedSection && (
+                    <motion.div
+                      key={selectedSection.key}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.18 }}
+                      className="flex flex-wrap items-end justify-between gap-2 border-b border-[#f3f3f3] pb-3"
+                    >
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">
+                          {selectedSection.label}
+                        </p>
+                        <h2 className="mt-1 text-base font-semibold text-[#111111]">
+                          작성 문항
+                        </h2>
+                      </div>
+                      <p className="text-xs font-medium text-slate-500">
+                        {selectedSection.answeredCount}/
+                        {selectedSection.questions.length} 완료
+                      </p>
+                    </motion.div>
+                  )}
                   {(selectedSection?.questions || []).map((question, index) => (
                     <QuestionField
                       key={question.id}
@@ -380,10 +440,11 @@ function SubjectCard({
     <button
       type="button"
       onClick={onClick}
-      className={`w-full rounded-xl border px-4 py-3 text-left transition-colors ${
+      aria-current={isActive ? "true" : undefined}
+      className={`relative w-full overflow-hidden rounded-xl border px-4 py-3 text-left transition-colors ${
         isActive
-          ? "border-[#f3f3f3] bg-white"
-          : "border-[#f3f3f3] bg-white hover:border-[#f3f3f3]"
+          ? "border-slate-200 bg-slate-50 text-[#111111]"
+          : "border-[#f3f3f3] bg-white hover:border-slate-300"
       }`}
     >
       <div className="flex items-start justify-between gap-3">
@@ -391,18 +452,31 @@ function SubjectCard({
           <p className="truncate text-sm font-semibold text-[#111111]">
             {subject.subjectName}
           </p>
-          <p className="mt-1 text-xs text-slate-400">
-            {[subject.teamName, subject.positionName].filter(Boolean).join(" · ") ||
-              "조직 정보 없음"}
+          <p
+            className={`mt-1 text-xs ${
+              isActive ? "text-slate-500" : "text-slate-400"
+            }`}
+          >
+            {[subject.teamName, subject.positionName]
+              .filter(Boolean)
+              .join(" · ") || "조직 정보 없음"}
           </p>
         </div>
         {subject.submittedAt ? (
           <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
         ) : (
-          <ClipboardCheck className="h-4 w-4 shrink-0 text-slate-300" />
+          <ClipboardCheck
+            className={`h-4 w-4 shrink-0 ${
+              isActive ? "text-slate-400" : "text-slate-300"
+            }`}
+          />
         )}
       </div>
-      <p className="mt-3 text-[11px] font-medium text-slate-400">
+      <p
+        className={`mt-3 text-[11px] font-medium ${
+          isActive ? "text-slate-500" : "text-slate-400"
+        }`}
+      >
         {subject.submittedAt
           ? `${formatDateTime(subject.submittedAt)} 제출`
           : `${subject.questions.length}개 문항`}
@@ -424,25 +498,55 @@ function QuestionField({
   disabled: boolean;
   onChange: (patch: { scoreValue?: number; textAnswer?: string }) => void;
 }) {
+  const parsedPrompt = parseQuestionPrompt(question.prompt);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, delay: index * 0.03 }}
-      className="rounded-lg bg-[#fafafa] px-3 py-3"
+      className="rounded-xl border border-[#eeeeee] bg-white px-4 py-4 shadow-[0_1px_0_rgba(15,23,42,0.03)] transition-colors hover:border-slate-200 sm:px-5"
     >
-      <div className="flex gap-2.5">
-        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-semibold text-slate-500">
+      <div className="flex gap-3">
+        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[11px] font-semibold text-slate-500">
           {index + 1}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="whitespace-pre-line text-[13px] font-medium leading-5 text-[#111111]">
-            {question.prompt}
-            {question.isRequired && <span className="text-rose-500"> *</span>}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600">
+              {parsedPrompt.category || getQuestionTypeLabel(question)}
+            </span>
+            {parsedPrompt.subcategory && (
+              <span className="rounded-full bg-[#111111] px-2.5 py-1 text-[11px] font-semibold text-white">
+                {parsedPrompt.subcategory}
+              </span>
+            )}
+            {question.isRequired && (
+              <span className="rounded-full bg-rose-50 px-2 py-1 text-[11px] font-semibold text-rose-600">
+                필수
+              </span>
+            )}
+          </div>
+
+          <p className="mt-3 text-[15px] font-semibold leading-6 text-[#111111]">
+            {parsedPrompt.detail}
           </p>
 
+          {parsedPrompt.guideLines.length > 0 && (
+            <div className="mt-3 border-l-2 border-slate-200 bg-slate-50 px-3 py-2.5">
+              <p className="text-[11px] font-semibold text-slate-400">
+                안내문구
+              </p>
+              <div className="mt-1.5 space-y-1">
+                {parsedPrompt.guideLines.map((line) => (
+                  <GuideLine key={line} line={line} />
+                ))}
+              </div>
+            </div>
+          )}
+
           {question.questionType === "score" ? (
-            <div className="mt-3 grid gap-1.5 sm:grid-cols-5">
+            <div className="mt-4 grid gap-1.5 sm:grid-cols-5">
               {question.scale.map((option) => {
                 const selected = answer?.scoreValue === option.value;
                 return (
@@ -451,10 +555,10 @@ function QuestionField({
                     type="button"
                     disabled={disabled}
                     onClick={() => onChange({ scoreValue: option.value })}
-                    className={`min-h-12 rounded-md border px-2 py-1.5 text-center transition-colors disabled:cursor-not-allowed ${
+                    className={`min-h-16 rounded-lg border px-2 py-2 text-center transition-colors disabled:cursor-not-allowed ${
                       selected
                         ? "border-[#111111] bg-[#111111] text-white disabled:border-[#111111] disabled:bg-[#111111] disabled:text-white"
-                        : "border-[#eeeeee] bg-white text-slate-500 hover:border-slate-300"
+                        : "border-[#eeeeee] bg-white text-slate-500 hover:border-slate-300 hover:bg-slate-50"
                     }`}
                   >
                     <span className="block text-[13px] font-semibold">
@@ -473,12 +577,27 @@ function QuestionField({
               disabled={disabled}
               onChange={(event) => onChange({ textAnswer: event.target.value })}
               placeholder="의견을 입력해주세요."
-              className="mt-3 min-h-20 w-full resize-none rounded-md border border-[#eeeeee] bg-white px-3 py-2 text-[13px] leading-5 text-slate-700 outline-none transition-colors placeholder:text-slate-300 focus:border-[#111111] disabled:bg-slate-50 disabled:text-slate-400"
+              className="mt-4 min-h-28 w-full resize-none rounded-lg border border-[#eeeeee] bg-white px-3 py-2.5 text-[13px] leading-5 text-slate-700 outline-none transition-colors placeholder:text-slate-300 focus:border-[#111111] disabled:bg-slate-50 disabled:text-slate-400"
             />
           )}
         </div>
       </div>
     </motion.div>
+  );
+}
+
+function GuideLine({ line }: { line: string }) {
+  const [label, ...rest] = line.split(":");
+  const body = rest.join(":").trim();
+
+  if (!body) {
+    return <p className="text-xs leading-5 text-slate-600">{line}</p>;
+  }
+
+  return (
+    <p className="text-xs leading-5 text-slate-600">
+      <span className="font-semibold text-slate-700">{label}:</span> {body}
+    </p>
   );
 }
 
@@ -579,6 +698,39 @@ function ProgressCircle({
       />
     </span>
   );
+}
+
+function parseQuestionPrompt(prompt: string): ParsedQuestionPrompt {
+  const lines = prompt
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const [header = "", ...bodyLines] = lines;
+  const hasHeader = Boolean(header?.includes(">"));
+  const [category, subcategory] = hasHeader
+    ? header.split(">").map((part) => part.trim())
+    : [null, null];
+  const contentLines = hasHeader ? bodyLines : lines;
+  const guideStartIndex = contentLines.findIndex(isGuideLine);
+  const detailLines =
+    guideStartIndex >= 0 ? contentLines.slice(0, guideStartIndex) : contentLines;
+  const guideLines =
+    guideStartIndex >= 0 ? contentLines.slice(guideStartIndex) : [];
+
+  return {
+    category: category || null,
+    subcategory: subcategory || null,
+    detail: detailLines.join(" ") || prompt,
+    guideLines,
+  };
+}
+
+function isGuideLine(line: string) {
+  return /^(\d+점|주관식|운영 기준)\s*:/.test(line);
+}
+
+function getQuestionTypeLabel(question: Question) {
+  return question.questionType === "score" ? "척도" : "주관식";
 }
 
 function questionBelongsToSection(

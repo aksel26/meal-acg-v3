@@ -88,6 +88,13 @@ export async function PUT(
           updateFields.approval_status = "pending";
           updateFields.first_approver_id = null;
           updateFields.first_approved_at = null;
+        } else if (req.approval_status === "rejected") {
+          updateFields.approval_status = "pending";
+          updateFields.reject_reason = null;
+          updateFields.first_approver_id = null;
+          updateFields.first_approved_at = null;
+          updateFields.final_approver_id = null;
+          updateFields.final_approved_at = null;
         } else {
           return NextResponse.json(
             { error: "되돌릴 수 없는 상태입니다." },

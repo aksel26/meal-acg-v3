@@ -69,6 +69,32 @@ export function useApproveRequest() {
   });
 }
 
+export function useCancelApprovalRequest() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id }: { id: string }) => {
+      const res = await fetch(`/api/approvals/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "cancel" }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "취소 처리 실패");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.approvals.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dayoffs.all });
+      toast.success("처리가 취소되었습니다.");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
 export function useRejectRequest() {
   const queryClient = useQueryClient();
   return useMutation({

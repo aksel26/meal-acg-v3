@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
 
-// PUT /api/approvals/:id - 승인 또는 반려 처리
+// PUT /api/approvals/:id - 승인, 반려, 처리 취소
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -14,13 +14,13 @@ export async function PUT(
     const body = await request.json();
 
     const { action, rejectReason } = body as {
-      action: "approve" | "reject";
+      action: "approve" | "reject" | "cancel";
       rejectReason?: string;
     };
 
-    if (!action || !["approve", "reject"].includes(action)) {
+    if (!action || !["approve", "reject", "cancel"].includes(action)) {
       return NextResponse.json(
-        { error: "action must be 'approve' or 'reject'" },
+        { error: "action must be 'approve', 'reject', or 'cancel'" },
         { status: 400 }
       );
     }
@@ -39,14 +39,25 @@ export async function PUT(
       );
     }
 
-    if (request_data.status !== "pending") {
+    if (
+      action === "cancel" &&
+      !["approved", "rejected"].includes(request_data.status)
+    ) {
+      return NextResponse.json(
+        { error: "승인 또는 반려 완료된 요청만 취소할 수 있습니다." },
+        { status: 400 }
+      );
+    }
+
+    if (action !== "cancel" && request_data.status !== "pending") {
       return NextResponse.json(
         { error: "이미 처리된 요청입니다." },
         { status: 400 }
       );
     }
 
-    const newStatus = action === "approve" ? "approved" : "rejected";
+    const newStatus =
+      action === "approve" ? "approved" : action === "reject" ? "rejected" : "pending";
 
     // 승인 요청 상태 업데이트
     const { data: updated, error: updateError } = await supabase
@@ -54,8 +65,8 @@ export async function PUT(
       .update({
         status: newStatus,
         reject_reason: action === "reject" ? rejectReason || null : null,
-        resolved_at: new Date().toISOString(),
-        resolved_by: session.userId,
+        resolved_at: action === "cancel" ? null : new Date().toISOString(),
+        resolved_by: action === "cancel" ? null : session.userId,
       })
       .eq("id", id)
       .select()
@@ -78,6 +89,9 @@ export async function PUT(
       if (action === "approve") {
         dayoffUpdate.approver_id = session.userId;
         dayoffUpdate.approved_at = new Date().toISOString();
+      } else if (action === "cancel") {
+        dayoffUpdate.approver_id = null;
+        dayoffUpdate.approved_at = null;
       }
 
       await supabase

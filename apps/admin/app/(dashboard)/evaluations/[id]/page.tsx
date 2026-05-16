@@ -5,8 +5,6 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  AlertCircle,
-  CheckCircle2,
   ChevronLeft,
   History,
   Loader2,
@@ -39,12 +37,6 @@ import {
   SelectValue,
 } from "@repo/ui/src/select";
 import { Textarea } from "@repo/ui/src/textarea";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@repo/ui/src/tooltip";
 import { queryKeys } from "@/lib/query-keys";
 import type { MemberCurrentStatus } from "@/lib/supabase/types";
 
@@ -164,12 +156,6 @@ async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   return payload as T;
 }
 
-function statusLabel(status: RoundStatus) {
-  if (status === "confirmed") return "확정";
-  if (status === "closed") return "종료";
-  return "초안";
-}
-
 function sourceLabel(source: AssignmentSource) {
   if (source === "auto_leader") return "상위자";
   if (source === "auto_same_team") return "같은 팀";
@@ -185,7 +171,6 @@ const ACTION_LABELS: Record<string, string> = {
   APPLY_QUESTION_SET: "문항 SET 적용",
   GENERATE_ASSIGNMENTS: "평가자 자동 생성",
   REPLACE_ASSIGNMENTS: "평가자 배정 저장",
-  CONFIRM_ROUND: "회차 확정",
   DEPLOY_ROUND: "배포 ON",
   UNDEPLOY_ROUND: "배포 OFF",
 };
@@ -688,19 +673,6 @@ export default function EvaluationDetailPage() {
     onError: (error: Error) => toast.error(error.message),
   });
 
-  const confirmMutation = useMutation({
-    mutationFn: async () =>
-      requestJson<EvaluationRound>(
-        `/api/evaluations/rounds/${roundId}/confirm`,
-        { method: "POST" },
-      ),
-    onSuccess: () => {
-      toast.success("회차가 확정되었습니다.");
-      invalidateRound();
-    },
-    onError: (error: Error) => toast.error(error.message),
-  });
-
   const deployMutation = useMutation({
     mutationFn: async (isDeployed: boolean) =>
       requestJson<EvaluationRound>(
@@ -887,9 +859,7 @@ export default function EvaluationDetailPage() {
                   : "bg-slate-100 text-slate-600",
               )}
             >
-              {roundDetail.is_deployed
-                ? "배포 ON"
-                : statusLabel(roundDetail.status)}
+              {roundDetail.is_deployed ? "배포 ON" : "배포 OFF"}
             </Badge>
             <Badge variant="outline">v{roundDetail.config_version}</Badge>
             {detailFetching && (
@@ -902,52 +872,23 @@ export default function EvaluationDetailPage() {
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
-          <TooltipProvider delayDuration={100}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className={cn(!validation?.valid && "cursor-help")}>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      if (validation && !validation.valid) {
-                        toast.error("확정/배포 전 확인 필요", {
-                          description: (
-                            <ul className="mt-1 list-inside list-disc space-y-0.5">
-                              {validation.errors.map((error) => (
-                                <li key={error}>{error}</li>
-                              ))}
-                            </ul>
-                          ),
-                        });
-                        return;
-                      }
-                      confirmMutation.mutate();
-                    }}
-                    disabled={isLocked || confirmMutation.isPending}
-                  >
-                    <CheckCircle2 className="mr-1 h-4 w-4" />
-                    확정
-                  </Button>
-                </span>
-              </TooltipTrigger>
-              {validation && !validation.valid && (
-                <TooltipContent side="bottom" align="end" className="max-w-xs">
-                  <p className="flex items-center gap-1.5 font-medium">
-                    <AlertCircle className="h-3.5 w-3.5" />
-                    확정/배포 전 확인 필요
-                  </p>
-                  <ul className="mt-1 list-inside list-disc space-y-0.5 text-xs">
-                    {validation.errors.map((error) => (
-                      <li key={error}>{error}</li>
-                    ))}
-                  </ul>
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
           <Button
             variant={roundDetail.is_deployed ? "outline" : "default"}
-            onClick={() => deployMutation.mutate(!roundDetail.is_deployed)}
+            onClick={() => {
+              if (!roundDetail.is_deployed && validation && !validation.valid) {
+                toast.error("배포 전 확인 필요", {
+                  description: (
+                    <ul className="mt-1 list-inside list-disc space-y-0.5">
+                      {validation.errors.map((error) => (
+                        <li key={error}>{error}</li>
+                      ))}
+                    </ul>
+                  ),
+                });
+                return;
+              }
+              deployMutation.mutate(!roundDetail.is_deployed);
+            }}
             disabled={deployMutation.isPending}
           >
             {roundDetail.is_deployed ? "배포 OFF" : "배포 ON"}

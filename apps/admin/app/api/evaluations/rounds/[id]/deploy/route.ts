@@ -41,11 +41,8 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       .from("multisource_evaluation_rounds")
       .update({
         is_deployed: isDeployed,
-        status: isDeployed ? "confirmed" : oldData.status,
         deployed_at: isDeployed ? new Date().toISOString() : null,
         deployed_by: isDeployed ? actorId : null,
-        confirmed_at: isDeployed && !oldData.confirmed_at ? new Date().toISOString() : oldData.confirmed_at,
-        confirmed_by: isDeployed && !oldData.confirmed_by ? actorId : oldData.confirmed_by,
         updated_by: actorId,
       })
       .eq("id", id)

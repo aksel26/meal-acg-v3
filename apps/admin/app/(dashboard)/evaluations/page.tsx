@@ -4,9 +4,19 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { BarChart3, Loader2, Plus } from "lucide-react";
+import { BarChart3, Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "@repo/ui/src/sonner";
 import { cn } from "@repo/ui/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@repo/ui/src/alert-dialog";
 import { Badge } from "@repo/ui/src/badge";
 import { Button } from "@repo/ui/src/button";
 import {
@@ -76,18 +86,6 @@ async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   return payload as T;
 }
 
-function statusLabel(status: RoundStatus) {
-  if (status === "confirmed") return "확정";
-  if (status === "closed") return "종료";
-  return "초안";
-}
-
-function statusBadgeClass(status: RoundStatus) {
-  if (status === "confirmed") return "bg-slate-900 text-white border-0";
-  if (status === "closed") return "bg-slate-200 text-slate-700 border-0";
-  return "bg-slate-100 text-slate-600 border-0";
-}
-
 function today() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -103,6 +101,7 @@ export default function EvaluationsPage() {
     startDate: today(),
     endDate: today(),
   });
+  const [deleteTarget, setDeleteTarget] = useState<EvaluationRound | null>(null);
 
   const { data: rounds = [], isLoading } = useQuery<EvaluationRound[]>({
     queryKey: queryKeys.evaluations.rounds,
@@ -121,6 +120,20 @@ export default function EvaluationsPage() {
       queryClient.invalidateQueries({ queryKey: queryKeys.evaluations.rounds });
       setDialogOpen(false);
       router.push(`/evaluations/${round.id}`);
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const deleteRoundMutation = useMutation({
+    mutationFn: async (roundId: string) =>
+      requestJson<{ success: true }>(`/api/evaluations/rounds/${roundId}`, {
+        method: "DELETE",
+      }),
+    onSuccess: (_result, roundId) => {
+      toast.success("회차가 삭제되었습니다.");
+      setDeleteTarget(null);
+      queryClient.invalidateQueries({ queryKey: queryKeys.evaluations.rounds });
+      queryClient.removeQueries({ queryKey: queryKeys.evaluations.round(roundId) });
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -149,6 +162,14 @@ export default function EvaluationsPage() {
       return;
     }
     createRoundMutation.mutate();
+  }
+
+  function openDeleteDialog(round: EvaluationRound) {
+    if (round.is_deployed) {
+      toast.error("배포 ON 회차는 배포 OFF 후 삭제할 수 있습니다.");
+      return;
+    }
+    setDeleteTarget(round);
   }
 
   return (
@@ -197,23 +218,22 @@ export default function EvaluationsPage() {
                 <TableHead className="text-xs text-slate-500">회차명</TableHead>
                 <TableHead className="w-56 text-xs text-slate-500">기간</TableHead>
                 <TableHead className="w-56 text-xs text-slate-500">적용 SET</TableHead>
-                <TableHead className="w-24 text-xs text-slate-500">상태</TableHead>
                 <TableHead className="w-24 text-xs text-slate-500">배포</TableHead>
                 <TableHead className="w-20 text-xs text-slate-500">버전</TableHead>
                 <TableHead className="w-44 text-xs text-slate-500">수정일</TableHead>
-                <TableHead className="w-14 text-xs text-slate-500" />
+                <TableHead className="w-24 text-xs text-slate-500" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="py-12 text-center text-sm text-slate-400">
+                  <TableCell colSpan={8} className="py-12 text-center text-sm text-slate-400">
                     <Loader2 className="mx-auto h-5 w-5 animate-spin" />
                   </TableCell>
                 </TableRow>
               ) : rounds.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="py-12 text-center text-sm text-slate-400">
+                  <TableCell colSpan={8} className="py-12 text-center text-sm text-slate-400">
                     등록된 회차가 없습니다. 우측 상단의 &quot;신규 회차&quot;로 생성하세요.
                   </TableCell>
                 </TableRow>
@@ -264,11 +284,6 @@ export default function EvaluationsPage() {
                       )}
                     </TableCell>
                     <TableCell className="py-3">
-                      <Badge className={cn("text-[11px]", statusBadgeClass(round.status))}>
-                        {statusLabel(round.status)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="py-3">
                       <Badge
                         className={cn(
                           "border-0 text-[11px]",
@@ -286,20 +301,35 @@ export default function EvaluationsPage() {
                     <TableCell className="py-3 text-sm text-slate-500">
                       {dayjs(round.updated_at).format("YYYY-MM-DD HH:mm")}
                     </TableCell>
-                    <TableCell className="py-3 text-right">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8 text-slate-500 hover:text-slate-900"
-                        aria-label={`${round.name} 통계`}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          toast.info("통계 화면은 준비 중입니다.");
-                        }}
-                      >
-                        <BarChart3 className="h-4 w-4" />
-                      </Button>
+                    <TableCell className="py-3">
+                      <div className="flex justify-end gap-1.5">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 text-slate-500 hover:text-slate-900"
+                          aria-label={`${round.name} 통계`}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            router.push(`/evaluations/${round.id}/stats`);
+                          }}
+                        >
+                          <BarChart3 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 text-slate-500 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                          aria-label={`${round.name} 삭제`}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            openDeleteDialog(round);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -421,6 +451,53 @@ export default function EvaluationsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open && !deleteRoundMutation.isPending) {
+            setDeleteTarget(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>회차 삭제</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget ? (
+                <>
+                  <span className="font-medium text-slate-900">
+                    {deleteTarget.name}
+                  </span>
+                  을 삭제합니다. 회차에 연결된 대상자, 문항, 평가자 배정 정보도 함께
+                  삭제됩니다.
+                </>
+              ) : (
+                "회차를 삭제합니다."
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteRoundMutation.isPending}>
+              취소
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 text-white hover:bg-red-700"
+              disabled={deleteRoundMutation.isPending || !deleteTarget}
+              onClick={(event) => {
+                event.preventDefault();
+                if (!deleteTarget) return;
+                deleteRoundMutation.mutate(deleteTarget.id);
+              }}
+            >
+              {deleteRoundMutation.isPending && (
+                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+              )}
+              삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

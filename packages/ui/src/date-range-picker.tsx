@@ -55,8 +55,7 @@ function DateRangePicker({
     if (!selected?.from) return null;
     const fromStr = format(selected.from, "yyyy년 M월 d일", { locale: ko });
     if (!selected.to) return fromStr;
-    const sameYear =
-      selected.from.getFullYear() === selected.to.getFullYear();
+    const sameYear = selected.from.getFullYear() === selected.to.getFullYear();
     const sameMonth =
       sameYear && selected.from.getMonth() === selected.to.getMonth();
     if (sameMonth) {
@@ -79,7 +78,7 @@ function DateRangePicker({
           className={cn(
             "w-full justify-start text-left font-normal",
             !display && "text-muted-foreground",
-            className
+            className,
           )}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
@@ -93,11 +92,21 @@ function DateRangePicker({
           const target = event.target as HTMLElement | null;
           if (target?.closest("[data-slot='popover-content']")) {
             event.preventDefault();
+            return;
+          }
+          setOpen(false);
+          if (target?.closest("[data-slot='dialog-content']")) {
+            event.preventDefault();
           }
         }}
         onInteractOutside={(event) => {
           const target = event.target as HTMLElement | null;
           if (target?.closest("[data-slot='popover-content']")) {
+            event.preventDefault();
+            return;
+          }
+          setOpen(false);
+          if (target?.closest("[data-slot='dialog-content']")) {
             event.preventDefault();
           }
         }}

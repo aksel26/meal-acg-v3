@@ -58,10 +58,13 @@ export default function AttendanceDesktopView({
   }, [records, filterType]);
 
   return (
-    <div className="flex gap-6">
-      {/* 왼쪽: 캘린더 (3) */}
-      <div className="w-3/10 shrink-0 space-y-4">
-        <MonthSelector year={year} month={month} onMonthChange={onMonthChange} />
+    <div className="grid gap-4 lg:grid-cols-[4fr_6fr]">
+      <div className="space-y-4">
+        <MonthSelector
+          year={year}
+          month={month}
+          onMonthChange={onMonthChange}
+        />
         <AttendanceCalendar
           year={year}
           month={month}
@@ -72,15 +75,13 @@ export default function AttendanceDesktopView({
         />
       </div>
 
-      {/* 우측: 서머리 + 필터 + 테이블 (7) */}
-      <div className="flex-1 min-w-0 space-y-4">
+      <div className="min-w-0 space-y-4">
         <div className="flex items-center justify-end">
           <AttendanceFilter selected={filterType} onChange={setFilterType} />
         </div>
 
-        {/* 서머리 카드 */}
         {summary && (
-          <div className="grid grid-cols-5 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             {[
               { label: "근무일", value: `${summary.total_work_days}일` },
               {
@@ -99,12 +100,10 @@ export default function AttendanceDesktopView({
             ].map(({ label, value }) => (
               <div
                 key={label}
-                className="card-premium rounded-xl p-3 text-center"
+                className="rounded-xl border border-[#f3f3f3] bg-white px-4 py-4 text-center"
               >
-                <p className="text-xs text-[oklch(0.55_0.01_250)] mb-0.5">
-                  {label}
-                </p>
-                <p className="text-base font-semibold text-[oklch(0.25_0.02_250)]">
+                <p className="text-xs text-slate-500">{label}</p>
+                <p className="mt-1 text-base font-semibold text-[#111111]">
                   {value}
                 </p>
               </div>

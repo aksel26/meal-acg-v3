@@ -54,8 +54,8 @@ export default function DayoffsCalendar({
     for (let d = 1; d <= daysInMonth; d++) {
       days.push(
         dayjs(
-          `${year}-${String(month).padStart(2, "0")}-${String(d).padStart(2, "0")}`
-        ).format("YYYY-MM-DD")
+          `${year}-${String(month).padStart(2, "0")}-${String(d).padStart(2, "0")}`,
+        ).format("YYYY-MM-DD"),
       );
     }
     return days;
@@ -78,23 +78,23 @@ export default function DayoffsCalendar({
   const selectedWeekIndex = useMemo(() => {
     if (!selectedDate) {
       const todayInMonth = weeks.findIndex((week) =>
-        week.some((d) => d === today)
+        week.some((d) => d === today),
       );
       return todayInMonth >= 0 ? todayInMonth : 0;
     }
-    const idx = weeks.findIndex((week) =>
-      week.some((d) => d === selectedDate)
-    );
+    const idx = weeks.findIndex((week) => week.some((d) => d === selectedDate));
     return idx >= 0 ? idx : 0;
   }, [selectedDate, weeks, today]);
 
   const visibleWeeks = isExpanded
     ? weeks
-    : (weeks[selectedWeekIndex] ? [weeks[selectedWeekIndex]] : [weeks[0]!]);
+    : weeks[selectedWeekIndex]
+      ? [weeks[selectedWeekIndex]]
+      : [weeks[0]!];
 
   return (
-    <div className="card-premium rounded-2xl p-4 overflow-hidden">
-      <div className="grid grid-cols-7 mb-2">
+    <div className="overflow-hidden rounded-xl border border-[#f3f3f3] bg-white p-4">
+      <div className="mb-2 grid grid-cols-7">
         {WEEKDAYS.map((day, i) => (
           <div
             key={day}
@@ -103,7 +103,7 @@ export default function DayoffsCalendar({
                 ? "text-red-400"
                 : i === 6
                   ? "text-blue-400"
-                  : "text-[oklch(0.55_0.01_250)]"
+                  : "text-slate-400"
             }`}
           >
             {day}
@@ -138,12 +138,12 @@ export default function DayoffsCalendar({
                   <button
                     key={dateStr}
                     onClick={() => onDateSelect(dateStr)}
-                    className={`relative flex flex-col items-center justify-center h-10 rounded-xl transition-colors ${
+                    className={`relative flex h-10 flex-col items-center justify-center rounded-lg transition-colors ${
                       isSelected
-                        ? "bg-[oklch(0.55_0.18_250)] text-white"
+                        ? "bg-[#111111] text-white"
                         : isToday
-                          ? "bg-[oklch(0.95_0.03_250)]"
-                          : "hover:bg-[oklch(0.97_0.01_250)]"
+                          ? "bg-[#f9f9fa]"
+                          : "hover:bg-[#f9f9fa]"
                     }`}
                   >
                     <span
@@ -154,7 +154,7 @@ export default function DayoffsCalendar({
                             ? "text-red-400"
                             : dayOfWeek === 6
                               ? "text-blue-400"
-                              : "text-[oklch(0.30_0.02_250)]"
+                              : "text-slate-700"
                       }`}
                     >
                       {dayNum}
@@ -163,12 +163,12 @@ export default function DayoffsCalendar({
                       <span className="absolute bottom-1 flex gap-0.5">
                         {dots.map((r) => {
                           const color = getLeaveTypeColor(
-                            r.leave_type?.category
+                            r.leave_type?.category,
                           );
                           return (
                             <span
                               key={r.id}
-                              className={`w-1.5 h-1.5 rounded-full ${!r.approver_id ? "ring-1 ring-white/50" : ""}`}
+                              className={`h-1.5 w-1.5 rounded-full ${!r.approver_id ? "ring-1 ring-white/50" : ""}`}
                               style={{ backgroundColor: color.dot }}
                             />
                           );
@@ -185,12 +185,13 @@ export default function DayoffsCalendar({
 
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="flex items-center justify-center w-full mt-2 py-1 text-[oklch(0.55_0.02_250)]"
+        className="mt-2 flex w-full items-center justify-center rounded-lg py-1 text-slate-500 transition-colors hover:bg-[#f9f9fa]"
+        aria-label={isExpanded ? "달력 접기" : "달력 펼치기"}
       >
         {isExpanded ? (
-          <ChevronUp className="w-5 h-5" />
+          <ChevronUp className="h-5 w-5" />
         ) : (
-          <ChevronDown className="w-5 h-5" />
+          <ChevronDown className="h-5 w-5" />
         )}
       </button>
     </div>

@@ -21,7 +21,6 @@ interface DayoffsDesktopViewProps {
   isLoading: boolean;
   onEdit: (record: DayoffRecord) => void;
   onDelete: (record: DayoffRecord) => void;
-  onApprove: (record: DayoffRecord) => void;
   onCopy: (record: DayoffRecord) => void;
   onCreateNew: (date?: string) => void;
 }
@@ -37,7 +36,6 @@ export default function DayoffsDesktopView({
   isLoading,
   onEdit,
   onDelete,
-  onApprove,
   onCopy,
   onCreateNew,
 }: DayoffsDesktopViewProps) {
@@ -49,9 +47,13 @@ export default function DayoffsDesktopView({
   }, [records, filterType]);
 
   return (
-    <div className="flex gap-6">
-      <div className="w-3/10 shrink-0 space-y-4">
-        <MonthSelector year={year} month={month} onMonthChange={onMonthChange} />
+    <div className="grid gap-4 lg:grid-cols-[4fr_6fr]">
+      <div className="space-y-4">
+        <MonthSelector
+          year={year}
+          month={month}
+          onMonthChange={onMonthChange}
+        />
         <DayoffsCalendar
           year={year}
           month={month}
@@ -61,7 +63,7 @@ export default function DayoffsDesktopView({
           defaultExpanded
         />
         <Button
-          className="w-full rounded-lg bg-[#131313] hover:bg-[#2a2a2a] text-white"
+          className="h-10 w-full rounded-lg bg-[#111111] text-sm font-medium text-white hover:bg-[#222222]"
           onClick={() => onCreateNew()}
         >
           <Plus className="mr-2 h-4 w-4" />
@@ -69,7 +71,7 @@ export default function DayoffsDesktopView({
         </Button>
       </div>
 
-      <div className="flex-1 min-w-0 space-y-4">
+      <div className="min-w-0 space-y-4">
         <div className="flex items-center justify-end">
           <DayoffsFilter
             categories={categories}
@@ -89,7 +91,6 @@ export default function DayoffsDesktopView({
             records={filteredRecords}
             onEdit={onEdit}
             onDelete={onDelete}
-            onApprove={onApprove}
             onCopy={onCopy}
           />
         )}

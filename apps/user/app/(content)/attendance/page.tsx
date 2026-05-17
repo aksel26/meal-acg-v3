@@ -8,7 +8,10 @@ import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import { useUserStore } from "@/stores/userStore";
 import { useMemberIdLookup } from "@/hooks/use-points-data";
-import { useAttendanceMonthly, AttendanceRecord } from "@/hooks/use-attendance-monthly";
+import {
+  useAttendanceMonthly,
+  AttendanceRecord,
+} from "@/hooks/use-attendance-monthly";
 import AttendanceMobileView from "@/components/attendance/AttendanceMobileView";
 import AttendanceDesktopView from "@/components/attendance/AttendanceDesktopView";
 import AttendanceModifyDrawer from "@/components/attendance/AttendanceModifyDrawer";
@@ -31,11 +34,13 @@ export default function AttendancePage() {
   const [year, setYear] = useState(now.year());
   const [month, setMonth] = useState(now.month() + 1);
   const [selectedDate, setSelectedDate] = useState<string | null>(
-    now.format("YYYY-MM-DD")
+    now.format("YYYY-MM-DD"),
   );
 
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [modifyTarget, setModifyTarget] = useState<AttendanceRecord | null>(null);
+  const [modifyTarget, setModifyTarget] = useState<AttendanceRecord | null>(
+    null,
+  );
 
   const { data: memberLookup } = useMemberIdLookup(!memberId ? userName : null);
 
@@ -53,7 +58,11 @@ export default function AttendancePage() {
 
   useEffect(() => {
     if (memberLookup && !memberId) {
-      setMemberInfo(memberLookup.id, memberLookup.member_role || "팀원", memberLookup.hire_date);
+      setMemberInfo(
+        memberLookup.id,
+        memberLookup.member_role || "팀원",
+        memberLookup.hire_date,
+      );
     }
   }, [memberLookup, memberId, setMemberInfo]);
 
@@ -86,10 +95,14 @@ export default function AttendancePage() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+        className="space-y-5 p-4 md:p-6"
       >
-        <h1 className="text-xl font-bold text-[oklch(0.20_0.02_250)] mb-5">
-          출퇴근 관리
-        </h1>
+        <div>
+          <h1 className="text-xl font-semibold text-[#111111]">출퇴근 관리</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            월별 출퇴근 기록과 수정 요청 상태를 확인합니다.
+          </p>
+        </div>
 
         <div className="md:hidden">
           <AttendanceMobileView

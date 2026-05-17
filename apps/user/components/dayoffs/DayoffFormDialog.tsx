@@ -11,7 +11,6 @@ import {
   SelectValue,
 } from "@repo/ui/src/select";
 import { Button } from "@repo/ui/src/button";
-import { Input } from "@repo/ui/src/input";
 import { Label } from "@repo/ui/src/label";
 import { DateRangePicker } from "@repo/ui/src/date-range-picker";
 import { SearchableDropdown } from "@repo/ui/src/searchable-dropdown";
@@ -153,13 +152,14 @@ export default function DayoffFormDialog({
                 {formData.ccMemberIds.map((id) => (
                   <span
                     key={id}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-[oklch(0.93_0.04_250)] text-[oklch(0.45_0.12_250)]"
+                    className="inline-flex items-center gap-1.5 rounded-md border border-[#f3f3f3] bg-[#f9f9fa] px-2.5 py-1 text-[13px] font-medium text-slate-700"
                   >
                     {getMemberName(id)}
                     <button
                       type="button"
                       onClick={() => handleRemoveCcMember(id)}
-                      className="hover:text-[oklch(0.30_0.12_250)] transition-colors"
+                      className="text-slate-400 transition-colors hover:text-[#111111]"
+                      aria-label={`${getMemberName(id)} 참조자 제거`}
                     >
                       &times;
                     </button>
@@ -175,6 +175,7 @@ export default function DayoffFormDialog({
             <DateRangePicker
               startDate={formData.startDate}
               endDate={formData.endDate || formData.startDate}
+              modal
               onChange={({ startDate, endDate }) =>
                 setFormData({ ...formData, startDate, endDate })
               }

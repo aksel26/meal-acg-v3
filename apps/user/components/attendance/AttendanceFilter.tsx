@@ -12,15 +12,15 @@ export default function AttendanceFilter({
   onChange,
 }: AttendanceFilterProps) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-1.5">
       {ATTENDANCE_TYPES.map((type) => (
         <button
           key={type}
           onClick={() => onChange(type)}
-          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+          className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ${
             selected === type
-              ? "bg-[oklch(0.55_0.18_250)] text-white"
-              : "bg-[oklch(0.96_0.01_250)] text-[oklch(0.45_0.02_250)] hover:bg-[oklch(0.93_0.01_250)]"
+              ? "border-[#111111] bg-[#111111] text-white"
+              : "border-[#f3f3f3] bg-white text-slate-500 hover:border-slate-300 hover:bg-[#f9f9fa]"
           }`}
         >
           {type}

@@ -18,11 +18,12 @@ interface AttendanceRecord {
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 const TYPE_COLORS: Record<string, string> = {
-  근무: "bg-[oklch(0.55_0.18_250)]",
-  휴가: "bg-[oklch(0.65_0.20_150)]",
-  재택: "bg-[oklch(0.65_0.15_60)]",
-  외근: "bg-[oklch(0.60_0.18_310)]",
+  근무: "bg-slate-500",
+  휴가: "bg-emerald-500",
+  재택: "bg-amber-500",
+  외근: "bg-violet-500",
 };
+const DEFAULT_TYPE_COLOR = "bg-slate-500";
 
 interface AttendanceCalendarProps {
   year: number;
@@ -64,7 +65,9 @@ export default function AttendanceCalendar({
     }
     for (let d = 1; d <= daysInMonth; d++) {
       days.push(
-        dayjs(`${year}-${String(month).padStart(2, "0")}-${String(d).padStart(2, "0")}`).format("YYYY-MM-DD")
+        dayjs(
+          `${year}-${String(month).padStart(2, "0")}-${String(d).padStart(2, "0")}`,
+        ).format("YYYY-MM-DD"),
       );
     }
     return days;
@@ -87,21 +90,20 @@ export default function AttendanceCalendar({
   const selectedWeekIndex = useMemo(() => {
     if (!selectedDate) {
       const todayInMonth = weeks.findIndex((week) =>
-        week.some((d) => d === today)
+        week.some((d) => d === today),
       );
       return todayInMonth >= 0 ? todayInMonth : 0;
     }
-    const idx = weeks.findIndex((week) =>
-      week.some((d) => d === selectedDate)
-    );
+    const idx = weeks.findIndex((week) => week.some((d) => d === selectedDate));
     return idx >= 0 ? idx : 0;
   }, [selectedDate, weeks, today]);
 
-  const visibleWeeks = isExpanded ? weeks : [weeks[selectedWeekIndex]].filter(Boolean);
+  const currentWeek = weeks[selectedWeekIndex] ?? weeks[0] ?? [];
+  const visibleWeeks = isExpanded ? weeks : [currentWeek];
 
   return (
-    <div className="card-premium rounded-2xl p-4 overflow-hidden">
-      <div className="grid grid-cols-7 mb-2">
+    <div className="overflow-hidden rounded-xl border border-[#f3f3f3] bg-white p-4">
+      <div className="mb-2 grid grid-cols-7">
         {WEEKDAYS.map((day, i) => (
           <div
             key={day}
@@ -110,7 +112,7 @@ export default function AttendanceCalendar({
                 ? "text-red-400"
                 : i === 6
                   ? "text-blue-400"
-                  : "text-[oklch(0.55_0.01_250)]"
+                  : "text-slate-400"
             }`}
           >
             {day}
@@ -140,7 +142,7 @@ export default function AttendanceCalendar({
                 const isSelected = dateStr === selectedDate;
                 const record = recordMap[dateStr];
                 const dotColor = record
-                  ? TYPE_COLORS[record.attendance_type] || TYPE_COLORS["근무"]
+                  ? TYPE_COLORS[record.attendance_type] || DEFAULT_TYPE_COLOR
                   : null;
                 const isLateOrEarly =
                   record?.status === "late" || record?.status === "early_leave";
@@ -149,12 +151,12 @@ export default function AttendanceCalendar({
                   <button
                     key={dateStr}
                     onClick={() => onDateSelect(dateStr)}
-                    className={`relative flex flex-col items-center justify-center h-10 rounded-xl transition-colors ${
+                    className={`relative flex h-10 flex-col items-center justify-center rounded-lg transition-colors ${
                       isSelected
-                        ? "bg-[oklch(0.55_0.18_250)] text-white"
+                        ? "bg-[#111111] text-white"
                         : isToday
-                          ? "bg-[oklch(0.95_0.03_250)]"
-                          : "hover:bg-[oklch(0.97_0.01_250)]"
+                          ? "bg-[#f9f9fa]"
+                          : "hover:bg-[#f9f9fa]"
                     }`}
                   >
                     <span
@@ -165,14 +167,14 @@ export default function AttendanceCalendar({
                             ? "text-red-400"
                             : dayOfWeek === 6
                               ? "text-blue-400"
-                              : "text-[oklch(0.30_0.02_250)]"
+                              : "text-slate-700"
                       }`}
                     >
                       {dayNum}
                     </span>
                     {dotColor && (
                       <span
-                        className={`absolute bottom-1 w-1.5 h-1.5 rounded-full ${dotColor} ${
+                        className={`absolute bottom-1 h-1.5 w-1.5 rounded-full ${dotColor} ${
                           isLateOrEarly ? "ring-1 ring-red-400" : ""
                         }`}
                       />
@@ -187,12 +189,13 @@ export default function AttendanceCalendar({
 
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="flex items-center justify-center w-full mt-2 py-1 text-[oklch(0.55_0.02_250)]"
+        className="mt-2 flex w-full items-center justify-center rounded-lg py-1 text-slate-500 transition-colors hover:bg-[#f9f9fa]"
+        aria-label={isExpanded ? "달력 접기" : "달력 펼치기"}
       >
         {isExpanded ? (
-          <ChevronUp className="w-5 h-5" />
+          <ChevronUp className="h-5 w-5" />
         ) : (
-          <ChevronDown className="w-5 h-5" />
+          <ChevronDown className="h-5 w-5" />
         )}
       </button>
     </div>

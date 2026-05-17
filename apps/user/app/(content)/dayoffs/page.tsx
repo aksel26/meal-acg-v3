@@ -13,7 +13,6 @@ import {
   useCreateDayoff,
   useUpdateDayoff,
   useDeleteDayoff,
-  useApproveDayoff,
 } from "@/hooks/use-dayoff-mutations";
 import { useQuery } from "@tanstack/react-query";
 import type { MemberOption, DayoffFormData } from "@/components/dayoffs/types";
@@ -33,7 +32,7 @@ export default function DayoffsPage() {
   const [year, setYear] = useState(now.year());
   const [month, setMonth] = useState(now.month() + 1);
   const [selectedDate, setSelectedDate] = useState<string | null>(
-    now.format("YYYY-MM-DD")
+    now.format("YYYY-MM-DD"),
   );
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -43,7 +42,11 @@ export default function DayoffsPage() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   // 내 휴가 내역만 조회
-  const { data: dayoffs, isLoading } = useDayoffs(year, month, memberId || undefined);
+  const { data: dayoffs, isLoading } = useDayoffs(
+    year,
+    month,
+    memberId || undefined,
+  );
   const { data: leaveTypes } = useLeaveTypes();
 
   const { data: members } = useQuery<MemberOption[]>({
@@ -58,7 +61,6 @@ export default function DayoffsPage() {
   const createMutation = useCreateDayoff();
   const updateMutation = useUpdateDayoff();
   const deleteMutation = useDeleteDayoff();
-  const approveMutation = useApproveDayoff();
 
   const categories = useMemo(() => {
     if (!leaveTypes) return ["전체"];
@@ -105,10 +107,6 @@ export default function DayoffsPage() {
     setDeleteTarget(record.id);
   };
 
-  const handleApprove = (record: DayoffRecord) => {
-    approveMutation.mutate({ id: record.id, approverId: memberId });
-  };
-
   const handleSave = (formData: DayoffFormData) => {
     if (!formData.startDate || !formData.leaveTypeId) {
       toast.error("날짜, 근태 유형을 입력해주세요.");
@@ -127,7 +125,7 @@ export default function DayoffsPage() {
           ccMemberIds: formData.ccMemberIds,
           reason: formData.reason,
         },
-        { onSuccess: () => setIsDialogOpen(false) }
+        { onSuccess: () => setIsDialogOpen(false) },
       );
     } else {
       createMutation.mutate(
@@ -142,7 +140,7 @@ export default function DayoffsPage() {
           ccMemberIds: formData.ccMemberIds,
           reason: formData.reason,
         },
-        { onSuccess: () => setIsDialogOpen(false) }
+        { onSuccess: () => setIsDialogOpen(false) },
       );
     }
   };
@@ -160,7 +158,15 @@ export default function DayoffsPage() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+        className="space-y-5 p-4 md:p-6"
       >
+        <div>
+          <h1 className="text-xl font-semibold text-[#111111]">휴가 관리</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            월별 휴가 신청 내역과 승인 상태를 확인합니다.
+          </p>
+        </div>
+
         <div className="md:hidden">
           <DayoffsMobileView
             year={year}
@@ -172,7 +178,6 @@ export default function DayoffsPage() {
             isLoading={isLoading}
             onEdit={handleEdit}
             onDelete={handleDeleteClick}
-            onApprove={handleApprove}
             onCopy={handleCopy}
             onCreateNew={handleCreateNew}
           />
@@ -190,7 +195,6 @@ export default function DayoffsPage() {
             isLoading={isLoading}
             onEdit={handleEdit}
             onDelete={handleDeleteClick}
-            onApprove={handleApprove}
             onCopy={handleCopy}
             onCreateNew={handleCreateNew}
           />

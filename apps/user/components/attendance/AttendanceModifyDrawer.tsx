@@ -86,7 +86,7 @@ export default function AttendanceModifyDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="w-[calc(100%-2rem)] max-w-sm rounded-xl sm:max-w-md">
         <DialogHeader>
           <DialogTitle>근태 수정 요청</DialogTitle>
         </DialogHeader>

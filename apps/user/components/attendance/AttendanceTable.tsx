@@ -23,16 +23,16 @@ interface AttendanceRecord {
 }
 
 const STATUS_LABELS: Record<string, { text: string; color: string }> = {
-  normal: { text: "정상", color: "text-[oklch(0.45_0.12_150)]" },
-  late: { text: "지각", color: "text-[oklch(0.55_0.20_25)]" },
-  early_leave: { text: "조퇴", color: "text-[oklch(0.55_0.15_60)]" },
+  normal: { text: "정상", color: "text-emerald-600" },
+  late: { text: "지각", color: "text-rose-600" },
+  early_leave: { text: "조퇴", color: "text-amber-600" },
 };
 
 const TYPE_BADGE_STYLES: Record<string, string> = {
-  근무: "bg-[oklch(0.93_0.04_250)] text-[oklch(0.45_0.12_250)]",
-  휴가: "bg-[oklch(0.93_0.04_150)] text-[oklch(0.40_0.12_150)]",
-  재택: "bg-[oklch(0.93_0.04_60)] text-[oklch(0.45_0.12_60)]",
-  외근: "bg-[oklch(0.93_0.04_310)] text-[oklch(0.45_0.12_310)]",
+  근무: "bg-slate-100 text-slate-700",
+  휴가: "bg-emerald-50 text-emerald-700",
+  재택: "bg-amber-50 text-amber-700",
+  외근: "bg-violet-50 text-violet-700",
 };
 
 function formatTime(isoString: string | null): string {
@@ -58,36 +58,36 @@ export default function AttendanceTable({
 }: AttendanceTableProps) {
   if (records.length === 0) {
     return (
-      <div className="text-center py-12 text-sm text-[oklch(0.55_0.01_250)]">
+      <div className="rounded-xl border border-[#f3f3f3] bg-white py-12 text-center text-sm text-slate-500">
         출퇴근 기록이 없습니다
       </div>
     );
   }
 
   return (
-    <div className="card-premium rounded-2xl overflow-hidden">
+    <div className="overflow-hidden rounded-xl border border-[#f3f3f3] bg-white">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-[oklch(0.92_0.01_250)]">
-            <th className="text-left py-3 px-4 font-medium text-[oklch(0.50_0.01_250)]">
+          <tr className="border-b border-[#f3f3f3] bg-[#f9f9fa]">
+            <th className="px-4 py-3 text-left font-medium text-slate-500">
               날짜
             </th>
-            <th className="text-left py-3 px-2 font-medium text-[oklch(0.50_0.01_250)]">
+            <th className="px-2 py-3 text-left font-medium text-slate-500">
               출근
             </th>
-            <th className="text-left py-3 px-2 font-medium text-[oklch(0.50_0.01_250)]">
+            <th className="px-2 py-3 text-left font-medium text-slate-500">
               퇴근
             </th>
-            <th className="text-left py-3 px-2 font-medium text-[oklch(0.50_0.01_250)]">
+            <th className="px-2 py-3 text-left font-medium text-slate-500">
               근태
             </th>
-            <th className="text-left py-3 px-2 font-medium text-[oklch(0.50_0.01_250)]">
+            <th className="px-2 py-3 text-left font-medium text-slate-500">
               현황
             </th>
-            <th className="text-left py-3 px-2 font-medium text-[oklch(0.50_0.01_250)]">
+            <th className="px-2 py-3 text-left font-medium text-slate-500">
               근무
             </th>
-            <th className="text-right py-3 px-4 font-medium text-[oklch(0.50_0.01_250)]">
+            <th className="px-4 py-3 text-right font-medium text-slate-500">
               초과
             </th>
           </tr>
@@ -97,9 +97,11 @@ export default function AttendanceTable({
             const d = dayjs(record.date);
             const dayOfWeek = d.day();
             const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-            const DEFAULT_STATUS = { text: "정상", color: "text-[oklch(0.45_0.12_150)]" };
-            const statusInfo =
-              STATUS_LABELS[record.status] ?? DEFAULT_STATUS;
+            const DEFAULT_STATUS = {
+              text: "정상",
+              color: "text-emerald-600",
+            };
+            const statusInfo = STATUS_LABELS[record.status] ?? DEFAULT_STATUS;
             const badgeStyle =
               TYPE_BADGE_STYLES[record.attendance_type] ||
               TYPE_BADGE_STYLES["근무"];
@@ -108,46 +110,48 @@ export default function AttendanceTable({
               <tr
                 key={record.id}
                 onClick={() => onRowClick(record)}
-                className={`border-b border-[oklch(0.95_0.01_250)] cursor-pointer hover:bg-[oklch(0.97_0.01_250)] transition-colors ${
-                  isWeekend ? "bg-[oklch(0.98_0.005_250)]" : ""
+                className={`cursor-pointer border-b border-[#f3f3f3] transition-colors hover:bg-[#fafafa] ${
+                  isWeekend ? "bg-[#fcfcfd]" : ""
                 }`}
               >
-                <td className="py-3 px-4 text-[oklch(0.30_0.02_250)]">
+                <td className="px-4 py-3 text-slate-700">
                   <div className="flex items-center gap-1.5">
                     {record.modification_status && (
-                      <span className="w-2 h-2 rounded-full bg-[oklch(0.65_0.15_60)] shrink-0" />
+                      <span className="h-2 w-2 shrink-0 rounded-full bg-amber-400" />
                     )}
-                    <span className={
-                      dayOfWeek === 0
-                        ? "text-red-400"
-                        : dayOfWeek === 6
-                          ? "text-blue-400"
-                          : ""
-                    }>
+                    <span
+                      className={
+                        dayOfWeek === 0
+                          ? "text-red-400"
+                          : dayOfWeek === 6
+                            ? "text-blue-400"
+                            : ""
+                      }
+                    >
                       {d.format("MM-DD")} ({d.format("dd")})
                     </span>
                   </div>
                 </td>
-                <td className="py-3 px-2 text-[oklch(0.30_0.02_250)]">
+                <td className="px-2 py-3 text-slate-700">
                   {formatTime(record.check_in_at)}
                 </td>
-                <td className="py-3 px-2 text-[oklch(0.30_0.02_250)]">
+                <td className="px-2 py-3 text-slate-700">
                   {formatTime(record.check_out_at)}
                 </td>
-                <td className="py-3 px-2">
+                <td className="px-2 py-3">
                   <span
-                    className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${badgeStyle}`}
+                    className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${badgeStyle}`}
                   >
                     {record.attendance_type}
                   </span>
                 </td>
-                <td className={`py-3 px-2 font-medium ${statusInfo.color}`}>
+                <td className={`px-2 py-3 font-medium ${statusInfo.color}`}>
                   {statusInfo.text}
                 </td>
-                <td className="py-3 px-2 text-[oklch(0.30_0.02_250)]">
+                <td className="px-2 py-3 text-slate-700">
                   {formatWorkTime(record.work_minutes)}
                 </td>
-                <td className="py-3 px-4 text-right text-[oklch(0.30_0.02_250)]">
+                <td className="px-4 py-3 text-right text-slate-700">
                   {formatWorkTime(record.overtime_minutes)}
                 </td>
               </tr>

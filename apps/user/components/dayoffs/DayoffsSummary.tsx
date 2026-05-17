@@ -26,11 +26,12 @@ export default function DayoffsSummary({ records }: DayoffsSummaryProps) {
   return (
     <div className="grid grid-cols-3 gap-3">
       {items.map(({ label, value }) => (
-        <div key={label} className="card-premium rounded-xl p-3 text-center">
-          <p className="text-xs text-[oklch(0.55_0.01_250)] mb-0.5">{label}</p>
-          <p className="text-base font-semibold text-[oklch(0.25_0.02_250)]">
-            {value}
-          </p>
+        <div
+          key={label}
+          className="rounded-xl border border-[#f3f3f3] bg-white px-4 py-4 text-center"
+        >
+          <p className="text-xs text-slate-500">{label}</p>
+          <p className="mt-1 text-base font-semibold text-[#111111]">{value}</p>
         </div>
       ))}
     </div>

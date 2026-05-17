@@ -3,7 +3,7 @@
 import { motion } from "motion/react";
 import dayjs from "dayjs";
 import "dayjs/locale/ko";
-import { Check, Pencil, Copy, Trash2, Lock, Plus } from "lucide-react";
+import { Pencil, Copy, Trash2, Lock, Plus } from "lucide-react";
 import type { DayoffRecord } from "./types";
 import { getLeaveTypeColor, formatLeaveTypeName } from "./types";
 
@@ -14,7 +14,6 @@ interface DayoffCardProps {
   records: DayoffRecord[];
   onEdit: (record: DayoffRecord) => void;
   onDelete: (record: DayoffRecord) => void;
-  onApprove: (record: DayoffRecord) => void;
   onCopy: (record: DayoffRecord) => void;
   onCreateNew: (date: string) => void;
 }
@@ -24,7 +23,6 @@ export default function DayoffCard({
   records,
   onEdit,
   onDelete,
-  onApprove,
   onCopy,
   onCreateNew,
 }: DayoffCardProps) {
@@ -35,21 +33,19 @@ export default function DayoffCard({
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="card-premium rounded-2xl p-5 mt-4"
+      className="mt-4 rounded-xl border border-[#f3f3f3] bg-white p-5"
     >
-      <div className="flex items-center justify-between mb-4">
-        <span className="font-semibold text-[oklch(0.25_0.02_250)]">
-          {dateLabel}
-        </span>
+      <div className="mb-4 flex items-center justify-between">
+        <span className="font-semibold text-[#111111]">{dateLabel}</span>
         {records.length > 0 && (
-          <span className="px-2 py-0.5 rounded-lg text-xs font-medium bg-[oklch(0.93_0.04_250)] text-[oklch(0.45_0.12_250)]">
+          <span className="rounded-lg bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
             {records.length}건
           </span>
         )}
       </div>
 
       {records.length === 0 ? (
-        <p className="text-center text-sm text-[oklch(0.55_0.01_250)] py-6">
+        <p className="py-6 text-center text-sm text-slate-500">
           등록된 근태가 없습니다
         </p>
       ) : (
@@ -62,11 +58,11 @@ export default function DayoffCard({
             return (
               <div
                 key={record.id}
-                className="flex items-center justify-between px-3 py-3 rounded-xl bg-[oklch(0.97_0.01_250)]"
+                className="flex items-center justify-between rounded-xl bg-[#f9f9fa] px-3 py-3"
               >
-                <div className="flex items-center gap-2 min-w-0">
+                <div className="flex min-w-0 items-center gap-2">
                   <span
-                    className="shrink-0 px-2 py-0.5 rounded text-xs font-medium"
+                    className="shrink-0 rounded px-2 py-0.5 text-xs font-medium"
                     style={{
                       backgroundColor: color.badge,
                       color: color.text,
@@ -74,46 +70,39 @@ export default function DayoffCard({
                   >
                     {typeName}
                   </span>
-                  <span className="text-sm text-[oklch(0.30_0.02_250)] truncate">
+                  <span className="truncate text-sm text-[#111111]">
                     {record.target?.full_name}
                   </span>
                   {record.reason && (
-                    <span className="text-xs text-[oklch(0.55_0.01_250)] truncate hidden sm:inline">
+                    <span className="hidden truncate text-xs text-slate-500 sm:inline">
                       {record.reason}
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-0.5 shrink-0">
+                <div className="flex shrink-0 items-center gap-0.5">
                   {isApproved ? (
-                    <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-xs font-medium bg-[oklch(0.93_0.04_150)] text-[oklch(0.40_0.12_150)]">
+                    <span className="inline-flex items-center gap-0.5 rounded bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
                       <Lock className="h-2.5 w-2.5" />
                       승인
                     </span>
                   ) : (
                     <>
                       <button
-                        className="inline-flex items-center justify-center h-7 w-7 rounded-lg hover:bg-[oklch(0.93_0.04_150)] text-[oklch(0.45_0.12_150)] transition-colors"
-                        onClick={() => onApprove(record)}
-                        title="승인"
-                      >
-                        <Check className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        className="inline-flex items-center justify-center h-7 w-7 rounded-lg hover:bg-white text-[oklch(0.50_0.01_250)] transition-colors"
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white"
                         onClick={() => onEdit(record)}
                         title="수정"
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
                       <button
-                        className="inline-flex items-center justify-center h-7 w-7 rounded-lg hover:bg-white text-[oklch(0.50_0.01_250)] transition-colors"
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white"
                         onClick={() => onCopy(record)}
                         title="복사"
                       >
                         <Copy className="h-3.5 w-3.5" />
                       </button>
                       <button
-                        className="inline-flex items-center justify-center h-7 w-7 rounded-lg hover:bg-[oklch(0.93_0.04_25)] text-[oklch(0.55_0.20_25)] transition-colors"
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-rose-600 transition-colors hover:bg-rose-50"
                         onClick={() => onDelete(record)}
                         title="삭제"
                       >
@@ -131,7 +120,7 @@ export default function DayoffCard({
       <motion.button
         whileTap={{ scale: 0.97 }}
         onClick={() => onCreateNew(selectedDate)}
-        className="w-full mt-4 py-2.5 rounded-lg text-sm font-medium text-white bg-[#131313] hover:bg-[#2a2a2a] flex items-center justify-center gap-1.5"
+        className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#111111] py-2.5 text-sm font-medium text-white hover:bg-[#222222]"
       >
         <Plus className="h-4 w-4" />
         휴가 신청

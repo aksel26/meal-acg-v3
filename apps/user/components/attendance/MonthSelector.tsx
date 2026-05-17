@@ -31,25 +31,27 @@ export default function MonthSelector({
   };
 
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between rounded-xl border border-[#f3f3f3] bg-white px-3 py-3">
       <motion.button
         whileTap={{ scale: 0.9 }}
         onClick={handlePrev}
-        className="p-2 rounded-xl hover:bg-[oklch(0.95_0.01_250)] transition-colors"
+        className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-[#f9f9fa]"
+        aria-label="이전 달"
       >
-        <ChevronLeft className="w-5 h-5 text-[oklch(0.45_0.02_250)]" />
+        <ChevronLeft className="h-5 w-5" strokeWidth={1.5} />
       </motion.button>
 
-      <h2 className="text-lg font-semibold text-[oklch(0.25_0.02_250)]">
+      <h2 className="text-base font-semibold text-[#111111]">
         {year}년 {month}월
       </h2>
 
       <motion.button
         whileTap={{ scale: 0.9 }}
         onClick={handleNext}
-        className="p-2 rounded-xl hover:bg-[oklch(0.95_0.01_250)] transition-colors"
+        className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-[#f9f9fa]"
+        aria-label="다음 달"
       >
-        <ChevronRight className="w-5 h-5 text-[oklch(0.45_0.02_250)]" />
+        <ChevronRight className="h-5 w-5" strokeWidth={1.5} />
       </motion.button>
     </div>
   );

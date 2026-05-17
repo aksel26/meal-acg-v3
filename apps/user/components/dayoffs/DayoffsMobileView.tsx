@@ -18,7 +18,6 @@ interface DayoffsMobileViewProps {
   isLoading: boolean;
   onEdit: (record: DayoffRecord) => void;
   onDelete: (record: DayoffRecord) => void;
-  onApprove: (record: DayoffRecord) => void;
   onCopy: (record: DayoffRecord) => void;
   onCreateNew: (date?: string) => void;
 }
@@ -33,7 +32,6 @@ export default function DayoffsMobileView({
   isLoading,
   onEdit,
   onDelete,
-  onApprove,
   onCopy,
   onCreateNew,
 }: DayoffsMobileViewProps) {
@@ -66,7 +64,6 @@ export default function DayoffsMobileView({
               records={selectedRecords}
               onEdit={onEdit}
               onDelete={onDelete}
-              onApprove={onApprove}
               onCopy={onCopy}
               onCreateNew={onCreateNew}
             />
@@ -77,7 +74,8 @@ export default function DayoffsMobileView({
       <motion.button
         whileTap={{ scale: 0.95 }}
         onClick={() => onCreateNew(selectedDate || undefined)}
-        className="fixed bottom-20 right-4 z-10 w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-colors bg-[#131313] hover:bg-[#2a2a2a] text-white"
+        className="fixed bottom-20 right-4 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-[#111111] text-white shadow-lg transition-colors hover:bg-[#222222]"
+        aria-label="휴가 신청"
       >
         <Plus className="h-5 w-5" />
       </motion.button>

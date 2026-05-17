@@ -21,7 +21,7 @@ export default function DayoffsFilter({
 }: DayoffsFilterProps) {
   return (
     <Select value={selected} onValueChange={onChange}>
-      <SelectTrigger className="w-[140px] h-9 text-sm rounded-lg border-[oklch(0.90_0.01_250)]">
+      <SelectTrigger className="h-9 w-[140px] rounded-lg border-[#f3f3f3] bg-white text-sm text-slate-600">
         <SelectValue placeholder="유형 선택" />
       </SelectTrigger>
       <SelectContent>

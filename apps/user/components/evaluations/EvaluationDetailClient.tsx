@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   CheckCircle2,
   ClipboardCheck,
+  Info,
   Loader2,
   Send,
 } from "lucide-react";
@@ -363,28 +364,6 @@ export function EvaluationDetailClient({ roundId }: { roundId: string }) {
                     selectedKey={selectedSection?.key || "common"}
                     onSelect={setSelectedSectionKey}
                   />
-                  {selectedSection && (
-                    <motion.div
-                      key={selectedSection.key}
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.18 }}
-                      className="flex flex-wrap items-end justify-between gap-2 border-b border-[#f3f3f3] pb-3"
-                    >
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">
-                          {selectedSection.label}
-                        </p>
-                        <h2 className="mt-1 text-base font-semibold text-[#111111]">
-                          작성 문항
-                        </h2>
-                      </div>
-                      <p className="text-xs font-medium text-slate-500">
-                        {selectedSection.answeredCount}/
-                        {selectedSection.questions.length} 완료
-                      </p>
-                    </motion.div>
-                  )}
                   {(selectedSection?.questions || []).map((question, index) => (
                     <QuestionField
                       key={question.id}
@@ -507,37 +486,44 @@ function QuestionField({
       transition={{ duration: 0.2, delay: index * 0.03 }}
       className="rounded-xl border border-[#eeeeee] bg-white px-4 py-4 shadow-[0_1px_0_rgba(15,23,42,0.03)] transition-colors hover:border-slate-200 sm:px-5"
     >
-      <div className="flex gap-3">
-        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[11px] font-semibold text-slate-500">
+      <div className="flex gap-4 sm:gap-5">
+        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-[11px] font-semibold text-slate-500">
           {index + 1}
         </span>
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600">
-              {parsedPrompt.category || getQuestionTypeLabel(question)}
-            </span>
-            {parsedPrompt.subcategory && (
-              <span className="rounded-full bg-[#111111] px-2.5 py-1 text-[11px] font-semibold text-white">
-                {parsedPrompt.subcategory}
-              </span>
-            )}
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-2">
+              <KeywordBlock
+                label="상위 키워드"
+                value={parsedPrompt.category || getQuestionTypeLabel(question)}
+              />
+              <KeywordBlock
+                label="하위 키워드"
+                value={parsedPrompt.subcategory || "세부 구분 없음"}
+                isMuted={!parsedPrompt.subcategory}
+              />
+            </div>
             {question.isRequired && (
-              <span className="rounded-full bg-rose-50 px-2 py-1 text-[11px] font-semibold text-rose-600">
+              <span className="shrink-0 rounded-full border border-rose-100 bg-rose-50 px-2 py-1 text-[11px] font-semibold text-rose-600">
                 필수
               </span>
             )}
           </div>
 
-          <p className="mt-3 text-[15px] font-semibold leading-6 text-[#111111]">
-            {parsedPrompt.detail}
-          </p>
+          <div className="mt-3 rounded-lg border border-slate-200 bg-white px-3.5 py-3">
+            <SectionLabel label="문항" />
+            <p className="mt-1.5 text-[15px] font-semibold leading-6 text-[#111111]">
+              {parsedPrompt.detail}
+            </p>
+          </div>
 
           {parsedPrompt.guideLines.length > 0 && (
-            <div className="mt-3 border-l-2 border-slate-200 bg-slate-50 px-3 py-2.5">
-              <p className="text-[11px] font-semibold text-slate-400">
-                안내문구
-              </p>
-              <div className="mt-1.5 space-y-1">
+            <div className="mt-3 rounded-lg border border-sky-100 bg-sky-50/60 px-3.5 py-3">
+              <div className="flex items-center gap-1.5">
+                <Info className="h-3.5 w-3.5 text-sky-600" />
+                <SectionLabel label="안내문" className="text-sky-700" />
+              </div>
+              <div className="mt-2 space-y-1.5">
                 {parsedPrompt.guideLines.map((line) => (
                   <GuideLine key={line} line={line} />
                 ))}
@@ -586,17 +572,57 @@ function QuestionField({
   );
 }
 
+function KeywordBlock({
+  label,
+  value,
+  isMuted = false,
+}: {
+  label: string;
+  value: string;
+  isMuted?: boolean;
+}) {
+  return (
+    <div className="min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+      <SectionLabel label={label} />
+      <p
+        className={`mt-1 truncate text-sm font-semibold ${
+          isMuted ? "text-slate-400" : "text-slate-800"
+        }`}
+        title={value}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function SectionLabel({
+  label,
+  className = "text-slate-400",
+}: {
+  label: string;
+  className?: string;
+}) {
+  return (
+    <span
+      className={`text-[11px] font-semibold uppercase tracking-[0.08em] ${className}`}
+    >
+      {label}
+    </span>
+  );
+}
+
 function GuideLine({ line }: { line: string }) {
   const [label, ...rest] = line.split(":");
   const body = rest.join(":").trim();
 
   if (!body) {
-    return <p className="text-xs leading-5 text-slate-600">{line}</p>;
+    return <p className="text-xs leading-5 text-slate-700">{line}</p>;
   }
 
   return (
-    <p className="text-xs leading-5 text-slate-600">
-      <span className="font-semibold text-slate-700">{label}:</span> {body}
+    <p className="text-xs leading-5 text-slate-700">
+      <span className="font-semibold text-sky-800">{label}:</span> {body}
     </p>
   );
 }
@@ -713,7 +739,9 @@ function parseQuestionPrompt(prompt: string): ParsedQuestionPrompt {
   const contentLines = hasHeader ? bodyLines : lines;
   const guideStartIndex = contentLines.findIndex(isGuideLine);
   const detailLines =
-    guideStartIndex >= 0 ? contentLines.slice(0, guideStartIndex) : contentLines;
+    guideStartIndex >= 0
+      ? contentLines.slice(0, guideStartIndex)
+      : contentLines;
   const guideLines =
     guideStartIndex >= 0 ? contentLines.slice(guideStartIndex) : [];
 

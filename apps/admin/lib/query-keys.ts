@@ -173,6 +173,8 @@ export const queryKeys = {
     round: (id: string) => ["evaluations", "rounds", id] as const,
     roundStatistics: (id: string) =>
       ["evaluations", "rounds", id, "statistics"] as const,
+    personalReport: (roundId: string, subjectId: string) =>
+      ["evaluations", "rounds", roundId, "reports", subjectId] as const,
     questionSets: ["evaluations", "questionSets"] as const,
     validation: (id: string) => ["evaluations", "rounds", id, "validation"] as const,
     auditLogs: (roundId?: string) =>

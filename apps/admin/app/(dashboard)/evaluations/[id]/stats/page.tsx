@@ -9,6 +9,7 @@ import {
   ArrowLeft,
   BarChart3,
   CheckCircle2,
+  ExternalLink,
   Loader2,
   Users,
 } from "lucide-react";
@@ -412,7 +413,7 @@ export default function EvaluationRoundStatsPage() {
 
       <QuestionAverageTable items={data.questionAverages} />
 
-      <PersonalResultsTable items={data.personalResults} />
+      <PersonalResultsTable roundId={data.round.id} items={data.personalResults} />
     </div>
   );
 }
@@ -746,7 +747,13 @@ function QuestionAverageTable({ items }: { items: QuestionAverage[] }) {
   );
 }
 
-function PersonalResultsTable({ items }: { items: PersonalResult[] }) {
+function PersonalResultsTable({
+  roundId,
+  items,
+}: {
+  roundId: string;
+  items: PersonalResult[];
+}) {
   return (
     <Card className="border-slate-200 bg-white shadow-none">
       <CardContent className="p-0">
@@ -764,12 +771,13 @@ function PersonalResultsTable({ items }: { items: PersonalResult[] }) {
                 <TableHead className="w-32 text-xs text-slate-500">평가 수</TableHead>
                 <TableHead className="w-24 text-right text-xs text-slate-500">평균</TableHead>
                 <TableHead className="min-w-[420px] text-xs text-slate-500">문항별 점수</TableHead>
+                <TableHead className="w-24 text-right text-xs text-slate-500">리포트</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {items.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="py-8 text-center text-sm text-slate-400">
+                  <TableCell colSpan={6} className="py-8 text-center text-sm text-slate-400">
                     제출된 개인 점수가 없습니다.
                   </TableCell>
                 </TableRow>
@@ -812,6 +820,23 @@ function PersonalResultsTable({ items }: { items: PersonalResult[] }) {
                           </span>
                         ))}
                       </div>
+                    </TableCell>
+                    <TableCell className="py-3 text-right">
+                      <Button
+                        asChild
+                        variant="outline"
+                        size="sm"
+                        className="h-8 gap-1 text-slate-600 hover:text-slate-900"
+                      >
+                        <Link
+                          href={`/evaluation-reports/${roundId}/${item.subjectId}`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                          리포트
+                        </Link>
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))

@@ -8,6 +8,7 @@ import { motion } from "motion/react";
 import { Menu, Bell, Clock, Send, FileText, Users } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/src/popover";
 import { Button } from "@repo/ui/src/button";
+import { ScrollArea } from "@repo/ui/src/scroll-area";
 import { toast } from "@repo/ui/src/sonner";
 import { useSidebarStore } from "@/stores/sidebarStore";
 import { useUserStore } from "@/stores/userStore";
@@ -145,6 +146,24 @@ function ApprovalBell() {
 
   const pendingCount = inboxItems?.length || 0;
   const items = tab === "inbox" ? inboxItems : tab === "sent" ? sentItems : ccItems;
+  const ccCount = ccItems?.length || 0;
+  const tabMeta = {
+    inbox: {
+      title: "받은 요청",
+      description: "내 승인이 필요한 요청",
+      count: pendingCount,
+    },
+    sent: {
+      title: "보낸 요청",
+      description: "내가 올린 요청의 처리 상태",
+      count: sentItems?.length || 0,
+    },
+    cc: {
+      title: "참조",
+      description: "내가 참조자로 포함된 요청",
+      count: ccCount,
+    },
+  }[tab];
 
   const handleApprove = (id: string) => {
     if (!memberId) return;
@@ -166,70 +185,79 @@ function ApprovalBell() {
     <Popover>
       <PopoverTrigger asChild>
         <button
-          className="relative rounded-xl p-2.5 text-slate-500 hover:bg-slate-100 transition-colors"
-          aria-label="알림"
+          className="relative flex h-11 w-11 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/20"
+          aria-label={`알림${pendingCount > 0 ? `, 대기 ${pendingCount}건` : ""}`}
         >
           <Bell size={20} />
           {pendingCount > 0 && (
-            <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-sm bg-rose-500 text-[9px] font-bold text-white">
-              {pendingCount}
+            <span className="absolute right-1 top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-gray-50 bg-rose-500 px-1 text-[10px] font-bold leading-none text-white">
+              {pendingCount > 99 ? "99+" : pendingCount}
             </span>
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-96 rounded-lg p-2">
-        {/* 탭 */}
-        <div className="flex border-b border-gray-100">
-          <button
-            onClick={() => setTab("inbox")}
-            className={`flex flex-1 items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-medium transition-colors ${
-              tab === "inbox" ? "text-slate-800 border-b-2 border-slate-800" : "text-slate-400"
-            }`}
-          >
-            <Clock size={13} />
-            받은 요청
-            {pendingCount > 0 && (
-              <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">
-                {pendingCount}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => setTab("sent")}
-            className={`flex flex-1 items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-medium transition-colors ${
-              tab === "sent" ? "text-slate-800 border-b-2 border-slate-800" : "text-slate-400"
-            }`}
-          >
-            <Send size={13} />
-            보낸 요청
-          </button>
-          <button
-            onClick={() => setTab("cc")}
-            className={`flex flex-1 items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-medium transition-colors ${
-              tab === "cc" ? "text-slate-800 border-b-2 border-slate-800" : "text-slate-400"
-            }`}
-          >
-            <Users size={13} />
-            참조
-            {ccItems && ccItems.length > 0 && (
-              <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-bold text-blue-700">
-                {ccItems.length}
-              </span>
-            )}
-          </button>
+      <PopoverContent
+        align="end"
+        sideOffset={10}
+        className="w-[calc(100vw-2rem)] max-w-[420px] overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-[0_20px_60px_rgba(15,23,42,0.16)]"
+      >
+        <div className="border-b border-slate-100 px-4 py-3.5">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-950">알림</h2>
+              <p className="mt-0.5 text-xs text-slate-500">
+                {tabMeta.description}
+              </p>
+            </div>
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
+              {tabMeta.count}건
+            </span>
+          </div>
         </div>
 
-        {/* 리스트 */}
-        <div className="max-h-80 overflow-y-auto">
+        <div
+          className="grid grid-cols-3 gap-1 border-b border-slate-100 bg-slate-100/80 p-1.5"
+          role="tablist"
+          aria-label="알림 유형"
+        >
+          <NotificationTabButton
+            icon={Clock}
+            label="받은 요청"
+            count={pendingCount}
+            selected={tab === "inbox"}
+            onClick={() => setTab("inbox")}
+          />
+          <NotificationTabButton
+            icon={Send}
+            label="보낸 요청"
+            count={sentItems?.length || 0}
+            selected={tab === "sent"}
+            onClick={() => setTab("sent")}
+          />
+          <NotificationTabButton
+            icon={Users}
+            label="참조"
+            count={ccCount}
+            selected={tab === "cc"}
+            onClick={() => setTab("cc")}
+          />
+        </div>
+
+        <ScrollArea className="h-[min(420px,calc(100vh-12rem))]">
           {!items || items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 text-slate-400">
-              <FileText className="mb-2 h-6 w-6" />
-              <p className="text-xs">
+            <div className="flex min-h-64 flex-col items-center justify-center px-6 py-12 text-center text-slate-400">
+              <span className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-slate-50">
+                <FileText className="h-5 w-5" />
+              </span>
+              <p className="text-sm font-medium text-slate-700">
                 {tab === "inbox" ? "대기 중인 요청이 없습니다." : tab === "sent" ? "보낸 요청이 없습니다." : "참조된 요청이 없습니다."}
+              </p>
+              <p className="mt-1 text-xs text-slate-400">
+                새 요청이 생기면 이곳에 표시됩니다.
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-gray-50">
+            <div className="divide-y divide-slate-100">
               {items.map((item) => (
                 <ApprovalItem
                   key={item.id}
@@ -241,9 +269,49 @@ function ApprovalBell() {
               ))}
             </div>
           )}
-        </div>
+        </ScrollArea>
       </PopoverContent>
     </Popover>
+  );
+}
+
+function NotificationTabButton({
+  icon: Icon,
+  label,
+  count,
+  selected,
+  onClick,
+}: {
+  icon: React.ElementType;
+  label: string;
+  count: number;
+  selected: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={selected}
+      onClick={onClick}
+      className={`flex min-h-11 items-center justify-center gap-1.5 rounded-xl px-2 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/20 ${
+        selected
+          ? "bg-white text-slate-950"
+          : "text-slate-500 hover:bg-white/70 hover:text-slate-800"
+      }`}
+    >
+      <Icon size={14} />
+      <span className="truncate">{label}</span>
+      {count > 0 && (
+        <span
+          className={`rounded-full px-1.5 py-0.5 text-[10px] leading-none ${
+            selected ? "bg-slate-900 text-white" : "bg-slate-200 text-slate-600"
+          }`}
+        >
+          {count > 99 ? "99+" : count}
+        </span>
+      )}
+    </button>
   );
 }
 
@@ -254,73 +322,54 @@ function ApprovalItem({
   onReject,
 }: {
   item: ApprovalRequest;
-  viewMode: "inbox" | "sent";
+  viewMode: "inbox" | "sent" | "cc";
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
 }) {
   const dayoff = item.related_data;
+  const leaveType = dayoff?.leave_type;
 
-  // 요청 유형 표시
-  const typeLabels: Record<string, { label: string; className: string }> = {
-    dayoffs: { label: "휴가", className: "bg-blue-50 text-blue-600" },
-    room_bookings: { label: "회의실", className: "bg-violet-50 text-violet-600" },
-    notices: { label: "공지사항", className: "bg-emerald-50 text-emerald-600" },
-  };
-  const requestType = item.related_table
-    ? typeLabels[item.related_table] || { label: item.type || "기타", className: "bg-gray-50 text-gray-600" }
-    : { label: item.type || "기타", className: "bg-gray-50 text-gray-600" };
-
-  const statusColors: Record<string, string> = {
-    pending: "bg-amber-50 text-amber-600",
-    approved: "bg-emerald-50 text-emerald-600",
-    rejected: "bg-red-50 text-red-600",
-  };
-  const statusLabels: Record<string, string> = {
-    pending: "대기",
-    approved: "승인",
-    rejected: "반려",
-  };
+  const personLabel =
+    viewMode === "inbox"
+      ? `요청자: ${item.requester?.full_name || "알 수 없음"}`
+      : viewMode === "sent"
+        ? `승인자: ${item.approver?.full_name || "알 수 없음"}`
+        : `참조 요청 · ${item.requester?.full_name || "알 수 없음"}`;
 
   return (
-    <div className="px-4 py-3">
-      <div className="flex items-center justify-between mb-1.5">
-        <div className="flex items-center gap-1.5">
-          <span className={`rounded-xs px-1.5 py-0.5 text-[10px] font-medium ${statusColors[item.status] || ""}`}>
-            {statusLabels[item.status] || item.status}
-          </span>
-          <span className={`rounded-xs px-1.5 py-0.5 text-[10px] font-medium ${requestType.className}`}>
-            {requestType.label}
-          </span>
-          {dayoff?.leave_type && (
-            <span className="text-xs font-medium text-slate-700">{dayoff.leave_type.name}</span>
+    <div className="px-4 py-3.5 transition-colors hover:bg-slate-50/80">
+      <div className="mb-2 flex items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+          {leaveType && (
+            <span className="rounded-full border border-blue-200 bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-800">
+              {leaveType.name}
+            </span>
           )}
         </div>
-        <span className="text-[10px] text-slate-400">
+        <span className="shrink-0 text-[11px] font-medium text-slate-400">
           {dayjs(item.requested_at).format("MM/DD")}
         </span>
       </div>
-      <p className="text-xs text-slate-500 mb-0.5">
-        {viewMode === "inbox"
-          ? item.requester?.full_name || "알 수 없음"
-          : `승인자: ${item.approver?.full_name || "알 수 없음"}`}
+      <p className="mb-1 text-xs font-medium text-slate-500">
+        {personLabel}
       </p>
       {dayoff && (
-        <p className="text-xs font-medium text-slate-800">
+        <p className="text-sm font-semibold text-slate-900">
           {dayjs(dayoff.leave_date).format("YYYY-MM-DD (ddd)")}
         </p>
       )}
       {dayoff?.reason && (
-        <p className="text-[11px] text-slate-400 mt-0.5">사유: {dayoff.reason}</p>
+        <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">사유: {dayoff.reason}</p>
       )}
       {item.reject_reason && (
-        <p className="text-[11px] text-red-500 mt-0.5">반려: {item.reject_reason}</p>
+        <p className="mt-1 line-clamp-2 text-xs leading-5 text-red-600">반려: {item.reject_reason}</p>
       )}
       {viewMode === "inbox" && item.status === "pending" && (
-        <div className="flex gap-1.5 mt-2">
+        <div className="mt-3 grid grid-cols-2 gap-2">
           <Button
             size="sm"
             variant="outline"
-            className="h-7 flex-1 text-xs text-emerald-600 hover:bg-emerald-50 border-emerald-200"
+            className="h-9 rounded-lg border-emerald-200 text-xs text-emerald-700 hover:bg-emerald-50"
             onClick={() => onApprove(item.id)}
           >
             승인
@@ -328,7 +377,7 @@ function ApprovalItem({
           <Button
             size="sm"
             variant="outline"
-            className="h-7 flex-1 text-xs text-red-500 hover:bg-red-50 border-red-200"
+            className="h-9 rounded-lg border-red-200 text-xs text-red-600 hover:bg-red-50"
             onClick={() => onReject(item.id)}
           >
             반려

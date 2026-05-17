@@ -128,6 +128,19 @@ function formatTime(isoString: string) {
   return dayjs(isoString).tz("Asia/Seoul").format("HH:mm");
 }
 
+function formatTimeWithSeconds(isoString: string) {
+  return dayjs(isoString).tz("Asia/Seoul").format("HH:mm:ss");
+}
+
+function formatElapsedTime(milliseconds: number) {
+  const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return [hours, minutes, seconds].map((value) => String(value).padStart(2, "0")).join(":");
+}
+
 // ─── Sub-components ───
 
 function UserInfoCard() {
@@ -166,10 +179,24 @@ function AttendanceSection({ memberId }: { memberId: string | null }) {
 
   const [checkInDialogOpen, setCheckInDialogOpen] = useState(false);
   const [checkOutDialogOpen, setCheckOutDialogOpen] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
 
   const hasCheckedIn = !!attendance?.check_in_at;
   const hasCheckedOut = !!attendance?.check_out_at;
   const isMutating = checkInMutation.isPending || checkOutMutation.isPending;
+  const isWorking = hasCheckedIn && !hasCheckedOut;
+  const elapsedTime =
+    isWorking && attendance?.check_in_at
+      ? formatElapsedTime(now - new Date(attendance.check_in_at).getTime())
+      : null;
+
+  useEffect(() => {
+    if (!isWorking) return;
+
+    setNow(Date.now());
+    const timerId = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timerId);
+  }, [isWorking, attendance?.check_in_at]);
 
   const handleCheckIn = () => {
     if (memberId) checkInMutation.mutate(memberId, {
@@ -199,12 +226,26 @@ function AttendanceSection({ memberId }: { memberId: string | null }) {
         </button>
       ) : !hasCheckedOut ? (
         <div className="space-y-2">
-          <div className="flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2">
-            <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
-            <span className="text-xs font-medium text-emerald-600">
-              {formatTime(attendance!.check_in_at!)} 출근
-            </span>
-          </div>
+          {elapsedTime && (
+            <div className="rounded-lg border border-emerald-100 bg-white px-3 py-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[11px] font-medium text-slate-400">
+                  출근 시간
+                </p>
+                <p className="font-mono text-[11px] font-medium tabular-nums text-slate-500">
+                  {formatTimeWithSeconds(attendance!.check_in_at!)}
+                </p>
+              </div>
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <p className="text-[11px] font-medium text-slate-400">
+                  근무 경과
+                </p>
+                <p className="font-mono text-[11px] font-medium tabular-nums text-slate-500">
+                  {elapsedTime}
+                </p>
+              </div>
+            </div>
+          )}
           <button
             onClick={() => setCheckOutDialogOpen(true)}
             disabled={isMutating}

@@ -347,7 +347,7 @@ export function EvaluationDetailClient({ roundId }: { roundId: string }) {
           </div>
         </aside>
 
-        <div className="min-w-0 rounded-xl border border-[#f3f3f3] bg-white">
+        <div className="min-w-0 rounded-xl bg-white">
           {selectedSubject ? (
             <div className="px-4 py-0 sm:px-5 sm:py-0">
               {selectedSubject.questions.length === 0 ? (
@@ -484,14 +484,21 @@ function QuestionField({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, delay: index * 0.03 }}
-      className="rounded-xl border border-[#eeeeee] bg-white px-4 py-4 shadow-[0_1px_0_rgba(15,23,42,0.03)] transition-colors hover:border-slate-200 sm:px-5"
+      className="rounded-xl bg-white px-4 py-4 shadow-[0_1px_0_rgba(15,23,42,0.03)] sm:px-5"
     >
       <div className="flex gap-4 sm:gap-5">
-        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-[11px] font-semibold text-slate-500">
-          {index + 1}
-        </span>
+        <div className="flex shrink-0 flex-col items-center gap-1.5">
+          <span className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-slate-50 text-[11px] font-semibold text-slate-500">
+            {index + 1}
+          </span>
+          {question.isRequired && (
+            <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-600">
+              필수
+            </span>
+          )}
+        </div>
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="flex flex-wrap items-start gap-2">
             <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-2">
               <KeywordBlock
                 label="상위 키워드"
@@ -503,14 +510,9 @@ function QuestionField({
                 isMuted={!parsedPrompt.subcategory}
               />
             </div>
-            {question.isRequired && (
-              <span className="shrink-0 rounded-full border border-rose-100 bg-rose-50 px-2 py-1 text-[11px] font-semibold text-rose-600">
-                필수
-              </span>
-            )}
           </div>
 
-          <div className="mt-3 rounded-lg border border-slate-200 bg-white px-3.5 py-3">
+          <div className="mt-3 rounded-lg bg-slate-50 px-3.5 py-3">
             <SectionLabel label="문항" />
             <p className="mt-1.5 text-[15px] font-semibold leading-6 text-[#111111]">
               {parsedPrompt.detail}
@@ -518,7 +520,7 @@ function QuestionField({
           </div>
 
           {parsedPrompt.guideLines.length > 0 && (
-            <div className="mt-3 rounded-lg border border-sky-100 bg-sky-50/60 px-3.5 py-3">
+            <div className="mt-3 rounded-lg bg-sky-50/60 px-3.5 py-3">
               <div className="flex items-center gap-1.5">
                 <Info className="h-3.5 w-3.5 text-sky-600" />
                 <SectionLabel label="안내문" className="text-sky-700" />
@@ -541,10 +543,10 @@ function QuestionField({
                     type="button"
                     disabled={disabled}
                     onClick={() => onChange({ scoreValue: option.value })}
-                    className={`min-h-16 rounded-lg border px-2 py-2 text-center transition-colors disabled:cursor-not-allowed ${
+                    className={`min-h-12 rounded-lg border px-2 py-1.5 text-center transition-colors disabled:cursor-not-allowed ${
                       selected
-                        ? "border-[#111111] bg-[#111111] text-white disabled:border-[#111111] disabled:bg-[#111111] disabled:text-white"
-                        : "border-[#eeeeee] bg-white text-slate-500 hover:border-slate-300 hover:bg-slate-50"
+                        ? "border-slate-800 bg-slate-800 text-white disabled:border-slate-800 disabled:bg-slate-800 disabled:text-white"
+                        : "border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200 hover:bg-slate-100"
                     }`}
                   >
                     <span className="block text-[13px] font-semibold">
@@ -563,7 +565,7 @@ function QuestionField({
               disabled={disabled}
               onChange={(event) => onChange({ textAnswer: event.target.value })}
               placeholder="의견을 입력해주세요."
-              className="mt-4 min-h-28 w-full resize-none rounded-lg border border-[#eeeeee] bg-white px-3 py-2.5 text-[13px] leading-5 text-slate-700 outline-none transition-colors placeholder:text-slate-300 focus:border-[#111111] disabled:bg-slate-50 disabled:text-slate-400"
+              className="mt-4 min-h-28 w-full resize-none rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-700 outline-none transition-colors placeholder:text-slate-300 focus:bg-white disabled:bg-slate-50 disabled:text-slate-400"
             />
           )}
         </div>
@@ -582,7 +584,7 @@ function KeywordBlock({
   isMuted?: boolean;
 }) {
   return (
-    <div className="min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+    <div className="min-w-0 rounded-lg bg-slate-50 px-3 py-2">
       <SectionLabel label={label} />
       <p
         className={`mt-1 truncate text-sm font-semibold ${
@@ -654,9 +656,9 @@ function QuestionProgress({
     : 0;
 
   return (
-    <div className="border-b border-[#f3f3f3] bg-white pb-3">
+    <div className="bg-white pb-3">
       <div className="mb-2 flex items-center justify-between text-[11px] font-medium">
-        <span className="text-slate-400">문항 진행</span>
+        <span className="text-slate-400">문항 유형</span>
         <div className="flex items-center gap-1.5">
           <span className="text-[11px] font-semibold text-slate-500">
             {totalPercent}%
@@ -675,10 +677,10 @@ function QuestionProgress({
               type="button"
               disabled={isEmpty}
               onClick={() => onSelect(section.key)}
-              className={`rounded-lg border px-3 py-2 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+              className={`min-h-12 rounded-lg px-3 py-1.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
                 isSelected
-                  ? "border-slate-300 bg-slate-50 text-[#111111]"
-                  : "border-[#f3f3f3] bg-white text-slate-500 hover:border-slate-300"
+                  ? "bg-slate-200 text-[#111111]"
+                  : "bg-slate-50 text-slate-500 hover:bg-slate-100"
               }`}
             >
               <div className="flex items-center justify-between gap-2">

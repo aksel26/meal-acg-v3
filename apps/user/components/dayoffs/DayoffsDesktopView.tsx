@@ -5,10 +5,10 @@ import { Plus } from "lucide-react";
 import { Button } from "@repo/ui/src/button";
 import MonthSelector from "@/components/attendance/MonthSelector";
 import DayoffsCalendar from "./DayoffsCalendar";
-import DayoffsFilter from "./DayoffsFilter";
-import DayoffsSummary from "./DayoffsSummary";
+import DayoffsMonthlyOverview from "./DayoffsMonthlyOverview";
 import DayoffsTable from "./DayoffsTable";
-import type { DayoffRecord } from "./types";
+import type { DayoffRecord, LeaveType } from "./types";
+import type { LeaveBalance } from "@/hooks/use-leave-balances";
 
 interface DayoffsDesktopViewProps {
   year: number;
@@ -17,11 +17,15 @@ interface DayoffsDesktopViewProps {
   selectedDate: string | null;
   onDateSelect: (date: string) => void;
   records: DayoffRecord[];
+  yearlyRecords: DayoffRecord[];
+  leaveTypes: LeaveType[];
+  leaveBalances: LeaveBalance[];
+  hireDate: string | null;
   categories: string[];
   isLoading: boolean;
+  yearlyLoading: boolean;
   onEdit: (record: DayoffRecord) => void;
   onDelete: (record: DayoffRecord) => void;
-  onCopy: (record: DayoffRecord) => void;
   onCreateNew: (date?: string) => void;
 }
 
@@ -32,11 +36,15 @@ export default function DayoffsDesktopView({
   selectedDate,
   onDateSelect,
   records,
+  yearlyRecords,
+  leaveTypes,
+  leaveBalances,
+  hireDate,
   categories,
   isLoading,
+  yearlyLoading,
   onEdit,
   onDelete,
-  onCopy,
   onCreateNew,
 }: DayoffsDesktopViewProps) {
   const [filterType, setFilterType] = useState("전체");
@@ -47,12 +55,13 @@ export default function DayoffsDesktopView({
   }, [records, filterType]);
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[4fr_6fr]">
+    <div className="grid gap-5 lg:grid-cols-[420px_minmax(0,1fr)]">
       <div className="space-y-4">
         <MonthSelector
           year={year}
           month={month}
           onMonthChange={onMonthChange}
+          className="border-0"
         />
         <DayoffsCalendar
           year={year}
@@ -69,21 +78,9 @@ export default function DayoffsDesktopView({
           <Plus className="mr-2 h-4 w-4" />
           휴가 신청
         </Button>
-      </div>
-
-      <div className="min-w-0 space-y-4">
-        <div className="flex items-center justify-end">
-          <DayoffsFilter
-            categories={categories}
-            selected={filterType}
-            onChange={setFilterType}
-          />
-        </div>
-
-        <DayoffsSummary records={records} />
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
+          <div className="flex items-center justify-center bg-slate-50 py-12">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-slate-600" />
           </div>
         ) : (
@@ -91,9 +88,25 @@ export default function DayoffsDesktopView({
             records={filteredRecords}
             onEdit={onEdit}
             onDelete={onDelete}
-            onCopy={onCopy}
           />
         )}
+      </div>
+
+      <div className="min-w-0 space-y-4">
+        <DayoffsMonthlyOverview
+          year={year}
+          selectedMonth={month}
+          records={yearlyRecords}
+          leaveTypes={leaveTypes}
+          leaveBalances={leaveBalances}
+          hireDate={hireDate}
+          categories={categories}
+          selectedCategory={filterType}
+          isLoading={yearlyLoading}
+          onCategoryChange={setFilterType}
+          onMonthSelect={(nextMonth) => onMonthChange(year, nextMonth)}
+        />
+
       </div>
     </div>
   );

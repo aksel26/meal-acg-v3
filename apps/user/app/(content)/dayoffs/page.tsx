@@ -7,7 +7,8 @@ import "dayjs/locale/ko";
 import { toast } from "@repo/ui/src/sonner";
 import { useUserStore } from "@/stores/userStore";
 import { useMemberIdLookup } from "@/hooks/use-points-data";
-import { useDayoffs, useLeaveTypes } from "@/hooks/use-dayoffs";
+import { useDayoffs, useDayoffsYearly, useLeaveTypes } from "@/hooks/use-dayoffs";
+import { useLeaveBalances } from "@/hooks/use-leave-balances";
 import type { DayoffRecord } from "@/hooks/use-dayoffs";
 import {
   useCreateDayoff,
@@ -47,6 +48,11 @@ export default function DayoffsPage() {
     month,
     memberId || undefined,
   );
+  const { data: yearlyDayoffs, isLoading: yearlyLoading } = useDayoffsYearly(
+    memberId || null,
+    year,
+  );
+  const { data: leaveBalances } = useLeaveBalances(memberId || null, year);
   const { data: leaveTypes } = useLeaveTypes();
 
   const { data: members } = useQuery<MemberOption[]>({
@@ -191,11 +197,15 @@ export default function DayoffsPage() {
             selectedDate={selectedDate}
             onDateSelect={setSelectedDate}
             records={dayoffs || []}
+            yearlyRecords={yearlyDayoffs || []}
+            leaveTypes={leaveTypes || []}
+            leaveBalances={leaveBalances || []}
+            hireDate={memberInfo?.hire_date || null}
             categories={categories}
             isLoading={isLoading}
+            yearlyLoading={yearlyLoading}
             onEdit={handleEdit}
             onDelete={handleDeleteClick}
-            onCopy={handleCopy}
             onCreateNew={handleCreateNew}
           />
         </div>

@@ -2,17 +2,20 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "motion/react";
+import { cn } from "@repo/ui/lib/utils";
 
 interface MonthSelectorProps {
   year: number;
   month: number;
   onMonthChange: (year: number, month: number) => void;
+  className?: string;
 }
 
 export default function MonthSelector({
   year,
   month,
   onMonthChange,
+  className,
 }: MonthSelectorProps) {
   const handlePrev = () => {
     if (month === 1) {
@@ -31,7 +34,12 @@ export default function MonthSelector({
   };
 
   return (
-    <div className="flex items-center justify-between rounded-xl border border-[#f3f3f3] bg-white px-3 py-3">
+    <div
+      className={cn(
+        "flex items-center justify-between rounded-xl border border-[#f3f3f3] bg-white px-3 py-3",
+        className,
+      )}
+    >
       <motion.button
         whileTap={{ scale: 0.9 }}
         onClick={handlePrev}

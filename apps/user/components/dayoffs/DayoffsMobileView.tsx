@@ -42,7 +42,12 @@ export default function DayoffsMobileView({
 
   return (
     <div className="space-y-4">
-      <MonthSelector year={year} month={month} onMonthChange={onMonthChange} />
+      <MonthSelector
+        year={year}
+        month={month}
+        onMonthChange={onMonthChange}
+        className="border-0"
+      />
 
       {isLoading ? (
         <div className="flex items-center justify-center py-12">

@@ -36,6 +36,9 @@ export interface LeaveType {
   category: string;
   duration_type: string;
   include_in_stats: boolean;
+  deducts_annual?: boolean;
+  deduction_amount?: number;
+  has_separate_quota?: boolean;
   sort_order: number;
 }
 

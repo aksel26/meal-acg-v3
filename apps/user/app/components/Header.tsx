@@ -25,8 +25,7 @@ import { formatDateKorean } from "utils";
 import dayjs from "dayjs";
 
 const PAGE_TITLES: Record<string, string> = {
-  "/attendance": "출퇴근 관리",
-  "/dayoffs": "휴가/연차 관리",
+  "/attendance": "근태 관리",
   "/meal": "식대",
   "/points": "복지포인트",
   "/points-dashboard": "활동비",
@@ -35,7 +34,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/monthly": "월간 취합",
   "/lunch": "점심 그룹",
   "/notices": "공지/일정",
-  "/profile": "내 정보 수정",
+  "/profile": "내 정보",
   "/acg-life": "ACG 라이프",
   "/project-dashboard": "대시보드",
   "/projects": "프로젝트",

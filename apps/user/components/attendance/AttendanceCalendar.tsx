@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { useMemo } from "react";
 import dayjs from "dayjs";
 import "dayjs/locale/ko";
+import type { DayoffRecord } from "@/hooks/use-dayoffs";
 
 dayjs.locale("ko");
 
@@ -30,8 +29,10 @@ interface AttendanceCalendarProps {
   month: number;
   selectedDate: string | null;
   onDateSelect: (date: string) => void;
+  rangeStartDate?: string | null;
+  rangeEndDate?: string | null;
   records: AttendanceRecord[];
-  defaultExpanded?: boolean;
+  dayoffs?: DayoffRecord[];
 }
 
 export default function AttendanceCalendar({
@@ -39,11 +40,11 @@ export default function AttendanceCalendar({
   month,
   selectedDate,
   onDateSelect,
+  rangeStartDate,
+  rangeEndDate,
   records,
-  defaultExpanded = false,
+  dayoffs = [],
 }: AttendanceCalendarProps) {
-  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
-
   const recordMap = useMemo(() => {
     const map: Record<string, AttendanceRecord> = {};
     records.forEach((r) => {
@@ -51,6 +52,13 @@ export default function AttendanceCalendar({
     });
     return map;
   }, [records]);
+  const dayoffsMap = useMemo(() => {
+    const map: Record<string, DayoffRecord[]> = {};
+    dayoffs.forEach((r) => {
+      map[r.leave_date] = [...(map[r.leave_date] || []), r];
+    });
+    return map;
+  }, [dayoffs]);
 
   const today = dayjs().format("YYYY-MM-DD");
 
@@ -87,22 +95,8 @@ export default function AttendanceCalendar({
     return result;
   }, [allDays]);
 
-  const selectedWeekIndex = useMemo(() => {
-    if (!selectedDate) {
-      const todayInMonth = weeks.findIndex((week) =>
-        week.some((d) => d === today),
-      );
-      return todayInMonth >= 0 ? todayInMonth : 0;
-    }
-    const idx = weeks.findIndex((week) => week.some((d) => d === selectedDate));
-    return idx >= 0 ? idx : 0;
-  }, [selectedDate, weeks, today]);
-
-  const currentWeek = weeks[selectedWeekIndex] ?? weeks[0] ?? [];
-  const visibleWeeks = isExpanded ? weeks : [currentWeek];
-
   return (
-    <div className="overflow-hidden rounded-xl border border-[#f3f3f3] bg-white p-4">
+    <div className="overflow-hidden rounded-xl bg-white p-4">
       <div className="mb-2 grid grid-cols-7">
         {WEEKDAYS.map((day, i) => (
           <div
@@ -120,84 +114,94 @@ export default function AttendanceCalendar({
         ))}
       </div>
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={isExpanded ? "expanded" : `week-${selectedWeekIndex}`}
-          initial={{ height: 0, opacity: 0 }}
-          animate={{ height: "auto", opacity: 1 }}
-          exit={{ height: 0, opacity: 0 }}
-          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-        >
-          {visibleWeeks.map((week, wi) => (
-            <div key={wi} className="grid grid-cols-7 gap-y-1">
-              {week.map((dateStr, di) => {
-                if (!dateStr) {
-                  return <div key={`empty-${wi}-${di}`} className="h-10" />;
-                }
+      <div>
+        {weeks.map((week, wi) => (
+          <div key={wi} className="grid grid-cols-7 gap-y-1.5">
+            {week.map((dateStr, di) => {
+              if (!dateStr) {
+                return <div key={`empty-${wi}-${di}`} className="h-14" />;
+              }
 
-                const d = dayjs(dateStr);
-                const dayNum = d.date();
-                const dayOfWeek = d.day();
-                const isToday = dateStr === today;
-                const isSelected = dateStr === selectedDate;
-                const record = recordMap[dateStr];
-                const dotColor = record
-                  ? TYPE_COLORS[record.attendance_type] || DEFAULT_TYPE_COLOR
-                  : null;
-                const isLateOrEarly =
-                  record?.status === "late" || record?.status === "early_leave";
+              const d = dayjs(dateStr);
+              const dayNum = d.date();
+              const dayOfWeek = d.day();
+              const isToday = dateStr === today;
+              const isSelected = dateStr === selectedDate;
+              const isRangeStart = dateStr === rangeStartDate;
+              const isRangeEnd = dateStr === rangeEndDate;
+              const isInRange =
+                !!rangeStartDate &&
+                !!rangeEndDate &&
+                dayjs(dateStr).isAfter(rangeStartDate, "day") &&
+                dayjs(dateStr).isBefore(rangeEndDate, "day");
+              const isRangeMarked = isRangeStart || isRangeEnd || isInRange;
+              const record = recordMap[dateStr];
+              const dayoffCount = dayoffsMap[dateStr]?.length || 0;
+              const dotColor = record
+                ? TYPE_COLORS[record.attendance_type] || DEFAULT_TYPE_COLOR
+                : null;
+              const isLateOrEarly =
+                record?.status === "late" || record?.status === "early_leave";
 
-                return (
-                  <button
-                    key={dateStr}
-                    onClick={() => onDateSelect(dateStr)}
-                    className={`relative flex h-10 flex-col items-center justify-center rounded-lg transition-colors ${
-                      isSelected
-                        ? "bg-[#111111] text-white"
-                        : isToday
-                          ? "bg-[#f9f9fa]"
-                          : "hover:bg-[#f9f9fa]"
+              return (
+                <button
+                  key={dateStr}
+                  onClick={() => onDateSelect(dateStr)}
+                  className={`relative flex h-14 flex-col items-center justify-center rounded-lg transition-colors ${
+                    isRangeStart || isRangeEnd || isSelected
+                      ? "bg-emerald-100 text-emerald-900"
+                      : isInRange
+                        ? "bg-emerald-50 text-emerald-800"
+                      : isToday
+                        ? "bg-[#f9f9fa]"
+                        : "hover:bg-[#f9f9fa]"
+                  }`}
+                >
+                  <span
+                    className={`text-sm ${
+                      isRangeMarked || isSelected
+                        ? "font-semibold text-emerald-900"
+                        : dayOfWeek === 0
+                          ? "text-red-400"
+                          : dayOfWeek === 6
+                            ? "text-blue-400"
+                            : "text-slate-700"
                     }`}
                   >
-                    <span
-                      className={`text-sm ${
-                        isSelected
-                          ? "font-semibold text-white"
-                          : dayOfWeek === 0
-                            ? "text-red-400"
-                            : dayOfWeek === 6
-                              ? "text-blue-400"
-                              : "text-slate-700"
-                      }`}
-                    >
-                      {dayNum}
+                    {dayNum}
+                  </span>
+                  {(dotColor || dayoffCount > 0) && (
+                    <span className="absolute bottom-2 flex items-center gap-0.5">
+                      {dotColor && (
+                        <span
+                          className={`h-1.5 w-1.5 rounded-full ${dotColor} ${
+                            isLateOrEarly ? "ring-1 ring-red-400" : ""
+                          }`}
+                        />
+                      )}
+                      {dayoffCount > 0 && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                      )}
                     </span>
-                    {dotColor && (
-                      <span
-                        className={`absolute bottom-1 h-1.5 w-1.5 rounded-full ${dotColor} ${
-                          isLateOrEarly ? "ring-1 ring-red-400" : ""
-                        }`}
-                      />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          ))}
-        </motion.div>
-      </AnimatePresence>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </div>
 
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="mt-2 flex w-full items-center justify-center rounded-lg py-1 text-slate-500 transition-colors hover:bg-[#f9f9fa]"
-        aria-label={isExpanded ? "달력 접기" : "달력 펼치기"}
-      >
-        {isExpanded ? (
-          <ChevronUp className="h-5 w-5" />
-        ) : (
-          <ChevronDown className="h-5 w-5" />
-        )}
-      </button>
+      <div className="mt-3 flex items-center justify-center gap-4 pt-3 text-xs font-medium text-slate-500">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-emerald-400" />
+          휴가
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-slate-500" />
+          출근
+        </span>
+      </div>
+
     </div>
   );
 }

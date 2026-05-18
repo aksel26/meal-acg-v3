@@ -6,7 +6,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Clock,
-  CalendarDays,
   AlarmClock,
   UtensilsCrossed,
   Wallet,
@@ -71,8 +70,7 @@ const menuGroups: MenuGroup[] = [
   {
     label: "근태",
     items: [
-      { id: "attendance", label: "출퇴근 관리", href: "/attendance", icon: Clock },
-      { id: "dayoffs", label: "휴가/연차 관리", href: "/dayoffs", icon: CalendarDays },
+      { id: "attendance", label: "근태 관리", href: "/attendance", icon: Clock },
       { id: "overtime", label: "시간외 근무 관리", href: "/overtime", icon: AlarmClock },
     ],
   },
@@ -86,7 +84,7 @@ const menuGroups: MenuGroup[] = [
   {
     label: "기타",
     items: [
-      { id: "profile", label: "내 정보 수정", href: "/profile", icon: UserPen },
+      { id: "profile", label: "내 정보", href: "/profile", icon: UserPen },
       { id: "notices", label: "공지/일정", href: "/notices", icon: Megaphone, badge: "New" },
       { id: "room", label: "회의실 예약", href: "/room-booking", icon: DoorOpen },
       { id: "sms", label: "SMS 전송", href: "/sms", icon: MessageSquareText },
@@ -185,6 +183,13 @@ function AttendanceSection({ memberId }: { memberId: string | null }) {
   const hasCheckedOut = !!attendance?.check_out_at;
   const isMutating = checkInMutation.isPending || checkOutMutation.isPending;
   const isWorking = hasCheckedIn && !hasCheckedOut;
+  const statusBadge = !memberId
+    ? { label: "동기화중", className: "bg-slate-100 text-slate-400" }
+    : hasCheckedOut
+      ? { label: "퇴근완료", className: "bg-slate-100 text-slate-500" }
+      : hasCheckedIn
+        ? { label: "근무중", className: "bg-emerald-50 text-emerald-600" }
+        : { label: "미출근", className: "bg-amber-50 text-amber-600" };
   const elapsedTime =
     isWorking && attendance?.check_in_at
       ? formatElapsedTime(now - new Date(attendance.check_in_at).getTime())
@@ -199,12 +204,22 @@ function AttendanceSection({ memberId }: { memberId: string | null }) {
   }, [isWorking, attendance?.check_in_at]);
 
   const handleCheckIn = () => {
-    if (memberId) checkInMutation.mutate(memberId, {
+    if (!memberId) {
+      toast.error("사용자 정보를 동기화하는 중입니다. 잠시 후 다시 시도해 주세요.");
+      return;
+    }
+
+    checkInMutation.mutate(memberId, {
       onSuccess: () => setCheckInDialogOpen(false),
     });
   };
   const handleCheckOut = (earlyLeaveReason?: string) => {
-    if (memberId) checkOutMutation.mutate(
+    if (!memberId) {
+      toast.error("사용자 정보를 동기화하는 중입니다. 잠시 후 다시 시도해 주세요.");
+      return;
+    }
+
+    checkOutMutation.mutate(
       { memberId, earlyLeaveReason },
       { onSuccess: () => setCheckOutDialogOpen(false) }
     );
@@ -213,13 +228,20 @@ function AttendanceSection({ memberId }: { memberId: string | null }) {
   return (
     <>
     <div className="mx-3 mb-4">
-      <p className="mb-2 px-1 text-[11px] font-medium uppercase tracking-widest text-slate-400">
-        출퇴근
-      </p>
+      <div className="mb-2 flex items-center justify-between gap-2 px-1">
+        <p className="text-[11px] font-medium uppercase tracking-widest text-slate-400">
+          출퇴근
+        </p>
+        <span
+          className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusBadge.className}`}
+        >
+          {statusBadge.label}
+        </span>
+      </div>
       {!hasCheckedIn ? (
         <button
           onClick={() => setCheckInDialogOpen(true)}
-          disabled={isMutating}
+          disabled={isMutating || !memberId}
           className="w-full rounded-lg bg-[#111111] py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#222222] disabled:opacity-50"
         >
           출근하기
@@ -248,7 +270,7 @@ function AttendanceSection({ memberId }: { memberId: string | null }) {
           )}
           <button
             onClick={() => setCheckOutDialogOpen(true)}
-            disabled={isMutating}
+            disabled={isMutating || !memberId}
             className="w-full rounded-lg border border-[#f3f3f3] py-2 text-sm font-medium text-slate-500 transition-colors hover:bg-[#f9f9fa] disabled:opacity-50"
           >
             퇴근하기
@@ -518,10 +540,11 @@ function NotificationToggle() {
 export function Sidebar() {
   const router = useRouter();
   const { userName, memberId, setMemberInfo, logout } = useUserStore();
-  const { data: memberLookup } = useMemberIdLookup(!memberId ? userName : null);
+  const { data: memberLookup } = useMemberIdLookup(userName);
+  const resolvedMemberId = memberLookup?.id ?? memberId;
 
   useEffect(() => {
-    if (memberLookup && !memberId) {
+    if (memberLookup && memberLookup.id !== memberId) {
       setMemberInfo(memberLookup.id, memberLookup.member_role || "팀원", memberLookup.hire_date);
     }
   }, [memberLookup, memberId, setMemberInfo]);
@@ -544,7 +567,7 @@ export function Sidebar() {
       <UserInfoCard />
 
       {/* Attendance */}
-      <AttendanceSection memberId={memberId} />
+      <AttendanceSection memberId={resolvedMemberId} />
 
       {/* Navigation (scrollable) */}
       <NavMenu />
@@ -570,10 +593,11 @@ export function MobileSidebar() {
   const router = useRouter();
   const { isOpen, close } = useSidebarStore();
   const { userName, memberId, setMemberInfo, logout } = useUserStore();
-  const { data: memberLookup } = useMemberIdLookup(!memberId ? userName : null);
+  const { data: memberLookup } = useMemberIdLookup(userName);
+  const resolvedMemberId = memberLookup?.id ?? memberId;
 
   useEffect(() => {
-    if (memberLookup && !memberId) {
+    if (memberLookup && memberLookup.id !== memberId) {
       setMemberInfo(memberLookup.id, memberLookup.member_role || "팀원", memberLookup.hire_date);
     }
   }, [memberLookup, memberId, setMemberInfo]);
@@ -625,7 +649,7 @@ export function MobileSidebar() {
             <UserInfoCard />
 
             {/* Attendance */}
-            <AttendanceSection memberId={memberId} />
+            <AttendanceSection memberId={resolvedMemberId} />
 
             {/* Navigation (scrollable) */}
             <NavMenu />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,6 +10,13 @@ import {
   DialogFooter,
 } from "@repo/ui/src/dialog";
 import { Textarea } from "@repo/ui/src/textarea";
+import {
+  CalendarDays,
+  Clock3,
+  LogIn,
+  LogOut,
+  TimerReset,
+} from "lucide-react";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
@@ -54,17 +62,24 @@ export default function AttendanceConfirmDialog({
   const isCheckIn = mode === "check-in";
 
   // 출근 모드: 지각 판단 (10:00 이후)
-  const isLate = isCheckIn && (now.hour() > 10 || (now.hour() === 10 && now.minute() > 0));
+  const isLate =
+    isCheckIn && (now.hour() > 10 || (now.hour() === 10 && now.minute() > 0));
 
   // 퇴근 모드: 조기퇴근 판단
   const expectedOut = checkInAt ? dayjs(checkInAt).add(9, "hour") : null;
-  const isEarlyLeave = !isCheckIn && expectedOut ? now.isBefore(expectedOut) : false;
-  const remainingMinutes = isEarlyLeave && expectedOut ? expectedOut.diff(now, "minute") : 0;
+  const isEarlyLeave = !isCheckIn && expectedOut
+    ? now.isBefore(expectedOut)
+    : false;
+  const remainingMinutes = isEarlyLeave && expectedOut
+    ? expectedOut.diff(now, "minute")
+    : 0;
   const remainingHours = Math.floor(remainingMinutes / 60);
   const remainingMins = remainingMinutes % 60;
 
   // 근무 시간 계산
-  const workedMinutes = !isCheckIn && checkInAt ? now.diff(dayjs(checkInAt), "minute") : 0;
+  const workedMinutes = !isCheckIn && checkInAt
+    ? now.diff(dayjs(checkInAt), "minute")
+    : 0;
   const workedHours = Math.floor(workedMinutes / 60);
   const workedMins = workedMinutes % 60;
 
@@ -76,7 +91,7 @@ export default function AttendanceConfirmDialog({
   }, [canConfirm, isPending, onConfirm, isEarlyLeave, reason]);
 
   const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
+    (e: KeyboardEvent) => {
       if (e.key === "Enter" && !e.shiftKey) {
         // Textarea에서 Enter 시 줄바꿈 허용 (Shift+Enter 없이도)
         if ((e.target as HTMLElement).tagName === "TEXTAREA") return;
@@ -91,30 +106,49 @@ export default function AttendanceConfirmDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="max-w-sm"
+        className="max-w-[420px] overflow-hidden rounded-2xl p-0"
         onKeyDown={handleKeyDown}
       >
-        <DialogHeader>
-          <DialogTitle className="text-center">
-            {isCheckIn ? "출근 확인" : isEarlyLeave ? "조기퇴근 안내" : "퇴근 확인"}
+        <DialogHeader className="px-5 pb-3 pt-5 text-left">
+          {!isEarlyLeave && (
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-700">
+              {isCheckIn ? (
+                <LogIn className="h-5 w-5" />
+              ) : (
+                <LogOut className="h-5 w-5" />
+              )}
+            </div>
+          )}
+          <DialogTitle className="text-lg font-semibold text-[#111111]">
+            {isCheckIn
+              ? "출근 확인"
+              : isEarlyLeave
+                ? "조기퇴근 안내"
+                : "퇴근 확인"}
           </DialogTitle>
+          <p className="mt-1 text-sm leading-5 text-slate-500">
+            {isCheckIn
+              ? "현재 시각 기준으로 출근을 기록합니다."
+              : isEarlyLeave
+                ? "정규 퇴근시간 전 퇴근은 승인 요청으로 등록됩니다."
+                : "오늘의 퇴근 시간을 기록합니다."}
+          </p>
         </DialogHeader>
 
-        <div className="space-y-3 py-2">
+        <div className="space-y-4 px-5 pb-4">
           {/* 날짜 */}
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-slate-500">날짜</span>
-            <span className="font-medium text-slate-800">
-              {now.format("YYYY년 M월 D일")} ({["일", "월", "화", "수", "목", "금", "토"][now.day()]})
-            </span>
-          </div>
-
-          {/* 현재 시각 */}
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-slate-500">현재 시각</span>
-            <span className="font-medium text-slate-800 tabular-nums">
-              {now.format("HH:mm:ss")}
-            </span>
+          <div className="grid gap-2 rounded-xl bg-slate-50 p-3">
+            <InfoRow
+              icon={<CalendarDays className="h-4 w-4" />}
+              label="날짜"
+              value={`${now.format("YYYY년 M월 D일")} (${["일", "월", "화", "수", "목", "금", "토"][now.day()]})`}
+            />
+            <InfoRow
+              icon={<Clock3 className="h-4 w-4" />}
+              label="현재 시각"
+              value={now.format("HH:mm:ss")}
+              tabular
+            />
           </div>
 
           {/* 출근 모드: 근태 현황 */}
@@ -135,39 +169,51 @@ export default function AttendanceConfirmDialog({
 
           {/* 퇴근 모드: 출근 시각 + 근무 시간 */}
           {!isCheckIn && checkInAt && (
-            <>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-500">출근 시각</span>
-                <span className="font-medium text-slate-800">
-                  {dayjs(checkInAt).tz("Asia/Seoul").format("HH:mm")}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-500">근무 시간</span>
-                <span className="font-medium text-slate-800">
-                  {workedHours}시간 {workedMins}분
-                </span>
-              </div>
-            </>
+            <div className="grid grid-cols-2 gap-2">
+              <MetricBox
+                label="출근 시각"
+                value={dayjs(checkInAt).tz("Asia/Seoul").format("HH:mm")}
+              />
+              <MetricBox
+                label="근무 시간"
+                value={`${workedHours}시간 ${workedMins}분`}
+              />
+            </div>
           )}
 
           {/* 조기퇴근 경고 */}
           {isEarlyLeave && (
-            <div className="mt-2 space-y-3">
-              <div className="p-3 rounded-xl bg-amber-50">
-                <p className="text-sm font-medium text-amber-800">정규 퇴근시간까지 {remainingHours > 0 ? `${remainingHours}시간 ` : ""}{remainingMins}분 남았습니다.</p>
-                <p className="mt-1 text-amber-600 text-xs">조기퇴근은 관리자 승인이 필요합니다.</p>
+            <div className="space-y-3">
+              <div className="rounded-xl bg-amber-50 p-3 text-amber-900">
+                <div className="flex items-start gap-2.5">
+                  <TimerReset className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+                  <div>
+                    <p className="text-sm font-semibold">
+                      정규 퇴근시간까지{" "}
+                      {remainingHours > 0 ? `${remainingHours}시간 ` : ""}
+                      {remainingMins}분 남았습니다.
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-amber-700">
+                      사유를 입력하면 조기퇴근 승인 요청이 함께 등록됩니다.
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  사유 입력 <span className="text-red-500">*</span>
+              <div className="space-y-1.5">
+                <label className="flex items-center justify-between text-sm font-medium text-slate-700">
+                  <span>
+                    사유 입력 <span className="text-rose-500">*</span>
+                  </span>
+                  <span className="text-xs font-normal text-slate-400">
+                    {reason.trim().length}/200
+                  </span>
                 </label>
                 <Textarea
                   value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  placeholder="조기퇴근 사유를 입력해주세요"
-                  className="min-h-20 text-sm"
+                  onChange={(e) => setReason(e.target.value.slice(0, 200))}
+                  placeholder="예: 병원 진료로 인해 조기퇴근 신청합니다."
+                  className="min-h-24 resize-none rounded-xl bg-slate-50 text-sm focus:bg-white"
                   autoFocus
                 />
               </div>
@@ -175,11 +221,11 @@ export default function AttendanceConfirmDialog({
           )}
         </div>
 
-        <DialogFooter className="flex-row gap-2">
+        <DialogFooter className="flex-row gap-2 border-t border-slate-100 bg-white px-5 py-4">
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="flex-1 py-2.5 rounded-lg text-sm font-medium text-slate-600 bg-slate-100 active:bg-slate-200 transition-colors"
+            className="flex-1 cursor-pointer rounded-lg bg-slate-100 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-200 active:bg-slate-200"
           >
             취소
           </button>
@@ -187,7 +233,7 @@ export default function AttendanceConfirmDialog({
             type="button"
             onClick={handleConfirm}
             disabled={!canConfirm || isPending}
-            className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white bg-[#131313] active:bg-[#2a2a2a] transition-colors disabled:opacity-50"
+            className="flex-1 cursor-pointer rounded-lg bg-[#131313] py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2a2a2a] active:bg-[#2a2a2a] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isPending
               ? "처리 중..."
@@ -200,5 +246,42 @@ export default function AttendanceConfirmDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function InfoRow({
+  icon,
+  label,
+  value,
+  tabular = false,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  tabular?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 text-sm">
+      <span className="inline-flex items-center gap-2 text-slate-500">
+        <span className="text-slate-400">{icon}</span>
+        {label}
+      </span>
+      <span
+        className={`font-medium text-slate-800 ${
+          tabular ? "tabular-nums" : ""
+        }`}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function MetricBox({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl bg-slate-50 px-3 py-2.5">
+      <p className="text-xs font-medium text-slate-400">{label}</p>
+      <p className="mt-1 text-sm font-semibold text-slate-800">{value}</p>
+    </div>
   );
 }

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
 
+const INVALID_MEMBER_ERROR =
+  "사용자 정보가 현재 DB와 일치하지 않습니다. 로그아웃 후 다시 로그인해 주세요.";
+
 // GET /api/attendance?memberId=xxx&date=YYYY-MM-DD
 export async function GET(request: NextRequest) {
   try {
@@ -71,6 +74,27 @@ export async function POST(request: NextRequest) {
     if (action !== "check_in" && action !== "check_out") {
       return NextResponse.json(
         { error: "action must be 'check_in' or 'check_out'" },
+        { status: 400 }
+      );
+    }
+
+    const { data: member, error: memberError } = await supabase
+      .from("members")
+      .select("id")
+      .eq("id", memberId)
+      .maybeSingle();
+
+    if (memberError) {
+      console.error("Error validating attendance member:", memberError);
+      return NextResponse.json(
+        { error: "사용자 정보 확인에 실패했습니다." },
+        { status: 500 }
+      );
+    }
+
+    if (!member) {
+      return NextResponse.json(
+        { error: INVALID_MEMBER_ERROR },
         { status: 400 }
       );
     }

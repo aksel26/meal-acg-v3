@@ -1,9 +1,11 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import dayjs from "dayjs";
 import "dayjs/locale/ko";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+import { Filter } from "lucide-react";
 
 dayjs.locale("ko");
 dayjs.extend(utc);
@@ -35,40 +37,57 @@ const TYPE_BADGE_STYLES: Record<string, string> = {
   외근: "bg-violet-50 text-violet-700",
 };
 
+const ATTENDANCE_TYPES = ["전체", "근무", "휴가", "재택", "외근"] as const;
+
 function formatTime(isoString: string | null): string {
   if (!isoString) return "-";
-  return dayjs(isoString).tz("Asia/Seoul").format("HH:mm");
+  return dayjs(isoString).tz("Asia/Seoul").format("HH:mm:ss");
+}
+
+function formatCheckoutTime(isoString: string | null): string {
+  if (!isoString) return "근무중";
+  return formatTime(isoString);
 }
 
 function formatWorkTime(minutes: number): string {
   if (minutes <= 0) return "-";
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  return m > 0 ? `${h}h ${m}m` : `${h}h`;
+  return m > 0 ? `${h}시간 ${m}분` : `${h}시간`;
 }
 
 interface AttendanceTableProps {
   records: AttendanceRecord[];
+  selectedFilter: string;
+  onFilterChange: (type: string) => void;
   onRowClick: (record: AttendanceRecord) => void;
 }
 
 export default function AttendanceTable({
   records,
+  selectedFilter,
+  onFilterChange,
   onRowClick,
 }: AttendanceTableProps) {
+  const [filterOpen, setFilterOpen] = useState(false);
+  const filteredRecords = useMemo(() => {
+    if (selectedFilter === "전체") return records;
+    return records.filter((record) => record.attendance_type === selectedFilter);
+  }, [records, selectedFilter]);
+
   if (records.length === 0) {
     return (
-      <div className="rounded-xl border border-[#f3f3f3] bg-white py-12 text-center text-sm text-slate-500">
+      <div className="rounded-xl bg-white py-12 text-center text-sm text-slate-500">
         출퇴근 기록이 없습니다
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-[#f3f3f3] bg-white">
+    <div className="rounded-xl bg-white">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-[#f3f3f3] bg-[#f9f9fa]">
+          <tr className="bg-slate-50">
             <th className="px-4 py-3 text-left font-medium text-slate-500">
               날짜
             </th>
@@ -78,8 +97,43 @@ export default function AttendanceTable({
             <th className="px-2 py-3 text-left font-medium text-slate-500">
               퇴근
             </th>
-            <th className="px-2 py-3 text-left font-medium text-slate-500">
-              근태
+            <th className="relative px-2 py-3 text-left font-medium text-slate-500">
+              <div className="flex items-center gap-1.5">
+                <span>근태</span>
+                <button
+                  type="button"
+                  onClick={() => setFilterOpen((open) => !open)}
+                  className={`rounded-md p-1 transition-colors ${
+                    selectedFilter === "전체"
+                      ? "text-slate-400 hover:bg-white hover:text-slate-700"
+                      : "bg-[#111111] text-white"
+                  }`}
+                  aria-label="근태 필터"
+                >
+                  <Filter className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              {filterOpen && (
+                <div className="absolute left-2 top-10 z-10 min-w-24 rounded-lg bg-white p-1 shadow-lg ring-1 ring-slate-100">
+                  {ATTENDANCE_TYPES.map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => {
+                        onFilterChange(type);
+                        setFilterOpen(false);
+                      }}
+                      className={`block w-full rounded-md px-2 py-1.5 text-left text-xs font-medium transition-colors ${
+                        selectedFilter === type
+                          ? "bg-[#111111] text-white"
+                          : "text-slate-600 hover:bg-slate-50"
+                      }`}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+              )}
             </th>
             <th className="px-2 py-3 text-left font-medium text-slate-500">
               현황
@@ -93,7 +147,17 @@ export default function AttendanceTable({
           </tr>
         </thead>
         <tbody>
-          {records.map((record) => {
+          {filteredRecords.length === 0 ? (
+            <tr>
+              <td
+                colSpan={7}
+                className="px-4 py-10 text-center text-sm text-slate-500"
+              >
+                해당 근태 기록이 없습니다
+              </td>
+            </tr>
+          ) : (
+            filteredRecords.map((record) => {
             const d = dayjs(record.date);
             const dayOfWeek = d.day();
             const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
@@ -106,57 +170,58 @@ export default function AttendanceTable({
               TYPE_BADGE_STYLES[record.attendance_type] ||
               TYPE_BADGE_STYLES["근무"];
 
-            return (
-              <tr
-                key={record.id}
-                onClick={() => onRowClick(record)}
-                className={`cursor-pointer border-b border-[#f3f3f3] transition-colors hover:bg-[#fafafa] ${
-                  isWeekend ? "bg-[#fcfcfd]" : ""
-                }`}
-              >
-                <td className="px-4 py-3 text-slate-700">
-                  <div className="flex items-center gap-1.5">
-                    {record.modification_status && (
-                      <span className="h-2 w-2 shrink-0 rounded-full bg-amber-400" />
-                    )}
+              return (
+                <tr
+                  key={record.id}
+                  onClick={() => onRowClick(record)}
+                  className={`cursor-pointer transition-colors hover:bg-[#fafafa] ${
+                    isWeekend ? "bg-[#fcfcfd]" : ""
+                  }`}
+                >
+                  <td className="px-4 py-3 text-slate-700">
+                    <div className="flex items-center gap-1.5">
+                      {record.modification_status && (
+                        <span className="h-2 w-2 shrink-0 rounded-full bg-amber-400" />
+                      )}
+                      <span
+                        className={
+                          dayOfWeek === 0
+                            ? "text-red-400"
+                            : dayOfWeek === 6
+                              ? "text-blue-400"
+                              : ""
+                        }
+                      >
+                        {d.format("MM-DD")} ({d.format("dd")})
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-2 py-3 text-slate-700">
+                    {formatTime(record.check_in_at)}
+                  </td>
+                  <td className="px-2 py-3 text-slate-700">
+                    {formatCheckoutTime(record.check_out_at)}
+                  </td>
+                  <td className="px-2 py-3">
                     <span
-                      className={
-                        dayOfWeek === 0
-                          ? "text-red-400"
-                          : dayOfWeek === 6
-                            ? "text-blue-400"
-                            : ""
-                      }
+                      className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${badgeStyle}`}
                     >
-                      {d.format("MM-DD")} ({d.format("dd")})
+                      {record.attendance_type}
                     </span>
-                  </div>
-                </td>
-                <td className="px-2 py-3 text-slate-700">
-                  {formatTime(record.check_in_at)}
-                </td>
-                <td className="px-2 py-3 text-slate-700">
-                  {formatTime(record.check_out_at)}
-                </td>
-                <td className="px-2 py-3">
-                  <span
-                    className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${badgeStyle}`}
-                  >
-                    {record.attendance_type}
-                  </span>
-                </td>
-                <td className={`px-2 py-3 font-medium ${statusInfo.color}`}>
-                  {statusInfo.text}
-                </td>
-                <td className="px-2 py-3 text-slate-700">
-                  {formatWorkTime(record.work_minutes)}
-                </td>
-                <td className="px-4 py-3 text-right text-slate-700">
-                  {formatWorkTime(record.overtime_minutes)}
-                </td>
-              </tr>
-            );
-          })}
+                  </td>
+                  <td className={`px-2 py-3 font-medium ${statusInfo.color}`}>
+                    {statusInfo.text}
+                  </td>
+                  <td className="px-2 py-3 text-slate-700">
+                    {formatWorkTime(record.work_minutes)}
+                  </td>
+                  <td className="px-4 py-3 text-right text-slate-700">
+                    {formatWorkTime(record.overtime_minutes)}
+                  </td>
+                </tr>
+              );
+            })
+          )}
         </tbody>
       </table>
     </div>

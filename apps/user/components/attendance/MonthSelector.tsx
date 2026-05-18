@@ -36,7 +36,7 @@ export default function MonthSelector({
   return (
     <div
       className={cn(
-        "flex items-center justify-between rounded-xl border border-[#f3f3f3] bg-white px-3 py-3",
+        "flex items-center justify-between rounded-xl bg-white px-3 py-3",
         className,
       )}
     >

@@ -7,6 +7,8 @@ import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import { useUserStore } from "@/stores/userStore";
+import { useDayoffs, type DayoffRecord } from "@/hooks/use-dayoffs";
+import { useLeaveBalances } from "@/hooks/use-leave-balances";
 import { useMemberIdLookup } from "@/hooks/use-points-data";
 import {
   useAttendanceMonthly,
@@ -15,9 +17,17 @@ import {
 import AttendanceMobileView from "@/components/attendance/AttendanceMobileView";
 import AttendanceDesktopView from "@/components/attendance/AttendanceDesktopView";
 import AttendanceModifyDrawer from "@/components/attendance/AttendanceModifyDrawer";
+import DayoffsManager from "@/components/dayoffs/DayoffsManager";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
+
+type DayoffCreateRequest = {
+  startDate: string;
+  endDate?: string;
+  requestId: number;
+};
+type DayoffEditRequest = { record: DayoffRecord; requestId: number };
 
 export default function AttendancePage() {
   const router = useRouter();
@@ -36,6 +46,12 @@ export default function AttendancePage() {
   const [selectedDate, setSelectedDate] = useState<string | null>(
     now.format("YYYY-MM-DD"),
   );
+  const [selectedRangeStart, setSelectedRangeStart] = useState<string | null>(null);
+  const [selectedRangeEnd, setSelectedRangeEnd] = useState<string | null>(null);
+  const [dayoffCreateRequest, setDayoffCreateRequest] =
+    useState<DayoffCreateRequest | null>(null);
+  const [dayoffEditRequest, setDayoffEditRequest] =
+    useState<DayoffEditRequest | null>(null);
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [modifyTarget, setModifyTarget] = useState<AttendanceRecord | null>(
@@ -67,6 +83,8 @@ export default function AttendancePage() {
   }, [memberLookup, memberId, setMemberInfo]);
 
   const { data, isLoading } = useAttendanceMonthly(memberId, year, month);
+  const { data: dayoffs } = useDayoffs(year, month, memberId || undefined);
+  const { data: leaveBalances } = useLeaveBalances(memberId || null, year);
   const records = data?.records ?? [];
   const summary = data?.summary ?? null;
 
@@ -74,11 +92,60 @@ export default function AttendancePage() {
     setYear(newYear);
     setMonth(newMonth);
     setSelectedDate(null);
+    setSelectedRangeStart(null);
+    setSelectedRangeEnd(null);
   };
 
   const handleModifyRequest = (record: AttendanceRecord) => {
     setModifyTarget(record);
     setDrawerOpen(true);
+  };
+
+  const handleCalendarDateSelect = (date: string) => {
+    setSelectedDate(date);
+    setDayoffEditRequest(null);
+
+    if (!selectedRangeStart || selectedRangeEnd || dayjs(date).isBefore(selectedRangeStart, "day")) {
+      setSelectedRangeStart(date);
+      setSelectedRangeEnd(null);
+      setDayoffCreateRequest(null);
+      return;
+    }
+
+    setSelectedRangeEnd(date);
+    setDayoffCreateRequest((prev) => ({
+      startDate: selectedRangeStart,
+      endDate: date,
+      requestId: (prev?.requestId ?? 0) + 1,
+    }));
+  };
+
+  const handleManageDayoffs = (
+    date: string,
+    shouldCreate: boolean,
+    record?: DayoffRecord,
+  ) => {
+    setSelectedDate(date);
+
+    if (shouldCreate) {
+      setDayoffEditRequest(null);
+      setSelectedRangeStart(date);
+      setSelectedRangeEnd(date);
+      setDayoffCreateRequest((prev) => ({
+        startDate: date,
+        endDate: date,
+        requestId: (prev?.requestId ?? 0) + 1,
+      }));
+    } else if (record) {
+      setDayoffCreateRequest(null);
+      setDayoffEditRequest((prev) => ({
+        record,
+        requestId: (prev?.requestId ?? 0) + 1,
+      }));
+    } else {
+      setDayoffCreateRequest(null);
+      setDayoffEditRequest(null);
+    }
   };
 
   if (!mounted || !hasHydrated || !userName) {
@@ -98,9 +165,9 @@ export default function AttendancePage() {
         className="space-y-5 p-4 md:p-6"
       >
         <div>
-          <h1 className="text-xl font-semibold text-[#111111]">출퇴근 관리</h1>
+          <h1 className="text-xl font-semibold text-[#111111]">근태 관리</h1>
           <p className="mt-1 text-sm text-slate-500">
-            월별 출퇴근 기록과 수정 요청 상태를 확인합니다.
+            출퇴근 기록과 휴가/연차 신청 내역을 한 곳에서 확인합니다.
           </p>
         </div>
 
@@ -110,10 +177,14 @@ export default function AttendancePage() {
             month={month}
             onMonthChange={handleMonthChange}
             selectedDate={selectedDate}
-            onDateSelect={setSelectedDate}
+            onDateSelect={handleCalendarDateSelect}
+            rangeStartDate={selectedRangeStart}
+            rangeEndDate={selectedRangeEnd}
             records={records}
+            dayoffs={dayoffs || []}
             isLoading={isLoading}
             onModifyRequest={handleModifyRequest}
+            onManageDayoffs={handleManageDayoffs}
           />
         </div>
 
@@ -123,13 +194,30 @@ export default function AttendancePage() {
             month={month}
             onMonthChange={handleMonthChange}
             selectedDate={selectedDate}
-            onDateSelect={setSelectedDate}
+            onDateSelect={handleCalendarDateSelect}
+            rangeStartDate={selectedRangeStart}
+            rangeEndDate={selectedRangeEnd}
             records={records}
+            dayoffs={dayoffs || []}
+            leaveBalances={leaveBalances || []}
             summary={summary}
             isLoading={isLoading}
             onRowClick={handleModifyRequest}
+            onViewLeaveDetails={() => router.push("/profile?tab=leave")}
+            onManageDayoffs={handleManageDayoffs}
           />
         </div>
+
+        <DayoffsManager
+          year={year}
+          month={month}
+          selectedDate={selectedDate}
+          createDateRequest={dayoffCreateRequest}
+          editRecordRequest={dayoffEditRequest}
+          dialogsOnly
+          onMonthChange={handleMonthChange}
+          onDateSelect={setSelectedDate}
+        />
       </motion.div>
 
       <AttendanceModifyDrawer

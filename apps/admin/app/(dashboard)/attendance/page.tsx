@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { ChevronLeft, ChevronRight, Save, Loader2 } from "lucide-react";
 import { Button } from "@repo/ui/src/button";
 import { Input } from "@repo/ui/src/input";
+import { DatePicker } from "@repo/ui/src/date-picker";
 import {
   Select,
   SelectContent,
@@ -136,11 +137,10 @@ export default function AttendancePage() {
               <Button variant="outline" size="icon" className="h-9 w-9" onClick={handlePrevDay}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <Input
-                type="date"
+              <DatePicker
                 value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="h-9 w-[150px] text-sm"
+                onChange={setSelectedDate}
+                className="h-9 w-[170px] text-sm"
               />
               <span className="text-xs text-slate-400">({dow})</span>
               <Button variant="outline" size="icon" className="h-9 w-9" onClick={handleNextDay}>
@@ -171,13 +171,21 @@ export default function AttendancePage() {
         </div>
 
         {viewMode === "date" && selectedDate === todayStr && summary && (
-          <div className="ml-auto flex items-center gap-4 text-xs text-slate-500">
-            <span>출근 <strong className="text-base text-green-600">{summary.checkedIn}</strong></span>
-            <span>미출근 <strong className="text-base text-slate-700">{summary.notCheckedIn}</strong></span>
-            <span>지각 <strong className="text-base text-red-600">{summary.late}</strong></span>
-            <span>휴가 <strong className="text-base text-slate-800">{summary.onLeave}</strong></span>
+          <div className="ml-auto flex h-9 items-center divide-x divide-slate-200 text-sm font-medium text-slate-400">
+            <span className="flex h-full items-center gap-1.5 px-3 first:pl-0">
+              출근 <strong className="inline-flex h-full items-center text-xl font-semibold leading-none text-slate-950">{summary.checkedIn}</strong>
+            </span>
+            <span className="flex h-full items-center gap-1.5 px-3">
+              미출근 <strong className="inline-flex h-full items-center text-xl font-semibold leading-none text-slate-950">{summary.notCheckedIn}</strong>
+            </span>
+            <span className="flex h-full items-center gap-1.5 px-3">
+              지각 <strong className="inline-flex h-full items-center text-xl font-semibold leading-none text-red-600">{summary.late}</strong>
+            </span>
+            <span className="flex h-full items-center gap-1.5 px-3">
+              휴가 <strong className="inline-flex h-full items-center text-xl font-semibold leading-none text-slate-950">{summary.onLeave}</strong>
+            </span>
             {summary.lateMembers.length > 0 && (
-              <span className="text-red-500">
+              <span className="flex h-full items-center px-3 text-sm font-medium text-red-500">
                 지각: {summary.lateMembers.map((m) => m.name).join(", ")}
               </span>
             )}
@@ -186,26 +194,26 @@ export default function AttendancePage() {
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-xl border bg-white">
+      <div className="overflow-x-auto rounded-xl bg-white">
         <table className="w-full text-sm whitespace-nowrap">
-          <thead className="border-b bg-slate-50 text-left text-xs font-medium text-slate-500">
+          <thead className="border-b border-slate-100 bg-slate-50 text-left text-xs font-medium text-slate-500">
             <tr>
-              <th className="px-3 py-2">이름</th>
-              <th className="px-3 py-2">수정자</th>
-              <th className="px-3 py-2">근태명</th>
-              <th className="px-3 py-2">날짜</th>
-              <th className="px-3 py-2">출근시간</th>
-              <th className="px-3 py-2">퇴근시간</th>
-              <th className="px-3 py-2">연장시간</th>
-              <th className="px-3 py-2">장소</th>
-              <th className="px-3 py-2">참조</th>
-              <th className="px-3 py-2">내용</th>
-              <th className="px-3 py-2">승인자</th>
-              <th className="px-3 py-2">등록일</th>
-              <th className="px-3 py-2">수정일</th>
-              <th className="px-3 py-2">승인일</th>
-              <th className="px-3 py-2">로그인IP</th>
-              <th className="px-3 py-2">로그인IP2</th>
+              <th className="px-3 py-2.5">이름</th>
+              <th className="px-3 py-2.5">수정자</th>
+              <th className="px-3 py-2.5">근태명</th>
+              <th className="px-3 py-2.5">날짜</th>
+              <th className="px-3 py-2.5">출근시간</th>
+              <th className="px-3 py-2.5">퇴근시간</th>
+              <th className="px-3 py-2.5">연장시간</th>
+              <th className="px-3 py-2.5">장소</th>
+              <th className="px-3 py-2.5">참조</th>
+              <th className="px-3 py-2.5">내용</th>
+              <th className="px-3 py-2.5">승인자</th>
+              <th className="px-3 py-2.5">승인일</th>
+              <th className="px-3 py-2.5">수정일</th>
+              <th className="px-3 py-2.5">등록일</th>
+              <th className="px-3 py-2.5">로그인IP</th>
+              <th className="px-3 py-2.5">로그인IP2</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -408,12 +416,12 @@ function InlineRow({ record }: { record: AttendanceRecord }) {
     }
   };
 
-  const cellClass = "px-3 py-1.5 text-slate-600";
+  const cellClass = "px-3 py-1.5 align-middle text-slate-600";
 
   return (
     <tr className={cn("hover:bg-slate-50", editing && "bg-slate-100/30")}>
       {/* 이름 */}
-      <td className="px-3 py-1.5 font-medium text-slate-800">
+      <td className="px-3 py-1.5 align-middle font-medium text-slate-800">
         {record.member.full_name}
       </td>
       {/* 수정자 */}
@@ -435,7 +443,7 @@ function InlineRow({ record }: { record: AttendanceRecord }) {
             }
           }}
         >
-          <SelectTrigger size="sm" className="text-xs border-0 bg-transparent shadow-none px-0 h-auto gap-1">
+          <SelectTrigger size="sm" className="!h-5 gap-1 border-0 bg-transparent px-0 py-0 text-xs leading-none shadow-none [&_svg]:size-3">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -574,17 +582,17 @@ function InlineRow({ record }: { record: AttendanceRecord }) {
       <td className={cellClass}>
         {record.approver?.full_name ?? "-"}
       </td>
-      {/* 등록일 */}
+      {/* 승인일 */}
       <td className={cellClass}>
-        <span className="text-xs">{formatDateTime(record.created_at)}</span>
+        <span className="text-xs">{formatDateTime(record.approved_at)}</span>
       </td>
       {/* 수정일 */}
       <td className={cellClass}>
         <span className="text-xs">{formatDateTime(record.updated_at)}</span>
       </td>
-      {/* 승인일 */}
+      {/* 등록일 */}
       <td className={cellClass}>
-        <span className="text-xs">{formatDateTime(record.approved_at)}</span>
+        <span className="text-xs">{formatDateTime(record.created_at)}</span>
       </td>
       {/* 로그인IP */}
       <td className={cellClass}>

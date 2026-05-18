@@ -221,7 +221,9 @@ export default function EvaluationsPage() {
                 <TableHead className="w-24 text-xs text-slate-500">배포</TableHead>
                 <TableHead className="w-20 text-xs text-slate-500">버전</TableHead>
                 <TableHead className="w-44 text-xs text-slate-500">수정일</TableHead>
-                <TableHead className="w-24 text-xs text-slate-500" />
+                <TableHead className="w-28 text-right text-xs text-slate-500">
+                  관리
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -302,7 +304,7 @@ export default function EvaluationsPage() {
                       {dayjs(round.updated_at).format("YYYY-MM-DD HH:mm")}
                     </TableCell>
                     <TableCell className="py-3">
-                      <div className="flex justify-end gap-1.5">
+                      <div className="flex flex-nowrap items-center justify-end gap-1.5">
                         <Button
                           type="button"
                           variant="outline"

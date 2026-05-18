@@ -204,7 +204,7 @@ export function QuestionSetManager() {
               <TableHead className="w-44 text-xs text-slate-500">
                 수정일
               </TableHead>
-              <TableHead className="w-28 text-xs text-slate-500">
+              <TableHead className="w-36 text-right text-xs text-slate-500">
                 관리
               </TableHead>
             </TableRow>
@@ -328,7 +328,7 @@ export function QuestionSetManager() {
                     {dayjs(questionSet.updated_at).format("YYYY-MM-DD HH:mm")}
                   </TableCell>
                   <TableCell className="py-3">
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-nowrap items-center justify-end gap-2">
                       <Button
                         type="button"
                         size="sm"

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth";
+import { getAuthErrorStatus, requireAdmin, requireAdminPermission } from "@/lib/auth";
 import { applyRoleOverride } from "@/lib/constants";
 
 // GET /api/members - List all members
@@ -46,8 +46,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(result);
   } catch (error) {
     console.error("Members API error:", error);
-    if (error instanceof Error && error.message === "Unauthorized") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const authStatus = getAuthErrorStatus(error);
+    if (authStatus) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: authStatus });
     }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
@@ -56,11 +57,26 @@ export async function GET(request: NextRequest) {
 // POST /api/members - Create a new member
 export async function POST(request: NextRequest) {
   try {
-    const session = await requireAdmin();
+    const session = await requireAdminPermission("members:write");
     const supabase = createServiceClient();
     const body = await request.json();
 
-    const { loginId, password, fullName, role = "user", email, memberRole, internMonths, position_id, title_id, birthDate, phone, passportNumber } = body;
+    const {
+      loginId,
+      password,
+      fullName,
+      role = "user",
+      adminRole,
+      userAuthority,
+      email,
+      memberRole,
+      internMonths,
+      position_id,
+      title_id,
+      birthDate,
+      phone,
+      passportNumber,
+    } = body;
 
     if (!loginId || !password || !fullName) {
       return NextResponse.json(
@@ -83,6 +99,8 @@ export async function POST(request: NextRequest) {
         password,
         full_name: fullName,
         role,
+        admin_role: role === "admin" ? adminRole || "P&C 일반" : null,
+        user_authority: userAuthority || null,
         email: email || null,
         member_role: memberRole || "팀원",
         intern_months: memberRole === "인턴" && internMonths ? parseInt(internMonths, 10) : null,
@@ -121,8 +139,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(data, { status: 201 });
   } catch (error) {
     console.error("Members API error:", error);
-    if (error instanceof Error && error.message === "Unauthorized") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const authStatus = getAuthErrorStatus(error);
+    if (authStatus) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: authStatus });
     }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

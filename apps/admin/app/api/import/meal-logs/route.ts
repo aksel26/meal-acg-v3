@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getAuthErrorStatus, requireAdminPermission } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/server";
 import type { MealRecord } from "@/lib/excel-parser";
 
@@ -18,6 +19,7 @@ interface ImportResult {
 
 export async function POST(request: Request): Promise<NextResponse<ImportResult>> {
   try {
+    await requireAdminPermission("meal:import");
     const body: ImportRequest = await request.json();
     const { memberId, records, overwrite = false } = body;
 
@@ -169,6 +171,19 @@ export async function POST(request: Request): Promise<NextResponse<ImportResult>
     });
   } catch (error) {
     console.error("Import error:", error);
+    const authStatus = getAuthErrorStatus(error);
+    if (authStatus) {
+      return NextResponse.json(
+        {
+          success: false,
+          inserted: 0,
+          updated: 0,
+          skipped: 0,
+          errors: [{ date: "-", message: "권한이 없습니다." }],
+        },
+        { status: authStatus },
+      );
+    }
     return NextResponse.json(
       {
         success: false,

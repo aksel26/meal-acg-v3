@@ -33,7 +33,7 @@ export function middleware(request: NextRequest) {
   // Validate session (basic check)
   try {
     const session = JSON.parse(sessionCookie.value);
-    if (!session.userId || !session.role) {
+    if (!session.userId || session.role !== "admin") {
       throw new Error("Invalid session");
     }
   } catch {

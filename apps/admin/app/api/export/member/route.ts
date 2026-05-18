@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getAuthErrorStatus, requireAdminPermission } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/server";
 import ExcelJS from "exceljs";
 
@@ -16,6 +17,7 @@ function normalizeDate(dateStr: string): string {
 // GET /api/export/member - 멤버별 엑셀 내보내기 (hmkim.xlsx 형식)
 export async function GET(request: NextRequest) {
   try {
+    await requireAdminPermission("meal:export");
     const supabase = createServiceClient();
     const searchParams = request.nextUrl.searchParams;
 
@@ -430,6 +432,10 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Member export API error:", error);
+    const authStatus = getAuthErrorStatus(error);
+    if (authStatus) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: authStatus });
+    }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

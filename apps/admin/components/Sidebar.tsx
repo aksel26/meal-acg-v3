@@ -56,6 +56,7 @@ import {
   TooltipContent,
 } from "@repo/ui/src/tooltip";
 import { useAuth } from "@/hooks/useAuth";
+import { hasAdminPermission, type AdminPermission } from "@/lib/rbac";
 import Image from "next/image";
 import dayjs from "dayjs";
 
@@ -63,6 +64,7 @@ interface NavItem {
   name: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
+  permission?: AdminPermission;
   external?: boolean;
   isLabel?: boolean;
 }
@@ -90,42 +92,43 @@ const navigation: NavigationItem[] = [
     icon: Coins,
     items: [
       { name: "식대 관리", href: "", icon: Coffee, isLabel: true },
-      { name: "사용현황 (인원별)", href: "/meal-status", icon: Users },
-      { name: "식대 입력", href: "/calendar", icon: Calendar },
-      { name: "식대 기본금 설정", href: "/settings", icon: Settings },
-      { name: "엑셀 가져오기", href: "/import", icon: Upload },
-      { name: "엑셀 내보내기", href: "/export", icon: Download },
+      { name: "사용현황 (인원별)", href: "/meal-status", icon: Users, permission: "meal:read" },
+      { name: "식대 입력", href: "/calendar", icon: Calendar, permission: "meal:write" },
+      { name: "식대 기본금 설정", href: "/settings", icon: Settings, permission: "settings:write" },
+      { name: "엑셀 가져오기", href: "/import", icon: Upload, permission: "meal:import" },
+      { name: "엑셀 내보내기", href: "/export", icon: Download, permission: "meal:export" },
       { name: "포인트 관리", href: "", icon: PiggyBank, isLabel: true },
-      { name: "예산 할당", href: "/budget", icon: PiggyBank },
-      { name: "사용내역 검토", href: "/review", icon: ClipboardCheck },
-      { name: "사용 내역 조회", href: "/points-overview", icon: BarChart3 },
+      { name: "예산 할당", href: "/budget", icon: PiggyBank, permission: "points:write" },
+      { name: "사용내역 검토", href: "/review", icon: ClipboardCheck, permission: "points:review" },
+      { name: "사용 내역 조회", href: "/points-overview", icon: BarChart3, permission: "points:read" },
     ],
   },
   {
     name: "조직 관리",
     icon: Users,
     items: [
-      { name: "조직 구성", href: "/organization", icon: Building2 },
-      { name: "직급/직책 관리", href: "/job-titles", icon: Grid3X3 },
-      { name: "다면평가", href: "/evaluations", icon: ClipboardPenLine },
-      { name: "점심조 관리", href: "/lunch-groups", icon: Shuffle },
-      { name: "Monthly 음료", href: "/monthly", icon: Coffee },
+      { name: "조직 구성", href: "/organization", icon: Building2, permission: "organization:read" },
+      { name: "직급/직책 관리", href: "/job-titles", icon: Grid3X3, permission: "organization:write" },
+      { name: "다면평가", href: "/evaluations", icon: ClipboardPenLine, permission: "evaluation:read" },
+      { name: "점심조 관리", href: "/lunch-groups", icon: Shuffle, permission: "organization:write" },
+      { name: "Monthly 음료", href: "/monthly", icon: Coffee, permission: "meal:write" },
     ],
   },
   {
     name: "근태 관리",
     icon: CalendarClock,
     items: [
-      { name: "출퇴근 관리", href: "/attendance", icon: UserCheck },
-      { name: "휴가 관리", href: "/dayoffs", icon: CalendarDays },
-      { name: "휴가 자동 계산", href: "/leave-calculator", icon: Calculator },
-      { name: "승인 관리", href: "/approvals", icon: ClipboardList },
+      { name: "출퇴근 관리", href: "/attendance", icon: UserCheck, permission: "attendance:read" },
+      { name: "휴가 관리", href: "/dayoffs", icon: CalendarDays, permission: "leave:read" },
+      { name: "휴가 자동 계산", href: "/leave-calculator", icon: Calculator, permission: "leave:read" },
+      { name: "승인 관리", href: "/approvals", icon: ClipboardList, permission: "leave:approve" },
     ],
   },
   {
     name: "알림 관리",
     href: "/notifications",
     icon: Bell,
+    permission: "notifications:read",
   },
   {
     name: "아르바이트 관리",
@@ -146,11 +149,36 @@ const navigation: NavigationItem[] = [
     name: "설정",
     icon: Cog,
     items: [
-      { name: "공휴일 관리", href: "/holidays", icon: CalendarDays },
-      { name: "휴가 유형 관리", href: "/leave-types", icon: CalendarClock },
+      { name: "공휴일 관리", href: "/holidays", icon: CalendarDays, permission: "settings:write" },
+      { name: "휴가 유형 관리", href: "/leave-types", icon: CalendarClock, permission: "settings:write" },
     ],
   },
 ];
+
+function canShowItem(item: NavItem, adminRole: string | null | undefined) {
+  return !item.permission || hasAdminPermission(adminRole, item.permission);
+}
+
+function filterNavigation(
+  items: NavigationItem[],
+  adminRole: string | null | undefined,
+): NavigationItem[] {
+  return items.reduce<NavigationItem[]>((visible, item) => {
+    if (!isNavGroup(item)) {
+      if (canShowItem(item, adminRole)) visible.push(item);
+      return visible;
+    }
+
+    const visibleItems = item.items.filter((child) => {
+      if (child.isLabel) return true;
+      return canShowItem(child, adminRole);
+    });
+    const hasVisibleLink = visibleItems.some((child) => !child.isLabel);
+
+    if (hasVisibleLink) visible.push({ ...item, items: visibleItems });
+    return visible;
+  }, []);
+}
 
 function NavItemComponent({
   item,
@@ -346,6 +374,7 @@ function NavGroupComponent({
 export default function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const visibleNavigation = filterNavigation(navigation, user?.adminRole);
 
   const [collapsed, setCollapsed] = useState(false);
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
@@ -461,7 +490,7 @@ export default function Sidebar() {
 
         {/* Navigation */}
         <nav className={cn("flex flex-col gap-1", collapsed ? "px-2" : "")}>
-          {navigation.map((item) => {
+          {visibleNavigation.map((item) => {
             if (isNavGroup(item)) {
               return (
                 <NavGroupComponent
@@ -519,7 +548,7 @@ export default function Sidebar() {
                 {user?.fullName || "Admin"}
               </p>
               <p className="text-[13px] text-[#7a7a7a]">
-                {user?.role === "admin" ? "관리자" : "사용자"}
+                {user?.adminRole ?? (user?.role === "admin" ? "관리자" : "사용자")}
               </p>
             </div>
             {user?.hireDate && (

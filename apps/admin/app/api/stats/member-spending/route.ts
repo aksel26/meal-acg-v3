@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getAuthErrorStatus, requireAdminPermission } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/server";
 import type { MonthlyAllowancesJson } from "@/lib/supabase/types";
 
 // GET /api/stats/member-spending - 멤버별 지출 현황
 export async function GET(request: NextRequest) {
   try {
+    await requireAdminPermission("dashboard:read");
     const supabase = createServiceClient();
     const searchParams = request.nextUrl.searchParams;
 
@@ -76,6 +78,10 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Member spending API error:", error);
+    const authStatus = getAuthErrorStatus(error);
+    if (authStatus) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: authStatus });
+    }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { setSession } from "@/lib/auth";
+import { isUserAuthority, normalizeAdminRole } from "@/lib/rbac";
 
 export async function POST(request: NextRequest) {
   try {
@@ -46,22 +47,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch hire date from member_statuses (earliest start_date)
-    const { data: statusData } = await supabase
-      .from("member_statuses")
-      .select("start_date")
-      .eq("member_id", user.user_id)
-      .order("start_date", { ascending: true })
-      .limit(1)
-      .single();
+    const [memberResult, statusResult] = await Promise.all([
+      supabase
+        .from("members")
+        .select("admin_role, user_authority")
+        .eq("id", user.user_id)
+        .single(),
+      supabase
+        .from("member_statuses")
+        .select("start_date")
+        .eq("member_id", user.user_id)
+        .order("start_date", { ascending: true })
+        .limit(1)
+        .single(),
+    ]);
 
-    const hireDate = statusData?.start_date || null;
+    const adminRole = normalizeAdminRole(memberResult.data?.admin_role);
+    const userAuthority = isUserAuthority(memberResult.data?.user_authority)
+      ? memberResult.data.user_authority
+      : null;
+    const hireDate = statusResult.data?.start_date || null;
 
     // Set session cookie
     await setSession({
       userId: user.user_id,
       fullName: user.full_name,
       role: user.role as "admin",
+      adminRole,
+      userAuthority,
       hireDate,
     });
 
@@ -71,6 +84,8 @@ export async function POST(request: NextRequest) {
         id: user.user_id,
         fullName: user.full_name,
         role: user.role,
+        adminRole,
+        userAuthority,
         hireDate,
       },
     });

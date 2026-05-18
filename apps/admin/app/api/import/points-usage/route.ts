@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getAuthErrorStatus, requireAdminPermission } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/server";
 
 interface ImportRecord {
@@ -33,6 +34,7 @@ function getPeriodFromDate(dateStr: string): string {
 
 export async function POST(request: Request): Promise<NextResponse<ImportResult>> {
   try {
+    await requireAdminPermission("points:write");
     const body: ImportRequest = await request.json();
     const { records, admin_id } = body;
 
@@ -295,6 +297,19 @@ export async function POST(request: Request): Promise<NextResponse<ImportResult>
     });
   } catch (error) {
     console.error("Points usage import error:", error);
+    const authStatus = getAuthErrorStatus(error);
+    if (authStatus) {
+      return NextResponse.json(
+        {
+          success: false,
+          inserted: 0,
+          failed: 0,
+          errors: ["권한이 없습니다."],
+          summary: [],
+        },
+        { status: authStatus },
+      );
+    }
     return NextResponse.json(
       {
         success: false,

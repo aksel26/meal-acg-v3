@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth";
+import { getAuthErrorStatus, requireAdmin, requireAdminPermission } from "@/lib/auth";
 
 // GET /api/members/[id] - Get a single member with team/position info
 export async function GET(
@@ -8,7 +8,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAdmin();
+    await requireAdminPermission("members:write");
     const supabase = createServiceClient();
     const { id } = await params;
 
@@ -27,8 +27,9 @@ export async function GET(
 
     return NextResponse.json(data);
   } catch (error) {
-    if (error instanceof Error && error.message === "Unauthorized") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const authStatus = getAuthErrorStatus(error);
+    if (authStatus) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: authStatus });
     }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
@@ -78,6 +79,12 @@ export async function PUT(
     if (body.role !== undefined) {
       updateData.role = body.role;
     }
+    if (body.admin_role !== undefined) {
+      updateData.admin_role = body.role === "admin" ? body.admin_role || "P&C 일반" : null;
+    }
+    if (body.user_authority !== undefined) {
+      updateData.user_authority = body.user_authority || null;
+    }
     if (body.position_id !== undefined) {
       updateData.position_id = body.position_id;
     }
@@ -110,8 +117,9 @@ export async function PUT(
     return NextResponse.json(data);
   } catch (error) {
     console.error("Members API error:", error);
-    if (error instanceof Error && error.message === "Unauthorized") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const authStatus = getAuthErrorStatus(error);
+    if (authStatus) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: authStatus });
     }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
@@ -123,7 +131,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAdmin();
+    await requireAdminPermission("members:write");
     const supabase = createServiceClient();
     const { id } = await params;
 
@@ -172,8 +180,9 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Members API error:", error);
-    if (error instanceof Error && error.message === "Unauthorized") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const authStatus = getAuthErrorStatus(error);
+    if (authStatus) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: authStatus });
     }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

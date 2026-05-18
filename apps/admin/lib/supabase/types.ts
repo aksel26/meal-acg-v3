@@ -850,6 +850,8 @@ export type Database = {
       }
       members: {
         Row: {
+          admin_role: string | null
+          birth_date: string | null
           created_at: string | null
           division_id: string | null
           email: string | null
@@ -865,12 +867,13 @@ export type Database = {
           role: string | null
           team_id: string | null
           title_id: string | null
-          birth_date: string | null
           passport_number: string | null
           phone: string | null
           updated_at: string | null
+          user_authority: string | null
         }
         Insert: {
+          admin_role?: string | null
           birth_date?: string | null
           created_at?: string | null
           division_id?: string | null
@@ -890,8 +893,10 @@ export type Database = {
           team_id?: string | null
           title_id?: string | null
           updated_at?: string | null
+          user_authority?: string | null
         }
         Update: {
+          admin_role?: string | null
           birth_date?: string | null
           created_at?: string | null
           division_id?: string | null
@@ -911,6 +916,7 @@ export type Database = {
           team_id?: string | null
           title_id?: string | null
           updated_at?: string | null
+          user_authority?: string | null
         }
         Relationships: [
           {
@@ -2300,5 +2306,7 @@ export interface AuthSession {
   userId: string
   fullName: string
   role: "user" | "admin"
+  adminRole?: "대표" | "P&C 팀장" | "P&C 일반" | null
+  userAuthority?: "팀장/본부장" | "팀장" | null
   hireDate?: string | null
 }

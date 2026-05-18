@@ -67,6 +67,7 @@ import type {
   MemberStatusType,
 } from "@/lib/supabase/types";
 import { STATUS_COLORS } from "@/lib/constants";
+import { ADMIN_ROLES, USER_AUTHORITIES } from "@/lib/rbac";
 
 // ── Constants ──
 
@@ -87,6 +88,8 @@ interface MemberOption {
   member_role: string | null;
   intern_months: number | null;
   role: string | null;
+  admin_role: string | null;
+  user_authority: string | null;
 }
 
 interface UserFormData {
@@ -100,6 +103,8 @@ interface UserFormData {
   memberRole: string;
   internMonths: string;
   role: string;
+  adminRole: string;
+  userAuthority: string;
   position_id: string;
   title_id: string;
 }
@@ -141,6 +146,8 @@ export default function MemberStatusView({
     member_role: string;
     intern_months: string;
     role: string;
+    admin_role: string;
+    user_authority: string;
     position_id: string;
     title_id: string;
   } | null>(null);
@@ -253,6 +260,8 @@ export default function MemberStatusView({
       memberRole: "팀원",
       internMonths: "",
       role: "user",
+      adminRole: "P&C 일반",
+      userAuthority: "",
       position_id: "",
       title_id: "",
     },
@@ -277,6 +286,8 @@ export default function MemberStatusView({
       position_id?: string;
       title_id?: string;
       role?: string;
+      adminRole?: string;
+      userAuthority?: string;
     }) => {
       const response = await fetch("/api/members", {
         method: "POST",
@@ -324,6 +335,8 @@ export default function MemberStatusView({
       passportNumber: data.passportNumber || undefined,
       position_id: data.position_id || undefined,
       title_id: data.title_id || undefined,
+      adminRole: data.role === "admin" ? data.adminRole : undefined,
+      userAuthority: data.userAuthority || undefined,
     });
   };
 
@@ -371,6 +384,8 @@ export default function MemberStatusView({
       member_role: string;
       intern_months?: number | null;
       role?: string;
+      admin_role?: string | null;
+      user_authority?: string | null;
       position_id?: string;
       title_id?: string | null;
     }) => {
@@ -386,6 +401,8 @@ export default function MemberStatusView({
               ? data.intern_months
               : null,
           role: data.role,
+          admin_role: data.role === "admin" ? data.admin_role : null,
+          user_authority: data.user_authority || null,
           ...(data.position_id !== undefined ? { position_id: data.position_id } : {}),
           title_id: data.title_id ?? null,
         }),
@@ -418,6 +435,8 @@ export default function MemberStatusView({
       member_role: member?.member_role || row.member_role || "팀원",
       intern_months: member?.intern_months?.toString() || "",
       role: member?.role || "user",
+      admin_role: member?.admin_role || "P&C 일반",
+      user_authority: member?.user_authority || "",
       position_id: row.position_id || "",
       title_id: row.title_id || "",
     });
@@ -436,6 +455,9 @@ export default function MemberStatusView({
           ? parseInt(editingMember.intern_months, 10)
           : null,
       role: editingMember.role,
+      admin_role:
+        editingMember.role === "admin" ? editingMember.admin_role : null,
+      user_authority: editingMember.user_authority || null,
       position_id: editingMember.position_id || undefined,
       title_id: editingMember.title_id || null,
     });
@@ -1191,6 +1213,50 @@ export default function MemberStatusView({
                     }
                   />
                 </label>
+                {watchedRole === "admin" && (
+                  <div className="space-y-2">
+                    <Label>어드민 권한</Label>
+                    <Select
+                      value={watchAddForm("adminRole")}
+                      onValueChange={(value) => setAddFormValue("adminRole", value)}
+                    >
+                      <SelectTrigger className="border border-slate-200 w-full">
+                        <SelectValue placeholder="어드민 권한 선택" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ADMIN_ROLES.map((role) => (
+                          <SelectItem key={role} value={role}>
+                            {role}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Label>User 권한</Label>
+                  <Select
+                    value={watchAddForm("userAuthority") || "__none__"}
+                    onValueChange={(value) =>
+                      setAddFormValue(
+                        "userAuthority",
+                        value === "__none__" ? "" : value,
+                      )
+                    }
+                  >
+                    <SelectTrigger className="border border-slate-200 w-full">
+                      <SelectValue placeholder="User 권한 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">없음</SelectItem>
+                      {USER_AUTHORITIES.map((authority) => (
+                        <SelectItem key={authority} value={authority}>
+                          {authority}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
             <div className="flex justify-end gap-2">
@@ -1667,6 +1733,55 @@ export default function MemberStatusView({
                   }
                 />
               </label>
+              {editingMember.role === "admin" && (
+                <div className="space-y-2">
+                  <Label>어드민 권한</Label>
+                  <Select
+                    value={editingMember.admin_role}
+                    onValueChange={(val) =>
+                      setEditingMember({
+                        ...editingMember,
+                        admin_role: val,
+                      })
+                    }
+                  >
+                    <SelectTrigger className="border border-slate-200 w-full">
+                      <SelectValue placeholder="어드민 권한 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ADMIN_ROLES.map((role) => (
+                        <SelectItem key={role} value={role}>
+                          {role}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              <div className="space-y-2">
+                <Label>User 권한</Label>
+                <Select
+                  value={editingMember.user_authority || "__none__"}
+                  onValueChange={(val) =>
+                    setEditingMember({
+                      ...editingMember,
+                      user_authority: val === "__none__" ? "" : val,
+                    })
+                  }
+                >
+                  <SelectTrigger className="border border-slate-200 w-full">
+                    <SelectValue placeholder="User 권한 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">없음</SelectItem>
+                    {USER_AUTHORITIES.map((authority) => (
+                      <SelectItem key={authority} value={authority}>
+                        {authority}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           )}
           <DialogFooter>

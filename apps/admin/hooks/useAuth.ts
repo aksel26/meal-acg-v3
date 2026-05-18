@@ -38,6 +38,8 @@ export function useAuth() {
           id: data.user.id,
           fullName: data.user.fullName,
           role: data.user.role,
+          adminRole: data.user.adminRole,
+          userAuthority: data.user.userAuthority,
           hireDate: data.user.hireDate,
         });
         return true;

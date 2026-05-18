@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getAuthErrorStatus, requireAdminPermission } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/server";
 
 interface StoreStats {
@@ -10,6 +11,7 @@ interface StoreStats {
 // GET /api/stats/popular-stores - 인기 가게 TOP 5
 export async function GET(request: NextRequest) {
   try {
+    await requireAdminPermission("dashboard:read");
     const supabase = createServiceClient();
     const searchParams = request.nextUrl.searchParams;
 
@@ -70,6 +72,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ stores });
   } catch (error) {
     console.error("Popular stores API error:", error);
+    const authStatus = getAuthErrorStatus(error);
+    if (authStatus) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: authStatus });
+    }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

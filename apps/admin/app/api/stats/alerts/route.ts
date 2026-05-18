@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getAuthErrorStatus, requireAdminPermission } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/server";
 
 // GET /api/stats/alerts - 미입력/미처리 알림 데이터
 export async function GET(request: NextRequest) {
   try {
+    await requireAdminPermission("dashboard:read");
     const supabase = createServiceClient();
     const searchParams = request.nextUrl.searchParams;
 
@@ -51,6 +53,10 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Alerts API error:", error);
+    const authStatus = getAuthErrorStatus(error);
+    if (authStatus) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: authStatus });
+    }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

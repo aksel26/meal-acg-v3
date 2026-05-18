@@ -189,6 +189,10 @@ export const queryKeys = {
     byYear: (year: number) => ["leaveBalances", year] as const,
   },
 
+  leaveCalculator: {
+    byYear: (year: number) => ["leaveCalculator", year] as const,
+  },
+
   // Approvals (승인)
   approvals: {
     all: ["approvals"] as const,

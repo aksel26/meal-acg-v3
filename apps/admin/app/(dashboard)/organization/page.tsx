@@ -1,18 +1,23 @@
 "use client";
 
-import { useState, useMemo, memo } from "react";
+import { useEffect, useState, useMemo, memo } from "react";
+import {
+  DndContext,
+  type DragEndEvent,
+  useDraggable,
+  useDroppable,
+} from "@dnd-kit/core";
 import {
   Building2,
   ChevronDown,
   ChevronRight,
   Edit2,
   FolderTree,
+  GripVertical,
   Loader2,
   Plus,
   Trash2,
   User,
-  UserX,
-  Users,
 } from "lucide-react";
 import { toast } from "@repo/ui/src/sonner";
 import { cn } from "@repo/ui/lib/utils";
@@ -61,11 +66,10 @@ import {
   useUpdateTeam,
   useDeleteTeam,
   useUpdateMemberOrg,
-  useBatchAssignMembers,
 } from "@/hooks/useOrganizationMutations";
-import { Checkbox } from "@repo/ui/src/checkbox";
 import { useActiveStatusMembers } from "@/hooks/useActiveStatusMembers";
 import { STATUS_COLORS, roleBadgeStyle } from "@/lib/constants";
+import MemberStatusView from "@/components/MemberStatusView";
 
 // ── Types for dialog state ──
 
@@ -75,6 +79,17 @@ type DialogMode =
   | { type: "createTeam"; divisionId?: string }
   | { type: "editTeam"; team: OrgTeam }
   | { type: "editMember"; member: OrgMember };
+
+type MemberDragData = {
+  type: "member";
+  member: OrgMember;
+};
+
+type TeamDropData = {
+  type: "team";
+  teamId: string | null;
+  divisionId: string | null;
+};
 
 // ── Member Row Component ──
 
@@ -87,12 +102,45 @@ const MemberRow = memo(function MemberRow({
   onEdit: (member: OrgMember) => void;
   status?: string;
 }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    isDragging,
+  } = useDraggable({
+    id: `member:${member.id}`,
+    data: {
+      type: "member",
+      member,
+    } satisfies MemberDragData,
+  });
+  const style = transform
+    ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+      }
+    : undefined;
+
   return (
-    <div className={cn(
-      "group flex items-center justify-between rounded-md px-3 py-2 transition-colors hover:bg-slate-50",
-      status && "opacity-50"
-    )}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "group flex items-center justify-between rounded-md px-3 py-2 transition-colors hover:bg-slate-50",
+        status && "opacity-50",
+        isDragging && "z-20 opacity-60 ring-2 ring-[#1d1d1f]/20"
+      )}
+    >
       <div className="flex items-center gap-3">
+        <button
+          type="button"
+          className="inline-flex h-6 w-5 cursor-grab items-center justify-center rounded text-slate-300 transition-colors hover:bg-slate-100 hover:text-slate-500 active:cursor-grabbing"
+          title="드래그하여 팀 배정"
+          {...listeners}
+          {...attributes}
+        >
+          <GripVertical className="h-3.5 w-3.5" />
+        </button>
         <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-500">
           <User className="h-3.5 w-3.5" />
         </div>
@@ -133,14 +181,24 @@ function TeamSection({
   onDeleteTeam,
   onEditMember,
   statusMap,
+  expandSignal,
 }: {
   team: OrgTeam;
   onEditTeam: (team: OrgTeam) => void;
   onDeleteTeam: (team: OrgTeam) => void;
   onEditMember: (member: OrgMember) => void;
   statusMap?: Map<string, string>;
+  expandSignal?: { expanded: boolean; version: number };
 }) {
   const [isOpen, setIsOpen] = useState(true);
+  const { isOver, setNodeRef } = useDroppable({
+    id: `team:${team.id}`,
+    data: {
+      type: "team",
+      teamId: team.id,
+      divisionId: team.division_id,
+    } satisfies TeamDropData,
+  });
   const members = useMemo(() => {
     const raw = team.members || [];
     const roleOrder: Record<string, number> = { 본부장: 0, 팀장: 1, 팀원: 2, 인턴: 3 };
@@ -149,8 +207,19 @@ function TeamSection({
     );
   }, [team.members]);
 
+  useEffect(() => {
+    if (!expandSignal) return;
+    setIsOpen(expandSignal.expanded);
+  }, [expandSignal]);
+
   return (
-    <div className="rounded-lg bg-white">
+    <div
+      ref={setNodeRef}
+      className={cn(
+        "rounded-lg bg-white transition-colors",
+        isOver && "bg-slate-50 ring-2 ring-[#1d1d1f]/15"
+      )}
+    >
       <div className="flex items-center justify-between px-4 py-3">
         <button
           onClick={() => setIsOpen(!isOpen)}
@@ -211,13 +280,72 @@ function TeamSection({
   );
 }
 
+function UnassignedMembersSection({
+  members,
+  onEditMember,
+  statusMap,
+}: {
+  members: OrgMember[];
+  onEditMember: (member: OrgMember) => void;
+  statusMap: Map<string, string>;
+}) {
+  const { isOver, setNodeRef } = useDroppable({
+    id: "team:unassigned",
+    data: {
+      type: "team",
+      teamId: null,
+      divisionId: null,
+    } satisfies TeamDropData,
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        "overflow-hidden rounded-xl bg-white transition-colors",
+        isOver && "bg-orange-50/60 ring-2 ring-orange-200"
+      )}
+    >
+      <div className="flex items-center justify-between px-5 py-4">
+        <div className="flex items-center gap-2.5">
+          <User className="h-4.5 w-4.5 text-slate-400" />
+          <span className="text-base font-bold text-slate-700">
+            미배정 인원
+          </span>
+          <Badge
+            variant="secondary"
+            className="text-xs py-0 px-2 bg-orange-50 text-orange-600"
+          >
+            {members.length}명
+          </Badge>
+        </div>
+      </div>
+      <div className="space-y-2 p-4">
+        {members.length > 0 ? (
+          members.map((member) => (
+            <MemberRow
+              key={member.id}
+              member={member}
+              onEdit={onEditMember}
+              status={statusMap.get(member.id)}
+            />
+          ))
+        ) : (
+          <div className="py-6 text-center text-sm text-slate-400">
+            미배정 인원이 없습니다
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Division Section Component ──
 
 function DivisionSection({
   division,
   onEditDivision,
   onDeleteDivision,
-  onAddTeam,
   onEditTeam,
   onDeleteTeam,
   onEditMember,
@@ -226,7 +354,6 @@ function DivisionSection({
   division: OrgDivision;
   onEditDivision: (division: OrgDivision) => void;
   onDeleteDivision: (division: OrgDivision) => void;
-  onAddTeam: (divisionId: string) => void;
   onEditTeam: (team: OrgTeam) => void;
   onDeleteTeam: (team: OrgTeam) => void;
   onEditMember: (member: OrgMember) => void;
@@ -259,14 +386,6 @@ function DivisionSection({
           </Badge>
         </button>
         <div className="flex items-center gap-1">
-          <button
-            onClick={() => onAddTeam(division.id)}
-            className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium text-[#1d1d1f] transition-colors hover:bg-[#1d1d1f]/10"
-            title="팀 추가"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            팀 추가
-          </button>
           <button
             onClick={() => onEditDivision(division)}
             className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-[#1d1d1f]"
@@ -308,56 +427,9 @@ function DivisionSection({
   );
 }
 
-// ── Unassigned Member Checkbox Row Component ──
+// ── Editor Component ──
 
-const UnassignedMemberRow = memo(function UnassignedMemberRow({
-  member,
-  checked,
-  onToggle,
-  status,
-}: {
-  member: OrgMember;
-  checked: boolean;
-  onToggle: (id: string) => void;
-  status?: string;
-}) {
-  return (
-    <label className={cn(
-      "flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 transition-colors hover:bg-orange-50/50",
-      status && "opacity-50"
-    )}>
-      <Checkbox
-        checked={checked}
-        onCheckedChange={() => onToggle(member.id)}
-      />
-      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-orange-50 text-orange-400">
-        <User className="h-3.5 w-3.5" />
-      </div>
-      <span className="text-sm font-medium text-slate-700">
-        {member.full_name}
-      </span>
-      <Badge
-        variant="outline"
-        className={cn("text-[11px] py-0 px-1.5", roleBadgeStyle(member.member_role))}
-      >
-        {member.member_role}
-      </Badge>
-      {status && (
-        <span className={cn(
-          "inline-flex items-center rounded-full border px-1.5 py-0.5 text-[10px] font-medium",
-          STATUS_COLORS[status] || "bg-slate-100 text-slate-500 border-slate-300"
-        )}>
-          {status}
-        </span>
-      )}
-    </label>
-  );
-});
-
-// ── Main Page Component ──
-
-export default function OrganizationPage() {
-  const [viewMode, setViewMode] = useState<"list" | "chart">("list");
+function OrganizationEditor({ onBack }: { onBack: () => void }) {
   const { data: orgTree, isLoading, refetch } = useOrganizationTree(null);
 
   // 특이사항 인원 조회
@@ -380,7 +452,6 @@ export default function OrganizationPage() {
   const updateTeamMutation = useUpdateTeam();
   const deleteTeamMutation = useDeleteTeam();
   const updateMemberOrgMutation = useUpdateMemberOrg();
-  const batchAssignMutation = useBatchAssignMembers();
 
   // Dialog state
   const [dialogMode, setDialogMode] = useState<DialogMode | null>(null);
@@ -389,13 +460,13 @@ export default function OrganizationPage() {
   const [formTeamId, setFormTeamId] = useState<string>("");
   const [formRole, setFormRole] = useState<string>("");
   const [formInternMonths, setFormInternMonths] = useState<string>("");
+  const [directTeamsExpandSignal, setDirectTeamsExpandSignal] = useState({
+    expanded: true,
+    version: 0,
+  });
 
   // 삭제 확인 Dialog
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: "division" | "team"; id: string; message: string } | null>(null);
-
-  // Batch assignment state
-  const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set());
-  const [batchTeamId, setBatchTeamId] = useState<string>("");
 
   // Derived data
   const divisions = orgTree?.divisions || [];
@@ -568,43 +639,28 @@ export default function OrganizationPage() {
     setDeleteConfirm(null);
   };
 
-  // ── Batch assignment handlers ──
+  const setDirectTeamsOpen = (expanded: boolean) => {
+    setDirectTeamsExpandSignal((prev) => ({
+      expanded,
+      version: prev.version + 1,
+    }));
+  };
 
-  const toggleMember = (id: string) => {
-    setSelectedMemberIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
+  const handleDragEnd = (event: DragEndEvent) => {
+    const memberData = event.active.data.current as MemberDragData | undefined;
+    const dropData = event.over?.data.current as TeamDropData | undefined;
+    if (memberData?.type !== "member" || dropData?.type !== "team") return;
+
+    const member = memberData.member;
+    if (member.team_id === dropData.teamId) return;
+
+    updateMemberOrgMutation.mutate({
+      id: member.id,
+      team_id: dropData.teamId,
+      division_id: dropData.divisionId,
+      member_role: member.member_role || "팀원",
+      intern_months: member.intern_months ?? null,
     });
-  };
-
-  const toggleAllMembers = () => {
-    if (selectedMemberIds.size === unassignedMembers.length) {
-      setSelectedMemberIds(new Set());
-    } else {
-      setSelectedMemberIds(new Set(unassignedMembers.map((m) => m.id)));
-    }
-  };
-
-  const handleBatchAssign = () => {
-    if (selectedMemberIds.size === 0) {
-      toast.error("배정할 멤버를 선택해주세요.");
-      return;
-    }
-    if (!batchTeamId || batchTeamId === "none") {
-      toast.error("배정할 팀을 선택해주세요.");
-      return;
-    }
-    batchAssignMutation.mutate(
-      { memberIds: Array.from(selectedMemberIds), team_id: batchTeamId },
-      {
-        onSuccess: () => {
-          setSelectedMemberIds(new Set());
-          setBatchTeamId("");
-        },
-      }
-    );
   };
 
   // ── Check if any mutation is pending ──
@@ -662,42 +718,13 @@ export default function OrganizationPage() {
           <span>멤버 <strong className="text-slate-800">{totalMembers}</strong></span>
         </div>
         <div className="ml-auto flex items-center gap-2">
-          {/* View Toggle */}
-          <div className="flex rounded-lg border border-slate-200 p-0.5">
-            <button
-              onClick={() => setViewMode("list")}
-              className={cn(
-                "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-                viewMode === "list"
-                  ? "bg-slate-900 text-white"
-                  : "text-slate-500 hover:text-slate-700"
-              )}
-            >
-              목록
-            </button>
-            <button
-              onClick={() => setViewMode("chart")}
-              className={cn(
-                "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-                viewMode === "chart"
-                  ? "bg-slate-900 text-white"
-                  : "text-slate-500 hover:text-slate-700"
-              )}
-            >
-              조직도
-            </button>
-          </div>
-          {/* [HIDDEN] 본부 추가 버튼 — 본부 기능 재활성화 시 주석 해제
           <Button
-            onClick={() => openDialog({ type: "createDivision" })}
+            onClick={onBack}
             size="sm"
-            className="gap-1.5"
-            disabled={!orgTree}
+            variant="outline"
           >
-            <Plus className="h-4 w-4" />
-            본부 추가
+            현황으로 돌아가기
           </Button>
-          */}
           <Button
             onClick={() => openDialog({ type: "createTeam" })}
             size="sm"
@@ -707,6 +734,16 @@ export default function OrganizationPage() {
           >
             <Plus className="h-4 w-4" />
             팀 추가
+          </Button>
+          <Button
+            onClick={() => openDialog({ type: "createDivision" })}
+            size="sm"
+            variant="outline"
+            className="gap-1.5"
+            disabled={!orgTree}
+          >
+            <Plus className="h-4 w-4" />
+            본부 추가
           </Button>
         </div>
       </div>
@@ -731,42 +768,25 @@ export default function OrganizationPage() {
         </div>
       )}
 
-      {/* Org Chart View */}
-      {!isLoading && orgTree && viewMode === "chart" && (
-        <div className="admin-card overflow-hidden rounded-xl">
-          <OrgChart
-            tree={orgTree}
-            organizationId={orgTree.id}
-            onSaved={() => refetch()}
-          />
-        </div>
-      )}
+      {/* List + Org Chart */}
+      {!isLoading && orgTree && (
+        <div className="grid min-h-[calc(100vh-15rem)] grid-cols-1 gap-4 xl:grid-cols-[minmax(360px,0.9fr)_minmax(520px,1.1fr)]">
+          <DndContext onDragEnd={handleDragEnd}>
+            <div className="min-h-0 space-y-4 overflow-y-auto pr-1">
+              {divisions.map((division) => (
+                <DivisionSection
+                  key={division.id}
+                  division={division}
+                  onEditDivision={(d) => openDialog({ type: "editDivision", division: d })}
+                  onDeleteDivision={handleDeleteDivision}
+                  onEditTeam={(t) => openDialog({ type: "editTeam", team: t })}
+                  onDeleteTeam={handleDeleteTeam}
+                  onEditMember={(m) => openDialog({ type: "editMember", member: m })}
+                  statusMap={statusMap}
+                />
+              ))}
 
-      {/* Organization Tree (List View) */}
-      {!isLoading && orgTree && viewMode === "list" && (
-        <div className="space-y-4">
-          {/* Divisions */}
-          {divisions.map((division) => (
-            <DivisionSection
-              key={division.id}
-              division={division}
-              onEditDivision={(d) => openDialog({ type: "editDivision", division: d })}
-              onDeleteDivision={handleDeleteDivision}
-              onAddTeam={(divisionId) =>
-                openDialog({ type: "createTeam", divisionId })
-              }
-              onEditTeam={(t) => openDialog({ type: "editTeam", team: t })}
-              onDeleteTeam={handleDeleteTeam}
-              onEditMember={(m) => openDialog({ type: "editMember", member: m })}
-              statusMap={statusMap}
-            />
-          ))}
-
-          {/* Direct Teams + Unassigned Members (50/50 layout) */}
-          {(directTeams.length > 0 || unassignedMembers.length > 0) && (
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              {/* Direct Teams */}
-              <div className="admin-card overflow-hidden rounded-xl">
+              <div className="overflow-hidden rounded-xl bg-white">
                 <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
                   <div className="flex items-center gap-2.5">
                     <FolderTree className="h-4.5 w-4.5 text-slate-400" />
@@ -781,11 +801,24 @@ export default function OrganizationPage() {
                     </Badge>
                   </div>
                   <button
-                    onClick={() => openDialog({ type: "createTeam" })}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium text-[#1d1d1f] transition-colors hover:bg-[#1d1d1f]/10"
+                    type="button"
+                    onClick={() =>
+                      setDirectTeamsOpen(!directTeamsExpandSignal.expanded)
+                    }
+                    className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-[#1d1d1f]"
+                    title={
+                      directTeamsExpandSignal.expanded
+                        ? "직속 팀 전체 접기"
+                        : "직속 팀 전체 펼치기"
+                    }
                   >
-                    <Plus className="h-3.5 w-3.5" />
-                    팀 추가
+                    <ChevronDown
+                      className={cn(
+                        "h-4 w-4 transition-transform duration-200",
+                        !directTeamsExpandSignal.expanded && "-rotate-90"
+                      )}
+                    />
+                    전체
                   </button>
                 </div>
                 <div className="space-y-2 p-4">
@@ -800,6 +833,7 @@ export default function OrganizationPage() {
                           openDialog({ type: "editMember", member: m })
                         }
                         statusMap={statusMap}
+                        expandSignal={directTeamsExpandSignal}
                       />
                     ))
                   ) : (
@@ -810,94 +844,21 @@ export default function OrganizationPage() {
                 </div>
               </div>
 
-              {/* Unassigned Members */}
-              <div className="admin-card flex flex-col overflow-hidden rounded-xl">
-                <div className="flex items-center justify-between border-b border-orange-100 px-5 py-4">
-                  <div className="flex items-center gap-2.5">
-                    <UserX className="h-4.5 w-4.5 text-orange-500" />
-                    <span className="text-base font-bold text-slate-800">
-                      미배정 멤버
-                    </span>
-                    <Badge
-                      variant="secondary"
-                      className="text-xs py-0 px-2 bg-orange-50 text-orange-600 border-orange-200"
-                    >
-                      {unassignedMembers.length}명
-                    </Badge>
-                  </div>
-                  {unassignedMembers.length > 0 && (
-                    <div className="flex items-center gap-2">
-                      {selectedMemberIds.size > 0 && (
-                        <>
-                          <span className="shrink-0 text-xs font-medium text-orange-700">
-                            {selectedMemberIds.size}명
-                          </span>
-                          <Select value={batchTeamId} onValueChange={setBatchTeamId}>
-                            <SelectTrigger className="h-7 w-32 text-xs">
-                              <SelectValue placeholder="팀 선택" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {allTeams.map((team) => {
-                                const divName = divisions.find(
-                                  (d) => d.id === team.division_id
-                                )?.name;
-                                return (
-                                  <SelectItem key={team.id} value={team.id}>
-                                    {divName ? `${divName} > ` : ""}
-                                    {team.name}
-                                  </SelectItem>
-                                );
-                              })}
-                            </SelectContent>
-                          </Select>
-                          <Button
-                            size="sm"
-                            className="h-7 shrink-0 px-2.5 text-xs"
-                            onClick={handleBatchAssign}
-                            disabled={batchAssignMutation.isPending}
-                          >
-                            {batchAssignMutation.isPending ? (
-                              <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                            ) : null}
-                            배정
-                          </Button>
-                          <div className="h-4 w-px bg-orange-200" />
-                        </>
-                      )}
-                      <label className="flex cursor-pointer items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700">
-                        <Checkbox
-                          checked={
-                            selectedMemberIds.size === unassignedMembers.length &&
-                            unassignedMembers.length > 0
-                          }
-                          onCheckedChange={toggleAllMembers}
-                        />
-                        전체 선택
-                      </label>
-                    </div>
-                  )}
-                </div>
-
-                {unassignedMembers.length > 0 ? (
-                  <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2">
-                    {unassignedMembers.map((member) => (
-                      <UnassignedMemberRow
-                        key={member.id}
-                        member={member}
-                        checked={selectedMemberIds.has(member.id)}
-                        onToggle={toggleMember}
-                        status={statusMap.get(member.id)}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex flex-1 items-center justify-center text-sm text-slate-400">
-                    모든 멤버가 팀에 배정되었습니다
-                  </div>
-                )}
-              </div>
+              <UnassignedMembersSection
+                members={unassignedMembers}
+                onEditMember={(m) => openDialog({ type: "editMember", member: m })}
+                statusMap={statusMap}
+              />
             </div>
-          )}
+          </DndContext>
+
+          <div className="admin-card min-h-0 overflow-hidden rounded-xl">
+            <OrgChart
+              tree={orgTree}
+              organizationId={orgTree.id}
+              onSaved={() => refetch()}
+            />
+          </div>
         </div>
       )}
 
@@ -1068,4 +1029,30 @@ export default function OrganizationPage() {
       </AlertDialog>
     </div>
   );
+}
+
+// ── Main Page Component ──
+
+export default function OrganizationPage() {
+  const [isEditMode, setIsEditMode] = useState(false);
+
+  if (!isEditMode) {
+    return (
+      <MemberStatusView
+        toolbarRight={
+          <Button
+            onClick={() => setIsEditMode(true)}
+            size="sm"
+            variant="outline"
+            className="gap-1.5"
+          >
+            <Edit2 className="h-4 w-4" />
+            편집
+          </Button>
+        }
+      />
+    );
+  }
+
+  return <OrganizationEditor onBack={() => setIsEditMode(false)} />;
 }

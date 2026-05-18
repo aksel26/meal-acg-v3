@@ -706,7 +706,7 @@ export default function DashboardPage() {
             {/* Organization + Settlement + Budget */}
             <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
               {/* Col 1: 총 인원 */}
-              <Link href="/member-status" className={cardClass}>
+              <Link href="/organization" className={cardClass}>
                 <div className="mb-1.5">
                   <h3 className="text-base font-semibold text-slate-800">
                     총 인원

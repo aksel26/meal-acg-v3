@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import type { ReactNode } from "react";
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -107,9 +107,13 @@ interface UserFormData {
 type SortKey = "member_role" | "team_name" | "current_status";
 type SortDir = "asc" | "desc";
 
-// ── Main Page ──
+// ── Main View ──
 
-export default function MemberStatusPage() {
+export default function MemberStatusView({
+  toolbarRight,
+}: {
+  toolbarRight?: ReactNode;
+}) {
   const queryClient = useQueryClient();
 
   // Filter state
@@ -739,6 +743,8 @@ export default function MemberStatusPage() {
               {activeStatusCount}
             </span>
           </div>
+          {toolbarRight && <div className="h-4 w-px bg-slate-200" />}
+          {toolbarRight}
         </div>
       </div>
 
@@ -774,7 +780,23 @@ export default function MemberStatusPage() {
                     이름
                   </TableHead>
                   <TableHead
-                    className="cursor-pointer select-none text-center text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-800"
+                    className="cursor-pointer select-none text-left text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-800"
+                    onClick={() => handleSort("team_name")}
+                  >
+                    <span className="inline-flex items-center gap-1">
+                      팀명
+                      <ArrowUpDown
+                        className={cn(
+                          "h-3 w-3",
+                          sortKey === "team_name"
+                            ? "text-[#1d1d1f]"
+                            : "text-slate-300",
+                        )}
+                      />
+                    </span>
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer select-none text-left text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-800"
                     onClick={() => handleSort("member_role")}
                   >
                     <span className="inline-flex items-center gap-1">
@@ -789,7 +811,7 @@ export default function MemberStatusPage() {
                       />
                     </span>
                   </TableHead>
-                  <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <TableHead className="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                     직책
                   </TableHead>
                   <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -820,22 +842,6 @@ export default function MemberStatusPage() {
                       />
                     </span>
                   </TableHead>
-                  <TableHead
-                    className="cursor-pointer select-none text-center text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-800"
-                    onClick={() => handleSort("team_name")}
-                  >
-                    <span className="inline-flex items-center gap-1">
-                      팀명
-                      <ArrowUpDown
-                        className={cn(
-                          "h-3 w-3",
-                          sortKey === "team_name"
-                            ? "text-[#1d1d1f]"
-                            : "text-slate-300",
-                        )}
-                      />
-                    </span>
-                  </TableHead>
                   <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                     가입일
                   </TableHead>
@@ -860,7 +866,10 @@ export default function MemberStatusPage() {
                           {row.full_name}
                         </button>
                       </TableCell>
-                      <TableCell className="text-center text-sm">
+                      <TableCell className="text-left text-sm text-slate-600">
+                        {row.team_name || "-"}
+                      </TableCell>
+                      <TableCell className="text-left text-sm">
                         {row.position_name ? (
                           <span className="text-[12px] font-medium text-slate-700">
                             {row.position_name}
@@ -869,7 +878,7 @@ export default function MemberStatusPage() {
                           <span className="text-[11px] text-slate-400">-</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-center text-sm">
+                      <TableCell className="text-left text-sm">
                         {row.title_name ? (
                           <span className="text-[12px] text-slate-600">
                             {row.title_name}
@@ -911,9 +920,6 @@ export default function MemberStatusPage() {
                         >
                           {displayStatus}
                         </Badge>
-                      </TableCell>
-                      <TableCell className="text-center text-sm text-slate-600">
-                        {row.team_name || "-"}
                       </TableCell>
                       <TableCell className="text-center text-sm text-slate-500">
                         {row.created_at
@@ -1268,6 +1274,7 @@ export default function MemberStatusPage() {
                     setFormEndDate(val);
                   }}
                   placeholder="퇴사일 선택"
+                  modal
                 />
               </div>
             ) : (
@@ -1278,6 +1285,7 @@ export default function MemberStatusPage() {
                     value={formStartDate}
                     onChange={(val) => setFormStartDate(val)}
                     placeholder="시작일 선택"
+                    modal
                   />
                 </div>
 
@@ -1287,6 +1295,7 @@ export default function MemberStatusPage() {
                     value={formEndDate}
                     onChange={(val) => setFormEndDate(val)}
                     placeholder="종료일 선택"
+                    modal
                   />
                 </div>
               </>
@@ -1366,6 +1375,7 @@ export default function MemberStatusPage() {
                         setFormEndDate(val);
                       }}
                       placeholder="퇴사일 선택"
+                      modal
                     />
                   </div>
                 ) : (
@@ -1376,6 +1386,7 @@ export default function MemberStatusPage() {
                         value={formStartDate}
                         onChange={(val) => setFormStartDate(val)}
                         placeholder="시작일 선택"
+                        modal
                       />
                     </div>
 
@@ -1385,6 +1396,7 @@ export default function MemberStatusPage() {
                         value={formEndDate}
                         onChange={(val) => setFormEndDate(val)}
                         placeholder="종료일 선택"
+                        modal
                       />
                     </div>
                   </>

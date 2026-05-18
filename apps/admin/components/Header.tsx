@@ -33,12 +33,8 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
     subtitle: "Excel 파일에서 식대 데이터를 가져옵니다.",
   },
   "/organization": {
-    title: "조직 구성 관리",
-    subtitle: "조직의 본부, 팀, 멤버를 관리합니다",
-  },
-  "/member-status": {
-    title: "조직원 현황",
-    subtitle: "멤버별 상태(휴직, 파견, 퇴사 등) 이력을 관리합니다",
+    title: "조직 구성",
+    subtitle: "조직원 현황을 확인하고 편집 모드에서 조직 구성을 관리합니다",
   },
   "/job-titles": {
     title: "직급/직책 관리",
@@ -49,7 +45,7 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
     subtitle: "회차별 문항, 대상자, 평가자 배정을 설정합니다",
   },
   "/attendance": {
-    title: "출퇴근 현황",
+    title: "출퇴근 관리",
     subtitle: "조직원의 출퇴근 기록을 관리합니다",
   },
   "/leave-balances": {
@@ -71,6 +67,10 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
   "/dayoffs": {
     title: "휴가 관리",
     subtitle: "휴가 등록, 승인, 통계를 관리합니다",
+  },
+  "/leave-calculator": {
+    title: "휴가 자동 계산",
+    subtitle: "입사일과 직급 기준으로 휴가 계산 결과와 산식을 확인합니다",
   },
   "/notifications": {
     title: "알림 관리",

@@ -27,6 +27,7 @@ import {
   CalendarClock,
   ClipboardList,
   ClipboardPenLine,
+  Calculator,
   Eye,
   EyeOff,
   HardHat,
@@ -105,7 +106,6 @@ const navigation: NavigationItem[] = [
     icon: Users,
     items: [
       { name: "조직 구성", href: "/organization", icon: Building2 },
-      { name: "조직원 현황", href: "/member-status", icon: UserCheck },
       { name: "직급/직책 관리", href: "/job-titles", icon: Grid3X3 },
       { name: "다면평가", href: "/evaluations", icon: ClipboardPenLine },
       { name: "점심조 관리", href: "/lunch-groups", icon: Shuffle },
@@ -116,9 +116,9 @@ const navigation: NavigationItem[] = [
     name: "근태 관리",
     icon: CalendarClock,
     items: [
-      { name: "출퇴근 현황", href: "/attendance", icon: UserCheck },
+      { name: "출퇴근 관리", href: "/attendance", icon: UserCheck },
       { name: "휴가 관리", href: "/dayoffs", icon: CalendarDays },
-      { name: "연차 현황", href: "/leave-balances", icon: BarChart3 },
+      { name: "휴가 자동 계산", href: "/leave-calculator", icon: Calculator },
       { name: "승인 관리", href: "/approvals", icon: ClipboardList },
     ],
   },

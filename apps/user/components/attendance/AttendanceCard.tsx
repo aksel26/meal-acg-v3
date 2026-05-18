@@ -5,7 +5,6 @@ import dayjs from "dayjs";
 import "dayjs/locale/ko";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
-import { ChevronRight } from "lucide-react";
 import type { DayoffRecord } from "@/hooks/use-dayoffs";
 
 dayjs.locale("ko");
@@ -60,11 +59,6 @@ interface AttendanceCardProps {
   record: AttendanceRecord | null;
   dayoffs?: DayoffRecord[];
   onModifyRequest: () => void;
-  onManageDayoffs: (
-    date: string,
-    shouldCreate: boolean,
-    record?: DayoffRecord,
-  ) => void;
 }
 
 export default function AttendanceCard({
@@ -72,7 +66,6 @@ export default function AttendanceCard({
   record,
   dayoffs = [],
   onModifyRequest,
-  onManageDayoffs,
 }: AttendanceCardProps) {
   const d = dayjs(selectedDate);
   const dateLabel = `${d.format("M월 D일")} (${d.format("dd")})`;
@@ -94,9 +87,7 @@ export default function AttendanceCard({
           </div>
         </div>
         <DayoffSummary
-          selectedDate={selectedDate}
           dayoffs={dayoffs}
-          onManageDayoffs={onManageDayoffs}
         />
       </motion.div>
     );
@@ -158,9 +149,7 @@ export default function AttendanceCard({
       </div>
 
       <DayoffSummary
-        selectedDate={selectedDate}
         dayoffs={dayoffs}
-        onManageDayoffs={onManageDayoffs}
       />
 
       {record.modification_status ? (
@@ -184,26 +173,12 @@ export default function AttendanceCard({
 }
 
 function DayoffSummary({
-  selectedDate,
   dayoffs,
-  onManageDayoffs,
 }: {
-  selectedDate: string;
   dayoffs: DayoffRecord[];
-  onManageDayoffs: (
-    date: string,
-    shouldCreate: boolean,
-    record?: DayoffRecord,
-  ) => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={() =>
-        onManageDayoffs(selectedDate, dayoffs.length === 0, dayoffs[0])
-      }
-      className="mb-4 flex w-full items-center justify-between gap-3 rounded-xl bg-emerald-50 px-3 py-3 text-left transition-colors hover:bg-emerald-100"
-    >
+    <div className="mb-4 flex w-full items-center justify-between gap-3 rounded-xl bg-emerald-50 px-3 py-3 text-left">
       <span className="min-w-0">
         <span className="block text-xs font-medium text-emerald-700">
           휴가/연차
@@ -225,7 +200,6 @@ function DayoffSummary({
           </span>
         )}
       </span>
-      <ChevronRight className="h-4 w-4 shrink-0 text-emerald-700" />
-    </button>
+    </div>
   );
 }

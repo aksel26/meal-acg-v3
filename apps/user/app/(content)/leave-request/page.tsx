@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarDays, ChevronLeft, Send, Users, Loader2 } from "lucide-react";
+import { ChevronLeft, Send, Users, Loader2 } from "lucide-react";
 import { Button } from "@repo/ui/src/button";
-import { Input } from "@repo/ui/src/input";
 import { Label } from "@repo/ui/src/label";
-import { DateRangePicker } from "@repo/ui/src/date-range-picker";
+import { DatePicker } from "@repo/ui/src/date-picker";
 import { Textarea } from "@repo/ui/src/textarea";
 import {
   Select,
@@ -141,13 +140,12 @@ export default function LeaveRequestPage() {
 
         {/* 날짜 */}
         <div className="space-y-2">
-          <Label className="text-sm font-medium text-slate-700">기간 *</Label>
-          <DateRangePicker
-            startDate={startDate}
-            endDate={endDate}
-            onChange={({ startDate: s, endDate: e }) => {
-              setStartDate(s);
-              setEndDate(e);
+          <Label className="text-sm font-medium text-slate-700">날짜 *</Label>
+          <DatePicker
+            value={startDate}
+            onChange={(date) => {
+              setStartDate(date);
+              setEndDate(date);
             }}
           />
         </div>

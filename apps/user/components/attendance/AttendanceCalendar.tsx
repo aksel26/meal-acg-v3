@@ -29,8 +29,6 @@ interface AttendanceCalendarProps {
   month: number;
   selectedDate: string | null;
   onDateSelect: (date: string) => void;
-  rangeStartDate?: string | null;
-  rangeEndDate?: string | null;
   records: AttendanceRecord[];
   dayoffs?: DayoffRecord[];
 }
@@ -40,8 +38,6 @@ export default function AttendanceCalendar({
   month,
   selectedDate,
   onDateSelect,
-  rangeStartDate,
-  rangeEndDate,
   records,
   dayoffs = [],
 }: AttendanceCalendarProps) {
@@ -127,14 +123,6 @@ export default function AttendanceCalendar({
               const dayOfWeek = d.day();
               const isToday = dateStr === today;
               const isSelected = dateStr === selectedDate;
-              const isRangeStart = dateStr === rangeStartDate;
-              const isRangeEnd = dateStr === rangeEndDate;
-              const isInRange =
-                !!rangeStartDate &&
-                !!rangeEndDate &&
-                dayjs(dateStr).isAfter(rangeStartDate, "day") &&
-                dayjs(dateStr).isBefore(rangeEndDate, "day");
-              const isRangeMarked = isRangeStart || isRangeEnd || isInRange;
               const record = recordMap[dateStr];
               const dayoffCount = dayoffsMap[dateStr]?.length || 0;
               const dotColor = record
@@ -148,10 +136,8 @@ export default function AttendanceCalendar({
                   key={dateStr}
                   onClick={() => onDateSelect(dateStr)}
                   className={`relative flex h-14 flex-col items-center justify-center rounded-lg transition-colors ${
-                    isRangeStart || isRangeEnd || isSelected
-                      ? "bg-emerald-100 text-emerald-900"
-                      : isInRange
-                        ? "bg-emerald-50 text-emerald-800"
+                    isSelected
+                      ? "bg-slate-100 text-slate-900"
                       : isToday
                         ? "bg-[#f9f9fa]"
                         : "hover:bg-[#f9f9fa]"
@@ -159,8 +145,8 @@ export default function AttendanceCalendar({
                 >
                   <span
                     className={`text-sm ${
-                      isRangeMarked || isSelected
-                        ? "font-semibold text-emerald-900"
+                      isSelected
+                        ? "font-semibold text-slate-900"
                         : dayOfWeek === 0
                           ? "text-red-400"
                           : dayOfWeek === 6

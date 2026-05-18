@@ -12,7 +12,7 @@ import {
 } from "@repo/ui/src/select";
 import { Button } from "@repo/ui/src/button";
 import { Label } from "@repo/ui/src/label";
-import { DateRangePicker } from "@repo/ui/src/date-range-picker";
+import { DatePicker } from "@repo/ui/src/date-picker";
 import { SearchableDropdown } from "@repo/ui/src/searchable-dropdown";
 import { Textarea } from "@repo/ui/src/textarea";
 import {
@@ -229,15 +229,14 @@ export default function DayoffFormDialog({
             )}
           </div>
 
-          {/* 날짜 (Range) */}
+          {/* 날짜 */}
           <div className="space-y-1.5">
-            <Label className="text-xs text-[oklch(0.50_0.01_250)]">기간</Label>
-            <DateRangePicker
-              startDate={formData.startDate}
-              endDate={formData.endDate || formData.startDate}
+            <Label className="text-xs text-[oklch(0.50_0.01_250)]">날짜</Label>
+            <DatePicker
+              value={formData.startDate}
               modal
-              onChange={({ startDate, endDate }) =>
-                setFormData({ ...formData, startDate, endDate })
+              onChange={(date) =>
+                setFormData({ ...formData, startDate: date, endDate: date })
               }
               disabled={!!editingRecord}
             />

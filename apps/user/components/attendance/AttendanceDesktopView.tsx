@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
-import { ChevronRight, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import MonthSelector from "./MonthSelector";
 import AttendanceTable from "./AttendanceTable";
 import AttendanceCalendar from "./AttendanceCalendar";
@@ -41,8 +41,6 @@ interface AttendanceDesktopViewProps {
   onMonthChange: (year: number, month: number) => void;
   selectedDate: string | null;
   onDateSelect: (date: string) => void;
-  rangeStartDate?: string | null;
-  rangeEndDate?: string | null;
   records: AttendanceRecord[];
   dayoffs: DayoffRecord[];
   leaveBalances: LeaveBalance[];
@@ -50,11 +48,6 @@ interface AttendanceDesktopViewProps {
   isLoading: boolean;
   onRowClick: (record: AttendanceRecord) => void;
   onViewLeaveDetails: () => void;
-  onManageDayoffs: (
-    date: string,
-    shouldCreate: boolean,
-    record?: DayoffRecord,
-  ) => void;
 }
 
 export default function AttendanceDesktopView({
@@ -63,8 +56,6 @@ export default function AttendanceDesktopView({
   onMonthChange,
   selectedDate,
   onDateSelect,
-  rangeStartDate,
-  rangeEndDate,
   records,
   dayoffs,
   leaveBalances,
@@ -72,7 +63,6 @@ export default function AttendanceDesktopView({
   isLoading,
   onRowClick,
   onViewLeaveDetails,
-  onManageDayoffs,
 }: AttendanceDesktopViewProps) {
   const [filterType, setFilterType] = useState("전체");
 
@@ -108,8 +98,6 @@ export default function AttendanceDesktopView({
           month={month}
           selectedDate={selectedDate}
           onDateSelect={onDateSelect}
-          rangeStartDate={rangeStartDate}
-          rangeEndDate={rangeEndDate}
           records={records}
           dayoffs={dayoffs}
         />
@@ -121,7 +109,6 @@ export default function AttendanceDesktopView({
             selectedDate={selectedDate}
             record={selectedRecord}
             dayoffs={selectedDayoffs}
-            onManageDayoffs={onManageDayoffs}
           />
         )}
 
@@ -209,16 +196,10 @@ function SelectedDaySummary({
   selectedDate,
   record,
   dayoffs,
-  onManageDayoffs,
 }: {
   selectedDate: string;
   record: AttendanceRecord | null;
   dayoffs: DayoffRecord[];
-  onManageDayoffs: (
-    date: string,
-    shouldCreate: boolean,
-    record?: DayoffRecord,
-  ) => void;
 }) {
   const d = dayjs(selectedDate);
 
@@ -252,13 +233,7 @@ function SelectedDaySummary({
             )}
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() =>
-            onManageDayoffs(selectedDate, dayoffs.length === 0, dayoffs[0])
-          }
-          className="flex h-full w-full items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-3 text-left transition-colors hover:bg-slate-100"
-        >
+        <div className="flex h-full w-full items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-3 text-left">
           <span className="min-w-0">
             <span className="block text-xs font-medium text-slate-400">
               휴가/연차
@@ -280,8 +255,7 @@ function SelectedDaySummary({
               </span>
             )}
           </span>
-          <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
-        </button>
+        </div>
       </div>
     </div>
   );

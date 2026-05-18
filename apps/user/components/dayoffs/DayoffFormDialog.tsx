@@ -32,11 +32,13 @@ interface DayoffFormDialogProps {
   editingRecord: DayoffRecord | null;
   copySource: DayoffRecord | null;
   initialDate?: string;
+  initialEndDate?: string;
   currentMemberId: string;
   currentUserName: string;
   members: MemberOption[];
   leaveTypes: LeaveType[];
   onSave: (formData: DayoffFormData) => void;
+  onDelete?: (record: DayoffRecord) => void;
   isSaving: boolean;
 }
 
@@ -46,11 +48,13 @@ export default function DayoffFormDialog({
   editingRecord,
   copySource,
   initialDate,
+  initialEndDate,
   currentMemberId,
   currentUserName,
   members,
   leaveTypes,
   onSave,
+  onDelete,
   isSaving,
 }: DayoffFormDialogProps) {
   const [formData, setFormData] = useState<DayoffFormData>(defaultFormData);
@@ -60,6 +64,7 @@ export default function DayoffFormDialog({
     if (editingRecord) {
       setFormData({
         targetId: editingRecord.target_id,
+        approverIds: editingRecord.approver_id ? [editingRecord.approver_id] : [],
         ccMemberIds: editingRecord.cc_member_ids || [],
         startDate: editingRecord.leave_date,
         endDate: editingRecord.leave_date,
@@ -67,10 +72,12 @@ export default function DayoffFormDialog({
         lateHour: editingRecord.late_hour || "09",
         lateMinute: editingRecord.late_minute || "00",
         reason: editingRecord.reason || "",
+        editReason: editingRecord.edit_reason || "",
       });
     } else if (copySource) {
       setFormData({
         targetId: currentMemberId,
+        approverIds: [],
         ccMemberIds: copySource.cc_member_ids || [],
         startDate: "",
         endDate: "",
@@ -78,20 +85,33 @@ export default function DayoffFormDialog({
         lateHour: copySource.late_hour || "09",
         lateMinute: copySource.late_minute || "00",
         reason: copySource.reason || "",
+        editReason: "",
       });
     } else {
       setFormData({
         ...defaultFormData,
         targetId: currentMemberId,
         startDate: initialDate || "",
-        endDate: initialDate || "",
+        endDate: initialEndDate || initialDate || "",
       });
     }
-  }, [open, editingRecord, copySource, initialDate, currentMemberId]);
+  }, [open, editingRecord, copySource, initialDate, initialEndDate, currentMemberId]);
 
   const handleAddCcMember = (memberId: string) => {
     if (!memberId || formData.ccMemberIds.includes(memberId)) return;
     setFormData({ ...formData, ccMemberIds: [...formData.ccMemberIds, memberId] });
+  };
+
+  const handleAddApprover = (memberId: string) => {
+    if (!memberId || formData.approverIds.includes(memberId)) return;
+    setFormData({ ...formData, approverIds: [...formData.approverIds, memberId] });
+  };
+
+  const handleRemoveApprover = (memberId: string) => {
+    setFormData({
+      ...formData,
+      approverIds: formData.approverIds.filter((id) => id !== memberId),
+    });
   };
 
   const handleRemoveCcMember = (memberId: string) => {
@@ -127,6 +147,46 @@ export default function DayoffFormDialog({
             <div className="flex items-center h-9 px-3 rounded-md border border-[oklch(0.90_0.01_250)] bg-[oklch(0.97_0.005_250)] text-sm text-[oklch(0.30_0.02_250)]">
               {currentUserName || "-"}
             </div>
+          </div>
+
+          {/* 결재자 */}
+          <div className="space-y-1.5">
+            <Label className="text-xs text-[oklch(0.50_0.01_250)]">
+              결재자
+            </Label>
+            <SearchableDropdown
+              items={members.filter(
+                (m) =>
+                  m.id !== currentMemberId &&
+                  !formData.approverIds.includes(m.id)
+              )}
+              getItemKey={(m) => m.id}
+              getItemLabel={(m) => m.full_name}
+              onSelect={(m) => handleAddApprover(m.id)}
+              placeholder="결재자 선택"
+              searchPlaceholder="이름 검색 (초성 가능)"
+              className="w-full"
+            />
+            {formData.approverIds.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-1">
+                {formData.approverIds.map((id) => (
+                  <span
+                    key={id}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-[#f3f3f3] bg-[#f9f9fa] px-2.5 py-1 text-[13px] font-medium text-slate-700"
+                  >
+                    {getMemberName(id)}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveApprover(id)}
+                      className="text-slate-400 transition-colors hover:text-[#111111]"
+                      aria-label={`${getMemberName(id)} 결재자 제거`}
+                    >
+                      &times;
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* 참조자 */}
@@ -292,9 +352,42 @@ export default function DayoffFormDialog({
               className="text-sm"
             />
           </div>
+
+          {editingRecord && (
+            <div className="space-y-1.5">
+              <Label className="text-xs text-[oklch(0.50_0.01_250)]">
+                수정 사유
+                {editingRecord.approver_id && (
+                  <span className="ml-1 text-rose-500">*</span>
+                )}
+              </Label>
+              <Textarea
+                value={formData.editReason}
+                onChange={(e) =>
+                  setFormData({ ...formData, editReason: e.target.value })
+                }
+                placeholder={
+                  editingRecord.approver_id
+                    ? "승인된 근태 수정 사유를 입력해주세요"
+                    : "수정 사유 입력 (선택)"
+                }
+                rows={2}
+                className="text-sm"
+              />
+            </div>
+          )}
         </div>
 
         <DialogFooter className="gap-2">
+          {editingRecord && onDelete && (
+            <Button
+              variant="outline"
+              onClick={() => onDelete(editingRecord)}
+              className="flex-1 border-rose-100 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+            >
+              삭제
+            </Button>
+          )}
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
@@ -304,7 +397,10 @@ export default function DayoffFormDialog({
           </Button>
           <Button
             onClick={() => onSave(formData)}
-            disabled={isSaving}
+            disabled={
+              isSaving ||
+              (!!editingRecord?.approver_id && !formData.editReason.trim())
+            }
             className="flex-1 rounded-lg bg-[#131313] hover:bg-[#2a2a2a] text-white"
           >
             {isSaving ? "저장 중..." : "저장"}

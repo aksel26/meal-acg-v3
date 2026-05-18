@@ -2,7 +2,7 @@
 
 import dayjs from "dayjs";
 import "dayjs/locale/ko";
-import { Lock, Pencil, Trash2 } from "lucide-react";
+import { Lock } from "lucide-react";
 import type { DayoffRecord } from "./types";
 import { formatLeaveTypeName, getLeaveTypeColor } from "./types";
 
@@ -11,13 +11,11 @@ dayjs.locale("ko");
 interface DayoffsTableProps {
   records: DayoffRecord[];
   onEdit: (record: DayoffRecord) => void;
-  onDelete: (record: DayoffRecord) => void;
 }
 
 export default function DayoffsTable({
   records,
   onEdit,
-  onDelete,
 }: DayoffsTableProps) {
   if (records.length === 0) {
     return (
@@ -39,7 +37,16 @@ export default function DayoffsTable({
         return (
           <article
             key={record.id}
-            className="flex items-center gap-3 rounded-xl bg-slate-50/80 px-3 py-3 transition-colors hover:bg-slate-100"
+            role="button"
+            tabIndex={0}
+            className="flex cursor-pointer items-center gap-3 rounded-xl bg-slate-50/80 px-3 py-3 text-left transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+            onClick={() => onEdit(record)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onEdit(record);
+              }
+            }}
           >
             <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-lg bg-white text-center">
               <p
@@ -83,29 +90,6 @@ export default function DayoffsTable({
               <p className="mt-1.5 truncate text-sm text-slate-500">
                 {record.reason || "사유 없음"}
               </p>
-            </div>
-
-            <div className="flex shrink-0 items-center justify-end gap-1">
-              {!isApproved && (
-                <>
-                  <button
-                    type="button"
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-500 transition-colors hover:text-[#111111]"
-                    onClick={() => onEdit(record)}
-                    title="수정"
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white text-rose-500 transition-colors hover:bg-rose-50 hover:text-rose-600"
-                    onClick={() => onDelete(record)}
-                    title="삭제"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </>
-              )}
             </div>
           </article>
         );

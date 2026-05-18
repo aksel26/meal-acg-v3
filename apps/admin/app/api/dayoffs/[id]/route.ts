@@ -60,7 +60,7 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
 
-    const { leaveDate, leaveTypeId, lateHour, lateMinute, ccMemberIds, reason } =
+    const { leaveDate, leaveTypeId, lateHour, lateMinute, approverId, ccMemberIds, reason } =
       body;
 
     const updateData: Record<string, unknown> = {
@@ -72,6 +72,10 @@ export async function PUT(
       updateData.leave_type_id = leaveTypeId;
       updateData.late_hour = leaveTypeId === 1 ? (lateHour || null) : null;
       updateData.late_minute = leaveTypeId === 1 ? (lateMinute || null) : null;
+    }
+    if (approverId !== undefined) {
+      updateData.approver_id = approverId || null;
+      updateData.approved_at = approverId ? new Date().toISOString() : null;
     }
     if (ccMemberIds !== undefined) updateData.cc_member_ids = ccMemberIds;
     if (reason !== undefined) updateData.reason = reason;

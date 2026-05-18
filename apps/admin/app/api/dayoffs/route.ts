@@ -81,6 +81,7 @@ export async function POST(request: NextRequest) {
       leaveTypeId,
       lateHour,
       lateMinute,
+      approverId,
       ccMemberIds,
       reason,
     } = body;
@@ -135,6 +136,8 @@ export async function POST(request: NextRequest) {
       leave_type_id: leaveTypeId,
       late_hour: leaveTypeId === 1 ? lateHour || null : null,
       late_minute: leaveTypeId === 1 ? lateMinute || null : null,
+      approver_id: approverId || null,
+      approved_at: approverId ? new Date().toISOString() : null,
       cc_member_ids: ccMemberIds || [],
       reason: reason || null,
     }));

@@ -12,6 +12,7 @@ interface CreateDayoffInput {
   leaveTypeId: number;
   lateHour?: string;
   lateMinute?: string;
+  approverId?: string;
   ccMemberIds?: string[];
   reason?: string;
 }
@@ -23,8 +24,10 @@ interface UpdateDayoffInput {
   leaveTypeId?: number;
   lateHour?: string;
   lateMinute?: string;
+  approverId?: string;
   ccMemberIds?: string[];
   reason?: string;
+  editReason?: string;
 }
 
 interface ApproveInput {

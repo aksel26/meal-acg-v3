@@ -25,7 +25,6 @@ interface DayoffsDesktopViewProps {
   isLoading: boolean;
   yearlyLoading: boolean;
   onEdit: (record: DayoffRecord) => void;
-  onDelete: (record: DayoffRecord) => void;
   onCreateNew: (date?: string) => void;
 }
 
@@ -44,7 +43,6 @@ export default function DayoffsDesktopView({
   isLoading,
   yearlyLoading,
   onEdit,
-  onDelete,
   onCreateNew,
 }: DayoffsDesktopViewProps) {
   const [filterType, setFilterType] = useState("전체");
@@ -87,7 +85,6 @@ export default function DayoffsDesktopView({
           <DayoffsTable
             records={filteredRecords}
             onEdit={onEdit}
-            onDelete={onDelete}
           />
         )}
       </div>

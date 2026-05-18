@@ -18,6 +18,7 @@ interface DatePickerProps {
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  modal?: boolean;
 }
 
 function DatePicker({
@@ -26,6 +27,7 @@ function DatePicker({
   placeholder = "날짜 선택",
   className,
   disabled,
+  modal,
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -41,7 +43,7 @@ function DatePicker({
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal={modal}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -58,14 +60,45 @@ function DatePicker({
             : placeholder}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
-        <Calendar
-          mode="single"
-          selected={selectedDate}
-          onSelect={handleSelect}
-          locale={ko}
-          defaultMonth={selectedDate}
-        />
+      <PopoverContent
+        className="w-auto p-0"
+        align="start"
+        onPointerDownOutside={(event) => {
+          const target = event.target as HTMLElement | null;
+          if (target?.closest("[data-slot='popover-content']")) {
+            event.preventDefault();
+            return;
+          }
+          setOpen(false);
+          if (target?.closest("[data-slot='dialog-content']")) {
+            event.preventDefault();
+          }
+        }}
+        onInteractOutside={(event) => {
+          const target = event.target as HTMLElement | null;
+          if (target?.closest("[data-slot='popover-content']")) {
+            event.preventDefault();
+            return;
+          }
+          setOpen(false);
+          if (target?.closest("[data-slot='dialog-content']")) {
+            event.preventDefault();
+          }
+        }}
+      >
+        <div
+          onPointerDown={(event) => event.stopPropagation()}
+          onMouseDown={(event) => event.stopPropagation()}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={handleSelect}
+            locale={ko}
+            defaultMonth={selectedDate}
+          />
+        </div>
       </PopoverContent>
     </Popover>
   );

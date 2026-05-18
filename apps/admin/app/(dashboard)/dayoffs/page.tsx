@@ -39,21 +39,15 @@ import {
 import { toast } from "@repo/ui/src/sonner";
 import {
   Plus,
-  Pencil,
-  Trash2,
   CalendarOff,
-  Check,
-  X,
   ChevronLeft,
   ChevronRight,
-  Copy,
   BarChart3,
 } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
 import {
   useDayoffs,
   useLeaveTypes,
-  useDayoffStats,
   type DayoffRecord,
   type LeaveType,
 } from "@/hooks/useDayoffs";
@@ -64,6 +58,7 @@ import {
   useApproveDayoff,
 } from "@/hooks/useDayoffMutations";
 import { useQuery } from "@tanstack/react-query";
+import LeaveBalancesPage from "../leave-balances/page";
 
 dayjs.locale("ko");
 
@@ -86,6 +81,7 @@ interface MemberOption {
 
 interface FormData {
   targetId: string;
+  approverId: string;
   startDate: string;
   endDate: string;
   leaveTypeId: number;
@@ -97,6 +93,7 @@ interface FormData {
 
 const defaultFormData: FormData = {
   targetId: "",
+  approverId: "",
   startDate: "",
   endDate: "",
   leaveTypeId: 0,
@@ -123,7 +120,6 @@ export default function DayoffsPage() {
   // Data fetching
   const { data: dayoffs, isLoading } = useDayoffs(year, month);
   const { data: leaveTypes } = useLeaveTypes();
-  const { data: stats } = useDayoffStats(year, month);
   const { data: members } = useQuery<MemberOption[]>({
     queryKey: queryKeys.members.all,
     queryFn: async () => {
@@ -200,23 +196,9 @@ export default function DayoffsPage() {
     setEditingRecord(record);
     setFormData({
       targetId: record.target_id,
+      approverId: record.approver_id || "",
       startDate: record.leave_date,
       endDate: record.leave_date,
-      leaveTypeId: record.leave_type_id,
-      lateHour: record.late_hour || "09",
-      lateMinute: record.late_minute || "00",
-      ccMemberIds: record.cc_member_ids || [],
-      reason: record.reason || "",
-    });
-    setIsDialogOpen(true);
-  };
-
-  const handleCopy = (record: DayoffRecord) => {
-    setEditingRecord(null);
-    setFormData({
-      targetId: record.target_id,
-      startDate: "",
-      endDate: "",
       leaveTypeId: record.leave_type_id,
       lateHour: record.late_hour || "09",
       lateMinute: record.late_minute || "00",
@@ -239,6 +221,7 @@ export default function DayoffsPage() {
         leaveTypeId: formData.leaveTypeId,
         lateHour: formData.lateHour,
         lateMinute: formData.lateMinute,
+        approverId: formData.approverId,
         ccMemberIds: formData.ccMemberIds,
         reason: formData.reason,
       }, {
@@ -252,6 +235,7 @@ export default function DayoffsPage() {
         leaveTypeId: formData.leaveTypeId,
         lateHour: formData.lateHour,
         lateMinute: formData.lateMinute,
+        approverId: formData.approverId,
         ccMemberIds: formData.ccMemberIds,
         reason: formData.reason,
       }, {
@@ -275,24 +259,43 @@ export default function DayoffsPage() {
       label = `지각-${record.late_hour}시${record.late_minute || "00"}분`;
     }
     return (
-      <Badge variant="outline" className={`text-[11px] ${colorClass}`}>
+      <Badge variant="outline" className={cn(colorClass, "border-transparent text-[11px]")}>
         {label}
       </Badge>
     );
   };
 
   const getApprovalBadge = (record: DayoffRecord) => {
+    const action = record.approver_id ? "cancel" : "approve";
+    const label = record.approver_id
+      ? `승인 (${record.approver?.full_name})`
+      : "미승인";
+
     if (record.approver_id) {
       return (
-        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-[11px]">
-          승인 ({record.approver?.full_name})
-        </Badge>
+        <button
+          type="button"
+          className="cursor-pointer"
+          onClick={() => approveMutation.mutate({ id: record.id, action })}
+          title="승인 취소"
+        >
+          <Badge variant="outline" className="border-transparent bg-green-50 text-[11px] text-green-700 transition-colors hover:bg-green-100">
+            {label}
+          </Badge>
+        </button>
       );
     }
     return (
-      <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[11px]">
-        미승인
-      </Badge>
+      <button
+        type="button"
+        className="cursor-pointer"
+        onClick={() => approveMutation.mutate({ id: record.id, action })}
+        title="승인"
+      >
+        <Badge variant="outline" className="border-transparent bg-amber-50 text-[11px] text-amber-700 transition-colors hover:bg-amber-100">
+          {label}
+        </Badge>
+      </button>
     );
   };
 
@@ -367,7 +370,7 @@ export default function DayoffsPage() {
 
       {/* Calendar View */}
       {viewMode === "calendar" && (
-        <div className="rounded-xl border bg-white p-4">
+        <div className="rounded-xl bg-white p-4">
             <div className="grid grid-cols-7 gap-px rounded-lg bg-slate-200 overflow-hidden">
               {["일", "월", "화", "수", "목", "금", "토"].map((day, i) => (
                 <div key={day} className={`bg-slate-50 p-2 text-center text-xs font-semibold ${i === 0 ? "text-red-500" : i === 6 ? "text-slate-700" : "text-slate-600"}`}>
@@ -415,24 +418,25 @@ export default function DayoffsPage() {
 
       {/* Table View */}
       {viewMode === "table" && (
-        <div className="overflow-x-auto rounded-xl border bg-white">
+        <div className="overflow-x-auto rounded-xl bg-white">
           <table className="w-full text-sm whitespace-nowrap">
-            <thead className="border-b bg-slate-50 text-left text-xs font-medium text-slate-500">
+            <thead className="border-b border-slate-100 bg-slate-50 text-left text-xs font-medium text-slate-500">
               <tr>
-                <th className="px-3 py-2 w-10">#</th>
-                <th className="px-3 py-2">날짜</th>
-                <th className="px-3 py-2">대상자</th>
-                <th className="px-3 py-2">구분</th>
-                <th className="px-3 py-2">사유</th>
-                <th className="px-3 py-2">작성자</th>
-                <th className="px-3 py-2">승인</th>
-                <th className="px-3 py-2 w-28">관리</th>
+                <th className="w-10 px-4 py-2.5">#</th>
+                <th className="px-3 py-2.5">날짜</th>
+                <th className="px-3 py-2.5">기안일</th>
+                <th className="px-3 py-2.5">대상자</th>
+                <th className="px-3 py-2.5">구분</th>
+                <th className="px-3 py-2.5">사유</th>
+                <th className="px-3 py-2.5">작성자</th>
+                <th className="px-3 py-2.5">승인</th>
+                <th className="w-28 px-4 py-2.5">관리</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={8} className="py-10 text-center text-sm text-slate-400">
+                  <td colSpan={9} className="py-10 text-center text-sm text-slate-400">
                     로딩 중...
                   </td>
                 </tr>
@@ -448,6 +452,9 @@ export default function DayoffsPage() {
                         <span className={cn("ml-1 text-xs", date.day() === 0 ? "text-red-500" : date.day() === 6 ? "text-slate-700" : "text-slate-400")}>
                           ({dayOfWeek})
                         </span>
+                      </td>
+                      <td className="px-3 py-1.5 text-xs text-slate-500">
+                        {record.created_at ? dayjs(record.created_at).format("MM-DD") : "-"}
                       </td>
                       <td className="px-3 py-1.5 font-medium text-slate-800">
                         <Link
@@ -466,44 +473,20 @@ export default function DayoffsPage() {
                       </td>
                       <td className="px-3 py-1.5">{getApprovalBadge(record)}</td>
                       <td className="px-3 py-1.5">
-                        <div className="flex gap-0.5">
-                          {!record.approver_id ? (
-                            <button
-                              className="inline-flex items-center justify-center h-6 w-6 rounded hover:bg-green-50 transition-colors text-green-500 hover:text-green-700"
-                              onClick={() => approveMutation.mutate({ id: record.id, action: "approve" })}
-                              title="승인"
-                            >
-                              <Check className="h-3 w-3" />
-                            </button>
-                          ) : (
-                            <button
-                              className="inline-flex items-center justify-center h-6 w-6 rounded hover:bg-amber-50 transition-colors text-amber-500 hover:text-amber-700"
-                              onClick={() => approveMutation.mutate({ id: record.id, action: "cancel" })}
-                              title="승인 취소"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          )}
+                        <div className="flex items-center gap-2">
                           <button
-                            className="inline-flex items-center justify-center h-6 w-6 rounded hover:bg-slate-100 transition-colors text-slate-500 hover:text-slate-700"
+                            className="text-xs font-medium text-slate-500 transition-colors hover:text-slate-900"
                             onClick={() => handleOpenEdit(record)}
                             title="수정"
                           >
-                            <Pencil className="h-3 w-3" />
+                            수정
                           </button>
                           <button
-                            className="inline-flex items-center justify-center h-6 w-6 rounded hover:bg-slate-100 transition-colors text-slate-500 hover:text-slate-700"
-                            onClick={() => handleCopy(record)}
-                            title="복사"
-                          >
-                            <Copy className="h-3 w-3" />
-                          </button>
-                          <button
-                            className="inline-flex items-center justify-center h-6 w-6 rounded hover:bg-red-50 transition-colors text-red-400 hover:text-red-600"
+                            className="text-xs font-medium text-red-400 transition-colors hover:text-red-600"
                             onClick={() => setDeleteTarget(record.id)}
                             title="삭제"
                           >
-                            <Trash2 className="h-3 w-3" />
+                            삭제
                           </button>
                         </div>
                       </td>
@@ -512,7 +495,7 @@ export default function DayoffsPage() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={8} className="py-12">
+                  <td colSpan={9} className="py-12">
                     <div className="flex flex-col items-center gap-2 text-slate-400">
                       <CalendarOff className="h-8 w-8" />
                       <p className="text-sm">등록된 휴가가 없습니다.</p>
@@ -527,26 +510,29 @@ export default function DayoffsPage() {
 
       {/* Create/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>
+        <DialogContent
+          showCloseButton={false}
+          className="max-w-xl gap-0 overflow-hidden border-0 bg-white p-0 shadow-none"
+        >
+          <DialogHeader className="px-6 pt-6 pb-3 text-left">
+            <DialogTitle className="text-base font-semibold text-slate-950">
               {editingRecord ? "휴가 수정" : "휴가 등록"}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-xs text-slate-500">
               {editingRecord ? "휴가 정보를 수정합니다." : "휴가를 등록합니다. 주말/공휴일은 자동 제외됩니다."}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4 py-2">
+          <div className="grid gap-4 px-6 py-3">
             {/* Target Member */}
             <div className="space-y-2">
-              <Label>대상자</Label>
+              <Label className="text-xs font-medium text-slate-500">대상자</Label>
               <Select
                 value={formData.targetId}
                 onValueChange={(v) => setFormData({ ...formData, targetId: v })}
                 disabled={!!editingRecord}
               >
-                <SelectTrigger className="bg-white">
+                <SelectTrigger className="w-full border-0 bg-slate-50 shadow-none">
                   <SelectValue placeholder="대상자 선택" />
                 </SelectTrigger>
                 <SelectContent>
@@ -559,36 +545,64 @@ export default function DayoffsPage() {
               </Select>
             </div>
 
+            {/* Approver */}
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-slate-500">결재자</Label>
+              <Select
+                value={formData.approverId || "none"}
+                onValueChange={(v) =>
+                  setFormData({
+                    ...formData,
+                    approverId: v === "none" ? "" : v,
+                  })
+                }
+              >
+                <SelectTrigger className="w-full border-0 bg-slate-50 shadow-none">
+                  <SelectValue placeholder="결재자 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">미지정</SelectItem>
+                  {(members || []).map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {m.full_name} {m.team_name ? `(${m.team_name})` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Date Range */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>시작일</Label>
+                <Label className="text-xs font-medium text-slate-500">시작일</Label>
                 <Input
                   type="date"
                   value={formData.startDate}
                   onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                   disabled={!!editingRecord}
+                  className="border-0 bg-slate-50 shadow-none"
                 />
               </div>
               <div className="space-y-2">
-                <Label>종료일</Label>
+                <Label className="text-xs font-medium text-slate-500">종료일</Label>
                 <Input
                   type="date"
                   value={formData.endDate || formData.startDate}
                   onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                   disabled={!!editingRecord}
+                  className="border-0 bg-slate-50 shadow-none"
                 />
               </div>
             </div>
 
             {/* Leave Type */}
             <div className="space-y-2">
-              <Label>구분</Label>
+              <Label className="text-xs font-medium text-slate-500">구분</Label>
               <Select
                 value={formData.leaveTypeId ? formData.leaveTypeId.toString() : ""}
                 onValueChange={(v) => setFormData({ ...formData, leaveTypeId: parseInt(v) })}
               >
-                <SelectTrigger className="bg-white">
+                <SelectTrigger className="w-full border-0 bg-slate-50 shadow-none">
                   <SelectValue placeholder="휴가 유형 선택" />
                 </SelectTrigger>
                 <SelectContent>
@@ -605,12 +619,12 @@ export default function DayoffsPage() {
             {formData.leaveTypeId === 1 && (
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>지각 시</Label>
+                  <Label className="text-xs font-medium text-slate-500">지각 시</Label>
                   <Select
                     value={formData.lateHour}
                     onValueChange={(v) => setFormData({ ...formData, lateHour: v })}
                   >
-                    <SelectTrigger className="bg-white">
+                    <SelectTrigger className="w-full border-0 bg-slate-50 shadow-none">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -621,12 +635,12 @@ export default function DayoffsPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>지각 분</Label>
+                  <Label className="text-xs font-medium text-slate-500">지각 분</Label>
                   <Select
                     value={formData.lateMinute}
                     onValueChange={(v) => setFormData({ ...formData, lateMinute: v })}
                   >
-                    <SelectTrigger className="bg-white">
+                    <SelectTrigger className="w-full border-0 bg-slate-50 shadow-none">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -641,18 +655,19 @@ export default function DayoffsPage() {
 
             {/* Reason */}
             <div className="space-y-2">
-              <Label>사유</Label>
+              <Label className="text-xs font-medium text-slate-500">사유</Label>
               <Textarea
                 value={formData.reason}
                 onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
                 placeholder="사유를 입력하세요 (선택)"
                 rows={2}
+                className="resize-none border-0 bg-slate-50 shadow-none"
               />
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+          <DialogFooter className="px-6 pt-3 pb-6">
+            <Button variant="ghost" onClick={() => setIsDialogOpen(false)}>
               취소
             </Button>
             <Button
@@ -669,18 +684,22 @@ export default function DayoffsPage() {
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>휴가 삭제</AlertDialogTitle>
-            <AlertDialogDescription>
-              이 휴가 기록을 삭제하시겠습니까?
+        <AlertDialogContent className="max-w-sm gap-0 border-0 bg-white p-0 shadow-none">
+          <AlertDialogHeader className="px-6 pt-6 pb-4 text-left">
+            <AlertDialogTitle className="text-base font-semibold text-slate-950">
+              휴가 기록 삭제
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm leading-6 text-slate-500">
+              삭제한 휴가 기록은 목록에서 제거됩니다. 계속 진행하시겠습니까?
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>취소</AlertDialogCancel>
+          <AlertDialogFooter className="px-6 pt-2 pb-6">
+            <AlertDialogCancel className="border-0 bg-transparent shadow-none hover:bg-slate-100">
+              취소
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-red-50 text-red-600 shadow-none hover:bg-red-100"
             >
               삭제
             </AlertDialogAction>
@@ -690,53 +709,16 @@ export default function DayoffsPage() {
 
       {/* Stats Dialog */}
       <Dialog open={isStatsOpen} onOpenChange={setIsStatsOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {year}년 {month}월 휴가 통계
+              연차 현황
             </DialogTitle>
             <DialogDescription>
-              직원별 휴가 유형별 건수
+              조직원별 휴가 사용 현황을 확인합니다.
             </DialogDescription>
           </DialogHeader>
-          <div className="overflow-x-auto rounded-lg border">
-            <table className="w-full text-sm whitespace-nowrap">
-              <thead className="border-b bg-slate-50 text-left text-xs font-medium text-slate-500">
-                <tr>
-                  <th className="px-3 py-2 sticky left-0 bg-slate-50">이름</th>
-                  <th className="px-3 py-2">팀</th>
-                  {(leaveTypes || []).map((t) => (
-                    <th key={t.id} className="px-3 py-2 text-center w-12">
-                      {t.name}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {(stats || []).map((s) => (
-                  <tr key={s.member_id} className="hover:bg-slate-50">
-                    <td className="px-3 py-1.5 font-medium text-slate-800 sticky left-0 bg-white">{s.member_name}</td>
-                    <td className="px-3 py-1.5 text-xs text-slate-400">{s.team_name || "-"}</td>
-                    {(leaveTypes || []).map((t) => {
-                      const count = s.types[t.id] || 0;
-                      return (
-                        <td key={t.id} className={cn("px-3 py-1.5 text-center", count > 0 ? "text-red-600 font-semibold" : "text-slate-300")}>
-                          {count || "-"}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-                {(!stats || stats.length === 0) && (
-                  <tr>
-                    <td colSpan={(leaveTypes?.length || 0) + 2} className="text-center py-8 text-slate-400">
-                      해당 월의 휴가 기록이 없습니다.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          <LeaveBalancesPage />
         </DialogContent>
       </Dialog>
     </div>

@@ -49,7 +49,7 @@ export async function GET(
   }
 }
 
-// PUT /api/dayoffs/[id] - 근태 수정 (승인된 건은 수정 불가)
+// PUT /api/dayoffs/[id] - 근태 수정
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -65,7 +65,17 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const { editorId, leaveDate, leaveTypeId, lateHour, lateMinute, ccMemberIds, reason } = body;
+    const {
+      editorId,
+      leaveDate,
+      leaveTypeId,
+      lateHour,
+      lateMinute,
+      approverId,
+      ccMemberIds,
+      reason,
+      editReason,
+    } = body;
 
     if (!editorId) {
       return NextResponse.json(
@@ -74,7 +84,6 @@ export async function PUT(
       );
     }
 
-    // 승인 여부 확인 (승인된 건은 일반 사용자 수정 불가)
     const { data: existing } = await supabase
       .from("dayoffs")
       .select("approver_id")
@@ -82,10 +91,10 @@ export async function PUT(
       .eq("is_deleted", false)
       .single();
 
-    if (existing?.approver_id) {
+    if (existing?.approver_id && !editReason?.trim()) {
       return NextResponse.json(
-        { error: "승인된 근태는 수정할 수 없습니다." },
-        { status: 403 }
+        { error: "승인된 근태 수정 시 수정 사유가 필요합니다." },
+        { status: 400 }
       );
     }
 
@@ -99,8 +108,13 @@ export async function PUT(
       updateData.late_hour = leaveTypeId === 1 ? (lateHour || null) : null;
       updateData.late_minute = leaveTypeId === 1 ? (lateMinute || null) : null;
     }
+    if (approverId !== undefined) {
+      updateData.approver_id = approverId || null;
+      updateData.approved_at = approverId ? new Date().toISOString() : null;
+    }
     if (ccMemberIds !== undefined) updateData.cc_member_ids = ccMemberIds;
     if (reason !== undefined) updateData.reason = reason;
+    if (editReason !== undefined) updateData.edit_reason = editReason || null;
 
     const { data, error } = await supabase
       .from("dayoffs")
@@ -128,7 +142,7 @@ export async function PUT(
   }
 }
 
-// DELETE /api/dayoffs/[id] - 근태 소프트 삭제 (승인된 건은 삭제 불가)
+// DELETE /api/dayoffs/[id] - 근태 소프트 삭제
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -143,21 +157,6 @@ export async function DELETE(
     }
 
     const { id } = await params;
-
-    // 승인 여부 확인
-    const { data: existing } = await supabase
-      .from("dayoffs")
-      .select("approver_id")
-      .eq("id", id)
-      .eq("is_deleted", false)
-      .single();
-
-    if (existing?.approver_id) {
-      return NextResponse.json(
-        { error: "승인된 근태는 삭제할 수 없습니다." },
-        { status: 403 }
-      );
-    }
 
     const { error } = await supabase
       .from("dayoffs")

@@ -195,6 +195,7 @@ export type Database = {
           author_id: string
           cc_member_ids: string[] | null
           created_at: string
+          edit_reason: string | null
           id: string
           is_deleted: boolean
           last_editor_id: string | null
@@ -213,6 +214,7 @@ export type Database = {
           author_id: string
           cc_member_ids?: string[] | null
           created_at?: string
+          edit_reason?: string | null
           id?: string
           is_deleted?: boolean
           last_editor_id?: string | null
@@ -231,6 +233,7 @@ export type Database = {
           author_id?: string
           cc_member_ids?: string[] | null
           created_at?: string
+          edit_reason?: string | null
           id?: string
           is_deleted?: boolean
           last_editor_id?: string | null
@@ -2299,4 +2302,3 @@ export interface AuthSession {
   role: "user" | "admin"
   hireDate?: string | null
 }
-

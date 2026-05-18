@@ -7,6 +7,7 @@ export interface MemberOption {
 
 export interface DayoffFormData {
   targetId: string;
+  approverIds: string[];
   ccMemberIds: string[];
   startDate: string;
   endDate: string;
@@ -14,10 +15,12 @@ export interface DayoffFormData {
   lateHour: string;
   lateMinute: string;
   reason: string;
+  editReason: string;
 }
 
 export const defaultFormData: DayoffFormData = {
   targetId: "",
+  approverIds: [],
   ccMemberIds: [],
   startDate: "",
   endDate: "",
@@ -25,6 +28,7 @@ export const defaultFormData: DayoffFormData = {
   lateHour: "09",
   lateMinute: "00",
   reason: "",
+  editReason: "",
 };
 
 interface LeaveTypeColor {

@@ -13,6 +13,7 @@ export interface DayoffRecord {
   late_minute: string | null;
   cc_member_ids: string[];
   reason: string | null;
+  edit_reason?: string | null;
   approver_id: string | null;
   approved_at: string | null;
   last_editor_id: string | null;

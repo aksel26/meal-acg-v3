@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/src/tabs";
-import { BarChart3, CalendarDays, UserRound } from "lucide-react";
 import { useUserStore } from "@/stores/userStore";
 import { useMemberIdLookup } from "@/hooks/use-points-data";
 import { useProfile } from "@/hooks/use-profile";
@@ -16,7 +15,11 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (memberLookup && !memberId) {
-      setMemberInfo(memberLookup.id, memberLookup.member_role || "팀원", memberLookup.hire_date);
+      setMemberInfo(
+        memberLookup.id,
+        memberLookup.member_role || "팀원",
+        memberLookup.hire_date,
+      );
     }
   }, [memberLookup, memberId, setMemberInfo]);
 
@@ -31,36 +34,49 @@ export default function ProfilePage() {
     }
   }, []);
 
+  const handleTabChange = useCallback((tab: string) => {
+    setActiveTab(tab);
+
+    const params = new URLSearchParams(window.location.search);
+    if (tab === "basic") {
+      params.delete("tab");
+    } else {
+      params.set("tab", tab);
+    }
+
+    const nextUrl = params.toString()
+      ? `${window.location.pathname}?${params.toString()}`
+      : window.location.pathname;
+    window.history.replaceState(null, "", nextUrl);
+  }, []);
+
   if (isLoading || !profile || !currentMemberId) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="h-10 w-10 animate-spin rounded-full border-2 border-slate-200 border-t-slate-600" />
+        <span className="text-sm text-slate-400">로딩 중...</span>
       </div>
     );
   }
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="mb-6 inline-flex h-auto w-fit rounded-xl bg-[#f1f3f5] p-1">
+    <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+      <TabsList className="mb-4 inline-flex h-auto w-fit rounded-xl bg-slate-100 p-1">
         <TabsTrigger
           value="basic"
-          className="h-9 flex-none rounded-lg px-3 text-xs font-semibold text-slate-600 hover:text-slate-900 data-[state=active]:bg-white data-[state=active]:text-[#111111] data-[state=active]:shadow-sm sm:text-sm"
+          className="h-8 flex-none rounded-lg px-3 text-xs font-semibold text-slate-600 hover:text-slate-900 data-[state=active]:bg-white data-[state=active]:text-slate-950"
         >
-          <UserRound className="h-3.5 w-3.5" />
           기본정보
         </TabsTrigger>
         <TabsTrigger
           value="leave"
-          className="h-9 flex-none rounded-lg px-3 text-xs font-semibold text-slate-600 hover:text-slate-900 data-[state=active]:bg-white data-[state=active]:text-[#111111] data-[state=active]:shadow-sm sm:text-sm"
+          className="h-8 flex-none rounded-lg px-3 text-xs font-semibold text-slate-600 hover:text-slate-900 data-[state=active]:bg-white data-[state=active]:text-slate-950"
         >
-          <CalendarDays className="h-3.5 w-3.5" />
           휴가
         </TabsTrigger>
         <TabsTrigger
           value="attendance"
-          className="h-9 flex-none rounded-lg px-3 text-xs font-semibold text-slate-600 hover:text-slate-900 data-[state=active]:bg-white data-[state=active]:text-[#111111] data-[state=active]:shadow-sm sm:text-sm"
+          className="h-8 flex-none rounded-lg px-3 text-xs font-semibold text-slate-600 hover:text-slate-900 data-[state=active]:bg-white data-[state=active]:text-slate-950"
         >
-          <BarChart3 className="h-3.5 w-3.5" />
           근태/통계
         </TabsTrigger>
       </TabsList>
@@ -74,17 +90,11 @@ export default function ProfilePage() {
       </TabsContent>
 
       <TabsContent value="leave">
-        <ProfileLeaveTab
-          memberId={currentMemberId!}
-          hireDate={hireDate}
-        />
+        <ProfileLeaveTab memberId={currentMemberId!} hireDate={hireDate} />
       </TabsContent>
 
       <TabsContent value="attendance">
-        <ProfileAttendanceTab
-          memberId={currentMemberId!}
-          hireDate={hireDate}
-        />
+        <ProfileAttendanceTab memberId={currentMemberId!} hireDate={hireDate} />
       </TabsContent>
     </Tabs>
   );

@@ -13,8 +13,6 @@ import { Textarea } from "@repo/ui/src/textarea";
 import {
   CalendarDays,
   Clock3,
-  LogIn,
-  LogOut,
   TimerReset,
 } from "lucide-react";
 import dayjs from "dayjs";
@@ -110,15 +108,6 @@ export default function AttendanceConfirmDialog({
         onKeyDown={handleKeyDown}
       >
         <DialogHeader className="px-5 pb-3 pt-5 text-left">
-          {!isEarlyLeave && (
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-700">
-              {isCheckIn ? (
-                <LogIn className="h-5 w-5" />
-              ) : (
-                <LogOut className="h-5 w-5" />
-              )}
-            </div>
-          )}
           <DialogTitle className="text-lg font-semibold text-[#111111]">
             {isCheckIn
               ? "출근 확인"

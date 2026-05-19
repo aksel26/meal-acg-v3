@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
 
 // GET /api/attendance/modify?memberId=xxx - 내 수정 요청 목록
+// GET /api/attendance/modify?memberId=xxx&attendanceRecordId=xxx - 특정 근태 수정 요청
 export async function GET(request: NextRequest) {
   try {
     const supabase = createServiceClient();
@@ -13,6 +14,8 @@ export async function GET(request: NextRequest) {
     }
 
     const memberId = request.nextUrl.searchParams.get("memberId");
+    const attendanceRecordId =
+      request.nextUrl.searchParams.get("attendanceRecordId");
     if (!memberId) {
       return NextResponse.json(
         { error: "memberId가 필요합니다." },
@@ -20,7 +23,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { data, error } = await supabase
+    let query = supabase
       .from("attendance_modification_requests")
       .select(
         `
@@ -33,12 +36,22 @@ export async function GET(request: NextRequest) {
       .eq("requester_id", memberId)
       .order("created_at", { ascending: false });
 
+    if (attendanceRecordId) {
+      query = query.eq("attendance_record_id", attendanceRecordId).limit(1);
+    }
+
+    const { data, error } = await query;
+
     if (error) {
       console.error("Error fetching modify requests:", error);
       return NextResponse.json(
         { error: "수정 요청 목록 조회 실패" },
         { status: 500 }
       );
+    }
+
+    if (attendanceRecordId) {
+      return NextResponse.json(data?.[0] || null);
     }
 
     return NextResponse.json(data || []);
@@ -62,12 +75,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { attendanceRecordId, requesterId, originalType, requestedType, reason } =
+    const { attendanceRecordId, requesterId, approverId, originalType, requestedType, reason } =
       await request.json();
 
-    if (!attendanceRecordId || !requesterId || !originalType || !requestedType || !reason) {
+    if (!attendanceRecordId || !requesterId || !approverId || !originalType || !requestedType || !reason) {
       return NextResponse.json(
         { error: "모든 필드는 필수입니다." },
+        { status: 400 }
+      );
+    }
+
+    const { data: approver, error: approverError } = await supabase
+      .from("members")
+      .select("id, member_role")
+      .eq("id", approverId)
+      .single();
+
+    const approverRoles = ["대표", "본부장", "팀장", "파트장"];
+    if (approverError || !approver || !approverRoles.includes(approver.member_role || "")) {
+      return NextResponse.json(
+        { error: "결재자는 팀장 이상만 선택할 수 있습니다." },
         { status: 400 }
       );
     }
@@ -95,6 +122,7 @@ export async function POST(request: NextRequest) {
         original_type: originalType,
         requested_type: requestedType,
         reason,
+        first_approver_id: approverId,
       })
       .select()
       .single();
@@ -103,6 +131,29 @@ export async function POST(request: NextRequest) {
       console.error("Error creating modify request:", error);
       return NextResponse.json(
         { error: "수정 요청 생성 실패" },
+        { status: 500 }
+      );
+    }
+
+    const { error: approvalError } = await supabase
+      .from("approval_requests")
+      .insert({
+        type: "attendance_modify",
+        requester_id: requesterId,
+        approver_id: approverId,
+        related_table: "attendance_modification_requests",
+        related_id: data.id,
+        status: "pending",
+      });
+
+    if (approvalError) {
+      console.error("Error creating modify approval request:", approvalError);
+      await supabase
+        .from("attendance_modification_requests")
+        .delete()
+        .eq("id", data.id);
+      return NextResponse.json(
+        { error: "결재 요청 생성 실패" },
         { status: 500 }
       );
     }

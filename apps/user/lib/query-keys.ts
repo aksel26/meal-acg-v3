@@ -130,12 +130,20 @@ export const queryKeys = {
     pending: (memberId: string) => ["approvals", "pending", memberId] as const,
     byStatus: (memberId: string, status: string) =>
       ["approvals", memberId, status] as const,
+    cc: (memberId: string) => ["approvals", "cc", memberId] as const,
   },
 
   // 내 신청 목록
   myRequests: {
     all: ["myRequests"] as const,
     byMember: (memberId: string) => ["myRequests", memberId] as const,
+  },
+
+  // 시간외/주말 근무 신청
+  workApplications: {
+    all: ["workApplications"] as const,
+    list: (memberId: string, scope: string, status?: string, type?: string) =>
+      ["workApplications", memberId, scope, status ?? "all", type ?? "all"] as const,
   },
 
   // 출퇴근 기록
@@ -150,6 +158,8 @@ export const queryKeys = {
       all: ["attendance", "modifyRequests"] as const,
       byMember: (memberId: string) =>
         ["attendance", "modifyRequests", memberId] as const,
+      detail: (memberId: string, attendanceRecordId: string) =>
+        ["attendance", "modifyRequests", memberId, attendanceRecordId] as const,
     },
   },
 

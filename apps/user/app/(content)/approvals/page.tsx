@@ -26,6 +26,8 @@ import {
   useApproveRequest,
   useRejectRequest,
   type ApprovalRequest,
+  type AttendanceModifyApprovalData,
+  type DayoffApprovalData,
 } from "@/hooks/use-approvals";
 import dayjs from "dayjs";
 
@@ -36,12 +38,17 @@ const STATUS_BADGE: Record<string, { label: string; className: string; icon: typ
   approved: { label: "승인", className: "bg-emerald-50 text-emerald-600", icon: Check },
   rejected: { label: "반려", className: "bg-red-50 text-red-600", icon: X },
 };
+const DEFAULT_STATUS_BADGE = {
+  label: "대기",
+  className: "bg-amber-50 text-amber-600",
+  icon: Clock,
+};
 
 export default function ApprovalsPage() {
   const { memberId } = useUserStore();
   const [viewMode, setViewMode] = useState<ViewMode>("inbox");
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
-  const [rejectTarget, setRejectTarget] = useState<string | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<ApprovalRequest | null>(null);
   const [rejectReason, setRejectReason] = useState("");
 
   const {
@@ -68,7 +75,8 @@ export default function ApprovalsPage() {
   };
 
   const openRejectDialog = (approvalId: string) => {
-    setRejectTarget(approvalId);
+    const target = inboxItems?.find((item) => item.id === approvalId) || null;
+    setRejectTarget(target);
     setRejectReason("");
     setRejectDialogOpen(true);
   };
@@ -76,11 +84,12 @@ export default function ApprovalsPage() {
   const handleReject = () => {
     if (!rejectTarget || !memberId) return;
     rejectMutation.mutate(
-      { approvalId: rejectTarget, memberId, rejectReason: rejectReason || undefined },
+      { approvalId: rejectTarget.id, memberId, rejectReason: rejectReason || undefined },
       {
         onSuccess: () => {
           toast.success("반려되었습니다.");
           setRejectDialogOpen(false);
+          setRejectTarget(null);
         },
         onError: (err: Error) => toast.error(err.message),
       }
@@ -175,6 +184,9 @@ export default function ApprovalsPage() {
     </div>
   );
 
+  const isAttendanceModifyReject =
+    rejectTarget?.related_table === "attendance_modification_requests";
+
   return (
     <React.Fragment>
       <div className="space-y-4">
@@ -195,7 +207,13 @@ export default function ApprovalsPage() {
       </div>
 
       {/* Reject Dialog */}
-      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+      <Dialog
+        open={rejectDialogOpen}
+        onOpenChange={(isOpen) => {
+          setRejectDialogOpen(isOpen);
+          if (!isOpen) setRejectTarget(null);
+        }}
+      >
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>반려 사유</DialogTitle>
@@ -203,7 +221,11 @@ export default function ApprovalsPage() {
           <Textarea
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
-            placeholder="반려 사유를 입력해주세요 (선택)"
+            placeholder={
+              isAttendanceModifyReject
+                ? "반려 사유를 입력해주세요"
+                : "반려 사유를 입력해주세요 (선택)"
+            }
             rows={3}
           />
           <DialogFooter>
@@ -216,7 +238,10 @@ export default function ApprovalsPage() {
             <Button
               variant="destructive"
               onClick={handleReject}
-              disabled={rejectMutation.isPending}
+              disabled={
+                rejectMutation.isPending ||
+                (isAttendanceModifyReject && !rejectReason.trim())
+              }
             >
               반려
             </Button>
@@ -225,6 +250,16 @@ export default function ApprovalsPage() {
       </Dialog>
     </React.Fragment>
   );
+}
+
+function isDayoffData(data: ApprovalRequest["related_data"]): data is DayoffApprovalData {
+  return !!data && "leave_date" in data;
+}
+
+function isAttendanceModifyData(
+  data: ApprovalRequest["related_data"],
+): data is AttendanceModifyApprovalData {
+  return !!data && "requested_type" in data;
 }
 
 function ApprovalCard({
@@ -238,8 +273,12 @@ function ApprovalCard({
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
 }) {
-  const badge = STATUS_BADGE[item.status] || STATUS_BADGE.pending;
-  const dayoff = item.related_data;
+  const badge = STATUS_BADGE[item.status] || DEFAULT_STATUS_BADGE;
+  const dayoff = isDayoffData(item.related_data) ? item.related_data : null;
+  const modifyRequest = isAttendanceModifyData(item.related_data)
+    ? item.related_data
+    : null;
+  const requestTitle = modifyRequest ? "근태 수정 요청" : dayoff?.leave_type?.name;
 
   return (
     <div className="rounded-xl bg-white p-4 transition-colors">
@@ -251,9 +290,9 @@ function ApprovalCard({
             >
               {badge.label}
             </span>
-            {dayoff?.leave_type && (
+            {requestTitle && (
               <span className="text-sm font-semibold text-slate-800">
-                {dayoff.leave_type.name}
+                {requestTitle}
               </span>
             )}
           </div>
@@ -275,6 +314,23 @@ function ApprovalCard({
           )}
           {dayoff?.reason && (
             <p className="text-xs text-slate-400">사유: {dayoff.reason}</p>
+          )}
+          {modifyRequest && (
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-slate-900">
+                {modifyRequest.attendance_record
+                  ? dayjs(modifyRequest.attendance_record.date).format(
+                      "YYYY-MM-DD (ddd)",
+                    )
+                  : "대상 날짜 없음"}
+              </p>
+              <p className="text-xs font-medium text-slate-600">
+                {modifyRequest.original_type} → {modifyRequest.requested_type}
+              </p>
+              <p className="text-xs text-slate-400">
+                사유: {modifyRequest.reason}
+              </p>
+            </div>
           )}
           {item.reject_reason && (
             <p className="text-xs text-red-500">

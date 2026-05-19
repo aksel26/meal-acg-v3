@@ -52,8 +52,20 @@ export async function GET(request: NextRequest) {
     const dayoffIds = (data || [])
       .filter((r) => r.related_table === "dayoffs" && r.related_id)
       .map((r) => r.related_id!);
+    const attendanceModifyIds = (data || [])
+      .filter(
+        (r) =>
+          r.related_table === "attendance_modification_requests" &&
+          r.related_id,
+      )
+      .map((r) => r.related_id!);
+    const workApplicationIds = (data || [])
+      .filter((r) => r.related_table === "work_applications" && r.related_id)
+      .map((r) => r.related_id!);
 
     let dayoffsMap: Record<string, unknown> = {};
+    let attendanceModifyMap: Record<string, unknown> = {};
+    let workApplicationsMap: Record<string, unknown> = {};
     if (dayoffIds.length > 0) {
       const { data: dayoffs } = await supabase
         .from("dayoffs")
@@ -71,11 +83,49 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    if (attendanceModifyIds.length > 0) {
+      const { data: modifyRequests } = await supabase
+        .from("attendance_modification_requests")
+        .select(
+          `
+          *,
+          requester:members!attendance_modification_requests_requester_id_fkey(id, full_name),
+          attendance_record:attendance_records!attendance_modification_requests_attendance_record_id_fkey(
+            id, member_id, date, attendance_type, check_in_at, check_out_at
+          )
+        `
+        )
+        .in("id", attendanceModifyIds);
+
+      if (modifyRequests) {
+        attendanceModifyMap = Object.fromEntries(
+          modifyRequests.map((modifyRequest) => [modifyRequest.id, modifyRequest]),
+        );
+      }
+    }
+
+    if (workApplicationIds.length > 0) {
+      const { data: workApplications } = await supabase
+        .from("work_applications")
+        .select("*")
+        .in("id", workApplicationIds);
+
+      if (workApplications) {
+        workApplicationsMap = Object.fromEntries(
+          workApplications.map((application) => [application.id, application]),
+        );
+      }
+    }
+
     const result = (data || []).map((r) => ({
       ...r,
       related_data:
         r.related_table === "dayoffs" && r.related_id
           ? dayoffsMap[r.related_id] || null
+          : r.related_table === "attendance_modification_requests" && r.related_id
+            ? attendanceModifyMap[r.related_id] || null
+          : r.related_table === "work_applications" && r.related_id
+            ? workApplicationsMap[r.related_id] || null
           : null,
     }));
 
@@ -138,13 +188,135 @@ export async function PUT(request: NextRequest) {
     }
 
     const newStatus = action === "approve" ? "approved" : "rejected";
+    const normalizedRejectReason =
+      typeof rejectReason === "string" ? rejectReason.trim() : "";
+
+    if (
+      action === "reject" &&
+      approvalData.related_table === "attendance_modification_requests" &&
+      !normalizedRejectReason
+    ) {
+      return NextResponse.json(
+        { error: "반려 사유를 입력해주세요." },
+        { status: 400 }
+      );
+    }
+
+    const now = new Date().toISOString();
+
+    // 관련 dayoff 상태 업데이트
+    if (approvalData.related_table === "dayoffs" && approvalData.related_id) {
+      const dayoffUpdate: Record<string, unknown> = {
+        approval_status: newStatus,
+      };
+
+      if (action === "approve") {
+        dayoffUpdate.approver_id = memberId;
+        dayoffUpdate.approved_at = now;
+      }
+
+      const { error: dayoffUpdateError } = await supabase
+        .from("dayoffs")
+        .update(dayoffUpdate)
+        .eq("id", approvalData.related_id);
+
+      if (dayoffUpdateError) {
+        console.error("Error updating dayoff approval:", dayoffUpdateError);
+        return NextResponse.json(
+          { error: "휴가 결재 상태 반영 실패" },
+          { status: 500 }
+        );
+      }
+    }
+
+    if (
+      approvalData.related_table === "attendance_modification_requests" &&
+      approvalData.related_id
+    ) {
+      const { data: modifyRequest, error: modifyFetchError } = await supabase
+        .from("attendance_modification_requests")
+        .select("*")
+        .eq("id", approvalData.related_id)
+        .single();
+
+      if (modifyFetchError || !modifyRequest) {
+        return NextResponse.json(
+          { error: "근태 수정 요청을 찾을 수 없습니다." },
+          { status: 404 }
+        );
+      }
+
+      if (action === "approve") {
+        const { error: attendanceError } = await supabase
+          .from("attendance_records")
+          .update({
+            attendance_type: modifyRequest.requested_type,
+            modifier_id: modifyRequest.requester_id,
+            approver_id: memberId,
+            approved_at: now,
+            updated_at: now,
+          })
+          .eq("id", modifyRequest.attendance_record_id);
+
+        if (attendanceError) {
+          console.error("Error applying attendance modify request:", attendanceError);
+          return NextResponse.json(
+            { error: "근태 수정 요청 반영 실패" },
+            { status: 500 }
+          );
+        }
+      }
+
+      const { error: modifyUpdateError } = await supabase
+        .from("attendance_modification_requests")
+        .update({
+          approval_status: action === "approve" ? "승인" : "반려",
+          first_approver_id: memberId,
+          first_approved_at: now,
+          final_approver_id: memberId,
+          final_approved_at: now,
+          reject_reason: action === "reject" ? normalizedRejectReason : null,
+          updated_at: now,
+        })
+        .eq("id", approvalData.related_id);
+
+      if (modifyUpdateError) {
+        console.error("Error updating attendance modify request:", modifyUpdateError);
+        return NextResponse.json(
+          { error: "근태 수정 결재 상태 반영 실패" },
+          { status: 500 }
+        );
+      }
+    }
+
+    if (
+      approvalData.related_table === "work_applications" &&
+      approvalData.related_id
+    ) {
+      const { error: workApplicationUpdateError } = await supabase
+        .from("work_applications")
+        .update({
+          status: newStatus,
+          approved_at: action === "approve" ? now : null,
+          reject_reason: action === "reject" ? normalizedRejectReason || null : null,
+        })
+        .eq("id", approvalData.related_id);
+
+      if (workApplicationUpdateError) {
+        console.error("Error updating work application approval:", workApplicationUpdateError);
+        return NextResponse.json(
+          { error: "근무 신청 결재 상태 반영 실패" },
+          { status: 500 }
+        );
+      }
+    }
 
     const { data: updated, error: updateError } = await supabase
       .from("approval_requests")
       .update({
         status: newStatus,
-        reject_reason: action === "reject" ? rejectReason || null : null,
-        resolved_at: new Date().toISOString(),
+        reject_reason: action === "reject" ? normalizedRejectReason || null : null,
+        resolved_at: now,
         resolved_by: memberId,
       })
       .eq("id", approvalId)
@@ -157,23 +329,6 @@ export async function PUT(request: NextRequest) {
         { error: "승인 처리 실패" },
         { status: 500 }
       );
-    }
-
-    // 관련 dayoff 상태 업데이트
-    if (approvalData.related_table === "dayoffs" && approvalData.related_id) {
-      const dayoffUpdate: Record<string, unknown> = {
-        approval_status: newStatus,
-      };
-
-      if (action === "approve") {
-        dayoffUpdate.approver_id = memberId;
-        dayoffUpdate.approved_at = new Date().toISOString();
-      }
-
-      await supabase
-        .from("dayoffs")
-        .update(dayoffUpdate)
-        .eq("id", approvalData.related_id);
     }
 
     return NextResponse.json(updated);

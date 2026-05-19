@@ -201,6 +201,72 @@ export type Database = {
           }
         ]
       }
+      work_applications: {
+        Row: {
+          id: string
+          requester_id: string
+          application_type: string
+          work_date: string
+          start_time: string
+          end_time: string
+          project_name: string
+          reason: string
+          status: string
+          approver_id: string | null
+          approved_at: string | null
+          reject_reason: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          requester_id: string
+          application_type: string
+          work_date: string
+          start_time: string
+          end_time: string
+          project_name: string
+          reason: string
+          status?: string
+          approver_id?: string | null
+          approved_at?: string | null
+          reject_reason?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          requester_id?: string
+          application_type?: string
+          work_date?: string
+          start_time?: string
+          end_time?: string
+          project_name?: string
+          reason?: string
+          status?: string
+          approver_id?: string | null
+          approved_at?: string | null
+          reject_reason?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_applications_approver_id_fkey"
+            columns: ["approver_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_applications_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       budget_allocations: {
         Row: {
           created_at: string | null
@@ -920,6 +986,7 @@ export type Database = {
       members: {
         Row: {
           birth_date: string | null
+          admin_role: string | null
           created_at: string | null
           division_id: string | null
           email: string | null
@@ -938,8 +1005,10 @@ export type Database = {
           team_id: string | null
           title_id: string | null
           updated_at: string | null
+          user_authority: string | null
         }
         Insert: {
+          admin_role?: string | null
           created_at?: string | null
           division_id?: string | null
           email?: string | null
@@ -956,8 +1025,10 @@ export type Database = {
           team_id?: string | null
           title_id?: string | null
           updated_at?: string | null
+          user_authority?: string | null
         }
         Update: {
+          admin_role?: string | null
           created_at?: string | null
           division_id?: string | null
           email?: string | null
@@ -974,6 +1045,7 @@ export type Database = {
           team_id?: string | null
           title_id?: string | null
           updated_at?: string | null
+          user_authority?: string | null
         }
         Relationships: [
           {

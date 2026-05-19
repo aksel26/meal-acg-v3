@@ -52,8 +52,20 @@ export async function GET(request: NextRequest) {
     const dayoffIds = (data || [])
       .filter((r) => r.related_table === "dayoffs" && r.related_id)
       .map((r) => r.related_id!);
+    const attendanceModifyIds = (data || [])
+      .filter(
+        (r) =>
+          r.related_table === "attendance_modification_requests" &&
+          r.related_id,
+      )
+      .map((r) => r.related_id!);
+    const workApplicationIds = (data || [])
+      .filter((r) => r.related_table === "work_applications" && r.related_id)
+      .map((r) => r.related_id!);
 
     let dayoffsMap: Record<string, unknown> = {};
+    let attendanceModifyMap: Record<string, unknown> = {};
+    let workApplicationsMap: Record<string, unknown> = {};
     if (dayoffIds.length > 0) {
       const { data: dayoffs } = await supabase
         .from("dayoffs")
@@ -70,11 +82,48 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    if (attendanceModifyIds.length > 0) {
+      const { data: modifyRequests } = await supabase
+        .from("attendance_modification_requests")
+        .select(
+          `
+          *,
+          attendance_record:attendance_records!attendance_modification_requests_attendance_record_id_fkey(
+            id, member_id, date, attendance_type, check_in_at, check_out_at
+          )
+        `
+        )
+        .in("id", attendanceModifyIds);
+
+      if (modifyRequests) {
+        attendanceModifyMap = Object.fromEntries(
+          modifyRequests.map((modifyRequest) => [modifyRequest.id, modifyRequest]),
+        );
+      }
+    }
+
+    if (workApplicationIds.length > 0) {
+      const { data: workApplications } = await supabase
+        .from("work_applications")
+        .select("*")
+        .in("id", workApplicationIds);
+
+      if (workApplications) {
+        workApplicationsMap = Object.fromEntries(
+          workApplications.map((application) => [application.id, application]),
+        );
+      }
+    }
+
     const result = (data || []).map((r) => ({
       ...r,
       related_data:
         r.related_table === "dayoffs" && r.related_id
           ? dayoffsMap[r.related_id] || null
+          : r.related_table === "attendance_modification_requests" && r.related_id
+            ? attendanceModifyMap[r.related_id] || null
+          : r.related_table === "work_applications" && r.related_id
+            ? workApplicationsMap[r.related_id] || null
           : null,
     }));
 

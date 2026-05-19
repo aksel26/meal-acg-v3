@@ -6,6 +6,7 @@ import "dayjs/locale/ko";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import { Filter } from "lucide-react";
+import type { ModifyRequest } from "@/hooks/use-attendance-modify";
 
 dayjs.locale("ko");
 dayjs.extend(utc);
@@ -58,22 +59,33 @@ function formatWorkTime(minutes: number): string {
 
 interface AttendanceTableProps {
   records: AttendanceRecord[];
+  modifyRequests?: ModifyRequest[];
   selectedFilter: string;
   onFilterChange: (type: string) => void;
-  onRowClick: (record: AttendanceRecord) => void;
 }
 
 export default function AttendanceTable({
   records,
+  modifyRequests = [],
   selectedFilter,
   onFilterChange,
-  onRowClick,
 }: AttendanceTableProps) {
   const [filterOpen, setFilterOpen] = useState(false);
   const filteredRecords = useMemo(() => {
     if (selectedFilter === "전체") return records;
     return records.filter((record) => record.attendance_type === selectedFilter);
   }, [records, selectedFilter]);
+  const modifyRequestByRecordId = useMemo(() => {
+    const requestMap = new Map<string, ModifyRequest>();
+    modifyRequests.forEach((request) => {
+      const recordId = request.attendance_record_id;
+      const previous = requestMap.get(recordId);
+      if (!previous || dayjs(request.created_at).isAfter(previous.created_at)) {
+        requestMap.set(recordId, request);
+      }
+    });
+    return requestMap;
+  }, [modifyRequests]);
 
   if (records.length === 0) {
     return (
@@ -139,6 +151,9 @@ export default function AttendanceTable({
               현황
             </th>
             <th className="px-2 py-3 text-left font-medium text-slate-500">
+              특이사항
+            </th>
+            <th className="px-2 py-3 text-left font-medium text-slate-500">
               근무
             </th>
             <th className="px-4 py-3 text-right font-medium text-slate-500">
@@ -150,7 +165,7 @@ export default function AttendanceTable({
           {filteredRecords.length === 0 ? (
             <tr>
               <td
-                colSpan={7}
+                colSpan={8}
                 className="px-4 py-10 text-center text-sm text-slate-500"
               >
                 해당 근태 기록이 없습니다
@@ -166,15 +181,25 @@ export default function AttendanceTable({
               color: "text-emerald-600",
             };
             const statusInfo = STATUS_LABELS[record.status] ?? DEFAULT_STATUS;
+            const modifyRequest = modifyRequestByRecordId.get(record.id);
+            const displayAttendanceType =
+              modifyRequest && modifyRequest.approval_status !== "반려"
+                ? modifyRequest.requested_type
+                : record.attendance_type;
+            const displayStatus =
+              modifyRequest && modifyRequest.approval_status !== "승인"
+                ? modifyRequest.approval_status === "반려"
+                  ? { text: "반려", color: "text-rose-600" }
+                  : { text: "승인 전", color: "text-amber-600" }
+                : statusInfo;
             const badgeStyle =
-              TYPE_BADGE_STYLES[record.attendance_type] ||
+              TYPE_BADGE_STYLES[displayAttendanceType] ||
               TYPE_BADGE_STYLES["근무"];
 
               return (
                 <tr
                   key={record.id}
-                  onClick={() => onRowClick(record)}
-                  className={`cursor-pointer transition-colors hover:bg-[#fafafa] ${
+                  className={`transition-colors hover:bg-[#fafafa] ${
                     isWeekend ? "bg-[#fcfcfd]" : ""
                   }`}
                 >
@@ -206,11 +231,27 @@ export default function AttendanceTable({
                     <span
                       className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${badgeStyle}`}
                     >
-                      {record.attendance_type}
+                      {displayAttendanceType}
                     </span>
                   </td>
-                  <td className={`px-2 py-3 font-medium ${statusInfo.color}`}>
-                    {statusInfo.text}
+                  <td className={`px-2 py-3 font-medium ${displayStatus.color}`}>
+                    {displayStatus.text}
+                  </td>
+                  <td className="px-2 py-3">
+                    {modifyRequest ? (
+                      <div className="max-w-[240px] space-y-1">
+                        <p className="line-clamp-2 text-[11px] leading-4 text-slate-400">
+                          {modifyRequest.reason}
+                        </p>
+                        {modifyRequest.reject_reason && (
+                          <p className="line-clamp-2 text-[11px] leading-4 text-rose-500">
+                            반려: {modifyRequest.reject_reason}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-slate-300">-</span>
+                    )}
                   </td>
                   <td className="px-2 py-3 text-slate-700">
                     {formatWorkTime(record.work_minutes)}

@@ -7,6 +7,7 @@ import { toast } from "@repo/ui/src/sonner";
 interface ModifyRequestPayload {
   attendanceRecordId: string;
   requesterId: string;
+  approverId: string;
   originalType: string;
   requestedType: string;
   reason: string;
@@ -20,7 +21,13 @@ export interface ModifyRequest {
   requested_type: string;
   reason: string;
   approval_status: string;
+  first_approver_id: string | null;
+  first_approved_at: string | null;
+  final_approver_id: string | null;
+  final_approved_at: string | null;
+  reject_reason: string | null;
   created_at: string;
+  updated_at: string;
   attendance_record: {
     id: string;
     date: string;
@@ -71,5 +78,31 @@ export function useMyModifyRequests(memberId: string | null) {
       return res.json();
     },
     enabled: !!memberId,
+  });
+}
+
+export function useAttendanceModifyRequestDetail(
+  memberId: string | null,
+  attendanceRecordId: string | null,
+  enabled = true,
+) {
+  return useQuery<ModifyRequest | null>({
+    queryKey: queryKeys.attendance.modifyRequests.detail(
+      memberId || "",
+      attendanceRecordId || "",
+    ),
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        memberId: memberId!,
+        attendanceRecordId: attendanceRecordId!,
+      });
+      const res = await fetch(`/api/attendance/modify?${params}`);
+      if (!res.ok) throw new Error("수정 요청 조회 실패");
+      return res.json();
+    },
+    enabled: enabled && !!memberId && !!attendanceRecordId,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: false,
   });
 }

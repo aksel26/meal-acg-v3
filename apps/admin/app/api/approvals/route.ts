@@ -46,8 +46,12 @@ export async function GET(request: NextRequest) {
     const dayoffIds = (data || [])
       .filter((r) => r.related_table === "dayoffs" && r.related_id)
       .map((r) => r.related_id!);
+    const workApplicationIds = (data || [])
+      .filter((r) => r.related_table === "work_applications" && r.related_id)
+      .map((r) => r.related_id!);
 
     let dayoffsMap: Record<string, unknown> = {};
+    let workApplicationsMap: Record<string, unknown> = {};
     if (dayoffIds.length > 0) {
       const { data: dayoffs } = await supabase
         .from("dayoffs")
@@ -65,11 +69,26 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    if (workApplicationIds.length > 0) {
+      const { data: workApplications } = await supabase
+        .from("work_applications")
+        .select("*")
+        .in("id", workApplicationIds);
+
+      if (workApplications) {
+        workApplicationsMap = Object.fromEntries(
+          workApplications.map((application) => [application.id, application]),
+        );
+      }
+    }
+
     const result = (data || []).map((r) => ({
       ...r,
       related_data:
         r.related_table === "dayoffs" && r.related_id
           ? dayoffsMap[r.related_id] || null
+          : r.related_table === "work_applications" && r.related_id
+            ? workApplicationsMap[r.related_id] || null
           : null,
     }));
 

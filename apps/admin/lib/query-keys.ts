@@ -199,6 +199,12 @@ export const queryKeys = {
     byStatus: (status: string) => ["approvals", status] as const,
   },
 
+  workApplications: {
+    all: ["workApplications"] as const,
+    list: (filters: Record<string, string>) =>
+      ["workApplications", filters] as const,
+  },
+
   // Early Leave Requests (조기퇴근)
   earlyLeaveRequests: {
     all: ["earlyLeaveRequests"] as const,

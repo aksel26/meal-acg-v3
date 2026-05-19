@@ -19,6 +19,8 @@ import {
   useApproveRequest,
   useRejectRequest,
   type ApprovalRequest,
+  type AttendanceModifyApprovalData,
+  type DayoffApprovalData,
 } from "@/hooks/use-approvals";
 import { usePathname } from "next/navigation";
 import { formatDateKorean } from "utils";
@@ -314,6 +316,16 @@ function NotificationTabButton({
   );
 }
 
+function isDayoffData(data: ApprovalRequest["related_data"]): data is DayoffApprovalData {
+  return !!data && "leave_date" in data;
+}
+
+function isAttendanceModifyData(
+  data: ApprovalRequest["related_data"],
+): data is AttendanceModifyApprovalData {
+  return !!data && "requested_type" in data;
+}
+
 function ApprovalItem({
   item,
   viewMode,
@@ -325,8 +337,12 @@ function ApprovalItem({
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
 }) {
-  const dayoff = item.related_data;
+  const dayoff = isDayoffData(item.related_data) ? item.related_data : null;
+  const modifyRequest = isAttendanceModifyData(item.related_data)
+    ? item.related_data
+    : null;
   const leaveType = dayoff?.leave_type;
+  const title = modifyRequest ? "근태 수정 요청" : leaveType?.name || "휴가 요청";
 
   const personLabel =
     viewMode === "inbox"
@@ -338,13 +354,9 @@ function ApprovalItem({
   return (
     <div className="px-4 py-3.5 transition-colors hover:bg-slate-50/80">
       <div className="mb-2 flex items-start justify-between gap-3">
-        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-          {leaveType && (
-            <span className="rounded-full border border-blue-200 bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-800">
-              {leaveType.name}
-            </span>
-          )}
-        </div>
+        <h3 className="min-w-0 truncate text-sm font-semibold text-slate-900">
+          {title}
+        </h3>
         <span className="shrink-0 text-[11px] font-medium text-slate-400">
           {dayjs(item.requested_at).format("MM/DD")}
         </span>
@@ -360,15 +372,29 @@ function ApprovalItem({
       {dayoff?.reason && (
         <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">사유: {dayoff.reason}</p>
       )}
+      {modifyRequest && (
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-slate-900">
+            {modifyRequest.attendance_record
+              ? dayjs(modifyRequest.attendance_record.date).format("YYYY-MM-DD (ddd)")
+              : "대상 날짜 없음"}
+          </p>
+          <p className="text-xs font-medium text-slate-600">
+            {modifyRequest.original_type} → {modifyRequest.requested_type}
+          </p>
+          <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
+            사유: {modifyRequest.reason}
+          </p>
+        </div>
+      )}
       {item.reject_reason && (
         <p className="mt-1 line-clamp-2 text-xs leading-5 text-red-600">반려: {item.reject_reason}</p>
       )}
       {viewMode === "inbox" && item.status === "pending" && (
-        <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="mt-3 flex justify-end gap-2">
           <Button
             size="sm"
-            variant="outline"
-            className="h-9 rounded-lg border-emerald-200 text-xs text-emerald-700 hover:bg-emerald-50"
+            className="h-8 rounded-lg bg-emerald-600 px-3 text-xs text-white hover:bg-emerald-700"
             onClick={() => onApprove(item.id)}
           >
             승인
@@ -376,7 +402,7 @@ function ApprovalItem({
           <Button
             size="sm"
             variant="outline"
-            className="h-9 rounded-lg border-red-200 text-xs text-red-600 hover:bg-red-50"
+            className="h-8 rounded-lg border-rose-200 px-3 text-xs text-rose-600 hover:bg-rose-50 hover:text-rose-700"
             onClick={() => onReject(item.id)}
           >
             반려

@@ -539,15 +539,18 @@ function NotificationToggle() {
 
 export function Sidebar() {
   const router = useRouter();
-  const { userName, memberId, setMemberInfo, logout } = useUserStore();
+  const { userName, memberId, memberRole, setMemberInfo, logout } = useUserStore();
   const { data: memberLookup } = useMemberIdLookup(userName);
   const resolvedMemberId = memberLookup?.id ?? memberId;
 
   useEffect(() => {
-    if (memberLookup && memberLookup.id !== memberId) {
+    if (
+      memberLookup &&
+      (memberLookup.id !== memberId || memberLookup.member_role !== memberRole)
+    ) {
       setMemberInfo(memberLookup.id, memberLookup.member_role || "팀원", memberLookup.hire_date);
     }
-  }, [memberLookup, memberId, setMemberInfo]);
+  }, [memberLookup, memberId, memberRole, setMemberInfo]);
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" }).catch(() => null);
@@ -592,15 +595,18 @@ export function Sidebar() {
 export function MobileSidebar() {
   const router = useRouter();
   const { isOpen, close } = useSidebarStore();
-  const { userName, memberId, setMemberInfo, logout } = useUserStore();
+  const { userName, memberId, memberRole, setMemberInfo, logout } = useUserStore();
   const { data: memberLookup } = useMemberIdLookup(userName);
   const resolvedMemberId = memberLookup?.id ?? memberId;
 
   useEffect(() => {
-    if (memberLookup && memberLookup.id !== memberId) {
+    if (
+      memberLookup &&
+      (memberLookup.id !== memberId || memberLookup.member_role !== memberRole)
+    ) {
       setMemberInfo(memberLookup.id, memberLookup.member_role || "팀원", memberLookup.hire_date);
     }
-  }, [memberLookup, memberId, setMemberInfo]);
+  }, [memberLookup, memberId, memberRole, setMemberInfo]);
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" }).catch(() => null);

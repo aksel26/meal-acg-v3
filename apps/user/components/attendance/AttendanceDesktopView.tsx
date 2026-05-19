@@ -4,12 +4,13 @@ import { useMemo, useState } from "react";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
-import { ExternalLink } from "lucide-react";
+import { ChevronRight, ExternalLink } from "lucide-react";
 import MonthSelector from "./MonthSelector";
 import AttendanceTable from "./AttendanceTable";
 import AttendanceCalendar from "./AttendanceCalendar";
 import type { DayoffRecord } from "@/hooks/use-dayoffs";
 import type { LeaveBalance } from "@/hooks/use-leave-balances";
+import type { ModifyRequest } from "@/hooks/use-attendance-modify";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -43,11 +44,16 @@ interface AttendanceDesktopViewProps {
   onDateSelect: (date: string) => void;
   records: AttendanceRecord[];
   dayoffs: DayoffRecord[];
+  modifyRequests: ModifyRequest[];
   leaveBalances: LeaveBalance[];
   summary: AttendanceSummary | null;
   isLoading: boolean;
-  onRowClick: (record: AttendanceRecord) => void;
   onViewLeaveDetails: () => void;
+  onManageDayoffs: (
+    date: string,
+    shouldCreate: boolean,
+    record?: DayoffRecord,
+  ) => void;
 }
 
 export default function AttendanceDesktopView({
@@ -58,11 +64,12 @@ export default function AttendanceDesktopView({
   onDateSelect,
   records,
   dayoffs,
+  modifyRequests,
   leaveBalances,
   summary,
   isLoading,
-  onRowClick,
   onViewLeaveDetails,
+  onManageDayoffs,
 }: AttendanceDesktopViewProps) {
   const [filterType, setFilterType] = useState("전체");
 
@@ -109,6 +116,7 @@ export default function AttendanceDesktopView({
             selectedDate={selectedDate}
             record={selectedRecord}
             dayoffs={selectedDayoffs}
+            onManageDayoffs={onManageDayoffs}
           />
         )}
 
@@ -167,9 +175,9 @@ export default function AttendanceDesktopView({
         ) : (
           <AttendanceTable
             records={records}
+            modifyRequests={modifyRequests}
             selectedFilter={filterType}
             onFilterChange={setFilterType}
-            onRowClick={onRowClick}
           />
         )}
       </div>
@@ -196,10 +204,16 @@ function SelectedDaySummary({
   selectedDate,
   record,
   dayoffs,
+  onManageDayoffs,
 }: {
   selectedDate: string;
   record: AttendanceRecord | null;
   dayoffs: DayoffRecord[];
+  onManageDayoffs: (
+    date: string,
+    shouldCreate: boolean,
+    record?: DayoffRecord,
+  ) => void;
 }) {
   const d = dayjs(selectedDate);
 
@@ -233,7 +247,13 @@ function SelectedDaySummary({
             )}
           </div>
         </div>
-        <div className="flex h-full w-full items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-3 text-left">
+        <button
+          type="button"
+          onClick={() =>
+            onManageDayoffs(selectedDate, dayoffs.length === 0, dayoffs[0])
+          }
+          className="flex h-full w-full items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-3 text-left transition-colors hover:bg-slate-100"
+        >
           <span className="min-w-0">
             <span className="block text-xs font-medium text-slate-400">
               휴가/연차
@@ -255,7 +275,8 @@ function SelectedDaySummary({
               </span>
             )}
           </span>
-        </div>
+          <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
+        </button>
       </div>
     </div>
   );

@@ -100,6 +100,18 @@ export async function PUT(
         .eq("id", request_data.related_id);
     }
 
+    if (request_data.related_table === "work_applications" && request_data.related_id) {
+      await supabase
+        .from("work_applications")
+        .update({
+          status: newStatus,
+          approver_id: action === "cancel" ? null : session.userId,
+          approved_at: action === "approve" ? new Date().toISOString() : null,
+          reject_reason: action === "reject" ? rejectReason || null : null,
+        })
+        .eq("id", request_data.related_id);
+    }
+
     return NextResponse.json(updated);
   } catch (error) {
     console.error("Approval update API error:", error);

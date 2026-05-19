@@ -1,6 +1,41 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 
+export interface DayoffApprovalData {
+  id: string;
+  leave_date: string;
+  reason: string | null;
+  target?: { id: string; full_name: string } | null;
+  leave_type?: { id: number; name: string; category: string } | null;
+}
+
+export interface AttendanceModifyApprovalData {
+  id: string;
+  attendance_record_id: string;
+  requester_id: string;
+  original_type: string;
+  requested_type: string;
+  reason: string;
+  approval_status: string;
+  reject_reason: string | null;
+  created_at: string;
+  updated_at: string;
+  requester?: { id: string; full_name: string } | null;
+  attendance_record?: {
+    id: string;
+    member_id: string;
+    date: string;
+    attendance_type: string;
+    check_in_at: string | null;
+    check_out_at: string | null;
+  } | null;
+}
+
+export type ApprovalRelatedData =
+  | DayoffApprovalData
+  | AttendanceModifyApprovalData
+  | null;
+
 export interface ApprovalRequest {
   id: string;
   type: string;
@@ -16,13 +51,7 @@ export interface ApprovalRequest {
   resolved_by: string | null;
   requester?: { id: string; full_name: string } | null;
   approver?: { id: string; full_name: string } | null;
-  related_data: {
-    id: string;
-    leave_date: string;
-    reason: string | null;
-    target?: { id: string; full_name: string } | null;
-    leave_type?: { id: number; name: string; category: string } | null;
-  } | null;
+  related_data: ApprovalRelatedData;
 }
 
 // 내가 승인할 요청 목록
@@ -126,6 +155,10 @@ export function useApproveRequest() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.approvals.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.dayoffs.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.attendance.all });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.attendance.modifyRequests.all,
+      });
     },
   });
 }
@@ -162,6 +195,10 @@ export function useRejectRequest() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.approvals.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.dayoffs.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.attendance.all });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.attendance.modifyRequests.all,
+      });
     },
   });
 }

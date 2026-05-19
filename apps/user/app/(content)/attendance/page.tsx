@@ -7,19 +7,25 @@ import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import { useUserStore } from "@/stores/userStore";
-import { useDayoffs } from "@/hooks/use-dayoffs";
+import { useDayoffs, type DayoffRecord } from "@/hooks/use-dayoffs";
 import { useLeaveBalances } from "@/hooks/use-leave-balances";
+import { useMyModifyRequests } from "@/hooks/use-attendance-modify";
 import { useMemberIdLookup } from "@/hooks/use-points-data";
 import {
   useAttendanceMonthly,
-  AttendanceRecord,
 } from "@/hooks/use-attendance-monthly";
 import AttendanceMobileView from "@/components/attendance/AttendanceMobileView";
 import AttendanceDesktopView from "@/components/attendance/AttendanceDesktopView";
-import AttendanceModifyDrawer from "@/components/attendance/AttendanceModifyDrawer";
+import DayoffsManager from "@/components/dayoffs/DayoffsManager";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
+
+type DayoffCreateRequest = {
+  startDate: string;
+  requestId: number;
+};
+type DayoffEditRequest = { record: DayoffRecord; requestId: number };
 
 export default function AttendancePage() {
   const router = useRouter();
@@ -38,11 +44,10 @@ export default function AttendancePage() {
   const [selectedDate, setSelectedDate] = useState<string | null>(
     now.format("YYYY-MM-DD"),
   );
-
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [modifyTarget, setModifyTarget] = useState<AttendanceRecord | null>(
-    null,
-  );
+  const [dayoffCreateRequest, setDayoffCreateRequest] =
+    useState<DayoffCreateRequest | null>(null);
+  const [dayoffEditRequest, setDayoffEditRequest] =
+    useState<DayoffEditRequest | null>(null);
 
   const { data: memberLookup } = useMemberIdLookup(!memberId ? userName : null);
 
@@ -71,6 +76,7 @@ export default function AttendancePage() {
   const { data, isLoading } = useAttendanceMonthly(memberId, year, month);
   const { data: dayoffs } = useDayoffs(year, month, memberId || undefined);
   const { data: leaveBalances } = useLeaveBalances(memberId || null, year);
+  const { data: modifyRequests } = useMyModifyRequests(memberId || null);
   const records = data?.records ?? [];
   const summary = data?.summary ?? null;
 
@@ -80,9 +86,42 @@ export default function AttendancePage() {
     setSelectedDate(null);
   };
 
-  const handleModifyRequest = (record: AttendanceRecord) => {
-    setModifyTarget(record);
-    setDrawerOpen(true);
+  const handleCalendarDateSelect = (date: string) => {
+    setSelectedDate(date);
+    setDayoffEditRequest(null);
+    setDayoffCreateRequest((prev) => ({
+      startDate: date,
+      requestId: (prev?.requestId ?? 0) + 1,
+    }));
+  };
+
+  const handleManageDayoffs = (
+    date: string,
+    shouldCreate: boolean,
+    record?: DayoffRecord,
+  ) => {
+    setSelectedDate(date);
+
+    if (shouldCreate) {
+      setDayoffEditRequest(null);
+      setDayoffCreateRequest((prev) => ({
+        startDate: date,
+        requestId: (prev?.requestId ?? 0) + 1,
+      }));
+      return;
+    }
+
+    if (record) {
+      setDayoffCreateRequest(null);
+      setDayoffEditRequest((prev) => ({
+        record,
+        requestId: (prev?.requestId ?? 0) + 1,
+      }));
+      return;
+    }
+
+    setDayoffCreateRequest(null);
+    setDayoffEditRequest(null);
   };
 
   if (!mounted || !hasHydrated || !userName) {
@@ -114,11 +153,11 @@ export default function AttendancePage() {
             month={month}
             onMonthChange={handleMonthChange}
             selectedDate={selectedDate}
-            onDateSelect={setSelectedDate}
+            onDateSelect={handleCalendarDateSelect}
             records={records}
             dayoffs={dayoffs || []}
             isLoading={isLoading}
-            onModifyRequest={handleModifyRequest}
+            onManageDayoffs={handleManageDayoffs}
           />
         </div>
 
@@ -128,24 +167,30 @@ export default function AttendancePage() {
             month={month}
             onMonthChange={handleMonthChange}
             selectedDate={selectedDate}
-            onDateSelect={setSelectedDate}
+            onDateSelect={handleCalendarDateSelect}
             records={records}
             dayoffs={dayoffs || []}
+            modifyRequests={modifyRequests || []}
             leaveBalances={leaveBalances || []}
             summary={summary}
             isLoading={isLoading}
-            onRowClick={handleModifyRequest}
             onViewLeaveDetails={() => router.push("/profile?tab=leave")}
+            onManageDayoffs={handleManageDayoffs}
           />
         </div>
+
+        <DayoffsManager
+          year={year}
+          month={month}
+          selectedDate={selectedDate}
+          createDateRequest={dayoffCreateRequest}
+          editRecordRequest={dayoffEditRequest}
+          dialogsOnly
+          onMonthChange={handleMonthChange}
+          onDateSelect={setSelectedDate}
+        />
       </motion.div>
 
-      <AttendanceModifyDrawer
-        open={drawerOpen}
-        onOpenChange={setDrawerOpen}
-        record={modifyTarget}
-        memberId={memberId || ""}
-      />
     </>
   );
 }

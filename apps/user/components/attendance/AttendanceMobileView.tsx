@@ -28,7 +28,11 @@ interface AttendanceMobileViewProps {
   records: AttendanceRecord[];
   dayoffs: DayoffRecord[];
   isLoading: boolean;
-  onModifyRequest: (record: AttendanceRecord) => void;
+  onManageDayoffs: (
+    date: string,
+    shouldCreate: boolean,
+    record?: DayoffRecord,
+  ) => void;
 }
 
 export default function AttendanceMobileView({
@@ -40,7 +44,7 @@ export default function AttendanceMobileView({
   records,
   dayoffs,
   isLoading,
-  onModifyRequest,
+  onManageDayoffs,
 }: AttendanceMobileViewProps) {
   const selectedRecord = useMemo(() => {
     if (!selectedDate) return null;
@@ -80,9 +84,7 @@ export default function AttendanceMobileView({
               selectedDate={selectedDate}
               record={selectedRecord}
               dayoffs={selectedDayoffs}
-              onModifyRequest={() => {
-                if (selectedRecord) onModifyRequest(selectedRecord);
-              }}
+              onManageDayoffs={onManageDayoffs}
             />
           )}
         </>

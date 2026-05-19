@@ -2,13 +2,7 @@
 
 import { useMemo, useState } from "react";
 import dayjs from "dayjs";
-import {
-  AlertCircle,
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  HelpCircle,
-} from "lucide-react";
+import { HelpCircle } from "lucide-react";
 import { Button } from "@repo/ui/src/button";
 import {
   Dialog,
@@ -17,9 +11,7 @@ import {
   DialogTitle,
 } from "@repo/ui/src/dialog";
 import { cn } from "@repo/ui/lib/utils";
-import {
-  useLeaveCalculatorPreview,
-} from "@/hooks/useLeaveCalculator";
+import { useLeaveCalculatorPreview } from "@/hooks/useLeaveCalculator";
 
 function formatDays(value: number | null) {
   if (value === null) return "-";
@@ -30,21 +22,13 @@ function formatDate(value: string | null) {
   return value ? dayjs(value).format("YYYY.MM.DD") : "-";
 }
 
-function statusClass(status: string) {
-  if (status === "ok") return "border-emerald-200 bg-emerald-50 text-emerald-700";
-  if (status === "not_applicable") return "border-slate-200 bg-slate-50 text-slate-500";
-  return "border-amber-200 bg-amber-50 text-amber-700";
-}
-
 function tenureText(years: number | null, months: number | null) {
   if (years === null) return "-";
   if (years < 1) return `${months ?? 0}개월`;
   return `${years}년차`;
 }
 
-export default function LeaveCalculatorPage() {
-  const currentYear = new Date().getFullYear();
-  const [year, setYear] = useState(currentYear);
+export function LeaveCalculatorPanel({ year }: { year: number }) {
   const [rulesOpen, setRulesOpen] = useState(false);
   const { data, isLoading, isError } = useLeaveCalculatorPreview(year);
 
@@ -57,28 +41,7 @@ export default function LeaveCalculatorPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-1">
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-9 w-9"
-            onClick={() => setYear((prev) => prev - 1)}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <div className="min-w-[92px] text-center text-sm font-semibold text-slate-800">
-            {year}년
-          </div>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-9 w-9"
-            onClick={() => setYear((prev) => prev + 1)}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
+      <div className="flex flex-wrap items-center justify-end gap-3">
         <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-500">
           <HelpCircle className="h-3.5 w-3.5" />
           계산 확인 전용 화면입니다. 휴가 수량은 여기서 적용되지 않습니다.
@@ -88,9 +51,12 @@ export default function LeaveCalculatorPage() {
       <section className="overflow-hidden rounded-xl bg-white">
         <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
           <div>
-            <h3 className="text-sm font-semibold text-slate-900">인원별 계산 결과</h3>
+            <h3 className="text-sm font-semibold text-slate-900">
+              인원별 계산 결과
+            </h3>
             <p className="mt-0.5 text-xs text-slate-500">
-              입사일, 직급, 인턴 개월 수를 기준으로 계산 방식과 현재 적용 수량을 비교합니다.
+              입사일, 직급, 인턴 개월 수를 기준으로 계산 방식과 현재 적용 수량을
+              비교합니다.
             </p>
           </div>
           <Button
@@ -110,31 +76,40 @@ export default function LeaveCalculatorPage() {
             <thead className="border-b border-slate-100 bg-slate-50 text-left text-xs font-medium text-slate-500">
               <tr>
                 <th className="px-4 py-2.5">이름</th>
+                <th className="px-3 py-2.5">팀</th>
+                <th className="px-3 py-2.5">직급</th>
                 <th className="px-3 py-2.5">입사일</th>
                 <th className="px-3 py-2.5">근무년차</th>
-                <th className="px-3 py-2.5">전환 기준</th>
                 <th className="px-3 py-2.5">계산 결과</th>
                 <th className="px-3 py-2.5">현재 적용</th>
-                <th className="px-3 py-2.5">상태</th>
                 <th className="px-4 py-2.5">계산 방식</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-sm text-slate-400">
+                  <td
+                    colSpan={8}
+                    className="py-12 text-center text-sm text-slate-400"
+                  >
                     계산 데이터를 불러오는 중...
                   </td>
                 </tr>
               ) : isError ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-sm text-rose-500">
+                  <td
+                    colSpan={8}
+                    className="py-12 text-center text-sm text-rose-500"
+                  >
                     계산 데이터를 불러오지 못했습니다.
                   </td>
                 </tr>
               ) : sortedMembers.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-sm text-slate-400">
+                  <td
+                    colSpan={8}
+                    className="py-12 text-center text-sm text-slate-400"
+                  >
                     계산할 인원이 없습니다.
                   </td>
                 </tr>
@@ -145,28 +120,33 @@ export default function LeaveCalculatorPage() {
                       item.status === "calculated" &&
                       (item.type === "annual" || item.type === "monthly"),
                   );
-                  const basisItems = member.items.filter((item) => item.status !== "not_applicable");
+                  const basisItems = member.items.filter(
+                    (item) => item.status !== "not_applicable",
+                  );
 
                   return (
-                    <tr key={member.memberId} className="align-top hover:bg-slate-50/70">
+                    <tr
+                      key={member.memberId}
+                      className="align-top hover:bg-slate-50/70"
+                    >
                       <td className="px-4 py-3">
-                        <div className="font-medium text-slate-900">{member.fullName}</div>
-                        <div className="mt-1 text-xs text-slate-400">
-                          {[member.teamName, member.positionName].filter(Boolean).join(" · ") || "-"}
+                        <div className="font-medium text-slate-900">
+                          {member.fullName}
                         </div>
                       </td>
-                      <td className="px-3 py-3 text-xs text-slate-600">{formatDate(member.hireDate)}</td>
-                      <td className="px-3 py-3 text-xs text-slate-600">
-                        {tenureText(member.yearsEmployed, member.monthsEmployed)}
+                      <td className="px-3 py-3 text-xs text-slate-500">
+                        {member.teamName || "-"}
+                      </td>
+                      <td className="px-3 py-3 text-xs text-slate-500">
+                        {member.positionName || "-"}
                       </td>
                       <td className="px-3 py-3 text-xs text-slate-600">
-                        {member.conversionDate ? (
-                          <>
-                            <div>{formatDate(member.conversionDate)}</div>
-                            <div className="mt-1 text-slate-400">인턴 {member.internMonths}개월</div>
-                          </>
-                        ) : (
-                          <span className="text-slate-400">데이터 없음</span>
+                        {formatDate(member.hireDate)}
+                      </td>
+                      <td className="px-3 py-3 text-xs text-slate-600">
+                        {tenureText(
+                          member.yearsEmployed,
+                          member.monthsEmployed,
                         )}
                       </td>
                       <td className="px-3 py-3">
@@ -192,30 +172,20 @@ export default function LeaveCalculatorPage() {
                         <div className="mt-1 text-[11px] font-normal text-slate-400">
                           잔여{" "}
                           {formatDays(
-                            member.items.reduce((sum, item) => sum + item.remaining, 0),
+                            member.items.reduce(
+                              (sum, item) => sum + item.remaining,
+                              0,
+                            ),
                           )}
                         </div>
-                      </td>
-                      <td className="px-3 py-3">
-                        <span
-                          className={cn(
-                            "inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-medium",
-                            statusClass(member.status),
-                          )}
-                        >
-                          {member.status === "ok" ? (
-                            <CheckCircle2 className="h-3 w-3" />
-                          ) : (
-                            <AlertCircle className="h-3 w-3" />
-                          )}
-                          {member.statusLabel}
-                        </span>
                       </td>
                       <td className="px-4 py-3">
                         <div className="max-w-[320px] space-y-1 text-xs text-slate-500">
                           {basisItems.map((item) => (
                             <p key={item.type}>
-                              <span className="font-medium text-slate-700">{item.label}</span>
+                              <span className="font-medium text-slate-700">
+                                {item.label}
+                              </span>
                               {" · "}
                               {item.basis}
                             </p>
@@ -242,13 +212,34 @@ export default function LeaveCalculatorPage() {
             <DialogTitle>계산 기준</DialogTitle>
           </DialogHeader>
           <div className="grid gap-2 md:grid-cols-2">
-            <RuleItem label="월차" value={data?.rules.monthly ?? "1년 미만 입사자 월차"} />
-            <RuleItem label="연차" value={data?.rules.annual ?? "기본 연차 15일"} />
-            <RuleItem label="하계휴가" value={data?.rules.summer ?? "해당없음 0일"} />
-            <RuleItem label="사용 차감" value={data?.rules.deduction ?? "연차/반차 사용 시 차감"} />
-            <RuleItem label="잔여 산식" value={data?.rules.balance ?? "잔여 = 부여 + 조정 - 사용"} />
-            <RuleItem label="정규직 전환" value={data?.rules.conversion ?? "인턴 개월 수 참고"} />
-            <RuleItem label="이월" value={data?.rules.carryover ?? "자동 계산 제외"} />
+            <RuleItem
+              label="월차"
+              value={data?.rules.monthly ?? "1년 미만 입사자 월차"}
+            />
+            <RuleItem
+              label="연차"
+              value={data?.rules.annual ?? "기본 연차 15일"}
+            />
+            <RuleItem
+              label="하계휴가"
+              value={data?.rules.summer ?? "해당없음 0일"}
+            />
+            <RuleItem
+              label="사용 차감"
+              value={data?.rules.deduction ?? "연차/반차 사용 시 차감"}
+            />
+            <RuleItem
+              label="잔여 산식"
+              value={data?.rules.balance ?? "잔여 = 부여 + 조정 - 사용"}
+            />
+            <RuleItem
+              label="정규직 전환"
+              value={data?.rules.conversion ?? "인턴 개월 수 참고"}
+            />
+            <RuleItem
+              label="이월"
+              value={data?.rules.carryover ?? "자동 계산 제외"}
+            />
           </div>
         </DialogContent>
       </Dialog>

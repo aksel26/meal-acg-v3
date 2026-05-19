@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores/authStore";
 import { toast } from "@repo/ui/src/sonner";
@@ -8,7 +9,7 @@ export function useAuth() {
   const router = useRouter();
   const { user, isAuthenticated, setUser, logout: clearAuth } = useAuthStore();
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       const response = await fetch("/api/auth/logout", {
         method: "POST",
@@ -26,9 +27,9 @@ export function useAuth() {
       console.error("Logout error:", error);
       toast.error("로그아웃 처리 중 오류가 발생했습니다.");
     }
-  };
+  }, [clearAuth, router]);
 
-  const checkSession = async () => {
+  const checkSession = useCallback(async () => {
     try {
       const response = await fetch("/api/auth/session");
       const data = await response.json();
@@ -52,7 +53,7 @@ export function useAuth() {
       clearAuth();
       return false;
     }
-  };
+  }, [clearAuth, setUser]);
 
   return {
     user,

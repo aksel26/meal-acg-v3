@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -27,7 +27,6 @@ import {
   CalendarClock,
   ClipboardList,
   ClipboardPenLine,
-  Calculator,
   Eye,
   EyeOff,
   HardHat,
@@ -119,8 +118,8 @@ const navigation: NavigationItem[] = [
     icon: CalendarClock,
     items: [
       { name: "출퇴근 관리", href: "/attendance", icon: UserCheck, permission: "attendance:read" },
-      { name: "휴가 관리", href: "/dayoffs", icon: CalendarDays, permission: "leave:read" },
-      { name: "휴가 자동 계산", href: "/leave-calculator", icon: Calculator, permission: "leave:read" },
+      { name: "근무 신청 관리", href: "/work-applications", icon: CalendarClock, permission: "attendance:read" },
+      { name: "연차 관리", href: "/dayoffs", icon: CalendarDays, permission: "leave:read" },
       { name: "승인 관리", href: "/approvals", icon: ClipboardList, permission: "leave:approve" },
     ],
   },
@@ -373,7 +372,7 @@ function NavGroupComponent({
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { user, logout, checkSession } = useAuth();
   const visibleNavigation = filterNavigation(navigation, user?.adminRole);
 
   const [collapsed, setCollapsed] = useState(false);
@@ -394,6 +393,10 @@ export default function Sidebar() {
     setShowNewPassword(false);
     setPasswordError("");
   };
+
+  useEffect(() => {
+    checkSession();
+  }, [checkSession]);
 
   const handlePasswordChange = async () => {
     setPasswordError("");

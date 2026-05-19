@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     const { data: member, error } = await supabase
       .from("members")
-      .select("id, full_name, member_role")
+      .select("id, full_name, role, admin_role, user_authority, member_role")
       .eq("full_name", name)
       .single();
 
@@ -45,10 +45,19 @@ export async function GET(request: NextRequest) {
       .limit(1)
       .single();
 
+    const displayRole =
+      member.role === "admin"
+        ? member.admin_role || "관리자"
+        : member.user_authority || member.member_role;
+
     return NextResponse.json({
       id: member.id,
       full_name: member.full_name,
-      member_role: member.member_role,
+      member_role: displayRole,
+      raw_member_role: member.member_role,
+      role: member.role,
+      admin_role: member.admin_role,
+      user_authority: member.user_authority,
       hire_date: statusData?.start_date || null,
     });
   } catch (error) {

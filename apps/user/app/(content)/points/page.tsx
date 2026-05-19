@@ -174,7 +174,10 @@ export default function Points() {
 
   // 매니저 여부 (팀장/본부장만 활동비 탭 접근 가능)
   const isManager =
-    currentMemberRole === "팀장" || currentMemberRole === "본부장";
+    currentMemberRole === "대표" ||
+    currentMemberRole === "팀장/본부장" ||
+    currentMemberRole === "팀장" ||
+    currentMemberRole === "본부장";
 
   // Supabase 기반 데이터 조회
   const {

@@ -71,6 +71,10 @@ export interface MemberLookup {
   id: string;
   full_name: string;
   member_role: string;
+  raw_member_role?: string | null;
+  role?: string | null;
+  admin_role?: string | null;
+  user_authority?: string | null;
   hire_date: string | null;
 }
 

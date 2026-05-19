@@ -65,16 +65,17 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
     subtitle: "전체 조직원의 포인트 사용 내역을 조회합니다",
   },
   "/dayoffs": {
-    title: "휴가 관리",
-    subtitle: "휴가 등록, 승인, 통계를 관리합니다",
-  },
-  "/leave-calculator": {
-    title: "휴가 자동 계산",
-    subtitle: "입사일과 직급 기준으로 휴가 계산 결과와 산식을 확인합니다",
+    title: "연차 관리",
+    subtitle: "연차 등록, 승인, 통계를 관리합니다",
   },
   "/notifications": {
     title: "알림 관리",
     subtitle: "푸시 알림 발송 및 구독 현황",
+  },
+  "/work-applications": {
+    title: "근무 신청 관리",
+    subtitle:
+      "시간외·주말근무 신청의 팀별 진행 내역과 전체 인원 내역을 조회합니다.",
   },
 };
 

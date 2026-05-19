@@ -48,7 +48,12 @@ function CalendarRoot({
   rootRef?: React.Ref<HTMLDivElement>;
 } & React.ComponentPropsWithoutRef<"div">) {
   return (
-    <div data-slot="calendar" ref={rootRef} className={cn(className)} {...props} />
+    <div
+      data-slot="calendar"
+      ref={rootRef}
+      className={cn(className)}
+      {...props}
+    />
   );
 }
 
@@ -198,38 +203,30 @@ export function AdminDashboardCalendar({
   }, []);
 
   return (
-    <div className="admin-card p-4">
-      <div className="mb-3 flex items-center justify-between px-2 pt-1">
-        <div>
-          <p className="text-xs font-normal tracking-[-0.01em] text-[#7a7a7a]">
-            Calendar
-          </p>
-          <p className="mt-1 text-[21px] font-semibold leading-tight tracking-[-0.02em] text-[#1d1d1f]">
-            일정 중심 보기
-          </p>
+    <div className="rounded-xl bg-white p-4">
+      <div className="mb-3 flex items-center justify-between gap-2 px-1 pt-1">
+        <div className="flex gap-1.5">
+          {presets.map((preset) => (
+            <Button
+              key={preset.label}
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                onPreset({ startDate: preset.start, endDate: preset.end })
+              }
+              className={
+                activePreset === preset.label
+                  ? "h-8 rounded-full bg-[#1d1d1f] px-3 text-xs text-white hover:bg-[#1d1d1f]"
+                  : "h-8 rounded-full px-3 text-xs text-[#333333] hover:bg-[#f5f5f7]"
+              }
+            >
+              {preset.label}
+            </Button>
+          ))}
         </div>
-        <div className="rounded-full border border-black/5 bg-[#fafafc] px-3 py-1 text-xs font-normal tracking-[-0.01em] text-[#333333]">
+        <div className="rounded-full bg-[#fafafc] px-3 py-1 text-xs font-normal tracking-[-0.01em] text-[#333333]">
           {dateLabel} 기준 현황
         </div>
-      </div>
-      <div className="mb-3 flex gap-1.5 px-1">
-        {presets.map((preset) => (
-          <Button
-            key={preset.label}
-            variant={activePreset === preset.label ? "default" : "outline"}
-            size="sm"
-            onClick={() =>
-              onPreset({ startDate: preset.start, endDate: preset.end })
-            }
-            className={
-              activePreset === preset.label
-                ? "admin-primary-pill h-8 px-3 text-xs shadow-none"
-                : "admin-secondary-pill h-8 px-3 text-xs hover:bg-[#f5f5f7]"
-            }
-          >
-            {preset.label}
-          </Button>
-        ))}
       </div>
       <div className="flex flex-col gap-3">
         <DayPicker
@@ -239,7 +236,7 @@ export function AdminDashboardCalendar({
           month={displayMonth}
           onMonthChange={onDisplayMonthChange}
           showOutsideDays
-          className="rounded-[18px] border border-black/8 bg-white p-3 [--cell-size:--spacing(9)]"
+          className="rounded-[18px] bg-white p-3 [--cell-size:--spacing(9)]"
           formatters={{
             formatCaption: (date) =>
               `${date.getFullYear()}년 ${date.getMonth() + 1}월`,
@@ -255,10 +252,7 @@ export function AdminDashboardCalendar({
               "flex gap-4 flex-col relative",
               defaultClassNames.months,
             ),
-            month: cn(
-              "flex flex-col w-full gap-4",
-              defaultClassNames.month,
-            ),
+            month: cn("flex flex-col w-full gap-4", defaultClassNames.month),
             nav: cn(
               "flex items-center gap-1 w-full absolute top-0 inset-x-0 justify-between",
               defaultClassNames.nav,
@@ -322,7 +316,7 @@ export function AdminDashboardCalendar({
         <button
           type="button"
           onClick={() => setIsCollapsed((prev) => !prev)}
-          className="admin-pressable flex w-full items-center justify-center gap-1 rounded-full border border-black/5 bg-[#fafafc] py-2 text-xs font-normal text-[#333333] hover:border-[#1d1d1f] hover:text-[#1d1d1f]"
+          className="admin-pressable flex w-full items-center justify-center gap-1 rounded-full bg-[#fafafc] py-2 text-xs font-normal text-[#333333] hover:bg-[#f5f5f7] hover:text-[#1d1d1f]"
         >
           {isCollapsed ? (
             <>

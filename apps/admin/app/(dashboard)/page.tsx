@@ -110,11 +110,11 @@ function ProgressBar({ percent }: { percent: number }) {
 
 // ── Detail Panel Sections ──
 
-const accentBorder: Record<string, string> = {
-  purple: "border-l-slate-900",
-  orange: "border-l-slate-700",
-  emerald: "border-l-slate-500",
-  blue: "border-l-slate-400",
+const accentDot: Record<string, string> = {
+  purple: "bg-slate-900",
+  orange: "bg-slate-700",
+  emerald: "bg-slate-500",
+  blue: "bg-slate-400",
 };
 
 function Section({
@@ -127,15 +127,13 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div
-      className={cn(
-        "rounded-lg border border-slate-100 bg-white px-3 py-2.5 shadow-sm border-l-2",
-        accentBorder[accent],
-      )}
-    >
-      <p className="mb-1.5 text-xs font-medium uppercase tracking-wider text-slate-400">
-        {title}
-      </p>
+    <div className="rounded-lg bg-white px-3 py-2.5">
+      <div className="mb-1.5 flex items-center gap-1.5">
+        <span className={cn("h-1.5 w-1.5 rounded-full", accentDot[accent])} />
+        <p className="text-xs font-medium uppercase tracking-wider text-slate-400">
+          {title}
+        </p>
+      </div>
       <div className="flex flex-col gap-0.5">{children}</div>
     </div>
   );
@@ -152,7 +150,7 @@ function DashboardSkeleton() {
     <div className="animate-pulse space-y-6">
       <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="admin-card p-4">
+          <div key={i} className="rounded-xl bg-white p-4">
             <div className="flex items-center gap-3">
               <div className="flex-1 space-y-1.5">
                 <div className="h-3 w-16 rounded bg-white" />
@@ -165,7 +163,7 @@ function DashboardSkeleton() {
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {Array.from({ length: 2 }).map((_, i) => (
-          <div key={i} className="admin-card p-5">
+          <div key={i} className="rounded-xl bg-white p-5">
             <div className="h-4 w-24 rounded bg-white mb-3" />
             <div className="h-16 rounded bg-white" />
           </div>
@@ -407,9 +405,9 @@ export default function DashboardPage() {
   // ── Styles ──
 
   const cardClass =
-    "admin-card admin-pressable p-5 hover:border-black/20";
+    "admin-pressable rounded-xl bg-white p-5 transition-colors hover:bg-slate-50";
   const rowClass =
-    "flex items-center justify-between border-t border-slate-100 py-2.5";
+    "flex items-center justify-between py-2";
 
   return (
     <div className="grid grid-cols-1 gap-6 pb-6 lg:grid-cols-[420px_1fr]">
@@ -604,25 +602,25 @@ export default function DashboardPage() {
                 {attendanceToday ? (
                   <div className="space-y-2">
                     <div className="grid grid-cols-4 gap-2">
-                      <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-center">
+                      <div className="rounded-sm bg-slate-50 px-3 py-2 text-center">
                         <p className="text-lg font-bold tabular-nums text-slate-900">
                           {attendanceToday.checkedIn}
                         </p>
                         <p className="text-[11px] text-slate-500">출근</p>
                       </div>
-                      <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-center">
+                      <div className="rounded-sm bg-slate-50 px-3 py-2 text-center">
                         <p className="text-lg font-bold tabular-nums text-slate-700">
                           {attendanceToday.notCheckedIn}
                         </p>
                         <p className="text-[11px] text-slate-500">미출근</p>
                       </div>
-                      <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-center">
+                      <div className="rounded-sm bg-slate-50 px-3 py-2 text-center">
                         <p className="text-lg font-bold tabular-nums text-slate-900">
                           {attendanceToday.late}
                         </p>
                         <p className="text-[11px] text-slate-500">지각</p>
                       </div>
-                      <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-center">
+                      <div className="rounded-sm bg-slate-50 px-3 py-2 text-center">
                         <p className="text-lg font-bold tabular-nums text-slate-900">
                           {attendanceToday.onLeave}
                         </p>
@@ -630,14 +628,14 @@ export default function DashboardPage() {
                       </div>
                     </div>
                     {attendanceToday.lateMembers.length > 0 && (
-                      <div className="flex flex-wrap gap-1 border-t border-slate-100 pt-2">
+                      <div className="flex flex-wrap gap-1 pt-2">
                         <span className="text-[11px] text-slate-400">
                           지각:
                         </span>
                         {attendanceToday.lateMembers.map((m) => (
                           <span
                             key={m.id}
-                            className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-700"
+                            className="rounded-sm bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-700"
                           >
                             {m.name}
                           </span>
@@ -664,7 +662,7 @@ export default function DashboardPage() {
                       <span className="text-sm text-slate-500">건 대기 중</span>
                     </div>
                     {pendingCount > 0 && (
-                      <div className="space-y-1 border-t border-slate-100 pt-2">
+                      <div className="space-y-1 pt-2">
                         {approvals.slice(0, 5).map((a) => (
                           <div
                             key={a.id}
@@ -718,7 +716,7 @@ export default function DashboardPage() {
                   </span>
                   <span className="text-base text-slate-400">명</span>
                 </div>
-                <div className="space-y-1.5 border-t border-slate-100 pt-2.5">
+                <div className="space-y-1.5 pt-2.5">
                   <div className="flex items-center justify-between rounded-md bg-slate-50/80 px-3 py-1.5">
                     <span className="text-sm text-slate-500">정상 근무</span>
                     <span className="text-sm font-semibold tabular-nums text-slate-700">
@@ -740,7 +738,7 @@ export default function DashboardPage() {
                   )}
                 </div>
                 {statusMembers && statusMembers.length > 0 && (
-                  <div className="mt-3 border-t border-slate-100 pt-3">
+                  <div className="mt-3 pt-3">
                     <div className="mb-2 flex flex-wrap gap-1.5">
                       {Object.entries(
                         statusMembers.reduce<Record<string, number>>(
@@ -755,9 +753,9 @@ export default function DashboardPage() {
                         <span
                           key={status}
                           className={cn(
-                            "rounded-full border px-2 py-0.5 text-[11px] font-medium",
+                            "rounded-full px-2 py-0.5 text-[11px] font-medium",
                             STATUS_COLORS[status] ||
-                              "border-slate-200 bg-slate-50 text-slate-600",
+                              "bg-slate-50 text-slate-600",
                           )}
                         >
                           {status} {count}
@@ -776,9 +774,9 @@ export default function DashboardPage() {
                           </span>
                           <span
                             className={cn(
-                              "shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] font-medium",
+                              "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
                               STATUS_COLORS[m.current_status || ""] ||
-                                "border-slate-200 bg-slate-50 text-slate-600",
+                                "bg-slate-50 text-slate-600",
                             )}
                           >
                             {m.current_status}
@@ -830,7 +828,7 @@ export default function DashboardPage() {
                         </p>
                       )}
                       {filteredUnsettled.length > 0 && (
-                        <div className="mt-2 border-t border-slate-100 pt-2">
+                        <div className="mt-2 pt-2">
                           <div className="flex flex-wrap gap-1">
                             {[...filteredUnsettled]
                               .sort((a, b) =>

@@ -46,7 +46,7 @@ const STATUS_OPTIONS = [
 ];
 
 const STATUS_LABEL: Record<string, string> = Object.fromEntries(
-  STATUS_OPTIONS.map((s) => [s.value, s.label])
+  STATUS_OPTIONS.map((s) => [s.value, s.label]),
 );
 
 function formatTime(ts: string | null): string {
@@ -77,11 +77,11 @@ export default function AttendancePage() {
 
   const { data: todaySummary } = useAttendanceToday();
   const { data: dateRecords, isLoading: dateLoading } = useAttendanceByDate(
-    viewMode === "date" ? selectedDate : ""
+    viewMode === "date" ? selectedDate : "",
   );
   const { data: monthRecords, isLoading: monthLoading } = useAttendanceByMonth(
     year,
-    month
+    month,
   );
 
   const summary = todaySummary as AttendanceTodaySummary | undefined;
@@ -89,22 +89,28 @@ export default function AttendancePage() {
   const records = viewMode === "date" ? dateRecords : monthRecords;
 
   const handlePrevDay = () => {
-    setSelectedDate(dayjs(selectedDate).subtract(1, "day").format("YYYY-MM-DD"));
+    setSelectedDate(
+      dayjs(selectedDate).subtract(1, "day").format("YYYY-MM-DD"),
+    );
   };
   const handleNextDay = () => {
     setSelectedDate(dayjs(selectedDate).add(1, "day").format("YYYY-MM-DD"));
   };
   const handlePrevMonth = () => {
-    if (month === 1) { setYear(year - 1); setMonth(12); }
-    else setMonth(month - 1);
+    if (month === 1) {
+      setYear(year - 1);
+      setMonth(12);
+    } else setMonth(month - 1);
   };
   const handleNextMonth = () => {
-    if (month === 12) { setYear(year + 1); setMonth(1); }
-    else setMonth(month + 1);
+    if (month === 12) {
+      setYear(year + 1);
+      setMonth(1);
+    } else setMonth(month + 1);
   };
 
   const dow = dayjs(selectedDate).format("ddd");
-  const colCount = 16;
+  const colCount = 17;
 
   return (
     <div className="space-y-6">
@@ -116,7 +122,9 @@ export default function AttendancePage() {
               onClick={() => setViewMode("date")}
               className={cn(
                 "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-                viewMode === "date" ? "bg-slate-900 text-white" : "text-slate-500 hover:text-slate-700"
+                viewMode === "date"
+                  ? "bg-slate-900 text-white"
+                  : "text-slate-500 hover:text-slate-700",
               )}
             >
               일별
@@ -125,7 +133,9 @@ export default function AttendancePage() {
               onClick={() => setViewMode("month")}
               className={cn(
                 "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-                viewMode === "month" ? "bg-slate-900 text-white" : "text-slate-500 hover:text-slate-700"
+                viewMode === "month"
+                  ? "bg-slate-900 text-white"
+                  : "text-slate-500 hover:text-slate-700",
               )}
             >
               월별
@@ -134,7 +144,12 @@ export default function AttendancePage() {
 
           {viewMode === "date" ? (
             <div className="flex items-center gap-1">
-              <Button variant="outline" size="icon" className="h-9 w-9" onClick={handlePrevDay}>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9"
+                onClick={handlePrevDay}
+              >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <DatePicker
@@ -143,7 +158,12 @@ export default function AttendancePage() {
                 className="h-9 w-[170px] text-sm"
               />
               <span className="text-xs text-slate-400">({dow})</span>
-              <Button variant="outline" size="icon" className="h-9 w-9" onClick={handleNextDay}>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9"
+                onClick={handleNextDay}
+              >
                 <ChevronRight className="h-4 w-4" />
               </Button>
               <Button
@@ -157,13 +177,23 @@ export default function AttendancePage() {
             </div>
           ) : (
             <div className="flex items-center gap-1">
-              <Button variant="outline" size="icon" className="h-9 w-9" onClick={handlePrevMonth}>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9"
+                onClick={handlePrevMonth}
+              >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <span className="min-w-[96px] text-center text-sm font-semibold text-slate-700">
                 {year}년 {month}월
               </span>
-              <Button variant="outline" size="icon" className="h-9 w-9" onClick={handleNextMonth}>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9"
+                onClick={handleNextMonth}
+              >
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -173,16 +203,28 @@ export default function AttendancePage() {
         {viewMode === "date" && selectedDate === todayStr && summary && (
           <div className="ml-auto flex h-9 items-center divide-x divide-slate-200 text-sm font-medium text-slate-400">
             <span className="flex h-full items-center gap-1.5 px-3 first:pl-0">
-              출근 <strong className="inline-flex h-full items-center text-xl font-semibold leading-none text-slate-950">{summary.checkedIn}</strong>
+              출근{" "}
+              <strong className="inline-flex h-full items-center text-xl font-semibold leading-none text-slate-950">
+                {summary.checkedIn}
+              </strong>
             </span>
             <span className="flex h-full items-center gap-1.5 px-3">
-              미출근 <strong className="inline-flex h-full items-center text-xl font-semibold leading-none text-slate-950">{summary.notCheckedIn}</strong>
+              미출근{" "}
+              <strong className="inline-flex h-full items-center text-xl font-semibold leading-none text-slate-950">
+                {summary.notCheckedIn}
+              </strong>
             </span>
             <span className="flex h-full items-center gap-1.5 px-3">
-              지각 <strong className="inline-flex h-full items-center text-xl font-semibold leading-none text-red-600">{summary.late}</strong>
+              지각{" "}
+              <strong className="inline-flex h-full items-center text-xl font-semibold leading-none text-red-600">
+                {summary.late}
+              </strong>
             </span>
             <span className="flex h-full items-center gap-1.5 px-3">
-              휴가 <strong className="inline-flex h-full items-center text-xl font-semibold leading-none text-slate-950">{summary.onLeave}</strong>
+              휴가{" "}
+              <strong className="inline-flex h-full items-center text-xl font-semibold leading-none text-slate-950">
+                {summary.onLeave}
+              </strong>
             </span>
             {summary.lateMembers.length > 0 && (
               <span className="flex h-full items-center px-3 text-sm font-medium text-red-500">
@@ -198,6 +240,7 @@ export default function AttendancePage() {
         <table className="w-full text-sm whitespace-nowrap">
           <thead className="border-b border-slate-100 bg-slate-50 text-left text-xs font-medium text-slate-500">
             <tr>
+              <th className="w-12 px-3 py-2.5 text-center">No</th>
               <th className="px-3 py-2.5">이름</th>
               <th className="px-3 py-2.5">수정자</th>
               <th className="px-3 py-2.5">근태명</th>
@@ -219,7 +262,10 @@ export default function AttendancePage() {
           <tbody className="divide-y divide-slate-100">
             {isLoading ? (
               <tr>
-                <td colSpan={colCount + 1} className="py-10 text-center text-sm text-slate-400">
+                <td
+                  colSpan={colCount}
+                  className="py-10 text-center text-sm text-slate-400"
+                >
                   로딩 중...
                 </td>
               </tr>
@@ -228,11 +274,15 @@ export default function AttendancePage() {
                 <InlineRow
                   key={record.id || `${record.member_id}-${record.date}-${idx}`}
                   record={record}
+                  index={idx}
                 />
               ))
             ) : (
               <tr>
-                <td colSpan={colCount + 1} className="py-12 text-center text-sm text-slate-400">
+                <td
+                  colSpan={colCount}
+                  className="py-12 text-center text-sm text-slate-400"
+                >
                   출퇴근 기록이 없습니다.
                 </td>
               </tr>
@@ -284,8 +334,14 @@ function TimeEditDropdown({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") { e.preventDefault(); onSave(); }
-            if (e.key === "Escape") { e.preventDefault(); onCancel(); }
+            if (e.key === "Enter") {
+              e.preventDefault();
+              onSave();
+            }
+            if (e.key === "Escape") {
+              e.preventDefault();
+              onCancel();
+            }
           }}
           className="h-8 w-[130px] text-xs appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
           autoFocus
@@ -295,13 +351,21 @@ function TimeEditDropdown({
   );
 }
 
-function InlineRow({ record }: { record: AttendanceRecord }) {
+function InlineRow({
+  record,
+  index,
+}: {
+  record: AttendanceRecord;
+  index: number;
+}) {
   const updateMutation = useUpdateAttendance();
   const [editing, setEditing] = useState(false);
   const [editingField, setEditingField] = useState<EditingField>(null);
   const [checkIn, setCheckIn] = useState(formatTime(record.check_in_at));
   const [checkOut, setCheckOut] = useState(formatTime(record.check_out_at));
-  const [attendanceType, setAttendanceType] = useState(record.attendance_type || "출근");
+  const [attendanceType, setAttendanceType] = useState(
+    record.attendance_type || "출근",
+  );
   const [note, setNote] = useState(record.note ?? "");
   const [location, setLocation] = useState(record.location ?? "");
   const [reference, setReference] = useState(record.reference ?? "");
@@ -321,7 +385,7 @@ function InlineRow({ record }: { record: AttendanceRecord }) {
     if (record.id) {
       updateMutation.mutate(
         { id: record.id, ...payload },
-        { onSuccess: () => setEditingField(null) }
+        { onSuccess: () => setEditingField(null) },
       );
     } else {
       try {
@@ -359,7 +423,7 @@ function InlineRow({ record }: { record: AttendanceRecord }) {
           location: location || null,
           reference: reference || null,
         },
-        { onSuccess: () => setEditing(false) }
+        { onSuccess: () => setEditing(false) },
       );
     } else {
       try {
@@ -402,7 +466,7 @@ function InlineRow({ record }: { record: AttendanceRecord }) {
   const handleTimeKeyDown = (
     e: React.KeyboardEvent<HTMLInputElement>,
     field: "checkIn" | "checkOut",
-    value: string
+    value: string,
   ) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -420,14 +484,16 @@ function InlineRow({ record }: { record: AttendanceRecord }) {
 
   return (
     <tr className={cn("hover:bg-slate-50", editing && "bg-slate-100/30")}>
+      {/* No */}
+      <td className="px-3 py-1.5 text-center align-middle text-xs tabular-nums text-slate-400">
+        {index + 1}
+      </td>
       {/* 이름 */}
       <td className="px-3 py-1.5 align-middle font-medium text-slate-800">
         {record.member.full_name}
       </td>
       {/* 수정자 */}
-      <td className={cellClass}>
-        {record.modifier?.full_name ?? "-"}
-      </td>
+      <td className={cellClass}>{record.modifier?.full_name ?? "-"}</td>
       {/* 근태명 */}
       <td className={cellClass}>
         <Select
@@ -436,19 +502,22 @@ function InlineRow({ record }: { record: AttendanceRecord }) {
             setAttendanceType(val);
             if (!editing) {
               if (record.id) {
-                updateMutation.mutate(
-                  { id: record.id, attendance_type: val },
-                );
+                updateMutation.mutate({ id: record.id, attendance_type: val });
               }
             }
           }}
         >
-          <SelectTrigger size="sm" className="!h-5 gap-1 border-0 bg-transparent px-0 py-0 text-xs leading-none shadow-none [&_svg]:size-3">
+          <SelectTrigger
+            size="sm"
+            className="!h-5 gap-1 border-0 bg-transparent px-0 py-0 text-xs leading-none shadow-none [&_svg]:size-3"
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {ATTENDANCE_TYPES.map((t) => (
-              <SelectItem key={t} value={t}>{t}</SelectItem>
+              <SelectItem key={t} value={t}>
+                {t}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -457,7 +526,7 @@ function InlineRow({ record }: { record: AttendanceRecord }) {
       <td className={cellClass}>
         {date.format("MM/DD")}
         <span className="ml-1 text-xs text-slate-400">
-          ({["일","월","화","수","목","금","토"][date.day()]})
+          ({["일", "월", "화", "수", "목", "금", "토"][date.day()]})
         </span>
       </td>
       {/* 출근시간 - 인라인 편집 */}
@@ -579,9 +648,7 @@ function InlineRow({ record }: { record: AttendanceRecord }) {
         )}
       </td>
       {/* 승인자 */}
-      <td className={cellClass}>
-        {record.approver?.full_name ?? "-"}
-      </td>
+      <td className={cellClass}>{record.approver?.full_name ?? "-"}</td>
       {/* 승인일 */}
       <td className={cellClass}>
         <span className="text-xs">{formatDateTime(record.approved_at)}</span>

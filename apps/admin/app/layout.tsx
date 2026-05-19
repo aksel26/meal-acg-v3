@@ -5,11 +5,6 @@ import type { Metadata, Viewport } from "next";
 import QueryProvider from "./providers/QueryProvider";
 import dayjs from "dayjs";
 import "dayjs/locale/ko";
-import { Inter } from "next/font/google";
-import { cn } from "@/lib/utils";
-
-const inter = Inter({subsets:['latin'],variable:'--font-sans'});
-
 
 dayjs.locale("ko");
 
@@ -34,7 +29,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko" className={cn("font-sans", inter.variable)}>
+    <html lang="ko">
       <head />
       <body>
         <QueryProvider>{children}</QueryProvider>

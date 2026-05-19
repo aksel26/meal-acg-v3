@@ -4,9 +4,6 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Send,
-  Smartphone,
-  Monitor,
-  BellOff,
   Trash2,
   Clock,
   Check,
@@ -111,7 +108,9 @@ export default function NotificationsPage() {
   } | null>(null);
 
   // 구독 해제 확인 Dialog
-  const [unsubTarget, setUnsubTarget] = useState<MemberSubscription | null>(null);
+  const [unsubTarget, setUnsubTarget] = useState<MemberSubscription | null>(
+    null,
+  );
 
   // 발송 이력 Dialog
   const [logsDialogOpen, setLogsDialogOpen] = useState(false);
@@ -281,138 +280,109 @@ export default function NotificationsPage() {
       </div>
 
       {/* Subscription Table */}
-      <div className="admin-card overflow-hidden rounded-xl">
-        {isLoading ? (
-          <div className="space-y-1 p-4">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="skeleton-shimmer h-8 rounded-md" />
-            ))}
-          </div>
-        ) : members.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-slate-400">
-            <BellOff className="mb-2 h-6 w-6" />
-            <p className="text-xs">멤버가 없습니다.</p>
-          </div>
-        ) : (
-          <div className="relative max-h-[calc(100vh-240px)] w-full overflow-auto">
-            <table className="w-full caption-bottom text-sm">
-              <thead className="sticky top-0 z-10">
-                <tr className="bg-slate-50 [&>th]:h-9 [&>th]:px-2 [&>th]:py-0">
-                  <th className="w-[72px] pl-4 text-left align-middle text-xs font-semibold text-slate-600">
-                    이름
-                  </th>
-                  <th className="text-left align-middle text-xs font-semibold text-slate-600">
-                    팀
-                  </th>
-                  <th className="text-center align-middle text-xs font-semibold text-slate-600">
-                    상태
-                  </th>
-                  <th className="text-center align-middle text-xs font-semibold text-slate-600">
-                    기기
-                  </th>
-                  <th className="text-right align-middle text-xs font-semibold text-slate-600">
-                    구독일
-                  </th>
-                  <th className="w-[72px] pr-4 text-center align-middle text-xs font-semibold text-slate-600">
-                    관리
-                  </th>
+      <div className="overflow-x-auto rounded-xl bg-white">
+        <table className="w-full text-sm whitespace-nowrap">
+          <thead className="border-b border-slate-100 bg-slate-50 text-left text-xs font-medium text-slate-500">
+            <tr>
+              <th className="w-12 px-3 py-2.5 text-center">No</th>
+              <th className="px-3 py-2.5">이름</th>
+              <th className="px-3 py-2.5">팀</th>
+              <th className="px-3 py-2.5">상태</th>
+              <th className="px-3 py-2.5">기기</th>
+              <th className="px-3 py-2.5">구독일</th>
+              <th className="px-3 py-2.5 text-center">관리</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {isLoading ? (
+              <tr>
+                <td
+                  colSpan={7}
+                  className="py-10 text-center text-sm text-slate-400"
+                >
+                  로딩 중...
+                </td>
+              </tr>
+            ) : members.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={7}
+                  className="py-12 text-center text-sm text-slate-400"
+                >
+                  멤버가 없습니다.
+                </td>
+              </tr>
+            ) : (
+              members.map((member, idx) => (
+                <tr key={member.id} className="hover:bg-slate-50">
+                  <td className="px-3 py-1.5 text-center align-middle text-xs tabular-nums text-slate-400">
+                    {idx + 1}
+                  </td>
+                  <td className="px-3 py-1.5 align-middle font-medium text-slate-800">
+                    {member.full_name}
+                  </td>
+                  <td className="px-3 py-1.5 align-middle text-slate-600">
+                    {member.team_name || "-"}
+                  </td>
+                  <td className="px-3 py-1.5 align-middle">
+                    {member.subscribed ? (
+                      <span className="font-medium text-slate-800">구독</span>
+                    ) : (
+                      <span className="text-slate-400">미구독</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-1.5 align-middle text-slate-600">
+                    {member.deviceCount > 0 ? (
+                      <span className="text-xs tabular-nums">
+                        PC {member.devices.filter((d) => d === "pc").length}
+                        <span className="mx-1 text-slate-300">/</span>
+                        Mobile{" "}
+                        {member.devices.filter((d) => d === "mobile").length}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-slate-300">-</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-1.5 align-middle text-xs tabular-nums text-slate-500">
+                    {formatDate(member.lastUpdated)}
+                  </td>
+                  <td className="px-3 py-1.5 text-center align-middle">
+                    <div className="flex items-center justify-center gap-1">
+                      <button
+                        onClick={() => handleSendToMember(member)}
+                        disabled={!member.subscribed}
+                        className={cn(
+                          "rounded p-1 transition-colors",
+                          member.subscribed
+                            ? "text-slate-600 hover:bg-slate-100 hover:text-slate-800"
+                            : "cursor-not-allowed text-slate-200",
+                        )}
+                        title="알림 발송"
+                      >
+                        <Send className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleUnsubscribe(member)}
+                        disabled={
+                          !member.subscribed || unsubscribeMutation.isPending
+                        }
+                        className={cn(
+                          "rounded p-1 transition-colors",
+                          member.subscribed
+                            ? "text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                            : "cursor-not-allowed text-slate-200",
+                        )}
+                        title="구독 해제"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="[&_tr:last-child]:border-0">
-                {members.map((member) => (
-                  <tr
-                    key={member.id}
-                    className="transition-all [&>td]:py-1.5"
-                  >
-                    <td className="w-[72px] pl-4 px-2 align-middle text-[13px] font-medium text-slate-800">
-                      {member.full_name}
-                    </td>
-                    <td className="px-2 align-middle text-[13px] text-slate-500">
-                      {member.team_name || "-"}
-                    </td>
-                    <td className="px-2 text-center align-middle">
-                      {member.subscribed ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-1.5 py-px text-[10px] font-medium text-emerald-600">
-                          <span className="h-1 w-1 rounded-full bg-emerald-500" />
-                          구독
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-1.5 py-px text-[10px] font-medium text-slate-400">
-                          <span className="h-1 w-1 rounded-full bg-slate-300" />
-                          미구독
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-2 text-center align-middle">
-                      {member.deviceCount > 0 ? (
-                        <span className="inline-flex items-center gap-1.5 text-[13px] tabular-nums text-slate-600">
-                          {member.devices.filter((d) => d === "pc").length >
-                            0 && (
-                            <span className="inline-flex items-center gap-0.5">
-                              <Monitor className="h-3 w-3 text-slate-400" />
-                              {
-                                member.devices.filter((d) => d === "pc")
-                                  .length
-                              }
-                            </span>
-                          )}
-                          {member.devices.filter((d) => d === "mobile")
-                            .length > 0 && (
-                            <span className="inline-flex items-center gap-0.5">
-                              <Smartphone className="h-3 w-3 text-slate-400" />
-                              {
-                                member.devices.filter((d) => d === "mobile")
-                                  .length
-                              }
-                            </span>
-                          )}
-                        </span>
-                      ) : (
-                        <span className="text-[13px] text-slate-300">-</span>
-                      )}
-                    </td>
-                    <td className="px-2 text-right align-middle text-[11px] tabular-nums text-slate-400">
-                      {formatDate(member.lastUpdated)}
-                    </td>
-                    <td className="w-[72px] pr-4 text-center align-middle">
-                      <div className="flex items-center justify-center gap-1">
-                        <button
-                          onClick={() => handleSendToMember(member)}
-                          disabled={!member.subscribed}
-                          className={cn(
-                            "rounded p-1 transition-colors",
-                            member.subscribed
-                              ? "text-slate-700 hover:bg-slate-100 hover:text-slate-800"
-                              : "cursor-not-allowed text-slate-200"
-                          )}
-                          title="알림 발송"
-                        >
-                          <Send className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleUnsubscribe(member)}
-                          disabled={
-                            !member.subscribed ||
-                            unsubscribeMutation.isPending
-                          }
-                          className={cn(
-                            "rounded p-1 transition-colors",
-                            member.subscribed
-                              ? "text-slate-400 hover:bg-rose-50 hover:text-rose-500"
-                              : "cursor-not-allowed text-slate-200"
-                          )}
-                          title="구독 해제"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
       {/* Send Dialog */}
@@ -456,10 +426,7 @@ export default function NotificationsPage() {
               {detailLoading ? (
                 <div className="space-y-2 py-4">
                   {[...Array(3)].map((_, i) => (
-                    <div
-                      key={i}
-                      className="skeleton-shimmer h-6 rounded-md"
-                    />
+                    <div key={i} className="skeleton-shimmer h-6 rounded-md" />
                   ))}
                 </div>
               ) : logDetail?.log ? (
@@ -541,10 +508,7 @@ export default function NotificationsPage() {
               {logsLoading ? (
                 <div className="space-y-1 py-2">
                   {[...Array(5)].map((_, i) => (
-                    <div
-                      key={i}
-                      className="skeleton-shimmer h-8 rounded-md"
-                    />
+                    <div key={i} className="skeleton-shimmer h-8 rounded-md" />
                   ))}
                 </div>
               ) : logs.length === 0 ? (
@@ -612,7 +576,10 @@ export default function NotificationsPage() {
       </Dialog>
 
       {/* 구독 해제 확인 */}
-      <AlertDialog open={!!unsubTarget} onOpenChange={(open) => !open && setUnsubTarget(null)}>
+      <AlertDialog
+        open={!!unsubTarget}
+        onOpenChange={(open) => !open && setUnsubTarget(null)}
+      >
         <AlertDialogContent className="max-w-sm">
           <AlertDialogHeader>
             <AlertDialogTitle>푸시 구독 해제</AlertDialogTitle>

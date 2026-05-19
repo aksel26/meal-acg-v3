@@ -63,6 +63,9 @@
   --sidebar-width: 280px;
   --sidebar-width-collapsed: 80px;
   --header-height: 52px;
+  --font-pretendard:
+    "Pretendard Variable", Pretendard, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
 
   /* Apple: zero decorative shadows */
   --shadow-soft: none;
@@ -91,6 +94,9 @@
 
 html {
   font-size: 87.5%;
+  text-rendering: optimizeLegibility;
+  -webkit-text-size-adjust: 100%;
+  font-kerning: normal;
 }
 
 body {
@@ -98,23 +104,37 @@ body {
   background: transparent;
   color: var(--admin-ink);
   font-family:
-    "Pretendard Variable",
-    Pretendard,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+    var(--font-pretendard);
   font-size: 13px;
-  line-height: 1.5;
-  letter-spacing: -0.01em;
+  font-weight: 400;
+  line-height: 1.58;
+  letter-spacing: -0.005em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-wrap: pretty;
   word-break: keep-all;
+  overflow-wrap: break-word;
+  font-synthesis: none;
 }
 
 :where(button, input, textarea, select) {
   font: inherit;
+  letter-spacing: inherit;
+}
+
+:where(p, li, dd, blockquote) {
+  line-height: 1.65;
+}
+
+:where(h1, h2, h3, h4, h5, h6) {
+  line-height: 1.28;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+  word-break: keep-all;
+}
+
+:where(table, button, input, textarea, select, [role="button"], [role="tab"]) {
+  text-wrap: auto;
 }
 
 ::selection {
@@ -471,8 +491,8 @@ td {
 }
 
 @theme inline {
-  --font-heading: var(--font-sans);
-  --font-sans: var(--font-sans);
+  --font-heading: var(--font-pretendard);
+  --font-sans: var(--font-pretendard);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);

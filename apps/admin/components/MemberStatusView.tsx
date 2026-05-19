@@ -1280,14 +1280,17 @@ export default function MemberStatusView({
 
       {/* ── Create Dialog ── */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>특이사항 등록</DialogTitle>
+            <DialogDescription>
+              대상 인원과 적용 기간을 선택해 특이사항을 등록합니다.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label>멤버</Label>
+              <Label className="text-xs font-medium text-slate-500">멤버</Label>
               {formMemberId &&
               allMembers?.find((m) => m.id === formMemberId) ? (
                 <Input
@@ -1315,9 +1318,9 @@ export default function MemberStatusView({
             </div>
 
             <div className="space-y-2">
-              <Label>특이사항</Label>
+              <Label className="text-xs font-medium text-slate-500">특이사항</Label>
               <Select value={formStatus} onValueChange={setFormStatus}>
-                <SelectTrigger className="border border-slate-200 w-full">
+                <SelectTrigger className="w-full border border-slate-200">
                   <SelectValue placeholder="특이사항 선택" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1332,7 +1335,7 @@ export default function MemberStatusView({
 
             {formStatus === "퇴사" ? (
               <div className="space-y-2">
-                <Label>퇴사일</Label>
+                <Label className="text-xs font-medium text-slate-500">퇴사일</Label>
                 <DatePicker
                   value={formStartDate}
                   onChange={(val) => {
@@ -1340,35 +1343,44 @@ export default function MemberStatusView({
                     setFormEndDate(val);
                   }}
                   placeholder="퇴사일 선택"
+                  className="h-10 bg-white"
                   modal
                 />
               </div>
             ) : (
-              <>
-                <div className="space-y-2">
-                  <Label>시작일</Label>
-                  <DatePicker
-                    value={formStartDate}
-                    onChange={(val) => setFormStartDate(val)}
-                    placeholder="시작일 선택"
-                    modal
-                  />
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-medium text-slate-500">기간</Label>
+                  <span className="text-[11px] text-slate-400">종료일 미입력 시 진행중</span>
                 </div>
-
-                <div className="space-y-2">
-                  <Label>종료일 (미입력 시 진행중)</Label>
-                  <DatePicker
-                    value={formEndDate}
-                    onChange={(val) => setFormEndDate(val)}
-                    placeholder="종료일 선택"
-                    modal
-                  />
+                <div className="grid gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-end">
+                  <div className="space-y-1.5">
+                    <span className="block text-[11px] font-medium text-slate-400">시작일</span>
+                    <DatePicker
+                      value={formStartDate}
+                      onChange={(val) => setFormStartDate(val)}
+                      placeholder="시작일 선택"
+                      className="h-10 bg-white"
+                      modal
+                    />
+                  </div>
+                  <span className="hidden pb-2 text-sm text-slate-400 sm:block">~</span>
+                  <div className="space-y-1.5">
+                    <span className="block text-[11px] font-medium text-slate-400">종료일</span>
+                    <DatePicker
+                      value={formEndDate}
+                      onChange={(val) => setFormEndDate(val)}
+                      placeholder="종료일 선택"
+                      className="h-10 bg-white"
+                      modal
+                    />
+                  </div>
                 </div>
-              </>
+              </div>
             )}
 
             <div className="space-y-2">
-              <Label>비고</Label>
+              <Label className="text-xs font-medium text-slate-500">비고</Label>
               <Textarea
                 value={formNote}
                 onChange={(e) => setFormNote(e.target.value)}

@@ -4,7 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "p=3013; while lsof -ti:$p >/dev/null 2>&1; do p=$((p+10)); done; next dev --port $p --turbopack",
+    "dev": "next dev --port 3013 --turbopack",
     "build": "NEXT_DIST_DIR=.next-build next build",
     "start": "NEXT_DIST_DIR=.next-build next start --port 3013",
     "lint": "next lint --max-warnings 0",

@@ -57,6 +57,22 @@ async function waitForActivation(reg: ServiceWorkerRegistration): Promise<boolea
 async function getReadyRegistration(): Promise<ServiceWorkerRegistration | null> {
   const registrations = await navigator.serviceWorker.getRegistrations();
   if (registrations.length > 0) {
+    if (process.env.NODE_ENV === "development") {
+      const fullPwaRegistrations = registrations.filter((reg) =>
+        reg.active?.scriptURL.endsWith("/sw.js"),
+      );
+      for (const reg of fullPwaRegistrations) {
+        await reg.unregister();
+      }
+      if (fullPwaRegistrations.length > 0) {
+        await navigator.serviceWorker.register("/push-sw.js");
+      }
+    }
+    return navigator.serviceWorker.ready;
+  }
+
+  if (process.env.NODE_ENV === "development") {
+    await navigator.serviceWorker.register("/push-sw.js");
     return navigator.serviceWorker.ready;
   }
 

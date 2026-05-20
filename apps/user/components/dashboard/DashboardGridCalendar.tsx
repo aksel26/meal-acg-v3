@@ -3,7 +3,6 @@
 import { useMemo } from "react";
 import dayjs from "dayjs";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import type { MealData } from "./types";
 
 type CalendarDay = {
   date: string;
@@ -12,11 +11,10 @@ type CalendarDay = {
 };
 
 type DayData = {
-  hasMeal: boolean;
-  mealLabel: string | null;
   dayoffs: string[];
-  supervisors: string[];
-  interviews: string[];
+  tasks: string[];
+  requests: string[];
+  projects: string[];
 };
 
 interface Props {
@@ -26,7 +24,6 @@ interface Props {
   onDateSelect: (date: Date) => void;
   onPrevMonth: () => void;
   onNextMonth: () => void;
-  mealData?: MealData[];
   dayDataMap?: Map<string, DayData>;
 }
 
@@ -37,7 +34,6 @@ export default function DashboardGridCalendar({
   onDateSelect,
   onPrevMonth,
   onNextMonth,
-  mealData = [],
   dayDataMap,
 }: Props) {
   const calendarDays = useMemo(() => {
@@ -56,7 +52,7 @@ export default function DashboardGridCalendar({
     }
     const remaining = 7 - (days.length % 7);
     if (remaining < 7) {
-      const lastDay = dayjs(days[days.length - 1].date);
+      const lastDay = dayjs(days[days.length - 1]!.date);
       for (let i = 1; i <= remaining; i++) {
         const d = lastDay.add(i, "day");
         days.push({ date: d.format("YYYY-MM-DD"), dayOfMonth: d.date(), isCurrentMonth: false });
@@ -64,12 +60,6 @@ export default function DashboardGridCalendar({
     }
     return days;
   }, [year, month]);
-
-  const mealByDate = useMemo(() => {
-    const map = new Map<string, MealData>();
-    mealData.forEach((m) => map.set(m.date, m));
-    return map;
-  }, [mealData]);
 
   const selectedStr = selectedDate ? dayjs(selectedDate).format("YYYY-MM-DD") : "";
   const todayStr = dayjs().format("YYYY-MM-DD");
@@ -114,7 +104,6 @@ export default function DashboardGridCalendar({
           const dow = dayjs(day.date).day();
           const isSelected = day.date === selectedStr;
           const isToday = day.date === todayStr;
-          const meal = mealByDate.get(day.date);
           const extra = dayDataMap?.get(day.date);
 
           return (
@@ -145,24 +134,30 @@ export default function DashboardGridCalendar({
               {/* 인디케이터 */}
               {day.isCurrentMonth && (
                 <div className="space-y-0.5">
-                  {meal && (
-                    <div className="truncate rounded px-1 py-0.5 text-[10px] bg-emerald-50 text-slate-600">
-                      식사
-                    </div>
-                  )}
                   {extra && extra.dayoffs.length > 0 && (
                     <div className="truncate rounded px-1 py-0.5 text-[10px] bg-rose-50 text-slate-600">
-                      근태 +{extra.dayoffs.length}
+                      {extra.dayoffs.length === 1
+                        ? extra.dayoffs[0]!
+                        : `내근태 +${extra.dayoffs.length}`}
                     </div>
                   )}
-                  {extra && extra.supervisors.length > 0 && (
+                  {extra && extra.tasks.length > 0 && (
                     <div className="truncate rounded px-1 py-0.5 text-[10px] bg-blue-50 text-slate-600">
-                      검사 +{extra.supervisors.length}
+                      {extra.tasks.length === 1
+                        ? "검사/면접"
+                        : `검사/면접 +${extra.tasks.length}`}
                     </div>
                   )}
-                  {extra && extra.interviews.length > 0 && (
+                  {extra && extra.projects.length > 0 && (
+                    <div className="truncate rounded px-1 py-0.5 text-[10px] bg-emerald-50 text-slate-600">
+                      {extra.projects.length === 1
+                        ? "프로젝트"
+                        : `프로젝트 +${extra.projects.length}`}
+                    </div>
+                  )}
+                  {extra && extra.requests.length > 0 && (
                     <div className="truncate rounded px-1 py-0.5 text-[10px] bg-amber-50 text-slate-600">
-                      면접교육 +{extra.interviews.length}
+                      {extra.requests.length === 1 ? "요청" : `요청 +${extra.requests.length}`}
                     </div>
                   )}
                 </div>

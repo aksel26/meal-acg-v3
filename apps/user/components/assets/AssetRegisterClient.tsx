@@ -3,6 +3,7 @@
 import {
   type ChangeEvent,
   type FormEvent,
+  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -69,22 +70,38 @@ const inputClass =
 const labelClass = "text-xs font-medium text-slate-600";
 
 export function AssetRegisterClient({ assets }: { assets: AssetSummary[] }) {
+  const router = useRouter();
+  const [assetsState, setAssetsState] = useState(assets);
   const [keyword, setKeyword] = useState("");
   const [statusFilter, setStatusFilter] = useState<AssetStatus | "all">("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
+  useEffect(() => {
+    setAssetsState(assets);
+  }, [assets]);
+
+  const refreshAssets = useCallback(async () => {
+    const response = await fetch("/api/assets", { cache: "no-store" });
+    const payload = await response.json();
+    if (!response.ok) {
+      throw new Error(payload.error || "물품 목록을 불러오지 못했습니다.");
+    }
+    setAssetsState(payload);
+    router.refresh();
+  }, [router]);
+
   const categories = useMemo(
     () =>
-      [...new Set(assets.map((asset) => asset.category))].sort((a, b) =>
+      [...new Set(assetsState.map((asset) => asset.category))].sort((a, b) =>
         a.localeCompare(b, "ko-KR"),
       ),
-    [assets],
+    [assetsState],
   );
 
   const filteredAssets = useMemo(() => {
     const normalized = keyword.trim().toLowerCase();
-    return assets.filter((asset) => {
+    return assetsState.filter((asset) => {
       if (statusFilter !== "all" && asset.status !== statusFilter) return false;
       if (categoryFilter !== "all" && asset.category !== categoryFilter) return false;
       if (!normalized) return true;
@@ -99,57 +116,65 @@ export function AssetRegisterClient({ assets }: { assets: AssetSummary[] }) {
         .filter((value): value is string => Boolean(value))
         .some((value) => value.toLowerCase().includes(normalized));
     });
-  }, [assets, categoryFilter, keyword, statusFilter]);
+  }, [assetsState, categoryFilter, keyword, statusFilter]);
 
   return (
     <section className="space-y-3">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center">
-          <div className="relative min-w-0 flex-1">
-            <Search
-              size={15}
-              strokeWidth={1.5}
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-            />
-            <input
-              className="h-9 w-full rounded-lg border border-[#e5e7eb] bg-white pl-9 pr-3 text-sm text-slate-700 placeholder:text-slate-400 outline-none transition-colors focus:border-[#111111]"
-              value={keyword}
-              onChange={(event) => setKeyword(event.target.value)}
-              placeholder="물품명, 자산번호, 시리얼번호 검색"
-            />
-          </div>
-          <select
-            className="h-9 rounded-lg border border-[#e5e7eb] bg-white px-3 text-sm text-slate-600 outline-none focus:border-[#111111]"
-            value={statusFilter}
-            onChange={(event) =>
-              setStatusFilter(event.target.value as AssetStatus | "all")
-            }
-          >
-            <option value="all">전체 상태</option>
-            {ASSET_STATUSES.map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
-            ))}
-          </select>
-          <select
-            className="h-9 rounded-lg border border-[#e5e7eb] bg-white px-3 text-sm text-slate-600 outline-none focus:border-[#111111]"
-            value={categoryFilter}
-            onChange={(event) => setCategoryFilter(event.target.value)}
-          >
-            <option value="all">전체 카테고리</option>
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
+      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        <div className="relative min-w-[280px] flex-1">
+          <Search
+            size={15}
+            strokeWidth={1.5}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+          />
+          <input
+            className="h-9 w-full rounded-lg border border-[#e5e7eb] bg-white pl-9 pr-3 text-sm text-slate-700 placeholder:text-slate-400 outline-none transition-colors focus:border-[#111111]"
+            value={keyword}
+            onChange={(event) => setKeyword(event.target.value)}
+            placeholder="물품명, 자산번호, 시리얼번호 검색"
+          />
         </div>
-        <AssetFormDialog mode="create" />
+        <select
+          className="h-9 w-[132px] shrink-0 rounded-lg border border-[#e5e7eb] bg-white px-3 text-sm text-slate-600 outline-none focus:border-[#111111]"
+          value={statusFilter}
+          onChange={(event) =>
+            setStatusFilter(event.target.value as AssetStatus | "all")
+          }
+        >
+          <option value="all">전체 상태</option>
+          {ASSET_STATUSES.map((status) => (
+            <option key={status} value={status}>
+              {status}
+            </option>
+          ))}
+        </select>
+        <select
+          className="h-9 w-[148px] shrink-0 rounded-lg border border-[#e5e7eb] bg-white px-3 text-sm text-slate-600 outline-none focus:border-[#111111]"
+          value={categoryFilter}
+          onChange={(event) => setCategoryFilter(event.target.value)}
+        >
+          <option value="all">전체 카테고리</option>
+          {categories.map((category) => (
+            <option key={category} value={category}>
+              {category}
+            </option>
+          ))}
+        </select>
+        <div className="shrink-0">
+          <AssetFormDialog mode="create" onSaved={refreshAssets} />
+        </div>
       </div>
 
-      <AssetTable assets={filteredAssets} onPreview={setPreviewUrl} />
-      <AssetMobileList assets={filteredAssets} onPreview={setPreviewUrl} />
+      <AssetTable
+        assets={filteredAssets}
+        onPreview={setPreviewUrl}
+        onSaved={refreshAssets}
+      />
+      <AssetMobileList
+        assets={filteredAssets}
+        onPreview={setPreviewUrl}
+        onSaved={refreshAssets}
+      />
       <ImagePreviewDialog url={previewUrl} onClose={() => setPreviewUrl(null)} />
     </section>
   );
@@ -158,9 +183,11 @@ export function AssetRegisterClient({ assets }: { assets: AssetSummary[] }) {
 function AssetTable({
   assets,
   onPreview,
+  onSaved,
 }: {
   assets: AssetSummary[];
   onPreview: (url: string) => void;
+  onSaved: () => Promise<void>;
 }) {
   if (assets.length === 0) return <EmptyState />;
 
@@ -231,7 +258,7 @@ function AssetTable({
                 </td>
                 <td className="px-4 py-3">
                   {asset.can_edit ? (
-                    <AssetFormDialog mode="edit" asset={asset} />
+                    <AssetFormDialog mode="edit" asset={asset} onSaved={onSaved} />
                   ) : (
                     <span className="text-xs text-slate-300">조회</span>
                   )}
@@ -248,9 +275,11 @@ function AssetTable({
 function AssetMobileList({
   assets,
   onPreview,
+  onSaved,
 }: {
   assets: AssetSummary[];
   onPreview: (url: string) => void;
+  onSaved: () => Promise<void>;
 }) {
   if (assets.length === 0) return null;
 
@@ -281,7 +310,7 @@ function AssetMobileList({
               </div>
               <div className="mt-3 flex justify-end">
                 {asset.can_edit ? (
-                  <AssetFormDialog mode="edit" asset={asset} />
+                  <AssetFormDialog mode="edit" asset={asset} onSaved={onSaved} />
                 ) : (
                   <span className="text-xs text-slate-300">조회만 가능</span>
                 )}
@@ -297,11 +326,12 @@ function AssetMobileList({
 function AssetFormDialog({
   mode,
   asset,
+  onSaved,
 }: {
   mode: "create" | "edit";
   asset?: AssetSummary;
+  onSaved: () => Promise<void>;
 }) {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [members, setMembers] = useState<MasterMember[]>([]);
   const [form, setForm] = useState<AssetFormState>(() => toFormState(asset));
@@ -355,7 +385,7 @@ function AssetFormDialog({
 
       toast.success(mode === "create" ? "물품을 등록했습니다." : "물품을 수정했습니다.");
       setOpen(false);
-      router.refresh();
+      await onSaved();
     } catch (submitError) {
       const message =
         submitError instanceof Error
@@ -377,7 +407,7 @@ function AssetFormDialog({
       });
       await assertOk(response, "이미지를 삭제하지 못했습니다.");
       toast.success("이미지를 삭제했습니다.");
-      router.refresh();
+      await onSaved();
     } catch (deleteError) {
       toast.error(
         deleteError instanceof Error

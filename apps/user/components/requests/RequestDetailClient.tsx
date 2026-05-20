@@ -682,6 +682,7 @@ export function RequestDetailClient({
               initialRequest={request}
               onSuccess={() => setEditOpen(false)}
               submitLabel="수정 저장"
+              datePickerModal
             />
           </div>
         </DialogContent>

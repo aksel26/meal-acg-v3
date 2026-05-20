@@ -46,6 +46,7 @@ interface RequestFormProps {
   initialRequest?: RequestRecord;
   hideSubmitRow?: boolean;
   submitLabel?: string;
+  datePickerModal?: boolean;
 }
 
 export function RequestForm({
@@ -55,6 +56,7 @@ export function RequestForm({
   initialRequest,
   hideSubmitRow,
   submitLabel,
+  datePickerModal,
 }: RequestFormProps = {}) {
   const router = useRouter();
   const isEditMode = Boolean(initialRequest);
@@ -362,6 +364,7 @@ export function RequestForm({
                 placeholder="마감일 선택"
                 value={dueDate}
                 onChange={setDueDate}
+                modal={datePickerModal}
               />
               {dueDate && (
                 <button

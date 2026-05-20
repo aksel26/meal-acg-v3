@@ -52,6 +52,7 @@ export function CreateRequestDialog({
             initialDueDate={initialDueDate}
             initialAssignees={initialAssignees}
             onSuccess={() => setOpen(false)}
+            datePickerModal
           />
         </div>
       </DialogContent>

@@ -3,7 +3,12 @@ import { createServiceClient } from "@/lib/supabase/client";
 const BUCKET = "request-attachments";
 const PROJECT_BUCKET = "project-attachments";
 const ASSET_BUCKET = "asset-images";
-const IMAGE_CONTENT_TYPE_PREFIX = "image/";
+const ALLOWED_IMAGE_CONTENT_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+]);
 const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
 
 export type UploadResult = {
@@ -18,10 +23,16 @@ export function validateAttachment(file: File): string | null {
   return null;
 }
 
-export function validateImageAttachment(file: File): string | null {
+export async function validateImageAttachment(
+  file: File,
+): Promise<string | null> {
   const sizeError = validateAttachment(file);
   if (sizeError) return sizeError;
-  if (!file.type.startsWith(IMAGE_CONTENT_TYPE_PREFIX)) {
+  if (!ALLOWED_IMAGE_CONTENT_TYPES.has(file.type)) {
+    return "이미지 파일만 업로드할 수 있습니다.";
+  }
+  const header = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+  if (!matchesAllowedImageSignature(file.type, header)) {
     return "이미지 파일만 업로드할 수 있습니다.";
   }
   return null;
@@ -110,6 +121,51 @@ export async function getAssetImageSignedUrl(
 
 export async function deleteAssetImage(path: string): Promise<boolean> {
   return deleteFromBucket(ASSET_BUCKET, path);
+}
+
+function matchesAllowedImageSignature(
+  contentType: string,
+  header: Uint8Array,
+): boolean {
+  switch (contentType) {
+    case "image/jpeg":
+      return matchesHeader(header, [0xff, 0xd8, 0xff]);
+    case "image/png":
+      return matchesHeader(header, [
+        0x89,
+        0x50,
+        0x4e,
+        0x47,
+        0x0d,
+        0x0a,
+        0x1a,
+        0x0a,
+      ]);
+    case "image/gif":
+      return (
+        matchesHeader(header, [0x47, 0x49, 0x46, 0x38, 0x37, 0x61]) ||
+        matchesHeader(header, [0x47, 0x49, 0x46, 0x38, 0x39, 0x61])
+      );
+    case "image/webp":
+      return (
+        matchesHeader(header, [0x52, 0x49, 0x46, 0x46], 0) &&
+        matchesHeader(header, [0x57, 0x45, 0x42, 0x50], 8)
+      );
+    default:
+      return false;
+  }
+}
+
+function matchesHeader(
+  header: Uint8Array,
+  signature: number[],
+  offset = 0,
+): boolean {
+  if (header.length < offset + signature.length) {
+    return false;
+  }
+
+  return signature.every((byte, index) => header[offset + index] === byte);
 }
 
 async function uploadToBucket(

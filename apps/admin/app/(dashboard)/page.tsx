@@ -9,7 +9,6 @@ import { Badge } from "@repo/ui/src/badge";
 import { queryKeys } from "@/lib/query-keys";
 import { useAuth } from "@/hooks/useAuth";
 import { useActiveStatusMembers } from "@/hooks/useActiveStatusMembers";
-import { useBudgetSummary } from "@/hooks/useBudgetAllocations";
 import { useAttendanceToday } from "@/hooks/useAttendance";
 import { useApprovals } from "@/hooks/useApprovals";
 import { useDayoffs } from "@/hooks/useDayoffs";
@@ -18,14 +17,12 @@ import {
   useSupervisorCalendar,
   useSupervisorCalendarByMonth,
 } from "@/hooks/useSupervisorCalendar";
-import { STATUS_COLORS, SETTLEMENT_EXCLUDED_STATUSES } from "@/lib/constants";
 import { cn } from "@repo/ui/lib/utils";
 
 import {
   AdminDashboardCalendar,
   type DayIndicator,
 } from "@/components/dashboard/AdminDashboardCalendar";
-import { AdminDashboardSummary } from "@/components/dashboard/AdminDashboardSummary";
 
 dayjs.locale("ko");
 
@@ -33,31 +30,19 @@ dayjs.locale("ko");
 
 interface DashboardStats {
   totalMembers: number;
-  totalAllowance: number;
-  totalUsed: number;
-  totalBalance: number;
-  averageUsage: number;
 }
 
-interface SettlementData {
-  totalMembers: number;
-  settledCount: number;
-  unsettledCount: number;
-  settledMembers: { id: string; full_name: string }[];
-  unsettledMembers: { id: string; full_name: string }[];
-  month: string;
-}
+type RoundStatus = "draft" | "confirmed" | "closed";
 
-interface BudgetSummaryItem {
-  allocation_id: string;
-  member_id: string;
-  member_name: string;
-  member_role: string;
-  team_name: string | null;
-  type: string;
-  total_amount: number;
-  used_amount: number;
-  remaining_amount: number;
+interface EvaluationRound {
+  id: string;
+  name: string;
+  start_date: string;
+  end_date: string;
+  status: RoundStatus;
+  is_deployed: boolean;
+  config_version: number;
+  updated_at: string;
 }
 
 const LEAVE_TYPE_COLORS: Record<string, string> = {
@@ -70,43 +55,6 @@ const LEAVE_TYPE_COLORS: Record<string, string> = {
   훈련: "bg-slate-50 text-slate-700",
   휴무: "bg-green-50 text-green-700",
 };
-
-// ── Helpers ──
-
-const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat("ko-KR").format(amount);
-
-const formatCurrencyShort = (amount: number) => {
-  if (amount >= 10000000) {
-    return (
-      <>
-        {(amount / 10000000).toFixed(1)}
-        <span className="text-xs text-slate-500">천만</span>
-      </>
-    );
-  }
-  if (amount >= 10000) {
-    return (
-      <>
-        {(amount / 10000).toFixed(1)}
-        <span className="text-xs text-slate-500">만</span>
-      </>
-    );
-  }
-  return formatCurrency(amount);
-};
-
-function ProgressBar({ percent }: { percent: number }) {
-  const clamped = Math.min(Math.max(percent, 0), 100);
-  return (
-    <div className="h-2 w-full overflow-hidden rounded-sm bg-slate-100">
-      <div
-        className="h-full rounded-sm bg-slate-900 transition-all duration-500 ease-out"
-        style={{ width: `${clamped}%` }}
-      />
-    </div>
-  );
-}
 
 // ── Detail Panel Sections ──
 
@@ -127,20 +75,59 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-lg bg-white px-3 py-2.5">
-      <div className="mb-1.5 flex items-center gap-1.5">
-        <span className={cn("h-1.5 w-1.5 rounded-full", accentDot[accent])} />
-        <p className="text-xs font-medium uppercase tracking-wider text-slate-400">
+    <div className="min-h-[132px] rounded-xl bg-white p-4">
+      <div className="mb-3 flex items-center gap-2">
+        <span className={cn("h-2 w-2 rounded-full", accentDot[accent])} />
+        <p className="text-lg font-semibold leading-none text-slate-900">
           {title}
         </p>
       </div>
-      <div className="flex flex-col gap-0.5">{children}</div>
+      <div className="flex flex-col gap-1">{children}</div>
     </div>
   );
 }
 
 function EmptyRow() {
-  return <p className="py-0.5 text-xs text-slate-300">없음</p>;
+  return <p className="py-1 text-sm text-slate-300">없음</p>;
+}
+
+function OperationQueueCard({
+  href,
+  label,
+  value,
+  suffix,
+  description,
+  isAttention,
+}: {
+  href: string;
+  label: string;
+  value: string | number;
+  suffix?: string;
+  description: string;
+  isAttention?: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      className="admin-pressable flex min-h-[112px] flex-col justify-between rounded-xl bg-white p-4 transition-colors hover:bg-slate-50"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-medium text-slate-600">{label}</span>
+        {isAttention && <span className="h-2 w-2 rounded-full bg-slate-900" />}
+      </div>
+      <div>
+        <div className="flex items-baseline gap-1">
+          <span className="text-[32px] font-semibold leading-none text-slate-950 tabular-nums">
+            {value}
+          </span>
+          {suffix && <span className="text-sm text-slate-500">{suffix}</span>}
+        </div>
+        <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-500">
+          {description}
+        </p>
+      </div>
+    </Link>
+  );
 }
 
 // ── Skeleton ──
@@ -234,6 +221,7 @@ export default function DashboardPage() {
     dateRange.startDate === dateRange.endDate
       ? dayjs(dateRange.startDate).format("M월 D일 (ddd)")
       : `${dayjs(dateRange.startDate).format("M/D")} ~ ${dayjs(dateRange.endDate).format("M/D")}`;
+  const currentDateStr = today.format("YYYY-MM-DD");
 
   // ── Calendar Data ──
 
@@ -301,8 +289,7 @@ export default function DashboardPage() {
       if (!s.status_start_date) return false;
       const sEnd = s.status_end_date;
       return sEnd
-        ? selectedDateStr >= s.status_start_date &&
-            selectedDateStr <= sEnd
+        ? selectedDateStr >= s.status_start_date && selectedDateStr <= sEnd
         : selectedDateStr >= s.status_start_date;
     });
   }, [memberStatuses, selectedDateStr]);
@@ -333,85 +320,44 @@ export default function DashboardPage() {
   const { data: statusMembers } = useActiveStatusMembers();
   const statusMemberCount = statusMembers?.length || 0;
 
-  const excludedMemberNames = useMemo(
-    () =>
-      new Set(
-        statusMembers
-          ?.filter(
-            (m) =>
-              m.current_status &&
-              SETTLEMENT_EXCLUDED_STATUSES.has(m.current_status),
-          )
-          .map((m) => m.full_name) || [],
-      ),
-    [statusMembers],
-  );
-
-  const { data: settlement } = useQuery<SettlementData>({
-    queryKey: queryKeys.dashboard.settlement(calendarYear, calendarMonth),
+  const { data: evaluationRounds = [] } = useQuery<EvaluationRound[]>({
+    queryKey: queryKeys.evaluations.rounds,
     queryFn: async () => {
-      const res = await fetch(
-        `/api/stats/settlement?year=${calendarYear}&month=${calendarMonth}`,
-      );
-      if (!res.ok) throw new Error("Failed to fetch settlement");
+      const res = await fetch("/api/evaluations/rounds");
+      if (!res.ok) throw new Error("Failed to fetch evaluation rounds");
       return res.json();
     },
   });
 
-  // ── Budget ──
+  const activeEvaluationRounds = useMemo(
+    () =>
+      evaluationRounds.filter(
+        (round) =>
+          round.is_deployed &&
+          round.status !== "closed" &&
+          currentDateStr >= round.start_date &&
+          currentDateStr <= round.end_date,
+      ),
+    [evaluationRounds, currentDateStr],
+  );
 
-  const budgetPeriod = useMemo(() => {
-    const half = calendarMonth <= 6 ? "H1" : "H2";
-    return `${calendarYear}-${half}`;
-  }, [calendarYear, calendarMonth]);
-
-  const { data: budgetData } = useBudgetSummary(budgetPeriod);
-
-  const pointsSummary = useMemo(() => {
-    const items: BudgetSummaryItem[] = Array.isArray(budgetData)
-      ? budgetData
-      : [];
-    const welfare = { total: 0, used: 0, remaining: 0, memberCount: 0 };
-    const activity = { total: 0, used: 0, remaining: 0, memberCount: 0 };
-
-    for (const item of items) {
-      if (item.type === "복지포인트") {
-        welfare.total += item.total_amount || 0;
-        welfare.used += item.used_amount || 0;
-        welfare.remaining += item.remaining_amount || 0;
-        welfare.memberCount++;
-      } else if (item.type === "활동비") {
-        activity.total += item.total_amount || 0;
-        activity.used += item.used_amount || 0;
-        activity.remaining += item.remaining_amount || 0;
-        activity.memberCount++;
-      }
-    }
-    return { welfare, activity };
-  }, [budgetData]);
-
-  const usageRate = stats?.totalAllowance
-    ? ((stats.totalUsed || 0) / stats.totalAllowance) * 100
-    : 0;
-  const welfareUsageRate =
-    pointsSummary.welfare.total > 0
-      ? (pointsSummary.welfare.used / pointsSummary.welfare.total) * 100
-      : 0;
-  const activityUsageRate =
-    pointsSummary.activity.total > 0
-      ? (pointsSummary.activity.used / pointsSummary.activity.total) * 100
-      : 0;
+  const upcomingEvaluationRounds = useMemo(
+    () =>
+      evaluationRounds
+        .filter(
+          (round) =>
+            round.status !== "closed" && currentDateStr < round.start_date,
+        )
+        .sort((a, b) => a.start_date.localeCompare(b.start_date))
+        .slice(0, 3),
+    [evaluationRounds, currentDateStr],
+  );
 
   // ── Styles ──
 
-  const cardClass =
-    "admin-pressable rounded-xl bg-white p-5 transition-colors hover:bg-slate-50";
-  const rowClass =
-    "flex items-center justify-between py-2";
-
   return (
     <div className="grid grid-cols-1 gap-6 pb-6 lg:grid-cols-[420px_1fr]">
-      {/* ── Left Column: Calendar + Detail ── */}
+      {/* ── Left Column: Calendar ── */}
       <div className="space-y-4">
         <AdminDashboardCalendar
           dayMap={dayMap}
@@ -423,157 +369,6 @@ export default function DashboardPage() {
           activePreset={activePreset}
           dateLabel={dateLabel}
         />
-
-        {/* Selected Date Detail */}
-        <div className="space-y-3">
-          <div className="flex items-baseline gap-1.5 px-1">
-            <span className="text-base font-semibold text-slate-800">
-              {dayjs(selectedDate).format("M월 D일")}
-            </span>
-            <span className="text-xs text-slate-400">{dayOfWeekLabel}요일</span>
-          </div>
-
-          <Section title="휴가 현황" accent="purple">
-            {selectedDayoffs.length === 0 ? (
-              <EmptyRow />
-            ) : (
-              selectedDayoffs.map((d) => (
-                <div
-                  key={d.id}
-                  className="flex items-center justify-between py-0.5"
-                >
-                  <span className="text-sm text-slate-700">
-                    {d.target?.full_name ?? "—"}
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    {d.leave_type && (
-                      <Badge
-                        variant="secondary"
-                        className={cn(
-                          "h-5 px-1.5 py-0 text-xs",
-                          LEAVE_TYPE_COLORS[d.leave_type.name] ||
-                            "bg-slate-50 text-slate-700",
-                        )}
-                      >
-                        {d.leave_type.name}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              ))
-            )}
-          </Section>
-
-          <Section title="특이사항" accent="orange">
-            {selectedStatuses.length === 0 ? (
-              <EmptyRow />
-            ) : (
-              selectedStatuses.map((s) => (
-                <div
-                  key={s.member_id}
-                  className="flex items-center justify-between py-0.5"
-                >
-                  <div className="flex min-w-0 items-center gap-1.5">
-                    <span className="truncate text-sm text-slate-700">
-                      {s.full_name ?? "—"}
-                    </span>
-                    {s.team_name && (
-                      <span className="shrink-0 text-xs text-slate-400">
-                        {s.team_name}
-                      </span>
-                    )}
-                  </div>
-                  <div className="ml-2 flex shrink-0 items-center gap-1.5">
-                    {s.current_status && (
-                      <Badge
-                        variant="outline"
-                        className="h-5 px-1.5 py-0 text-xs"
-                      >
-                        {s.current_status}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              ))
-            )}
-          </Section>
-
-          <Section title="감독관 공고" accent="emerald">
-            {jobPostings.length === 0 ? (
-              <EmptyRow />
-            ) : (
-              jobPostings.map((jp) => (
-                <div
-                  key={jp.id}
-                  className="flex items-center justify-between py-0.5"
-                >
-                  <div className="flex min-w-0 flex-col">
-                    <span className="truncate text-sm text-slate-700">
-                      {jp.title}
-                    </span>
-                    <span className="text-xs text-slate-400">
-                      {jp.location || "—"}
-                    </span>
-                  </div>
-                  <div className="ml-2 flex shrink-0 items-center gap-1.5">
-                    <span className="text-xs text-slate-400">
-                      {jp.assigned_count}/{jp.headcount}명
-                    </span>
-                    <Badge
-                      variant="secondary"
-                      className={cn(
-                        "h-5 px-1.5 py-0 text-xs",
-                        jp.status === "open" && "bg-green-50 text-green-700",
-                        jp.status === "closed" && "bg-slate-100 text-slate-500",
-                        jp.status === "draft" && "bg-yellow-50 text-yellow-600",
-                      )}
-                    >
-                      {jp.status}
-                    </Badge>
-                  </div>
-                </div>
-              ))
-            )}
-          </Section>
-
-          <Section title="교육운영 공고" accent="blue">
-            {interviewPostings.length === 0 ? (
-              <EmptyRow />
-            ) : (
-              interviewPostings.map((ip) => (
-                <div
-                  key={ip.id}
-                  className="flex items-center justify-between py-0.5"
-                >
-                  <div className="flex min-w-0 flex-col">
-                    <span className="truncate text-sm text-slate-700">
-                      {ip.title}
-                    </span>
-                    <span className="text-xs text-slate-400">
-                      {ip.platform || "-"}
-                    </span>
-                  </div>
-                  <div className="ml-2 flex shrink-0 items-center gap-1.5">
-                    <span className="text-xs text-slate-400">
-                      {ip.total_headcount}명
-                    </span>
-                    <Badge
-                      variant="secondary"
-                      className={cn(
-                        "h-5 px-1.5 py-0 text-xs",
-                        ip.status === "open" && "bg-green-50 text-green-700",
-                        ip.status === "closed" && "bg-slate-100 text-slate-500",
-                        ip.status === "draft" && "bg-yellow-50 text-yellow-600",
-                      )}
-                    >
-                      {ip.status}
-                    </Badge>
-                  </div>
-                </div>
-              ))
-            )}
-          </Section>
-        </div>
       </div>
 
       {/* ── Right Column: KPI + Cards ── */}
@@ -582,435 +377,257 @@ export default function DashboardPage() {
           <DashboardSkeleton />
         ) : (
           <>
-            {/* KPI Summary */}
-            <AdminDashboardSummary
-              totalMembers={stats?.totalMembers || 0}
-              checkedIn={attendanceToday?.checkedIn || 0}
-              notCheckedIn={attendanceToday?.notCheckedIn || 0}
-              onLeave={attendanceToday?.onLeave || 0}
-              pendingApprovals={pendingCount}
-              usageRate={Math.round(usageRate)}
-            />
-
-            {/* Attendance + Approvals */}
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {/* 오늘의 근태 */}
-              <Link href="/attendance" className={cardClass}>
-                <h4 className="mb-2 text-sm font-semibold text-slate-700">
-                  오늘의 근태
-                </h4>
-                {attendanceToday ? (
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-4 gap-2">
-                      <div className="rounded-sm bg-slate-50 px-3 py-2 text-center">
-                        <p className="text-lg font-bold tabular-nums text-slate-900">
-                          {attendanceToday.checkedIn}
-                        </p>
-                        <p className="text-[11px] text-slate-500">출근</p>
-                      </div>
-                      <div className="rounded-sm bg-slate-50 px-3 py-2 text-center">
-                        <p className="text-lg font-bold tabular-nums text-slate-700">
-                          {attendanceToday.notCheckedIn}
-                        </p>
-                        <p className="text-[11px] text-slate-500">미출근</p>
-                      </div>
-                      <div className="rounded-sm bg-slate-50 px-3 py-2 text-center">
-                        <p className="text-lg font-bold tabular-nums text-slate-900">
-                          {attendanceToday.late}
-                        </p>
-                        <p className="text-[11px] text-slate-500">지각</p>
-                      </div>
-                      <div className="rounded-sm bg-slate-50 px-3 py-2 text-center">
-                        <p className="text-lg font-bold tabular-nums text-slate-900">
-                          {attendanceToday.onLeave}
-                        </p>
-                        <p className="text-[11px] text-slate-500">휴가</p>
-                      </div>
-                    </div>
-                    {attendanceToday.lateMembers.length > 0 && (
-                      <div className="flex flex-wrap gap-1 pt-2">
-                        <span className="text-[11px] text-slate-400">
-                          지각:
-                        </span>
-                        {attendanceToday.lateMembers.map((m) => (
-                          <span
-                            key={m.id}
-                            className="rounded-sm bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-700"
-                          >
-                            {m.name}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="h-16 animate-pulse rounded bg-slate-100" />
-                )}
-              </Link>
-
-              {/* 승인 대기 */}
-              <Link href="/approvals" className={cardClass}>
-                <h4 className="mb-2 text-sm font-semibold text-slate-700">
-                  승인 대기
-                </h4>
-                {approvals ? (
-                  <div className="space-y-2">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-bold tabular-nums text-slate-900">
-                        {pendingCount}
-                      </span>
-                      <span className="text-sm text-slate-500">건 대기 중</span>
-                    </div>
-                    {pendingCount > 0 && (
-                      <div className="space-y-1 pt-2">
-                        {approvals.slice(0, 5).map((a) => (
-                          <div
-                            key={a.id}
-                            className="flex items-center justify-between rounded-md bg-slate-50/80 px-2.5 py-1.5"
-                          >
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-slate-700">
-                                {a.requester?.full_name || "알 수 없음"}
-                              </span>
-                              {a.related_data?.leave_type && (
-                                <span className="text-[11px] text-slate-400">
-                                  {a.related_data.leave_type.name}
-                                </span>
-                              )}
-                            </div>
-                            {a.related_data && (
-                              <span className="text-[11px] tabular-nums text-slate-400">
-                                {dayjs(a.related_data.leave_date).format(
-                                  "MM/DD",
-                                )}
-                              </span>
-                            )}
-                          </div>
-                        ))}
-                        {pendingCount > 5 && (
-                          <p className="text-center text-[11px] text-slate-400">
-                            외 {pendingCount - 5}건
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="h-16 animate-pulse rounded bg-slate-100" />
-                )}
+            <div className="flex flex-wrap items-end justify-between gap-4 px-1">
+              <div>
+                <p className="text-sm font-medium text-slate-400">
+                  {dayOfWeekLabel}요일
+                </p>
+                <h1 className="mt-1 text-3xl font-semibold leading-tight text-slate-950 md:text-4xl">
+                  {dayjs(selectedDate).format("M월 D일")}
+                </h1>
+              </div>
+              <Link
+                href="/organization"
+                className="admin-pressable flex w-fit shrink-0 items-stretch rounded-xl bg-white px-5 py-4 text-center transition-colors hover:bg-slate-50"
+              >
+                <div className="min-w-[132px]">
+                  <p className="text-sm font-medium text-slate-500">총 인원</p>
+                  <p className="mt-1 text-3xl font-semibold leading-none text-slate-950 tabular-nums">
+                    {stats?.totalMembers || 0}
+                    <span className="ml-1 text-base font-medium text-slate-500">
+                      명
+                    </span>
+                  </p>
+                </div>
+                <div className="mx-5 w-px bg-slate-200" />
+                <div className="min-w-[152px]">
+                  <p className="text-sm font-medium text-slate-500">
+                    특이사항 인원
+                  </p>
+                  <p className="mt-1 text-3xl font-semibold leading-none text-slate-950 tabular-nums">
+                    {statusMemberCount}
+                    <span className="ml-1 text-base font-medium text-slate-500">
+                      명
+                    </span>
+                  </p>
+                </div>
               </Link>
             </div>
 
-            {/* Organization + Settlement + Budget */}
-            <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-              {/* Col 1: 총 인원 */}
-              <Link href="/organization" className={cardClass}>
-                <div className="mb-1.5">
-                  <h3 className="text-base font-semibold text-slate-800">
-                    총 인원
-                  </h3>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between px-1">
+                <div>
+                  <h2 className="text-base font-semibold text-slate-900">
+                    오늘 처리할 일
+                  </h2>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    승인, 출근 누락, 평가 진행 상태를 먼저 확인합니다.
+                  </p>
                 </div>
-                <div className="mb-3 flex items-baseline gap-2">
-                  <span className="text-4xl font-bold tabular-nums text-slate-900">
-                    {stats?.totalMembers || 0}
-                  </span>
-                  <span className="text-base text-slate-400">명</span>
-                </div>
-                <div className="space-y-1.5 pt-2.5">
-                  <div className="flex items-center justify-between rounded-md bg-slate-50/80 px-3 py-1.5">
-                    <span className="text-sm text-slate-500">정상 근무</span>
-                    <span className="text-sm font-semibold tabular-nums text-slate-700">
-                      {(stats?.totalMembers || 0) - statusMemberCount}명
-                    </span>
-                  </div>
-                  {statusMemberCount > 0 && (
-                    <div className="flex items-center justify-between rounded-md bg-slate-50/80 px-3 py-1.5">
-                      <div className="flex items-center gap-1.5">
-                        <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-                        <span className="text-sm font-semibold text-slate-700">
-                          특이사항
+                <span className="text-xs text-slate-400">
+                  {today.format("YYYY.MM.DD")}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <OperationQueueCard
+                  href="/approvals"
+                  label="승인 대기"
+                  value={pendingCount}
+                  suffix="건"
+                  description={
+                    pendingCount > 0
+                      ? "휴가/근무 신청을 확인하고 승인 또는 반려 처리합니다."
+                      : "현재 승인 대기 건이 없습니다."
+                  }
+                  isAttention={pendingCount > 0}
+                />
+                <OperationQueueCard
+                  href="/attendance"
+                  label="출근 미확인"
+                  value={attendanceToday?.notCheckedIn ?? 0}
+                  suffix="명"
+                  description={
+                    attendanceToday?.notCheckedIn
+                      ? `${attendanceToday.notCheckedInMembers
+                          .slice(0, 3)
+                          .map((m) => m.name)
+                          .join(
+                            ", ",
+                          )}${attendanceToday.notCheckedIn > 3 ? " 외" : ""}`
+                      : "오늘 출근 미확인 인원이 없습니다."
+                  }
+                  isAttention={(attendanceToday?.notCheckedIn ?? 0) > 0}
+                />
+                <OperationQueueCard
+                  href="/evaluations"
+                  label="진행 중 평가"
+                  value={activeEvaluationRounds.length}
+                  suffix="개"
+                  description={
+                    activeEvaluationRounds.length > 0
+                      ? activeEvaluationRounds
+                          .slice(0, 2)
+                          .map((round) => round.name)
+                          .join(", ")
+                      : upcomingEvaluationRounds[0]
+                        ? `${dayjs(
+                            upcomingEvaluationRounds[0].start_date,
+                          ).format("M/D")} 시작 예정`
+                        : "진행 중이거나 예정된 평가가 없습니다."
+                  }
+                  isAttention={activeEvaluationRounds.length > 0}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-4">
+                <Section title="휴가 현황" accent="purple">
+                  {selectedDayoffs.length === 0 ? (
+                    <EmptyRow />
+                  ) : (
+                    selectedDayoffs.map((d) => (
+                      <div
+                        key={d.id}
+                        className="flex items-center justify-between py-0.5"
+                      >
+                        <span className="text-sm text-slate-700">
+                          {d.target?.full_name ?? "—"}
                         </span>
-                      </div>
-                      <span className="text-sm font-semibold tabular-nums text-slate-700">
-                        {statusMemberCount}명
-                      </span>
-                    </div>
-                  )}
-                </div>
-                {statusMembers && statusMembers.length > 0 && (
-                  <div className="mt-3 pt-3">
-                    <div className="mb-2 flex flex-wrap gap-1.5">
-                      {Object.entries(
-                        statusMembers.reduce<Record<string, number>>(
-                          (acc, m) => {
-                            const status = m.current_status || "기타";
-                            acc[status] = (acc[status] || 0) + 1;
-                            return acc;
-                          },
-                          {},
-                        ),
-                      ).map(([status, count]) => (
-                        <span
-                          key={status}
-                          className={cn(
-                            "rounded-full px-2 py-0.5 text-[11px] font-medium",
-                            STATUS_COLORS[status] ||
-                              "bg-slate-50 text-slate-600",
+                        <div className="flex items-center gap-1.5">
+                          {d.leave_type && (
+                            <Badge
+                              variant="secondary"
+                              className={cn(
+                                "h-5 px-1.5 py-0 text-xs",
+                                LEAVE_TYPE_COLORS[d.leave_type.name] ||
+                                  "bg-slate-50 text-slate-700",
+                              )}
+                            >
+                              {d.leave_type.name}
+                            </Badge>
                           )}
-                        >
-                          {status} {count}
-                        </span>
-                      ))}
-                    </div>
-                    <div className="space-y-0.5">
-                      {statusMembers.map((m) => (
-                        <div
-                          key={m.member_id}
-                          className="flex items-center gap-2 rounded-md px-2 py-1 transition-colors hover:bg-slate-50"
-                        >
-                          <span className="h-1 w-1 shrink-0 rounded-full bg-slate-300" />
-                          <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-700">
-                            {m.full_name}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </Section>
+
+                <Section title="특이사항" accent="orange">
+                  {selectedStatuses.length === 0 ? (
+                    <EmptyRow />
+                  ) : (
+                    selectedStatuses.map((s) => (
+                      <div
+                        key={s.member_id}
+                        className="flex items-center justify-between py-0.5"
+                      >
+                        <div className="flex min-w-0 items-center gap-1.5">
+                          <span className="truncate text-sm text-slate-700">
+                            {s.full_name ?? "—"}
                           </span>
-                          <span
+                          {s.team_name && (
+                            <span className="shrink-0 text-xs text-slate-400">
+                              {s.team_name}
+                            </span>
+                          )}
+                        </div>
+                        <div className="ml-2 flex shrink-0 items-center gap-1.5">
+                          {s.current_status && (
+                            <Badge
+                              variant="outline"
+                              className="h-5 px-1.5 py-0 text-xs"
+                            >
+                              {s.current_status}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </Section>
+
+                <Section title="감독관 공고" accent="emerald">
+                  {jobPostings.length === 0 ? (
+                    <EmptyRow />
+                  ) : (
+                    jobPostings.map((jp) => (
+                      <div
+                        key={jp.id}
+                        className="flex items-center justify-between py-0.5"
+                      >
+                        <div className="flex min-w-0 flex-col">
+                          <span className="truncate text-sm text-slate-700">
+                            {jp.title}
+                          </span>
+                          <span className="text-xs text-slate-400">
+                            {jp.location || "—"}
+                          </span>
+                        </div>
+                        <div className="ml-2 flex shrink-0 items-center gap-1.5">
+                          <span className="text-xs text-slate-400">
+                            {jp.assigned_count}/{jp.headcount}명
+                          </span>
+                          <Badge
+                            variant="secondary"
                             className={cn(
-                              "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
-                              STATUS_COLORS[m.current_status || ""] ||
-                                "bg-slate-50 text-slate-600",
+                              "h-5 px-1.5 py-0 text-xs",
+                              jp.status === "open" &&
+                                "bg-green-50 text-green-700",
+                              jp.status === "closed" &&
+                                "bg-slate-100 text-slate-500",
+                              jp.status === "draft" &&
+                                "bg-yellow-50 text-yellow-600",
                             )}
                           >
-                            {m.current_status}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </Link>
-
-              {/* Col 2: 정산 현황 */}
-              <Link href="/meal-status" className={cardClass}>
-                <h4 className="mb-2 text-sm font-semibold text-slate-700">
-                  정산 현황
-                </h4>
-                {(() => {
-                  const filteredUnsettled =
-                    settlement?.unsettledMembers?.filter(
-                      (m) => !excludedMemberNames.has(m.full_name),
-                    ) || [];
-                  const filteredUnsettledCount = filteredUnsettled.length;
-                  const excludedCount =
-                    (settlement?.unsettledCount || 0) - filteredUnsettledCount;
-                  return (
-                    <>
-                      <div className="flex items-baseline gap-2">
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-2xl font-bold tabular-nums text-slate-900">
-                            {settlement?.settledCount || 0}
-                          </span>
-                          <span className="text-[11px] text-slate-400">
-                            완료
-                          </span>
-                        </div>
-                        <span className="text-slate-300">/</span>
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-2xl font-bold tabular-nums text-slate-900">
-                            {filteredUnsettledCount}
-                          </span>
-                          <span className="text-[11px] text-slate-400">
-                            미정산
-                          </span>
+                            {jp.status}
+                          </Badge>
                         </div>
                       </div>
-                      {excludedCount > 0 && (
-                        <p className="mt-0.5 text-[11px] text-slate-400">
-                          특이사항 {excludedCount}명 제외
-                        </p>
-                      )}
-                      {filteredUnsettled.length > 0 && (
-                        <div className="mt-2 pt-2">
-                          <div className="flex flex-wrap gap-1">
-                            {[...filteredUnsettled]
-                              .sort((a, b) =>
-                                a.full_name.localeCompare(b.full_name, "ko"),
-                              )
-                              .map((m) => (
-                                <span
-                                  key={m.id}
-                                  className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600"
-                                >
-                                  {m.full_name}
-                                </span>
-                              ))}
-                          </div>
+                    ))
+                  )}
+                </Section>
+
+                <Section title="교육운영 공고" accent="blue">
+                  {interviewPostings.length === 0 ? (
+                    <EmptyRow />
+                  ) : (
+                    interviewPostings.map((ip) => (
+                      <div
+                        key={ip.id}
+                        className="flex items-center justify-between py-0.5"
+                      >
+                        <div className="flex min-w-0 flex-col">
+                          <span className="truncate text-sm text-slate-700">
+                            {ip.title}
+                          </span>
+                          <span className="text-xs text-slate-400">
+                            {ip.platform || "-"}
+                          </span>
                         </div>
-                      )}
-                    </>
-                  );
-                })()}
-              </Link>
-
-              {/* Col 3: 비용 통계 */}
-              <div className="flex flex-col gap-3">
-                {/* 식대 */}
-                <Link href="/meal-status" className={cardClass}>
-                  <div className="mb-3">
-                    <h3 className="text-base font-semibold text-slate-800">
-                      식대
-                    </h3>
-                  </div>
-                  <div className="flex items-end justify-between">
-                    <p className="text-sm font-medium text-slate-500">
-                      사용률
-                    </p>
-                    <p className="text-3xl font-bold tabular-nums text-slate-900">
-                      {usageRate.toFixed(0)}
-                      <span className="text-lg text-slate-500">%</span>
-                    </p>
-                  </div>
-                  <div className="mt-3">
-                    <ProgressBar percent={usageRate} />
-                  </div>
-                  <div className="mt-3">
-                    <div className={rowClass}>
-                      <span className="text-sm text-slate-500">지원금</span>
-                      <span className="text-sm font-semibold tabular-nums text-slate-900">
-                        {formatCurrencyShort(stats?.totalAllowance || 0)}
-                      </span>
-                    </div>
-                    <div className={rowClass}>
-                      <span className="text-sm text-slate-500">사용액</span>
-                      <span className="text-sm font-semibold tabular-nums text-slate-900">
-                        {formatCurrencyShort(stats?.totalUsed || 0)}
-                      </span>
-                    </div>
-                    <div className={rowClass}>
-                      <span className="text-sm text-slate-500">잔여</span>
-                      <span
-                        className={cn(
-                          "text-sm font-semibold tabular-nums",
-                          (stats?.totalBalance || 0) >= 0
-                            ? "text-slate-900"
-                            : "text-rose-600",
-                        )}
-                      >
-                        {formatCurrencyShort(stats?.totalBalance || 0)}
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-
-                {/* 복지포인트 */}
-                <Link href="/points-overview" className={cardClass}>
-                  <div className="mb-3">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-base font-semibold text-slate-800">
-                        복지포인트
-                      </h3>
-                      <span className="text-[11px] text-slate-400">
-                        {budgetPeriod}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-end justify-between">
-                    <p className="text-sm font-medium text-slate-500">
-                      사용률
-                      <span className="ml-1 text-xs text-slate-400">
-                        {pointsSummary.welfare.memberCount}명
-                      </span>
-                    </p>
-                    <p className="text-3xl font-bold tabular-nums text-slate-900">
-                      {welfareUsageRate.toFixed(0)}
-                      <span className="text-lg text-slate-500">%</span>
-                    </p>
-                  </div>
-                  <div className="mt-3">
-                    <ProgressBar percent={welfareUsageRate} />
-                  </div>
-                  <div className="mt-3">
-                    <div className={rowClass}>
-                      <span className="text-sm text-slate-500">할당</span>
-                      <span className="text-sm font-semibold tabular-nums text-slate-900">
-                        {formatCurrencyShort(pointsSummary.welfare.total)}
-                      </span>
-                    </div>
-                    <div className={rowClass}>
-                      <span className="text-sm text-slate-500">사용</span>
-                      <span className="text-sm font-semibold tabular-nums text-slate-900">
-                        {formatCurrencyShort(pointsSummary.welfare.used)}
-                      </span>
-                    </div>
-                    <div className={rowClass}>
-                      <span className="text-sm text-slate-500">잔여</span>
-                      <span
-                        className={cn(
-                          "text-sm font-semibold tabular-nums",
-                          pointsSummary.welfare.remaining < 0
-                            ? "text-rose-600"
-                            : "text-slate-900",
-                        )}
-                      >
-                        {formatCurrencyShort(pointsSummary.welfare.remaining)}
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-
-                {/* 활동비 */}
-                <Link href="/points-overview" className={cardClass}>
-                  <div className="mb-3">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-base font-semibold text-slate-800">
-                        활동비
-                      </h3>
-                      <span className="text-[11px] text-slate-400">
-                        {budgetPeriod}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-end justify-between">
-                    <p className="text-sm font-medium text-slate-500">
-                      사용률
-                      <span className="ml-1 text-xs text-slate-400">
-                        {pointsSummary.activity.memberCount}명
-                      </span>
-                    </p>
-                    <p className="text-3xl font-bold tabular-nums text-slate-900">
-                      {activityUsageRate.toFixed(0)}
-                      <span className="text-lg text-slate-500">%</span>
-                    </p>
-                  </div>
-                  <div className="mt-3">
-                    <ProgressBar percent={activityUsageRate} />
-                  </div>
-                  <div className="mt-3">
-                    <div className={rowClass}>
-                      <span className="text-sm text-slate-500">할당</span>
-                      <span className="text-sm font-semibold tabular-nums text-slate-900">
-                        {formatCurrencyShort(pointsSummary.activity.total)}
-                      </span>
-                    </div>
-                    <div className={rowClass}>
-                      <span className="text-sm text-slate-500">사용</span>
-                      <span className="text-sm font-semibold tabular-nums text-slate-900">
-                        {formatCurrencyShort(pointsSummary.activity.used)}
-                      </span>
-                    </div>
-                    <div className={rowClass}>
-                      <span className="text-sm text-slate-500">잔여</span>
-                      <span
-                        className={cn(
-                          "text-sm font-semibold tabular-nums",
-                          pointsSummary.activity.remaining < 0
-                            ? "text-rose-600"
-                            : "text-slate-900",
-                        )}
-                      >
-                        {formatCurrencyShort(pointsSummary.activity.remaining)}
-                      </span>
-                    </div>
-                  </div>
-                </Link>
+                        <div className="ml-2 flex shrink-0 items-center gap-1.5">
+                          <span className="text-xs text-slate-400">
+                            {ip.total_headcount}명
+                          </span>
+                          <Badge
+                            variant="secondary"
+                            className={cn(
+                              "h-5 px-1.5 py-0 text-xs",
+                              ip.status === "open" &&
+                                "bg-green-50 text-green-700",
+                              ip.status === "closed" &&
+                                "bg-slate-100 text-slate-500",
+                              ip.status === "draft" &&
+                                "bg-yellow-50 text-yellow-600",
+                            )}
+                          >
+                            {ip.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </Section>
               </div>
             </div>
           </>

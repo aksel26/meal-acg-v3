@@ -196,7 +196,7 @@ function AssetTable({
   if (assets.length === 0) return <EmptyState />;
 
   return (
-    <div className="hidden overflow-hidden rounded-xl border border-[#f3f3f3] bg-white md:block">
+    <div className="hidden overflow-hidden rounded-xl border border-[#f3f3f3] bg-white md:!block">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[1120px] table-fixed text-left">
           <colgroup>
@@ -288,7 +288,7 @@ function AssetMobileList({
   if (assets.length === 0) return null;
 
   return (
-    <div className="space-y-2 md:hidden">
+    <div className="space-y-2 md:!hidden">
       {assets.map((asset) => (
         <div
           key={asset.id}

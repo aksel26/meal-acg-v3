@@ -35,6 +35,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   ExternalLink,
+  ReceiptText,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import { Button } from "@repo/ui/src/button";
@@ -121,6 +122,18 @@ const navigation: NavigationItem[] = [
       { name: "근무 신청 관리", href: "/work-applications", icon: CalendarClock, permission: "attendance:read" },
       { name: "연차 관리", href: "/dayoffs", icon: CalendarDays, permission: "leave:read" },
       { name: "승인 관리", href: "/approvals", icon: ClipboardList, permission: "leave:approve" },
+    ],
+  },
+  {
+    name: "경영관리",
+    icon: PiggyBank,
+    items: [
+      { name: "고객사 관리", href: "/finance/clients", icon: Building2, permission: "finance:read" },
+      { name: "프로젝트/계약 관리", href: "/finance/projects", icon: ClipboardList, permission: "finance:read" },
+      { name: "견적서 관리", href: "/finance/quotes", icon: ClipboardCheck, permission: "finance:read" },
+      { name: "매출 관리", href: "/finance/revenue", icon: Coins, permission: "finance:read" },
+      { name: "비용 정산", href: "/finance/expenses", icon: ReceiptText, permission: "finance:read" },
+      { name: "정산 리포트", href: "/finance/reports", icon: BarChart3, permission: "finance:report" },
     ],
   },
   {

@@ -120,6 +120,22 @@ export const queryKeys = {
       ["budgetSummary", "period", period, "type", type] as const,
   },
 
+  // Finance Management
+  finance: {
+    clients: (filters?: Record<string, string>) =>
+      ["finance", "clients", filters] as const,
+    projects: (filters?: Record<string, string>) =>
+      ["finance", "projects", filters] as const,
+    quotes: (filters?: Record<string, string>) =>
+      ["finance", "quotes", filters] as const,
+    revenue: (filters?: Record<string, string>) =>
+      ["finance", "revenue", filters] as const,
+    expenses: (filters?: Record<string, string>) =>
+      ["finance", "expenses", filters] as const,
+    reports: (filters?: Record<string, string>) =>
+      ["finance", "reports", filters] as const,
+  },
+
   // Member Statuses
   memberStatuses: {
     all: ["memberStatuses"] as const,

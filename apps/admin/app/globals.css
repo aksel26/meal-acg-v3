@@ -181,7 +181,6 @@ body {
 .admin-topbar {
   min-height: var(--header-height);
   background: transparent;
-  border-bottom: 1px solid var(--admin-hairline);
 }
 
 /* Dialog: borderless (B&W tone — content stands on the overlay) */

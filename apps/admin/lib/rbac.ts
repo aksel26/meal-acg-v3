@@ -27,6 +27,10 @@ export const ADMIN_PERMISSIONS = [
   "leave:approve",
   "notifications:read",
   "notifications:send",
+  "finance:read",
+  "finance:write",
+  "finance:approve",
+  "finance:report",
   "settings:read",
   "settings:write",
 ] as const;
@@ -54,6 +58,8 @@ const PNC_MEMBER_PERMISSIONS: AdminPermission[] = [
   "leave:read",
   "leave:write",
   "notifications:read",
+  "finance:read",
+  "finance:write",
   "settings:read",
 ];
 

@@ -72,6 +72,30 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
     title: "알림 관리",
     subtitle: "푸시 알림 발송 및 구독 현황",
   },
+  "/finance/clients": {
+    title: "고객사 관리",
+    subtitle: "고객사 기본 정보와 거래 상태를 관리합니다",
+  },
+  "/finance/projects": {
+    title: "프로젝트/계약 관리",
+    subtitle: "고객사별 프로젝트와 계약 정보를 관리합니다",
+  },
+  "/finance/quotes": {
+    title: "견적서 관리",
+    subtitle: "견적서 품목, 금액, 승인 상태를 관리합니다",
+  },
+  "/finance/revenue": {
+    title: "매출 관리",
+    subtitle: "매출 예정, 세금계산서, 입금 상태를 관리합니다",
+  },
+  "/finance/expenses": {
+    title: "비용 정산",
+    subtitle: "프로젝트 비용 정산과 승인·지급 상태를 관리합니다",
+  },
+  "/finance/reports": {
+    title: "정산 리포트",
+    subtitle: "매출, 비용, 마진과 미수·미지급 현황을 확인합니다",
+  },
   "/work-applications": {
     title: "근무 신청 관리",
     subtitle:

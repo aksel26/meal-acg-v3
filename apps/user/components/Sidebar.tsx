@@ -24,6 +24,7 @@ import {
   FolderKanban,
   Inbox,
   LayoutDashboard,
+  PackageSearch,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import LOGO from "@/public/images/ACG_LOGO_GRAY.png";
@@ -87,6 +88,7 @@ const menuGroups: MenuGroup[] = [
       { id: "profile", label: "내 정보", href: "/profile", icon: UserPen },
       { id: "notices", label: "공지/일정", href: "/notices", icon: Megaphone, badge: "New" },
       { id: "room", label: "회의실 예약", href: "/room-booking", icon: DoorOpen },
+      { id: "assets", label: "물품관리대장", href: "/assets", icon: PackageSearch },
       { id: "sms", label: "SMS 전송", href: "/sms", icon: MessageSquareText },
       { id: "evaluations", label: "다면평가", href: "/evaluations", icon: ClipboardCheck },
     ],

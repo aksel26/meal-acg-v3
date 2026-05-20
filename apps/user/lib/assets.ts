@@ -65,6 +65,13 @@ export type AssetPayload = {
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
+export class AssetPayloadValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AssetPayloadValidationError";
+  }
+}
+
 export function isAssetStatus(value: unknown): value is AssetStatus {
   return typeof value === "string" && ASSET_STATUSES.includes(value as AssetStatus);
 }
@@ -113,25 +120,25 @@ export function parseAssetPayload(
       : Number(getString("purchaseAmount"));
 
   if (!name) {
-    throw new Error("물품명은 필수입니다.");
+    throw new AssetPayloadValidationError("물품명은 필수입니다.");
   }
   if (!category) {
-    throw new Error("카테고리는 필수입니다.");
+    throw new AssetPayloadValidationError("카테고리는 필수입니다.");
   }
   if (!isAssetStatus(statusValue)) {
-    throw new Error("유효한 상태를 선택해주세요.");
+    throw new AssetPayloadValidationError("유효한 상태를 선택해주세요.");
   }
   if (!DATE_PATTERN.test(purchaseDate)) {
-    throw new Error("구매일은 YYYY-MM-DD 형식이어야 합니다.");
+    throw new AssetPayloadValidationError("구매일은 YYYY-MM-DD 형식이어야 합니다.");
   }
   if (!Number.isFinite(purchaseAmount) || !Number.isInteger(purchaseAmount) || purchaseAmount < 0) {
-    throw new Error("구매금액은 0원 이상의 숫자여야 합니다.");
+    throw new AssetPayloadValidationError("구매금액은 0원 이상의 숫자여야 합니다.");
   }
   if (!userId || !userName) {
-    throw new Error("실사용자는 필수입니다.");
+    throw new AssetPayloadValidationError("실사용자는 필수입니다.");
   }
   if (!managerId || !managerName) {
-    throw new Error("관리 담당자는 필수입니다.");
+    throw new AssetPayloadValidationError("관리 담당자는 필수입니다.");
   }
 
   return {

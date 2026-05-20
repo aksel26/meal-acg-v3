@@ -2,6 +2,8 @@ import { createServiceClient } from "@/lib/supabase/client";
 
 const BUCKET = "request-attachments";
 const PROJECT_BUCKET = "project-attachments";
+const ASSET_BUCKET = "asset-images";
+const IMAGE_CONTENT_TYPE_PREFIX = "image/";
 const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
 
 export type UploadResult = {
@@ -12,6 +14,15 @@ export type UploadResult = {
 export function validateAttachment(file: File): string | null {
   if (file.size > MAX_FILE_SIZE_BYTES) {
     return "첨부파일은 20MB 이하만 업로드할 수 있습니다.";
+  }
+  return null;
+}
+
+export function validateImageAttachment(file: File): string | null {
+  const sizeError = validateAttachment(file);
+  if (sizeError) return sizeError;
+  if (!file.type.startsWith(IMAGE_CONTENT_TYPE_PREFIX)) {
+    return "이미지 파일만 업로드할 수 있습니다.";
   }
   return null;
 }
@@ -74,6 +85,31 @@ export async function getProjectAttachmentSignedUrl(
 
 export async function deleteProjectAttachment(path: string): Promise<boolean> {
   return deleteFromBucket(PROJECT_BUCKET, path);
+}
+
+export async function uploadAssetImage(
+  assetId: string,
+  fileBuffer: Buffer,
+  fileName: string,
+  contentType: string,
+): Promise<UploadResult> {
+  return uploadToBucket(
+    ASSET_BUCKET,
+    assetId,
+    fileBuffer,
+    fileName,
+    contentType,
+  );
+}
+
+export async function getAssetImageSignedUrl(
+  path: string,
+): Promise<string | null> {
+  return getSignedUrlForBucket(ASSET_BUCKET, path);
+}
+
+export async function deleteAssetImage(path: string): Promise<boolean> {
+  return deleteFromBucket(ASSET_BUCKET, path);
 }
 
 async function uploadToBucket(

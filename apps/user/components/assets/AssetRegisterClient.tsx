@@ -8,7 +8,6 @@ import {
   useMemo,
   useState,
 } from "react";
-import { useRouter } from "next/navigation";
 import { ImageIcon, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import {
   Dialog,
@@ -70,7 +69,6 @@ const inputClass =
 const labelClass = "text-xs font-medium text-slate-600";
 
 export function AssetRegisterClient({ assets }: { assets: AssetSummary[] }) {
-  const router = useRouter();
   const [assetsState, setAssetsState] = useState(assets);
   const [keyword, setKeyword] = useState("");
   const [statusFilter, setStatusFilter] = useState<AssetStatus | "all">("all");
@@ -78,7 +76,9 @@ export function AssetRegisterClient({ assets }: { assets: AssetSummary[] }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const refreshAssets = useCallback(async (resetFilters = false) => {
-    const response = await fetch("/api/assets", { cache: "no-store" });
+    const response = await fetch(`/api/assets?ts=${Date.now()}`, {
+      cache: "no-store",
+    });
     const payload = await response.json();
     if (!response.ok) {
       throw new Error(payload.error || "물품 목록을 불러오지 못했습니다.");
@@ -89,8 +89,11 @@ export function AssetRegisterClient({ assets }: { assets: AssetSummary[] }) {
       setCategoryFilter("all");
     }
     setAssetsState(payload as AssetSummary[]);
-    router.refresh();
-  }, [router]);
+  }, []);
+
+  useEffect(() => {
+    void refreshAssets();
+  }, [refreshAssets]);
 
   const categories = useMemo(
     () =>

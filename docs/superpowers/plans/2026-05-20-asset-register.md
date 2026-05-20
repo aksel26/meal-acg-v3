@@ -332,8 +332,8 @@ export function parseAssetPayload(source: FormData | Record<string, unknown>): A
   if (!category) throw new Error("카테고리는 필수입니다.");
   if (!isAssetStatus(statusValue)) throw new Error("유효한 상태를 선택해주세요.");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(purchaseDate)) throw new Error("구매일은 필수입니다.");
-  if (!Number.isFinite(purchaseAmount) || purchaseAmount < 0) {
-    throw new Error("구매금액은 0원 이상이어야 합니다.");
+  if (!Number.isFinite(purchaseAmount) || !Number.isInteger(purchaseAmount) || purchaseAmount < 0) {
+    throw new Error("구매금액은 0원 이상의 숫자여야 합니다.");
   }
   if (!userId || !userName) throw new Error("실사용자는 필수입니다.");
   if (!managerId || !managerName) throw new Error("관리 담당자는 필수입니다.");

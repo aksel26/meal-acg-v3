@@ -77,17 +77,18 @@ export function AssetRegisterClient({ assets }: { assets: AssetSummary[] }) {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  useEffect(() => {
-    setAssetsState(assets);
-  }, [assets]);
-
-  const refreshAssets = useCallback(async () => {
+  const refreshAssets = useCallback(async (resetFilters = false) => {
     const response = await fetch("/api/assets", { cache: "no-store" });
     const payload = await response.json();
     if (!response.ok) {
       throw new Error(payload.error || "물품 목록을 불러오지 못했습니다.");
     }
-    setAssetsState(payload);
+    if (resetFilters) {
+      setKeyword("");
+      setStatusFilter("all");
+      setCategoryFilter("all");
+    }
+    setAssetsState(payload as AssetSummary[]);
     router.refresh();
   }, [router]);
 
@@ -187,7 +188,7 @@ function AssetTable({
 }: {
   assets: AssetSummary[];
   onPreview: (url: string) => void;
-  onSaved: () => Promise<void>;
+  onSaved: (resetFilters?: boolean) => Promise<void>;
 }) {
   if (assets.length === 0) return <EmptyState />;
 
@@ -279,7 +280,7 @@ function AssetMobileList({
 }: {
   assets: AssetSummary[];
   onPreview: (url: string) => void;
-  onSaved: () => Promise<void>;
+  onSaved: (resetFilters?: boolean) => Promise<void>;
 }) {
   if (assets.length === 0) return null;
 
@@ -330,7 +331,7 @@ function AssetFormDialog({
 }: {
   mode: "create" | "edit";
   asset?: AssetSummary;
-  onSaved: () => Promise<void>;
+  onSaved: (resetFilters?: boolean) => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
   const [members, setMembers] = useState<MasterMember[]>([]);
@@ -385,7 +386,7 @@ function AssetFormDialog({
 
       toast.success(mode === "create" ? "물품을 등록했습니다." : "물품을 수정했습니다.");
       setOpen(false);
-      await onSaved();
+      await onSaved(mode === "create");
     } catch (submitError) {
       const message =
         submitError instanceof Error

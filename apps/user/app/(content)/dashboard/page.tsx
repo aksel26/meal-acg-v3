@@ -2,7 +2,14 @@
 
 import DashboardGridCalendar from "@/components/dashboard/DashboardGridCalendar";
 import { useUserStore } from "@/stores/userStore";
-import { CalendarPlus, UtensilsCrossed, Wallet, Cake, Coffee, Bell } from "lucide-react";
+import {
+  CalendarPlus,
+  UtensilsCrossed,
+  Wallet,
+  Cake,
+  Coffee,
+  Bell,
+} from "lucide-react";
 import Link from "next/link";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
@@ -12,13 +19,11 @@ import { UpdateNotificationDialog } from "@/components/UpdateNotificationDialog"
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import {
-  type DashboardAttendanceRecord,
   type DashboardDueRequest,
   type DashboardProjectSchedule,
   useDashboardCalendar,
 } from "@/hooks/use-dashboard-calendar";
 import type { SupervisorPosting } from "@/hooks/use-supervisor-calendar";
-import type { DayoffRecord } from "@/hooks/use-dayoffs";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -43,24 +48,6 @@ function buildPostingsByDate(postings: SupervisorPosting[] = []) {
   });
 
   return map;
-}
-
-function formatTime(value: string | null) {
-  if (!value) return null;
-  return dayjs(value).format("HH:mm");
-}
-
-function getAttendanceStatusLabel(status: string | null) {
-  switch (status) {
-    case "late":
-      return "지각";
-    case "early_leave":
-      return "조퇴";
-    case "absent":
-      return "결근";
-    default:
-      return null;
-  }
 }
 
 // ─── 바로가기 ───
@@ -115,7 +102,9 @@ function NoticesContent() {
       </div>
       <div className="rounded-xl bg-slate-50 p-4">
         <p className="text-xs text-slate-400 mb-1">2026.03.28</p>
-        <p className="text-sm font-medium text-slate-800">시스템 업데이트 공지</p>
+        <p className="text-sm font-medium text-slate-800">
+          시스템 업데이트 공지
+        </p>
         <p className="mt-1 text-xs text-slate-500 line-clamp-2">
           앱 v1.3 업데이트가 적용되었습니다. 새로운 기능을 확인해보세요.
         </p>
@@ -216,7 +205,9 @@ function InfoTabs() {
 function LeaveSummary() {
   return (
     <div>
-      <h3 className="mb-3 text-sm font-semibold text-[#131313]">내 휴가 요약</h3>
+      <h3 className="mb-3 text-sm font-semibold text-[#131313]">
+        내 휴가 요약
+      </h3>
       <div className="grid grid-cols-4 gap-3">
         <div className="rounded-xl bg-gray-50 p-3 text-center">
           <p className="text-[11px] text-[#131313]/50 mb-1">총 연차</p>
@@ -243,16 +234,12 @@ function LeaveSummary() {
 
 function SelectedDateDetail({
   date,
-  attendanceRecords,
   postings,
-  dayoffs,
   requests,
   projects,
 }: {
   date: Date | undefined;
-  attendanceRecords: DashboardAttendanceRecord[];
   postings: SupervisorPosting[];
-  dayoffs: DayoffRecord[];
   requests: DashboardDueRequest[];
   projects: DashboardProjectSchedule[];
 }) {
@@ -265,50 +252,15 @@ function SelectedDateDetail({
         {dateStr} 일정
       </h3>
       {(() => {
-        const interviewPostings = postings.filter((p) => p.type === "interview");
-        const supervisorPostings = postings.filter((p) => p.type === "supervisor");
+        const interviewPostings = postings.filter(
+          (p) => p.type === "interview",
+        );
+        const supervisorPostings = postings.filter(
+          (p) => p.type === "supervisor",
+        );
 
         return (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {/* 내 근태 */}
-            <div className="rounded-xl bg-gray-50 p-3">
-              <p className="text-xs font-semibold text-[#131313] mb-2">내 근태</p>
-              {attendanceRecords.length === 0 && dayoffs.length === 0 ? (
-                <p className="text-xs text-slate-400">없음</p>
-              ) : (
-                <ul className="space-y-1">
-                  {attendanceRecords.map((record) => {
-                    const checkIn = formatTime(record.check_in_at);
-                    const checkOut = formatTime(record.check_out_at);
-                    const timeLabel = [checkIn, checkOut].filter(Boolean).join("~");
-                    const statusLabel = getAttendanceStatusLabel(record.status);
-
-                    return (
-                      <li key={record.id} className="text-xs text-[#131313]">
-                        <span className="font-medium">
-                          {record.attendance_type || "근무"}
-                        </span>
-                        {statusLabel && (
-                          <span className="text-amber-600 ml-1">{statusLabel}</span>
-                        )}
-                        {timeLabel && (
-                          <span className="text-slate-400 ml-1">{timeLabel}</span>
-                        )}
-                      </li>
-                    );
-                  })}
-                  {dayoffs.map((d) => (
-                    <li key={d.id} className="text-xs text-[#131313]">
-                      <span className="font-medium">{d.leave_type?.name || "휴가"}</span>
-                      {!d.approved_at && (
-                        <span className="text-amber-600 ml-1">승인대기</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
             {/* 검사/면접 일정 */}
             <div className="rounded-xl bg-gray-50 p-3">
               <p className="text-xs font-semibold text-[#131313] mb-2">
@@ -323,7 +275,9 @@ function SelectedDateDetail({
                       key={p.id}
                       className="flex items-start justify-between gap-2 text-xs text-[#131313]"
                     >
-                      <span className="min-w-0 truncate font-medium">{p.title}</span>
+                      <span className="min-w-0 truncate font-medium">
+                        {p.title}
+                      </span>
                       <span className="shrink-0 whitespace-nowrap text-right text-slate-400">
                         {p.type === "interview" ? "면접교육" : "검사"} ·{" "}
                         {dayjs(p.start_date).format("MM/DD")}~
@@ -366,7 +320,9 @@ function SelectedDateDetail({
 
             {/* 요청 마감 */}
             <div className="rounded-xl bg-gray-50 p-3">
-              <p className="text-xs font-semibold text-[#131313] mb-2">요청 마감</p>
+              <p className="text-xs font-semibold text-[#131313] mb-2">
+                요청 마감
+              </p>
               {requests.length === 0 ? (
                 <p className="text-xs text-slate-400">없음</p>
               ) : (
@@ -418,19 +374,20 @@ export default function DashboardPage() {
   const hydrate = useUserStore((s) => s.hydrate);
   const hasHydrated = useUserStore((s) => s.hasHydrated);
 
-  const { data: calendarData } = useDashboardCalendar(currentYear, currentMonth);
+  const { data: calendarData } = useDashboardCalendar(
+    currentYear,
+    currentMonth,
+  );
   const postingsByDate = React.useMemo(
     () => buildPostingsByDate(calendarData?.postings),
     [calendarData?.postings],
   );
 
-  const selectedDateStr = selectedDate ? dayjs(selectedDate).format("YYYY-MM-DD") : "";
-  const selectedPostings = selectedDateStr ? (postingsByDate.get(selectedDateStr) || []) : [];
-  const selectedAttendanceRecords = selectedDateStr
-    ? (calendarData?.attendanceRecords ?? []).filter((record) => record.date === selectedDateStr)
-    : [];
-  const selectedDayoffs = selectedDateStr
-    ? (calendarData?.dayoffs ?? []).filter((d) => d.leave_date === selectedDateStr)
+  const selectedDateStr = selectedDate
+    ? dayjs(selectedDate).format("YYYY-MM-DD")
+    : "";
+  const selectedPostings = selectedDateStr
+    ? postingsByDate.get(selectedDateStr) || []
     : [];
   const selectedRequests = selectedDateStr
     ? (calendarData?.requests ?? []).filter(
@@ -442,7 +399,8 @@ export default function DashboardPage() {
     : [];
   const selectedProjects = selectedDateStr
     ? (calendarData?.projects ?? []).filter(
-        (project) => project.due_date === selectedDateStr && project.status !== "완료",
+        (project) =>
+          project.due_date === selectedDateStr && project.status !== "완료",
       )
     : [];
 
@@ -481,7 +439,12 @@ export default function DashboardPage() {
       ensure(r.leave_date).dayoffs.push(r.leave_type?.name || "휴가");
     });
     calendarData?.requests.forEach((request) => {
-      if (!request.due_date || request.status === "완료" || request.status === "거절") return;
+      if (
+        !request.due_date ||
+        request.status === "완료" ||
+        request.status === "거절"
+      )
+        return;
       ensure(request.due_date).requests.push(request.title);
     });
     calendarData?.projects.forEach((project) => {
@@ -492,12 +455,16 @@ export default function DashboardPage() {
   }, [postingsByDate, calendarData]);
 
   const handlePrevMonth = () => {
-    if (currentMonth === 1) { setCurrentYear(currentYear - 1); setCurrentMonth(12); }
-    else setCurrentMonth(currentMonth - 1);
+    if (currentMonth === 1) {
+      setCurrentYear(currentYear - 1);
+      setCurrentMonth(12);
+    } else setCurrentMonth(currentMonth - 1);
   };
   const handleNextMonth = () => {
-    if (currentMonth === 12) { setCurrentYear(currentYear + 1); setCurrentMonth(1); }
-    else setCurrentMonth(currentMonth + 1);
+    if (currentMonth === 12) {
+      setCurrentYear(currentYear + 1);
+      setCurrentMonth(1);
+    } else setCurrentMonth(currentMonth + 1);
   };
 
   useEffect(() => {
@@ -525,73 +492,70 @@ export default function DashboardPage() {
   return (
     <React.Fragment>
       <div className="md:grid md:grid-cols-2 md:gap-6">
-          {/* ── 좌측: 캘린더 + 바로가기 ── */}
-          <div>
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className="mb-6"
-            >
-              <DashboardGridCalendar
-                year={currentYear}
-                month={currentMonth}
-                selectedDate={selectedDate}
-                onDateSelect={setSelectedDate}
-                onPrevMonth={handlePrevMonth}
-                onNextMonth={handleNextMonth}
-                dayDataMap={dayDataMap}
-              />
-            </motion.div>
-
-          </div>
-
-          {/* ── 우측: 바로가기 + 탭 + 휴가요약 ── */}
-          <div>
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-              className="mb-6"
-            >
-              <ApprovalShortcuts />
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
-              className="mb-6"
-            >
-              <SelectedDateDetail
-                date={selectedDate}
-                attendanceRecords={selectedAttendanceRecords}
-                postings={selectedPostings}
-                dayoffs={selectedDayoffs}
-                requests={selectedRequests}
-                projects={selectedProjects}
-              />
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-              className="mb-6"
-            >
-              <LeaveSummary />
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              className="mb-6"
-            >
-              <InfoTabs />
-            </motion.div>
-          </div>
+        {/* ── 좌측: 캘린더 + 바로가기 ── */}
+        <div>
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="mb-6"
+          >
+            <DashboardGridCalendar
+              year={currentYear}
+              month={currentMonth}
+              selectedDate={selectedDate}
+              onDateSelect={setSelectedDate}
+              onPrevMonth={handlePrevMonth}
+              onNextMonth={handleNextMonth}
+              dayDataMap={dayDataMap}
+            />
+          </motion.div>
         </div>
+
+        {/* ── 우측: 바로가기 + 탭 + 휴가요약 ── */}
+        <div>
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+            className="mb-6"
+          >
+            <ApprovalShortcuts />
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
+            className="mb-6"
+          >
+            <SelectedDateDetail
+              date={selectedDate}
+              postings={selectedPostings}
+              requests={selectedRequests}
+              projects={selectedProjects}
+            />
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+            className="mb-6"
+          >
+            <LeaveSummary />
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="mb-6"
+          >
+            <InfoTabs />
+          </motion.div>
+        </div>
+      </div>
 
       <UpdateNotificationDialog />
     </React.Fragment>

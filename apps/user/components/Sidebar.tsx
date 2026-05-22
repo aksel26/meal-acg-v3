@@ -12,7 +12,7 @@ import {
   UserPen,
   Megaphone,
   DoorOpen,
-  MessageSquareText,
+  DoorClosed,
   ClipboardCheck,
   LogOut,
   X,
@@ -25,6 +25,7 @@ import {
   Inbox,
   LayoutDashboard,
   PackageSearch,
+  CarFront,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import LOGO from "@/public/images/ACG_LOGO_GRAY.png";
@@ -71,26 +72,73 @@ const menuGroups: MenuGroup[] = [
   {
     label: "근태",
     items: [
-      { id: "attendance", label: "근태 관리", href: "/attendance", icon: Clock },
-      { id: "overtime", label: "시간외 근무 관리", href: "/overtime", icon: AlarmClock },
+      {
+        id: "attendance",
+        label: "근태 관리",
+        href: "/attendance",
+        icon: Clock,
+      },
+      {
+        id: "overtime",
+        label: "시간외 근무 관리",
+        href: "/overtime",
+        icon: AlarmClock,
+      },
     ],
   },
   {
     label: "복지",
     items: [
       { id: "meals", label: "식대", href: "/meal", icon: UtensilsCrossed },
-      { id: "points", label: "복지포인트/활동비", href: "/points", icon: Wallet },
+      {
+        id: "points",
+        label: "복지포인트/활동비",
+        href: "/points",
+        icon: Wallet,
+      },
     ],
   },
   {
     label: "기타",
     items: [
       { id: "profile", label: "내 정보", href: "/profile", icon: UserPen },
-      { id: "notices", label: "공지/일정", href: "/notices", icon: Megaphone, badge: "New" },
-      { id: "room", label: "회의실 예약", href: "/room-booking", icon: DoorOpen },
-      { id: "assets", label: "물품관리대장", href: "/assets", icon: PackageSearch },
-      { id: "sms", label: "SMS 전송", href: "/sms", icon: MessageSquareText },
-      { id: "evaluations", label: "다면평가", href: "/evaluations", icon: ClipboardCheck },
+      {
+        id: "notices",
+        label: "공지/일정",
+        href: "/notices",
+        icon: Megaphone,
+        badge: "New",
+      },
+      {
+        id: "room",
+        label: "회의실 예약",
+        href: "/room-booking",
+        icon: DoorOpen,
+      },
+      {
+        id: "lockers",
+        label: "개인 사물함",
+        href: "/lockers",
+        icon: DoorClosed,
+      },
+      {
+        id: "assets",
+        label: "물품관리대장",
+        href: "/assets",
+        icon: PackageSearch,
+      },
+      {
+        id: "vehicles",
+        label: "사내 차량",
+        href: "/vehicles",
+        icon: CarFront,
+      },
+      {
+        id: "evaluations",
+        label: "다면평가",
+        href: "/evaluations",
+        icon: ClipboardCheck,
+      },
     ],
   },
   {
@@ -102,7 +150,12 @@ const menuGroups: MenuGroup[] = [
         href: "/project-dashboard",
         icon: LayoutDashboard,
       },
-      { id: "projects", label: "프로젝트", href: "/projects", icon: FolderKanban },
+      {
+        id: "projects",
+        label: "프로젝트",
+        href: "/projects",
+        icon: FolderKanban,
+      },
       { id: "requests", label: "업무 요청", href: "/requests", icon: Inbox },
     ],
   },
@@ -138,7 +191,28 @@ function formatElapsedTime(milliseconds: number) {
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
 
-  return [hours, minutes, seconds].map((value) => String(value).padStart(2, "0")).join(":");
+  return [hours, minutes, seconds]
+    .map((value) => String(value).padStart(2, "0"))
+    .join(":");
+}
+
+function getAttendanceStatusLabel(status?: string | null) {
+  switch (status) {
+    case "early_check_in":
+      return "조기출근";
+    case "normal":
+      return "정상";
+    case "late":
+      return "지각";
+    case "early_leave":
+      return "조퇴";
+    case "absent":
+      return "결근";
+    case "pending":
+      return "미출근";
+    default:
+      return null;
+  }
 }
 
 // ─── Sub-components ───
@@ -196,6 +270,15 @@ function AttendanceSection({ memberId }: { memberId: string | null }) {
     isWorking && attendance?.check_in_at
       ? formatElapsedTime(now - new Date(attendance.check_in_at).getTime())
       : null;
+  const attendanceSummary = attendance?.check_in_at
+    ? [
+        attendance.attendance_type || "출근",
+        getAttendanceStatusLabel(attendance.status),
+        formatTimeWithSeconds(attendance.check_in_at),
+      ]
+        .filter(Boolean)
+        .join(" ")
+    : null;
 
   useEffect(() => {
     if (!isWorking) return;
@@ -207,7 +290,9 @@ function AttendanceSection({ memberId }: { memberId: string | null }) {
 
   const handleCheckIn = () => {
     if (!memberId) {
-      toast.error("사용자 정보를 동기화하는 중입니다. 잠시 후 다시 시도해 주세요.");
+      toast.error(
+        "사용자 정보를 동기화하는 중입니다. 잠시 후 다시 시도해 주세요.",
+      );
       return;
     }
 
@@ -217,94 +302,129 @@ function AttendanceSection({ memberId }: { memberId: string | null }) {
   };
   const handleCheckOut = (earlyLeaveReason?: string) => {
     if (!memberId) {
-      toast.error("사용자 정보를 동기화하는 중입니다. 잠시 후 다시 시도해 주세요.");
+      toast.error(
+        "사용자 정보를 동기화하는 중입니다. 잠시 후 다시 시도해 주세요.",
+      );
       return;
     }
 
     checkOutMutation.mutate(
       { memberId, earlyLeaveReason },
-      { onSuccess: () => setCheckOutDialogOpen(false) }
+      { onSuccess: () => setCheckOutDialogOpen(false) },
     );
   };
 
   return (
     <>
-    <div className="mx-3 mb-4">
-      <div className="mb-2 flex items-center justify-between gap-2 px-1">
-        <p className="text-[11px] font-medium uppercase tracking-widest text-slate-400">
-          출퇴근
-        </p>
-        <span
-          className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusBadge.className}`}
-        >
-          {statusBadge.label}
-        </span>
-      </div>
-      {!hasCheckedIn ? (
-        <button
-          onClick={() => setCheckInDialogOpen(true)}
-          disabled={isMutating || !memberId}
-          className="w-full rounded-lg bg-[#111111] py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#222222] disabled:opacity-50"
-        >
-          출근하기
-        </button>
-      ) : !hasCheckedOut ? (
-        <div className="space-y-2">
-          {elapsedTime && (
-            <div className="rounded-lg border border-emerald-100 bg-white px-3 py-2.5">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-[11px] font-medium text-slate-400">
-                  출근 시간
-                </p>
-                <p className="font-mono text-[11px] font-medium tabular-nums text-slate-500">
-                  {formatTimeWithSeconds(attendance!.check_in_at!)}
-                </p>
-              </div>
-              <div className="mt-2 flex items-center justify-between gap-2">
-                <p className="text-[11px] font-medium text-slate-400">
-                  근무 경과
-                </p>
-                <p className="font-mono text-[11px] font-medium tabular-nums text-slate-500">
-                  {elapsedTime}
-                </p>
-              </div>
-            </div>
-          )}
-          <button
-            onClick={() => setCheckOutDialogOpen(true)}
-            disabled={isMutating || !memberId}
-            className="w-full rounded-lg border border-[#f3f3f3] py-2 text-sm font-medium text-slate-500 transition-colors hover:bg-[#f9f9fa] disabled:opacity-50"
+      <div className="mx-3 mb-4">
+        <div className="mb-2 flex items-center justify-between gap-2 px-1">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-slate-400">
+            출퇴근
+          </p>
+          <span
+            className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusBadge.className}`}
           >
-            퇴근하기
-          </button>
-        </div>
-      ) : (
-        <div className="flex items-center gap-2 rounded-lg bg-[#f9f9fa] px-3 py-2">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="shrink-0">
-            <circle cx="8" cy="8" r="7" stroke="#22c55e" strokeWidth="1.5" />
-            <path d="M5 8.5L7 10.5L11 6" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <span className="text-xs text-slate-500">
-            {formatTime(attendance!.check_in_at!)} → {formatTime(attendance!.check_out_at!)}
+            {statusBadge.label}
           </span>
         </div>
-      )}
-    </div>
-    <AttendanceConfirmDialog
-      mode="check-in"
-      open={checkInDialogOpen}
-      onOpenChange={setCheckInDialogOpen}
-      onConfirm={handleCheckIn}
-      isPending={checkInMutation.isPending}
-    />
-    <AttendanceConfirmDialog
-      mode="check-out"
-      open={checkOutDialogOpen}
-      onOpenChange={setCheckOutDialogOpen}
-      onConfirm={handleCheckOut}
-      isPending={checkOutMutation.isPending}
-      checkInAt={attendance?.check_in_at}
-    />
+        {!hasCheckedIn ? (
+          <button
+            onClick={() => setCheckInDialogOpen(true)}
+            disabled={isMutating || !memberId}
+            className="w-full rounded-lg bg-[#111111] py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#222222] disabled:opacity-50"
+          >
+            출근하기
+          </button>
+        ) : !hasCheckedOut ? (
+          <div className="space-y-2">
+            {elapsedTime && (
+              <div className="rounded-lg border border-emerald-100 bg-white px-3 py-2.5">
+                {attendanceSummary && (
+                  <div className="mb-2 flex items-center justify-between gap-2 border-b border-emerald-50 pb-2">
+                    <p className="truncate text-xs font-semibold text-[#131313]">
+                      {attendanceSummary}
+                    </p>
+                  </div>
+                )}
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[11px] font-medium text-slate-400">
+                    출근 시간
+                  </p>
+                  <p className="font-mono text-[11px] font-medium tabular-nums text-slate-500">
+                    {formatTimeWithSeconds(attendance!.check_in_at!)}
+                  </p>
+                </div>
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <p className="text-[11px] font-medium text-slate-400">
+                    근무 경과
+                  </p>
+                  <p className="font-mono text-[11px] font-medium tabular-nums text-slate-500">
+                    {elapsedTime}
+                  </p>
+                </div>
+              </div>
+            )}
+            <button
+              onClick={() => setCheckOutDialogOpen(true)}
+              disabled={isMutating || !memberId}
+              className="w-full rounded-lg border border-[#f3f3f3] py-2 text-sm font-medium text-slate-500 transition-colors hover:bg-[#f9f9fa] disabled:opacity-50"
+            >
+              퇴근하기
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-2 rounded-lg bg-[#f9f9fa] px-3 py-2">
+            {attendanceSummary && (
+              <p className="truncate text-xs font-semibold text-[#131313]">
+                {attendanceSummary}
+              </p>
+            )}
+            <div className="flex items-center gap-2">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 16 16"
+                fill="none"
+                className="shrink-0"
+              >
+                <circle
+                  cx="8"
+                  cy="8"
+                  r="7"
+                  stroke="#22c55e"
+                  strokeWidth="1.5"
+                />
+                <path
+                  d="M5 8.5L7 10.5L11 6"
+                  stroke="#22c55e"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <span className="text-xs text-slate-500">
+                {formatTime(attendance!.check_in_at!)} →{" "}
+                {formatTime(attendance!.check_out_at!)}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+      <AttendanceConfirmDialog
+        mode="check-in"
+        open={checkInDialogOpen}
+        onOpenChange={setCheckInDialogOpen}
+        onConfirm={handleCheckIn}
+        isPending={checkInMutation.isPending}
+      />
+      <AttendanceConfirmDialog
+        mode="check-out"
+        open={checkOutDialogOpen}
+        onOpenChange={setCheckOutDialogOpen}
+        onConfirm={handleCheckOut}
+        isPending={checkOutMutation.isPending}
+        checkInAt={attendance?.check_in_at}
+      />
     </>
   );
 }
@@ -317,7 +437,9 @@ function NavMenu() {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     menuGroups.forEach((group) => {
-      const hasActive = group.items.some((item) => pathname.startsWith(item.href));
+      const hasActive = group.items.some((item) =>
+        pathname.startsWith(item.href),
+      );
       initial[group.label] = !hasActive;
     });
     return initial;
@@ -361,9 +483,13 @@ function NavMenu() {
                   onClick={close}
                   className="flex w-full items-center justify-between px-1 mb-1.5 group"
                 >
-                  <p className={`text-sm font-semibold transition-colors duration-200 ${
-                    isActive ? "text-[#111111]" : "text-slate-700 group-hover:text-[#111111]"
-                  }`}>
+                  <p
+                    className={`text-sm font-semibold transition-colors duration-200 ${
+                      isActive
+                        ? "text-[#111111]"
+                        : "text-slate-700 group-hover:text-[#111111]"
+                    }`}
+                  >
                     {group.label}
                   </p>
                   <ChevronRight
@@ -399,7 +525,8 @@ function NavMenu() {
               <div className="space-y-0.5">
                 {group.items.map((item) => {
                   const isActive =
-                    pathname === item.href || pathname.startsWith(`${item.href}/`);
+                    pathname === item.href ||
+                    pathname.startsWith(`${item.href}/`);
                   const className = `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
                     isActive
                       ? "bg-[#111111] font-medium text-white"
@@ -457,7 +584,9 @@ function NavMenu() {
 
 function NotificationToggle() {
   const { userId } = useUserStore();
-  const [status, setStatus] = useState<"loading" | "unsupported" | "denied" | "subscribed" | "unsubscribed">("loading");
+  const [status, setStatus] = useState<
+    "loading" | "unsupported" | "denied" | "subscribed" | "unsubscribed"
+  >("loading");
 
   useEffect(() => {
     if (!userId) return;
@@ -541,7 +670,8 @@ function NotificationToggle() {
 
 export function Sidebar() {
   const router = useRouter();
-  const { userName, memberId, memberRole, setMemberInfo, logout } = useUserStore();
+  const { userName, memberId, memberRole, setMemberInfo, logout } =
+    useUserStore();
   const { data: memberLookup } = useMemberIdLookup(userName);
   const resolvedMemberId = memberLookup?.id ?? memberId;
 
@@ -550,7 +680,11 @@ export function Sidebar() {
       memberLookup &&
       (memberLookup.id !== memberId || memberLookup.member_role !== memberRole)
     ) {
-      setMemberInfo(memberLookup.id, memberLookup.member_role || "팀원", memberLookup.hire_date);
+      setMemberInfo(
+        memberLookup.id,
+        memberLookup.member_role || "팀원",
+        memberLookup.hire_date,
+      );
     }
   }, [memberLookup, memberId, memberRole, setMemberInfo]);
 
@@ -564,7 +698,13 @@ export function Sidebar() {
     <aside className="flex h-screen w-60 shrink-0 flex-col border-r border-[#f3f3f3] bg-white py-5 text-slate-900">
       {/* Logo */}
       <Link href="/dashboard" className="mb-5 flex items-center gap-2 px-5">
-        <Image src={LOGO} alt="ACG" width={48} height={48} className="h-12 w-12 object-contain" />
+        <Image
+          src={LOGO}
+          alt="ACG"
+          width={48}
+          height={48}
+          className="h-12 w-12 object-contain"
+        />
         <p className="text-sm text-[#111111]">ACG 그룹웨어</p>
       </Link>
 
@@ -597,7 +737,8 @@ export function Sidebar() {
 export function MobileSidebar() {
   const router = useRouter();
   const { isOpen, close } = useSidebarStore();
-  const { userName, memberId, memberRole, setMemberInfo, logout } = useUserStore();
+  const { userName, memberId, memberRole, setMemberInfo, logout } =
+    useUserStore();
   const { data: memberLookup } = useMemberIdLookup(userName);
   const resolvedMemberId = memberLookup?.id ?? memberId;
 
@@ -606,7 +747,11 @@ export function MobileSidebar() {
       memberLookup &&
       (memberLookup.id !== memberId || memberLookup.member_role !== memberRole)
     ) {
-      setMemberInfo(memberLookup.id, memberLookup.member_role || "팀원", memberLookup.hire_date);
+      setMemberInfo(
+        memberLookup.id,
+        memberLookup.member_role || "팀원",
+        memberLookup.hire_date,
+      );
     }
   }, [memberLookup, memberId, memberRole, setMemberInfo]);
 
@@ -642,7 +787,13 @@ export function MobileSidebar() {
             {/* Header with close */}
             <div className="mb-5 flex items-center justify-between px-5">
               <div className="flex items-center gap-2">
-                <Image src={LOGO} alt="ACG" width={48} height={48} className="h-12 w-12 object-contain" />
+                <Image
+                  src={LOGO}
+                  alt="ACG"
+                  width={48}
+                  height={48}
+                  className="h-12 w-12 object-contain"
+                />
                 <p className="text-sm text-[#111111]">ACG 그룹웨어</p>
               </div>
               <button

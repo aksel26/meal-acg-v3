@@ -31,11 +31,14 @@ import {
   EyeOff,
   HardHat,
   KeyRound,
+  DoorClosed,
   Loader2,
   PanelLeftClose,
   PanelLeftOpen,
   ExternalLink,
+  PackageSearch,
   ReceiptText,
+  CarFront,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import { Button } from "@repo/ui/src/button";
@@ -101,6 +104,10 @@ const navigation: NavigationItem[] = [
       { name: "예산 할당", href: "/budget", icon: PiggyBank, permission: "points:write" },
       { name: "사용내역 검토", href: "/review", icon: ClipboardCheck, permission: "points:review" },
       { name: "사용 내역 조회", href: "/points-overview", icon: BarChart3, permission: "points:read" },
+      { name: "기타", href: "", icon: Cog, isLabel: true },
+      { name: "개인 사물함 관리", href: "/lockers", icon: DoorClosed, permission: "meal:read" },
+      { name: "물품관리대장", href: "/assets", icon: PackageSearch, permission: "meal:read" },
+      { name: "사내 차량관리", href: "/vehicles", icon: CarFront, permission: "meal:read" },
     ],
   },
   {
@@ -323,7 +330,7 @@ function NavGroupComponent({
         className={cn(
           "overflow-hidden transition-all duration-200",
           collapsed ? "space-y-1 pl-0" : "relative ml-4 space-y-1 pl-4",
-          isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0",
+          isOpen ? "max-h-[720px] opacity-100" : "max-h-0 opacity-0",
           !collapsed &&
             "before:absolute before:top-2 before:bottom-2 before:left-1 before:w-px before:bg-[#eeeeee]",
         )}

@@ -1,5 +1,6 @@
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
+import DashboardContentFrame from "@/components/DashboardContentFrame";
 
 export default function DashboardLayout({
   children,
@@ -15,10 +16,7 @@ export default function DashboardLayout({
       <main className="admin-main relative flex h-full flex-1 flex-col overflow-hidden">
         <Header />
 
-        {/* Content with nice padding and scroll */}
-        <div className="flex-1 overflow-y-auto scroll-smooth bg-[#fafafc] px-6 py-4">
-          <div className="md:px-2">{children}</div>
-        </div>
+        <DashboardContentFrame>{children}</DashboardContentFrame>
       </main>
     </div>
   );

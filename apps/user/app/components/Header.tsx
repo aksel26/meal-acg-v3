@@ -38,6 +38,8 @@ const PAGE_TITLES: Record<string, string> = {
   "/notices": "공지/일정",
   "/profile": "내 정보",
   "/acg-life": "ACG 라이프",
+  "/lockers": "개인 사물함",
+  "/vehicles": "차량신청내역",
   "/project-dashboard": "대시보드",
   "/projects": "프로젝트",
   "/requests": "업무 요청",

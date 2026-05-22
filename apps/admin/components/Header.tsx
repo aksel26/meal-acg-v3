@@ -64,6 +64,14 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
     title: "사용 내역 조회",
     subtitle: "전체 조직원의 포인트 사용 내역을 조회합니다",
   },
+  "/assets": {
+    title: "물품관리대장",
+    subtitle: "구성원별 등록 현황과 전체 물품 목록을 확인합니다.",
+  },
+  "/lockers": {
+    title: "개인 사물함 관리",
+    subtitle: "사물함 위치, 배정 현황, 사용자 요청을 처리합니다.",
+  },
   "/dayoffs": {
     title: "연차 관리",
     subtitle: "연차 등록, 승인, 통계를 관리합니다",

@@ -144,9 +144,14 @@ const MemberRow = memo(function MemberRow({
         <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-500">
           <User className="h-3.5 w-3.5" />
         </div>
-        <span className="text-sm font-medium text-slate-700">
-          {member.full_name}
-        </span>
+        <div className="grid min-w-0 grid-cols-[minmax(5rem,1fr)_5.75rem] items-center gap-2">
+          <span className="truncate text-sm font-medium text-slate-700">
+            {member.full_name}
+          </span>
+          <span className="text-xs tabular-nums text-slate-400">
+            {member.birth_date || "-"}
+          </span>
+        </div>
         <Badge
           variant="outline"
           className={cn("text-[11px] py-0 px-1.5", roleBadgeStyle(member.member_role))}

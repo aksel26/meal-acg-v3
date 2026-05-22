@@ -12,7 +12,7 @@ import {
 } from "@repo/ui/src/select";
 import { Button } from "@repo/ui/src/button";
 import { Label } from "@repo/ui/src/label";
-import { DatePicker } from "@repo/ui/src/date-picker";
+import { DateRangePicker } from "@repo/ui/src/date-range-picker";
 import { SearchableDropdown } from "@repo/ui/src/searchable-dropdown";
 import { Textarea } from "@repo/ui/src/textarea";
 import {
@@ -23,7 +23,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@repo/ui/src/dialog";
-import type { DayoffRecord, LeaveType, MemberOption, DayoffFormData } from "./types";
+import type {
+  DayoffRecord,
+  LeaveType,
+  MemberOption,
+  DayoffFormData,
+} from "./types";
 import { defaultFormData } from "./types";
 
 interface DayoffFormDialogProps {
@@ -64,7 +69,9 @@ export default function DayoffFormDialog({
     if (editingRecord) {
       setFormData({
         targetId: editingRecord.target_id,
-        approverIds: editingRecord.approver_id ? [editingRecord.approver_id] : [],
+        approverIds: editingRecord.approver_id
+          ? [editingRecord.approver_id]
+          : [],
         ccMemberIds: editingRecord.cc_member_ids || [],
         startDate: editingRecord.leave_date,
         endDate: editingRecord.leave_date,
@@ -95,16 +102,29 @@ export default function DayoffFormDialog({
         endDate: initialEndDate || initialDate || "",
       });
     }
-  }, [open, editingRecord, copySource, initialDate, initialEndDate, currentMemberId]);
+  }, [
+    open,
+    editingRecord,
+    copySource,
+    initialDate,
+    initialEndDate,
+    currentMemberId,
+  ]);
 
   const handleAddCcMember = (memberId: string) => {
     if (!memberId || formData.ccMemberIds.includes(memberId)) return;
-    setFormData({ ...formData, ccMemberIds: [...formData.ccMemberIds, memberId] });
+    setFormData({
+      ...formData,
+      ccMemberIds: [...formData.ccMemberIds, memberId],
+    });
   };
 
   const handleAddApprover = (memberId: string) => {
     if (!memberId || formData.approverIds.includes(memberId)) return;
-    setFormData({ ...formData, approverIds: [...formData.approverIds, memberId] });
+    setFormData({
+      ...formData,
+      approverIds: [...formData.approverIds, memberId],
+    });
   };
 
   const handleRemoveApprover = (memberId: string) => {
@@ -158,7 +178,7 @@ export default function DayoffFormDialog({
               items={members.filter(
                 (m) =>
                   m.id !== currentMemberId &&
-                  !formData.approverIds.includes(m.id)
+                  !formData.approverIds.includes(m.id),
               )}
               getItemKey={(m) => m.id}
               getItemLabel={(m) => m.full_name}
@@ -198,7 +218,7 @@ export default function DayoffFormDialog({
               items={members.filter(
                 (m) =>
                   m.id !== currentMemberId &&
-                  !formData.ccMemberIds.includes(m.id)
+                  !formData.ccMemberIds.includes(m.id),
               )}
               getItemKey={(m) => m.id}
               getItemLabel={(m) => m.full_name}
@@ -232,11 +252,16 @@ export default function DayoffFormDialog({
           {/* 날짜 */}
           <div className="space-y-1.5">
             <Label className="text-xs text-[oklch(0.50_0.01_250)]">날짜</Label>
-            <DatePicker
-              value={formData.startDate}
+            <DateRangePicker
+              startDate={formData.startDate}
+              endDate={formData.endDate}
               modal
-              onChange={(date) =>
-                setFormData({ ...formData, startDate: date, endDate: date })
+              onChange={(range) =>
+                setFormData({
+                  ...formData,
+                  startDate: range.startDate,
+                  endDate: range.endDate,
+                })
               }
               disabled={!!editingRecord}
             />
@@ -258,19 +283,30 @@ export default function DayoffFormDialog({
               </SelectTrigger>
               <SelectContent>
                 {(() => {
-                  const CATEGORY_ORDER = ["연차", "반차", "반반차", "대체", "경조", "휴무", "훈련", "보건휴가"];
-                  const groups = leaveTypes.reduce<Record<string, typeof leaveTypes>>(
-                    (acc, t) => {
-                      const cat = t.category || "기타";
-                      if (!acc[cat]) acc[cat] = [];
-                      acc[cat].push(t);
-                      return acc;
-                    },
-                    {}
-                  );
+                  const CATEGORY_ORDER = [
+                    "연차",
+                    "반차",
+                    "반반차",
+                    "대체",
+                    "경조",
+                    "휴무",
+                    "훈련",
+                    "보건휴가",
+                  ];
+                  const groups = leaveTypes.reduce<
+                    Record<string, typeof leaveTypes>
+                  >((acc, t) => {
+                    const cat = t.category || "기타";
+                    if (!acc[cat]) acc[cat] = [];
+                    acc[cat].push(t);
+                    return acc;
+                  }, {});
                   return Object.entries(groups)
                     .filter(([cat]) => CATEGORY_ORDER.includes(cat))
-                    .sort(([a], [b]) => CATEGORY_ORDER.indexOf(a) - CATEGORY_ORDER.indexOf(b))
+                    .sort(
+                      ([a], [b]) =>
+                        CATEGORY_ORDER.indexOf(a) - CATEGORY_ORDER.indexOf(b),
+                    )
                     .map(([category, types]) => (
                       <SelectGroup key={category}>
                         <SelectLabel>{category}</SelectLabel>
@@ -326,7 +362,7 @@ export default function DayoffFormDialog({
                   </SelectTrigger>
                   <SelectContent>
                     {Array.from({ length: 12 }, (_, i) =>
-                      String(i * 5).padStart(2, "0")
+                      String(i * 5).padStart(2, "0"),
                     ).map((m) => (
                       <SelectItem key={m} value={m}>
                         {m}분

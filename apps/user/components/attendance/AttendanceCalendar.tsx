@@ -128,8 +128,10 @@ export default function AttendanceCalendar({
               const dotColor = record
                 ? TYPE_COLORS[record.attendance_type] || DEFAULT_TYPE_COLOR
                 : null;
-              const isLateOrEarly =
-                record?.status === "late" || record?.status === "early_leave";
+              const isSpecialStatus =
+                record?.status === "early_check_in" ||
+                record?.status === "late" ||
+                record?.status === "early_leave";
 
               return (
                 <button
@@ -161,7 +163,7 @@ export default function AttendanceCalendar({
                       {dotColor && (
                         <span
                           className={`h-1.5 w-1.5 rounded-full ${dotColor} ${
-                            isLateOrEarly ? "ring-1 ring-red-400" : ""
+                            isSpecialStatus ? "ring-1 ring-red-400" : ""
                           }`}
                         />
                       )}
@@ -187,7 +189,6 @@ export default function AttendanceCalendar({
           출근
         </span>
       </div>
-
     </div>
   );
 }

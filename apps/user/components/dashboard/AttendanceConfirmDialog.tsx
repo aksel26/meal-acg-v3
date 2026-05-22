@@ -10,14 +10,11 @@ import {
   DialogFooter,
 } from "@repo/ui/src/dialog";
 import { Textarea } from "@repo/ui/src/textarea";
-import {
-  CalendarDays,
-  Clock3,
-  TimerReset,
-} from "lucide-react";
+import { CalendarDays, Clock3, TimerReset } from "lucide-react";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+import { getCheckInStatus } from "@/lib/attendance-status";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -59,25 +56,25 @@ export default function AttendanceConfirmDialog({
 
   const isCheckIn = mode === "check-in";
 
-  // 출근 모드: 지각 판단 (10:00 이후)
-  const isLate =
-    isCheckIn && (now.hour() > 10 || (now.hour() === 10 && now.minute() > 0));
+  // 출근 모드: 08:00 이전 조기출근, 08:00~10:00 정상출근, 10:00 이후 지각
+  const checkInStatus = isCheckIn
+    ? getCheckInStatus(now.hour(), now.minute(), now.second())
+    : null;
+  const isEarlyCheckIn = checkInStatus === "early_check_in";
+  const isLate = checkInStatus === "late";
 
   // 퇴근 모드: 조기퇴근 판단
   const expectedOut = checkInAt ? dayjs(checkInAt).add(9, "hour") : null;
-  const isEarlyLeave = !isCheckIn && expectedOut
-    ? now.isBefore(expectedOut)
-    : false;
-  const remainingMinutes = isEarlyLeave && expectedOut
-    ? expectedOut.diff(now, "minute")
-    : 0;
+  const isEarlyLeave =
+    !isCheckIn && expectedOut ? now.isBefore(expectedOut) : false;
+  const remainingMinutes =
+    isEarlyLeave && expectedOut ? expectedOut.diff(now, "minute") : 0;
   const remainingHours = Math.floor(remainingMinutes / 60);
   const remainingMins = remainingMinutes % 60;
 
   // 근무 시간 계산
-  const workedMinutes = !isCheckIn && checkInAt
-    ? now.diff(dayjs(checkInAt), "minute")
-    : 0;
+  const workedMinutes =
+    !isCheckIn && checkInAt ? now.diff(dayjs(checkInAt), "minute") : 0;
   const workedHours = Math.floor(workedMinutes / 60);
   const workedMins = workedMinutes % 60;
 
@@ -97,7 +94,7 @@ export default function AttendanceConfirmDialog({
         handleConfirm();
       }
     },
-    [handleConfirm]
+    [handleConfirm],
   );
 
   return (
@@ -144,7 +141,11 @@ export default function AttendanceConfirmDialog({
           {isCheckIn && (
             <div className="flex items-center justify-between text-sm">
               <span className="text-slate-500">근태 현황</span>
-              {isLate ? (
+              {isEarlyCheckIn ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-sky-100 text-sky-700">
+                  조기출근
+                </span>
+              ) : isLate ? (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
                   지각
                 </span>

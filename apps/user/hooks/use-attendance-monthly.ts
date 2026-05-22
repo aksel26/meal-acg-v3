@@ -20,6 +20,7 @@ export interface AttendanceSummary {
   total_work_days: number;
   total_work_minutes: number;
   total_overtime_minutes: number;
+  early_check_in_count: number;
   late_count: number;
   early_leave_count: number;
 }
@@ -32,7 +33,7 @@ interface AttendanceMonthlyResponse {
 export function useAttendanceMonthly(
   memberId: string | null,
   year: number,
-  month: number
+  month: number,
 ) {
   return useQuery<AttendanceMonthlyResponse>({
     queryKey: queryKeys.attendance.monthly(memberId || "", year, month),

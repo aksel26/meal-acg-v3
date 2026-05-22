@@ -32,6 +32,7 @@ interface AttendanceSummary {
   total_work_days: number;
   total_work_minutes: number;
   total_overtime_minutes: number;
+  early_check_in_count: number;
   late_count: number;
   early_leave_count: number;
 }
@@ -83,7 +84,9 @@ export default function AttendanceDesktopView({
   }, [dayoffs, selectedDate]);
   const remainingLeaveDays = useMemo(() => {
     return leaveBalances
-      .filter((balance) => balance.type === "annual" || balance.type === "monthly")
+      .filter(
+        (balance) => balance.type === "annual" || balance.type === "monthly",
+      )
       .reduce(
         (sum, balance) =>
           sum + balance.granted + balance.adjusted - balance.used,
@@ -136,7 +139,7 @@ export default function AttendanceDesktopView({
                 <ExternalLink className="h-4 w-4" />
               </button>
             </div>
-            <div className="grid overflow-hidden rounded-xl bg-white sm:grid-cols-2 xl:grid-cols-6 xl:divide-x xl:divide-slate-100">
+            <div className="grid overflow-hidden rounded-xl bg-white sm:grid-cols-2 xl:grid-cols-7 xl:divide-x xl:divide-slate-100">
               {[
                 { label: "근무일", value: `${summary.total_work_days}일` },
                 {
@@ -150,9 +153,16 @@ export default function AttendanceDesktopView({
                       ? `${Math.floor(summary.total_overtime_minutes / 60)}h ${summary.total_overtime_minutes % 60}m`
                       : "-",
                 },
+                {
+                  label: "조기출근",
+                  value: `${summary.early_check_in_count}회`,
+                },
                 { label: "지각", value: `${summary.late_count}회` },
                 { label: "조퇴", value: `${summary.early_leave_count}회` },
-                { label: "남은 휴가", value: formatLeaveDays(remainingLeaveDays) },
+                {
+                  label: "남은 휴가",
+                  value: formatLeaveDays(remainingLeaveDays),
+                },
               ].map(({ label, value }) => (
                 <div
                   key={label}
@@ -226,11 +236,11 @@ function SelectedDaySummary({
       </div>
       <div className="grid items-stretch gap-3 md:grid-cols-2">
         <div className="h-full">
-          <div className={`grid h-full gap-2 ${record ? "grid-cols-2" : "grid-cols-1"}`}>
+          <div
+            className={`grid h-full gap-2 ${record ? "grid-cols-2" : "grid-cols-1"}`}
+          >
             <div className="flex h-full flex-col justify-center rounded-lg bg-slate-50 px-3 py-3">
-              <p className="text-[11px] font-medium text-slate-400">
-                출근시간
-              </p>
+              <p className="text-[11px] font-medium text-slate-400">출근시간</p>
               <p className="mt-1 text-sm font-semibold text-slate-800">
                 {record ? formatTime(record.check_in_at) : "출근 전"}
               </p>

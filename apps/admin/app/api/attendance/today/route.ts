@@ -26,11 +26,14 @@ export async function GET() {
       console.error("Error fetching members:", membersError);
       return NextResponse.json(
         { error: "멤버 조회 실패", details: membersError.message },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
-    const members = (allMembers ?? []) as { member_id: string; full_name: string }[];
+    const members = (allMembers ?? []) as {
+      member_id: string;
+      full_name: string;
+    }[];
     const total = members.length;
     const memberMap = new Map(members.map((m) => [m.member_id, m.full_name]));
 
@@ -44,7 +47,7 @@ export async function GET() {
       console.error("Error fetching today attendance:", recordsError);
       return NextResponse.json(
         { error: "출퇴근 기록 조회 실패", details: recordsError.message },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -65,16 +68,22 @@ export async function GET() {
     const checkedInIds = new Set(
       (records ?? [])
         .filter((r) => r.check_in_at !== null)
-        .map((r) => r.member_id)
+        .map((r) => r.member_id),
     );
 
     const lateIds = new Set(
       (records ?? [])
         .filter((r) => r.status === "late")
-        .map((r) => r.member_id)
+        .map((r) => r.member_id),
+    );
+    const earlyCheckInIds = new Set(
+      (records ?? [])
+        .filter((r) => r.status === "early_check_in")
+        .map((r) => r.member_id),
     );
 
     const checkedIn = checkedInIds.size;
+    const earlyCheckIn = earlyCheckInIds.size;
     const late = lateIds.size;
     const notCheckedIn = Math.max(0, total - checkedIn - onLeave);
 
@@ -83,12 +92,15 @@ export async function GET() {
       .map((id) => ({ id, name: memberMap.get(id)! }));
 
     const notCheckedInMembers = members
-      .filter((m) => !checkedInIds.has(m.member_id) && !onLeaveIds.has(m.member_id))
+      .filter(
+        (m) => !checkedInIds.has(m.member_id) && !onLeaveIds.has(m.member_id),
+      )
       .map((m) => ({ id: m.member_id, name: m.full_name }));
 
     return NextResponse.json({
       total,
       checkedIn,
+      earlyCheckIn,
       notCheckedIn,
       late,
       onLeave,
@@ -100,6 +112,9 @@ export async function GET() {
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

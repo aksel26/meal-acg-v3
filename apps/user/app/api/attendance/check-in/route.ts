@@ -3,6 +3,7 @@ import { createServiceClient } from "@/lib/supabase/client";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+import { getCheckInStatus } from "@/lib/attendance-status";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -14,7 +15,7 @@ export async function POST(request: NextRequest) {
     if (!supabase) {
       return NextResponse.json(
         { error: "데이터베이스 연결 오류" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
     if (!memberId) {
       return NextResponse.json(
         { error: "memberId가 필요합니다." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -30,10 +31,10 @@ export async function POST(request: NextRequest) {
     const today = nowKST.format("YYYY-MM-DD");
     const hour = nowKST.hour();
     const minute = nowKST.minute();
+    const second = nowKST.second();
 
-    // 10:00 초과이면 지각
-    const isLate = hour > 10 || (hour === 10 && minute > 0);
-    const status = isLate ? "late" : "normal";
+    // 08:00 이전 조기출근, 08:00~10:00 정상출근, 10:00 이후 지각
+    const status = getCheckInStatus(hour, minute, second);
 
     // 주말 여부 (0=일, 6=토)
     const dayOfWeek = nowKST.day();
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
     if (existing?.check_in_at) {
       return NextResponse.json(
         { error: "이미 출근했습니다." },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest) {
           status,
           is_weekend: isWeekend,
         },
-        { onConflict: "member_id,date" }
+        { onConflict: "member_id,date" },
       )
       .select()
       .single();
@@ -75,7 +76,7 @@ export async function POST(request: NextRequest) {
       console.error("Error checking in:", error);
       return NextResponse.json(
         { error: "출근 처리 실패", details: error.message },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -84,7 +85,7 @@ export async function POST(request: NextRequest) {
     console.error("Check-in API error:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -10,6 +10,8 @@ interface AttendanceRecord {
   work_date: string;
   check_in_at: string | null;
   check_out_at: string | null;
+  attendance_type?: string | null;
+  status?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -71,7 +73,11 @@ export function useCheckOut() {
       const res = await fetch("/api/attendance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId, action: "check_out", earlyLeaveReason }),
+        body: JSON.stringify({
+          memberId,
+          action: "check_out",
+          earlyLeaveReason,
+        }),
       });
       if (!res.ok) {
         const err = await res.json();

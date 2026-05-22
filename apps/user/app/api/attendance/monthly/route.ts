@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     if (!supabase) {
       return NextResponse.json(
         { error: "데이터베이스 연결 오류" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     if (!memberId || !year || !month) {
       return NextResponse.json(
         { error: "memberId, year, month는 필수입니다." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
       console.error("Error fetching monthly attendance:", error);
       return NextResponse.json(
         { error: "월간 출퇴근 내역 조회 실패" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
 
       if (modifications) {
         modificationMap = Object.fromEntries(
-          modifications.map((m) => [m.attendance_record_id, m.approval_status])
+          modifications.map((m) => [m.attendance_record_id, m.approval_status]),
         );
       }
     }
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
         workMinutes = Math.floor(
           (new Date(r.check_out_at).getTime() -
             new Date(r.check_in_at).getTime()) /
-            60000
+            60000,
         );
       }
 
@@ -96,18 +96,21 @@ export async function GET(request: NextRequest) {
     });
 
     const workRecords = enrichedRecords.filter(
-      (r) => r.attendance_type === "근무" || r.attendance_type === "외근"
+      (r) => r.attendance_type === "근무" || r.attendance_type === "외근",
     );
     const summary = {
       total_work_days: workRecords.filter((r) => r.check_in_at).length,
       total_work_minutes: workRecords.reduce(
         (sum, r) => sum + r.work_minutes,
-        0
+        0,
       ),
       total_overtime_minutes: workRecords.reduce(
         (sum, r) => sum + r.overtime_minutes,
-        0
+        0,
       ),
+      early_check_in_count: workRecords.filter(
+        (r) => r.status === "early_check_in",
+      ).length,
       late_count: workRecords.filter((r) => r.status === "late").length,
       early_leave_count: workRecords.filter((r) => r.status === "early_leave")
         .length,
@@ -118,7 +121,7 @@ export async function GET(request: NextRequest) {
     console.error("Monthly attendance API error:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

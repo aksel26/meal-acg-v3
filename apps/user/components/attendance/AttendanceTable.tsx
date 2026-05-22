@@ -26,6 +26,7 @@ interface AttendanceRecord {
 }
 
 const STATUS_LABELS: Record<string, { text: string; color: string }> = {
+  early_check_in: { text: "조기출근", color: "text-sky-600" },
   normal: { text: "정상", color: "text-emerald-600" },
   late: { text: "지각", color: "text-rose-600" },
   early_leave: { text: "조퇴", color: "text-amber-600" },
@@ -73,7 +74,9 @@ export default function AttendanceTable({
   const [filterOpen, setFilterOpen] = useState(false);
   const filteredRecords = useMemo(() => {
     if (selectedFilter === "전체") return records;
-    return records.filter((record) => record.attendance_type === selectedFilter);
+    return records.filter(
+      (record) => record.attendance_type === selectedFilter,
+    );
   }, [records, selectedFilter]);
   const modifyRequestByRecordId = useMemo(() => {
     const requestMap = new Map<string, ModifyRequest>();
@@ -173,28 +176,28 @@ export default function AttendanceTable({
             </tr>
           ) : (
             filteredRecords.map((record) => {
-            const d = dayjs(record.date);
-            const dayOfWeek = d.day();
-            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-            const DEFAULT_STATUS = {
-              text: "정상",
-              color: "text-emerald-600",
-            };
-            const statusInfo = STATUS_LABELS[record.status] ?? DEFAULT_STATUS;
-            const modifyRequest = modifyRequestByRecordId.get(record.id);
-            const displayAttendanceType =
-              modifyRequest && modifyRequest.approval_status !== "반려"
-                ? modifyRequest.requested_type
-                : record.attendance_type;
-            const displayStatus =
-              modifyRequest && modifyRequest.approval_status !== "승인"
-                ? modifyRequest.approval_status === "반려"
-                  ? { text: "반려", color: "text-rose-600" }
-                  : { text: "승인 전", color: "text-amber-600" }
-                : statusInfo;
-            const badgeStyle =
-              TYPE_BADGE_STYLES[displayAttendanceType] ||
-              TYPE_BADGE_STYLES["근무"];
+              const d = dayjs(record.date);
+              const dayOfWeek = d.day();
+              const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+              const DEFAULT_STATUS = {
+                text: "정상",
+                color: "text-emerald-600",
+              };
+              const statusInfo = STATUS_LABELS[record.status] ?? DEFAULT_STATUS;
+              const modifyRequest = modifyRequestByRecordId.get(record.id);
+              const displayAttendanceType =
+                modifyRequest && modifyRequest.approval_status !== "반려"
+                  ? modifyRequest.requested_type
+                  : record.attendance_type;
+              const displayStatus =
+                modifyRequest && modifyRequest.approval_status !== "승인"
+                  ? modifyRequest.approval_status === "반려"
+                    ? { text: "반려", color: "text-rose-600" }
+                    : { text: "승인 전", color: "text-amber-600" }
+                  : statusInfo;
+              const badgeStyle =
+                TYPE_BADGE_STYLES[displayAttendanceType] ||
+                TYPE_BADGE_STYLES["근무"];
 
               return (
                 <tr
@@ -234,7 +237,9 @@ export default function AttendanceTable({
                       {displayAttendanceType}
                     </span>
                   </td>
-                  <td className={`px-2 py-3 font-medium ${displayStatus.color}`}>
+                  <td
+                    className={`px-2 py-3 font-medium ${displayStatus.color}`}
+                  >
                     {displayStatus.text}
                   </td>
                   <td className="px-2 py-3">

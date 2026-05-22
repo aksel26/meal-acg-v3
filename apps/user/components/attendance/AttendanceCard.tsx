@@ -32,6 +32,7 @@ const TYPE_BADGE_STYLES: Record<string, string> = {
 };
 
 const STATUS_LABELS: Record<string, { text: string; color: string }> = {
+  early_check_in: { text: "조기출근", color: "text-sky-600" },
   normal: { text: "정상", color: "text-emerald-600" },
   late: { text: "지각", color: "text-rose-600" },
   early_leave: { text: "조퇴", color: "text-amber-600" },

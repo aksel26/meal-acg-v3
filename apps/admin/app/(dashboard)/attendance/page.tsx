@@ -38,6 +38,7 @@ const ATTENDANCE_TYPES = [
 ];
 
 const STATUS_OPTIONS = [
+  { value: "early_check_in", label: "조기출근" },
   { value: "normal", label: "정상" },
   { value: "late", label: "지각" },
   { value: "early_leave", label: "조퇴" },
@@ -51,7 +52,7 @@ const STATUS_LABEL: Record<string, string> = Object.fromEntries(
 
 function formatTime(ts: string | null): string {
   if (!ts) return "";
-  return dayjs(ts).format("HH:mm");
+  return dayjs(ts).format("HH:mm:ss");
 }
 
 function formatDateTime(ts: string | null): string {
@@ -110,7 +111,7 @@ export default function AttendancePage() {
   };
 
   const dow = dayjs(selectedDate).format("ddd");
-  const colCount = 17;
+  const colCount = 18;
 
   return (
     <div className="space-y-6">
@@ -215,6 +216,12 @@ export default function AttendancePage() {
               </strong>
             </span>
             <span className="flex h-full items-center gap-1.5 px-3">
+              조기출근{" "}
+              <strong className="inline-flex h-full items-center text-xl font-semibold leading-none text-sky-600">
+                {summary.earlyCheckIn}
+              </strong>
+            </span>
+            <span className="flex h-full items-center gap-1.5 px-3">
               지각{" "}
               <strong className="inline-flex h-full items-center text-xl font-semibold leading-none text-red-600">
                 {summary.late}
@@ -244,6 +251,7 @@ export default function AttendancePage() {
               <th className="px-3 py-2.5">이름</th>
               <th className="px-3 py-2.5">수정자</th>
               <th className="px-3 py-2.5">근태명</th>
+              <th className="px-3 py-2.5">현황</th>
               <th className="px-3 py-2.5">날짜</th>
               <th className="px-3 py-2.5">출근시간</th>
               <th className="px-3 py-2.5">퇴근시간</th>
@@ -331,6 +339,7 @@ function TimeEditDropdown({
         <label className="text-xs font-medium text-slate-500">{label}</label>
         <Input
           type="time"
+          step={1}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={(e) => {
@@ -343,7 +352,7 @@ function TimeEditDropdown({
               onCancel();
             }
           }}
-          className="h-8 w-[130px] text-xs appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+          className="h-8 w-[150px] appearance-none bg-background text-xs [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
           autoFocus
         />
       </div>
@@ -366,6 +375,7 @@ function InlineRow({
   const [attendanceType, setAttendanceType] = useState(
     record.attendance_type || "출근",
   );
+  const [status, setStatus] = useState(record.status || "pending");
   const [note, setNote] = useState(record.note ?? "");
   const [location, setLocation] = useState(record.location ?? "");
   const [reference, setReference] = useState(record.reference ?? "");
@@ -374,7 +384,8 @@ function InlineRow({
 
   const toIso = (time: string) => {
     if (!time) return null;
-    return dayjs(`${record.date}T${time}:00+09:00`).toISOString();
+    const normalizedTime = time.length === 5 ? `${time}:00` : time;
+    return dayjs(`${record.date}T${normalizedTime}+09:00`).toISOString();
   };
 
   const saveField = async (field: "checkIn" | "checkOut", value: string) => {
@@ -398,7 +409,7 @@ function InlineRow({
             check_in_at: field === "checkIn" ? toIso(value) : toIso(checkIn),
             check_out_at: field === "checkOut" ? toIso(value) : toIso(checkOut),
             attendance_type: attendanceType,
-            status: "normal",
+            status,
           }),
         });
         if (res.ok) {
@@ -419,6 +430,7 @@ function InlineRow({
           check_in_at: toIso(checkIn),
           check_out_at: toIso(checkOut),
           attendance_type: attendanceType,
+          status,
           note: note || null,
           location: location || null,
           reference: reference || null,
@@ -436,7 +448,7 @@ function InlineRow({
             check_in_at: toIso(checkIn),
             check_out_at: toIso(checkOut),
             attendance_type: attendanceType,
-            status: "normal",
+            status,
             note: note || null,
             location: location || null,
             reference: reference || null,
@@ -458,6 +470,7 @@ function InlineRow({
     setCheckIn(formatTime(record.check_in_at));
     setCheckOut(formatTime(record.check_out_at));
     setAttendanceType(record.attendance_type || "출근");
+    setStatus(record.status || "pending");
     setNote(record.note ?? "");
     setLocation(record.location ?? "");
     setReference(record.reference ?? "");
@@ -522,6 +535,32 @@ function InlineRow({
           </SelectContent>
         </Select>
       </td>
+      {/* 현황 */}
+      <td className={cellClass}>
+        <Select
+          value={status}
+          onValueChange={(val) => {
+            setStatus(val);
+            if (!editing && record.id) {
+              updateMutation.mutate({ id: record.id, status: val });
+            }
+          }}
+        >
+          <SelectTrigger
+            size="sm"
+            className="!h-5 min-w-[76px] gap-1 border-0 bg-transparent px-0 py-0 text-xs leading-none shadow-none [&_svg]:size-3"
+          >
+            <SelectValue>{STATUS_LABEL[status] ?? status}</SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {STATUS_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </td>
       {/* 날짜 */}
       <td className={cellClass}>
         {date.format("MM/DD")}
@@ -534,9 +573,10 @@ function InlineRow({
         {editing ? (
           <Input
             type="time"
+            step={1}
             value={checkIn}
             onChange={(e) => setCheckIn(e.target.value)}
-            className="h-7 w-[90px] text-xs"
+            className="h-7 w-[110px] text-xs"
           />
         ) : (
           <>
@@ -570,9 +610,10 @@ function InlineRow({
         {editing ? (
           <Input
             type="time"
+            step={1}
             value={checkOut}
             onChange={(e) => setCheckOut(e.target.value)}
-            className="h-7 w-[90px] text-xs"
+            className="h-7 w-[110px] text-xs"
           />
         ) : (
           <>

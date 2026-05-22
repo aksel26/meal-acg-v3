@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
+import { getCheckInStatus } from "@/lib/attendance-status";
 
 const INVALID_MEMBER_ERROR =
   "사용자 정보가 현재 DB와 일치하지 않습니다. 로그아웃 후 다시 로그인해 주세요.";
@@ -11,7 +12,7 @@ export async function GET(request: NextRequest) {
     if (!supabase) {
       return NextResponse.json(
         { error: "Supabase client initialization failed" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
     if (!memberId || !date) {
       return NextResponse.json(
         { error: "memberId and date are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
       console.error("Error fetching attendance:", error);
       return NextResponse.json(
         { error: "Failed to fetch attendance" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest) {
     console.error("Attendance API error:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -58,7 +59,7 @@ export async function POST(request: NextRequest) {
     if (!supabase) {
       return NextResponse.json(
         { error: "Supabase client initialization failed" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -67,14 +68,14 @@ export async function POST(request: NextRequest) {
     if (!memberId || !action) {
       return NextResponse.json(
         { error: "memberId and action are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (action !== "check_in" && action !== "check_out") {
       return NextResponse.json(
         { error: "action must be 'check_in' or 'check_out'" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -88,22 +89,21 @@ export async function POST(request: NextRequest) {
       console.error("Error validating attendance member:", memberError);
       return NextResponse.json(
         { error: "사용자 정보 확인에 실패했습니다." },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     if (!member) {
       return NextResponse.json(
         { error: INVALID_MEMBER_ERROR },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // KST 기준 오늘 날짜
     const now = new Date();
-    const kstDate = new Date(now.getTime() + 9 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0]!;
+    const kstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+    const kstDate = kstNow.toISOString().split("T")[0]!;
 
     if (action === "check_in") {
       // UPSERT: 오늘 레코드가 없으면 생성, 있으면 이미 출근한 것
@@ -117,9 +117,16 @@ export async function POST(request: NextRequest) {
       if (existing?.check_in_at) {
         return NextResponse.json(
           { error: "이미 출근 처리되었습니다." },
-          { status: 409 }
+          { status: 409 },
         );
       }
+
+      const status = getCheckInStatus(
+        kstNow.getUTCHours(),
+        kstNow.getUTCMinutes(),
+        kstNow.getUTCSeconds(),
+      );
+      const isWeekend = kstNow.getUTCDay() === 0 || kstNow.getUTCDay() === 6;
 
       const { data, error } = await supabase
         .from("attendance_records")
@@ -128,8 +135,10 @@ export async function POST(request: NextRequest) {
             member_id: memberId,
             date: kstDate,
             check_in_at: now.toISOString(),
+            status,
+            is_weekend: isWeekend,
           },
-          { onConflict: "member_id,date" }
+          { onConflict: "member_id,date" },
         )
         .select()
         .single();
@@ -138,7 +147,7 @@ export async function POST(request: NextRequest) {
         console.error("Error checking in:", error);
         return NextResponse.json(
           { error: `출근 처리에 실패했습니다: ${error.message}` },
-          { status: 500 }
+          { status: 500 },
         );
       }
 
@@ -148,7 +157,7 @@ export async function POST(request: NextRequest) {
     // check_out
     const { data: record } = await supabase
       .from("attendance_records")
-      .select("id, check_in_at, check_out_at")
+      .select("id, check_in_at, check_out_at, status")
       .eq("member_id", memberId)
       .eq("date", kstDate)
       .maybeSingle();
@@ -156,14 +165,14 @@ export async function POST(request: NextRequest) {
     if (!record?.check_in_at) {
       return NextResponse.json(
         { error: "출근 기록이 없습니다. 먼저 출근해주세요." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (record.check_out_at) {
       return NextResponse.json(
         { error: "이미 퇴근 처리되었습니다." },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -177,7 +186,7 @@ export async function POST(request: NextRequest) {
     const overtimeMs = now.getTime() - overtimeThreshold;
     const overtimeMinutes = overtimeMs > 0 ? Math.floor(overtimeMs / 60000) : 0;
 
-    const status = isEarlyLeave ? "early_leave" : "normal";
+    const status = isEarlyLeave ? "early_leave" : (record.status ?? "normal");
 
     const updateFields: Record<string, unknown> = {
       check_out_at: now.toISOString(),
@@ -201,7 +210,7 @@ export async function POST(request: NextRequest) {
       console.error("Error checking out:", error);
       return NextResponse.json(
         { error: "퇴근 처리에 실패했습니다." },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -227,7 +236,7 @@ export async function POST(request: NextRequest) {
     console.error("Attendance API error:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

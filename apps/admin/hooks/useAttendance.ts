@@ -35,6 +35,7 @@ export interface AttendanceRecord {
 export interface AttendanceTodaySummary {
   total: number;
   checkedIn: number;
+  earlyCheckIn: number;
   notCheckedIn: number;
   late: number;
   onLeave: number;
@@ -80,7 +81,10 @@ export function useAttendanceByDate(date: string) {
 export function useUpdateAttendance() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...data }: { id: string } & Record<string, unknown>) => {
+    mutationFn: async ({
+      id,
+      ...data
+    }: { id: string } & Record<string, unknown>) => {
       const res = await fetch(`/api/attendance/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },

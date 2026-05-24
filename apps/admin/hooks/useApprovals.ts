@@ -20,10 +20,15 @@ export interface ApprovalRequest {
   resolver: { id: string; full_name: string } | null;
   related_data: {
     id: string;
-    leave_date: string;
+    leave_date?: string | null;
+    work_date?: string | null;
+    start_time?: string | null;
+    end_time?: string | null;
+    application_type?: string | null;
+    project_name?: string | null;
     reason: string | null;
-    target: { id: string; full_name: string } | null;
-    leave_type: { id: number; name: string; category: string } | null;
+    target?: { id: string; full_name: string } | null;
+    leave_type?: { id: number; name: string; category: string } | null;
   } | null;
 }
 

@@ -16,6 +16,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@repo/ui/src/dialog";
+import { DatePicker } from "@repo/ui/src/date-picker";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/src/select";
 import { toast } from "@repo/ui/src/sonner";
 import {
   ASSET_STATUSES,
@@ -66,7 +75,11 @@ const emptyForm: AssetFormState = {
 
 const inputClass =
   "h-10 w-full rounded-md border border-[#e5e7eb] bg-white px-3 text-sm text-slate-700 outline-none transition-colors focus:border-[#111111]";
+const selectTriggerClass =
+  "h-10 w-full rounded-md border-[#e5e7eb] bg-white px-3 text-sm text-slate-700";
 const labelClass = "text-xs font-medium text-slate-600";
+const uploadInputClass =
+  "block w-full text-sm text-slate-600 file:mr-3 file:h-10 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:text-sm file:font-medium file:text-slate-700";
 
 export function AssetRegisterClient({ assets }: { assets: AssetSummary[] }) {
   const [assetsState, setAssetsState] = useState(assets);
@@ -138,32 +151,42 @@ export function AssetRegisterClient({ assets }: { assets: AssetSummary[] }) {
             placeholder="물품명, 자산번호, 시리얼번호 검색"
           />
         </div>
-        <select
-          className="h-9 w-[132px] shrink-0 rounded-lg border border-[#e5e7eb] bg-white px-3 text-sm text-slate-600 outline-none focus:border-[#111111]"
+        <Select
           value={statusFilter}
-          onChange={(event) =>
-            setStatusFilter(event.target.value as AssetStatus | "all")
-          }
+          onValueChange={(value) => setStatusFilter(value as AssetStatus | "all")}
         >
-          <option value="all">전체 상태</option>
-          {ASSET_STATUSES.map((status) => (
-            <option key={status} value={status}>
-              {status}
-            </option>
-          ))}
-        </select>
-        <select
-          className="h-9 w-[148px] shrink-0 rounded-lg border border-[#e5e7eb] bg-white px-3 text-sm text-slate-600 outline-none focus:border-[#111111]"
+          <SelectTrigger className="h-9 w-[132px] shrink-0 rounded-lg border-[#e5e7eb] bg-white text-sm text-slate-600">
+            <SelectValue placeholder="전체 상태" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value="all">전체 상태</SelectItem>
+              {ASSET_STATUSES.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {status}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+        <Select
           value={categoryFilter}
-          onChange={(event) => setCategoryFilter(event.target.value)}
+          onValueChange={setCategoryFilter}
         >
-          <option value="all">전체 카테고리</option>
-          {categories.map((category) => (
-            <option key={category} value={category}>
-              {category}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="h-9 w-[148px] shrink-0 rounded-lg border-[#e5e7eb] bg-white text-sm text-slate-600">
+            <SelectValue placeholder="전체 카테고리" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value="all">전체 카테고리</SelectItem>
+              {categories.map((category) => (
+                <SelectItem key={category} value={category}>
+                  {category}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
         <div className="shrink-0">
           <AssetFormDialog mode="create" onSaved={refreshAssets} />
         </div>
@@ -341,6 +364,14 @@ function AssetFormDialog({
   const [form, setForm] = useState<AssetFormState>(() => toFormState(asset));
   const [primaryImage, setPrimaryImage] = useState<File | null>(null);
   const [extraImage, setExtraImage] = useState<File | null>(null);
+  const [primaryImagePreviewUrl, setPrimaryImagePreviewUrl] = useState<
+    string | null
+  >(null);
+  const [extraImagePreviewUrl, setExtraImagePreviewUrl] = useState<
+    string | null
+  >(null);
+  const [primaryImageInputKey, setPrimaryImageInputKey] = useState(0);
+  const [extraImageInputKey, setExtraImageInputKey] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -349,12 +380,36 @@ function AssetFormDialog({
     setForm(toFormState(asset));
     setPrimaryImage(null);
     setExtraImage(null);
+    setPrimaryImageInputKey((current) => current + 1);
+    setExtraImageInputKey((current) => current + 1);
     setError(null);
     fetch("/api/masters")
       .then((response) => response.json())
       .then((payload) => setMembers(payload.members ?? []))
       .catch(() => setMembers([]));
   }, [asset, open]);
+
+  useEffect(() => {
+    if (!primaryImage) {
+      setPrimaryImagePreviewUrl(null);
+      return;
+    }
+
+    const url = URL.createObjectURL(primaryImage);
+    setPrimaryImagePreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [primaryImage]);
+
+  useEffect(() => {
+    if (!extraImage) {
+      setExtraImagePreviewUrl(null);
+      return;
+    }
+
+    const url = URL.createObjectURL(extraImage);
+    setExtraImagePreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [extraImage]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -462,191 +517,261 @@ function AssetFormDialog({
             {mode === "create" ? "물품 등록" : "물품 수정"}
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={submit} className="max-h-[calc(85vh-68px)] overflow-y-auto">
-          <div className="grid gap-4 px-5 py-4 md:grid-cols-2">
-            <Field label="물품명">
-              <input
-                required
-                className={inputClass}
-                value={form.name}
-                onChange={(event) => setFormField(setForm, "name", event.target.value)}
-              />
-            </Field>
-            <Field label="카테고리">
-              <input
-                required
-                className={inputClass}
-                value={form.category}
-                onChange={(event) => setFormField(setForm, "category", event.target.value)}
-                placeholder="노트북, 모니터, 장비"
-              />
-            </Field>
-            <Field label="상태">
-              <select
-                required
-                className={inputClass}
-                value={form.status}
-                onChange={(event) =>
-                  setFormField(setForm, "status", event.target.value as AssetStatus)
-                }
-              >
-                {ASSET_STATUSES.map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label="구매일">
-              <input
-                required
-                type="date"
-                className={inputClass}
-                value={form.purchaseDate}
-                onChange={(event) =>
-                  setFormField(setForm, "purchaseDate", event.target.value)
-                }
-              />
-            </Field>
-            <Field label="구매금액">
-              <input
-                required
-                type="number"
-                min={0}
-                step={1}
-                className={inputClass}
-                value={form.purchaseAmount}
-                onChange={(event) =>
-                  setFormField(setForm, "purchaseAmount", event.target.value)
-                }
-              />
-            </Field>
-            <Field label="보관 위치">
-              <input
-                className={inputClass}
-                value={form.location}
-                onChange={(event) =>
-                  setFormField(setForm, "location", event.target.value)
-                }
-              />
-            </Field>
-            <MemberSelect
-              label="실사용자"
-              members={members}
-              value={form.userId}
-              selectedName={selectedUser?.full_name || form.userName}
-              onChange={(member) =>
-                setForm((current) => ({
-                  ...current,
-                  userId: member.id,
-                  userName: member.full_name,
-                }))
-              }
-            />
-            <MemberSelect
-              label="관리 담당자"
-              members={members}
-              value={form.managerId}
-              selectedName={selectedManager?.full_name || form.managerName}
-              onChange={(member) =>
-                setForm((current) => ({
-                  ...current,
-                  managerId: member.id,
-                  managerName: member.full_name,
-                }))
-              }
-            />
-            <Field label="자산번호">
-              <input
-                className={inputClass}
-                value={form.assetNumber}
-                onChange={(event) =>
-                  setFormField(setForm, "assetNumber", event.target.value)
-                }
-              />
-            </Field>
-            <Field label="시리얼번호">
-              <input
-                className={inputClass}
-                value={form.serialNumber}
-                onChange={(event) =>
-                  setFormField(setForm, "serialNumber", event.target.value)
-                }
-              />
-            </Field>
-            <Field label={mode === "create" ? "대표 이미지" : "대표 이미지 교체"}>
-              <input
-                required={mode === "create"}
-                type="file"
-                accept="image/png,image/jpeg,image/webp,image/gif"
-                className="block w-full text-sm text-slate-600 file:mr-3 file:h-10 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:text-sm file:font-medium file:text-slate-700"
-                onChange={(event) => setPrimaryImage(getFirstFile(event))}
-              />
-            </Field>
-            {mode === "edit" && (
-              <Field label="추가 이미지">
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp,image/gif"
-                  className="block w-full text-sm text-slate-600 file:mr-3 file:h-10 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:text-sm file:font-medium file:text-slate-700"
-                  onChange={(event) => setExtraImage(getFirstFile(event))}
-                />
-              </Field>
-            )}
-            <div className="md:col-span-2">
-              <label className="space-y-1.5">
-                <span className={labelClass}>메모</span>
-                <textarea
-                  className="min-h-[84px] w-full resize-none rounded-md border border-[#e5e7eb] bg-white px-3 py-2 text-sm text-slate-700 outline-none transition-colors focus:border-[#111111]"
-                  value={form.memo}
-                  onChange={(event) => setFormField(setForm, "memo", event.target.value)}
-                />
-              </label>
-            </div>
-            {mode === "edit" && asset && (
-              <div className="md:col-span-2">
-                <p className={`${labelClass} mb-2`}>등록 이미지</p>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {asset.images.map((image) => (
-                    <div
-                      key={image.id}
-                      className="relative overflow-hidden rounded-lg border border-[#f3f3f3] bg-slate-50"
+        <form
+          onSubmit={submit}
+          className="max-h-[calc(85vh-68px)] overflow-y-auto"
+        >
+          <div className="px-5 py-5">
+            <div className="grid gap-7">
+              <AssetFormSection title="기본 정보">
+                <div className="grid gap-4 md:grid-cols-3">
+                  <Field label="물품명" required>
+                    <input
+                      required
+                      className={inputClass}
+                      value={form.name}
+                      onChange={(event) =>
+                        setFormField(setForm, "name", event.target.value)
+                      }
+                    />
+                  </Field>
+                  <Field label="카테고리" required>
+                    <input
+                      required
+                      className={inputClass}
+                      value={form.category}
+                      onChange={(event) =>
+                        setFormField(setForm, "category", event.target.value)
+                      }
+                      placeholder="노트북, 모니터, 장비"
+                    />
+                  </Field>
+                  <Field label="상태" required>
+                    <Select
+                      value={form.status}
+                      onValueChange={(value) =>
+                        setFormField(
+                          setForm,
+                          "status",
+                          value as AssetStatus,
+                        )
+                      }
                     >
-                      {image.signed_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={image.signed_url}
-                          alt={image.file_name}
-                          className="aspect-square w-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex aspect-square items-center justify-center text-slate-300">
-                          <ImageIcon size={24} />
-                        </div>
-                      )}
-                      <div className="flex items-center justify-between px-2 py-1 text-[11px] text-slate-500">
-                        <span>{image.is_primary ? "대표" : "추가"}</span>
-                        {!image.is_primary && (
-                          <button
-                            type="button"
-                            onClick={() => deleteImage(image)}
-                            className="text-slate-400 hover:text-red-500"
-                            disabled={submitting}
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                      <SelectTrigger className={selectTriggerClass}>
+                        <SelectValue placeholder="상태 선택" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {ASSET_STATUSES.map((status) => (
+                            <SelectItem key={status} value={status}>
+                              {status}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </Field>
                 </div>
-              </div>
-            )}
-            {error && (
-              <p className="md:col-span-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-600">
-                {error}
-              </p>
-            )}
+              </AssetFormSection>
+
+              <AssetFormSection title="구매 및 보관">
+                <div className="grid gap-4 md:grid-cols-3">
+                  <Field label="구매일" required>
+                    <DatePicker
+                      value={form.purchaseDate}
+                      onChange={(value) =>
+                        setFormField(setForm, "purchaseDate", value)
+                      }
+                      placeholder="구매일 선택"
+                      className="h-10 border-[#e5e7eb] bg-white"
+                      modal
+                    />
+                  </Field>
+                  <Field label="구매금액" required>
+                    <input
+                      required
+                      type="number"
+                      min={0}
+                      step={1}
+                      className={inputClass}
+                      value={form.purchaseAmount}
+                      onChange={(event) =>
+                        setFormField(
+                          setForm,
+                          "purchaseAmount",
+                          event.target.value,
+                        )
+                      }
+                    />
+                  </Field>
+                  <Field label="보관 위치">
+                    <input
+                      className={inputClass}
+                      value={form.location}
+                      onChange={(event) =>
+                        setFormField(setForm, "location", event.target.value)
+                      }
+                    />
+                  </Field>
+                </div>
+              </AssetFormSection>
+
+              <AssetFormSection title="사용자 및 식별 정보">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <MemberSelect
+                    label="실사용자"
+                    required
+                    members={members}
+                    value={form.userId}
+                    selectedName={selectedUser?.full_name || form.userName}
+                    onChange={(member) =>
+                      setForm((current) => ({
+                        ...current,
+                        userId: member.id,
+                        userName: member.full_name,
+                      }))
+                    }
+                  />
+                  <MemberSelect
+                    label="관리 담당자"
+                    required
+                    members={members}
+                    value={form.managerId}
+                    selectedName={selectedManager?.full_name || form.managerName}
+                    onChange={(member) =>
+                      setForm((current) => ({
+                        ...current,
+                        managerId: member.id,
+                        managerName: member.full_name,
+                      }))
+                    }
+                  />
+                  <Field label="자산번호">
+                    <input
+                      className={inputClass}
+                      value={form.assetNumber}
+                      onChange={(event) =>
+                        setFormField(setForm, "assetNumber", event.target.value)
+                      }
+                    />
+                  </Field>
+                  <Field label="시리얼번호">
+                    <input
+                      className={inputClass}
+                      value={form.serialNumber}
+                      onChange={(event) =>
+                        setFormField(setForm, "serialNumber", event.target.value)
+                      }
+                    />
+                  </Field>
+                </div>
+              </AssetFormSection>
+
+              <AssetFormSection title="이미지">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Field
+                    label={mode === "create" ? "대표 이미지" : "대표 이미지 교체"}
+                    required={mode === "create"}
+                  >
+                    <input
+                      key={primaryImageInputKey}
+                      required={mode === "create"}
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/gif"
+                      className={uploadInputClass}
+                      onChange={(event) => setPrimaryImage(getFirstFile(event))}
+                    />
+                    <SelectedImagePreview
+                      file={primaryImage}
+                      label="대표 이미지"
+                      url={primaryImagePreviewUrl}
+                      onRemove={() => {
+                        setPrimaryImage(null);
+                        setPrimaryImageInputKey((current) => current + 1);
+                      }}
+                    />
+                  </Field>
+                  {mode === "edit" && (
+                    <Field label="추가 이미지">
+                      <input
+                        key={extraImageInputKey}
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp,image/gif"
+                        className={uploadInputClass}
+                        onChange={(event) => setExtraImage(getFirstFile(event))}
+                      />
+                      <SelectedImagePreview
+                        file={extraImage}
+                        label="추가 이미지"
+                        url={extraImagePreviewUrl}
+                        onRemove={() => {
+                          setExtraImage(null);
+                          setExtraImageInputKey((current) => current + 1);
+                        }}
+                      />
+                    </Field>
+                  )}
+                </div>
+
+                {mode === "edit" && asset && (
+                  <div className="pt-2">
+                    <p className={`${labelClass} mb-2`}>등록 이미지</p>
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                      {asset.images.map((image) => (
+                        <div
+                          key={image.id}
+                          className="relative overflow-hidden rounded-lg border border-[#f3f3f3] bg-slate-50"
+                        >
+                          {image.signed_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={image.signed_url}
+                              alt={image.file_name}
+                              className="aspect-square w-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex aspect-square items-center justify-center text-slate-300">
+                              <ImageIcon size={24} />
+                            </div>
+                          )}
+                          <div className="flex items-center justify-between px-2 py-1 text-[11px] text-slate-500">
+                            <span>{image.is_primary ? "대표" : "추가"}</span>
+                            {!image.is_primary && (
+                              <button
+                                type="button"
+                                onClick={() => deleteImage(image)}
+                                className="text-slate-400 hover:text-red-500"
+                                disabled={submitting}
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </AssetFormSection>
+
+              <AssetFormSection title="메모">
+                <Field label="메모">
+                  <textarea
+                    className="min-h-[84px] w-full resize-none rounded-md border border-[#e5e7eb] bg-white px-3 py-2 text-sm text-slate-700 outline-none transition-colors focus:border-[#111111]"
+                    value={form.memo}
+                    onChange={(event) =>
+                      setFormField(setForm, "memo", event.target.value)
+                    }
+                  />
+                </Field>
+              </AssetFormSection>
+
+              {error && (
+                <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-600">
+                  {error}
+                </p>
+              )}
+            </div>
           </div>
           <div className="flex justify-end gap-2 border-t border-[#f3f3f3] px-5 py-4">
             <button
@@ -673,26 +798,50 @@ function AssetFormDialog({
 function Field({
   label,
   children,
+  required = false,
 }: {
   label: string;
   children: React.ReactNode;
+  required?: boolean;
 }) {
   return (
     <label className="space-y-1.5">
-      <span className={labelClass}>{label}</span>
+      <span className={labelClass}>
+        {label}
+        {required && <span className="ml-0.5 text-red-500">*</span>}
+      </span>
       {children}
     </label>
   );
 }
 
+function AssetFormSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="grid gap-3">
+      <h3 className="text-xs font-semibold uppercase tracking-normal text-slate-500">
+        {title}
+      </h3>
+      {children}
+    </section>
+  );
+}
+
 function MemberSelect({
   label,
+  required = false,
   members,
   value,
   selectedName,
   onChange,
 }: {
   label: string;
+  required?: boolean;
   members: MasterMember[];
   value: string;
   selectedName: string;
@@ -700,24 +849,67 @@ function MemberSelect({
 }) {
   return (
     <label className="space-y-1.5">
-      <span className={labelClass}>{label}</span>
-      <select
-        required
-        className={inputClass}
-        value={value}
-        onChange={(event) => {
-          const member = members.find((item) => item.id === event.target.value);
+      <span className={labelClass}>
+        {label}
+        {required && <span className="ml-0.5 text-red-500">*</span>}
+      </span>
+      <Select
+        value={value || undefined}
+        onValueChange={(nextValue) => {
+          const member = members.find((item) => item.id === nextValue);
           if (member) onChange(member);
         }}
       >
-        <option value="">{selectedName || "선택"}</option>
-        {members.map((member) => (
-          <option key={member.id} value={member.id}>
-            {member.full_name}
-          </option>
-        ))}
-      </select>
+        <SelectTrigger className={selectTriggerClass}>
+          <SelectValue placeholder={selectedName || "선택"} />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            {members.map((member) => (
+              <SelectItem key={member.id} value={member.id}>
+                {member.full_name}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
     </label>
+  );
+}
+
+function SelectedImagePreview({
+  file,
+  label,
+  url,
+  onRemove,
+}: {
+  file: File | null;
+  label: string;
+  url: string | null;
+  onRemove: () => void;
+}) {
+  if (!file || !url) return null;
+
+  return (
+    <div className="mt-3 overflow-hidden rounded-lg border border-[#f3f3f3]">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={url}
+        alt={`${label} 미리보기`}
+        className="aspect-[4/3] w-full object-cover"
+      />
+      <div className="flex min-w-0 items-center justify-between gap-2 px-3 py-2">
+        <span className="truncate text-xs text-slate-500">{file.name}</span>
+        <button
+          type="button"
+          onClick={onRemove}
+          className="shrink-0 rounded p-1 text-slate-400 transition-colors hover:text-red-500"
+          aria-label={`${label} 선택 취소`}
+        >
+          <X size={14} />
+        </button>
+      </div>
+    </div>
   );
 }
 

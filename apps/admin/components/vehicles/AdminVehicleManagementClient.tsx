@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import dayjs from "dayjs";
-import { CarFront, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Plus, Search } from "lucide-react";
+import { Badge } from "@repo/ui/src/badge";
 import { Button } from "@repo/ui/src/button";
+import { Checkbox } from "@repo/ui/src/checkbox";
 import { DatePicker } from "@repo/ui/src/date-picker";
 import { DateRangePicker } from "@repo/ui/src/date-range-picker";
 import {
@@ -14,6 +16,11 @@ import {
   DialogTitle,
 } from "@repo/ui/src/dialog";
 import { Input } from "@repo/ui/src/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@repo/ui/src/popover";
 import {
   Select,
   SelectContent,
@@ -72,6 +79,9 @@ type ApplicationForm = {
 type VehicleRow = CompanyVehicle & {
   displayStatus: VehicleStatus;
 };
+
+const VEHICLE_APPROVAL_OVERLAP_MESSAGE =
+  "같은 차량의 승인된 신청과 사용 시간이 겹쳐 모두 승인할 수 없습니다.";
 
 export function AdminVehicleManagementClient({
   initialData,
@@ -192,6 +202,21 @@ export function AdminVehicleManagementClient({
 
   async function submitApplicationForm() {
     if (!editingApplication) return;
+    if (
+      applicationForm.status === "approved" &&
+      hasApprovedVehicleTimeConflict(data.applications, {
+        id: editingApplication.id,
+        vehicle_id: applicationForm.vehicleId || null,
+        vehicle_type: applicationForm.vehicleType,
+        vehicle_name_snapshot: applicationForm.vehicleNameSnapshot,
+        start_at: applicationForm.startAt,
+        end_at: applicationForm.endAt,
+      })
+    ) {
+      toast.warning(VEHICLE_APPROVAL_OVERLAP_MESSAGE);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const response = await fetch(
@@ -224,6 +249,14 @@ export function AdminVehicleManagementClient({
     nextStatus: VehicleApplicationStatus,
   ) {
     if (application.status === nextStatus) return;
+
+    if (
+      nextStatus === "approved" &&
+      hasApprovedVehicleTimeConflict(data.applications, application)
+    ) {
+      toast.warning(VEHICLE_APPROVAL_OVERLAP_MESSAGE);
+      return;
+    }
 
     const rejectReason =
       nextStatus === "rejected"
@@ -332,19 +365,6 @@ export function AdminVehicleManagementClient({
 
   return (
     <div className="space-y-5">
-      <section className="grid gap-y-3 bg-white md:grid-cols-4 md:divide-x md:divide-[#eeeeee]">
-        <SummaryCard label="등록 차량" value={`${data.vehicles.length}대`} />
-        <SummaryCard label="이용 가능" value={`${availableVehicleCount}대`} />
-        <SummaryCard
-          label="대기 신청"
-          value={`${data.applications.filter((item) => item.status === "pending").length}건`}
-        />
-        <SummaryCard
-          label="전체 사용 내역"
-          value={`${data.applications.length}건`}
-        />
-      </section>
-
       <section className="space-y-3 rounded-xl bg-white py-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <h2 className="text-base font-semibold text-[#111111]">
@@ -360,56 +380,70 @@ export function AdminVehicleManagementClient({
           </Button>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] table-fixed text-left text-sm">
+          <table className="w-full min-w-[760px] table-fixed text-left text-sm">
+            <colgroup>
+              <col className="w-[110px]" />
+              <col className="w-[150px]" />
+              <col className="w-[120px]" />
+              <col className="w-[70px]" />
+              <col className="w-[100px]" />
+              <col className="w-[120px]" />
+              <col className="w-[90px]" />
+            </colgroup>
             <thead className="border-y border-slate-100 text-xs text-slate-500">
               <tr>
-                <th className="px-3 py-2">차량종류</th>
-                <th className="px-3 py-2">차량이름(인승)</th>
-                <th className="px-3 py-2">차량번호</th>
-                <th className="px-3 py-2">하이패스</th>
-                <th className="px-3 py-2">상태</th>
-                <th className="px-3 py-2">총 주행거리</th>
-                <th className="px-3 py-2 text-right">관리</th>
+                <th className="px-2 py-2">차량종류</th>
+                <th className="px-2 py-2">차량이름(인승)</th>
+                <th className="px-2 py-2">차량번호</th>
+                <th className="px-2 py-2">하이패스</th>
+                <th className="px-2 py-2">상태</th>
+                <th className="px-2 py-2">총 주행거리</th>
+                <th className="w-px whitespace-nowrap px-1 py-2 text-right">
+                  관리
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {vehicleRows.map((vehicle) => (
                 <tr key={vehicle.id}>
-                  <td className="px-3 py-3">{vehicle.vehicle_type}</td>
-                  <td className="px-3 py-3 font-medium text-slate-950">
+                  <td className="px-2 py-2.5">{vehicle.vehicle_type}</td>
+                  <td className="px-2 py-2.5 font-medium text-slate-950">
                     {formatVehicleName(vehicle)}
                   </td>
-                  <td className="px-3 py-3 text-slate-600">
+                  <td className="px-2 py-2.5 text-slate-600">
                     {vehicle.license_plate || "-"}
                   </td>
-                  <td className="px-3 py-3">
+                  <td className="px-2 py-2.5">
                     {vehicle.has_hipass ? "Y" : "N"}
                   </td>
-                  <td className="px-3 py-3">
+                  <td className="px-2 py-2.5">
                     <StatusPill
                       label={VEHICLE_STATUS_LABEL[vehicle.displayStatus]}
+                      status={vehicle.displayStatus}
                     />
                   </td>
-                  <td className="px-3 py-3 text-slate-600">
+                  <td className="px-2 py-2.5 text-slate-600">
                     {vehicle.odometer_km == null
                       ? "-"
                       : `${vehicle.odometer_km.toLocaleString("ko-KR")}km`}
                   </td>
-                  <td className="px-3 py-3">
+                  <td className="w-px whitespace-nowrap px-1 py-2.5">
                     <div className="flex justify-end gap-1">
                       <Button
                         variant="ghost"
                         size="sm"
+                        className="h-7 px-2"
                         onClick={() => openEditVehicle(vehicle)}
                       >
-                        <Pencil className="h-4 w-4" />
+                        수정
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
+                        className="h-7 px-2"
                         onClick={() => deleteVehicle(vehicle)}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        삭제
                       </Button>
                     </div>
                   </td>
@@ -500,6 +534,22 @@ function VehicleApplicationTable({
   ) => void;
   isSubmitting: boolean;
 }) {
+  const [expandedHipassRows, setExpandedHipassRows] = useState<Set<string>>(
+    () => new Set(),
+  );
+
+  function toggleHipassRow(applicationId: string) {
+    setExpandedHipassRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(applicationId)) {
+        next.delete(applicationId);
+      } else {
+        next.add(applicationId);
+      }
+      return next;
+    });
+  }
+
   if (applications.length === 0) {
     return (
       <div className="rounded-xl bg-white px-6 py-10 text-center text-sm text-slate-500">
@@ -510,10 +560,34 @@ function VehicleApplicationTable({
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[1580px] table-fixed text-left text-sm">
+      <table className="w-full min-w-[1552px] table-fixed text-left text-sm">
+        <colgroup>
+          <col className="w-[32px]" />
+          <col className="w-[86px]" />
+          <col className="w-[90px]" />
+          <col className="w-[80px]" />
+          <col className="w-[110px]" />
+          <col className="w-[90px]" />
+          <col className="w-[170px]" />
+          <col className="w-[90px]" />
+          <col className="w-[120px]" />
+          <col className="w-[64px]" />
+          <col className="w-[80px]" />
+          <col className="w-[86px]" />
+          <col className="w-[100px]" />
+          <col className="w-[130px]" />
+          <col className="w-[82px]" />
+          <col className="w-[82px]" />
+          <col className="w-[86px]" />
+          <col className="w-[100px]" />
+          <col className="w-[120px]" />
+          <col className="w-[100px]" />
+          <col className="w-[52px]" />
+        </colgroup>
         <thead className="border-y border-slate-100 text-xs text-slate-500">
           <tr>
             {[
+              "",
               "신청일",
               "소속",
               "신청자",
@@ -527,120 +601,278 @@ function VehicleApplicationTable({
               "상태",
               "반려사유",
               "출발-도착지",
-              "당일/총 주행거리",
+              "주행전 km",
+              "주행 후 km",
+              "주행거리 (km)",
+              "비고",
               "편집일",
               "참조자(공유)",
               "관리",
             ].map((label) => (
-              <th key={label} className="px-3 py-2">
+              <th
+                key={label}
+                className={
+                  label === ""
+                    ? "px-1 py-2"
+                    : label === "관리"
+                      ? "w-px whitespace-nowrap px-1 py-2 text-right"
+                      : "px-2 py-2"
+                }
+              >
                 {label}
               </th>
             ))}
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
-          {applications.map((application) => (
-            <tr key={application.id}>
-              <td className="px-3 py-3">{application.request_date}</td>
-              <td className="px-3 py-3">{application.department}</td>
-              <td className="px-3 py-3 font-medium text-slate-950">
-                {application.applicant_name}
-              </td>
-              <td className="truncate px-3 py-3">{application.purpose}</td>
-              <td className="truncate px-3 py-3">
-                {application.passengers || "-"}
-              </td>
-              <td className="px-3 py-3 text-xs leading-5">
-                {formatPeriod(application.start_at, application.end_at)}
-              </td>
-              <td className="px-3 py-3">{application.vehicle_type}</td>
-              <td className="px-3 py-3">{application.vehicle_name_snapshot}</td>
-              <td className="px-3 py-3">
-                {application.has_hipass ? "Y" : "N"}
-              </td>
-              <td className="px-3 py-3">{application.approver_name}</td>
-              <td className="px-3 py-3">
-                <ApplicationStatusSelect
-                  value={application.status}
-                  disabled={isSubmitting}
-                  onChange={(status) => onStatusChange(application, status)}
-                />
-              </td>
-              <td className="truncate px-3 py-3">
-                {application.reject_reason || "-"}
-              </td>
-              <td className="truncate px-3 py-3">
-                {application.departure_place} - {application.arrival_place}
-              </td>
-              <td className="px-3 py-3">
-                {application.same_day_distance_km ?? "-"} /{" "}
-                {application.total_distance_km ?? "-"}km
-              </td>
-              <td className="px-3 py-3 text-xs text-slate-500">
-                {application.edited_at
-                  ? dayjs(application.edited_at).format("YYYY-MM-DD HH:mm")
-                  : "-"}
-              </td>
-              <td className="truncate px-3 py-3">
-                {application.shared_references || "-"}
-              </td>
-              <td className="px-3 py-3 text-right">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onEdit(application)}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-              </td>
-            </tr>
-          ))}
+          {applications.map((application) => {
+            const isHipassExpanded = expandedHipassRows.has(application.id);
+
+            return (
+              <Fragment key={application.id}>
+                <tr>
+                  <td className="px-1 py-2.5">
+                    {application.has_hipass && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                        onClick={() => toggleHipassRow(application.id)}
+                        aria-label={
+                          isHipassExpanded
+                            ? "하이패스카드 작성 내역 접기"
+                            : "하이패스카드 작성 내역 펼치기"
+                        }
+                        aria-expanded={isHipassExpanded}
+                      >
+                        {isHipassExpanded ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                      </Button>
+                    )}
+                  </td>
+                  <td className="px-2 py-2.5">{application.request_date}</td>
+                  <td className="px-2 py-2.5">{application.department}</td>
+                  <td className="px-2 py-2.5 font-medium text-slate-950">
+                    {application.applicant_name}
+                  </td>
+                  <td className="truncate px-2 py-2.5">{application.purpose}</td>
+                  <td className="truncate px-2 py-2.5">
+                    {application.passengers || "-"}
+                  </td>
+                  <td className="px-2 py-2.5 text-xs leading-5">
+                    {formatPeriod(application.start_at, application.end_at)}
+                  </td>
+                  <td className="px-2 py-2.5">{application.vehicle_type}</td>
+                  <td className="px-2 py-2.5">
+                    {application.vehicle_name_snapshot}
+                  </td>
+                  <td className="px-2 py-2.5">
+                    {application.has_hipass ? "Y" : "N"}
+                  </td>
+                  <td className="px-2 py-2.5">{application.approver_name}</td>
+                  <td className="px-2 py-2.5">
+                    <ApplicationStatusDropdown
+                      application={application}
+                      disabled={isSubmitting}
+                      onStatusChange={onStatusChange}
+                    />
+                  </td>
+                  <td className="truncate px-2 py-2.5">
+                    {application.reject_reason || "-"}
+                  </td>
+                  <td className="truncate px-2 py-2.5">
+                    {application.departure_place} - {application.arrival_place}
+                  </td>
+                  <td className="px-2 py-2.5">
+                    {formatNullableKm(application.return_start_odometer_km)}
+                  </td>
+                  <td className="px-2 py-2.5">
+                    {formatNullableKm(application.return_end_odometer_km)}
+                  </td>
+                  <td className="px-2 py-2.5">
+                    {formatNullableKm(application.return_distance_km)}
+                  </td>
+                  <td className="truncate px-2 py-2.5">
+                    {application.return_memo || "-"}
+                  </td>
+                  <td className="px-2 py-2.5 text-xs text-slate-500">
+                    {application.edited_at
+                      ? dayjs(application.edited_at).format("YYYY-MM-DD HH:mm")
+                      : "-"}
+                  </td>
+                  <td className="truncate px-2 py-2.5">
+                    {application.shared_references || "-"}
+                  </td>
+                  <td className="w-px whitespace-nowrap px-1 py-2.5 text-right">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2"
+                      onClick={() => onEdit(application)}
+                    >
+                      수정
+                    </Button>
+                  </td>
+                </tr>
+                {application.has_hipass && isHipassExpanded && (
+                  <tr className="bg-slate-50/40 transition-colors">
+                    <td colSpan={21} className="px-2 py-2">
+                      <HipassNestedTable application={application} />
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
+            );
+          })}
         </tbody>
       </table>
     </div>
   );
 }
 
-function ApplicationStatusSelect({
-  value,
-  disabled,
-  onChange,
+function HipassNestedTable({
+  application,
 }: {
-  value: VehicleApplicationStatus;
-  disabled: boolean;
-  onChange: (value: VehicleApplicationStatus) => void;
+  application: VehicleApplication;
 }) {
   return (
-    <select
-      aria-label="차량 신청 상태 변경"
-      className={`h-8 cursor-pointer appearance-none rounded-full border px-3 pr-7 text-xs font-medium outline-none transition disabled:cursor-not-allowed disabled:opacity-60 ${getVehicleApplicationStatusClass(
-        value,
-      )}`}
-      value={value}
-      disabled={disabled}
-      onChange={(event) =>
-        onChange(event.target.value as VehicleApplicationStatus)
-      }
-    >
-      <option value="pending">대기</option>
-      <option value="approved">승인</option>
-      <option value="rejected">반려</option>
-      <option value="cancelled">취소</option>
-    </select>
+    <div className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-slate-100">
+      <div className="px-3 pt-3 text-xs font-semibold text-slate-500">
+        하이패스카드 작성 내역
+      </div>
+      <div className="overflow-x-auto px-3 pb-3 pt-2">
+        <table className="w-full min-w-[900px] table-fixed text-left text-sm">
+          <colgroup>
+            <col className="w-[90px]" />
+            <col className="w-[100px]" />
+            <col className="w-[100px]" />
+            <col className="w-[150px]" />
+            <col className="w-[150px]" />
+            <col className="w-[90px]" />
+            <col className="w-[90px]" />
+            <col className="w-[90px]" />
+            <col className="w-[160px]" />
+          </colgroup>
+          <thead className="border-y border-slate-100 text-xs text-slate-500">
+            <tr>
+              {[
+                "구분",
+                "일자",
+                "사용자",
+                "목적",
+                "목적지",
+                "충전액",
+                "사용액",
+                "잔액",
+                "비고",
+              ].map((label) => (
+                <th key={label} className="px-2 py-2">
+                  {label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            <tr>
+              <td className="px-2 py-2.5">통행료</td>
+              <td className="px-2 py-2.5">
+                {dayjs(application.start_at).format("YYYY-MM-DD")}
+              </td>
+              <td className="px-2 py-2.5 font-medium text-slate-950">
+                {application.applicant_name}
+              </td>
+              <td className="truncate px-2 py-2.5">
+                {application.purpose}
+              </td>
+              <td className="truncate px-2 py-2.5">
+                {application.departure_place} - {application.arrival_place}
+              </td>
+              <td className="px-2 py-2.5">-</td>
+              <td className="px-2 py-2.5">-</td>
+              <td className="px-2 py-2.5">-</td>
+              <td className="truncate px-2 py-2.5">
+                {application.return_memo || "-"}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
 
-function getVehicleApplicationStatusClass(status: VehicleApplicationStatus) {
+function ApplicationStatusDropdown({
+  application,
+  disabled,
+  onStatusChange,
+}: {
+  application: VehicleApplication;
+  disabled: boolean;
+  onStatusChange: (
+    application: VehicleApplication,
+    status: VehicleApplicationStatus,
+  ) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const statusOptions: VehicleApplicationStatus[] = [
+    "pending",
+    "approved",
+    "rejected",
+    "cancelled",
+  ];
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Badge
+          asChild
+          variant="outline"
+          className={`min-w-[72px] cursor-pointer justify-center gap-1.5 ${getVehicleApplicationStatusBadgeClass(
+            application.status,
+          )}`}
+        >
+          <button type="button" disabled={disabled}>
+            {VEHICLE_APPLICATION_STATUS_LABEL[application.status]}
+            <ChevronDown className="h-3 w-3" />
+          </button>
+        </Badge>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-32 p-1">
+        {statusOptions.map((status) => (
+          <button
+            key={status}
+            type="button"
+            disabled={disabled || application.status === status}
+            onClick={() => {
+              setOpen(false);
+              onStatusChange(application, status);
+            }}
+            className="flex h-8 w-full items-center rounded-sm px-2 text-left text-xs text-slate-700 outline-none hover:bg-slate-100 disabled:cursor-default disabled:bg-slate-50 disabled:text-slate-400"
+          >
+            {VEHICLE_APPLICATION_STATUS_LABEL[status]}
+          </button>
+        ))}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function getVehicleApplicationStatusBadgeClass(
+  status: VehicleApplicationStatus,
+) {
   switch (status) {
     case "approved":
-      return "border-transparent bg-emerald-100 text-emerald-800 hover:bg-emerald-200";
+      return "border-emerald-200 bg-emerald-50 text-emerald-700";
     case "rejected":
-      return "border-transparent bg-red-100 text-red-700 hover:bg-red-200";
+      return "border-red-200 bg-red-50 text-red-700";
     case "cancelled":
-      return "border-slate-200 bg-slate-100 text-slate-500 hover:bg-slate-200";
+      return "border-slate-200 bg-slate-50 text-slate-500";
     case "pending":
     default:
-      return "border-amber-200 bg-amber-100 text-amber-800 hover:bg-amber-200";
+      return "border-amber-200 bg-amber-50 text-amber-700";
   }
 }
 
@@ -663,15 +895,15 @@ function VehicleDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl gap-0 overflow-hidden p-0">
-        <DialogHeader className="border-b border-slate-100 px-5 py-4">
+      <DialogContent className="max-w-3xl gap-0 overflow-hidden p-0">
+        <DialogHeader className="border-b border-slate-100 px-6 py-5">
           <DialogTitle className="text-base font-semibold text-slate-950">
             {isEditing ? "차량 정보 수정" : "차량 추가"}
           </DialogTitle>
         </DialogHeader>
-        <div className="grid max-h-[72vh] gap-5 overflow-y-auto px-5 py-4">
-          <DialogSection title="차량 기본 정보">
-            <FormField label="차량종류">
+        <div className="grid max-h-[72vh] gap-5 overflow-y-auto px-6 py-5">
+          <DialogSection title="기본 정보" columns="md:grid-cols-6">
+            <FormField label="차량종류" required className="md:col-span-2">
               <Input
                 value={form.vehicleType}
                 onChange={(event) =>
@@ -683,7 +915,7 @@ function VehicleDialog({
                 placeholder="예: 승용차"
               />
             </FormField>
-            <FormField label="차량이름">
+            <FormField label="차량이름" required className="md:col-span-2">
               <Input
                 value={form.vehicleName}
                 onChange={(event) =>
@@ -695,7 +927,7 @@ function VehicleDialog({
                 placeholder="예: 카니발"
               />
             </FormField>
-            <FormField label="인승">
+            <FormField label="인승" required className="md:col-span-2">
               <Input
                 value={form.passengerCapacity}
                 onChange={(event) =>
@@ -709,7 +941,7 @@ function VehicleDialog({
                 min="1"
               />
             </FormField>
-            <FormField label="차량번호">
+            <FormField label="차량번호" className="md:col-span-3">
               <Input
                 value={form.licensePlate}
                 onChange={(event) =>
@@ -721,10 +953,24 @@ function VehicleDialog({
                 placeholder="예: 12가 3456"
               />
             </FormField>
+            <FormField label="총 주행거리" className="md:col-span-3">
+              <Input
+                value={form.odometerKm}
+                onChange={(event) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    odometerKm: event.target.value,
+                  }))
+                }
+                placeholder="km"
+                type="number"
+                min="0"
+              />
+            </FormField>
           </DialogSection>
 
-          <DialogSection title="운영 상태">
-            <FormField label="상태">
+          <DialogSection title="운영 설정" columns="md:grid-cols-[1fr_1fr]">
+            <FormField label="상태" required>
               <Select
                 value={form.status}
                 onValueChange={(value) =>
@@ -745,47 +991,42 @@ function VehicleDialog({
                 </SelectContent>
               </Select>
             </FormField>
-            <FormField label="총 주행거리">
-              <Input
-                value={form.odometerKm}
-                onChange={(event) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    odometerKm: event.target.value,
-                  }))
-                }
-                placeholder="km"
-                type="number"
-                min="0"
-              />
+            <FormField label="하이패스">
+              <label className="flex h-10 items-center justify-between rounded-md border border-input bg-white px-3 text-sm text-slate-700">
+                <span className="font-medium">
+                  {form.hasHipass ? "있음" : "없음"}
+                </span>
+                <Checkbox
+                  checked={form.hasHipass}
+                  onCheckedChange={(checked) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      hasHipass: checked === true,
+                    }))
+                  }
+                  aria-label="하이패스 여부"
+                />
+              </label>
             </FormField>
-            <label className="flex h-10 items-center gap-2 rounded-md border border-input bg-white px-3 text-sm font-medium text-slate-700">
-              <input
-                type="checkbox"
-                checked={form.hasHipass}
-                onChange={(event) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    hasHipass: event.target.checked,
-                  }))
-                }
-              />
-              하이패스 있음
-            </label>
           </DialogSection>
 
-          <FormField label="메모">
-            <Textarea
-              className="min-h-24"
-              value={form.memo}
-              onChange={(event) =>
-                setForm((prev) => ({ ...prev, memo: event.target.value }))
-              }
-              placeholder="관리 메모"
-            />
-          </FormField>
+          <DialogSection title="메모" columns="grid-cols-1">
+            <FormField label="관리 메모">
+              <Textarea
+                className="min-h-24 resize-none"
+                value={form.memo}
+                onChange={(event) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    memo: event.target.value,
+                  }))
+                }
+                placeholder="정비 일정, 비고 등"
+              />
+            </FormField>
+          </DialogSection>
         </div>
-        <DialogFooter className="border-t border-slate-100 bg-slate-50 px-5 py-4">
+        <DialogFooter className="border-t border-slate-100 bg-slate-50 px-6 py-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             취소
           </Button>
@@ -844,14 +1085,14 @@ function ApplicationDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl gap-0 overflow-hidden p-0">
-        <DialogHeader className="border-b border-slate-100 px-5 py-4">
+        <DialogHeader className="border-b border-slate-100 px-6 py-5">
           <DialogTitle className="text-base font-semibold text-slate-950">
             차량 신청 내용 편집
           </DialogTitle>
         </DialogHeader>
-        <div className="grid max-h-[72vh] gap-5 overflow-y-auto px-5 py-4">
+        <div className="grid max-h-[72vh] gap-5 overflow-y-auto px-6 py-5">
           <DialogSection title="신청자 정보" columns="md:grid-cols-4">
-            <FormField label="신청일">
+            <FormField label="신청일" required>
               <DatePicker
                 value={form.requestDate}
                 className={FORM_PICKER_TRIGGER_CLASS}
@@ -864,7 +1105,7 @@ function ApplicationDialog({
                 }
               />
             </FormField>
-            <FormField label="소속">
+            <FormField label="소속" required>
               <Input
                 value={form.department}
                 onChange={(event) =>
@@ -876,7 +1117,7 @@ function ApplicationDialog({
                 placeholder="소속"
               />
             </FormField>
-            <FormField label="신청자">
+            <FormField label="신청자" required>
               <Input
                 value={form.applicantName}
                 onChange={(event) =>
@@ -903,7 +1144,7 @@ function ApplicationDialog({
           </DialogSection>
 
           <DialogSection title="차량 및 사용 기간" columns="md:grid-cols-4">
-            <FormField label="시작 - 종료" className="md:col-span-4">
+            <FormField label="시작 - 종료" required className="md:col-span-4">
               <DateRangePicker
                 startDate={toDateOnly(form.startAt)}
                 endDate={toDateOnly(form.endAt)}
@@ -912,7 +1153,7 @@ function ApplicationDialog({
                 onChange={updateUseDateRange}
               />
             </FormField>
-            <FormField label="등록 차량">
+            <FormField label="등록 차량" required>
               <Select
                 value={form.vehicleId || DIRECT_VEHICLE_VALUE}
                 onValueChange={selectVehicle}
@@ -932,7 +1173,7 @@ function ApplicationDialog({
                 </SelectContent>
               </Select>
             </FormField>
-            <FormField label="차량종류">
+            <FormField label="차량종류" required>
               <Input
                 value={form.vehicleType}
                 onChange={(event) =>
@@ -944,7 +1185,7 @@ function ApplicationDialog({
                 placeholder="차량종류"
               />
             </FormField>
-            <FormField label="차량이름(인승)">
+            <FormField label="차량이름(인승)" required>
               <Input
                 value={form.vehicleNameSnapshot}
                 onChange={(event) =>
@@ -956,23 +1197,27 @@ function ApplicationDialog({
                 placeholder="차량이름(인승)"
               />
             </FormField>
-            <label className="flex h-10 items-center gap-2 rounded-md border border-input px-3 text-sm font-medium text-slate-700">
-              <input
-                type="checkbox"
-                checked={form.hasHipass}
-                onChange={(event) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    hasHipass: event.target.checked,
-                  }))
-                }
-              />
-              하이패스 있음
-            </label>
+            <FormField label="하이패스">
+              <label className="flex h-10 items-center justify-between rounded-md border border-input bg-white px-3 text-sm text-slate-700">
+                <span className="font-medium">
+                  {form.hasHipass ? "있음" : "없음"}
+                </span>
+                <Checkbox
+                  checked={form.hasHipass}
+                  onCheckedChange={(checked) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      hasHipass: checked === true,
+                    }))
+                  }
+                  aria-label="하이패스 여부"
+                />
+              </label>
+            </FormField>
           </DialogSection>
 
           <DialogSection title="운행 정보" columns="md:grid-cols-4">
-            <FormField label="출발지">
+            <FormField label="출발지" required>
               <Input
                 value={form.departurePlace}
                 onChange={(event) =>
@@ -984,7 +1229,7 @@ function ApplicationDialog({
                 placeholder="출발지"
               />
             </FormField>
-            <FormField label="도착지">
+            <FormField label="도착지" required>
               <Input
                 value={form.arrivalPlace}
                 onChange={(event) =>
@@ -1024,8 +1269,8 @@ function ApplicationDialog({
             </FormField>
           </DialogSection>
 
-          <DialogSection title="처리 정보">
-            <FormField label="승인자">
+          <DialogSection title="처리 정보" columns="md:grid-cols-3">
+            <FormField label="승인자" required>
               <Input
                 value={form.approverName}
                 onChange={(event) =>
@@ -1037,7 +1282,7 @@ function ApplicationDialog({
                 placeholder="승인자"
               />
             </FormField>
-            <FormField label="상태">
+            <FormField label="상태" required>
               <Select
                 value={form.status}
                 onValueChange={(value) =>
@@ -1072,10 +1317,10 @@ function ApplicationDialog({
             </FormField>
           </DialogSection>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <FormField label="사용목적">
+          <DialogSection title="상세 내용" columns="md:grid-cols-2">
+            <FormField label="사용목적" required>
               <Textarea
-                className="min-h-28"
+                className="min-h-28 resize-none"
                 value={form.purpose}
                 onChange={(event) =>
                   setForm((prev) => ({ ...prev, purpose: event.target.value }))
@@ -1085,7 +1330,7 @@ function ApplicationDialog({
             </FormField>
             <FormField label="반려사유">
               <Textarea
-                className="min-h-28"
+                className="min-h-28 resize-none"
                 value={form.rejectReason}
                 onChange={(event) =>
                   setForm((prev) => ({
@@ -1096,9 +1341,9 @@ function ApplicationDialog({
                 placeholder="반려 시 사유"
               />
             </FormField>
-          </div>
+          </DialogSection>
         </div>
-        <DialogFooter className="border-t border-slate-100 bg-slate-50 px-5 py-4">
+        <DialogFooter className="border-t border-slate-100 bg-slate-50 px-6 py-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             취소
           </Button>
@@ -1138,35 +1383,49 @@ function FormField({
   label,
   children,
   className = "",
+  required = false,
 }: {
   label: string;
   children: React.ReactNode;
   className?: string;
+  required?: boolean;
 }) {
   return (
     <label className={`grid gap-1 text-sm ${className}`}>
-      <span className="text-xs font-medium text-slate-500">{label}</span>
+      <span className="text-xs font-medium text-slate-500">
+        {label}
+        {required && <span className="ml-0.5 text-red-500">*</span>}
+      </span>
       {children}
     </label>
   );
 }
 
-function SummaryCard({ label, value }: { label: string; value: string }) {
+function StatusPill({
+  label,
+  status,
+}: {
+  label: string;
+  status: VehicleStatus;
+}) {
   return (
-    <div className="px-4 py-3">
-      <p className="text-xs text-slate-500">{label}</p>
-      <p className="mt-1 text-xl font-semibold text-slate-950">{value}</p>
-    </div>
+    <Badge
+      variant="secondary"
+      className={`px-2 py-1 text-xs font-medium ${getVehicleStatusPillClass(
+        status,
+      )}`}
+    >
+      {label}
+    </Badge>
   );
 }
 
-function StatusPill({ label }: { label: string }) {
-  return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
-      <CarFront className="h-3 w-3" />
-      {label}
-    </span>
-  );
+function getVehicleStatusPillClass(status: VehicleStatus) {
+  if (status === "available") {
+    return "bg-emerald-50 text-emerald-700";
+  }
+
+  return "bg-slate-100 text-slate-700";
 }
 
 function createEmptyVehicleForm(): VehicleForm {
@@ -1227,6 +1486,55 @@ function getVehicleDisplayStatus(
   return hasCurrentUsage ? "in_use" : "available";
 }
 
+function hasApprovedVehicleTimeConflict(
+  applications: VehicleApplication[],
+  target: Pick<
+    VehicleApplication,
+    | "id"
+    | "vehicle_id"
+    | "vehicle_type"
+    | "vehicle_name_snapshot"
+    | "start_at"
+    | "end_at"
+  >,
+) {
+  const targetStart = dayjs(target.start_at);
+  const targetEnd = dayjs(target.end_at);
+  if (!targetStart.isValid() || !targetEnd.isValid()) return false;
+
+  return applications.some((application) => {
+    if (application.id === target.id) return false;
+    if (application.status !== "approved") return false;
+    if (!isSameVehicleApplication(application, target)) return false;
+
+    return (
+      dayjs(application.start_at).isBefore(targetEnd) &&
+      dayjs(application.end_at).isAfter(targetStart)
+    );
+  });
+}
+
+function isSameVehicleApplication(
+  application: Pick<
+    VehicleApplication,
+    "vehicle_id" | "vehicle_type" | "vehicle_name_snapshot"
+  >,
+  target: Pick<
+    VehicleApplication,
+    "vehicle_id" | "vehicle_type" | "vehicle_name_snapshot"
+  >,
+) {
+  if (application.vehicle_id && target.vehicle_id) {
+    return application.vehicle_id === target.vehicle_id;
+  }
+
+  return (
+    application.vehicle_type.trim() === target.vehicle_type.trim() &&
+    application.vehicle_name_snapshot.trim() ===
+      target.vehicle_name_snapshot.trim()
+  );
+}
+
 function toDateTimeLocal(value: string) {
   return dayjs(value).format("YYYY-MM-DDTHH:mm");
 }
@@ -1250,4 +1558,9 @@ function mergeDateWithTime(
 
 function formatPeriod(startAt: string, endAt: string) {
   return `${dayjs(startAt).format("YYYY-MM-DD HH:mm")} ~ ${dayjs(endAt).format("YYYY-MM-DD HH:mm")}`;
+}
+
+function formatNullableKm(value: number | null) {
+  if (value === null || value === undefined) return "-";
+  return `${Number(value).toLocaleString("ko-KR")}km`;
 }

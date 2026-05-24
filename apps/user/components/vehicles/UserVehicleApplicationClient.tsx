@@ -52,6 +52,7 @@ type ApplicationForm = {
   departurePlace: string;
   arrivalPlace: string;
   sharedReferences: string;
+  status: VehicleApplication["status"];
 };
 
 type ReturnForm = {
@@ -60,6 +61,10 @@ type ReturnForm = {
   returnedAt: string;
   memo: string;
 };
+
+type DialogMode =
+  | { type: "create" }
+  | { type: "edit"; application: VehicleApplication };
 
 function createEmptyReturnForm(): ReturnForm {
   return {
@@ -79,6 +84,8 @@ const VEHICLE_LABEL_WIDTH = 152;
 const HEADER_HEIGHT = 38;
 const ROW_HEIGHT = 58;
 const VEHICLE_TIMEZONE = "Asia/Seoul";
+const DEFAULT_VEHICLE_APPROVER_NAME = "P&C팀 윤이나";
+const DEFAULT_VEHICLE_SHARED_REFERENCES = "홍세영";
 
 type DragState =
   | { mode: "idle" }
@@ -93,6 +100,7 @@ export function UserVehicleApplicationClient({
 }) {
   const [data, setData] = useState(initialData);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<DialogMode>({ type: "create" });
   const [selectedDate, setSelectedDate] = useState(() =>
     dayjs().format("YYYY-MM-DD"),
   );
@@ -109,22 +117,26 @@ export function UserVehicleApplicationClient({
     createEmptyReturnForm(),
   );
 
-  const selectedVehicle = data.vehicles.find(
-    (vehicle) => vehicle.id === form.vehicleId,
-  );
   const availableVehicles = data.vehicles.filter(
     (vehicle) => vehicle.status === "available",
   );
+  const selectableVehicles = useMemo(() => {
+    if (dialogMode.type !== "edit") return availableVehicles;
+    const currentVehicle = data.vehicles.find(
+      (vehicle) => vehicle.id === dialogMode.application.vehicle_id,
+    );
+    if (!currentVehicle) return availableVehicles;
+    if (availableVehicles.some((vehicle) => vehicle.id === currentVehicle.id)) {
+      return availableVehicles;
+    }
+    return [currentVehicle, ...availableVehicles];
+  }, [availableVehicles, data.vehicles, dialogMode]);
   const timelineApplications = useMemo(
     () => data.allApplications,
     [data.allApplications],
   );
 
-  useEffect(() => {
-    void refresh(selectedDate);
-  }, [selectedDate]);
-
-  async function refresh(date = selectedDate) {
+  const refresh = useCallback(async (date: string) => {
     const params = new URLSearchParams({
       ts: String(Date.now()),
       date,
@@ -137,28 +149,102 @@ export function UserVehicleApplicationClient({
       throw new Error(payload.error || VEHICLE_LOAD_ERROR_MESSAGE);
     }
     setData(payload);
-  }
+  }, []);
+
+  useEffect(() => {
+    void refresh(selectedDate);
+  }, [refresh, selectedDate]);
 
   async function submitApplication() {
     setIsSubmitting(true);
+    const submittedDate = getDatePart(form.startAt);
     try {
-      const response = await fetch("/api/vehicle-applications", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+      const isEdit = dialogMode.type === "edit";
+      const response = await fetch(
+        isEdit
+          ? `/api/vehicle-applications/${dialogMode.application.id}`
+          : "/api/vehicle-applications",
+        {
+          method: isEdit ? "PATCH" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        },
+      );
       const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || "차량 신청 등록 실패");
-      toast.success("차량 신청을 등록했습니다.");
+      if (!response.ok) {
+        throw new Error(
+          payload.error ||
+            (isEdit ? "차량 신청 수정 실패" : "차량 신청 등록 실패"),
+        );
+      }
+      toast.success(
+        isEdit ? "차량 신청을 수정했습니다." : "차량 신청을 등록했습니다.",
+      );
       setDialogOpen(false);
+      setDialogMode({ type: "create" });
       setForm(createEmptyApplicationForm(data.defaultDepartment));
-      await refresh();
+      setSelectedDate(submittedDate);
+      await refresh(submittedDate);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "차량 신청 등록 실패",
+        error instanceof Error ? error.message : "차량 신청 저장 실패",
       );
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  async function cancelApplication() {
+    if (dialogMode.type !== "edit") return;
+    setIsSubmitting(true);
+    const submittedDate = getDatePart(form.startAt);
+    try {
+      const response = await fetch(
+        `/api/vehicle-applications/${dialogMode.application.id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...form, status: "cancelled" }),
+        },
+      );
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "차량 신청 취소 실패");
+      toast.success("차량 신청을 취소했습니다.");
+      setDialogOpen(false);
+      setDialogMode({ type: "create" });
+      setForm(createEmptyApplicationForm(data.defaultDepartment));
+      await refresh(submittedDate);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "차량 신청 취소 실패",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  function openDialog(vehicleId?: string, startAt?: string, endAt?: string) {
+    setDialogMode({ type: "create" });
+    setForm((prev) => ({
+      ...prev,
+      vehicleId: vehicleId || prev.vehicleId || availableVehicles[0]?.id || "",
+      startAt: startAt || prev.startAt,
+      endAt: endAt || prev.endAt,
+    }));
+    setDialogOpen(true);
+  }
+
+  function openEditDialog(application: VehicleApplication) {
+    setDialogMode({ type: "edit", application });
+    setForm(applicationToForm(application));
+    setDialogOpen(true);
+  }
+
+  function handleDialogOpenChange(open: boolean) {
+    setDialogOpen(open);
+    if (!open) {
+      setDialogMode({ type: "create" });
+      setForm(createEmptyApplicationForm(data.defaultDepartment));
     }
   }
 
@@ -185,7 +271,7 @@ export function UserVehicleApplicationClient({
       setReturnDialogOpen(false);
       setReturnTarget(null);
       setReturnForm(createEmptyReturnForm());
-      await refresh();
+      await refresh(selectedDate);
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "차량 반납 처리 실패",
@@ -193,16 +279,6 @@ export function UserVehicleApplicationClient({
     } finally {
       setIsReturning(false);
     }
-  }
-
-  function openDialog(vehicleId?: string, startAt?: string, endAt?: string) {
-    setForm((prev) => ({
-      ...prev,
-      vehicleId: vehicleId || prev.vehicleId || availableVehicles[0]?.id || "",
-      startAt: startAt || prev.startAt,
-      endAt: endAt || prev.endAt,
-    }));
-    setDialogOpen(true);
   }
 
   function openReturnDialog(application: VehicleApplication) {
@@ -224,6 +300,27 @@ export function UserVehicleApplicationClient({
 
   return (
     <div className="space-y-5">
+      <section className="rounded-2xl bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700">
+        <p>
+          ※ 차량 이용이 필요하신 경우 사용일 1주일 전까지 신청서를 작성해
+          승인을 받아주세요. (회사차량/렌터카/개인차량 동일)
+        </p>
+        <p>
+          차량은 회사차량을 우선적으로 이용해주시고, 차량 내부에 비치된
+          회사차량 사용거리를 꼭 작성해주세요.
+        </p>
+        <p>26.05.18부터 아이오닉은 장기대여로 인해 사용이 어렵습니다.</p>
+        <div className="mt-3">
+          <p>주차는 지하 3층 회사 화물 엘레베이터 쪽을 이용해주세요.</p>
+          <p>
+            전기차 충전 구역(초록색)은 완충 이후 14시간 이상 계속 주차 시
+            과태료가 부과될 수 있으며, 회색칸은 상시 주차 가능합니다.
+          </p>
+        </div>
+        <p className="mt-3">
+          승인권자는 P&C팀 윤이나, 참조자는 홍세영으로 설정해주세요.
+        </p>
+      </section>
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.42fr)]">
         <div className="space-y-4">
           <section className="rounded-2xl bg-white p-4">
@@ -245,6 +342,7 @@ export function UserVehicleApplicationClient({
               onCreateRange={(vehicleId, startAt, endAt) =>
                 openDialog(vehicleId, startAt, endAt)
               }
+              onClickApplication={openEditDialog}
             />
           </section>
 
@@ -267,23 +365,29 @@ export function UserVehicleApplicationClient({
         </section>
       </section>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
         <DialogContent className="max-w-2xl rounded-2xl p-0">
           <DialogHeader>
             <div className="px-5 pt-5">
               <DialogTitle className="text-lg font-semibold text-slate-950">
-                사내 차량 신청
+                {dialogMode.type === "edit" ? "차량 신청 수정" : "사내 차량 신청"}
               </DialogTitle>
               <DialogDescription className="mt-1 text-sm text-slate-500">
-                사용 기간과 차량, 이동 정보를 입력해 신청을 등록합니다.
+                {dialogMode.type === "edit"
+                  ? "신청한 사용 기간과 이동 정보를 수정합니다."
+                  : "사용 기간과 차량, 이동 정보를 입력해 신청을 등록합니다."}
               </DialogDescription>
             </div>
           </DialogHeader>
           <div className="max-h-[72vh] space-y-10 overflow-y-auto px-5 py-4">
-            <section className="grid gap-3 sm:grid-cols-2">
+            <section className="grid gap-3 sm:grid-cols-3">
               <Field label="신청자">
                 <Input
-                  value={userName}
+                  value={
+                    dialogMode.type === "edit"
+                      ? dialogMode.application.applicant_name
+                      : userName
+                  }
                   readOnly
                   aria-label="신청자"
                   className="h-10 bg-white text-slate-600"
@@ -300,6 +404,18 @@ export function UserVehicleApplicationClient({
                   }
                   placeholder="소속"
                   className="h-10 bg-white"
+                />
+              </Field>
+              <Field label="승인권자">
+                <Input
+                  value={
+                    dialogMode.type === "edit"
+                      ? dialogMode.application.approver_name
+                      : DEFAULT_VEHICLE_APPROVER_NAME
+                  }
+                  readOnly
+                  aria-label="승인권자"
+                  className="h-10 bg-white text-slate-600"
                 />
               </Field>
             </section>
@@ -386,7 +502,7 @@ export function UserVehicleApplicationClient({
                   }
                 >
                   <option value="">이용 가능한 차량 선택</option>
-                  {availableVehicles.map((vehicle) => (
+                  {selectableVehicles.map((vehicle) => (
                     <option key={vehicle.id} value={vehicle.id}>
                       {vehicle.vehicle_type} · {formatVehicleName(vehicle)} ·{" "}
                       {vehicle.has_hipass ? "하이패스" : "하이패스 없음"}
@@ -464,14 +580,29 @@ export function UserVehicleApplicationClient({
               </Field>
             </section>
           </div>
-          <DialogFooter className="px-5 pb-5">
+          <DialogFooter className="flex flex-col-reverse gap-2 px-5 pb-5 sm:flex-row sm:flex-wrap sm:justify-end">
             <Button
               onClick={submitApplication}
               disabled={isSubmitting}
               className="h-10 w-full sm:w-auto"
             >
-              신청 등록
+              {dialogMode.type === "edit" ? "수정 저장" : "신청 등록"}
             </Button>
+            {dialogMode.type === "edit" && (
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                {form.status !== "cancelled" && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={cancelApplication}
+                    disabled={isSubmitting}
+                    className="h-10 w-full sm:w-auto"
+                  >
+                    신청 취소
+                  </Button>
+                )}
+              </div>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -556,7 +687,7 @@ export function UserVehicleApplicationClient({
                   className="h-10"
                 />
               </Field>
-              <Field label="메모" className="sm:col-span-2">
+              <Field label="비고" className="sm:col-span-2">
                 <Textarea
                   value={returnForm.memo}
                   onChange={(event) =>
@@ -565,7 +696,7 @@ export function UserVehicleApplicationClient({
                       memo: event.target.value,
                     }))
                   }
-                  placeholder="특이사항이나 전달사항을 입력해주세요."
+                  placeholder="비고나 전달사항을 입력해주세요."
                   className="min-h-24"
                 />
               </Field>
@@ -628,9 +759,13 @@ function ApplicationList({
     );
   }
 
+  const sortedApplications = [...applications].sort(
+    (a, b) => getApplicationSortTime(b) - getApplicationSortTime(a),
+  );
+
   return (
     <div className="mt-3 divide-y divide-slate-100">
-      {applications.map((application) => (
+      {sortedApplications.map((application) => (
         <div key={application.id} className="py-3">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
@@ -690,6 +825,12 @@ function ApplicationList({
   );
 }
 
+function getApplicationSortTime(application: VehicleApplication) {
+  return new Date(
+    application.created_at || application.request_date || application.start_at,
+  ).getTime();
+}
+
 function Field({
   label,
   className = "",
@@ -712,11 +853,13 @@ function VehicleTimeline({
   applications,
   selectedDate,
   onCreateRange,
+  onClickApplication,
 }: {
   vehicles: CompanyVehicle[];
   applications: VehicleApplication[];
   selectedDate: string;
   onCreateRange: (vehicleId: string, startAt: string, endAt: string) => void;
+  onClickApplication: (application: VehicleApplication) => void;
 }) {
   const gridRef = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<DragState>({ mode: "idle" });
@@ -771,6 +914,21 @@ function VehicleTimeline({
       const startSlot = Math.min(drag.startSlot, drag.endSlot);
       const endSlot = Math.max(drag.startSlot, drag.endSlot);
       if (endSlot > startSlot) {
+        if (
+          getOverlappingTimelineApplication(
+            applications,
+            drag.vehicleId,
+            selectedDate,
+            startSlot,
+            endSlot,
+          )
+        ) {
+          toast.warning(
+            "이미 등록된 차량 신청 시간과 겹칩니다. 겹치는 시간을 피해 신청해주세요.",
+          );
+          setDrag({ mode: "idle" });
+          return;
+        }
         onCreateRange(
           drag.vehicleId,
           slotToDateTime(selectedDate, startSlot),
@@ -779,7 +937,7 @@ function VehicleTimeline({
       }
     }
     setDrag({ mode: "idle" });
-  }, [drag, onCreateRange, selectedDate]);
+  }, [applications, drag, onCreateRange, selectedDate]);
 
   return (
     <div
@@ -813,7 +971,9 @@ function VehicleTimeline({
 
         {vehicles.map((vehicle) => {
           const rowApplications = applications.filter(
-            (application) => application.vehicle_id === vehicle.id,
+            (application) =>
+              application.vehicle_id === vehicle.id &&
+              application.status !== "cancelled",
           );
           const isDragTarget =
             drag.mode === "create" && drag.vehicleId === vehicle.id;
@@ -869,6 +1029,7 @@ function VehicleTimeline({
                     key={application.id}
                     application={application}
                     selectedDate={selectedDate}
+                    onClick={onClickApplication}
                   />
                 ))}
               </div>
@@ -899,12 +1060,35 @@ function TimelineSelectionBlock({
   );
 }
 
+function getOverlappingTimelineApplication(
+  applications: VehicleApplication[],
+  vehicleId: string,
+  selectedDate: string,
+  startSlot: number,
+  endSlot: number,
+) {
+  return applications.find((application) => {
+    if (application.vehicle_id !== vehicleId) return false;
+    if (application.status !== "pending" && application.status !== "approved") {
+      return false;
+    }
+    const applicationStartSlot = dateTimeToSlot(
+      application.start_at,
+      selectedDate,
+    );
+    const applicationEndSlot = dateTimeToSlot(application.end_at, selectedDate);
+    return startSlot < applicationEndSlot && endSlot > applicationStartSlot;
+  });
+}
+
 function VehicleApplicationBlock({
   application,
   selectedDate,
+  onClick,
 }: {
   application: VehicleApplication;
   selectedDate: string;
+  onClick: (application: VehicleApplication) => void;
 }) {
   const startSlot = dateTimeToSlot(application.start_at, selectedDate);
   const endSlot = dateTimeToSlot(application.end_at, selectedDate);
@@ -914,25 +1098,44 @@ function VehicleApplicationBlock({
 
   const statusClass =
     application.status === "approved"
-      ? "border-emerald-300 bg-emerald-100 text-emerald-900"
+      ? "border-emerald-300 bg-emerald-50/55 text-emerald-900"
       : application.status === "rejected"
-        ? "border-red-300 bg-red-100 text-red-800"
+        ? "border-red-300 bg-red-50/55 text-red-800"
         : application.status === "cancelled"
-          ? "border-slate-200 bg-slate-100 text-slate-500"
-          : "border-amber-300 bg-amber-100 text-amber-900";
+          ? "border-slate-200 bg-slate-50/55 text-slate-500"
+          : "border-amber-300 bg-amber-50/55 text-amber-900";
 
   return (
-    <div
-      className={`absolute bottom-1 top-1 z-20 overflow-hidden rounded-md border px-2 py-1 text-xs ${statusClass}`}
+    <button
+      type="button"
+      className={`absolute bottom-1 top-1 z-20 overflow-hidden rounded-md border px-2 py-1 text-left text-xs backdrop-blur-[1px] transition hover:border-current/40 focus:outline-none focus:ring-2 focus:ring-slate-400/30 ${statusClass}`}
       style={{
         left: `${(clampedStart / SLOT_COUNT) * 100}%`,
         width: `${((clampedEnd - clampedStart) / SLOT_COUNT) * 100}%`,
       }}
       title={`${application.applicant_name} · ${application.purpose}`}
+      onMouseDown={(event) => event.stopPropagation()}
+      onClick={(event) => {
+        event.stopPropagation();
+        onClick(application);
+      }}
     >
-      <p className="truncate font-semibold">{application.applicant_name}</p>
+      <div className="flex min-w-0 items-center gap-1.5">
+        <p className="min-w-0 truncate font-semibold">
+          {application.applicant_name}
+          {application.department ? (
+            <span className="font-normal opacity-75">
+              {" "}
+              · {application.department}
+            </span>
+          ) : null}
+        </p>
+        <span className="shrink-0 rounded-full bg-white/75 px-1.5 py-0.5 text-[10px] font-semibold leading-none ring-1 ring-current/15">
+          {VEHICLE_APPLICATION_STATUS_LABEL[application.status]}
+        </span>
+      </div>
       <p className="truncate">{application.purpose}</p>
-    </div>
+    </button>
   );
 }
 
@@ -989,7 +1192,23 @@ function createEmptyApplicationForm(
     vehicleId: "",
     departurePlace: "",
     arrivalPlace: "",
-    sharedReferences: "",
+    sharedReferences: DEFAULT_VEHICLE_SHARED_REFERENCES,
+    status: "pending",
+  };
+}
+
+function applicationToForm(application: VehicleApplication): ApplicationForm {
+  return {
+    department: application.department,
+    purpose: application.purpose,
+    passengers: application.passengers ?? "",
+    startAt: dateTimeToLocalInput(application.start_at),
+    endAt: dateTimeToLocalInput(application.end_at),
+    vehicleId: application.vehicle_id ?? "",
+    departurePlace: application.departure_place,
+    arrivalPlace: application.arrival_place,
+    sharedReferences: application.shared_references ?? "",
+    status: application.status,
   };
 }
 
@@ -1036,6 +1255,10 @@ function getDistanceKm(startValue: string, endValue: string) {
 function dateTimeLocalToIso(value: string) {
   if (!value) return "";
   return dayjs(`${value}:00+09:00`).toISOString();
+}
+
+function dateTimeToLocalInput(value: string) {
+  return dayjs(value).tz(VEHICLE_TIMEZONE).format("YYYY-MM-DDTHH:mm");
 }
 
 function canReturnVehicle(application: VehicleApplication) {

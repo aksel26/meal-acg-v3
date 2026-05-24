@@ -144,14 +144,11 @@ export default function AttendanceDesktopView({
                 { label: "근무일", value: `${summary.total_work_days}일` },
                 {
                   label: "총 근무",
-                  value: `${Math.floor(summary.total_work_minutes / 60)}h`,
+                  value: formatSummaryMinutes(summary.total_work_minutes),
                 },
                 {
                   label: "초과근무",
-                  value:
-                    summary.total_overtime_minutes > 0
-                      ? `${Math.floor(summary.total_overtime_minutes / 60)}h ${summary.total_overtime_minutes % 60}m`
-                      : "-",
+                  value: formatSummaryMinutes(summary.total_overtime_minutes),
                 },
                 {
                   label: "조기출근",
@@ -208,6 +205,18 @@ function formatCheckoutTime(isoString: string | null): string {
 function formatLeaveDays(days: number): string {
   if (!Number.isFinite(days)) return "-";
   return `${Number.isInteger(days) ? days : days.toFixed(1)}일`;
+}
+
+function formatSummaryMinutes(minutes: number): string {
+  if (minutes <= 0) return "-";
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return [
+    hours > 0 ? `${hours}시간` : null,
+    remainingMinutes > 0 ? `${remainingMinutes}분` : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
 }
 
 function SelectedDaySummary({

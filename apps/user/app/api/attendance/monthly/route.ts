@@ -95,11 +95,9 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    const workRecords = enrichedRecords.filter(
-      (r) => r.attendance_type === "근무" || r.attendance_type === "외근",
-    );
+    const workRecords = enrichedRecords.filter((r) => Boolean(r.check_in_at));
     const summary = {
-      total_work_days: workRecords.filter((r) => r.check_in_at).length,
+      total_work_days: workRecords.length,
       total_work_minutes: workRecords.reduce(
         (sum, r) => sum + r.work_minutes,
         0,

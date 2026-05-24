@@ -286,7 +286,7 @@ export default function DayoffsPage() {
     return (
       <Badge
         variant="outline"
-        className={cn(colorClass, "border-transparent text-[11px]")}
+        className={cn(colorClass, "border-transparent")}
       >
         {label}
       </Badge>
@@ -309,7 +309,7 @@ export default function DayoffsPage() {
         >
           <Badge
             variant="outline"
-            className="border-transparent bg-green-50 text-[11px] text-green-700 transition-colors hover:bg-green-100"
+            className="border-transparent bg-green-50 text-green-700 transition-colors hover:bg-green-100"
           >
             {label}
           </Badge>
@@ -325,7 +325,7 @@ export default function DayoffsPage() {
       >
         <Badge
           variant="outline"
-          className="border-transparent bg-amber-50 text-[11px] text-amber-700 transition-colors hover:bg-amber-100"
+          className="border-transparent bg-amber-50 text-amber-700 transition-colors hover:bg-amber-100"
         >
           {label}
         </Badge>
@@ -548,14 +548,14 @@ export default function DayoffsPage() {
                     ][date.day()];
                     return (
                       <tr key={record.id} className="hover:bg-slate-50">
-                        <td className="px-3 py-1.5 text-xs text-slate-400">
+                        <td className="px-3 py-1.5 text-slate-400">
                           {index + 1}
                         </td>
                         <td className="px-3 py-1.5 text-slate-600">
                           {date.format("MM-DD")}
                           <span
                             className={cn(
-                              "ml-1 text-xs",
+                              "ml-1",
                               date.day() === 0
                                 ? "text-red-500"
                                 : date.day() === 6
@@ -566,7 +566,7 @@ export default function DayoffsPage() {
                             ({dayOfWeek})
                           </span>
                         </td>
-                        <td className="px-3 py-1.5 text-xs text-slate-500">
+                        <td className="px-3 py-1.5 text-slate-500">
                           {record.created_at
                             ? dayjs(record.created_at).format("MM-DD")
                             : "-"}
@@ -583,11 +583,9 @@ export default function DayoffsPage() {
                           {getLeaveTypeBadge(record)}
                         </td>
                         <td className="px-3 py-1.5 text-slate-600 max-w-[200px] truncate">
-                          <span className="text-xs">
-                            {record.reason || "-"}
-                          </span>
+                          <span>{record.reason || "-"}</span>
                         </td>
-                        <td className="px-3 py-1.5 text-xs text-slate-400">
+                        <td className="px-3 py-1.5 text-slate-400">
                           {record.author?.full_name}
                         </td>
                         <td className="px-3 py-1.5">
@@ -596,14 +594,14 @@ export default function DayoffsPage() {
                         <td className="px-3 py-1.5">
                           <div className="flex items-center gap-2">
                             <button
-                              className="text-xs font-medium text-slate-500 transition-colors hover:text-slate-900"
+                              className="font-medium text-slate-500 transition-colors hover:text-slate-900"
                               onClick={() => handleOpenEdit(record)}
                               title="수정"
                             >
                               수정
                             </button>
                             <button
-                              className="text-xs font-medium text-red-400 transition-colors hover:text-red-600"
+                              className="font-medium text-red-400 transition-colors hover:text-red-600"
                               onClick={() => setDeleteTarget(record.id)}
                               title="삭제"
                             >

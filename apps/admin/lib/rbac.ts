@@ -31,6 +31,7 @@ export const ADMIN_PERMISSIONS = [
   "finance:write",
   "finance:approve",
   "finance:report",
+  "audit:read",
   "settings:read",
   "settings:write",
 ] as const;

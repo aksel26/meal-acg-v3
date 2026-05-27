@@ -16,6 +16,8 @@ export const ADMIN_PERMISSIONS = [
   "organization:read",
   "organization:write",
   "members:write",
+  "members:sensitive:read",
+  "members:sensitive:write",
   "rbac:manage",
   "evaluation:read",
   "evaluation:write",

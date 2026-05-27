@@ -27,39 +27,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // members 테이블에서 사용자 조회
-    const { data: member, error } = await supabase
-      .from("members")
-      .select("id, login_id, password, full_name, role")
-      .eq("login_id", login_id)
-      .single();
+    const { data, error } = await supabase.rpc("authenticate_user", {
+      p_login_id: login_id,
+      p_password: password,
+    });
 
-    if (error || !member) {
+    if (error) {
+      console.error("Authentication error:", error);
+      return NextResponse.json(
+        { success: false, error: "인증 중 오류가 발생했습니다." },
+        { status: 500 },
+      );
+    }
+
+    if (!data || data.length === 0) {
       return NextResponse.json(
         { success: false, error: "아이디 또는 비밀번호가 일치하지 않습니다." },
         { status: 401 }
       );
     }
 
-    // 비밀번호 확인 (평문 비교)
-    if (member.password !== password) {
-      return NextResponse.json(
-        { success: false, error: "아이디 또는 비밀번호가 일치하지 않습니다." },
-        { status: 401 }
-      );
-    }
+    const member = data[0]!;
 
     // 로그인 성공
     const response = NextResponse.json({
       success: true,
       data: {
-        user_id: member.id,
+        user_id: member.user_id,
         full_name: member.full_name,
         role: member.role,
       },
     });
 
-    response.cookies.set(buildSessionCookie(member.id, member.role ?? null));
+    response.cookies.set(buildSessionCookie(member.user_id, member.role ?? null));
 
     return response;
   } catch (error) {

@@ -24,35 +24,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "DB not configured" }, { status: 500 });
     }
 
-    const { data: member, error: fetchError } = await supabase
-      .from("members")
-      .select("password")
-      .eq("id", memberId)
-      .single();
-
-    if (fetchError || !member) {
-      return NextResponse.json(
-        { error: "사용자 정보를 찾을 수 없습니다." },
-        { status: 404 },
-      );
-    }
-
-    if (member.password !== currentPassword) {
-      return NextResponse.json(
-        { error: "현재 비밀번호가 일치하지 않습니다." },
-        { status: 401 },
-      );
-    }
-
-    const { error: updateError } = await supabase
-      .from("members")
-      .update({ password: newPassword })
-      .eq("id", memberId);
+    const { data: changed, error: updateError } = await (supabase as any).rpc(
+      "change_member_password",
+      {
+        p_member_id: memberId,
+        p_current_password: currentPassword,
+        p_new_password: newPassword,
+      },
+    );
 
     if (updateError) {
       return NextResponse.json(
         { error: "비밀번호 변경에 실패했습니다." },
         { status: 500 },
+      );
+    }
+
+    if (!changed) {
+      return NextResponse.json(
+        { error: "현재 비밀번호가 일치하지 않습니다." },
+        { status: 401 },
       );
     }
 

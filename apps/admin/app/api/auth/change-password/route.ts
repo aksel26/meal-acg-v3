@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth";
+import { getAuthErrorStatus, requireAdmin } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,34 +14,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (newPassword.length < 4) {
+      return NextResponse.json(
+        { error: "새 비밀번호는 4자 이상이어야 합니다." },
+        { status: 400 }
+      );
+    }
+
     const supabase = createServiceClient();
 
-    // Verify current password
-    const { data: member, error: fetchError } = await supabase
-      .from("members")
-      .select("password")
-      .eq("id", session.userId)
-      .single();
-
-    if (fetchError || !member) {
-      return NextResponse.json(
-        { error: "사용자 정보를 찾을 수 없습니다." },
-        { status: 404 }
-      );
-    }
-
-    if (member.password !== currentPassword) {
-      return NextResponse.json(
-        { error: "현재 비밀번호가 일치하지 않습니다." },
-        { status: 401 }
-      );
-    }
-
-    // Update password
-    const { error: updateError } = await supabase
-      .from("members")
-      .update({ password: newPassword })
-      .eq("id", session.userId);
+    const { data: changed, error: updateError } = await (supabase as any).rpc(
+      "change_member_password",
+      {
+        p_member_id: session.userId,
+        p_current_password: currentPassword,
+        p_new_password: newPassword,
+      },
+    );
 
     if (updateError) {
       console.error("Password update error:", updateError);
@@ -51,11 +40,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!changed) {
+      return NextResponse.json(
+        { error: "현재 비밀번호가 일치하지 않습니다." },
+        { status: 401 }
+      );
+    }
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Change password error:", error);
-    if (error instanceof Error && error.message === "Unauthorized") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const authStatus = getAuthErrorStatus(error);
+    if (authStatus) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: authStatus });
     }
     return NextResponse.json(
       { error: "비밀번호 변경 중 오류가 발생했습니다." },

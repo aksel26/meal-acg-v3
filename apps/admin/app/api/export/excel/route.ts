@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import { writeAdminAuditLog } from "@/lib/admin-audit";
 import { createServiceClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth";
+import { getAuthErrorStatus, requireAdminPermission } from "@/lib/auth";
 import ExcelJS from "exceljs";
 import type { MonthlyAllowancesJson } from "@/lib/supabase/types";
 
 // GET /api/export/excel - Export data to Excel
 export async function GET(request: NextRequest) {
   try {
-    await requireAdmin();
+    const session = await requireAdminPermission("meal:export");
     const supabase = createServiceClient();
     const searchParams = request.nextUrl.searchParams;
 
@@ -15,6 +16,7 @@ export async function GET(request: NextRequest) {
     const month = parseInt(searchParams.get("month") || (new Date().getMonth() + 1).toString());
     const exportType = searchParams.get("type") || "summary";
     const includeFormulas = searchParams.get("formulas") === "true";
+    const reason = "관리자 식대 엑셀 다운로드";
 
     // Fetch data
     const [statsResult, settingsResult, holidaysResult, mealLogsResult] = await Promise.all([
@@ -45,6 +47,23 @@ export async function GET(request: NextRequest) {
     const settings = settingsResult.data;
     const holidays = holidaysResult.data || [];
     const mealLogs = mealLogsResult.data || [];
+
+    await writeAdminAuditLog({
+      session,
+      request,
+      action: "export.excel",
+      targetType: "meal_logs",
+      targetLabel: "식대 엑셀",
+      riskLevel: exportType === "summary" ? "medium" : "high",
+      reason,
+      metadata: {
+        year,
+        month,
+        exportType,
+        includeFormulas,
+        mealLogCount: mealLogs.length,
+      },
+    });
 
     // Get saved monthly allowance from global_settings
     const monthlyAllowances = settings?.monthly_allowances as MonthlyAllowancesJson | null;
@@ -250,8 +269,9 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Export API error:", error);
-    if (error instanceof Error && error.message === "Unauthorized") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const authStatus = getAuthErrorStatus(error);
+    if (authStatus) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: authStatus });
     }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

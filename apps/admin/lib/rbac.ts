@@ -19,6 +19,7 @@ export const ADMIN_PERMISSIONS = [
   "members:sensitive:read",
   "members:sensitive:write",
   "rbac:manage",
+  "export:bulk",
   "evaluation:read",
   "evaluation:write",
   "evaluation:deploy",

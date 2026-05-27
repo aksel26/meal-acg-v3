@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { writeAdminAuditLog } from "@/lib/admin-audit";
 import { createServiceClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth";
+import { getAuthErrorStatus, requireAdminPermission } from "@/lib/auth";
 import ExcelJS from "exceljs";
 
 const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
@@ -80,7 +81,7 @@ function applyDataStyle(
 // GET /api/export/usage-records - 사용내역 Excel 내보내기
 export async function GET(request: NextRequest) {
   try {
-    await requireAdmin();
+    const session = await requireAdminPermission("meal:export");
     const supabase = createServiceClient();
     const { searchParams } = new URL(request.url);
 
@@ -88,6 +89,7 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get("type");
     const memberId = searchParams.get("member_id");
     const reviewStatus = searchParams.get("review_status");
+    const reason = "사용 내역 엑셀 다운로드";
 
     // 반기 period인 경우 추가 시트용 데이터도 조회
     const range = period ? halfYearToDateRange(period) : null;
@@ -151,6 +153,23 @@ export async function GET(request: NextRequest) {
     }
 
     const records = rawResult.data || [];
+    await writeAdminAuditLog({
+      session,
+      request,
+      action: "export.usage_records",
+      targetType: "usage_records",
+      targetId: memberId || null,
+      targetLabel: memberId ? "개별 사용 내역" : "사용 내역",
+      riskLevel: "high",
+      reason,
+      metadata: {
+        period,
+        type,
+        memberId,
+        reviewStatus,
+        recordCount: records.length,
+      },
+    });
 
     // ── ExcelJS workbook ──
     const workbook = new ExcelJS.Workbook();
@@ -192,8 +211,9 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Usage records export API error:", error);
-    if (error instanceof Error && error.message === "Unauthorized") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const authStatus = getAuthErrorStatus(error);
+    if (authStatus) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: authStatus });
     }
     return NextResponse.json(
       { error: "Internal server error" },

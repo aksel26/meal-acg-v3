@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { writeAdminAuditLog } from "@/lib/admin-audit";
 import { getAuthErrorStatus, requireAdminPermission } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/server";
 import ExcelJS from "exceljs";
@@ -17,13 +18,14 @@ function normalizeDate(dateStr: string): string {
 // GET /api/export/member - 멤버별 엑셀 내보내기 (hmkim.xlsx 형식)
 export async function GET(request: NextRequest) {
   try {
-    await requireAdminPermission("meal:export");
+    const session = await requireAdminPermission("meal:export");
     const supabase = createServiceClient();
     const searchParams = request.nextUrl.searchParams;
 
     const year = parseInt(searchParams.get("year") || new Date().getFullYear().toString());
     const half = searchParams.get("half") || "H1"; // H1: 상반기, H2: 하반기
     const memberId = searchParams.get("memberId");
+    const reason = "단일 직원 식대 내역 다운로드";
 
     // 반기에 따른 월 범위 설정
     const startMonth = half === "H1" ? 1 : 7;
@@ -53,6 +55,18 @@ export async function GET(request: NextRequest) {
     if (memberError || !member) {
       return NextResponse.json({ error: "Member not found" }, { status: 404 });
     }
+
+    await writeAdminAuditLog({
+      session,
+      request,
+      action: "export.member",
+      targetType: "member",
+      targetId: memberId,
+      targetLabel: member.full_name,
+      riskLevel: "medium",
+      reason,
+      metadata: { year, half },
+    });
 
     const holidayMap = new Map<string, string>();
     holidays?.forEach((h) => {

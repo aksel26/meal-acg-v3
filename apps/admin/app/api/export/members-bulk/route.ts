@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { writeAdminAuditLog } from "@/lib/admin-audit";
 import { getAuthErrorStatus, requireAdminPermission } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/server";
 import ExcelJS from "exceljs";
@@ -9,13 +10,14 @@ const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
 // GET /api/export/members-bulk - 전체 멤버 일괄 내보내기 (ZIP)
 export async function GET(request: NextRequest) {
   try {
-    await requireAdminPermission("meal:export");
+    const session = await requireAdminPermission("export:bulk");
     const supabase = createServiceClient();
     const searchParams = request.nextUrl.searchParams;
 
     const year = parseInt(searchParams.get("year") || new Date().getFullYear().toString());
     const half = searchParams.get("half") || "H1"; // H1: 상반기, H2: 하반기
     const memberIds = searchParams.get("memberIds")?.split(",").filter(Boolean);
+    const reason = "직원 식대 내역 일괄 다운로드";
 
     // 반기에 따른 월 범위 설정
     const startMonth = half === "H1" ? 1 : 7;
@@ -45,6 +47,18 @@ export async function GET(request: NextRequest) {
     if (membersError || !members || members.length === 0) {
       return NextResponse.json({ error: "No members found" }, { status: 404 });
     }
+
+    await writeAdminAuditLog({
+      session,
+      request,
+      action: "export.members_bulk",
+      targetType: "member",
+      targetId: memberIds?.length ? memberIds.join(",") : "all",
+      targetLabel: members.length === 1 ? members[0]?.full_name : `${members.length}명`,
+      riskLevel: "high",
+      reason,
+      metadata: { year, half, memberCount: members.length },
+    });
 
     // 멤버 ID 목록으로 meal_logs 조회 (1000개 제한 우회)
     const memberIdList = members.map((m) => m.id);

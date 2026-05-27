@@ -10,7 +10,7 @@ BEGIN
     AND (TG_OP = 'INSERT' OR NEW.password IS DISTINCT FROM OLD.password)
     AND NEW.password !~ '^\$2[aby]\$'
   THEN
-    NEW.password := crypt(NEW.password, gen_salt('bf'));
+    NEW.password := extensions.crypt(NEW.password, extensions.gen_salt('bf'));
   END IF;
 
   RETURN NEW;
@@ -25,7 +25,7 @@ CREATE TRIGGER trg_hash_member_password
   EXECUTE FUNCTION public.hash_member_password();
 
 UPDATE public.members
-SET password = crypt(password, gen_salt('bf'))
+SET password = extensions.crypt(password, extensions.gen_salt('bf'))
 WHERE password IS NOT NULL
   AND password !~ '^\$2[aby]\$';
 
@@ -42,7 +42,7 @@ BEGIN
   SELECT m.id, m.full_name, m.role
   FROM public.members m
   WHERE m.login_id = p_login_id
-    AND m.password = crypt(p_password, m.password);
+    AND m.password = extensions.crypt(p_password, m.password);
 END;
 $$;
 
@@ -61,7 +61,7 @@ BEGIN
   UPDATE public.members
   SET password = p_new_password
   WHERE id = p_member_id
-    AND password = crypt(p_current_password, password);
+    AND password = extensions.crypt(p_current_password, password);
 
   GET DIAGNOSTICS updated_count = ROW_COUNT;
   RETURN updated_count = 1;

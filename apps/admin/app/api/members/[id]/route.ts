@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getAuthErrorStatus, requireAdmin, requireAdminPermission } from "@/lib/auth";
+import { MEMBER_DETAIL_SELECT, assertNoSensitiveMemberFields } from "@/lib/privacy";
 
 // GET /api/members/[id] - Get a single member with team/position info
 export async function GET(
@@ -12,9 +13,8 @@ export async function GET(
     const supabase = createServiceClient();
     const { id } = await params;
 
-    const { data, error } = await supabase
-      .from("members")
-      .select("*, team:teams(name), position:positions(name), division:divisions(name)")
+    const { data, error } = await (supabase.from("members") as any)
+      .select(MEMBER_DETAIL_SELECT)
       .eq("id", id)
       .single();
 
@@ -24,6 +24,8 @@ export async function GET(
       }
       return NextResponse.json({ error: "Failed to fetch member" }, { status: 500 });
     }
+
+    assertNoSensitiveMemberFields(data as Record<string, unknown>);
 
     return NextResponse.json(data);
   } catch (error) {

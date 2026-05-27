@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
 import { applyRoleOverride } from "@/lib/constants";
+import { ORGANIZATION_MEMBER_SELECT } from "@/lib/privacy";
 
 // GET /api/organizations/[id]/tree - Get full organization tree with divisions > teams > members
 export async function GET(
@@ -25,12 +26,12 @@ export async function GET(
           *,
           teams (
             *,
-            members!members_team_id_fkey (id, full_name, member_role, email, birth_date, team_id, division_id, intern_months, position:positions(id, name), title:titles(id, name))
+            members!members_team_id_fkey (${ORGANIZATION_MEMBER_SELECT})
           )
         ),
         teams!teams_organization_id_fkey (
           *,
-          members!members_team_id_fkey (id, full_name, member_role, email, birth_date, team_id, division_id, intern_months, position:positions(id, name), title:titles(id, name))
+          members!members_team_id_fkey (${ORGANIZATION_MEMBER_SELECT})
         )
       `)
       .eq("id", id)
@@ -47,7 +48,7 @@ export async function GET(
     // Fetch members not assigned to any team (including those with no organization_id)
     const { data: unassigned } = await supabase
       .from("members")
-      .select("id, full_name, member_role, email, birth_date, team_id, division_id, intern_months, position:positions(id, name), title:titles(id, name)")
+      .select(ORGANIZATION_MEMBER_SELECT)
       .or(`organization_id.eq.${id},organization_id.is.null`)
       .is("team_id", null)
       .order("full_name");

@@ -194,7 +194,7 @@ export function useUpdateMemberOrg() {
       id: string;
       team_id?: string | null;
       division_id?: string | null;
-      member_role?: "본부장" | "팀장" | "팀원" | "인턴";
+      member_role?: "대표" | "본부장" | "팀장" | "팀원" | "인턴";
       intern_months?: number | null;
     }) => {
       const res = await fetch(`/api/members/${id}`, {

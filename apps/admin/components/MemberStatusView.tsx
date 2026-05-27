@@ -67,7 +67,7 @@ import type {
   MemberStatusType,
 } from "@/lib/supabase/types";
 import { STATUS_COLORS } from "@/lib/constants";
-import { ADMIN_ROLES, USER_AUTHORITIES } from "@/lib/rbac";
+import { ADMIN_ROLES, DEFAULT_ADMIN_ROLE, USER_AUTHORITIES } from "@/lib/rbac";
 
 // ── Constants ──
 
@@ -260,7 +260,7 @@ export default function MemberStatusView({
       memberRole: "팀원",
       internMonths: "",
       role: "user",
-      adminRole: "P&C 일반",
+      adminRole: DEFAULT_ADMIN_ROLE,
       userAuthority: "",
       position_id: "",
       title_id: "",
@@ -435,7 +435,7 @@ export default function MemberStatusView({
       member_role: member?.member_role || row.member_role || "팀원",
       intern_months: member?.intern_months?.toString() || "",
       role: member?.role || "user",
-      admin_role: member?.admin_role || "P&C 일반",
+      admin_role: member?.admin_role || DEFAULT_ADMIN_ROLE,
       user_authority: member?.user_authority || "",
       position_id: row.position_id || "",
       title_id: row.title_id || "",
@@ -598,7 +598,7 @@ export default function MemberStatusView({
     const role = deletingItem.memberRole;
 
     // 팀장/본부장: 재계산 없이 기존 DELETE API 사용
-    if (role === "팀장" || role === "본부장") {
+    if (role === "대표" || role === "팀장" || role === "본부장") {
       deleteMemberMutation.mutate(deletingItem.memberId, { onSuccess });
       return;
     }
@@ -1709,6 +1709,8 @@ export default function MemberStatusView({
                     <SelectValue placeholder="직군 선택" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="대표">대표</SelectItem>
+                    <SelectItem value="팀장">팀장</SelectItem>
                     <SelectItem value="팀원">팀원</SelectItem>
                     <SelectItem value="인턴">인턴</SelectItem>
                   </SelectContent>

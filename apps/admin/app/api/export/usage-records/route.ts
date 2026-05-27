@@ -311,7 +311,7 @@ function buildGuideSheet(
   // P&C팀 식별
   const pncMember = membersData.find(
     (m: any) =>
-      (m.member_role === "팀장" || m.member_role === "본부장") &&
+      (m.member_role === "대표" || m.member_role === "팀장" || m.member_role === "본부장") &&
       (m.team_name?.includes("People & Culture") || m.team_name?.includes("P&C"))
   );
   const pncTeamId = pncMember?.team_id;
@@ -347,7 +347,7 @@ function buildGuideSheet(
     const member = memberById.get(memberId);
     if (!member) return "-";
 
-    if (info.member_role !== "본부장" && info.member_role !== "팀장") return "-";
+    if (info.member_role !== "대표" && info.member_role !== "본부장" && info.member_role !== "팀장") return "-";
 
     const memberCount = member.team_id ? (teamCounts.get(member.team_id) || 1) : 1;
     const isPnC = !!(pncTeamId && member.team_id === pncTeamId);
@@ -422,7 +422,7 @@ function buildGuideSheet(
     const budget = budgetMap.get(memberId) || { activity: 0, welfare: 0 };
 
     // D열: 인원 — 본부장/팀장만 해당 팀 인원수, 팀원/인턴은 "-"
-    const isLeader = info.member_role === "본부장" || info.member_role === "팀장";
+    const isLeader = info.member_role === "대표" || info.member_role === "본부장" || info.member_role === "팀장";
     const teamCount = isLeader ? (teamMemberCount.get(info.team_name || "") || "-") : "-";
 
     row.values = [

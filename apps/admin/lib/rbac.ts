@@ -1,8 +1,10 @@
-export const ADMIN_ROLES = ["대표", "P&C 팀장", "P&C 일반"] as const;
+export const ADMIN_ROLES = ["대표", "팀장", "일반"] as const;
 export const USER_AUTHORITIES = ["팀장/본부장", "팀장"] as const;
 
 export type AdminRole = (typeof ADMIN_ROLES)[number];
 export type UserAuthority = (typeof USER_AUTHORITIES)[number];
+
+export const DEFAULT_ADMIN_ROLE: AdminRole = "일반";
 
 export const ADMIN_PERMISSIONS = [
   "dashboard:read",
@@ -44,11 +46,11 @@ export type AdminPermission = (typeof ADMIN_PERMISSIONS)[number];
 
 const REPRESENTATIVE_PERMISSIONS = ADMIN_PERMISSIONS;
 
-const PNC_LEADER_PERMISSIONS: AdminPermission[] = ADMIN_PERMISSIONS.filter(
+const ADMIN_LEADER_PERMISSIONS: AdminPermission[] = ADMIN_PERMISSIONS.filter(
   (permission) => permission !== "rbac:manage",
 );
 
-const PNC_MEMBER_PERMISSIONS: AdminPermission[] = [
+const ADMIN_MEMBER_PERMISSIONS: AdminPermission[] = [
   "dashboard:read",
   "meal:read",
   "meal:write",
@@ -71,8 +73,8 @@ const PNC_MEMBER_PERMISSIONS: AdminPermission[] = [
 
 export const ADMIN_ROLE_PERMISSIONS: Record<AdminRole, readonly AdminPermission[]> = {
   대표: REPRESENTATIVE_PERMISSIONS,
-  "P&C 팀장": PNC_LEADER_PERMISSIONS,
-  "P&C 일반": PNC_MEMBER_PERMISSIONS,
+  팀장: ADMIN_LEADER_PERMISSIONS,
+  일반: ADMIN_MEMBER_PERMISSIONS,
 };
 
 export function isAdminRole(value: unknown): value is AdminRole {
@@ -87,7 +89,7 @@ export function isUserAuthority(value: unknown): value is UserAuthority {
 }
 
 export function normalizeAdminRole(value: unknown): AdminRole {
-  return isAdminRole(value) ? value : "대표";
+  return isAdminRole(value) ? value : DEFAULT_ADMIN_ROLE;
 }
 
 export function hasAdminPermission(

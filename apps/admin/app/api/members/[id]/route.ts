@@ -3,6 +3,7 @@ import { writeAdminAuditLog } from "@/lib/admin-audit";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getAuthErrorStatus, requireAdminPermission } from "@/lib/auth";
 import { MEMBER_DETAIL_SELECT, assertNoSensitiveMemberFields } from "@/lib/privacy";
+import { DEFAULT_ADMIN_ROLE } from "@/lib/rbac";
 
 const RBAC_FIELDS = ["role", "admin_role", "user_authority"];
 
@@ -88,7 +89,7 @@ export async function PUT(
       updateData.role = body.role;
     }
     if (body.admin_role !== undefined) {
-      updateData.admin_role = body.role === "admin" ? body.admin_role || "P&C 일반" : null;
+      updateData.admin_role = body.role === "admin" ? body.admin_role || DEFAULT_ADMIN_ROLE : null;
     }
     if (body.user_authority !== undefined) {
       updateData.user_authority = body.user_authority || null;

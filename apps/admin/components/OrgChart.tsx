@@ -793,10 +793,11 @@ function addTeamNodes(
   });
 
   const roleOrder: Record<string, number> = {
-    본부장: 0,
-    팀장: 1,
-    팀원: 2,
-    인턴: 3,
+    대표: 0,
+    본부장: 1,
+    팀장: 2,
+    팀원: 3,
+    인턴: 4,
   };
   const sorted = [...filteredMembers].sort(
     (a, b) =>

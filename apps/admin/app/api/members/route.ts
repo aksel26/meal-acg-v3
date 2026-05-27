@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getAuthErrorStatus, requireAdminPermission } from "@/lib/auth";
 import { applyRoleOverride } from "@/lib/constants";
+import { DEFAULT_ADMIN_ROLE } from "@/lib/rbac";
 import {
   MEMBER_DETAIL_SELECT,
   MEMBER_LIST_SELECT,
@@ -104,7 +105,7 @@ export async function POST(request: NextRequest) {
         password,
         full_name: fullName,
         role,
-        admin_role: role === "admin" ? adminRole || "P&C 일반" : null,
+        admin_role: role === "admin" ? adminRole || DEFAULT_ADMIN_ROLE : null,
         user_authority: userAuthority || null,
         email: email || null,
         member_role: memberRole || "팀원",

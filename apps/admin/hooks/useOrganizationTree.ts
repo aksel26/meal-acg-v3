@@ -6,7 +6,7 @@ import { queryKeys } from "@/lib/query-keys";
 export interface OrgMember {
   id: string;
   full_name: string;
-  member_role: "본부장" | "팀장" | "팀원" | "인턴";
+  member_role: "대표" | "본부장" | "팀장" | "팀원" | "인턴";
   email?: string | null;
   birth_date?: string | null;
   team_id: string | null;

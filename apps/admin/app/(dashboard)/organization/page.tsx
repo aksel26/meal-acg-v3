@@ -206,7 +206,7 @@ function TeamSection({
   });
   const members = useMemo(() => {
     const raw = team.members || [];
-    const roleOrder: Record<string, number> = { 본부장: 0, 팀장: 1, 팀원: 2, 인턴: 3 };
+    const roleOrder: Record<string, number> = { 대표: 0, 본부장: 1, 팀장: 2, 팀원: 3, 인턴: 4 };
     return [...raw].sort(
       (a, b) => (roleOrder[a.member_role] ?? 9) - (roleOrder[b.member_role] ?? 9),
     );
@@ -608,7 +608,7 @@ function OrganizationEditor({ onBack }: { onBack: () => void }) {
           {
             id: dialogMode.member.id,
             team_id: editTeamId,
-            member_role: (formRole as "본부장" | "팀장" | "팀원" | "인턴") || "팀원",
+            member_role: (formRole as "대표" | "본부장" | "팀장" | "팀원" | "인턴") || "팀원",
             intern_months: internMonths,
           },
           { onSuccess: closeDialog }
@@ -969,6 +969,7 @@ function OrganizationEditor({ onBack }: { onBack: () => void }) {
                       <SelectValue placeholder="역할 선택" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="대표">대표</SelectItem>
                       <SelectItem value="팀원">팀원</SelectItem>
                       <SelectItem value="인턴">인턴</SelectItem>
                       <SelectItem value="팀장">팀장</SelectItem>

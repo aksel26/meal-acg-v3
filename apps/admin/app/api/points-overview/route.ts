@@ -155,9 +155,9 @@ export async function GET(request: NextRequest) {
     const members = Array.from(memberMap.values())
       .filter((m) => !HIDDEN_MEMBER_NAMES.has(m.member_name))
       .sort((a, b) => {
-        const roleOrder: Record<string, number> = { "본부장": 0, "팀장": 1, "팀원": 2 };
-        const ra = roleOrder[a.member_role] ?? 3;
-        const rb = roleOrder[b.member_role] ?? 3;
+        const roleOrder: Record<string, number> = { 대표: 0, 본부장: 1, 팀장: 2, 팀원: 3 };
+        const ra = roleOrder[a.member_role] ?? 4;
+        const rb = roleOrder[b.member_role] ?? 4;
         if (ra !== rb) return ra - rb;
         return a.member_name.localeCompare(b.member_name, "ko");
       });

@@ -855,3 +855,14 @@ INSERT INTO work.events (
 ON CONFLICT (id) DO UPDATE SET
   before = EXCLUDED.before,
   after = EXCLUDED.after;
+
+-- 어드민 권한 등급은 조직 직책/직급과 별도이며, 빈 값은 최소 권한으로 정규화한다.
+UPDATE members
+SET admin_role = '일반'
+WHERE role = 'admin'
+  AND admin_role IS NULL;
+
+UPDATE members
+SET admin_role = '대표',
+    member_role = '대표'
+WHERE login_id = 'admin';

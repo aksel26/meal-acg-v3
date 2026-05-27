@@ -2079,7 +2079,7 @@ export type Database = {
     }
     Enums: {
       budget_type: "복지포인트" | "활동비"
-      member_role: "본부장" | "팀장" | "팀원" | "인턴"
+      member_role: "대표" | "본부장" | "팀장" | "팀원" | "인턴"
       member_status_type:
         | "육아휴직"
         | "병가"
@@ -2218,7 +2218,7 @@ export const Constants = {
   public: {
     Enums: {
       budget_type: ["복지포인트", "활동비"],
-      member_role: ["본부장", "팀장", "팀원", "인턴"],
+      member_role: ["대표", "본부장", "팀장", "팀원", "인턴"],
       member_status_type: [
         "육아휴직",
         "병가",
@@ -2306,7 +2306,7 @@ export interface AuthSession {
   userId: string
   fullName: string
   role: "user" | "admin"
-  adminRole?: "대표" | "P&C 팀장" | "P&C 일반" | null
+  adminRole?: "대표" | "팀장" | "일반" | null
   userAuthority?: "팀장/본부장" | "팀장" | null
   hireDate?: string | null
 }

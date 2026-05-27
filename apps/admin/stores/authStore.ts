@@ -5,7 +5,7 @@ export interface User {
   id: string;
   fullName: string;
   role: "user" | "admin";
-  adminRole?: "대표" | "P&C 팀장" | "P&C 일반" | null;
+  adminRole?: "대표" | "팀장" | "일반" | null;
   userAuthority?: "팀장/본부장" | "팀장" | null;
   hireDate?: string | null;
 }

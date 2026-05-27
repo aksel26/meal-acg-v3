@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
         .from("members")
         .select("id")
         .eq("team_id", member.team_id)
-        .in("member_role", ["팀장", "본부장"])
+        .in("member_role", ["대표", "팀장", "본부장"])
         .neq("id", member_id)
         .limit(1)
         .single();
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
         .from("members")
         .select("id")
         .in("team_id", pncTeamIds)
-        .in("member_role", ["팀장", "본부장"])
+        .in("member_role", ["대표", "팀장", "본부장"])
         .limit(1)
         .single();
 

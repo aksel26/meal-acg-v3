@@ -205,7 +205,7 @@ export default function BudgetPage() {
   const leaderMembers = useMemo(() => {
     if (!members) return [];
     return members.filter(
-      (m) => m.member_role === "팀장" || m.member_role === "본부장",
+      (m) => m.member_role === "대표" || m.member_role === "팀장" || m.member_role === "본부장",
     );
   }, [members]);
 

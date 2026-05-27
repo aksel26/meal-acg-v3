@@ -39,6 +39,7 @@ import {
   PackageSearch,
   ReceiptText,
   CarFront,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import { Button } from "@repo/ui/src/button";
@@ -168,6 +169,7 @@ const navigation: NavigationItem[] = [
     name: "설정",
     icon: Cog,
     items: [
+      { name: "감사 로그", href: "/admin-audit-logs", icon: ShieldCheck, permission: "audit:read" },
       { name: "공휴일 관리", href: "/holidays", icon: CalendarDays, permission: "settings:write" },
       { name: "휴가 유형 관리", href: "/leave-types", icon: CalendarClock, permission: "settings:write" },
     ],

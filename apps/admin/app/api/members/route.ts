@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
-import { getAuthErrorStatus, requireAdmin, requireAdminPermission } from "@/lib/auth";
+import { getAuthErrorStatus, requireAdminPermission } from "@/lib/auth";
 import { applyRoleOverride } from "@/lib/constants";
 import {
   MEMBER_DETAIL_SELECT,
@@ -11,7 +11,7 @@ import {
 // GET /api/members - List all members
 export async function GET(request: NextRequest) {
   try {
-    await requireAdmin();
+    await requireAdminPermission("members:read");
     const supabase = createServiceClient();
     const { searchParams } = new URL(request.url);
     const excludeStatus = searchParams.get("exclude_status");

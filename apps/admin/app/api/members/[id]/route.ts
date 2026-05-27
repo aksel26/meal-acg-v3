@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { writeAdminAuditLog } from "@/lib/admin-audit";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getAuthErrorStatus, requireAdminPermission } from "@/lib/auth";
 import { MEMBER_DETAIL_SELECT, assertNoSensitiveMemberFields } from "@/lib/privacy";
+
+const RBAC_FIELDS = ["role", "admin_role", "user_authority"];
 
 // GET /api/members/[id] - Get a single member with team/position info
 export async function GET(
@@ -9,7 +12,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAdminPermission("members:write");
+    await requireAdminPermission("members:read");
     const supabase = createServiceClient();
     const { id } = await params;
 
@@ -43,10 +46,13 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAdminPermission("members:write");
     const supabase = createServiceClient();
     const { id } = await params;
     const body = await request.json();
+    const changesRbacFields = RBAC_FIELDS.some((field) => body[field] !== undefined);
+    const session = await requireAdminPermission(
+      changesRbacFields ? "rbac:manage" : "members:write",
+    );
 
     if (!id) {
       return NextResponse.json({ error: "Member ID is required" }, { status: 400 });
@@ -116,6 +122,22 @@ export async function PUT(
     }
 
     assertNoSensitiveMemberFields(data as Record<string, unknown>);
+
+    if (changesRbacFields) {
+      await writeAdminAuditLog({
+        session,
+        request,
+        action: "member.permission_update",
+        targetType: "member",
+        targetId: id,
+        targetLabel: data.full_name,
+        riskLevel: "high",
+        reason: "관리자 권한 정보 변경",
+        metadata: {
+          changedFields: RBAC_FIELDS.filter((field) => field in updateData),
+        },
+      });
+    }
 
     return NextResponse.json(data);
   } catch (error) {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
-import { getAuthErrorStatus, requireAdmin, requireAdminPermission } from "@/lib/auth";
+import { getAuthErrorStatus, requireAdminPermission } from "@/lib/auth";
 import { MEMBER_DETAIL_SELECT, assertNoSensitiveMemberFields } from "@/lib/privacy";
 
 // GET /api/members/[id] - Get a single member with team/position info
@@ -43,7 +43,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAdmin();
+    await requireAdminPermission("members:write");
     const supabase = createServiceClient();
     const { id } = await params;
     const body = await request.json();
@@ -98,11 +98,10 @@ export async function PUT(
       return NextResponse.json({ error: "No fields to update" }, { status: 400 });
     }
 
-    const { data, error } = await supabase
-      .from("members")
+    const { data, error } = await (supabase.from("members") as any)
       .update(updateData)
       .eq("id", id)
-      .select()
+      .select(MEMBER_DETAIL_SELECT)
       .single();
 
     if (error) {
@@ -115,6 +114,8 @@ export async function PUT(
       }
       return NextResponse.json({ error: "Failed to update member" }, { status: 500 });
     }
+
+    assertNoSensitiveMemberFields(data as Record<string, unknown>);
 
     return NextResponse.json(data);
   } catch (error) {

@@ -23,6 +23,7 @@ export const MEMBER_DETAIL_SELECT = [
   "admin_role",
   "user_authority",
   "member_role",
+  "hire_date",
   "email",
   "team_id",
   "division_id",

@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getAuthErrorStatus, requireAdmin, requireAdminPermission } from "@/lib/auth";
 import { applyRoleOverride } from "@/lib/constants";
-import { MEMBER_LIST_SELECT, assertNoSensitiveMemberFields } from "@/lib/privacy";
+import {
+  MEMBER_DETAIL_SELECT,
+  MEMBER_LIST_SELECT,
+  assertNoSensitiveMemberFields,
+} from "@/lib/privacy";
 
 // GET /api/members - List all members
 export async function GET(request: NextRequest) {
@@ -94,8 +98,7 @@ export async function POST(request: NextRequest) {
       .eq("id", session.userId)
       .single();
 
-    const { data, error } = await supabase
-      .from("members")
+    const { data, error } = await (supabase.from("members") as any)
       .insert({
         login_id: loginId,
         password,
@@ -113,7 +116,7 @@ export async function POST(request: NextRequest) {
         phone: phone || null,
         passport_number: passportNumber || null,
       })
-      .select()
+      .select(MEMBER_DETAIL_SELECT)
       .single();
 
     if (error) {
@@ -137,6 +140,8 @@ export async function POST(request: NextRequest) {
         console.error(`Error creating ${type} allocation:`, allocError);
       }
     }
+
+    assertNoSensitiveMemberFields(data as Record<string, unknown>);
 
     return NextResponse.json(data, { status: 201 });
   } catch (error) {

@@ -30,6 +30,7 @@ const STATUS_CLASS: Record<string, string> = {
   approved: "border-emerald-200 bg-emerald-50 text-emerald-700",
   rejected: "border-red-200 bg-red-50 text-red-700",
 };
+const actionIconClass = "mr-1 h-3.5 w-3.5 shrink-0";
 
 export default function WorkApplicationsAdminPage() {
   const [status, setStatus] = useState("all");
@@ -370,7 +371,7 @@ function ActionButtons({
     return (
       <div className="flex justify-end">
         <Button size="sm" variant="outline" onClick={onReopen} disabled={isPending}>
-          <Clock className="mr-1 h-4 w-4" />
+          <Clock className={actionIconClass} />
           대기로
         </Button>
       </div>
@@ -380,11 +381,11 @@ function ActionButtons({
   return (
     <div className="flex justify-end gap-2">
       <Button size="sm" variant="outline" onClick={onReject} disabled={isPending}>
-        <X className="mr-1 h-4 w-4" />
+        <X className={actionIconClass} />
         반려
       </Button>
       <Button size="sm" onClick={onApprove} disabled={isPending}>
-        <Check className="mr-1 h-4 w-4" />
+        <Check className={actionIconClass} />
         승인
       </Button>
     </div>

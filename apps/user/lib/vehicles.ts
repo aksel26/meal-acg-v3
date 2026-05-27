@@ -62,6 +62,7 @@ export interface VehicleUserState {
 
 export const VEHICLE_LOAD_ERROR_MESSAGE = "차량 정보를 불러오지 못했습니다.";
 const VEHICLE_TIMEZONE_OFFSET = "+09:00";
+const TIMEZONE_PATTERN = /(Z|[+-]\d{2}:\d{2})$/;
 
 export const VEHICLE_STATUS_LABEL: Record<VehicleStatus, string> = {
   available: "이용 가능",
@@ -99,7 +100,7 @@ export function formatVehicleName(vehicle: {
 
 export async function listVehiclesForUser(
   session: SessionUser,
-  selectedDate = new Date().toISOString().slice(0, 10),
+  selectedDate = getVehicleTodayDate(),
 ): Promise<VehicleUserState> {
   const supabase = createServiceClient();
   if (!supabase) throw new Error("데이터베이스 연결 오류");
@@ -176,21 +177,39 @@ export function assertVehicleApplicationPayload(body: unknown) {
   if (!departurePlace || !arrivalPlace) {
     throw new Error("출발지와 도착지를 입력해주세요.");
   }
-  if (new Date(endAt).getTime() <= new Date(startAt).getTime()) {
+  const normalizedStartAt = normalizeVehicleDateTime(startAt);
+  const normalizedEndAt = normalizeVehicleDateTime(endAt);
+
+  if (
+    new Date(normalizedEndAt).getTime() <=
+    new Date(normalizedStartAt).getTime()
+  ) {
     throw new Error("반납 일시는 출발 일시 이후여야 합니다.");
   }
 
   return {
     department,
     purpose,
-    startAt,
-    endAt,
+    startAt: normalizedStartAt,
+    endAt: normalizedEndAt,
     vehicleId,
     departurePlace,
     arrivalPlace,
     passengers: normalizeText(record.passengers) || null,
     sharedReferences: normalizeText(record.sharedReferences) || null,
   };
+}
+
+function normalizeVehicleDateTime(value: string) {
+  if (TIMEZONE_PATTERN.test(value)) return value;
+  const valueWithSeconds = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)
+    ? `${value}:00`
+    : value;
+  return `${valueWithSeconds}${VEHICLE_TIMEZONE_OFFSET}`;
+}
+
+function getVehicleTodayDate() {
+  return new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
 
 export function assertVehicleReturnPayload(body: unknown) {

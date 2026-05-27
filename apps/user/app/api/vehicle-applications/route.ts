@@ -6,6 +6,10 @@ import {
 } from "@/lib/vehicles";
 import { createServiceClient } from "@/lib/supabase/client";
 
+const VEHICLE_OVERLAP_MESSAGE =
+  "이미 등록된 차량 신청 시간과 겹칩니다. 겹치는 시간을 피해 신청해주세요.";
+const DEFAULT_VEHICLE_APPROVER_NAME = "P&C팀 윤이나";
+
 export async function POST(request: NextRequest) {
   try {
     const session = await requireAuth();
@@ -44,7 +48,7 @@ export async function POST(request: NextRequest) {
 
     if (overlapped?.length) {
       return NextResponse.json(
-        { error: "선택한 기간에 이미 차량 신청이 있습니다." },
+        { error: VEHICLE_OVERLAP_MESSAGE },
         { status: 409 },
       );
     }
@@ -63,7 +67,7 @@ export async function POST(request: NextRequest) {
         vehicle_id: vehicle.id,
         vehicle_name_snapshot: formatVehicleName(vehicle),
         has_hipass: vehicle.has_hipass,
-        approver_name: "윤이나",
+        approver_name: DEFAULT_VEHICLE_APPROVER_NAME,
         departure_place: payload.departurePlace,
         arrival_place: payload.arrivalPlace,
         shared_references: payload.sharedReferences,

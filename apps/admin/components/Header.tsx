@@ -76,6 +76,10 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
     title: "개인 사물함 관리",
     subtitle: "사물함 위치, 배정 현황, 사용자 요청을 처리합니다.",
   },
+  "/vehicles": {
+    title: "사내 차량관리",
+    subtitle: "차량 등록 현황과 신청 내역을 관리합니다.",
+  },
   "/dayoffs": {
     title: "연차 관리",
     subtitle: "연차 등록, 승인, 통계를 관리합니다",
@@ -112,6 +116,10 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
     title: "근무 신청 관리",
     subtitle:
       "시간외·주말근무 신청의 팀별 진행 내역과 전체 인원 내역을 조회합니다.",
+  },
+  "/approvals": {
+    title: "승인 관리",
+    subtitle: "대기 건을 우선 처리하고 완료/반려 이력을 확인합니다.",
   },
 };
 

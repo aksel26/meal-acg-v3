@@ -3,18 +3,16 @@
 import { useMemo, useState } from "react";
 import {
   ArrowRight,
+  ChevronDown,
   Check,
-  CheckCircle2,
-  Clock,
   FileText,
-  ListChecks,
-  TimerReset,
+  Filter,
   Undo2,
   X,
-  XCircle,
 } from "lucide-react";
 import dayjs from "dayjs";
 import { Button } from "@repo/ui/src/button";
+import { Checkbox } from "@repo/ui/src/checkbox";
 import { Textarea } from "@repo/ui/src/textarea";
 import {
   Dialog,
@@ -23,6 +21,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@repo/ui/src/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@repo/ui/src/popover";
 import {
   useApprovals,
   useApproveRequest,
@@ -37,16 +40,16 @@ import {
 } from "@/hooks/useEarlyLeaveRequests";
 
 type TabStatus = "all" | "pending" | "approved" | "rejected";
+type ApprovalStatusFilter = Exclude<TabStatus, "all">;
 type Category = "leave" | "early_leave";
 
-const TABS: { key: TabStatus; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-  { key: "all", label: "전체", icon: FileText },
-  { key: "pending", label: "대기", icon: Clock },
-  { key: "approved", label: "승인", icon: CheckCircle2 },
-  { key: "rejected", label: "반려", icon: XCircle },
+const STATUS_FILTERS: { key: ApprovalStatusFilter; label: string }[] = [
+  { key: "pending", label: "대기" },
+  { key: "approved", label: "승인" },
+  { key: "rejected", label: "반려" },
 ];
 
-const CATEGORY_TABS: { key: Category; label: string; description: string }[] = [
+const CATEGORY_FILTERS: { key: Category; label: string; description: string }[] = [
   { key: "leave", label: "휴가/초과근무", description: "일반 승인 요청" },
   { key: "early_leave", label: "조기퇴근", description: "가승인 후 최종승인" },
 ];
@@ -77,16 +80,24 @@ const STATUS_BADGE: Record<string, { label: string; className: string; dotClassN
 const TYPE_LABEL: Record<string, string> = {
   leave: "휴가",
   overtime: "초과근무",
+  weekend: "주말근무",
 };
 
 export default function ApprovalsPage() {
-  const [category, setCategory] = useState<Category>("leave");
-  const [activeTab, setActiveTab] = useState<TabStatus>("pending");
+  const [categoryFilters, setCategoryFilters] = useState<Category[]>([
+    "leave",
+    "early_leave",
+  ]);
+  const [statusFilters, setStatusFilters] = useState<ApprovalStatusFilter[]>([
+    "pending",
+    "approved",
+    "rejected",
+  ]);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectTarget, setRejectTarget] = useState<{ id: string; category: Category } | null>(null);
   const [rejectReason, setRejectReason] = useState("");
 
-  const { data: approvals, isLoading } = useApprovals(activeTab === "all" ? undefined : activeTab);
+  const { data: approvals, isLoading } = useApprovals();
   const approveMutation = useApproveRequest();
   const cancelApprovalMutation = useCancelApprovalRequest();
   const rejectMutation = useRejectRequest();
@@ -94,31 +105,47 @@ export default function ApprovalsPage() {
   const { data: earlyLeaveRequests, isLoading: elLoading } = useEarlyLeaveRequests();
   const earlyLeaveMutation = useUpdateEarlyLeaveStatus();
 
+  const filteredApprovals = useMemo(() => {
+    return (approvals || []).filter((approval) =>
+      statusFilters.includes(approval.status as ApprovalStatusFilter),
+    );
+  }, [approvals, statusFilters]);
+
   const filteredEarlyLeave = useMemo(() => {
     return (earlyLeaveRequests || []).filter((request) => {
-      if (activeTab === "all") return true;
-      if (activeTab === "pending") {
-        return request.approval_status === "pending" || request.approval_status === "pre_approved";
+      if (statusFilters.includes("pending")) {
+        if (request.approval_status === "pending" || request.approval_status === "pre_approved") {
+          return true;
+        }
       }
-      if (activeTab === "approved") return request.approval_status === "approved";
-      return request.approval_status === "rejected";
+      if (statusFilters.includes("approved") && request.approval_status === "approved") return true;
+      if (statusFilters.includes("rejected") && request.approval_status === "rejected") return true;
+      return false;
     });
-  }, [activeTab, earlyLeaveRequests]);
+  }, [earlyLeaveRequests, statusFilters]);
 
-  const earlyLeaveSummary = useMemo(() => {
-    const requests = earlyLeaveRequests || [];
-    return {
-      pending: requests.filter((request) => request.approval_status === "pending").length,
-      preApproved: requests.filter((request) => request.approval_status === "pre_approved").length,
-      approved: requests.filter((request) => request.approval_status === "approved").length,
-      rejected: requests.filter((request) => request.approval_status === "rejected").length,
-    };
-  }, [earlyLeaveRequests]);
+  const showApprovals = categoryFilters.includes("leave");
+  const showEarlyLeave = categoryFilters.includes("early_leave");
+  const currentItemCount =
+    (showApprovals ? filteredApprovals.length : 0) +
+    (showEarlyLeave ? filteredEarlyLeave.length : 0);
+  const isCurrentLoading = (showApprovals && isLoading) || (showEarlyLeave && elLoading);
 
-  const currentItems = category === "leave" ? approvals || [] : filteredEarlyLeave;
-  const isCurrentLoading = category === "leave" ? isLoading : elLoading;
-  const pendingWorkCount =
-    category === "leave" ? currentItems.length : earlyLeaveSummary.pending + earlyLeaveSummary.preApproved;
+  function toggleStatusFilter(status: ApprovalStatusFilter) {
+    setStatusFilters((prev) =>
+      prev.includes(status)
+        ? prev.filter((item) => item !== status)
+        : [...prev, status],
+    );
+  }
+
+  function toggleCategoryFilter(category: Category) {
+    setCategoryFilters((prev) =>
+      prev.includes(category)
+        ? prev.filter((item) => item !== category)
+        : [...prev, category],
+    );
+  }
 
   const openRejectDialog = (id: string, targetCategory: Category) => {
     setRejectTarget({ id, category: targetCategory });
@@ -149,122 +176,56 @@ export default function ApprovalsPage() {
   };
 
   return (
-    <div className="space-y-5">
-      <section className="rounded-xl border border-slate-200 bg-white">
-        <div className="flex flex-col gap-4 border-b border-slate-100 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
+    <div className="space-y-4">
+      <section className="overflow-hidden rounded-xl bg-white">
+        <div className="flex flex-col gap-4 bg-slate-50/70 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h1 className="text-xl font-bold text-slate-900">승인 관리</h1>
-            <p className="mt-1 text-sm text-slate-500">
-              대기 건을 우선 처리하고 완료/반려 이력을 확인합니다.
+            <p className="text-xs font-medium text-slate-400">총 건수</p>
+            <p className="mt-1 text-3xl font-bold leading-none text-slate-950">
+              {currentItemCount}
+              <span className="ml-1 text-lg font-semibold">건</span>
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 sm:flex">
-            <SummaryPill label="현재 목록" value={currentItems.length} />
-            <SummaryPill label="처리 대기" value={pendingWorkCount} tone="amber" />
-            <SummaryPill
-              label="가승인"
-              value={category === "early_leave" ? earlyLeaveSummary.preApproved : 0}
-              tone="blue"
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <ApprovalFilterDropdown
+              statusFilters={statusFilters}
+              categoryFilters={categoryFilters}
+              onToggleStatus={toggleStatusFilter}
+              onToggleCategory={toggleCategoryFilter}
             />
           </div>
         </div>
 
-        <div className="grid gap-3 px-5 py-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-center">
-          <div className="grid grid-cols-4 rounded-lg border border-slate-200 bg-slate-50 p-1">
-            {TABS.map((tab) => (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setActiveTab(tab.key)}
-                className={`flex min-h-10 items-center justify-center gap-1.5 rounded-md px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 ${
-                  activeTab === tab.key
-                    ? "bg-white text-slate-900 shadow-sm"
-                    : "text-slate-500 hover:text-slate-800"
-                }`}
-              >
-                <tab.icon className="h-4 w-4" />
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-2 rounded-lg border border-slate-200 bg-white p-1">
-            {CATEGORY_TABS.map((tab) => {
-              const isSelected = category === tab.key;
-              const count =
-                tab.key === "leave"
-                  ? category === "leave"
-                    ? currentItems.length
-                    : undefined
-                  : earlyLeaveSummary.pending + earlyLeaveSummary.preApproved;
-
-              return (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => setCategory(tab.key)}
-                  className={`flex min-h-10 items-center justify-center gap-1.5 rounded-md px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 ${
-                    isSelected
-                      ? "bg-slate-900 text-white"
-                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
-                  }`}
-                >
-                  <span>{tab.label}</span>
-                  {typeof count === "number" && count > 0 && (
-                    <span
-                      className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold ${
-                        isSelected ? "bg-white text-slate-900" : "bg-amber-100 text-amber-700"
-                      }`}
-                    >
-                      {count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      <section className="rounded-xl border border-slate-200 bg-white">
-        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3">
-          <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-            {category === "leave" ? (
-              <ListChecks className="h-4 w-4 text-slate-500" />
-            ) : (
-              <TimerReset className="h-4 w-4 text-slate-500" />
-            )}
-            {CATEGORY_TABS.find((tab) => tab.key === category)?.label} ·{" "}
-            {TABS.find((tab) => tab.key === activeTab)?.label}
-          </div>
-          <span className="text-xs text-slate-400">총 {currentItems.length}건</span>
-        </div>
-
         {isCurrentLoading ? (
           <LoadingState />
-        ) : currentItems.length === 0 ? (
-          <EmptyState activeTab={activeTab} />
-        ) : category === "leave" ? (
-          <ApprovalsTable
-            approvals={approvals || []}
-            activeTab={activeTab}
-            showActions={activeTab === "pending"}
-            cancelActionLabel={
-              activeTab === "approved" ? "승인 취소" : activeTab === "rejected" ? "반려 취소" : null
-            }
-            onApprove={(id) => approveMutation.mutate({ id })}
-            onCancel={(id) => cancelApprovalMutation.mutate({ id })}
-            onReject={(id) => openRejectDialog(id, "leave")}
-            isPending={approveMutation.isPending || rejectMutation.isPending || cancelApprovalMutation.isPending}
-          />
+        ) : currentItemCount === 0 ? (
+          <EmptyState />
         ) : (
-          <EarlyLeaveTable
-            requests={filteredEarlyLeave}
-            onAction={(id, action) => earlyLeaveMutation.mutate({ id, action })}
-            onReject={(id) => openRejectDialog(id, "early_leave")}
-            isPending={earlyLeaveMutation.isPending}
-          />
+          <>
+            {showApprovals && filteredApprovals.length > 0 && (
+              <ApprovalsTable
+                approvals={filteredApprovals}
+                activeTab="all"
+                showActions={false}
+                cancelActionLabel={null}
+                onApprove={(id) => approveMutation.mutate({ id })}
+                onCancel={(id) => cancelApprovalMutation.mutate({ id })}
+                onReject={(id) => openRejectDialog(id, "leave")}
+                isPending={approveMutation.isPending || rejectMutation.isPending || cancelApprovalMutation.isPending}
+              />
+            )}
+            {showEarlyLeave && filteredEarlyLeave.length > 0 && (
+              <div className={showApprovals && filteredApprovals.length > 0 ? "border-t border-slate-100" : ""}>
+                <EarlyLeaveTable
+                  requests={filteredEarlyLeave}
+                  onAction={(id, action) => earlyLeaveMutation.mutate({ id, action })}
+                  onReject={(id) => openRejectDialog(id, "early_leave")}
+                  isPending={earlyLeaveMutation.isPending}
+                />
+              </div>
+            )}
+          </>
         )}
       </section>
 
@@ -297,26 +258,98 @@ export default function ApprovalsPage() {
   );
 }
 
-function SummaryPill({
-  label,
-  value,
-  tone = "slate",
+function ApprovalFilterDropdown({
+  statusFilters,
+  categoryFilters,
+  onToggleStatus,
+  onToggleCategory,
 }: {
-  label: string;
-  value: number;
-  tone?: "slate" | "amber" | "blue";
+  statusFilters: ApprovalStatusFilter[];
+  categoryFilters: Category[];
+  onToggleStatus: (status: ApprovalStatusFilter) => void;
+  onToggleCategory: (category: Category) => void;
 }) {
-  const toneClass = {
-    slate: "bg-slate-50 text-slate-900",
-    amber: "bg-amber-50 text-amber-700",
-    blue: "bg-blue-50 text-blue-700",
-  }[tone];
+  const selectedCount = statusFilters.length + categoryFilters.length;
 
   return (
-    <div className={`rounded-lg px-3 py-2 ${toneClass}`}>
-      <p className="text-[11px] font-medium text-current opacity-70">{label}</p>
-      <p className="mt-0.5 text-lg font-bold leading-none">{value}</p>
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" className="h-10 justify-between gap-2 bg-white">
+          <Filter className="h-4 w-4" />
+          필터
+          {selectedCount > 0 && (
+            <span className="rounded-full bg-slate-900 px-1.5 py-0.5 text-[11px] font-semibold leading-none text-white">
+              {selectedCount}
+            </span>
+          )}
+          <ChevronDown className="h-4 w-4 text-slate-400" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-64 p-3">
+        <FilterSection title="상태">
+          {STATUS_FILTERS.map((item) => (
+            <FilterCheckbox
+              key={item.key}
+              checked={statusFilters.includes(item.key)}
+              label={item.label}
+              onCheckedChange={() => onToggleStatus(item.key)}
+            />
+          ))}
+        </FilterSection>
+        <div className="mt-3 border-t border-slate-100 pt-3">
+          <FilterSection title="유형">
+            {CATEGORY_FILTERS.map((item) => (
+              <FilterCheckbox
+                key={item.key}
+                checked={categoryFilters.includes(item.key)}
+                label={item.label}
+                description={item.description}
+                onCheckedChange={() => onToggleCategory(item.key)}
+              />
+            ))}
+          </FilterSection>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function FilterSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <p className="mb-2 text-xs font-semibold text-slate-500">{title}</p>
+      <div className="grid gap-1">{children}</div>
     </div>
+  );
+}
+
+function FilterCheckbox({
+  checked,
+  label,
+  description,
+  onCheckedChange,
+}: {
+  checked: boolean;
+  label: string;
+  description?: string;
+  onCheckedChange: () => void;
+}) {
+  return (
+    <label className="flex cursor-pointer items-start gap-2 rounded-md px-2 py-2 hover:bg-slate-50">
+      <Checkbox checked={checked} onCheckedChange={onCheckedChange} className="mt-0.5" />
+      <span>
+        <span className="block text-sm font-medium text-slate-800">{label}</span>
+        {description && (
+          <span className="mt-0.5 block text-xs text-slate-400">{description}</span>
+        )}
+      </span>
+    </label>
   );
 }
 
@@ -328,18 +361,11 @@ function LoadingState() {
   );
 }
 
-function EmptyState({ activeTab }: { activeTab: TabStatus }) {
-  const message =
-    activeTab === "pending"
-      ? "대기 중인 요청이 없습니다."
-      : activeTab === "approved"
-        ? "승인된 요청이 없습니다."
-        : "반려된 요청이 없습니다.";
-
+function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-slate-400">
       <FileText className="mb-3 h-10 w-10" />
-      <p className="text-sm">{message}</p>
+      <p className="text-sm">조건에 맞는 요청이 없습니다.</p>
     </div>
   );
 }
@@ -373,9 +399,11 @@ function ApprovalsTable({
               <th className="px-4 py-2.5">요청자</th>
               <th className="px-4 py-2.5">유형</th>
               <th className="px-4 py-2.5">날짜</th>
+              <th className="px-4 py-2.5">시간</th>
               <th className="px-4 py-2.5">사유</th>
               <th className="px-4 py-2.5">승인자</th>
-              <th className="px-4 py-2.5">신청/처리</th>
+              <th className="px-4 py-2.5">신청일</th>
+              <th className="px-4 py-2.5">처리일</th>
               <th className="w-32 px-4 py-2.5 text-right">관리</th>
             </tr>
           </thead>
@@ -460,7 +488,8 @@ function ApprovalRow({
   onReject: (id: string) => void;
   isPending: boolean;
 }) {
-  const dayoff = approval.related_data;
+  const relatedData = approval.related_data;
+  const workTimeLabel = getApprovalWorkTimeLabel(approval);
 
   return (
     <tr className="hover:bg-slate-50">
@@ -471,27 +500,25 @@ function ApprovalRow({
         {approval.requester?.full_name || "알 수 없음"}
       </td>
       <td className="px-4 py-3">
-        <div className="flex items-center gap-2">
-          <span className="rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700">
-            {TYPE_LABEL[approval.type] || approval.type}
-          </span>
-          {dayoff?.leave_type && <span className="text-xs text-slate-500">{dayoff.leave_type.name}</span>}
-        </div>
+        <span className="text-slate-700">{getApprovalTypeLabel(approval)}</span>
       </td>
       <td className="px-4 py-3 text-slate-700">
-        {dayoff?.leave_date ? formatDate(dayoff.leave_date) : "-"}
+        {getApprovalDateLabel(approval)}
+      </td>
+      <td className="px-4 py-3 text-slate-500">
+        {workTimeLabel || "-"}
       </td>
       <td className="max-w-[240px] px-4 py-3 text-slate-600">
-        <p className="truncate text-xs">{approval.reject_reason || dayoff?.reason || "-"}</p>
+        <p className="truncate">{approval.reject_reason || relatedData?.reason || "-"}</p>
       </td>
-      <td className="px-4 py-3 text-xs text-slate-500">
+      <td className="px-4 py-3 text-slate-500">
         {approval.approver?.full_name || "-"}
       </td>
-      <td className="px-4 py-3 text-xs text-slate-500">
-        <div>{dayjs(approval.requested_at).format("MM/DD HH:mm")}</div>
-        {approval.resolved_at && (
-          <div className="mt-0.5 text-slate-400">{dayjs(approval.resolved_at).format("MM/DD HH:mm")}</div>
-        )}
+      <td className="px-4 py-3 text-slate-500">
+        {dayjs(approval.requested_at).format("MM/DD HH:mm")}
+      </td>
+      <td className="px-4 py-3 text-slate-500">
+        {approval.resolved_at ? dayjs(approval.resolved_at).format("MM/DD HH:mm") : "-"}
       </td>
       <td className="px-4 py-3">
         <ApprovalActions
@@ -524,7 +551,8 @@ function ApprovalMobileCard({
   onReject: (id: string) => void;
   isPending: boolean;
 }) {
-  const dayoff = approval.related_data;
+  const relatedData = approval.related_data;
+  const workTimeLabel = getApprovalWorkTimeLabel(approval);
 
   return (
     <div className="space-y-3 p-4">
@@ -532,20 +560,21 @@ function ApprovalMobileCard({
         <div>
           <p className="font-semibold text-slate-900">{approval.requester?.full_name || "알 수 없음"}</p>
           <p className="mt-1 text-sm text-slate-500">
-            {TYPE_LABEL[approval.type] || approval.type}
-            {dayoff?.leave_type ? ` · ${dayoff.leave_type.name}` : ""}
+            {getApprovalTypeLabel(approval)}
+            {relatedData?.leave_type ? ` · ${relatedData.leave_type.name}` : ""}
           </p>
         </div>
         <StatusBadge status={approval.status} />
       </div>
       <dl className="grid grid-cols-2 gap-2 text-xs">
-        <InfoItem label="날짜" value={dayoff?.leave_date ? formatDate(dayoff.leave_date) : "-"} />
+        <InfoItem label="날짜" value={getApprovalDateLabel(approval)} />
+        <InfoItem label="시간" value={workTimeLabel || "-"} />
         <InfoItem label="승인자" value={approval.approver?.full_name || "-"} />
-        <InfoItem label="신청" value={dayjs(approval.requested_at).format("MM/DD HH:mm")} />
-        <InfoItem label="처리" value={approval.resolved_at ? dayjs(approval.resolved_at).format("MM/DD HH:mm") : "-"} />
+        <InfoItem label="신청일" value={dayjs(approval.requested_at).format("MM/DD HH:mm")} />
+        <InfoItem label="처리일" value={approval.resolved_at ? dayjs(approval.resolved_at).format("MM/DD HH:mm") : "-"} />
       </dl>
       <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
-        {approval.reject_reason || dayoff?.reason || "사유 없음"}
+        {approval.reject_reason || relatedData?.reason || "사유 없음"}
       </p>
       <ApprovalActions
         showActions={showActions}
@@ -637,16 +666,16 @@ function EarlyLeaveRow({
         {request.requester?.full_name || "알 수 없음"}
       </td>
       <td className="px-4 py-3 text-slate-700">{record?.date ? formatDate(record.date) : "-"}</td>
-      <td className="px-4 py-3 text-xs text-slate-500">
+      <td className="px-4 py-3 text-slate-500">
         {formatTime(record?.check_in_at || null)} 출근 → {formatTime(record?.check_out_at || null)} 퇴근
       </td>
       <td className="max-w-[260px] px-4 py-3 text-slate-600">
-        <p className="truncate text-xs">{request.reject_reason || request.reason || "-"}</p>
+        <p className="truncate">{request.reject_reason || request.reason || "-"}</p>
       </td>
-      <td className="px-4 py-3 text-xs text-slate-500">
+      <td className="px-4 py-3 text-slate-500">
         <ApprovalHistory request={request} />
       </td>
-      <td className="px-4 py-3 text-xs text-slate-500">
+      <td className="px-4 py-3 text-slate-500">
         {dayjs(request.created_at).format("MM/DD HH:mm")}
       </td>
       <td className="px-4 py-3">
@@ -876,8 +905,32 @@ function approvalHistoryText(request: EarlyLeaveRequest) {
   return history.length > 0 ? history.join(" / ") : "-";
 }
 
+function getApprovalTypeLabel(approval: ApprovalRequest) {
+  const applicationType = approval.related_data?.application_type;
+  if (applicationType && TYPE_LABEL[applicationType]) {
+    return TYPE_LABEL[applicationType];
+  }
+  return TYPE_LABEL[approval.type] || approval.type;
+}
+
+function getApprovalDateLabel(approval: ApprovalRequest) {
+  const date = approval.related_data?.leave_date || approval.related_data?.work_date;
+  return date ? formatDate(date) : "-";
+}
+
+function getApprovalWorkTimeLabel(approval: ApprovalRequest) {
+  const startTime = approval.related_data?.start_time;
+  const endTime = approval.related_data?.end_time;
+  if (!startTime || !endTime) return null;
+  return `${formatClockTime(startTime)}-${formatClockTime(endTime)}`;
+}
+
 function formatDate(date: string) {
   return dayjs(date).format("YYYY-MM-DD (ddd)");
+}
+
+function formatClockTime(time: string) {
+  return time.slice(0, 5);
 }
 
 function formatTime(iso: string | null) {

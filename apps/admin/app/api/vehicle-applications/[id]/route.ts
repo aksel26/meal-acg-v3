@@ -7,6 +7,9 @@ import {
   normalizeText,
 } from "@/lib/vehicles";
 
+const VEHICLE_APPROVAL_OVERLAP_MESSAGE =
+  "같은 차량의 승인된 신청과 사용 시간이 겹쳐 모두 승인할 수 없습니다.";
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -34,7 +37,9 @@ export async function PATCH(
     const { data: vehicle } = body.vehicleId
       ? await supabase
           .from("company_vehicles")
-          .select("id, vehicle_type, vehicle_name, passenger_capacity, has_hipass")
+          .select(
+            "id, vehicle_type, vehicle_name, passenger_capacity, has_hipass",
+          )
           .eq("id", body.vehicleId)
           .maybeSingle()
       : { data: null };
@@ -42,6 +47,28 @@ export async function PATCH(
     const vehicleNameSnapshot = vehicle
       ? `${vehicle.vehicle_name}(${vehicle.passenger_capacity}인승)`
       : normalizeText(body.vehicleNameSnapshot);
+    const vehicleId = vehicle?.id ?? (normalizeText(body.vehicleId) || null);
+    const startAt = normalizeText(body.startAt);
+    const endAt = normalizeText(body.endAt);
+
+    if (status === "approved" && vehicleId) {
+      const { data: overlapped } = await supabase
+        .from("vehicle_applications")
+        .select("id")
+        .neq("id", id)
+        .eq("vehicle_id", vehicleId)
+        .eq("status", "approved")
+        .lt("start_at", endAt)
+        .gt("end_at", startAt)
+        .limit(1);
+
+      if (overlapped?.length) {
+        return NextResponse.json(
+          { error: VEHICLE_APPROVAL_OVERLAP_MESSAGE },
+          { status: 409 },
+        );
+      }
+    }
 
     const { data, error } = await supabase
       .from("vehicle_applications")
@@ -51,15 +78,16 @@ export async function PATCH(
         applicant_name: normalizeText(body.applicantName),
         purpose: normalizeText(body.purpose),
         passengers: normalizeText(body.passengers) || null,
-        start_at: normalizeText(body.startAt),
-        end_at: normalizeText(body.endAt),
+        start_at: startAt,
+        end_at: endAt,
         vehicle_type: vehicle?.vehicle_type ?? normalizeText(body.vehicleType),
-        vehicle_id: vehicle?.id ?? (normalizeText(body.vehicleId) || null),
+        vehicle_id: vehicleId,
         vehicle_name_snapshot: vehicleNameSnapshot,
         has_hipass: vehicle?.has_hipass ?? Boolean(body.hasHipass),
         approver_name: normalizeText(body.approverName) || "윤이나",
         status,
-        reject_reason: status === "rejected" ? normalizeText(body.rejectReason) : null,
+        reject_reason:
+          status === "rejected" ? normalizeText(body.rejectReason) : null,
         departure_place: normalizeText(body.departurePlace),
         arrival_place: normalizeText(body.arrivalPlace),
         same_day_distance_km: normalizeNumber(body.sameDayDistanceKm),

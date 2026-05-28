@@ -304,92 +304,94 @@ export default function OrganizationMemberDetailPage() {
       )}
 
       <div className="space-y-4">
-        <InfoCard title="기본 정보">
-          <dl>
-            <Field label="로그인 아이디" value={member.login_id} />
-            <Field label="이메일" value={member.email} />
-            <Field label="본부" value={member.division?.name} />
-            <Field label="팀" value={member.team?.name} />
-            <Field label="직급" value={member.position?.name || member.member_role} />
-            <Field label="직책" value={member.member_role} />
-            <Field label="관리 권한" value={member.role === "admin" ? member.admin_role || "관리자" : "일반"} />
-            <Field label="사용자 권한" value={member.user_authority} />
-            <Field label="입사일" value={formatDate(member.hire_date)} />
-          </dl>
-        </InfoCard>
+        <div className="grid gap-4 xl:grid-cols-2">
+          <InfoCard title="기본 정보">
+            <dl>
+              <Field label="로그인 아이디" value={member.login_id} />
+              <Field label="이메일" value={member.email} />
+              <Field label="본부" value={member.division?.name} />
+              <Field label="팀" value={member.team?.name} />
+              <Field label="직급" value={member.position?.name || member.member_role} />
+              <Field label="직책" value={member.member_role} />
+              <Field label="관리 권한" value={member.role === "admin" ? member.admin_role || "관리자" : "일반"} />
+              <Field label="사용자 권한" value={member.user_authority} />
+              <Field label="입사일" value={formatDate(member.hire_date)} />
+            </dl>
+          </InfoCard>
 
-        <InfoCard title="현재 요약">
-          <div className="space-y-3">
-            <SummaryRow title="이번 달 근태 요약">
-              {overviewQuery.isLoading ? (
-                <EmptyState>요약 정보를 불러오는 중입니다.</EmptyState>
-              ) : !overview?.permissions.attendance ? (
-                <EmptyState>근태 조회 권한이 없습니다.</EmptyState>
-              ) : overview.attendance ? (
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <Metric label={`${overview.attendance.month}월 출근일`} value={`${overview.attendance.checkedInDays}일`} />
-                  <Metric label="지각" value={`${overview.attendance.lateCount}건`} tone={overview.attendance.lateCount > 0 ? "amber" : "default"} />
-                  <Metric label="결근" value={`${overview.attendance.absentCount}건`} tone={overview.attendance.absentCount > 0 ? "rose" : "default"} />
-                </div>
-              ) : (
-                <EmptyState>등록된 근태 데이터가 없습니다.</EmptyState>
-              )}
-            </SummaryRow>
+          <InfoCard title="현재 요약">
+            <div className="space-y-3">
+              <SummaryRow title="이번 달 근태 요약">
+                {overviewQuery.isLoading ? (
+                  <EmptyState>요약 정보를 불러오는 중입니다.</EmptyState>
+                ) : !overview?.permissions.attendance ? (
+                  <EmptyState>근태 조회 권한이 없습니다.</EmptyState>
+                ) : overview.attendance ? (
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <Metric label={`${overview.attendance.month}월 출근일`} value={`${overview.attendance.checkedInDays}일`} />
+                    <Metric label="지각" value={`${overview.attendance.lateCount}건`} tone={overview.attendance.lateCount > 0 ? "amber" : "default"} />
+                    <Metric label="결근" value={`${overview.attendance.absentCount}건`} tone={overview.attendance.absentCount > 0 ? "rose" : "default"} />
+                  </div>
+                ) : (
+                  <EmptyState>등록된 근태 데이터가 없습니다.</EmptyState>
+                )}
+              </SummaryRow>
 
-            <SummaryRow title="올해 휴가 요약">
-              {overviewQuery.isLoading ? (
-                <EmptyState>요약 정보를 불러오는 중입니다.</EmptyState>
-              ) : !overview?.permissions.leave ? (
-                <EmptyState>휴가 조회 권한이 없습니다.</EmptyState>
-              ) : overview.leave ? (
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <Metric label={`${overview.leave.year}년 사용일수`} value={`${overview.leave.usedDays}일`} />
-                  <Metric label="승인 건수" value={`${overview.leave.approvedCount}건`} />
-                  <Metric label="대기 건수" value={`${overview.leave.pendingCount}건`} tone={overview.leave.pendingCount > 0 ? "amber" : "default"} />
-                </div>
-              ) : (
-                <EmptyState>등록된 휴가 데이터가 없습니다.</EmptyState>
-              )}
-            </SummaryRow>
+              <SummaryRow title="올해 휴가 요약">
+                {overviewQuery.isLoading ? (
+                  <EmptyState>요약 정보를 불러오는 중입니다.</EmptyState>
+                ) : !overview?.permissions.leave ? (
+                  <EmptyState>휴가 조회 권한이 없습니다.</EmptyState>
+                ) : overview.leave ? (
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <Metric label={`${overview.leave.year}년 사용일수`} value={`${overview.leave.usedDays}일`} />
+                    <Metric label="승인 건수" value={`${overview.leave.approvedCount}건`} />
+                    <Metric label="대기 건수" value={`${overview.leave.pendingCount}건`} tone={overview.leave.pendingCount > 0 ? "amber" : "default"} />
+                  </div>
+                ) : (
+                  <EmptyState>등록된 휴가 데이터가 없습니다.</EmptyState>
+                )}
+              </SummaryRow>
 
-            <SummaryRow title="프로젝트 소속">
-              {overviewQuery.isLoading ? (
-                <EmptyState>요약 정보를 불러오는 중입니다.</EmptyState>
-              ) : projects.length === 0 ? (
-                <EmptyState>소속된 프로젝트가 없습니다.</EmptyState>
-              ) : (
-                <div className="space-y-3">
-                  {projects.map((project) => (
-                    <div key={project.id} className="border-l-2 border-slate-200 py-1 pl-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <FolderKanban className="h-4 w-4 text-slate-400" />
-                        <div className="min-w-0 flex-1 text-sm font-semibold text-slate-800">
-                          {project.title}
+              <SummaryRow title="프로젝트 소속">
+                {overviewQuery.isLoading ? (
+                  <EmptyState>요약 정보를 불러오는 중입니다.</EmptyState>
+                ) : projects.length === 0 ? (
+                  <EmptyState>소속된 프로젝트가 없습니다.</EmptyState>
+                ) : (
+                  <div className="space-y-3">
+                    {projects.map((project) => (
+                      <div key={project.id} className="border-l-2 border-slate-200 py-1 pl-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <FolderKanban className="h-4 w-4 text-slate-400" />
+                          <div className="min-w-0 flex-1 text-sm font-semibold text-slate-800">
+                            {project.title}
+                          </div>
+                          <Badge className="border-0 bg-slate-200 px-2 py-0.5 text-xs text-slate-700">
+                            {project.status}
+                          </Badge>
+                          <Badge className="border-0 bg-indigo-100 px-2 py-0.5 text-xs text-indigo-700">
+                            {project.role}
+                          </Badge>
                         </div>
-                        <Badge className="border-0 bg-slate-200 px-2 py-0.5 text-xs text-slate-700">
-                          {project.status}
-                        </Badge>
-                        <Badge className="border-0 bg-indigo-100 px-2 py-0.5 text-xs text-indigo-700">
-                          {project.role}
-                        </Badge>
+                        <dl className="mt-3">
+                          <Field
+                            label="고객사"
+                            value={project.customerNames.join(", ") || "-"}
+                          />
+                          <Field
+                            label="기간"
+                            value={`${formatDate(project.startDate)} ~ ${formatDate(project.dueDate)}`}
+                          />
+                        </dl>
                       </div>
-                      <dl className="mt-3">
-                        <Field
-                          label="고객사"
-                          value={project.customerNames.join(", ") || "-"}
-                        />
-                        <Field
-                          label="기간"
-                          value={`${formatDate(project.startDate)} ~ ${formatDate(project.dueDate)}`}
-                        />
-                      </dl>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </SummaryRow>
-          </div>
-        </InfoCard>
+                    ))}
+                  </div>
+                )}
+              </SummaryRow>
+            </div>
+          </InfoCard>
+        </div>
 
         <div className="grid gap-4 xl:grid-cols-2">
           <InfoCard title="특이사항">

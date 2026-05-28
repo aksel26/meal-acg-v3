@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { setSession } from "@/lib/auth";
 import { isUserAuthority, normalizeAdminRole } from "@/lib/rbac";
+import { getEffectiveAdminPermissions } from "@/lib/rbac-server";
 
 export async function POST(request: NextRequest) {
   try {
@@ -67,6 +68,10 @@ export async function POST(request: NextRequest) {
       ? memberResult.data.user_authority
       : null;
     const hireDate = statusResult.data?.start_date || null;
+    const permissions = await getEffectiveAdminPermissions({
+      userId: user.user_id,
+      adminRole,
+    });
 
     // Set session cookie
     await setSession({
@@ -86,6 +91,7 @@ export async function POST(request: NextRequest) {
         role: user.role,
         adminRole,
         userAuthority,
+        permissions,
         hireDate,
       },
     });

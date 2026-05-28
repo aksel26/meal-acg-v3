@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthErrorStatus, getSession, requireAdmin } from "@/lib/auth";
+import { getEffectiveAdminPermissions } from "@/lib/rbac-server";
 import { createServiceClient } from "@/lib/supabase/server";
 
 export async function GET() {
@@ -33,6 +34,10 @@ export async function GET() {
         role: freshSession.role,
         adminRole: freshSession.adminRole,
         userAuthority: freshSession.userAuthority,
+        permissions:
+          freshSession.role === "admin"
+            ? await getEffectiveAdminPermissions(freshSession)
+            : [],
         hireDate,
       },
     });

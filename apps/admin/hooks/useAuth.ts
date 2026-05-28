@@ -41,6 +41,7 @@ export function useAuth() {
           role: data.user.role,
           adminRole: data.user.adminRole,
           userAuthority: data.user.userAuthority,
+          permissions: data.user.permissions || [],
           hireDate: data.user.hireDate,
         });
         return true;

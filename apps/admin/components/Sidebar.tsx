@@ -62,7 +62,6 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import {
   getAdminRoleLabel,
-  hasAdminPermission,
   type AdminPermission,
 } from "@/lib/rbac";
 import Image from "next/image";
@@ -181,23 +180,26 @@ const navigation: NavigationItem[] = [
   },
 ];
 
-function canShowItem(item: NavItem, adminRole: string | null | undefined) {
-  return !item.permission || hasAdminPermission(adminRole, item.permission);
+function canShowItem(
+  item: NavItem,
+  permissions: readonly AdminPermission[] | null | undefined,
+) {
+  return !item.permission || Boolean(permissions?.includes(item.permission));
 }
 
 function filterNavigation(
   items: NavigationItem[],
-  adminRole: string | null | undefined,
+  permissions: readonly AdminPermission[] | null | undefined,
 ): NavigationItem[] {
   return items.reduce<NavigationItem[]>((visible, item) => {
     if (!isNavGroup(item)) {
-      if (canShowItem(item, adminRole)) visible.push(item);
+      if (canShowItem(item, permissions)) visible.push(item);
       return visible;
     }
 
     const visibleItems = item.items.filter((child) => {
       if (child.isLabel) return true;
-      return canShowItem(child, adminRole);
+      return canShowItem(child, permissions);
     });
     const hasVisibleLink = visibleItems.some((child) => !child.isLabel);
 
@@ -395,7 +397,7 @@ function NavGroupComponent({
 export default function Sidebar() {
   const pathname = usePathname();
   const { user, logout, checkSession } = useAuth();
-  const visibleNavigation = filterNavigation(navigation, user?.adminRole);
+  const visibleNavigation = filterNavigation(navigation, user?.permissions);
 
   const [collapsed, setCollapsed] = useState(false);
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);

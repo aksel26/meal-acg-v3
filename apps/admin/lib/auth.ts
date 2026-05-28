@@ -104,6 +104,16 @@ export async function requireAdminPermission(
   return session;
 }
 
+export async function requireRepresentativeAdmin(): Promise<AuthSession> {
+  const session = await requireAdminPermission("rbac:manage");
+
+  if (session.adminRole !== "대표") {
+    throw new AuthError("Forbidden: Representative access required", 403);
+  }
+
+  return session;
+}
+
 export function getAuthErrorStatus(error: unknown) {
   if (error instanceof AuthError) return error.status;
   if (error instanceof Error && error.message === "Unauthorized") return 401;

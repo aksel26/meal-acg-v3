@@ -1057,7 +1057,7 @@ export default function MemberStatusView({
             <div className="py-5">
               {/* 기본 정보 */}
               <div className="mb-8 space-y-4 last:mb-0">
-                <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-400">기본 정보</p>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">기본 정보</p>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="addFullName">이름</Label>
@@ -1133,7 +1133,7 @@ export default function MemberStatusView({
 
               {/* 직급/직책 */}
               <div className="mb-8 space-y-4 last:mb-0">
-                <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-400">직급 / 직책</p>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">직급 / 직책</p>
                 <div className="flex gap-4">
                   <div className="space-y-2 flex-1">
                     <Label>직급</Label>
@@ -1204,7 +1204,7 @@ export default function MemberStatusView({
 
               {/* 계정 정보 */}
               <div className="mb-8 space-y-4 last:mb-0">
-                <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-400">계정 정보</p>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">계정 정보</p>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="addLoginId">아이디</Label>
@@ -1678,7 +1678,7 @@ export default function MemberStatusView({
             <div className="py-5">
               {/* 기본 정보 */}
               <div className="mb-8 space-y-4 last:mb-0">
-                <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-400">기본 정보</p>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">기본 정보</p>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="editFullName">이름</Label>
@@ -1757,7 +1757,7 @@ export default function MemberStatusView({
 
               {/* 직급/직책 */}
               <div className="mb-8 space-y-4 last:mb-0">
-                <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-400">직급 / 직책</p>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">직급 / 직책</p>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>직급</Label>
@@ -1851,7 +1851,7 @@ export default function MemberStatusView({
 
               {/* 계정 정보 */}
               <div className="mb-8 space-y-4 last:mb-0">
-                <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-400">계정 정보</p>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">계정 정보</p>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="editLoginId">아이디</Label>

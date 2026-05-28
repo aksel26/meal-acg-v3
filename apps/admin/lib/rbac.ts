@@ -8,8 +8,8 @@ export const DEFAULT_ADMIN_ROLE: AdminRole = "일반";
 
 export const ADMIN_ROLE_LABELS: Record<AdminRole, string> = {
   대표: "슈퍼 관리자",
-  팀장: "P&C 팀장",
-  일반: "P&C 직원",
+  팀장: "상위 관리자",
+  일반: "일반 관리자",
 };
 
 export function getAdminRoleLabel(value: unknown) {

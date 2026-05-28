@@ -60,7 +60,11 @@ import {
   TooltipContent,
 } from "@repo/ui/src/tooltip";
 import { useAuth } from "@/hooks/useAuth";
-import { hasAdminPermission, type AdminPermission } from "@/lib/rbac";
+import {
+  getAdminRoleLabel,
+  hasAdminPermission,
+  type AdminPermission,
+} from "@/lib/rbac";
 import Image from "next/image";
 import dayjs from "dayjs";
 
@@ -574,7 +578,11 @@ export default function Sidebar() {
                 {user?.fullName || "Admin"}
               </p>
               <p className="text-[13px] text-[#7a7a7a]">
-                {user?.adminRole ?? (user?.role === "admin" ? "관리자" : "사용자")}
+                {user?.adminRole
+                  ? getAdminRoleLabel(user.adminRole)
+                  : user?.role === "admin"
+                    ? "관리자"
+                    : "사용자"}
               </p>
             </div>
             {user?.hireDate && (

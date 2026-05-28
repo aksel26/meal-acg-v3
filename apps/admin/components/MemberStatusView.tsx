@@ -86,6 +86,12 @@ const STATUS_TYPES: MemberStatusType[] = [
   "퇴사",
 ];
 
+const ADMIN_ROLE_BADGE_STYLES: Record<string, string> = {
+  대표: "bg-indigo-100 text-indigo-800",
+  팀장: "bg-sky-50 text-sky-700",
+  일반: "bg-emerald-50 text-emerald-700",
+};
+
 interface MemberOption {
   id: string;
   full_name: string;
@@ -360,13 +366,12 @@ export default function MemberStatusView({
     return map;
   }, [allMembers]);
 
-  // Admin member IDs
-  const adminIds = useMemo(() => {
-    const set = new Set<string>();
-    allMembers?.forEach((m) => {
-      if (m.role === "admin") set.add(m.id);
+  const memberById = useMemo(() => {
+    const map = new Map<string, MemberOption>();
+    allMembers?.forEach((member) => {
+      map.set(member.id, member);
     });
-    return set;
+    return map;
   }, [allMembers]);
 
   const updateNoteMutation = useMutation({
@@ -918,6 +923,11 @@ export default function MemberStatusView({
                   const displayStatus = row.current_status || "정상";
                   const colorClass =
                     STATUS_COLORS[displayStatus] || STATUS_COLORS["정상"];
+                  const member = row.member_id
+                    ? memberById.get(row.member_id)
+                    : undefined;
+                  const isAdmin = member?.role === "admin";
+                  const adminRole = member?.admin_role || DEFAULT_ADMIN_ROLE;
                   return (
                     <TableRow
                       key={`${row.member_id}-${row.status_id || "normal"}`}
@@ -969,9 +979,16 @@ export default function MemberStatusView({
                         {row.phone || "-"}
                       </TableCell>
                       <TableCell className="text-center">
-                        {row.member_id && adminIds.has(row.member_id) ? (
-                          <Badge className="border-0 bg-indigo-100 text-indigo-700 px-1.5 py-0.5 text-[10px] font-medium">
-                            관리자
+                        {isAdmin ? (
+                          <Badge
+                            variant="secondary"
+                            className={cn(
+                              "w-[68px] justify-center border-0 px-1.5 py-0.5 text-[10px] font-medium",
+                              ADMIN_ROLE_BADGE_STYLES[adminRole] ||
+                                ADMIN_ROLE_BADGE_STYLES[DEFAULT_ADMIN_ROLE],
+                            )}
+                          >
+                            {getAdminRoleLabel(adminRole)}
                           </Badge>
                         ) : (
                           <span className="text-[11px] text-slate-400">

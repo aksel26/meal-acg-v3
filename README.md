@@ -1,257 +1,259 @@
 # Meal ACG v3
 
-기업 식대 관리 애플리케이션 — 복지포인트 · 활동비 · 식대 정산을 하나로
+기업 내부 복지/운영 포털 모노레포입니다. 식대, 복지포인트, 근태, 휴가, 자산, 차량, 점심조, 프로젝트/요청 관리, 아르바이트 감독 업무를 앱별로 나누어 운영합니다.
 
-## Overview
+최종 검토: 2026-05-28
 
-직원들의 식대 사용 내역을 관리하고, 복지포인트/활동비 정산을 자동화하는 시스템입니다.
-Turborepo 기반 모노레포로 User/Admin 두 개의 Next.js 앱과 공유 패키지로 구성됩니다.
+## 앱 구성
 
-| App | Port | 설명 |
-|-----|------|------|
-| User | 3000 | 직원용 — 식사 기록, 영수증 스캔, 포인트 관리, 푸시 알림 |
-| Admin | 3001 | 관리자용 — 대시보드, 예산 할당, 정산 관리, Slack 연동 |
+| 앱                   | 패키지                      | 포트 | 용도                                                                                       |
+| -------------------- | --------------------------- | ---- | ------------------------------------------------------------------------------------------ |
+| User                 | `apps/user`                 | 3000 | 임직원용 포털. 식대/복지포인트/근태/휴가/자산/차량/프로젝트 요청을 처리합니다.             |
+| Admin                | `apps/admin`                | 3001 | 관리자용 백오피스. 조직, 권한, 정산, 검토, 알림, 감사 로그, 각종 운영 마스터를 관리합니다. |
+| Part-time Supervisor | `apps/part-time-supervisor` | 3002 | 단기 근무자 모집, 배정, 출근, 계약, 비용 정산을 관리합니다.                                |
+| Project Management   | `apps/project-management`   | 3013 | 프로젝트와 요청 큐를 별도 업무 앱으로 관리합니다.                                          |
 
-## Tech Stack
+## 기술 스택
 
-| 영역 | 기술 |
-|------|------|
-| **프레임워크** | Next.js 15 (App Router, Turbopack), React 19 |
-| **언어** | TypeScript 5 (strict mode) |
-| **스타일링** | Tailwind CSS 4, Motion v12 (애니메이션), Radix UI |
-| **상태 관리** | Zustand (클라이언트), TanStack React Query v5 (서버) |
-| **백엔드** | Supabase (PostgreSQL, RLS, RPC) |
-| **AI** | Google Gemini (영수증 스캔) |
-| **외부 연동** | Google Sheets, Google Calendar, Slack |
-| **빌드** | Turborepo, pnpm |
-| **PWA** | @ducanh2912/next-pwa (서비스 워커 자동 생성) |
-| **알림** | Web Push (VAPID) |
+| 영역             | 기술                                                    |
+| ---------------- | ------------------------------------------------------- |
+| 모노레포         | Turborepo, pnpm workspace                               |
+| 프레임워크       | Next.js 15 App Router, React 19                         |
+| 언어             | TypeScript 5                                            |
+| 스타일           | Tailwind CSS 4, Radix UI, Motion, lucide-react          |
+| 상태/서버 상태   | Zustand, TanStack React Query v5                        |
+| 백엔드           | Supabase PostgreSQL, RLS, RPC, Next.js Route Handlers   |
+| 외부 연동        | Google Sheets, Google Calendar, Slack, Web Push, Gemini |
+| 문서/데이터 처리 | ExcelJS, xlsx, Tiptap, Sentry 일부 앱 적용              |
 
-## Project Structure
+## 빠른 시작
 
-```
-meal-v3/
-├── apps/
-│   ├── user/                    # 직원용 Next.js 앱
-│   │   ├── app/
-│   │   │   ├── (auth)/          # 인증 관련 페이지
-│   │   │   ├── (content)/       # 메인 콘텐츠 (dashboard, points, settings 등)
-│   │   │   └── api/             # API Routes
-│   │   ├── components/          # React 컴포넌트
-│   │   ├── hooks/               # Custom hooks (use-meal-data, use-points-data 등)
-│   │   ├── lib/                 # Supabase 클라이언트, 유틸리티
-│   │   └── stores/              # Zustand stores (userStore, mealDrawerStore)
-│   │
-│   └── admin/                   # 관리자용 Next.js 앱
-│       ├── app/
-│       │   ├── (dashboard)/     # 대시보드 페이지들
-│       │   └── api/             # API Routes (stats, members, budget, settlement 등)
-│       ├── hooks/               # Custom hooks
-│       └── lib/                 # Supabase 클라이언트, 인증, Excel 파서
-│
-└── packages/
-    ├── ui/                      # 공유 UI 컴포넌트 (@repo/ui) — Radix 기반
-    ├── utils/                   # 공유 유틸리티 (@repo/utils) — dayjs, KST 날짜 함수
-    ├── eslint-config/           # 공유 ESLint 설정
-    ├── typescript-config/       # 공유 TypeScript 설정
-    └── tailwind-config/         # 공유 Tailwind 설정
-```
+### 요구 사항
 
-## Getting Started
+- Node.js 18 이상
+- pnpm 8.15.6
+- 로컬 Supabase를 사용할 경우 Docker 또는 OrbStack
 
-### Prerequisites
-
-- Node.js 18+
-- pnpm 8+
-
-### Installation
+### 설치
 
 ```bash
-# 의존성 설치
 pnpm install
-
-# 환경 변수 설정
-# 각 앱의 .env.local 파일에 필요한 키 입력
 ```
 
-### Development
+### 개발 서버
 
 ```bash
-pnpm dev          # 전체 앱 실행 (user:3000, admin:3001)
-pnpm dev:user     # 사용자 앱만
-pnpm dev:admin    # 어드민 앱만
+pnpm dev                         # 전체 앱 실행
+pnpm dev:user                    # User: http://localhost:3000
+pnpm dev:admin                   # Admin: http://localhost:3001
+pnpm dev:part-time-supervisor    # Supervisor: http://localhost:3002
+pnpm dev:project-management      # Project Management: http://localhost:3013
 ```
 
-### Build
+### 빌드/실행
 
 ```bash
-pnpm build        # 전체 모노레포 빌드
-pnpm build:user   # 사용자 앱만
-pnpm build:admin  # 어드민 앱만
+pnpm build
+pnpm build:user
+pnpm build:admin
+pnpm build:part-time-supervisor
+pnpm build:project-management
+
+pnpm start:user
+pnpm start:admin
+pnpm start:part-time-supervisor
+pnpm start:project-management
 ```
 
-### Production
+### 품질 확인
 
 ```bash
-pnpm start:user   # 프로덕션 사용자 앱 시작 (빌드 후)
-pnpm start:admin  # 프로덕션 어드민 앱 시작 (빌드 후)
+pnpm check-types
+pnpm lint
+pnpm format
 ```
 
-### Code Quality
+앱별 확인이 필요하면 Turbo 필터를 직접 사용할 수 있습니다.
 
 ```bash
-pnpm lint         # ESLint (경고 0 정책)
-pnpm check-types  # TypeScript 타입 체크
-pnpm format       # Prettier 포매팅
+pnpm --filter admin check-types
+pnpm --filter user build
+pnpm --filter project-management lint
 ```
 
-> **참고:** 빌드 시 TypeScript/ESLint 에러가 무시됩니다 (`ignoreBuildErrors`). 반드시 `pnpm check-types`와 `pnpm lint`를 수동 실행하세요.
+> 각 Next 앱의 `next.config.ts`는 빌드 중 TypeScript/ESLint 오류를 무시하도록 설정되어 있습니다. 배포 전에는 `check-types`와 `lint`를 별도로 실행해야 합니다.
 
-## Features
+## 프로젝트 구조
 
-### User App
+```text
+meal-acg-v3/
+├── apps/
+│   ├── user/                    # 임직원 포털
+│   ├── admin/                   # 관리자 백오피스
+│   ├── part-time-supervisor/    # 단기 근무 감독/계약/출근 앱
+│   └── project-management/      # 프로젝트/요청 관리 앱
+├── packages/
+│   ├── ui/                      # 공유 UI 컴포넌트
+│   ├── utils/                   # 공유 유틸리티
+│   ├── eslint-config/           # 공유 ESLint 설정
+│   ├── typescript-config/       # 공유 TypeScript 설정
+│   └── tailwind-config/         # 공유 Tailwind 설정
+├── supabase/
+│   ├── migrations/              # DB 마이그레이션
+│   ├── schemas/                 # 보조 스키마 문서
+│   └── seed.sql                 # 로컬 seed
+└── docs/                        # IA, 보안, 기능 문서
+```
 
-| 기능 | 설명 |
-|------|------|
-| 식사 기록 | 조식/중식/석식 금액 및 가게 입력, 캘린더 기반 조회 |
-| 영수증 스캔 | Gemini AI로 영수증 자동 인식 |
-| 복지포인트 | 잔액 조회, 사용 내역 등록/수정, 전체 내역 조회 (무한 스크롤) |
-| 활동비 | 팀장/본부장 전용 활동비 관리 및 팀별 현황 |
-| 인기 음식점 | ACG 전체 인기 음식점 Top 10 랭킹 (누적 통계) |
-| 대리결제 알림 | 대리결제 시 Web Push 알림 발송 |
-| 점심조 | 주간 점심조 배정 및 조회 |
-| PWA | 모바일 앱 설치 지원, 가로 스크롤 방지 |
+## 주요 기능
 
-### Admin App
+### User
 
-| 기능 | 설명 |
-|------|------|
-| 대시보드 | 월별 통계, 사용 트렌드, 인기 가게 |
-| 예산 관리 | 복지포인트/활동비 예산 할당 및 조회 |
-| 사용 내역 검토 | 전체 내역 조회, 검토 상태 관리, 일괄 삭제, Audit log |
-| Excel Import | 복지포인트 Excel 가져오기 (중복 자동 제거, 기존 데이터 덮어쓰기) |
-| Excel Export | 개인별/전체 정산 Excel 내보내기 |
-| 정산 처리 | 월별 정산 완료 처리 |
-| Slack 알림 | 미정산자에게 정산 요청 발송 |
-| 점심조 설정 | 고정 점심조 및 주간 배정 관리 |
-| 푸시 알림 | 전체/개인 공지 Web Push 발송 |
+- 식대 기록, 월별 사용 가능액, 영수증 스캔
+- 복지포인트/활동비 신청과 사용 내역 조회
+- 근태, 휴가, 연장근무, 승인 요청
+- 공지, 점심조, 회의실 예약
+- 사내 자산, 사물함, 차량 사용 신청
+- 다면평가, 프로젝트/요청 관리 진입점
+- PWA 설치와 Web Push 알림
 
-## Environment Variables
+### Admin
 
-### User App (`apps/user/.env.local`)
+- 운영 대시보드와 월별 통계
+- 조직도, 직책/직무, 대표 권한, 권한 정책 관리
+- 예산, 정산, 회계, Excel Import/Export
+- 사용 내역 검토, 승인, 휴가/근태 관리
+- 자산, 사물함, 차량, 점심조, 월간 음료 관리
+- 다면평가 문항/라운드/리포트 관리
+- Slack/Web Push 알림, 휴일 동기화
+- 감사 로그와 관리자 세션 보호
+
+### Part-time Supervisor
+
+- 단기 근무 공고와 근무자 관리
+- 방 배정, 출근 QR/서명, 계약서 작성
+- 비용 관리와 감독자 전용 대시보드
+- Admin 앱 인증 세션 연동
+
+### Project Management
+
+- 프로젝트 목록과 상세 관리
+- 요청 큐, 담당자 배정, 진행 상태 관리
+- User/Admin/Supervisor 앱과의 이동 링크
+
+## 환경 변수
+
+실제 비밀값은 커밋하지 않습니다. 로컬에서는 각 앱의 `.env.local` 또는 루트 `.env.local`에 설정합니다.
+
+### 공통 Supabase
 
 ```bash
-NEXT_PUBLIC_SUPABASE_URL=         # Supabase 프로젝트 URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY=    # Supabase 공개 키
-SUPABASE_SERVICE_ROLE_KEY=        # Supabase 서비스 역할 키
-
-GOOGLE_PRIVATE_KEY=               # Google 서비스 계정 키
-GOOGLE_CLIENT_EMAIL=              # Google 서비스 계정 이메일
-GOOGLE_SHEET_ID=                  # 월간 음료 시트 ID
-GOOGLE_SHEET_ID_WELFARE_POINTS=   # 복지포인트 시트 ID
-
-GEMINI_API_KEY=                   # Gemini AI API 키
-NEXT_PUBLIC_VAPID_PUBLIC_KEY=     # Web Push VAPID 공개 키
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
 ```
 
-### Admin App (`apps/admin/.env.local`)
+### User
 
 ```bash
-NEXT_PUBLIC_SUPABASE_URL=         # Supabase 프로젝트 URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY=    # Supabase 공개 키
-SUPABASE_SERVICE_ROLE_KEY=        # Supabase 서비스 역할 키
-
-GOOGLE_CALENDAR_API_KEY=          # Google Calendar API 키
-SLACK_BOT_TOKEN=                  # Slack 봇 토큰
-
-VAPID_PUBLIC_KEY=                 # Web Push VAPID 공개 키
-VAPID_PRIVATE_KEY=                # Web Push VAPID 비공개 키
+SESSION_SECRET=
+GOOGLE_PRIVATE_KEY=
+GOOGLE_CLIENT_EMAIL=
+GOOGLE_SHEET_ID=
+GOOGLE_SHEET_ID_WELFARE_POINTS=
+GEMINI_API_KEY=
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=
+VAPID_PUBLIC_KEY=
+VAPID_PRIVATE_KEY=
+VAPID_SUBJECT=
 ```
 
-## Key Patterns
+### Admin
 
-### Data Flow
-
-```
-사용자 입력 → React Query Mutation → API Route → Supabase → Cache Invalidation → UI 갱신
-```
-
-### Query Keys (Factory Pattern)
-
-```typescript
-// lib/query-keys.ts
-queryKeys.meals.byUserAndMonth(userName, month, year)
-queryKeys.points.welfare.byPeriod(memberId, period)
-queryKeys.points.activity.byPeriod(memberId, period)
-```
-
-### Custom Hooks
-
-```typescript
-// 패턴: use-{resource}.ts 또는 use-{resource}-{action}.ts
-useMealData(userName, month, year)   // 데이터 조회
-useMealSubmit()                      // mutation hook
-usePointsWelfare(memberId, period)   // 복지포인트 조회
-usePointsActivity(memberId, period)  // 활동비 조회
-```
-
-### Authentication
-
-- **User 앱:** Zustand + localStorage 기반 세션 (이름으로 식별)
-- **Admin 앱:** 쿠키 기반 세션 + 미들웨어 보호 + `requireAdmin()` 가드
-
-## Database
-
-### Supabase RPC Functions
-
-DB 레벨에서 복잡한 집계/쿼리를 처리하는 RPC 함수:
-
-| 함수명 | 설명 |
-|--------|------|
-| `get_user_monthly_stats` | 월별 식사 통계 집계 |
-| `get_popular_restaurants` | 전체 meal_logs 기준 인기 음식점 Top 10 |
-
-### Migrations
-
-마이그레이션 파일은 `supabase/migrations/` 디렉토리에 저장:
-- 네이밍: `YYYYMMDD_description.sql`
-- 예시: `20260219_add_no_to_usage_records.sql`
-
-**로컬 개발 워크플로우** (Supabase CLI):
 ```bash
-supabase start                    # 로컬 Supabase 인스턴스 시작
-supabase db reset                 # DB 초기화 및 모든 migration 적용
-supabase migration new <name>     # 새 migration 파일 생성
-supabase db push                  # 원격에 migration 적용
+ADMIN_SESSION_SECRET=
+GOOGLE_CALENDAR_API_KEY=
+SLACK_BOT_TOKEN=
+VAPID_PUBLIC_KEY=
+VAPID_PRIVATE_KEY=
+VAPID_SUBJECT=
+NEXT_PUBLIC_SUPERVISOR_APP_URL=
+NEXT_PUBLIC_PROJECT_MANAGEMENT_APP_URL=
+NEXT_PUBLIC_REQUEST_MANAGEMENT_APP_URL=
+NEXT_DIST_DIR=
 ```
 
-**타입 생성:**
+`ADMIN_SESSION_SECRET`은 운영 환경에서 별도로 생성한 긴 랜덤 문자열을 사용합니다.
+
 ```bash
-supabase gen types typescript --project-id <id> > apps/admin/lib/supabase/types.ts
+openssl rand -base64 32
 ```
 
-## Attendance Types
+### Part-time Supervisor
 
-`meal_logs.attendance` 컬럼에 저장되는 값:
+```bash
+ADMIN_APP_URL=
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+```
 
-| 값 | 식대 포함 |
-|----|----------|
-| `근무` | O |
-| `근무(개별식사 / 식사안함)` | X |
-| `재택근무` | X |
-| `연차/휴무` | X |
-| `오전 반차/휴무` | X |
-| `오후 반차/휴무` | X |
+### Project Management
 
-**사용가능액 계산:** `일일단가 × (근무일 - 휴일 - 재택 - 개별 + 주말근무)`
+```bash
+ADMIN_APP_URL=
+NEXT_PUBLIC_USER_APP_URL=
+NEXT_PUBLIC_SUPERVISOR_APP_URL=
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+NEXT_DIST_DIR=
+```
 
-## Code Standards
+## 인증과 권한
 
-- **ESLint:** Zero warnings policy (`--max-warnings 0`)
-- **TypeScript:** Strict mode (`tsc --noEmit`)
-- **Commits:** Korean commit messages with prefix
-  - `feat` — 새로운 기능
-  - `fix` — 버그 수정
-  - `refactor` — 리팩토링
-  - `style` — 스타일 변경
-  - `docs` — 문서 수정
+- User 앱은 사용자 세션 쿠키와 Supabase 기반 데이터 접근을 함께 사용합니다.
+- Admin 앱은 `admin-session` 쿠키, 미들웨어, 서버 가드를 통해 보호합니다.
+- Admin 세션 쿠키는 HMAC 서명으로 위변조를 검증합니다.
+- 관리자 권한은 `admin_role`, `user_authority`, 권한 정책 테이블과 서버 API의 `requireAdminPermission(...)` 가드로 관리합니다.
+- Supervisor와 Project Management 앱은 Admin 앱으로 로그인 흐름을 위임하는 구간이 있습니다.
+
+## Supabase 작업
+
+마이그레이션은 `supabase/migrations/`에 둡니다.
+
+```bash
+supabase start
+supabase db reset
+supabase migration new <name>
+supabase db push
+```
+
+타입 생성이 필요하면 대상 앱의 타입 파일로 출력합니다.
+
+```bash
+supabase gen types typescript --project-id <project-id> > apps/admin/lib/supabase/types.ts
+```
+
+로컬 DB 적용 여부가 중요할 때는 마이그레이션 파일 존재만 보지 말고 실제 DB에 적용됐는지 확인합니다.
+
+## 개발 규칙
+
+- 새 기능은 기존 앱/패키지 패턴을 먼저 따릅니다.
+- 공유 로직은 `packages/utils`, 공유 UI는 `packages/ui`를 우선 검토합니다.
+- Route Handler에서 민감한 DB 작업을 할 때는 서버 권한 가드를 먼저 확인합니다.
+- 환경변수 예시에는 이름만 남기고 실제 값은 넣지 않습니다.
+- 큰 기능은 앱별 타입 체크와 변경 파일 중심 검증을 우선 실행합니다.
+
+## 커밋 메시지
+
+이 레포의 AGENTS.md는 Lore Commit Protocol을 사용합니다. 커밋을 만들 때는 의도 중심 제목과 필요한 trailer를 포함합니다.
+
+```text
+관리자 세션 위변조를 서버에서 차단한다
+
+Constraint: 운영 환경에서는 별도 세션 시크릿이 필요함
+Confidence: high
+Scope-risk: narrow
+Tested: pnpm --filter admin check-types
+```

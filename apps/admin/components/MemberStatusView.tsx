@@ -1261,7 +1261,7 @@ export default function MemberStatusView({
                     )}
                   </div>
                 </div>
-                <label className="flex w-full items-center justify-between rounded-md bg-white px-3 py-2.5 cursor-pointer hover:bg-slate-100 transition-colors">
+                <label className="flex w-full items-center justify-between rounded-md border border-slate-200 bg-white px-3 py-2.5 cursor-pointer hover:bg-slate-100 transition-colors">
                   <span className="text-sm font-medium">관리자 권한</span>
                   <Checkbox
                     checked={watchedRole === "admin"}
@@ -1897,7 +1897,7 @@ export default function MemberStatusView({
                     </div>
                   </div>
                 </div>
-                <label className="flex w-full items-center justify-between rounded-md bg-white px-3 py-2.5 cursor-pointer hover:bg-slate-100 transition-colors">
+                <label className="flex w-full items-center justify-between rounded-md border border-slate-200 bg-white px-3 py-2.5 cursor-pointer hover:bg-slate-100 transition-colors">
                   <span className="text-sm font-medium">관리자 권한</span>
                   <Checkbox
                     checked={editingMember.role === "admin"}

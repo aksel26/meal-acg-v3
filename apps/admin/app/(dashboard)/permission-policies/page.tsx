@@ -7,15 +7,9 @@ import { Button } from "@repo/ui/src/button";
 import { Card, CardContent } from "@repo/ui/src/card";
 import { Checkbox } from "@repo/ui/src/checkbox";
 import { SearchableDropdown } from "@repo/ui/src/searchable-dropdown";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@repo/ui/src/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/src/tabs";
 import { toast } from "@repo/ui/src/sonner";
+import { cn } from "@repo/ui/lib/utils";
 import {
   ADMIN_ROLES,
   getAdminRoleLabel,
@@ -68,6 +62,12 @@ type PermissionPoliciesResponse = {
 };
 
 type OverrideValue = "inherit" | "allow" | "deny";
+
+const OVERRIDE_OPTIONS: Array<{ value: OverrideValue; label: string }> = [
+  { value: "inherit", label: "역할 따름" },
+  { value: "allow", label: "추가 허용" },
+  { value: "deny", label: "개인 차단" },
+];
 
 async function fetchPermissionPolicies(): Promise<PermissionPoliciesResponse> {
   const response = await fetch("/api/permission-policies");
@@ -360,7 +360,7 @@ export default function PermissionPoliciesPage() {
             />
 
             {selectedMember && (
-              <div className="mt-4 rounded-lg border border-slate-200 p-4">
+              <div className="mt-4">
                 <div className="mb-3 flex items-center justify-between">
                   <div>
                     <p className="text-sm font-semibold text-slate-900">
@@ -373,7 +373,7 @@ export default function PermissionPoliciesPage() {
                   )}
                 </div>
 
-                <div className="max-h-[520px] space-y-3 overflow-auto pr-1">
+                <div className="max-h-[520px] overflow-auto pr-1">
                   {data.permissions.map((item) => {
                     const inherited = selectedMemberRole === "대표" ||
                       Boolean(rolePolicyMap.get(selectedMemberRole)?.has(item.permission));
@@ -381,7 +381,7 @@ export default function PermissionPoliciesPage() {
                     return (
                       <div
                         key={item.permission}
-                        className="grid gap-2 rounded-md border border-slate-100 p-3 text-sm"
+                        className="grid gap-2 border-b border-slate-100 bg-white px-1 py-3 text-sm last:border-b-0"
                       >
                         <div className="flex items-center justify-between gap-2">
                           <span className="font-medium text-slate-800">{item.label}</span>
@@ -391,22 +391,31 @@ export default function PermissionPoliciesPage() {
                         </div>
                         <div className="flex items-center justify-between gap-3">
                           <span className="text-xs text-slate-500">{item.permission}</span>
-                          <Select
-                            value={override}
-                            disabled={selectedMemberIsRepresentative}
-                            onValueChange={(value) =>
-                              setOverride(item.permission, value as OverrideValue)
-                            }
+                          <div
+                            className="inline-flex shrink-0 rounded-md bg-slate-100 p-0.5"
+                            role="radiogroup"
+                            aria-label={`${item.label} 예외 권한`}
                           >
-                            <SelectTrigger className="h-8 w-[132px]">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="inherit">역할 따름</SelectItem>
-                              <SelectItem value="allow">추가 허용</SelectItem>
-                              <SelectItem value="deny">개인 차단</SelectItem>
-                            </SelectContent>
-                          </Select>
+                            {OVERRIDE_OPTIONS.map((option) => {
+                              const isSelected = override === option.value;
+                              return (
+                                <button
+                                  key={option.value}
+                                  type="button"
+                                  disabled={selectedMemberIsRepresentative}
+                                  onClick={() => setOverride(item.permission, option.value)}
+                                  className={cn(
+                                    "h-6 rounded px-2 text-[11px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+                                    isSelected
+                                      ? "bg-white text-slate-900 shadow-sm"
+                                      : "text-slate-500 hover:bg-white/60 hover:text-slate-800",
+                                  )}
+                                >
+                                  {option.label}
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
                       </div>
                     );

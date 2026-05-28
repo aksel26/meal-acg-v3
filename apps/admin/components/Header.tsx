@@ -27,6 +27,10 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
     title: "감사 로그",
     subtitle: "민감정보 조회, 권한 변경, 다운로드 기록을 확인합니다",
   },
+  "/permission-policies": {
+    title: "권한 관리",
+    subtitle: "대표 전용 역할 권한과 직원별 예외 권한을 설정합니다",
+  },
   "/export": {
     title: "엑셀 내보내기",
     subtitle:

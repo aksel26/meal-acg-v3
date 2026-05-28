@@ -169,6 +169,7 @@ const navigation: NavigationItem[] = [
     name: "설정",
     icon: Cog,
     items: [
+      { name: "권한 관리", href: "/permission-policies", icon: KeyRound, permission: "rbac:manage" },
       { name: "감사 로그", href: "/admin-audit-logs", icon: ShieldCheck, permission: "audit:read" },
       { name: "공휴일 관리", href: "/holidays", icon: CalendarDays, permission: "settings:write" },
       { name: "휴가 유형 관리", href: "/leave-types", icon: CalendarClock, permission: "settings:write" },

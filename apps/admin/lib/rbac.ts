@@ -44,6 +44,60 @@ export const ADMIN_PERMISSIONS = [
 
 export type AdminPermission = (typeof ADMIN_PERMISSIONS)[number];
 
+export const ADMIN_PERMISSION_GROUPS = [
+  "직원/조직",
+  "민감정보/다운로드",
+  "복지포인트/식대",
+  "근태/휴가",
+  "재무/평가",
+  "설정/감사 로그",
+] as const;
+
+export type AdminPermissionGroup = (typeof ADMIN_PERMISSION_GROUPS)[number];
+
+export type AdminPermissionMetadata = {
+  permission: AdminPermission;
+  label: string;
+  group: AdminPermissionGroup;
+  highRisk?: boolean;
+};
+
+export const ADMIN_PERMISSION_METADATA: AdminPermissionMetadata[] = [
+  { permission: "dashboard:read", label: "대시보드 조회", group: "설정/감사 로그" },
+  { permission: "meal:read", label: "식대 조회", group: "복지포인트/식대" },
+  { permission: "meal:write", label: "식대 수정", group: "복지포인트/식대" },
+  { permission: "meal:import", label: "식대 가져오기", group: "복지포인트/식대" },
+  { permission: "meal:export", label: "식대 내보내기", group: "복지포인트/식대" },
+  { permission: "points:read", label: "복지포인트 조회", group: "복지포인트/식대" },
+  { permission: "points:write", label: "복지포인트 수정", group: "복지포인트/식대" },
+  { permission: "points:review", label: "복지포인트 검토", group: "복지포인트/식대" },
+  { permission: "organization:read", label: "조직 조회", group: "직원/조직" },
+  { permission: "organization:write", label: "조직 수정", group: "직원/조직" },
+  { permission: "members:read", label: "직원 조회", group: "직원/조직" },
+  { permission: "members:write", label: "직원 수정", group: "직원/조직" },
+  { permission: "members:sensitive:read", label: "직원 민감정보 조회", group: "민감정보/다운로드", highRisk: true },
+  { permission: "members:sensitive:write", label: "직원 민감정보 수정", group: "민감정보/다운로드", highRisk: true },
+  { permission: "rbac:manage", label: "권한 정책 관리", group: "설정/감사 로그", highRisk: true },
+  { permission: "export:bulk", label: "대량 다운로드", group: "민감정보/다운로드", highRisk: true },
+  { permission: "evaluation:read", label: "평가 조회", group: "재무/평가" },
+  { permission: "evaluation:write", label: "평가 수정", group: "재무/평가" },
+  { permission: "evaluation:deploy", label: "평가 배포", group: "재무/평가" },
+  { permission: "attendance:read", label: "근태 조회", group: "근태/휴가" },
+  { permission: "attendance:write", label: "근태 수정", group: "근태/휴가" },
+  { permission: "leave:read", label: "휴가 조회", group: "근태/휴가" },
+  { permission: "leave:write", label: "휴가 수정", group: "근태/휴가" },
+  { permission: "leave:approve", label: "휴가 승인", group: "근태/휴가" },
+  { permission: "notifications:read", label: "알림 조회", group: "설정/감사 로그" },
+  { permission: "notifications:send", label: "알림 발송", group: "설정/감사 로그" },
+  { permission: "finance:read", label: "재무 조회", group: "재무/평가" },
+  { permission: "finance:write", label: "재무 수정", group: "재무/평가" },
+  { permission: "finance:approve", label: "재무 승인", group: "재무/평가" },
+  { permission: "finance:report", label: "재무 리포트", group: "재무/평가" },
+  { permission: "audit:read", label: "감사 로그 조회", group: "설정/감사 로그", highRisk: true },
+  { permission: "settings:read", label: "설정 조회", group: "설정/감사 로그" },
+  { permission: "settings:write", label: "설정 수정", group: "설정/감사 로그" },
+];
+
 const REPRESENTATIVE_PERMISSIONS = ADMIN_PERMISSIONS;
 
 const ADMIN_LEADER_PERMISSIONS: AdminPermission[] = ADMIN_PERMISSIONS.filter(
@@ -92,9 +146,20 @@ export function normalizeAdminRole(value: unknown): AdminRole {
   return isAdminRole(value) ? value : DEFAULT_ADMIN_ROLE;
 }
 
+export function isAdminPermission(value: unknown): value is AdminPermission {
+  return (
+    typeof value === "string" &&
+    ADMIN_PERMISSIONS.includes(value as AdminPermission)
+  );
+}
+
+export function getFallbackAdminPermissions(adminRole: unknown) {
+  return ADMIN_ROLE_PERMISSIONS[normalizeAdminRole(adminRole)];
+}
+
 export function hasAdminPermission(
   adminRole: unknown,
   permission: AdminPermission,
 ) {
-  return ADMIN_ROLE_PERMISSIONS[normalizeAdminRole(adminRole)].includes(permission);
+  return getFallbackAdminPermissions(adminRole).includes(permission);
 }

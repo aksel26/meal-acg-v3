@@ -2,11 +2,11 @@ import { cookies } from "next/headers";
 import type { AuthSession } from "./supabase/types";
 import { createServiceClient } from "./supabase/server";
 import {
-  hasAdminPermission,
   isUserAuthority,
   normalizeAdminRole,
   type AdminPermission,
 } from "./rbac";
+import { hasEffectiveAdminPermission } from "./rbac-server";
 
 const SESSION_COOKIE_NAME = "admin-session";
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
@@ -97,7 +97,7 @@ export async function requireAdminPermission(
 ): Promise<AuthSession> {
   const session = await requireAdmin();
 
-  if (!hasAdminPermission(session.adminRole, permission)) {
+  if (!(await hasEffectiveAdminPermission(session, permission))) {
     throw new AuthError("Forbidden: Permission denied", 403);
   }
 

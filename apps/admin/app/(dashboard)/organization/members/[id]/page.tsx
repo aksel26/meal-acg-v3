@@ -26,6 +26,7 @@ import { Textarea } from "@repo/ui/src/textarea";
 import { cn } from "@repo/ui/lib/utils";
 import { queryKeys } from "@/lib/query-keys";
 import { STATUS_COLORS } from "@/lib/constants";
+import { getAdminRoleLabel } from "@/lib/rbac";
 
 type MemberDetail = {
   id: string;
@@ -313,7 +314,7 @@ export default function OrganizationMemberDetailPage() {
               <Field label="팀" value={member.team?.name} />
               <Field label="직급" value={member.position?.name || member.member_role} />
               <Field label="직책" value={member.member_role} />
-              <Field label="관리 권한" value={member.role === "admin" ? member.admin_role || "관리자" : "일반"} />
+              <Field label="관리 권한" value={member.role === "admin" ? getAdminRoleLabel(member.admin_role) : "일반"} />
               <Field label="사용자 권한" value={member.user_authority} />
               <Field label="입사일" value={formatDate(member.hire_date)} />
             </dl>

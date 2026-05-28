@@ -6,6 +6,16 @@ export type UserAuthority = (typeof USER_AUTHORITIES)[number];
 
 export const DEFAULT_ADMIN_ROLE: AdminRole = "일반";
 
+export const ADMIN_ROLE_LABELS: Record<AdminRole, string> = {
+  대표: "슈퍼 관리자",
+  팀장: "P&C 팀장",
+  일반: "P&C 직원",
+};
+
+export function getAdminRoleLabel(value: unknown) {
+  return ADMIN_ROLE_LABELS[normalizeAdminRole(value)];
+}
+
 export const ADMIN_PERMISSIONS = [
   "dashboard:read",
   "meal:read",

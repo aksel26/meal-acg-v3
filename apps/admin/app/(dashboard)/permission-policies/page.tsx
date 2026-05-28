@@ -18,6 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/src/tabs";
 import { toast } from "@repo/ui/src/sonner";
 import {
   ADMIN_ROLES,
+  getAdminRoleLabel,
   type AdminPermission,
   type AdminPermissionGroup,
   type AdminPermissionMetadata,
@@ -238,7 +239,7 @@ export default function PermissionPoliciesPage() {
                 <TabsList>
                   {ADMIN_ROLES.map((role) => (
                     <TabsTrigger key={role} value={role}>
-                      {role}
+                      {getAdminRoleLabel(role)}
                     </TabsTrigger>
                   ))}
                 </TabsList>
@@ -258,7 +259,7 @@ export default function PermissionPoliciesPage() {
                     </Badge>
                     {role === "대표" && (
                       <span className="text-sm text-slate-500">
-                        대표 권한은 잠김 방지를 위해 변경할 수 없습니다.
+                        슈퍼 관리자 권한은 잠김 방지를 위해 변경할 수 없습니다.
                       </span>
                     )}
                   </div>
@@ -338,7 +339,7 @@ export default function PermissionPoliciesPage() {
               <SelectContent>
                 {filteredMembers.map((member) => (
                   <SelectItem key={member.id} value={member.id}>
-                    {member.full_name} · {member.admin_role || "일반"}
+                    {member.full_name} · {getAdminRoleLabel(member.admin_role)}
                   </SelectItem>
                 ))}
               </SelectContent>

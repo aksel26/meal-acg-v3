@@ -68,7 +68,12 @@ import type {
   MemberStatusType,
 } from "@/lib/supabase/types";
 import { STATUS_COLORS } from "@/lib/constants";
-import { ADMIN_ROLES, DEFAULT_ADMIN_ROLE, USER_AUTHORITIES } from "@/lib/rbac";
+import {
+  ADMIN_ROLES,
+  DEFAULT_ADMIN_ROLE,
+  USER_AUTHORITIES,
+  getAdminRoleLabel,
+} from "@/lib/rbac";
 
 // ── Constants ──
 
@@ -1283,7 +1288,7 @@ export default function MemberStatusView({
                       <SelectContent>
                         {ADMIN_ROLES.map((role) => (
                           <SelectItem key={role} value={role}>
-                            {role}
+                            {getAdminRoleLabel(role)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -1927,7 +1932,7 @@ export default function MemberStatusView({
                       <SelectContent>
                         {ADMIN_ROLES.map((role) => (
                           <SelectItem key={role} value={role}>
-                            {role}
+                            {getAdminRoleLabel(role)}
                           </SelectItem>
                         ))}
                       </SelectContent>

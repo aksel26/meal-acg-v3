@@ -142,8 +142,13 @@ export default function MemberStatusView({
   // Edit member state
   const [editingMember, setEditingMember] = useState<{
     id: string;
+    login_id: string;
+    password: string;
     full_name: string;
     email: string;
+    birth_date: string;
+    phone: string;
+    passport_number: string;
     member_role: string;
     intern_months: string;
     role: string;
@@ -380,8 +385,13 @@ export default function MemberStatusView({
   const updateMemberMutation = useMutation({
     mutationFn: async (data: {
       id: string;
+      login_id?: string;
+      password?: string;
       full_name: string;
       email?: string;
+      birth_date?: string;
+      phone?: string;
+      passport_number?: string;
       member_role: string;
       intern_months?: number | null;
       role?: string;
@@ -395,7 +405,12 @@ export default function MemberStatusView({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           full_name: data.full_name,
+          login_id: data.login_id,
+          ...(data.password ? { password: data.password } : {}),
           email: data.email || null,
+          birth_date: data.birth_date || null,
+          phone: data.phone || null,
+          passport_number: data.passport_number || null,
           member_role: data.member_role,
           intern_months:
             data.member_role === "인턴" && data.intern_months
@@ -422,8 +437,12 @@ export default function MemberStatusView({
       setIsEditMemberOpen(false);
       setEditingMember(null);
     },
-    onError: () => {
-      toast.error("인원 정보 수정에 실패했습니다.");
+    onError: (error: Error) => {
+      if (error.message === "Login ID already exists") {
+        toast.error("이미 존재하는 아이디입니다.");
+      } else {
+        toast.error("인원 정보 수정에 실패했습니다.");
+      }
     },
   });
 
@@ -431,8 +450,13 @@ export default function MemberStatusView({
     const member = allMembers?.find((m) => m.id === row.member_id);
     setEditingMember({
       id: row.member_id || "",
+      login_id: row.login_id || "",
+      password: "",
       full_name: row.full_name || "",
       email: row.email || "",
+      birth_date: row.birth_date || "",
+      phone: row.phone || "",
+      passport_number: row.passport_number || "",
       member_role: member?.member_role || row.member_role || "팀원",
       intern_months: member?.intern_months?.toString() || "",
       role: member?.role || "user",
@@ -445,11 +469,22 @@ export default function MemberStatusView({
   };
 
   const handleEditMemberSubmit = () => {
-    if (!editingMember || !editingMember.full_name.trim()) return;
+    if (
+      !editingMember ||
+      !editingMember.full_name.trim() ||
+      !editingMember.login_id.trim()
+    ) {
+      return;
+    }
     updateMemberMutation.mutate({
       id: editingMember.id,
+      login_id: editingMember.login_id.trim(),
+      password: editingMember.password.trim() || undefined,
       full_name: editingMember.full_name.trim(),
       email: editingMember.email,
+      birth_date: editingMember.birth_date || undefined,
+      phone: editingMember.phone || undefined,
+      passport_number: editingMember.passport_number || undefined,
       member_role: editingMember.member_role,
       intern_months:
         editingMember.member_role === "인턴" && editingMember.intern_months
@@ -1019,10 +1054,10 @@ export default function MemberStatusView({
             <DialogDescription>새 인원 정보를 입력하세요.</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleFormSubmit(onSubmitAddMember)}>
-            <div className="space-y-8 py-5">
+            <div className="py-5">
               {/* 기본 정보 */}
-              <div className="space-y-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">기본 정보</p>
+              <div className="mb-8 space-y-4 last:mb-0">
+                <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-400">기본 정보</p>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="addFullName">이름</Label>
@@ -1097,8 +1132,8 @@ export default function MemberStatusView({
               </div>
 
               {/* 직급/직책 */}
-              <div className="space-y-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">직급 / 직책</p>
+              <div className="mb-8 space-y-4 last:mb-0">
+                <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-400">직급 / 직책</p>
                 <div className="flex gap-4">
                   <div className="space-y-2 flex-1">
                     <Label>직급</Label>
@@ -1168,8 +1203,8 @@ export default function MemberStatusView({
               </div>
 
               {/* 계정 정보 */}
-              <div className="space-y-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">계정 정보</p>
+              <div className="mb-8 space-y-4 last:mb-0">
+                <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-400">계정 정보</p>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="addLoginId">아이디</Label>
@@ -1640,10 +1675,10 @@ export default function MemberStatusView({
             </DialogDescription>
           </DialogHeader>
           {editingMember && (
-            <div className="space-y-8 py-5">
+            <div className="py-5">
               {/* 기본 정보 */}
-              <div className="space-y-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">기본 정보</p>
+              <div className="mb-8 space-y-4 last:mb-0">
+                <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-400">기본 정보</p>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="editFullName">이름</Label>
@@ -1674,12 +1709,55 @@ export default function MemberStatusView({
                       placeholder="hong@example.com"
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="editBirthDate">생년월일 (선택)</Label>
+                    <Input
+                      id="editBirthDate"
+                      type="date"
+                      value={editingMember.birth_date}
+                      onChange={(e) =>
+                        setEditingMember({
+                          ...editingMember,
+                          birth_date: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="editPhone">휴대폰번호 (선택)</Label>
+                    <Input
+                      id="editPhone"
+                      type="tel"
+                      value={editingMember.phone}
+                      onChange={(e) =>
+                        setEditingMember({
+                          ...editingMember,
+                          phone: e.target.value,
+                        })
+                      }
+                      placeholder="010-1234-5678"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="editPassportNumber">여권번호 (선택)</Label>
+                    <Input
+                      id="editPassportNumber"
+                      value={editingMember.passport_number}
+                      onChange={(e) =>
+                        setEditingMember({
+                          ...editingMember,
+                          passport_number: e.target.value,
+                        })
+                      }
+                      placeholder="M12345678"
+                    />
+                  </div>
                 </div>
               </div>
 
               {/* 직급/직책 */}
-              <div className="space-y-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">직급 / 직책</p>
+              <div className="mb-8 space-y-4 last:mb-0">
+                <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-400">직급 / 직책</p>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>직급</Label>
@@ -1772,8 +1850,53 @@ export default function MemberStatusView({
               </div>
 
               {/* 계정 정보 */}
-              <div className="space-y-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">계정 정보</p>
+              <div className="mb-8 space-y-4 last:mb-0">
+                <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-400">계정 정보</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="editLoginId">아이디</Label>
+                    <Input
+                      id="editLoginId"
+                      value={editingMember.login_id}
+                      onChange={(e) =>
+                        setEditingMember({
+                          ...editingMember,
+                          login_id: e.target.value,
+                        })
+                      }
+                      placeholder="hong123"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="editPassword">비밀번호</Label>
+                    <div className="relative">
+                      <Input
+                        id="editPassword"
+                        type={showPassword ? "text" : "password"}
+                        value={editingMember.password}
+                        onChange={(e) =>
+                          setEditingMember({
+                            ...editingMember,
+                            password: e.target.value,
+                          })
+                        }
+                        placeholder="변경 시 입력"
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
                 <label className="flex w-full items-center justify-between rounded-md bg-white px-3 py-2.5 cursor-pointer hover:bg-slate-100 transition-colors">
                   <span className="text-sm font-medium">관리자 권한</span>
                   <Checkbox
@@ -1852,7 +1975,8 @@ export default function MemberStatusView({
               onClick={handleEditMemberSubmit}
               disabled={
                 updateMemberMutation.isPending ||
-                !editingMember?.full_name.trim()
+                !editingMember?.full_name.trim() ||
+                !editingMember?.login_id.trim()
               }
             >
               {updateMemberMutation.isPending ? (

@@ -64,8 +64,23 @@ export async function PUT(
     if (body.full_name !== undefined) {
       updateData.full_name = body.full_name;
     }
+    if (body.login_id !== undefined) {
+      updateData.login_id = body.login_id;
+    }
+    if (body.password !== undefined && body.password) {
+      updateData.password = body.password;
+    }
     if (body.email !== undefined) {
       updateData.email = body.email || null;
+    }
+    if (body.birth_date !== undefined) {
+      updateData.birth_date = body.birth_date || null;
+    }
+    if (body.phone !== undefined) {
+      updateData.phone = body.phone || null;
+    }
+    if (body.passport_number !== undefined) {
+      updateData.passport_number = body.passport_number || null;
     }
     if (body.team_id !== undefined) {
       updateData.team_id = body.team_id || null;
@@ -118,6 +133,9 @@ export async function PUT(
       }
       if (error.code === "23503") {
         return NextResponse.json({ error: "Referenced team or division not found" }, { status: 404 });
+      }
+      if (error.code === "23505") {
+        return NextResponse.json({ error: "Login ID already exists" }, { status: 409 });
       }
       return NextResponse.json({ error: "Failed to update member" }, { status: 500 });
     }

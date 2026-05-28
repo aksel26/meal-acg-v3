@@ -282,12 +282,7 @@ function NavGroupComponent({
   pathname: string;
   collapsed: boolean;
 }) {
-  const hasActiveItem = group.items.some(
-    (item) =>
-      pathname === item.href ||
-      (item.href !== "/" && pathname.startsWith(item.href)),
-  );
-  const [isOpen, setIsOpen] = useState(hasActiveItem);
+  const [isOpen, setIsOpen] = useState(false);
 
   const parentButton = (
     <button

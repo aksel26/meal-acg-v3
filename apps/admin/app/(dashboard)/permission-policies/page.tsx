@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@repo/ui/src/badge";
 import { Button } from "@repo/ui/src/button";
 import { Card, CardContent } from "@repo/ui/src/card";
 import { Checkbox } from "@repo/ui/src/checkbox";
-import { Input } from "@repo/ui/src/input";
+import { SearchableDropdown } from "@repo/ui/src/searchable-dropdown";
 import {
   Select,
   SelectContent,
@@ -114,11 +114,11 @@ export default function PermissionPoliciesPage() {
   const [roleDrafts, setRoleDrafts] = useState<Map<AdminRole, Set<AdminPermission>>>(
     () => new Map(),
   );
-  const [memberSearch, setMemberSearch] = useState("");
   const [selectedMemberId, setSelectedMemberId] = useState<string>("");
   const [overrideDraft, setOverrideDraft] = useState<Map<AdminPermission, OverrideValue>>(
     () => new Map(),
   );
+  const hasInitializedMemberSelection = useRef(false);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["permission-policies"],
@@ -136,25 +136,20 @@ export default function PermissionPoliciesPage() {
   const selectedMemberRole = selectedMember?.admin_role || "일반";
   const selectedMemberIsRepresentative = selectedMember?.admin_role === "대표";
 
-  const filteredMembers = useMemo(() => {
-    const keyword = memberSearch.trim().toLowerCase();
-    const members = data?.adminMembers || [];
-    if (!keyword) return members;
-    return members.filter((member) =>
-      `${member.full_name} ${member.admin_role || ""}`.toLowerCase().includes(keyword),
-    );
-  }, [data, memberSearch]);
-
   useEffect(() => {
     if (!data) return;
     setRoleDrafts(createRolePolicyMap(data));
-    if (!selectedMemberId && data.adminMembers[0]) {
+    if (!hasInitializedMemberSelection.current && data.adminMembers[0]) {
+      hasInitializedMemberSelection.current = true;
       setSelectedMemberId(data.adminMembers[0].id);
     }
-  }, [data, selectedMemberId]);
+  }, [data]);
 
   useEffect(() => {
-    if (!selectedMemberId) return;
+    if (!selectedMemberId) {
+      setOverrideDraft(new Map());
+      return;
+    }
     setOverrideDraft(new Map(memberOverrideMap.get(selectedMemberId) || []));
   }, [memberOverrideMap, selectedMemberId]);
 
@@ -230,10 +225,10 @@ export default function PermissionPoliciesPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-6 py-6">
-      <section className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.85fr)]">
-        <Card className="rounded-lg border-slate-200 shadow-none">
-          <CardContent className="p-5">
+    <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-10">
+      <section className="grid gap-10 lg:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.85fr)]">
+        <Card className="border-0 bg-transparent shadow-none">
+          <CardContent className="p-0">
             <Tabs value={activeRole} onValueChange={(value) => setActiveRole(value as AdminRole)}>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <TabsList>
@@ -310,8 +305,8 @@ export default function PermissionPoliciesPage() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-lg border-slate-200 shadow-none">
-          <CardContent className="p-5">
+        <Card className="border-0 bg-transparent shadow-none">
+          <CardContent className="p-0">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-base font-semibold text-slate-900">직원별 예외 권한</h2>
@@ -325,25 +320,44 @@ export default function PermissionPoliciesPage() {
               </Button>
             </div>
 
-            <Input
-              value={memberSearch}
-              onChange={(event) => setMemberSearch(event.target.value)}
-              placeholder="관리자 이름 검색"
+            <SearchableDropdown<AdminMember>
+              items={data.adminMembers}
+              value={selectedMemberId}
+              getItemKey={(member) => member.id}
+              getItemLabel={(member) => `${member.full_name} · ${getAdminRoleLabel(member.admin_role)}`}
+              renderItem={(member, isHighlighted) => (
+                <div
+                  className={`flex cursor-pointer items-center justify-between gap-3 px-3 py-2.5 transition-colors ${
+                    isHighlighted ? "bg-blue-50" : "hover:bg-slate-50"
+                  }`}
+                >
+                  <span className="truncate text-sm text-slate-900">{member.full_name}</span>
+                  <Badge
+                    variant={
+                      member.admin_role === "대표"
+                        ? "default"
+                        : member.admin_role === "팀장"
+                          ? "outline"
+                          : "secondary"
+                    }
+                    className={
+                      member.admin_role === "팀장"
+                        ? "shrink-0 border-amber-200 bg-amber-50 text-[10px] text-amber-700"
+                        : "shrink-0 text-[10px]"
+                    }
+                  >
+                    {getAdminRoleLabel(member.admin_role)}
+                  </Badge>
+                </div>
+              )}
+              onSelect={(member) => setSelectedMemberId(member.id)}
+              onClear={() => setSelectedMemberId("")}
+              placeholder="관리자 선택"
+              searchPlaceholder="관리자 이름 검색 (초성 가능)"
+              emptyText="검색 결과가 없습니다"
+              allowClear
               className="mb-3"
             />
-
-            <Select value={selectedMemberId} onValueChange={setSelectedMemberId}>
-              <SelectTrigger>
-                <SelectValue placeholder="직원 선택" />
-              </SelectTrigger>
-              <SelectContent>
-                {filteredMembers.map((member) => (
-                  <SelectItem key={member.id} value={member.id}>
-                    {member.full_name} · {getAdminRoleLabel(member.admin_role)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
 
             {selectedMember && (
               <div className="mt-4 rounded-lg border border-slate-200 p-4">
@@ -404,8 +418,8 @@ export default function PermissionPoliciesPage() {
         </Card>
       </section>
 
-      <Card className="rounded-lg border-slate-200 shadow-none">
-        <CardContent className="p-5">
+      <Card className="border-0 bg-transparent shadow-none">
+        <CardContent className="p-0">
           <h2 className="mb-4 text-base font-semibold text-slate-900">최근 권한 변경 이력</h2>
           <div className="overflow-hidden rounded-lg border border-slate-200">
             <table className="w-full text-left text-sm">

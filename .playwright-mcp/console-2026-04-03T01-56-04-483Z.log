@@ -1,0 +1,60 @@
+[    5435ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost:3010/:0
+[    5764ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3010/_next/static/chunks/4075f_next_dist_compiled_react-dom_8fee0d96._.js:14475
+[    5913ms] [WARNING] Image with src "/_next/static/media/ACG_LOGO_WHITE.cc15d50a.png" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. @ http://localhost:3010/_next/static/chunks/4075f_next_dist_95bd20da._.js:874
+[    6015ms] [INFO] Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner. @ http://localhost:3010/:0
+[    6111ms] [LOG] %c[Vercel Web Analytics]%c Debug mode is enabled by default in development. No requests will be sent to the server. color: rgb(120, 120, 120) color: inherit @ https://va.vercel-scripts.com/v1/script.debug.js:0
+[    6111ms] [LOG] %c[Vercel Web Analytics]%c Running queued event color: rgb(120, 120, 120) color: inherit pageview {route: /, path: /} @ https://va.vercel-scripts.com/v1/script.debug.js:0
+[    6111ms] [LOG] %c[Vercel Web Analytics]%c [view] http://localhost:3010/ color: rgb(120, 120, 120) color: inherit {o: http://localhost:3010/, sv: 0.1.3, sdkn: @vercel/analytics/next, sdkv: 1.5.0, ts: 1775181370594} /_vercel/insights/view @ https://va.vercel-scripts.com/v1/script.debug.js:0
+[    6126ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5693
+[    6573ms] [LOG] [Fast Refresh] done in 548ms @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5557
+[    8360ms] [WARNING] Image with src "/_next/static/media/ACG_LOGO_WHITE.cc15d50a.png" was detected as the Largest Contentful Paint (LCP). Please add the "priority" property if this image is above the fold.
+Read more: https://nextjs.org/docs/api-reference/next/image#priority @ http://localhost:3010/_next/static/chunks/4075f_next_dist_95bd20da._.js:874
+[  196373ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5693
+[  196716ms] [LOG] [Fast Refresh] done in 445ms @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5557
+[  212386ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5693
+[  212494ms] [LOG] [Fast Refresh] done in 210ms @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5557
+[  317432ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5693
+[  317777ms] [LOG] [Fast Refresh] done in 446ms @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5557
+[  367585ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5693
+[  367991ms] [LOG] [Fast Refresh] done in 508ms @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5557
+[  398570ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5693
+[  398875ms] [LOG] [Fast Refresh] done in 407ms @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5557
+[  399668ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5693
+[  399813ms] [LOG] [Fast Refresh] done in 245ms @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5557
+[  403152ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5693
+[  403409ms] [LOG] [Fast Refresh] done in 333ms @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5557
+[  421202ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5693
+[  421535ms] [LOG] [Fast Refresh] done in 406ms @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5557
+[  436974ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5693
+[  437330ms] [LOG] [Fast Refresh] done in 444ms @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5557
+[  474963ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5693
+[  475138ms] [LOG] [Fast Refresh] done in 279ms @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5557
+[  478929ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5693
+[  479147ms] [LOG] [Fast Refresh] done in 310ms @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5557
+[  489324ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5693
+[  489475ms] [LOG] [Fast Refresh] done in 253ms @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5557
+[  496778ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5693
+[  496894ms] [LOG] [Fast Refresh] done in 200ms @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5557
+[  526252ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5693
+[  526568ms] [LOG] [Fast Refresh] done in 418ms @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5557
+[  543972ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5693
+[  544139ms] [LOG] [Fast Refresh] done in 267ms @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5557
+[  554773ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5693
+[  554879ms] [LOG] [Fast Refresh] done in 207ms @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5557
+[  565671ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5693
+[  565808ms] [LOG] [Fast Refresh] done in 239ms @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5557
+[  566927ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5693
+[  567126ms] [LOG] [Fast Refresh] done in 301ms @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5557
+[  570580ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5693
+[  570629ms] [LOG] [Fast Refresh] done in 150ms @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5557
+[  572563ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5693
+[  572747ms] [LOG] [Fast Refresh] done in 284ms @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5557
+[  643691ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5693
+[  644726ms] [LOG] [Fast Refresh] done in 1137ms @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5557
+[  668970ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5693
+[  671895ms] [LOG] [Fast Refresh] done in 3026ms @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5557
+[  673576ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:3010/api/auth/login:0
+[  673578ms] [ERROR] 로그인 오류: Error: 아이디 또는 비밀번호가 일치하지 않습니다.
+    at handleLogin (http://localhost:3010/_next/static/chunks/_d824b9d6._.js:887:23) @ http://localhost:3010/_next/static/chunks/4075f_next_dist_95bd20da._.js:2248
+[  673771ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5693
+[  673980ms] [LOG] [Fast Refresh] done in 310ms @ http://localhost:3010/_next/static/chunks/4075f_next_dist_client_a5284f4a._.js:5557

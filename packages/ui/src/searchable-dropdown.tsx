@@ -2,67 +2,30 @@
 
 import * as React from "react";
 import { cn } from "../lib/utils";
+import { canBeChoseong, getChoseong } from "es-hangul";
 import { Search, X, Check, ChevronDown } from "lucide-react";
-
-// 한글 초성 배열
-const CHOSUNG = [
-  "ㄱ",
-  "ㄲ",
-  "ㄴ",
-  "ㄷ",
-  "ㄸ",
-  "ㄹ",
-  "ㅁ",
-  "ㅂ",
-  "ㅃ",
-  "ㅅ",
-  "ㅆ",
-  "ㅇ",
-  "ㅈ",
-  "ㅉ",
-  "ㅊ",
-  "ㅋ",
-  "ㅌ",
-  "ㅍ",
-  "ㅎ",
-];
-
-// 문자열에서 초성 추출
-function getChosung(str: string): string {
-  return str
-    .split("")
-    .map((char) => {
-      const code = char.charCodeAt(0);
-      // 한글 음절 범위 (가 ~ 힣)
-      if (code >= 0xac00 && code <= 0xd7a3) {
-        const chosungIndex = Math.floor((code - 0xac00) / 588);
-        return CHOSUNG[chosungIndex];
-      }
-      return char;
-    })
-    .join("");
-}
 
 // 초성 검색 매칭 확인
 function matchesChosung(text: string, query: string): boolean {
-  if (!query) return true;
+  const trimmedQuery = query.trim();
+  if (!trimmedQuery) return true;
 
   const lowerText = text.toLowerCase();
-  const lowerQuery = query.toLowerCase();
+  const lowerQuery = trimmedQuery.toLowerCase();
 
   // 일반 텍스트 매칭
   if (lowerText.includes(lowerQuery)) return true;
 
-  // 초성 매칭: 검색어가 초성으로만 구성된 경우
-  const isChosungOnly = query.split("").every((char) => CHOSUNG.includes(char));
-  if (isChosungOnly) {
-    const textChosung = getChosung(text);
-    return textChosung.includes(query);
-  }
+  const textChoseong = getChoseong(text).toLowerCase();
+  const queryChoseong = getChoseong(trimmedQuery).toLowerCase();
+  const isChoseongOnly = [...trimmedQuery].every((char) =>
+    canBeChoseong(char),
+  );
 
-  // 초성 + 일반 문자 혼합 매칭
-  const textChosung = getChosung(text);
-  return textChosung.toLowerCase().includes(lowerQuery);
+  if (isChoseongOnly) return textChoseong.includes(lowerQuery);
+  if (queryChoseong) return textChoseong.includes(queryChoseong);
+
+  return false;
 }
 
 export interface SearchableDropdownProps<T> {

@@ -868,6 +868,9 @@ export default function MemberStatusView({
                   <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                     가입일
                   </TableHead>
+                  <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500 w-16">
+                    관리
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody className="divide-y divide-slate-100/60">

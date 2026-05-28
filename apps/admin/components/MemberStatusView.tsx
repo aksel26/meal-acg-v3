@@ -1440,7 +1440,7 @@ export default function MemberStatusView({
 
       {/* ── Edit Dialog ── */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>특이사항 수정</DialogTitle>
           </DialogHeader>
@@ -1632,7 +1632,7 @@ export default function MemberStatusView({
           if (!open) setEditingMember(null);
         }}
       >
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>인원 정보 수정</DialogTitle>
             <DialogDescription>

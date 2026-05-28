@@ -1019,9 +1019,9 @@ export default function MemberStatusView({
             <DialogDescription>새 인원 정보를 입력하세요.</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleFormSubmit(onSubmitAddMember)}>
-            <div className="space-y-4 py-4">
+            <div className="space-y-8 py-5">
               {/* 기본 정보 */}
-              <div className="rounded-lg bg-slate-50 p-4 space-y-4">
+              <div className="space-y-5">
                 <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">기본 정보</p>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -1097,7 +1097,7 @@ export default function MemberStatusView({
               </div>
 
               {/* 직급/직책 */}
-              <div className="rounded-lg bg-slate-50 p-4 space-y-4">
+              <div className="space-y-5">
                 <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">직급 / 직책</p>
                 <div className="flex gap-4">
                   <div className="space-y-2 flex-1">
@@ -1168,7 +1168,7 @@ export default function MemberStatusView({
               </div>
 
               {/* 계정 정보 */}
-              <div className="rounded-lg bg-slate-50 p-4 space-y-4">
+              <div className="space-y-5">
                 <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">계정 정보</p>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">

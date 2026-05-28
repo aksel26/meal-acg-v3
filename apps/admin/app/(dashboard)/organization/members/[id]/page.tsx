@@ -138,6 +138,21 @@ function EmptyState({ children }: { children: React.ReactNode }) {
   );
 }
 
+function SummaryRow({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="border-b border-slate-100 py-4 first:pt-0 last:border-0 last:pb-0">
+      <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
+      <div className="mt-3">{children}</div>
+    </div>
+  );
+}
+
 function Metric({
   label,
   value,
@@ -288,7 +303,7 @@ export default function OrganizationMemberDetailPage() {
         </div>
       )}
 
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="space-y-4">
         <InfoCard title="기본 정보">
           <dl>
             <Field label="로그인 아이디" value={member.login_id} />
@@ -303,137 +318,143 @@ export default function OrganizationMemberDetailPage() {
           </dl>
         </InfoCard>
 
-        <InfoCard title="현재 특이사항">
-          {overviewQuery.isLoading ? (
-            <EmptyState>요약 정보를 불러오는 중입니다.</EmptyState>
-          ) : overview?.currentStatus.status ? (
-            <dl>
-              <Field label="상태" value={overview.currentStatus.status} />
-              <Field label="시작일" value={formatDate(overview.currentStatus.startDate)} />
-              <Field label="종료일" value={formatDate(overview.currentStatus.endDate)} />
-              <Field label="메모" value={overview.currentStatus.note} />
-            </dl>
-          ) : (
-            <EmptyState>현재 등록된 특이사항이 없습니다.</EmptyState>
-          )}
-        </InfoCard>
-
-        <InfoCard title="올해 휴가 요약">
-          {overviewQuery.isLoading ? (
-            <EmptyState>요약 정보를 불러오는 중입니다.</EmptyState>
-          ) : !overview?.permissions.leave ? (
-            <EmptyState>휴가 조회 권한이 없습니다.</EmptyState>
-          ) : overview.leave ? (
-            <div className="grid gap-3 sm:grid-cols-3">
-              <Metric label={`${overview.leave.year}년 사용일수`} value={`${overview.leave.usedDays}일`} />
-              <Metric label="승인 건수" value={`${overview.leave.approvedCount}건`} />
-              <Metric label="대기 건수" value={`${overview.leave.pendingCount}건`} tone={overview.leave.pendingCount > 0 ? "amber" : "default"} />
-            </div>
-          ) : (
-            <EmptyState>등록된 휴가 데이터가 없습니다.</EmptyState>
-          )}
-        </InfoCard>
-
-        <InfoCard title="이번 달 근태 요약">
-          {overviewQuery.isLoading ? (
-            <EmptyState>요약 정보를 불러오는 중입니다.</EmptyState>
-          ) : !overview?.permissions.attendance ? (
-            <EmptyState>근태 조회 권한이 없습니다.</EmptyState>
-          ) : overview.attendance ? (
-            <div className="grid gap-3 sm:grid-cols-3">
-              <Metric label={`${overview.attendance.month}월 출근일`} value={`${overview.attendance.checkedInDays}일`} />
-              <Metric label="지각" value={`${overview.attendance.lateCount}건`} tone={overview.attendance.lateCount > 0 ? "amber" : "default"} />
-              <Metric label="결근" value={`${overview.attendance.absentCount}건`} tone={overview.attendance.absentCount > 0 ? "rose" : "default"} />
-            </div>
-          ) : (
-            <EmptyState>등록된 근태 데이터가 없습니다.</EmptyState>
-          )}
-        </InfoCard>
-
-        <InfoCard title="프로젝트 소속">
-          {overviewQuery.isLoading ? (
-            <EmptyState>요약 정보를 불러오는 중입니다.</EmptyState>
-          ) : projects.length === 0 ? (
-            <EmptyState>소속된 프로젝트가 없습니다.</EmptyState>
-          ) : (
-            <div className="space-y-3">
-              {projects.map((project) => (
-                <div key={project.id} className="rounded-lg bg-slate-50 p-4">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <FolderKanban className="h-4 w-4 text-slate-400" />
-                    <div className="min-w-0 flex-1 text-sm font-semibold text-slate-800">
-                      {project.title}
-                    </div>
-                    <Badge className="border-0 bg-slate-200 px-2 py-0.5 text-xs text-slate-700">
-                      {project.status}
-                    </Badge>
-                    <Badge className="border-0 bg-indigo-100 px-2 py-0.5 text-xs text-indigo-700">
-                      {project.role}
-                    </Badge>
-                  </div>
-                  <dl className="mt-3">
-                    <Field
-                      label="고객사"
-                      value={project.customerNames.join(", ") || "-"}
-                    />
-                    <Field
-                      label="기간"
-                      value={`${formatDate(project.startDate)} ~ ${formatDate(project.dueDate)}`}
-                    />
-                  </dl>
+        <InfoCard title="현재 요약">
+          <div className="space-y-3">
+            <SummaryRow title="이번 달 근태 요약">
+              {overviewQuery.isLoading ? (
+                <EmptyState>요약 정보를 불러오는 중입니다.</EmptyState>
+              ) : !overview?.permissions.attendance ? (
+                <EmptyState>근태 조회 권한이 없습니다.</EmptyState>
+              ) : overview.attendance ? (
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <Metric label={`${overview.attendance.month}월 출근일`} value={`${overview.attendance.checkedInDays}일`} />
+                  <Metric label="지각" value={`${overview.attendance.lateCount}건`} tone={overview.attendance.lateCount > 0 ? "amber" : "default"} />
+                  <Metric label="결근" value={`${overview.attendance.absentCount}건`} tone={overview.attendance.absentCount > 0 ? "rose" : "default"} />
                 </div>
-              ))}
-            </div>
-          )}
+              ) : (
+                <EmptyState>등록된 근태 데이터가 없습니다.</EmptyState>
+              )}
+            </SummaryRow>
+
+            <SummaryRow title="올해 휴가 요약">
+              {overviewQuery.isLoading ? (
+                <EmptyState>요약 정보를 불러오는 중입니다.</EmptyState>
+              ) : !overview?.permissions.leave ? (
+                <EmptyState>휴가 조회 권한이 없습니다.</EmptyState>
+              ) : overview.leave ? (
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <Metric label={`${overview.leave.year}년 사용일수`} value={`${overview.leave.usedDays}일`} />
+                  <Metric label="승인 건수" value={`${overview.leave.approvedCount}건`} />
+                  <Metric label="대기 건수" value={`${overview.leave.pendingCount}건`} tone={overview.leave.pendingCount > 0 ? "amber" : "default"} />
+                </div>
+              ) : (
+                <EmptyState>등록된 휴가 데이터가 없습니다.</EmptyState>
+              )}
+            </SummaryRow>
+
+            <SummaryRow title="프로젝트 소속">
+              {overviewQuery.isLoading ? (
+                <EmptyState>요약 정보를 불러오는 중입니다.</EmptyState>
+              ) : projects.length === 0 ? (
+                <EmptyState>소속된 프로젝트가 없습니다.</EmptyState>
+              ) : (
+                <div className="space-y-3">
+                  {projects.map((project) => (
+                    <div key={project.id} className="border-l-2 border-slate-200 py-1 pl-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <FolderKanban className="h-4 w-4 text-slate-400" />
+                        <div className="min-w-0 flex-1 text-sm font-semibold text-slate-800">
+                          {project.title}
+                        </div>
+                        <Badge className="border-0 bg-slate-200 px-2 py-0.5 text-xs text-slate-700">
+                          {project.status}
+                        </Badge>
+                        <Badge className="border-0 bg-indigo-100 px-2 py-0.5 text-xs text-indigo-700">
+                          {project.role}
+                        </Badge>
+                      </div>
+                      <dl className="mt-3">
+                        <Field
+                          label="고객사"
+                          value={project.customerNames.join(", ") || "-"}
+                        />
+                        <Field
+                          label="기간"
+                          value={`${formatDate(project.startDate)} ~ ${formatDate(project.dueDate)}`}
+                        />
+                      </dl>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </SummaryRow>
+          </div>
         </InfoCard>
 
-        <InfoCard title="연봉 정보">
-          {sensitiveData ? (
-            sensitiveData.compensation.registered ? (
+        <div className="grid gap-4 xl:grid-cols-2">
+          <InfoCard title="특이사항">
+            {overviewQuery.isLoading ? (
+              <EmptyState>요약 정보를 불러오는 중입니다.</EmptyState>
+            ) : overview?.currentStatus.status ? (
               <dl>
-                <Field
-                  label="연봉"
-                  value={
-                    sensitiveData.compensation.annualSalary
-                      ? `${sensitiveData.compensation.annualSalary.toLocaleString("ko-KR")}원`
-                      : "-"
-                  }
-                />
-                <Field
-                  label="적용일"
-                  value={formatDate(sensitiveData.compensation.effectiveDate)}
-                />
-                <Field label="비고" value={sensitiveData.compensation.note} />
+                <Field label="상태" value={overview.currentStatus.status} />
+                <Field label="시작일" value={formatDate(overview.currentStatus.startDate)} />
+                <Field label="종료일" value={formatDate(overview.currentStatus.endDate)} />
+                <Field label="메모" value={overview.currentStatus.note} />
               </dl>
             ) : (
-              <EmptyState>{sensitiveData.compensation.note}</EmptyState>
-            )
-          ) : canRequestSensitive ? (
-            <div className="flex items-start justify-between gap-4 rounded-lg bg-slate-50 p-4">
-              <div>
-                <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                  <ShieldAlert className="h-4 w-4 text-amber-500" />
-                  조회 사유 필요
+              <EmptyState>현재 등록된 특이사항이 없습니다.</EmptyState>
+            )}
+          </InfoCard>
+
+          <InfoCard title="연봉 정보">
+            {sensitiveData ? (
+              sensitiveData.compensation.registered ? (
+                <dl>
+                  <Field
+                    label="연봉"
+                    value={
+                      sensitiveData.compensation.annualSalary
+                        ? `${sensitiveData.compensation.annualSalary.toLocaleString("ko-KR")}원`
+                        : "-"
+                    }
+                  />
+                  <Field
+                    label="적용일"
+                    value={formatDate(sensitiveData.compensation.effectiveDate)}
+                  />
+                  <Field label="비고" value={sensitiveData.compensation.note} />
+                </dl>
+              ) : (
+                <EmptyState>{sensitiveData.compensation.note}</EmptyState>
+              )
+            ) : canRequestSensitive ? (
+              <div className="flex items-start justify-between gap-4 rounded-lg bg-slate-50 p-4">
+                <div>
+                  <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                    <ShieldAlert className="h-4 w-4 text-amber-500" />
+                    조회 사유 필요
+                  </div>
+                  <p className="mt-1 text-sm text-slate-500">
+                    조회 시 감사 로그에 사유와 조회 기록이 남습니다.
+                  </p>
                 </div>
-                <p className="mt-1 text-sm text-slate-500">
-                  조회 시 감사 로그에 사유와 조회 기록이 남습니다.
-                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => setIsSensitiveOpen(true)}
+                >
+                  <Eye className="h-4 w-4" />
+                  연봉 보기
+                </Button>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="gap-1.5"
-                onClick={() => setIsSensitiveOpen(true)}
-              >
-                <Eye className="h-4 w-4" />
-                연봉 보기
-              </Button>
-            </div>
-          ) : (
-            <EmptyState>대표 권한 또는 연봉 정보 조회 권한이 필요합니다.</EmptyState>
-          )}
-        </InfoCard>
+            ) : (
+              <EmptyState>대표 권한 또는 연봉 정보 조회 권한이 필요합니다.</EmptyState>
+            )}
+          </InfoCard>
+        </div>
       </div>
 
       <Dialog open={isSensitiveOpen} onOpenChange={setIsSensitiveOpen}>

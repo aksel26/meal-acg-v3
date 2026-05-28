@@ -8,6 +8,13 @@ type PermissionResult<T> = {
   error: { message?: string } | null;
 };
 
+type LeaveOverviewRow = {
+  approval_status?: string | null;
+  approver_id?: string | null;
+  approved_at?: string | null;
+  leave_type?: unknown;
+};
+
 function currentPeriod(now = new Date()) {
   const year = now.getFullYear();
   const half = now.getMonth() + 1 <= 6 ? "H1" : "H2";
@@ -41,6 +48,23 @@ function leaveDeductionAmount(row: { leave_type?: unknown }) {
   return 1;
 }
 
+function isApprovedLeave(row: LeaveOverviewRow) {
+  if (row.approval_status) {
+    return row.approval_status === "approved";
+  }
+
+  return Boolean(row.approver_id || row.approved_at);
+}
+
+function isPendingLeave(row: LeaveOverviewRow) {
+  if (row.approval_status) {
+    return row.approval_status === "pending" ||
+      row.approval_status === "pre_approved";
+  }
+
+  return !row.approver_id && !row.approved_at;
+}
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -55,12 +79,14 @@ export async function GET(
     const range = monthRange(year, month);
     const period = currentPeriod(now);
 
-    const [canLeave, canAttendance, canPoints, canMeal] = await Promise.all([
-      hasEffectiveAdminPermission(session, "leave:read"),
-      hasEffectiveAdminPermission(session, "attendance:read"),
-      hasEffectiveAdminPermission(session, "points:read"),
-      hasEffectiveAdminPermission(session, "meal:read"),
-    ]);
+    const [canLeave, canAttendance, canPoints, canMeal, canSensitive] =
+      await Promise.all([
+        hasEffectiveAdminPermission(session, "leave:read"),
+        hasEffectiveAdminPermission(session, "attendance:read"),
+        hasEffectiveAdminPermission(session, "points:read"),
+        hasEffectiveAdminPermission(session, "meal:read"),
+        hasEffectiveAdminPermission(session, "members:sensitive:read"),
+      ]);
 
     const { data: statusRow, error: statusError } = await supabase
       .from("member_current_status")
@@ -79,7 +105,9 @@ export async function GET(
       canLeave
         ? supabase
             .from("dayoffs")
-            .select("id, approver_id, approved_at, leave_type:leave_types(deduction_amount)")
+            .select(
+              "id, approval_status, approver_id, approved_at, leave_type:leave_types(deduction_amount)",
+            )
             .eq("target_id", id)
             .eq("is_deleted", false)
             .gte("leave_date", `${year}-01-01`)
@@ -113,7 +141,9 @@ export async function GET(
     const attendanceRows = attendanceResult.data || [];
     const pointRows = pointsResult.data || [];
     const activity = pointRows.find((row) => row.type === "활동비");
-    const welfare = pointRows.find((row) => row.type !== "활동비");
+    const welfare = pointRows.find((row) => row.type === "복지포인트");
+    const approvedLeaveRows = leaveRows.filter(isApprovedLeave);
+    const pendingLeaveRows = leaveRows.filter(isPendingLeave);
 
     return NextResponse.json({
       currentStatus: {
@@ -125,14 +155,12 @@ export async function GET(
       leave: canLeave
         ? {
             year,
-            usedDays: leaveRows.reduce(
+            usedDays: approvedLeaveRows.reduce(
               (sum, row) => sum + leaveDeductionAmount(row),
               0,
             ),
-            approvedCount: leaveRows.filter((row) => row.approver_id || row.approved_at)
-              .length,
-            pendingCount: leaveRows.filter((row) => !row.approver_id && !row.approved_at)
-              .length,
+            approvedCount: approvedLeaveRows.length,
+            pendingCount: pendingLeaveRows.length,
           }
         : null,
       attendance: canAttendance
@@ -159,6 +187,7 @@ export async function GET(
         attendance: canAttendance,
         points: canPoints,
         meal: canMeal,
+        sensitive: canSensitive,
       },
     });
   } catch (error) {

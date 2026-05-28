@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -26,7 +26,6 @@ import {
 import { Textarea } from "@repo/ui/src/textarea";
 import { cn } from "@repo/ui/lib/utils";
 import { queryKeys } from "@/lib/query-keys";
-import { hasAdminPermission } from "@/lib/rbac";
 import { STATUS_COLORS } from "@/lib/constants";
 
 type MemberDetail = {
@@ -81,13 +80,7 @@ type MemberOverview = {
     attendance: boolean;
     points: boolean;
     meal: boolean;
-  };
-};
-
-type SessionResponse = {
-  authenticated: boolean;
-  user?: {
-    adminRole?: string | null;
+    sensitive: boolean;
   };
 };
 
@@ -199,16 +192,7 @@ export default function OrganizationMemberDetailPage() {
       if (!res.ok) throw new Error("Failed to fetch overview");
       return res.json();
     },
-    enabled: !!id,
-  });
-
-  const sessionQuery = useQuery<SessionResponse>({
-    queryKey: ["auth", "session"],
-    queryFn: async () => {
-      const res = await fetch("/api/auth/session");
-      if (!res.ok) throw new Error("Failed to fetch session");
-      return res.json();
-    },
+    enabled: !!memberQuery.data?.id,
   });
 
   const sensitiveMutation = useMutation({
@@ -239,14 +223,7 @@ export default function OrganizationMemberDetailPage() {
   const overview = overviewQuery.data;
   const displayStatus = overview?.currentStatus.status || "정상";
   const statusClass = STATUS_COLORS[displayStatus] || STATUS_COLORS["정상"];
-  const canRequestSensitive = useMemo(
-    () =>
-      hasAdminPermission(
-        sessionQuery.data?.user?.adminRole,
-        "members:sensitive:read",
-      ),
-    [sessionQuery.data?.user?.adminRole],
-  );
+  const canRequestSensitive = overview?.permissions.sensitive ?? false;
 
   const handleSensitiveSubmit = () => {
     const reason = sensitiveReason.trim();

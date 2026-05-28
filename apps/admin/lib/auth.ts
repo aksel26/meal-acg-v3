@@ -2,6 +2,10 @@ import { cookies } from "next/headers";
 import type { AuthSession } from "./supabase/types";
 import { createServiceClient } from "./supabase/server";
 import {
+  decodeAdminSessionCookie,
+  encodeAdminSessionCookie,
+} from "./admin-session-cookie";
+import {
   isUserAuthority,
   normalizeAdminRole,
   type AdminPermission,
@@ -23,13 +27,17 @@ export class AuthError extends Error {
 
 export async function setSession(session: AuthSession): Promise<void> {
   const cookieStore = await cookies();
-  cookieStore.set(SESSION_COOKIE_NAME, JSON.stringify(session), {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: SESSION_MAX_AGE,
-    path: "/",
-  });
+  cookieStore.set(
+    SESSION_COOKIE_NAME,
+    await encodeAdminSessionCookie(session),
+    {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: SESSION_MAX_AGE,
+      path: "/",
+    },
+  );
 }
 
 export async function getSession(): Promise<AuthSession | null> {
@@ -41,7 +49,7 @@ export async function getSession(): Promise<AuthSession | null> {
   }
 
   try {
-    return JSON.parse(sessionCookie.value) as AuthSession;
+    return await decodeAdminSessionCookie(sessionCookie.value);
   } catch {
     return null;
   }

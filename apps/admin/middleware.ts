@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { decodeAdminSessionCookie } from "@/lib/admin-session-cookie";
 
 const PUBLIC_PATHS = ["/login", "/api/auth/login", "/api/auth/session"];
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Allow public paths
@@ -31,15 +32,13 @@ export function middleware(request: NextRequest) {
   }
 
   // Validate session (basic check)
-  try {
-    const session = JSON.parse(sessionCookie.value);
-    if (!session.userId || session.role !== "admin") {
-      throw new Error("Invalid session");
-    }
-  } catch {
+  const session = await decodeAdminSessionCookie(sessionCookie.value);
+  if (!session?.userId || session.role !== "admin") {
     // Invalid session, redirect to login
     const loginUrl = new URL("/login", request.url);
-    return NextResponse.redirect(loginUrl);
+    const response = NextResponse.redirect(loginUrl);
+    response.cookies.delete("admin-session");
+    return response;
   }
 
   return NextResponse.next();

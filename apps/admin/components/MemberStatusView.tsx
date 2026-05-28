@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useState, useMemo } from "react";
+import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { toast } from "@repo/ui/src/sonner";
@@ -880,13 +881,19 @@ export default function MemberStatusView({
                       className="transition-colors hover:bg-slate-50/50 [&>td]:px-3 [&>td]:py-1.5"
                     >
                       <TableCell className="pl-6 text-sm font-medium w-24 text-center">
-                        <button
-                          onClick={() => handleEditMemberOpen(row)}
-                          className="text-slate-800 hover:text-slate-900 hover:underline"
-                          title="인원 정보 수정"
-                        >
-                          {row.full_name}
-                        </button>
+                        {row.member_id ? (
+                          <Link
+                            href={`/organization/members/${row.member_id}`}
+                            className="text-slate-800 hover:text-slate-900 hover:underline"
+                            title="인원 상세 보기"
+                          >
+                            {row.full_name}
+                          </Link>
+                        ) : (
+                          <span className="text-slate-800">
+                            {row.full_name || "-"}
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell className="text-left text-sm text-slate-600">
                         {row.team_name || "-"}
@@ -949,30 +956,42 @@ export default function MemberStatusView({
                           : "-"}
                       </TableCell>
                       <TableCell className="text-center">
-                        {row.current_status === "퇴사" && (
-                          <button
-                            onClick={() => {
-                              const member = allMembers?.find(
-                                (m) => m.id === row.member_id,
-                              );
-                              setDeletingItem({
-                                id: row.status_id!,
-                                memberId: row.member_id!,
-                                name: row.full_name || "",
-                                status: "퇴사",
-                                memberRole: row.member_role || undefined,
-                                internMonths: member?.intern_months || undefined,
-                                teamId: row.team_id || undefined,
-                              });
-                              setActualMonths(member?.intern_months || 1);
-                              setIsDeleteOpen(true);
-                            }}
-                            className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
-                            title="멤버 삭제"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        )}
+                        <div className="flex items-center justify-center gap-1">
+                          {row.member_id && (
+                            <button
+                              onClick={() => handleEditMemberOpen(row)}
+                              className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                              title="인원 정보 수정"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                          {row.current_status === "퇴사" && (
+                            <button
+                              onClick={() => {
+                                const member = allMembers?.find(
+                                  (m) => m.id === row.member_id,
+                                );
+                                setDeletingItem({
+                                  id: row.status_id!,
+                                  memberId: row.member_id!,
+                                  name: row.full_name || "",
+                                  status: "퇴사",
+                                  memberRole: row.member_role || undefined,
+                                  internMonths:
+                                    member?.intern_months || undefined,
+                                  teamId: row.team_id || undefined,
+                                });
+                                setActualMonths(member?.intern_months || 1);
+                                setIsDeleteOpen(true);
+                              }}
+                              className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                              title="멤버 삭제"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   );

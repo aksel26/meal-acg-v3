@@ -129,11 +129,24 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
 
 export default function Header() {
   const pathname = usePathname();
-  const normalizedPathname = pathname.startsWith("/evaluations/")
-    ? "/evaluations"
-    : pathname;
-  const pageInfo = pageTitles[normalizedPathname] ??
-    pageTitles["/"] ?? { title: "대시보드", subtitle: "" };
+  const normalizedPathname = pathname.startsWith("/organization/members/")
+    ? "/organization/members"
+    : pathname.startsWith("/evaluations/")
+      ? "/evaluations"
+      : pathname;
+
+  const dynamicPageTitles: Record<string, { title: string; subtitle: string }> = {
+    "/organization/members": {
+      title: "조직원 상세",
+      subtitle: "조직원의 기본 정보와 현재 운영 요약을 확인합니다",
+    },
+  };
+
+  const pageInfo =
+    dynamicPageTitles[normalizedPathname] ??
+    pageTitles[normalizedPathname] ??
+    pageTitles["/"] ??
+    { title: "대시보드", subtitle: "" };
 
   return (
     <header className="admin-topbar z-10 flex w-full items-center justify-between px-6 py-3.5">

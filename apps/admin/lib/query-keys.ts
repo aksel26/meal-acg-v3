@@ -4,6 +4,7 @@ export const queryKeys = {
     all: ["members"] as const,
     active: ["members", { excludeStatus: true }] as const,
     detail: (id: string) => ["members", id] as const,
+    overview: (id: string) => ["members", id, "overview"] as const,
   },
 
   // Meal Logs

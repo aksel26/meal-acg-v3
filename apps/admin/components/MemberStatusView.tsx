@@ -1021,7 +1021,7 @@ export default function MemberStatusView({
           <form onSubmit={handleFormSubmit(onSubmitAddMember)}>
             <div className="space-y-8 py-5">
               {/* 기본 정보 */}
-              <div className="space-y-5">
+              <div className="space-y-4">
                 <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">기본 정보</p>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -1097,7 +1097,7 @@ export default function MemberStatusView({
               </div>
 
               {/* 직급/직책 */}
-              <div className="space-y-5">
+              <div className="space-y-4">
                 <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">직급 / 직책</p>
                 <div className="flex gap-4">
                   <div className="space-y-2 flex-1">
@@ -1168,7 +1168,7 @@ export default function MemberStatusView({
               </div>
 
               {/* 계정 정보 */}
-              <div className="space-y-5">
+              <div className="space-y-4">
                 <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">계정 정보</p>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -1640,183 +1640,201 @@ export default function MemberStatusView({
             </DialogDescription>
           </DialogHeader>
           {editingMember && (
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="editFullName">이름</Label>
-                <Input
-                  id="editFullName"
-                  value={editingMember.full_name}
-                  onChange={(e) =>
-                    setEditingMember({
-                      ...editingMember,
-                      full_name: e.target.value,
-                    })
-                  }
-                  placeholder="홍길동"
-                />
+            <div className="space-y-8 py-5">
+              {/* 기본 정보 */}
+              <div className="space-y-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">기본 정보</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="editFullName">이름</Label>
+                    <Input
+                      id="editFullName"
+                      value={editingMember.full_name}
+                      onChange={(e) =>
+                        setEditingMember({
+                          ...editingMember,
+                          full_name: e.target.value,
+                        })
+                      }
+                      placeholder="홍길동"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="editEmail">이메일 (선택)</Label>
+                    <Input
+                      id="editEmail"
+                      type="email"
+                      value={editingMember.email}
+                      onChange={(e) =>
+                        setEditingMember({
+                          ...editingMember,
+                          email: e.target.value,
+                        })
+                      }
+                      placeholder="hong@example.com"
+                    />
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="editEmail">이메일 (선택)</Label>
-                <Input
-                  id="editEmail"
-                  type="email"
-                  value={editingMember.email}
-                  onChange={(e) =>
-                    setEditingMember({
-                      ...editingMember,
-                      email: e.target.value,
-                    })
-                  }
-                  placeholder="hong@example.com"
-                />
+
+              {/* 직급/직책 */}
+              <div className="space-y-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">직급 / 직책</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>직급</Label>
+                    <Select
+                      value={editingMember.position_id}
+                      onValueChange={(val) =>
+                        setEditingMember({ ...editingMember, position_id: val })
+                      }
+                    >
+                      <SelectTrigger className="border border-slate-200 w-full">
+                        <SelectValue placeholder="직급 선택" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(positions ?? []).map((p) => (
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>직책 (선택)</Label>
+                    <Select
+                      value={editingMember.title_id || "__none__"}
+                      onValueChange={(val) =>
+                        setEditingMember({
+                          ...editingMember,
+                          title_id: val === "__none__" ? "" : val,
+                        })
+                      }
+                    >
+                      <SelectTrigger className="border border-slate-200 w-full">
+                        <SelectValue placeholder="직책 선택" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">없음</SelectItem>
+                        {(titles ?? []).map((t) => (
+                          <SelectItem key={t.id} value={t.id}>
+                            {t.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>직군</Label>
+                    <Select
+                      value={editingMember.member_role}
+                      onValueChange={(val) =>
+                        setEditingMember({
+                          ...editingMember,
+                          member_role: val,
+                          intern_months:
+                            val !== "인턴" ? "" : editingMember.intern_months,
+                        })
+                      }
+                    >
+                      <SelectTrigger className="border border-slate-200 w-full">
+                        <SelectValue placeholder="직군 선택" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="대표">대표</SelectItem>
+                        <SelectItem value="팀장">팀장</SelectItem>
+                        <SelectItem value="팀원">팀원</SelectItem>
+                        <SelectItem value="인턴">인턴</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {editingMember.member_role === "인턴" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="editInternMonths">개월 수</Label>
+                      <Input
+                        id="editInternMonths"
+                        type="number"
+                        min={1}
+                        max={6}
+                        value={editingMember.intern_months}
+                        onChange={(e) =>
+                          setEditingMember({
+                            ...editingMember,
+                            intern_months: e.target.value,
+                          })
+                        }
+                        placeholder="1~6"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>직급 (positions)</Label>
-                <Select
-                  value={editingMember.position_id}
-                  onValueChange={(val) =>
-                    setEditingMember({ ...editingMember, position_id: val })
-                  }
-                >
-                  <SelectTrigger className="border border-slate-200 w-full">
-                    <SelectValue placeholder="직급 선택" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(positions ?? []).map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>직책 (선택)</Label>
-                <Select
-                  value={editingMember.title_id || "__none__"}
-                  onValueChange={(val) =>
-                    setEditingMember({
-                      ...editingMember,
-                      title_id: val === "__none__" ? "" : val,
-                    })
-                  }
-                >
-                  <SelectTrigger className="border border-slate-200 w-full">
-                    <SelectValue placeholder="직책 선택 (선택사항)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">없음</SelectItem>
-                    {(titles ?? []).map((t) => (
-                      <SelectItem key={t.id} value={t.id}>
-                        {t.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>직군 (member_role)</Label>
-                <Select
-                  value={editingMember.member_role}
-                  onValueChange={(val) =>
-                    setEditingMember({
-                      ...editingMember,
-                      member_role: val,
-                      intern_months:
-                        val !== "인턴" ? "" : editingMember.intern_months,
-                    })
-                  }
-                >
-                  <SelectTrigger className="border border-slate-200 w-full">
-                    <SelectValue placeholder="직군 선택" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="대표">대표</SelectItem>
-                    <SelectItem value="팀장">팀장</SelectItem>
-                    <SelectItem value="팀원">팀원</SelectItem>
-                    <SelectItem value="인턴">인턴</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {editingMember.member_role === "인턴" && (
-                <div className="space-y-2">
-                  <Label htmlFor="editInternMonths">인턴 기간 (개월)</Label>
-                  <Input
-                    id="editInternMonths"
-                    type="number"
-                    min={1}
-                    max={6}
-                    value={editingMember.intern_months}
-                    onChange={(e) =>
+
+              {/* 계정 정보 */}
+              <div className="space-y-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">계정 정보</p>
+                <label className="flex w-full items-center justify-between rounded-md bg-white px-3 py-2.5 cursor-pointer hover:bg-slate-100 transition-colors">
+                  <span className="text-sm font-medium">관리자 권한</span>
+                  <Checkbox
+                    checked={editingMember.role === "admin"}
+                    onCheckedChange={(checked) =>
                       setEditingMember({
                         ...editingMember,
-                        intern_months: e.target.value,
+                        role: checked ? "admin" : "user",
                       })
                     }
-                    placeholder="1~6"
                   />
-                </div>
-              )}
-              <label className="flex w-full items-center justify-between rounded-md border border-slate-200 px-3 py-2.5 cursor-pointer hover:bg-slate-50 transition-colors">
-                <span className="text-sm font-medium">관리자 권한</span>
-                <Checkbox
-                  checked={editingMember.role === "admin"}
-                  onCheckedChange={(checked) =>
-                    setEditingMember({
-                      ...editingMember,
-                      role: checked ? "admin" : "user",
-                    })
-                  }
-                />
-              </label>
-              {editingMember.role === "admin" && (
+                </label>
+                {editingMember.role === "admin" && (
+                  <div className="space-y-2">
+                    <Label>어드민 권한</Label>
+                    <Select
+                      value={editingMember.admin_role}
+                      onValueChange={(val) =>
+                        setEditingMember({
+                          ...editingMember,
+                          admin_role: val,
+                        })
+                      }
+                    >
+                      <SelectTrigger className="border border-slate-200 w-full">
+                        <SelectValue placeholder="어드민 권한 선택" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ADMIN_ROLES.map((role) => (
+                          <SelectItem key={role} value={role}>
+                            {role}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <div className="space-y-2">
-                  <Label>어드민 권한</Label>
+                  <Label>User 권한</Label>
                   <Select
-                    value={editingMember.admin_role}
+                    value={editingMember.user_authority || "__none__"}
                     onValueChange={(val) =>
                       setEditingMember({
                         ...editingMember,
-                        admin_role: val,
+                        user_authority: val === "__none__" ? "" : val,
                       })
                     }
                   >
                     <SelectTrigger className="border border-slate-200 w-full">
-                      <SelectValue placeholder="어드민 권한 선택" />
+                      <SelectValue placeholder="User 권한 선택" />
                     </SelectTrigger>
                     <SelectContent>
-                      {ADMIN_ROLES.map((role) => (
-                        <SelectItem key={role} value={role}>
-                          {role}
+                      <SelectItem value="__none__">없음</SelectItem>
+                      {USER_AUTHORITIES.map((authority) => (
+                        <SelectItem key={authority} value={authority}>
+                          {authority}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-              )}
-              <div className="space-y-2">
-                <Label>User 권한</Label>
-                <Select
-                  value={editingMember.user_authority || "__none__"}
-                  onValueChange={(val) =>
-                    setEditingMember({
-                      ...editingMember,
-                      user_authority: val === "__none__" ? "" : val,
-                    })
-                  }
-                >
-                  <SelectTrigger className="border border-slate-200 w-full">
-                    <SelectValue placeholder="User 권한 선택" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">없음</SelectItem>
-                    {USER_AUTHORITIES.map((authority) => (
-                      <SelectItem key={authority} value={authority}>
-                        {authority}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
             </div>
           )}

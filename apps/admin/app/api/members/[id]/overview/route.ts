@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { getAuthErrorStatus, requireAdminPermission } from "@/lib/auth";
 import { hasEffectiveAdminPermission } from "@/lib/rbac-server";
 import { createServiceClient } from "@/lib/supabase/server";
@@ -15,11 +16,17 @@ type LeaveOverviewRow = {
   leave_type?: unknown;
 };
 
-function currentPeriod(now = new Date()) {
-  const year = now.getFullYear();
-  const half = now.getMonth() + 1 <= 6 ? "H1" : "H2";
-  return `${year}-${half}`;
-}
+type ProjectOverviewRow = {
+  id: string;
+  title: string;
+  status: string;
+  owner_id: string | null;
+  manager_ids: string[] | null;
+  stakeholder_ids: string[] | null;
+  customer_names: string[] | null;
+  start_date: string | null;
+  due_date: string | null;
+};
 
 function monthRange(year: number, month: number) {
   const padded = String(month).padStart(2, "0");
@@ -30,18 +37,13 @@ function monthRange(year: number, month: number) {
   };
 }
 
-function toNumber(value: unknown) {
-  const parsed = Number(value ?? 0);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
 function leaveDeductionAmount(row: { leave_type?: unknown }) {
   const leaveType = Array.isArray(row.leave_type)
     ? row.leave_type[0]
     : row.leave_type;
 
   if (leaveType && typeof leaveType === "object" && "deduction_amount" in leaveType) {
-    const amount = toNumber((leaveType as { deduction_amount?: unknown }).deduction_amount);
+    const amount = Number((leaveType as { deduction_amount?: unknown }).deduction_amount ?? 0);
     return amount > 0 ? amount : 1;
   }
 
@@ -65,6 +67,30 @@ function isPendingLeave(row: LeaveOverviewRow) {
   return !row.approver_id && !row.approved_at;
 }
 
+function createWorkClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error("Supabase environment variables not configured");
+  }
+
+  return createClient(supabaseUrl, serviceRoleKey, {
+    db: { schema: "work" },
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+}
+
+function projectRole(project: ProjectOverviewRow, memberId: string) {
+  if (project.owner_id === memberId) return "오너";
+  if (project.manager_ids?.includes(memberId)) return "담당자";
+  if (project.stakeholder_ids?.includes(memberId)) return "이해관계자";
+  return "참여";
+}
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -77,16 +103,12 @@ export async function GET(
     const year = now.getFullYear();
     const month = now.getMonth() + 1;
     const range = monthRange(year, month);
-    const period = currentPeriod(now);
 
-    const [canLeave, canAttendance, canPoints, canMeal, canSensitive] =
-      await Promise.all([
-        hasEffectiveAdminPermission(session, "leave:read"),
-        hasEffectiveAdminPermission(session, "attendance:read"),
-        hasEffectiveAdminPermission(session, "points:read"),
-        hasEffectiveAdminPermission(session, "meal:read"),
-        hasEffectiveAdminPermission(session, "members:sensitive:read"),
-      ]);
+    const [canLeave, canAttendance, canSensitive] = await Promise.all([
+      hasEffectiveAdminPermission(session, "leave:read"),
+      hasEffectiveAdminPermission(session, "attendance:read"),
+      hasEffectiveAdminPermission(session, "members:sensitive:read"),
+    ]);
 
     const { data: statusRow, error: statusError } = await supabase
       .from("member_current_status")
@@ -101,7 +123,8 @@ export async function GET(
       );
     }
 
-    const [leaveResult, attendanceResult, pointsResult] = await Promise.all([
+    const workClient = createWorkClient();
+    const [leaveResult, attendanceResult, projectsResult] = await Promise.all([
       canLeave
         ? supabase
             .from("dayoffs")
@@ -121,16 +144,18 @@ export async function GET(
             .gte("date", range.start)
             .lte("date", range.end)
         : Promise.resolve({ data: null, error: null } as PermissionResult<never>),
-      canPoints || canMeal
-        ? supabase
-            .from("budget_summary")
-            .select("type,total_amount,used_amount,remaining_amount")
-            .eq("member_id", id)
-            .eq("period", period)
-        : Promise.resolve({ data: null, error: null } as PermissionResult<never>),
+      workClient
+        .from("projects")
+        .select(
+          "id,title,status,owner_id,manager_ids,stakeholder_ids,customer_names,start_date,due_date",
+        )
+        .or(
+          `owner_id.eq.${id},manager_ids.cs.{${id}},stakeholder_ids.cs.{${id}}`,
+        )
+        .order("created_at", { ascending: false }),
     ]);
 
-    if (leaveResult.error || attendanceResult.error || pointsResult.error) {
+    if (leaveResult.error || attendanceResult.error || projectsResult.error) {
       return NextResponse.json(
         { error: "Failed to fetch member overview" },
         { status: 500 },
@@ -139,11 +164,19 @@ export async function GET(
 
     const leaveRows = leaveResult.data || [];
     const attendanceRows = attendanceResult.data || [];
-    const pointRows = pointsResult.data || [];
-    const activity = pointRows.find((row) => row.type === "활동비");
-    const welfare = pointRows.find((row) => row.type === "복지포인트");
     const approvedLeaveRows = leaveRows.filter(isApprovedLeave);
     const pendingLeaveRows = leaveRows.filter(isPendingLeave);
+    const projects = ((projectsResult.data || []) as ProjectOverviewRow[]).map(
+      (project) => ({
+        id: project.id,
+        title: project.title,
+        status: project.status,
+        role: projectRole(project, id),
+        customerNames: project.customer_names || [],
+        startDate: project.start_date,
+        dueDate: project.due_date,
+      }),
+    );
 
     return NextResponse.json({
       currentStatus: {
@@ -172,21 +205,10 @@ export async function GET(
             absentCount: attendanceRows.filter((row) => row.status === "absent").length,
           }
         : null,
-      points:
-        canPoints || canMeal
-          ? {
-              period,
-              mealUsed: canMeal ? toNumber(activity?.used_amount) : 0,
-              welfareUsed: canPoints ? toNumber(welfare?.used_amount) : 0,
-              mealBudget: canMeal ? toNumber(activity?.total_amount) : 0,
-              welfareBudget: canPoints ? toNumber(welfare?.total_amount) : 0,
-            }
-          : null,
+      projects,
       permissions: {
         leave: canLeave,
         attendance: canAttendance,
-        points: canPoints,
-        meal: canMeal,
         sensitive: canSensitive,
       },
     });

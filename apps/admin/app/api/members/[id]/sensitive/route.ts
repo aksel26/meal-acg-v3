@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { writeAdminAuditLog } from "@/lib/admin-audit";
 import { getAuthErrorStatus, requireAdminPermission } from "@/lib/auth";
-import { MEMBER_SENSITIVE_SELECT } from "@/lib/privacy";
 import { createServiceClient } from "@/lib/supabase/server";
 
 export async function POST(
@@ -19,8 +18,9 @@ export async function POST(
       return NextResponse.json({ error: "사유를 입력해주세요." }, { status: 400 });
     }
 
-    const { data, error } = await (supabase.from("members") as any)
-      .select(MEMBER_SENSITIVE_SELECT)
+    const { data, error } = await supabase
+      .from("members")
+      .select("id, full_name")
       .eq("id", id)
       .single();
 
@@ -38,11 +38,20 @@ export async function POST(
       riskLevel: "high",
       reason,
       metadata: {
-        fields: ["birth_date", "phone", "passport_number"],
+        fields: ["annual_salary", "salary_effective_date", "salary_note"],
       },
     });
 
-    return NextResponse.json(data);
+    return NextResponse.json({
+      full_name: data.full_name,
+      compensation: {
+        annualSalary: null,
+        currency: "KRW",
+        effectiveDate: null,
+        note: "연봉 정보가 아직 등록되어 있지 않습니다.",
+        registered: false,
+      },
+    });
   } catch (error) {
     console.error("Member sensitive API error:", error);
     const authStatus = getAuthErrorStatus(error);

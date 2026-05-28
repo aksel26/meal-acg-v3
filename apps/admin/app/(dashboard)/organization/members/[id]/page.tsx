@@ -6,12 +6,11 @@ import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
-  BadgeCheck,
   Eye,
+  FolderKanban,
   Loader2,
   ShieldAlert,
   UserRound,
-  WalletCards,
 } from "lucide-react";
 import { Badge } from "@repo/ui/src/badge";
 import { Button } from "@repo/ui/src/button";
@@ -68,39 +67,35 @@ type MemberOverview = {
     lateCount: number;
     absentCount: number;
   } | null;
-  points: {
-    period: string;
-    mealUsed: number;
-    welfareUsed: number;
-    mealBudget: number;
-    welfareBudget: number;
-  } | null;
+  projects: {
+    id: string;
+    title: string;
+    status: string;
+    role: string;
+    customerNames: string[];
+    startDate: string | null;
+    dueDate: string | null;
+  }[];
   permissions: {
     leave: boolean;
     attendance: boolean;
-    points: boolean;
-    meal: boolean;
     sensitive: boolean;
   };
 };
 
 type SensitiveMember = {
-  birth_date: string | null;
-  phone: string | null;
-  passport_number: string | null;
+  compensation: {
+    annualSalary: number | null;
+    currency: string;
+    effectiveDate: string | null;
+    note: string | null;
+    registered: boolean;
+  };
 };
 
 function formatDate(value: string | null | undefined) {
   if (!value) return "-";
   return new Date(value).toLocaleDateString("ko-KR");
-}
-
-function formatAmount(value: number) {
-  return `${value.toLocaleString("ko-KR")}원`;
-}
-
-function remainingAmount(total: number, used: number) {
-  return Math.max(0, total - used);
 }
 
 function InfoCard({
@@ -224,6 +219,7 @@ export default function OrganizationMemberDetailPage() {
   const displayStatus = overview?.currentStatus.status || "정상";
   const statusClass = STATUS_COLORS[displayStatus] || STATUS_COLORS["정상"];
   const canRequestSensitive = overview?.permissions.sensitive ?? false;
+  const projects = overview?.projects ?? [];
 
   const handleSensitiveSubmit = () => {
     const reason = sensitiveReason.trim();
@@ -260,7 +256,6 @@ export default function OrganizationMemberDetailPage() {
   }
 
   const hasOverviewError = overviewQuery.isError;
-  const points = overview?.points;
 
   return (
     <div className="space-y-6">
@@ -355,56 +350,64 @@ export default function OrganizationMemberDetailPage() {
           )}
         </InfoCard>
 
-        <InfoCard title="현재 반기 식대/복지포인트 요약">
+        <InfoCard title="프로젝트 소속">
           {overviewQuery.isLoading ? (
             <EmptyState>요약 정보를 불러오는 중입니다.</EmptyState>
-          ) : !points ? (
-            <EmptyState>식대 또는 복지포인트 조회 권한이 없습니다.</EmptyState>
+          ) : projects.length === 0 ? (
+            <EmptyState>소속된 프로젝트가 없습니다.</EmptyState>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-lg bg-slate-50 p-4">
-                <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                  <WalletCards className="h-4 w-4 text-slate-400" />
-                  식대
-                </div>
-                {overview?.permissions.meal ? (
-                  <dl className="mt-3 space-y-1 text-sm">
-                    <Field label="예산" value={formatAmount(points.mealBudget)} />
-                    <Field label="사용액" value={formatAmount(points.mealUsed)} />
-                    <Field label="잔액" value={formatAmount(remainingAmount(points.mealBudget, points.mealUsed))} />
+            <div className="space-y-3">
+              {projects.map((project) => (
+                <div key={project.id} className="rounded-lg bg-slate-50 p-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <FolderKanban className="h-4 w-4 text-slate-400" />
+                    <div className="min-w-0 flex-1 text-sm font-semibold text-slate-800">
+                      {project.title}
+                    </div>
+                    <Badge className="border-0 bg-slate-200 px-2 py-0.5 text-xs text-slate-700">
+                      {project.status}
+                    </Badge>
+                    <Badge className="border-0 bg-indigo-100 px-2 py-0.5 text-xs text-indigo-700">
+                      {project.role}
+                    </Badge>
+                  </div>
+                  <dl className="mt-3">
+                    <Field
+                      label="고객사"
+                      value={project.customerNames.join(", ") || "-"}
+                    />
+                    <Field
+                      label="기간"
+                      value={`${formatDate(project.startDate)} ~ ${formatDate(project.dueDate)}`}
+                    />
                   </dl>
-                ) : (
-                  <p className="mt-3 text-sm text-slate-500">식대 조회 권한이 없습니다.</p>
-                )}
-              </div>
-              <div className="rounded-lg bg-slate-50 p-4">
-                <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                  <BadgeCheck className="h-4 w-4 text-slate-400" />
-                  복지포인트
                 </div>
-                {overview?.permissions.points ? (
-                  <dl className="mt-3 space-y-1 text-sm">
-                    <Field label="예산" value={formatAmount(points.welfareBudget)} />
-                    <Field label="사용액" value={formatAmount(points.welfareUsed)} />
-                    <Field label="잔액" value={formatAmount(remainingAmount(points.welfareBudget, points.welfareUsed))} />
-                  </dl>
-                ) : (
-                  <p className="mt-3 text-sm text-slate-500">
-                    복지포인트 조회 권한이 없습니다.
-                  </p>
-                )}
-              </div>
+              ))}
             </div>
           )}
         </InfoCard>
 
-        <InfoCard title="민감정보">
+        <InfoCard title="연봉 정보">
           {sensitiveData ? (
-            <dl>
-              <Field label="생년월일" value={sensitiveData.birth_date || "-"} />
-              <Field label="휴대폰번호" value={sensitiveData.phone || "-"} />
-              <Field label="여권번호" value={sensitiveData.passport_number || "-"} />
-            </dl>
+            sensitiveData.compensation.registered ? (
+              <dl>
+                <Field
+                  label="연봉"
+                  value={
+                    sensitiveData.compensation.annualSalary
+                      ? `${sensitiveData.compensation.annualSalary.toLocaleString("ko-KR")}원`
+                      : "-"
+                  }
+                />
+                <Field
+                  label="적용일"
+                  value={formatDate(sensitiveData.compensation.effectiveDate)}
+                />
+                <Field label="비고" value={sensitiveData.compensation.note} />
+              </dl>
+            ) : (
+              <EmptyState>{sensitiveData.compensation.note}</EmptyState>
+            )
           ) : canRequestSensitive ? (
             <div className="flex items-start justify-between gap-4 rounded-lg bg-slate-50 p-4">
               <div>
@@ -424,11 +427,11 @@ export default function OrganizationMemberDetailPage() {
                 onClick={() => setIsSensitiveOpen(true)}
               >
                 <Eye className="h-4 w-4" />
-                보기
+                연봉 보기
               </Button>
             </div>
           ) : (
-            <EmptyState>대표 권한 또는 민감정보 조회 권한이 필요합니다.</EmptyState>
+            <EmptyState>대표 권한 또는 연봉 정보 조회 권한이 필요합니다.</EmptyState>
           )}
         </InfoCard>
       </div>
@@ -436,7 +439,7 @@ export default function OrganizationMemberDetailPage() {
       <Dialog open={isSensitiveOpen} onOpenChange={setIsSensitiveOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>민감정보 조회</DialogTitle>
+            <DialogTitle>연봉 정보 조회</DialogTitle>
             <DialogDescription>
               조회 사유는 감사 로그에 기록됩니다.
             </DialogDescription>
@@ -445,7 +448,7 @@ export default function OrganizationMemberDetailPage() {
             <Textarea
               value={sensitiveReason}
               onChange={(event) => setSensitiveReason(event.target.value)}
-              placeholder="예: 인사 정보 확인 요청 처리"
+              placeholder="예: 연봉 정보 확인 요청 처리"
               rows={4}
             />
             {sensitiveError && (

@@ -260,7 +260,7 @@ export default function CalendarComponent({
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.1}
         onDragEnd={handleDragEnd}
-        className="min-h-[25.5rem] min-w-0 cursor-grab rounded-[18px] p-0.5 active:cursor-grabbing sm:min-h-[26rem] lg:min-h-0 lg:flex-1 lg:overflow-hidden lg:p-0.5"
+        className="min-h-[25.5rem] min-w-0 cursor-grab rounded-[18px] p-0.5 active:cursor-grabbing sm:min-h-[26rem] lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:overflow-hidden lg:p-0.5"
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
@@ -269,7 +269,7 @@ export default function CalendarComponent({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: direction * -30 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="min-h-[25.5rem] sm:min-h-[26rem] lg:min-h-0"
+            className="min-h-[25.5rem] sm:min-h-[26rem] lg:flex lg:h-full lg:min-h-0 lg:flex-1 lg:flex-col"
           >
             <Calendar
               mode="single"
@@ -278,13 +278,14 @@ export default function CalendarComponent({
               numberOfMonths={1}
               month={displayDate}
               captionLayout="label"
-              className="w-full max-w-full p-0 sm:pb-0"
+              className="w-full max-w-full p-0 sm:pb-0 lg:flex lg:h-full lg:min-h-0 lg:flex-col"
               classNames={{
                 month_caption: "hidden",
                 month: "flex min-h-[25.5rem] w-full min-w-0 flex-col gap-3 sm:min-h-[26rem] lg:h-full lg:min-h-0 lg:gap-1",
                 months: "flex min-h-[25.5rem] w-full flex-col gap-0 sm:min-h-[26rem] lg:h-full lg:min-h-0",
                 nav: "hidden",
-                table: "w-full border-separate border-spacing-y-3 lg:h-full lg:min-h-0 lg:border-collapse lg:border-spacing-y-0",
+                month_grid: "w-full lg:flex lg:h-full lg:min-h-0 lg:flex-col",
+                weeks: "lg:flex lg:h-full lg:min-h-0 lg:flex-1 lg:flex-col",
                 week: "my-1.5 grid w-full min-w-0 grid-cols-7 gap-x-0 gap-y-3 lg:my-0 lg:flex-1 lg:min-h-0 lg:gap-0.5",
                 day: "relative min-w-0 px-0 py-1 text-center min-h-[clamp(3rem,12.5vw,3.5rem)] sm:min-h-[52px] lg:min-h-0 lg:py-0 select-none",
                 weekdays: "mb-0 mt-1 grid grid-cols-7 lg:mt-1.5",

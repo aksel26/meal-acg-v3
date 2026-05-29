@@ -24,10 +24,14 @@ interface AmountStepProps {
 }
 
 export function AmountStep({ onSubmit, isSubmitting }: AmountStepProps) {
-  const { formData, selectedMealType, updateFormField, completeStep } = useMealDrawerStore();
+  const { formData, selectedMealType, updateFormField, completeStep } =
+    useMealDrawerStore();
   const { amount: individualMealAmount } = useIndividualMealAmount();
   const currentAmount = formData[selectedMealType].amount;
-  const isIndividualMeal = selectedMealType === "lunch" && formData.lunch.attendance === "근무(개별식사 / 식사안함)";
+  const isIndividualMeal =
+    selectedMealType === "lunch" &&
+    formData.lunch.attendance === "근무(개별식사 / 식사안함)";
+  const isDinner = selectedMealType === "dinner";
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -77,8 +81,7 @@ export function AmountStep({ onSubmit, isSubmitting }: AmountStepProps) {
         <p className="text-sm text-gray-500">
           {isIndividualMeal
             ? `총 금액에서 ${individualMealAmount.toLocaleString()}원이 차감됩니다`
-            : "결제 금액을 입력해주세요"
-          }
+            : "결제 금액을 입력해주세요"}
         </p>
       </div>
 
@@ -105,6 +108,31 @@ export function AmountStep({ onSubmit, isSubmitting }: AmountStepProps) {
             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-lg text-gray-400 font-medium pointer-events-none">
               원
             </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isDinner && !isIndividualMeal && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3"
+          >
+            <p className="text-sm font-medium text-gray-900">
+              석식 입력 안내
+            </p>
+            <ul className="mt-2 space-y-1 text-xs leading-relaxed text-gray-600">
+              <li>
+                사용 금액 전체를 입력해주세요. 석식 금액은 중식 통계에 반영되지
+                않습니다.
+              </li>
+              <li>
+                11,000원 초과분은 복지포인트 또는 입금으로 별도 정산해주세요.
+              </li>
+              <li>입금자명 예시: 5/21 홍길동 석식초과</li>
+            </ul>
           </motion.div>
         )}
       </AnimatePresence>

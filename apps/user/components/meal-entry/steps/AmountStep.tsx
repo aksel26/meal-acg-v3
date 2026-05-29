@@ -24,10 +24,14 @@ interface AmountStepProps {
 }
 
 export function AmountStep({ onSubmit, isSubmitting }: AmountStepProps) {
-  const { formData, selectedMealType, updateFormField, completeStep } = useMealDrawerStore();
+  const { formData, selectedMealType, updateFormField, completeStep } =
+    useMealDrawerStore();
   const { amount: individualMealAmount } = useIndividualMealAmount();
   const currentAmount = formData[selectedMealType].amount;
-  const isIndividualMeal = selectedMealType === "lunch" && formData.lunch.attendance === "근무(개별식사 / 식사안함)";
+  const isIndividualMeal =
+    selectedMealType === "lunch" &&
+    formData.lunch.attendance === "근무(개별식사 / 식사안함)";
+  const isDinner = selectedMealType === "dinner";
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -77,8 +81,7 @@ export function AmountStep({ onSubmit, isSubmitting }: AmountStepProps) {
         <p className="text-sm text-[var(--slate-gray)]">
           {isIndividualMeal
             ? `총 금액에서 ${individualMealAmount.toLocaleString()}원이 차감됩니다`
-            : "결제 금액을 입력해주세요"
-          }
+            : "결제 금액을 입력해주세요"}
         </p>
       </div>
 
@@ -100,11 +103,36 @@ export function AmountStep({ onSubmit, isSubmitting }: AmountStepProps) {
               onChange={handleValueChange}
               onKeyDown={handleKeyDown}
               className="h-14 text-2xl font-medium text-right rounded-[16px] border-0 bg-[var(--whisper-cream)] focus:bg-white focus:ring-0 transition-all placeholder:text-[var(--slate-gray)] placeholder:font-normal"
-              style={{ paddingRight: '2.3rem' }}
+              style={{ paddingRight: "2.3rem" }}
             />
             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-lg text-[var(--slate-gray)] font-medium pointer-events-none">
               원
             </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isDinner && !isIndividualMeal && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="rounded-[16px] bg-[var(--whisper-cream)] px-4 py-3"
+          >
+            <p className="text-sm font-medium text-[var(--ink-black)]">
+              석식 입력 안내
+            </p>
+            <ul className="mt-2 space-y-1 text-xs leading-relaxed text-[var(--granite)]">
+              <li>
+                사용 금액 전체를 입력해주세요. 석식 금액은 중식 통계에 반영되지
+                않습니다.
+              </li>
+              <li>
+                11,000원 초과분은 복지포인트 또는 입금으로 별도 정산해주세요.
+              </li>
+              <li>입금자명 예시: 5/21 홍길동 석식초과</li>
+            </ul>
           </motion.div>
         )}
       </AnimatePresence>
@@ -123,7 +151,9 @@ export function AmountStep({ onSubmit, isSubmitting }: AmountStepProps) {
                 <span className="text-lg">🍱</span>
               </div>
               <div>
-                <p className="text-sm font-medium text-[var(--ink-black)]">개별식사 처리</p>
+                <p className="text-sm font-medium text-[var(--ink-black)]">
+                  개별식사 처리
+                </p>
                 <p className="text-xs text-[var(--granite)]">
                   -{individualMealAmount.toLocaleString()}원 자동 차감
                 </p>

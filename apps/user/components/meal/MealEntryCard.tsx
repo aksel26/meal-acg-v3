@@ -18,6 +18,39 @@ const MEAL_SLOTS: { type: MealType; title: string; dotColor: string }[] = [
   { type: "dinner", title: "석식", dotColor: "bg-violet-400" },
 ];
 
+function hasMealSlotRecord(meal: MealData | undefined, type: MealType) {
+  if (!meal) return false;
+  const record = meal[type];
+  const hasMealValue = Boolean(
+    record?.store || record?.payer || (record?.amount ?? 0) > 0,
+  );
+
+  if (type !== "lunch") return hasMealValue;
+
+  const isMealAttendance =
+    !meal.attendance_source || meal.attendance_source === "meal";
+  return hasMealValue || Boolean(isMealAttendance && meal.attendance);
+}
+
+function getLunchAttendanceLabel(attendance: string | undefined) {
+  if (!attendance) return "식사 기록";
+  if (attendance.includes("개별식사")) return "개별식사";
+  if (attendance.includes("오전") && attendance.includes("반차"))
+    return "오전 반차";
+  if (attendance.includes("오후") && attendance.includes("반차"))
+    return "오후 반차";
+  if (attendance.includes("반차")) return "반차";
+  if (attendance.includes("재택")) return "재택근무";
+  if (
+    attendance.includes("연차") ||
+    attendance.includes("휴가") ||
+    attendance.includes("휴무")
+  ) {
+    return "휴가";
+  }
+  return "식사 기록";
+}
+
 interface MealEntryCardProps {
   selectedDate?: Date;
   mealData: MealData[];
@@ -38,7 +71,7 @@ export default function MealEntryCard({
   const isIndividualLunch = !!currentMeal?.attendance?.includes("개별식사");
 
   const handleSlotClick = (type: MealType) => {
-    if (currentMeal) {
+    if (currentMeal && hasMealSlotRecord(currentMeal, type)) {
       openDrawerForEdit(type, currentMeal, selectedDate);
     } else {
       openDrawer(type, selectedDate, currentMeal);
@@ -58,15 +91,22 @@ export default function MealEntryCard({
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {MEAL_SLOTS.map((slot) => {
           const record = currentMeal?.[slot.type];
-          const hasRecord =
+          const hasRecord = hasMealSlotRecord(currentMeal, slot.type);
+          const showIndividual =
+            slot.type === "lunch" &&
+            isIndividualLunch &&
+            (!currentMeal?.attendance_source ||
+              currentMeal.attendance_source === "meal");
+          const hasAmountOrStore =
             !!(record?.amount && record.amount > 0) || !!record?.store;
-          const showIndividual = slot.type === "lunch" && isIndividualLunch;
 
-          const storeLabel = hasRecord
+          const storeLabel = hasAmountOrStore
             ? record?.store || "식사 기록"
-            : showIndividual
-              ? "개별식사"
-              : "기록 없음";
+            : hasRecord && slot.type === "lunch"
+              ? getLunchAttendanceLabel(currentMeal?.attendance)
+              : showIndividual
+                ? "개별식사"
+                : "기록 없음";
 
           return (
             <button
@@ -101,10 +141,12 @@ export default function MealEntryCard({
               <div className="mt-auto flex items-end justify-between pt-1.5">
                 <span
                   className={`text-[13px] font-semibold ${
-                    hasRecord ? "text-slate-900" : "text-slate-300"
+                    hasAmountOrStore ? "text-slate-900" : "text-slate-300"
                   }`}
                 >
-                  {hasRecord ? `${record!.amount.toLocaleString()}원` : "-"}
+                  {hasAmountOrStore
+                    ? `${record!.amount.toLocaleString()}원`
+                    : "-"}
                 </span>
                 <span className="flex items-center gap-0.5 text-[11px] font-medium text-slate-400 transition-colors group-hover:text-slate-600">
                   {hasRecord ? (

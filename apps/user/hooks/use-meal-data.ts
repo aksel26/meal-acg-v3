@@ -4,6 +4,7 @@ import { queryKeys } from "@/lib/query-keys";
 interface MealData {
   date: string;
   attendance: string;
+  attendance_source?: "meal" | "dayoff" | "attendance";
   lunch?: {
     store: string;
     amount: number;

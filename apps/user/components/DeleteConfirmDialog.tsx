@@ -14,18 +14,27 @@ import {
 
 interface DeleteConfirmDialogProps {
   selectedDate?: Date;
+  mealTypeLabel?: string;
   isDeleting: boolean;
   onConfirm: () => Promise<void>;
   children: React.ReactNode;
 }
 
-export function DeleteConfirmDialog({ selectedDate, isDeleting, onConfirm, children }: DeleteConfirmDialogProps) {
+export function DeleteConfirmDialog({
+  selectedDate,
+  mealTypeLabel,
+  isDeleting,
+  onConfirm,
+  children,
+}: DeleteConfirmDialogProps) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
       <AlertDialogContent className="sm:max-w-md max-w-xs!">
         <AlertDialogHeader className="text-center sm:text-left">
-          <AlertDialogTitle className="text-sm sm:text-lg font-semibold flex items-center gap-2">식사 기록 삭제</AlertDialogTitle>
+          <AlertDialogTitle className="text-sm sm:text-lg font-semibold flex items-center gap-2">
+            식사 기록 삭제
+          </AlertDialogTitle>
           <AlertDialogDescription className="text-left space-y-3 pt-2">
             <span className="text-xs sm:text-sm">
               <span className="font-medium text-foreground">
@@ -36,12 +45,16 @@ export function DeleteConfirmDialog({ selectedDate, isDeleting, onConfirm, child
                   weekday: "short",
                 })}
               </span>
-              의 식대 기록을 삭제하시겠습니까?
+              의 {mealTypeLabel ? `${mealTypeLabel} ` : ""}식대 기록을
+              삭제하시겠습니까?
             </span>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="gap-3 sm:gap-2">
-          <AlertDialogCancel disabled={isDeleting} className="flex-1 sm:flex-none text-xs sm:text-sm">
+          <AlertDialogCancel
+            disabled={isDeleting}
+            className="flex-1 sm:flex-none text-xs sm:text-sm"
+          >
             취소
           </AlertDialogCancel>
           <AlertDialogAction

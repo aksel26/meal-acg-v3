@@ -68,6 +68,26 @@ function DayMarker({ type }: { type: MarkerType }) {
   return <span className="h-[7px] w-[7px] rounded-full bg-blue-500" />;
 }
 
+function getAttendanceLabel(meal: MealData | undefined): string | null {
+  if (!meal?.attendance) return null;
+  const attendance = meal.attendance;
+  if (attendance.includes("개별식사")) return "개별";
+  if (attendance.includes("오전") && attendance.includes("반차"))
+    return "오전반차";
+  if (attendance.includes("오후") && attendance.includes("반차"))
+    return "오후반차";
+  if (attendance.includes("반차")) return "반차";
+  if (attendance.includes("재택")) return "재택";
+  if (
+    attendance.includes("연차") ||
+    attendance.includes("휴가") ||
+    attendance.includes("휴무")
+  ) {
+    return "휴가";
+  }
+  return null;
+}
+
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 export default function MealCalendar({
@@ -182,7 +202,9 @@ export default function MealCalendar({
           const dow = dayjs(day.date).day();
           const isSelected = day.date === selectedStr;
           const isToday = day.date === todayStr;
-          const marker = resolveMarker(mealByDate.get(day.date));
+          const meal = mealByDate.get(day.date);
+          const marker = resolveMarker(meal);
+          const attendanceLabel = getAttendanceLabel(meal);
 
           return (
             <button
@@ -192,7 +214,7 @@ export default function MealCalendar({
                 day.isCurrentMonth && onDateSelect(dayjs(day.date).toDate())
               }
               disabled={!day.isCurrentMonth}
-              className={`group flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-lg py-1.5 transition-colors ${
+              className={`group flex min-h-[58px] flex-col items-center justify-center gap-0.5 rounded-lg px-0.5 py-1.5 transition-colors ${
                 !day.isCurrentMonth
                   ? "cursor-default opacity-0"
                   : "cursor-pointer hover:bg-gray-50"
@@ -213,6 +235,9 @@ export default function MealCalendar({
               </span>
               <span className="flex h-[9px] items-center justify-center">
                 {marker && <DayMarker type={marker} />}
+              </span>
+              <span className="h-3 max-w-full truncate text-[10px] leading-3 text-slate-500">
+                {attendanceLabel}
               </span>
             </button>
           );

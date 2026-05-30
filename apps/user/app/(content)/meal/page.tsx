@@ -125,7 +125,10 @@ export default function MealPage() {
     }
   };
 
-  const handleDeleteMeal = async (date: string) => {
+  const handleDeleteMeal = async (
+    date: string,
+    mealType: "breakfast" | "lunch" | "dinner",
+  ) => {
     if (!userName) return;
 
     try {
@@ -133,6 +136,7 @@ export default function MealPage() {
         userName,
         userId: userId || undefined,
         date,
+        mealType,
       });
     } catch (error) {
       console.error("Meal delete error:", error);

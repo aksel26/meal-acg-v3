@@ -30,6 +30,37 @@ export interface MealLogRow {
   total_amount: number | null;
 }
 
+export type MealType = "breakfast" | "lunch" | "dinner";
+
+function hasMealSlot(row: MealLogRow, mealType: MealType) {
+  if (mealType === "breakfast") {
+    return Boolean(
+      row.breakfast_store ||
+        row.breakfast_payer ||
+        (row.breakfast_amount ?? 0) > 0,
+    );
+  }
+  if (mealType === "lunch") {
+    return Boolean(
+      row.lunch_store ||
+        row.lunch_payer ||
+        (row.lunch_amount ?? 0) > 0 ||
+        row.attendance,
+    );
+  }
+  return Boolean(
+    row.dinner_store || row.dinner_payer || (row.dinner_amount ?? 0) > 0,
+  );
+}
+
+function hasAnyMealData(row: MealLogRow) {
+  return (
+    hasMealSlot(row, "breakfast") ||
+    hasMealSlot(row, "lunch") ||
+    hasMealSlot(row, "dinner")
+  );
+}
+
 /**
  * 식대 데이터 저장/수정
  * @param userIdOrName - user_id(UUID) 또는 userName(full_name)
@@ -122,6 +153,7 @@ export async function saveMeal(
 export async function deleteMeal(
   userName: string,
   date: string,
+  mealType?: MealType,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = createServiceClient();
@@ -143,19 +175,91 @@ export async function deleteMeal(
       return { success: true }; // Nothing to delete
     }
 
-    // Delete meal log
+    const baseQuery = supabase
+      .from("meal_logs")
+      .select("*")
+      .eq("user_id", member.id)
+      .eq("entry_date", entryDate)
+      .limit(1);
+
+    const { data: mealLogs, error: fetchError } = await baseQuery;
+
+    if (fetchError) {
+      console.error("Failed to fetch meal for delete:", fetchError);
+      return { success: false, error: fetchError.message };
+    }
+
+    const mealLog = mealLogs?.[0] as MealLogRow | undefined;
+    if (!mealLog) {
+      return { success: true };
+    }
+
+    if (!mealType) {
+      const { error } = await supabase
+        .from("meal_logs")
+        .delete()
+        .eq("user_id", member.id)
+        .eq("entry_date", entryDate);
+
+      if (error) {
+        console.error("Failed to delete meal:", error);
+        return { success: false, error: error.message };
+      }
+
+      console.log(`Meal deleted: ${entryDate}`);
+      return { success: true };
+    }
+
+    const updateData =
+      mealType === "breakfast"
+        ? {
+            breakfast_store: null,
+            breakfast_amount: 0,
+            breakfast_payer: null,
+          }
+        : mealType === "lunch"
+          ? {
+              attendance: null,
+              lunch_store: null,
+              lunch_amount: 0,
+              lunch_payer: null,
+            }
+          : {
+              dinner_store: null,
+              dinner_amount: 0,
+              dinner_payer: null,
+            };
+
+    const nextMealLog = { ...mealLog, ...updateData };
+
+    if (!hasAnyMealData(nextMealLog)) {
+      const { error } = await supabase
+        .from("meal_logs")
+        .delete()
+        .eq("user_id", member.id)
+        .eq("entry_date", entryDate);
+
+      if (error) {
+        console.error("Failed to delete empty meal:", error);
+        return { success: false, error: error.message };
+      }
+
+      console.log(`Meal row deleted after clearing ${mealType}: ${entryDate}`);
+      return { success: true };
+    }
+
     const { error } = await supabase
       .from("meal_logs")
-      .delete()
+      .update(updateData)
       .eq("user_id", member.id)
       .eq("entry_date", entryDate);
 
     if (error) {
-      console.error("Failed to delete meal:", error);
+      console.error("Failed to delete meal slot:", error);
       return { success: false, error: error.message };
     }
 
-    console.log(`Meal deleted: ${entryDate}`);
+    console.log(`Meal slot deleted: ${mealType} - ${entryDate}`);
     return { success: true };
   } catch (error) {
     console.error("Delete meal error:", error);
@@ -175,11 +279,15 @@ export async function getMealsByMonth(
   month: number,
 ): Promise<{ success: boolean; error?: string; data?: MealLogRow[] }> {
   try {
-    console.log(`getMealsByMonth called: userName=${userName}, year=${year}, month=${month}`);
+    console.log(
+      `getMealsByMonth called: userName=${userName}, year=${year}, month=${month}`,
+    );
 
     const supabase = createServiceClient();
     if (!supabase) {
-      console.error("Supabase client not configured - check NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY");
+      console.error(
+        "Supabase client not configured - check NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY",
+      );
       return { success: false, error: "Supabase not configured" };
     }
 
@@ -191,7 +299,10 @@ export async function getMealsByMonth(
       .limit(1);
 
     if (memberError) {
-      console.log(`Member lookup failed for "${userName}":`, memberError.message);
+      console.log(
+        `Member lookup failed for "${userName}":`,
+        memberError.message,
+      );
       return { success: true, data: [] };
     }
 
@@ -209,7 +320,9 @@ export async function getMealsByMonth(
       .endOf("month")
       .format("YYYY-MM-DD");
 
-    console.log(`Querying meal_logs: user_id=${member.id}, ${startDate} ~ ${endDate}`);
+    console.log(
+      `Querying meal_logs: user_id=${member.id}, ${startDate} ~ ${endDate}`,
+    );
 
     // Get meal logs
     const { data, error } = await supabase

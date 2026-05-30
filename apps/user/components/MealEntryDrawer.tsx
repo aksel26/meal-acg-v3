@@ -18,13 +18,22 @@ import { StepFormContainer } from "./meal-entry";
 const DeleteConfirmDialog = lazy(() =>
   import("./DeleteConfirmDialog").then((module) => ({
     default: module.DeleteConfirmDialog,
-  }))
+  })),
 );
 
 interface MealEntryDrawerProps {
   onFormSubmit: (e: React.FormEvent) => Promise<void>;
-  onDeleteMeal?: (date: string) => Promise<void>;
+  onDeleteMeal?: (
+    date: string,
+    mealType: "breakfast" | "lunch" | "dinner",
+  ) => Promise<void>;
 }
+
+const MEAL_TYPE_LABELS = {
+  breakfast: "조식",
+  lunch: "중식",
+  dinner: "석식",
+} as const;
 
 export default function MealEntryDrawer({
   onFormSubmit,
@@ -49,7 +58,7 @@ export default function MealEntryDrawer({
 
     setIsDeleting(true);
     try {
-      await onDeleteMeal(formatDate(selectedDate));
+      await onDeleteMeal(formatDate(selectedDate), selectedMealType);
       closeDrawer();
     } finally {
       setIsDeleting(false);
@@ -107,6 +116,7 @@ export default function MealEntryDrawer({
                 <Suspense fallback={null}>
                   <DeleteConfirmDialog
                     selectedDate={selectedDate}
+                    mealTypeLabel={MEAL_TYPE_LABELS[selectedMealType]}
                     isDeleting={isDeleting}
                     onConfirm={handleDeleteMeal}
                   >

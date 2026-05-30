@@ -17,6 +17,7 @@ export interface CalculationData {
 export interface MealData {
   date: string;
   attendance: string;
+  attendance_source?: "meal" | "dayoff" | "attendance";
   lunch?: {
     store: string;
     amount: number;

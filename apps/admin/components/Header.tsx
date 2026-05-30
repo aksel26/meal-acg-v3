@@ -60,6 +60,10 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
     title: "잔여 휴가 현황",
     subtitle: "조직원별 잔여 휴가 현황을 조회합니다",
   },
+  "/leave-types": {
+    title: "휴가 유형 관리",
+    subtitle: "근태 유형의 차감, 할당, 통계 포함 기준을 관리합니다",
+  },
   "/budget": {
     title: "예산 할당 관리",
     subtitle: "기간별 복지포인트 및 활동비를 멤버에게 할당합니다",
@@ -135,18 +139,17 @@ export default function Header() {
       ? "/evaluations"
       : pathname;
 
-  const dynamicPageTitles: Record<string, { title: string; subtitle: string }> = {
-    "/organization/members": {
-      title: "조직원 상세",
-      subtitle: "조직원의 기본 정보와 현재 운영 요약을 확인합니다",
-    },
-  };
+  const dynamicPageTitles: Record<string, { title: string; subtitle: string }> =
+    {
+      "/organization/members": {
+        title: "조직원 상세",
+        subtitle: "조직원의 기본 정보와 현재 운영 요약을 확인합니다",
+      },
+    };
 
-  const pageInfo =
-    dynamicPageTitles[normalizedPathname] ??
+  const pageInfo = dynamicPageTitles[normalizedPathname] ??
     pageTitles[normalizedPathname] ??
-    pageTitles["/"] ??
-    { title: "대시보드", subtitle: "" };
+    pageTitles["/"] ?? { title: "대시보드", subtitle: "" };
 
   return (
     <header className="admin-topbar z-10 flex w-full items-center justify-between px-6 py-3.5">

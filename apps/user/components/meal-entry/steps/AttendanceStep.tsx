@@ -8,15 +8,14 @@ import {
 } from "@/stores/mealDrawerStore";
 import { attendanceOptions } from "@/lib/const/const";
 
-const attendanceConfig: Record<string, { emoji: string; shortLabel: string }> =
-  {
-    근무: { emoji: "💼", shortLabel: "근무" },
-    "근무(개별식사 / 식사안함)": { emoji: "🍱", shortLabel: "개별식사" },
-    "오전 반차/휴무": { emoji: "🌅", shortLabel: "오전반차" },
-    "오후 반차/휴무": { emoji: "🌆", shortLabel: "오후반차" },
-    "연차/휴무": { emoji: "🏖️", shortLabel: "연차" },
-    재택근무: { emoji: "🏠", shortLabel: "재택" },
-  };
+const attendanceConfig: Record<string, { shortLabel: string }> = {
+  근무: { shortLabel: "근무" },
+  "근무(개별식사 / 식사안함)": { shortLabel: "개별식사" },
+  "오전 반차/휴무": { shortLabel: "오전반차" },
+  "오후 반차/휴무": { shortLabel: "오후반차" },
+  "연차/휴무": { shortLabel: "연차" },
+  재택근무: { shortLabel: "재택" },
+};
 
 interface AttendanceStepProps {
   onSubmit?: () => Promise<void>;
@@ -65,7 +64,7 @@ export function AttendanceStep({
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        {attendanceOptions?.map((option, index) => {
+        {attendanceOptions?.map((option) => {
           const config = attendanceConfig[option.value];
           const isSelected = selectedValue === option.value;
 
@@ -74,13 +73,12 @@ export function AttendanceStep({
               key={option.value}
               type="button"
               onClick={() => handleSelect(option.value)}
-              className={`flex items-center gap-3 py-3.5 px-4 rounded-xl border-2 transition-all duration-200 text-left ${
+              className={`flex items-center py-3.5 px-4 rounded-xl border-2 transition-all duration-200 text-left ${
                 isSelected
                   ? "bg-gray-900 border-gray-900 text-white shadow-lg shadow-gray-900/20"
                   : "bg-white border-gray-100 text-gray-700 hover:border-gray-200 hover:bg-gray-50"
               }`}
             >
-              <span className="text-lg">{config?.emoji}</span>
               <span className="text-sm font-medium">{config?.shortLabel}</span>
             </button>
           );

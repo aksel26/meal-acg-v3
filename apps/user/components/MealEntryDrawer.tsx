@@ -13,7 +13,6 @@ import {
 } from "@repo/ui/src/dialog";
 import { formatDate } from "utils";
 import { StepFormContainer } from "./meal-entry";
-import { X, ChevronLeft } from "lucide-react";
 
 // Lazy load DeleteConfirmDialog
 const DeleteConfirmDialog = lazy(() =>
@@ -79,9 +78,9 @@ export default function MealEntryDrawer({
                     exit={{ opacity: 0, x: -10 }}
                     type="button"
                     onClick={prevStep}
-                    className="p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    className="px-2 py-1.5 -ml-2 rounded-lg text-xs font-medium text-gray-500 hover:bg-gray-100 transition-colors"
                   >
-                    <ChevronLeft className="w-5 h-5 text-gray-600" />
+                    뒤로
                   </motion.button>
                 )}
               </AnimatePresence>
@@ -128,9 +127,9 @@ export default function MealEntryDrawer({
                 <DialogClose asChild>
                   <button
                     type="button"
-                    className="p-2 -mr-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    className="px-2 py-1.5 -mr-2 rounded-lg text-xs font-medium text-gray-500 hover:bg-gray-100 transition-colors"
                   >
-                    <X className="w-5 h-5 text-gray-400" />
+                    닫기
                   </button>
                 </DialogClose>
               )}

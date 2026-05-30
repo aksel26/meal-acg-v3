@@ -2,13 +2,12 @@
 
 import { useCallback } from "react";
 import { motion } from "motion/react";
-import { Camera, PenLine } from "lucide-react";
 import { useMealDrawerStore } from "@/stores/mealDrawerStore";
 import { ReceiptScanner } from "@/components/ReceiptScanner";
 import { ReceiptScanResult } from "@/lib/types/receipt-types";
 
 export function ReceiptStep() {
-  const { updateFormField, completeStep, setManualInput, isManualInput } = useMealDrawerStore();
+  const { updateFormField, completeStep, setManualInput } = useMealDrawerStore();
 
   const handleScanComplete = useCallback(
     (result: ReceiptScanResult) => {
@@ -71,9 +70,8 @@ export function ReceiptStep() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.3 }}
           onClick={handleManualInput}
-          className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl border-2 border-gray-100 bg-white text-gray-700 hover:border-gray-200 hover:bg-gray-50 transition-all duration-200"
+          className="w-full flex items-center justify-center py-4 px-4 rounded-xl border-2 border-gray-100 bg-white text-gray-700 hover:border-gray-200 hover:bg-gray-50 transition-all duration-200"
         >
-          <PenLine className="w-4 h-4" />
           <span className="text-sm font-medium">직접 입력할게요</span>
         </motion.button>
       </div>

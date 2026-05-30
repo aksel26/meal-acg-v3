@@ -7,7 +7,6 @@ import { mealTypeOptions } from "@/lib/const/const";
 const mealTypeConfig = {
   breakfast: {
     label: "조식",
-    emoji: "🌅",
     bgColor: "bg-amber-50",
     activeColor: "bg-amber-100",
     textColor: "text-amber-700",
@@ -16,7 +15,6 @@ const mealTypeConfig = {
   },
   lunch: {
     label: "중식",
-    emoji: "☀️",
     bgColor: "bg-blue-50",
     activeColor: "bg-blue-100",
     textColor: "text-blue-700",
@@ -25,7 +23,6 @@ const mealTypeConfig = {
   },
   dinner: {
     label: "석식",
-    emoji: "🌙",
     bgColor: "bg-violet-50",
     activeColor: "bg-violet-100",
     textColor: "text-violet-700",
@@ -72,13 +69,12 @@ export function MealTypeStep() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: index * 0.1, duration: 0.3 }}
               onClick={() => handleSelect(meal.value as "breakfast" | "lunch" | "dinner")}
-              className={`relative flex flex-col items-center gap-2 py-5 px-4 rounded-2xl border-2 transition-all duration-200 ${
+              className={`relative flex flex-col items-center justify-center gap-2 py-5 px-4 rounded-2xl border-2 transition-all duration-200 ${
                 isSelected
                   ? `${config.activeColor} ${config.borderColor} ${config.textColor} shadow-sm`
                   : `bg-white border-gray-100 text-gray-600 ${config.hoverBorder} hover:bg-gray-50`
               }`}
             >
-              <span className="text-2xl">{config.emoji}</span>
               <span className="text-sm font-semibold">{config.label}</span>
               {isSelected && (
                 <motion.div

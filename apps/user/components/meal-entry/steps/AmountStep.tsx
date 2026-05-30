@@ -118,16 +118,11 @@ export function AmountStep({ onSubmit, isSubmitting }: AmountStepProps) {
             exit={{ opacity: 0, y: -10 }}
             className="p-4 rounded-xl bg-blue-50 border border-blue-100"
           >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                <span className="text-lg">🍱</span>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-blue-900">개별식사 처리</p>
-                <p className="text-xs text-blue-700">
-                  -{individualMealAmount.toLocaleString()}원 자동 차감
-                </p>
-              </div>
+            <div>
+              <p className="text-sm font-medium text-blue-900">개별식사 처리</p>
+              <p className="text-xs text-blue-700">
+                -{individualMealAmount.toLocaleString()}원 자동 차감
+              </p>
             </div>
           </motion.div>
         )}

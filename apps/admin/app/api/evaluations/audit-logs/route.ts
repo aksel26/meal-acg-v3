@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminPermission } from "@/lib/auth";
 import { apiError } from "../_utils";
 
 // GET /api/evaluations/audit-logs?roundId=...
 export async function GET(request: NextRequest) {
   try {
-    await requireAdmin();
+    await requireAdminPermission("evaluation:read");
     const supabase = createServiceClient();
     const { searchParams } = new URL(request.url);
     const roundId = searchParams.get("roundId");

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminPermission } from "@/lib/auth";
 import {
   apiError,
   logEvaluationAudit,
@@ -13,7 +13,7 @@ type Params = { params: Promise<{ id: string }> };
 // POST /api/evaluations/question-sets/[id]/clone - Clone a reusable question set
 export async function POST(_request: Request, { params }: Params) {
   try {
-    const session = await requireAdmin();
+    const session = await requireAdminPermission("evaluation:write");
     const supabase = createServiceClient();
     const actorId = await resolveActorMemberId(supabase, session.userId);
     const { id } = await params;

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminPermission } from "@/lib/auth";
 import {
   apiError,
   logEvaluationAudit,
@@ -15,7 +15,7 @@ import {
 // GET /api/evaluations/question-sets - List reusable question sets
 export async function GET() {
   try {
-    await requireAdmin();
+    await requireAdminPermission("evaluation:read");
     const supabase = createServiceClient();
 
     const { data, error } = await supabase
@@ -49,7 +49,7 @@ export async function GET() {
 // POST /api/evaluations/question-sets - Create a reusable question set
 export async function POST(request: NextRequest) {
   try {
-    const session = await requireAdmin();
+    const session = await requireAdminPermission("evaluation:write");
     const supabase = createServiceClient();
     const actorId = await resolveActorMemberId(supabase, session.userId);
     const body = (await request.json()) as QuestionSetInput;

@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminPermission } from "@/lib/auth";
 import { apiError, logEvaluationAudit, resolveActorMemberId } from "../_utils";
 
 // GET /api/evaluations/rounds - List evaluation rounds
 export async function GET() {
   try {
-    await requireAdmin();
+    await requireAdminPermission("evaluation:read");
     const supabase = createServiceClient();
 
     const { data, error } = await supabase
@@ -37,7 +37,7 @@ export async function GET() {
 // POST /api/evaluations/rounds - Create an evaluation round
 export async function POST(request: NextRequest) {
   try {
-    const session = await requireAdmin();
+    const session = await requireAdminPermission("evaluation:write");
     const supabase = createServiceClient();
     const actorId = await resolveActorMemberId(supabase, session.userId);
     const body = await request.json();

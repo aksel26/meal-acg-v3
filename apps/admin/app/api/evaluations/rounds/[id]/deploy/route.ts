@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminPermission } from "@/lib/auth";
 import {
   apiError,
   logEvaluationAudit,
@@ -13,7 +13,7 @@ type Params = { params: Promise<{ id: string }> };
 // PATCH /api/evaluations/rounds/[id]/deploy - Toggle deployment state
 export async function PATCH(request: NextRequest, { params }: Params) {
   try {
-    const session = await requireAdmin();
+    const session = await requireAdminPermission("evaluation:deploy");
     const supabase = createServiceClient();
     const actorId = await resolveActorMemberId(supabase, session.userId);
     const { id } = await params;

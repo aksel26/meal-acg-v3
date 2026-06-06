@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminPermission } from "@/lib/auth";
 import { apiError, validateRound } from "../../../_utils";
 
 type Params = { params: Promise<{ id: string }> };
@@ -8,7 +8,7 @@ type Params = { params: Promise<{ id: string }> };
 // GET /api/evaluations/rounds/[id]/validate - Validate round before confirm/deploy
 export async function GET(request: NextRequest, { params }: Params) {
   try {
-    await requireAdmin();
+    await requireAdminPermission("evaluation:read");
     const supabase = createServiceClient();
     const { id } = await params;
 

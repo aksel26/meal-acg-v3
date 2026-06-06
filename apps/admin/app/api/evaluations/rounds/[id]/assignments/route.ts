@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminPermission } from "@/lib/auth";
 import {
   apiError,
   assertRoundEditable,
@@ -14,7 +14,7 @@ type Params = { params: Promise<{ id: string }> };
 // PUT /api/evaluations/rounds/[id]/assignments - Replace evaluator assignments
 export async function PUT(request: NextRequest, { params }: Params) {
   try {
-    const session = await requireAdmin();
+    const session = await requireAdminPermission("evaluation:write");
     const supabase = createServiceClient();
     const actorId = await resolveActorMemberId(supabase, session.userId);
     const { id } = await params;

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminPermission } from "@/lib/auth";
 import {
   apiError,
   logEvaluationAudit,
@@ -17,7 +17,7 @@ type Params = { params: Promise<{ id: string }> };
 // GET /api/evaluations/question-sets/[id] - Get a reusable question set detail
 export async function GET(_request: NextRequest, { params }: Params) {
   try {
-    await requireAdmin();
+    await requireAdminPermission("evaluation:read");
     const supabase = createServiceClient();
     const { id } = await params;
 
@@ -51,7 +51,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
 // PUT /api/evaluations/question-sets/[id] - Update a reusable question set
 export async function PUT(request: NextRequest, { params }: Params) {
   try {
-    const session = await requireAdmin();
+    const session = await requireAdminPermission("evaluation:write");
     const supabase = createServiceClient();
     const actorId = await resolveActorMemberId(supabase, session.userId);
     const { id } = await params;
@@ -127,7 +127,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
 // DELETE /api/evaluations/question-sets/[id] - Delete a reusable question set
 export async function DELETE(request: NextRequest, { params }: Params) {
   try {
-    const session = await requireAdmin();
+    const session = await requireAdminPermission("evaluation:write");
     const supabase = createServiceClient();
     const actorId = await resolveActorMemberId(supabase, session.userId);
     const { id } = await params;

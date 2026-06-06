@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminPermission } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/server";
 import { apiError, evaluatorTypeForMember } from "../../../_utils";
 
@@ -102,7 +102,7 @@ const EVALUATOR_TYPES: EvaluatorType[] = ["상사", "동료"];
 
 export async function GET(_request: Request, { params }: Params) {
   try {
-    await requireAdmin();
+    await requireAdminPermission("evaluation:read");
     const supabase = createServiceClient();
     const { id } = await params;
 

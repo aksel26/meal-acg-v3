@@ -8,13 +8,11 @@ import {
   SelectValue,
 } from "@repo/ui/src/select";
 import { NumberTicker } from "@repo/ui/src/number-ticker";
-import { Check, ChevronRight, Eye, HelpCircle, ListFilter, Plus } from "@repo/ui/icons";
+import { ChevronRight, Eye, ListFilter, Plus } from "@repo/ui/icons";
 import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/src/popover";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@repo/ui/src/tooltip";
 import { motion } from "motion/react";
 import React, { useState, useEffect, useMemo } from "react";
-import NoDataIcon from "@/public/icons/noData.png";
-import Image from "next/image";
 import { EditPointDialog } from "@/components/points/EditPointDialog";
 import { ActivityViewDialog } from "../../../components/points/ActivityViewDialog";
 import { PointsGuideDialog } from "@/components/points/PointsGuideDialog";
@@ -31,6 +29,7 @@ import {
   useUpdateUsageRecord,
   useDeleteUsageRecord,
 } from "@/hooks/use-points-mutations";
+import { useAllUsageRecords } from "@/hooks/use-all-usage-records";
 import { useUserStore } from "@/stores/userStore";
 import { toast } from "@repo/ui/src/sonner";
 import dayjs from "dayjs";
@@ -45,9 +44,21 @@ interface WelfarePoint {
   confirmed: boolean;
   notes?: string;
   delay_reason?: string;
-  proxy_payer?: string;         // 대표 결제자 이름 (단일). undefined = 본인
-  companion_names?: string[];   // 동반 결제자 이름들 (UI 전용, DB 저장 안함)
+  proxy_payer?: string; // 대표 결제자 이름 (단일). undefined = 본인
+  companion_names?: string[]; // 동반 결제자 이름들 (UI 전용, DB 저장 안함)
 }
+
+const reviewLabel = (status: number) => {
+  if (status >= 2) return "최종";
+  if (status >= 1) return "P&C";
+  return "미확인";
+};
+
+const shortDate = (date: string) => {
+  const d = dayjs(date);
+  const dow = ["일", "월", "화", "수", "목", "금", "토"][d.day()];
+  return `${d.month() + 1}.${String(d.date()).padStart(2, "0")} (${dow})`;
+};
 
 function BudgetRow({
   label,
@@ -165,7 +176,11 @@ export default function Points() {
   // member_id와 member_role을 최신 값으로 store에 저장
   useEffect(() => {
     if (memberLookup) {
-      setMemberInfo(memberLookup.id, memberLookup.member_role, memberLookup.hire_date);
+      setMemberInfo(
+        memberLookup.id,
+        memberLookup.member_role,
+        memberLookup.hire_date,
+      );
     }
   }, [memberLookup, setMemberInfo]);
 
@@ -190,6 +205,21 @@ export default function Points() {
     usePointsActivity(isManager ? currentMemberId : null, selectedMonth);
 
   const { data: membersData } = usePointsMembers(currentMemberId);
+  const {
+    data: allUsageData,
+    isLoading: isAllUsageLoading,
+    error: allUsageError,
+  } = useAllUsageRecords(
+    currentMemberId
+      ? {
+          memberId: currentMemberId,
+          period: selectedMonth,
+          limit: 80,
+          offset: 0,
+        }
+      : null,
+    !!currentMemberId,
+  );
 
   // Mutation hooks
   const addMutation = useAddUsageRecord();
@@ -255,6 +285,9 @@ export default function Points() {
   });
 
   const isLoading = isWelfareLoading || (isManager && isActivityLoading);
+  const allUsageRecords = allUsageData?.records ?? [];
+  const allUsageTotalAmount = allUsageData?.total_amount ?? 0;
+  const allUsageTotalCount = allUsageData?.total_count ?? 0;
 
   // UsageRecord → WelfarePoint 변환 (EditPointDrawer 호환)
   const toEditablePoint = (record: UsageRecord): WelfarePoint => ({
@@ -267,10 +300,11 @@ export default function Points() {
     confirmed: (record.review_status ?? 0) >= 1,
     delay_reason: record.delay_reason || "",
     proxy_payer: record.companions?.[0]
-      ? membersData?.find((m) => m.id === record.companions[0])?.full_name || record.companions[0]
+      ? membersData?.find((m) => m.id === record.companions[0])?.full_name ||
+        record.companions[0]
       : undefined,
     companion_names: (record.co_payers || []).map(
-      (id) => membersData?.find((m) => m.id === id)?.full_name || id
+      (id) => membersData?.find((m) => m.id === id)?.full_name || id,
     ),
   });
 
@@ -429,7 +463,10 @@ export default function Points() {
                 복지포인트{isManager ? " · 활동비" : ""}
               </h1>
               <span onClick={(e) => e.stopPropagation()}>
-                <PointsGuideDialog open={isGuideOpen} onOpenChange={setIsGuideOpen} />
+                <PointsGuideDialog
+                  open={isGuideOpen}
+                  onOpenChange={setIsGuideOpen}
+                />
               </span>
             </div>
             <span className="flex items-center gap-0.5 text-sm text-blue-500/100">
@@ -482,226 +519,551 @@ export default function Points() {
   // 사용 내역 리스트 렌더링
   const listContent = (
     <div>
-        <div className="mb-3 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <h2 className="text-md font-semibold text-gray-900">사용 내역</h2>
-            <button
-              onClick={() => setIsAllRecordsOpen(true)}
-              className="flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-blue-50 hover:text-blue-700 active:scale-95 transition-all duration-200 text-xs text-gray-600"
-            >
-              <Eye className="w-3.5 h-3.5" />
-              <span>전체 내역</span>
-            </button>
-          </div>
-          <div className="flex gap-2">
-            <Select
-              value={sortOrder}
-              onValueChange={(
-                value: "newest" | "oldest" | "amount-high" | "amount-low",
-              ) => setSortOrder(value)}
-            >
-              <SelectTrigger className="w-auto min-w-[100px] h-11 border-0 bg-white shadow-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">최신순</SelectItem>
-                <SelectItem value="oldest">오래된순</SelectItem>
-                <SelectItem value="amount-high">금액 높은순</SelectItem>
-                <SelectItem value="amount-low">금액 낮은순</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-              <SelectTrigger className="w-auto min-w-[80px] h-11 border-0 bg-white shadow-sm">
-                <SelectValue placeholder="월을 선택하세요" />
-              </SelectTrigger>
-              <SelectContent>
-                {months.map((month) => (
-                  <SelectItem key={month.value} value={month.value}>
-                    {month.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {isManager && (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="relative h-8.5 w-8.5 flex items-center justify-center rounded-md bg-white shadow-xs border border-input">
-                    <ListFilter className="w-4 h-4 text-gray-600" />
-                    {typeFilter !== "all" && (
-                      <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-blue-500" />
-                    )}
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent align="end" className="w-40 p-1">
-                  {(
-                    [
-                      { value: "all", label: "전체" },
-                      { value: "welfare", label: "복지포인트" },
-                      { value: "activity", label: "활동비" },
-                    ] as const
-                  ).map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => setTypeFilter(option.value)}
-                      className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors ${
-                        typeFilter === option.value
-                          ? "bg-gray-100 font-medium text-gray-900"
-                          : "text-gray-600 hover:bg-gray-50"
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </PopoverContent>
-              </Popover>
-            )}
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          {/* Add New Point */}
+      <div className="mb-3 flex justify-between items-center">
+        <div className="flex items-center gap-2">
+          <h2 className="text-md font-semibold text-gray-900">사용 내역</h2>
           <button
-            className="w-full py-3 bg-white rounded-xl text-sm font-medium text-blue-600 flex items-center justify-center gap-2 border border-dashed border-blue-200 hover:border-blue-300 hover:bg-blue-50/30 active:bg-blue-50 transition-colors"
-            onClick={handleAddNewPoint}
+            onClick={() => setIsAllRecordsOpen(true)}
+            className="flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-blue-50 hover:text-blue-700 active:scale-95 transition-all duration-200 text-xs text-gray-600"
           >
-            <Plus className="w-4 h-4" />새 내역 추가
+            <Eye className="w-3.5 h-3.5" />
+            <span>전체 내역</span>
           </button>
-
-          {isLoading ? (
-            <div className="bg-white rounded-xl divide-y divide-gray-50">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="px-4 py-4">
-                  <div className="animate-pulse">
-                    <div className="flex justify-between mb-2">
-                      <div className="bg-gray-100 rounded h-[15px] w-32" />
-                      <div className="bg-gray-100 rounded h-[15px] w-16" />
-                    </div>
-                    <div className="flex justify-between">
-                      <div className="bg-gray-50 rounded h-3 w-24" />
-                      <div className="bg-gray-50 rounded h-3 w-10" />
-                    </div>
-                  </div>
-                </div>
+        </div>
+        <div className="flex gap-2">
+          <Select
+            value={sortOrder}
+            onValueChange={(
+              value: "newest" | "oldest" | "amount-high" | "amount-low",
+            ) => setSortOrder(value)}
+          >
+            <SelectTrigger className="w-auto min-w-[100px] h-11 border-0 bg-white shadow-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">최신순</SelectItem>
+              <SelectItem value="oldest">오래된순</SelectItem>
+              <SelectItem value="amount-high">금액 높은순</SelectItem>
+              <SelectItem value="amount-low">금액 낮은순</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <SelectTrigger className="w-auto min-w-[80px] h-11 border-0 bg-white shadow-sm">
+              <SelectValue placeholder="월을 선택하세요" />
+            </SelectTrigger>
+            <SelectContent>
+              {months.map((month) => (
+                <SelectItem key={month.value} value={month.value}>
+                  {month.label}
+                </SelectItem>
               ))}
-            </div>
-          ) : sortedRecords.length === 0 ? (
-            <div className="bg-white rounded-xl py-12 text-center">
-              <Image
-                src={NoDataIcon}
-                alt="No Data"
-                width={40}
-                height={40}
-                className="mx-auto mb-3 opacity-40"
-              />
-              <p className="text-sm text-gray-400">
-                {welfareError
-                  ? "내역을 불러올 수 없습니다."
-                  : "이 달에 내역이 없습니다."}
-              </p>
-            </div>
-          ) : (
-            <div className="bg-white rounded-xl divide-y divide-gray-100 overflow-hidden">
-              {sortedRecords.map((record) => {
-                const d = dayjs(record.used_at);
-                const dow = ["일", "월", "화", "수", "목", "금", "토"][d.day()];
-                const isActivity = record.type === "활동비";
-
-                const reviewStatus = record.review_status ?? 0;
-                const isLocked = reviewStatus >= 1;
-
-                const recordContent = (
-                  <div
-                    className={`px-4 py-3.5 ${
-                      reviewStatus === 2
-                        ? "opacity-55"
-                        : isLocked
-                          ? "opacity-75"
-                          : "cursor-pointer active:bg-gray-50"
-                    } transition-colors`}
-                    onClick={() => handleEditPoint(record)}
+            </SelectContent>
+          </Select>
+          {isManager && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="relative h-8.5 w-8.5 flex items-center justify-center rounded-md bg-white shadow-xs border border-input">
+                  <ListFilter className="w-4 h-4 text-gray-600" />
+                  {typeFilter !== "all" && (
+                    <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-blue-500" />
+                  )}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-40 p-1">
+                {(
+                  [
+                    { value: "all", label: "전체" },
+                    { value: "welfare", label: "복지포인트" },
+                    { value: "activity", label: "활동비" },
+                  ] as const
+                ).map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setTypeFilter(option.value)}
+                    className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors ${
+                      typeFilter === option.value
+                        ? "bg-gray-100 font-medium text-gray-900"
+                        : "text-gray-600 hover:bg-gray-50"
+                    }`}
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <p className="text-[15px] font-medium text-gray-900 flex-1 min-w-0 truncate">
-                        {record.description}
-                      </p>
-                      <p className="text-[15px] font-semibold text-gray-900 tabular-nums shrink-0">
-                        {record.amount.toLocaleString()}원
-                      </p>
-                    </div>
-                    <div className="flex items-center justify-between mt-1.5">
-                      <div className="flex items-center gap-2 text-xs text-gray-400">
-                        <span>
-                          {d.month() + 1}.{String(d.date()).padStart(2, "0")} (
-                          {dow})
-                        </span>
-                        <span
-                          className={`px-1.5 py-px rounded text-[10px] font-medium ${
-                            isActivity
-                              ? "bg-amber-50 text-amber-500"
-                              : "bg-blue-50/60 text-blue-600"
-                          }`}
-                        >
-                          {record.type}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className={`flex items-center gap-1 ${
-                          reviewStatus >= 1 ? "text-blue-500" : "text-gray-300"
-                        }`}>
-                          <span className={`inline-block w-[7px] h-[7px] rounded-full border ${
-                            reviewStatus >= 1
-                              ? "bg-blue-500 border-blue-500"
-                              : "bg-transparent border-gray-300"
-                          }`} />
-                          <span className="text-[10px]">P&C</span>
-                        </span>
-                        <span className={`flex items-center gap-1 ${
-                          reviewStatus >= 2 ? "text-emerald-500" : "text-gray-300"
-                        }`}>
-                          <span className={`inline-block w-[7px] h-[7px] rounded-full border ${
-                            reviewStatus >= 2
-                              ? "bg-emerald-500 border-emerald-500"
-                              : "bg-transparent border-gray-300"
-                          }`} />
-                          <span className="text-[10px]">최종</span>
-                        </span>
-                      </div>
-                    </div>
-                    {record.companions?.length > 0 && (
-                      <p className="text-xs text-gray-400 mt-1">
-                        카드: {record.companions.map((id: string) => membersData?.find((m) => m.id === id)?.full_name || id).join(", ")}
-                      </p>
-                    )}
-                    {record.co_payers?.length > 0 && (
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        동반: {record.co_payers.map((id: string) => membersData?.find((m) => m.id === id)?.full_name || id).join(", ")}
-                      </p>
-                    )}
-                  </div>
-                );
-
-                return isLocked ? (
-                  <Tooltip key={record.id}>
-                    <TooltipTrigger asChild>
-                      <div>{recordContent}</div>
-                    </TooltipTrigger>
-                    <TooltipContent
-                      side="top"
-                      className="bg-gray-800 text-gray-100 max-w-60"
-                    >
-                      {reviewStatus === 2
-                        ? "최종확인 완료 항목입니다. 수정하려면 P&C에 문의 바랍니다."
-                        : "P&C 확인완료 항목입니다. 수정하려면 P&C에 문의 바랍니다."}
-                    </TooltipContent>
-                  </Tooltip>
-                ) : (
-                  <div key={record.id}>{recordContent}</div>
-                );
-              })}
-            </div>
+                    {option.label}
+                  </button>
+                ))}
+              </PopoverContent>
+            </Popover>
           )}
         </div>
       </div>
+
+      <div className="space-y-3">
+        {/* Add New Point */}
+        <button
+          className="w-full py-3 bg-white rounded-xl text-sm font-medium text-blue-600 flex items-center justify-center gap-2 border border-dashed border-blue-200 hover:border-blue-300 hover:bg-blue-50/30 active:bg-blue-50 transition-colors"
+          onClick={handleAddNewPoint}
+        >
+          <Plus className="w-4 h-4" />새 내역 추가
+        </button>
+
+        {isLoading ? (
+          <div className="bg-white rounded-xl divide-y divide-gray-50">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="px-4 py-4">
+                <div className="animate-pulse">
+                  <div className="flex justify-between mb-2">
+                    <div className="bg-gray-100 rounded h-[15px] w-32" />
+                    <div className="bg-gray-100 rounded h-[15px] w-16" />
+                  </div>
+                  <div className="flex justify-between">
+                    <div className="bg-gray-50 rounded h-3 w-24" />
+                    <div className="bg-gray-50 rounded h-3 w-10" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : sortedRecords.length === 0 ? (
+          <div className="bg-white rounded-xl py-12 text-center">
+            <p className="text-sm text-gray-400">
+              {welfareError
+                ? "내역을 불러올 수 없습니다."
+                : "이 달에 내역이 없습니다."}
+            </p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl divide-y divide-gray-100 overflow-hidden">
+            {sortedRecords.map((record) => {
+              const d = dayjs(record.used_at);
+              const dow = ["일", "월", "화", "수", "목", "금", "토"][d.day()];
+              const isActivity = record.type === "활동비";
+
+              const reviewStatus = record.review_status ?? 0;
+              const isLocked = reviewStatus >= 1;
+
+              const recordContent = (
+                <div
+                  className={`px-4 py-3.5 ${
+                    reviewStatus === 2
+                      ? "opacity-55"
+                      : isLocked
+                        ? "opacity-75"
+                        : "cursor-pointer active:bg-gray-50"
+                  } transition-colors`}
+                  onClick={() => handleEditPoint(record)}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <p className="text-[15px] font-medium text-gray-900 flex-1 min-w-0 truncate">
+                      {record.description}
+                    </p>
+                    <p className="text-[15px] font-semibold text-gray-900 tabular-nums shrink-0">
+                      {record.amount.toLocaleString()}원
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between mt-1.5">
+                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                      <span>
+                        {d.month() + 1}.{String(d.date()).padStart(2, "0")} (
+                        {dow})
+                      </span>
+                      <span
+                        className={`px-1.5 py-px rounded text-[10px] font-medium ${
+                          isActivity
+                            ? "bg-amber-50 text-amber-500"
+                            : "bg-blue-50/60 text-blue-600"
+                        }`}
+                      >
+                        {record.type}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className={`flex items-center gap-1 ${
+                          reviewStatus >= 1 ? "text-blue-500" : "text-gray-300"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block w-[7px] h-[7px] rounded-full border ${
+                            reviewStatus >= 1
+                              ? "bg-blue-500 border-blue-500"
+                              : "bg-transparent border-gray-300"
+                          }`}
+                        />
+                        <span className="text-[10px]">P&C</span>
+                      </span>
+                      <span
+                        className={`flex items-center gap-1 ${
+                          reviewStatus >= 2
+                            ? "text-emerald-500"
+                            : "text-gray-300"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block w-[7px] h-[7px] rounded-full border ${
+                            reviewStatus >= 2
+                              ? "bg-emerald-500 border-emerald-500"
+                              : "bg-transparent border-gray-300"
+                          }`}
+                        />
+                        <span className="text-[10px]">최종</span>
+                      </span>
+                    </div>
+                  </div>
+                  {record.companions?.length > 0 && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      카드:{" "}
+                      {record.companions
+                        .map(
+                          (id: string) =>
+                            membersData?.find((m) => m.id === id)?.full_name ||
+                            id,
+                        )
+                        .join(", ")}
+                    </p>
+                  )}
+                  {record.co_payers?.length > 0 && (
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      동반:{" "}
+                      {record.co_payers
+                        .map(
+                          (id: string) =>
+                            membersData?.find((m) => m.id === id)?.full_name ||
+                            id,
+                        )
+                        .join(", ")}
+                    </p>
+                  )}
+                </div>
+              );
+
+              return isLocked ? (
+                <Tooltip key={record.id}>
+                  <TooltipTrigger asChild>
+                    <div>{recordContent}</div>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="top"
+                    className="bg-gray-800 text-gray-100 max-w-60"
+                  >
+                    {reviewStatus === 2
+                      ? "최종확인 완료 항목입니다. 수정하려면 P&C에 문의 바랍니다."
+                      : "P&C 확인완료 항목입니다. 수정하려면 P&C에 문의 바랍니다."}
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <div key={record.id}>{recordContent}</div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const desktopSummaryContent = (
+    <section className="rounded-[22px] bg-white px-7 py-7 shadow-[0_18px_50px_rgba(15,23,42,0.04)]">
+      <div className="mb-8 flex items-start justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <h2 className="text-[19px] font-semibold text-slate-900">
+            복지포인트
+          </h2>
+          <span onClick={(e) => e.stopPropagation()}>
+            <PointsGuideDialog
+              open={isGuideOpen}
+              onOpenChange={setIsGuideOpen}
+            />
+          </span>
+        </div>
+        {isManager && (
+          <button
+            onClick={() => setIsActivityViewOpen(true)}
+            className="flex min-h-11 items-center gap-1 rounded-xl px-2 text-[15px] font-medium text-slate-700 transition-colors hover:bg-slate-50"
+          >
+            팀별 활동비 내역
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
+      <BudgetRow
+        label="복지포인트"
+        remaining={welfareRemainingAmount}
+        used={welfareUsedAmount}
+        total={welfareTotalAmount}
+        showProgressBar
+      />
+
+      {isManager && (
+        <div className="mt-6 border-t border-slate-100 pt-5">
+          <BudgetRow
+            label="활동비"
+            remaining={activityRemainingAmount}
+            used={activityUsedAmount}
+            total={activityTotalAmount}
+          />
+        </div>
+      )}
+    </section>
+  );
+
+  const orgUsageContent = (
+    <section className="rounded-[22px] bg-white px-6 py-6 shadow-[0_18px_50px_rgba(15,23,42,0.04)]">
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-[19px] font-semibold text-slate-900">
+            전체인원 사용내역
+          </h2>
+          <p className="mt-1 text-sm text-slate-400">해당 월 조직 전체 내역</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-slate-50 px-4 py-2 text-sm font-medium tabular-nums text-slate-500">
+            {allUsageTotalAmount.toLocaleString()}원
+          </span>
+          <span className="rounded-full bg-slate-50 px-4 py-2 text-sm font-medium text-slate-500">
+            총 {allUsageTotalCount}건
+          </span>
+          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <SelectTrigger className="h-11 w-[86px] rounded-xl border-0 bg-slate-50 text-[15px] shadow-none">
+              <SelectValue placeholder="월" />
+            </SelectTrigger>
+            <SelectContent>
+              {months.map((month) => (
+                <SelectItem key={month.value} value={month.value}>
+                  {month.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="max-h-[520px] space-y-2 overflow-y-auto pr-1">
+        {isAllUsageLoading ? (
+          [1, 2, 3, 4, 5, 6].map((i) => (
+            <div
+              key={i}
+              className="h-12 animate-pulse rounded-2xl bg-slate-50"
+            />
+          ))
+        ) : allUsageError ? (
+          <div className="rounded-2xl bg-red-50 px-4 py-6 text-center text-sm text-red-500">
+            전체 내역을 불러올 수 없습니다.
+          </div>
+        ) : allUsageRecords.length === 0 ? (
+          <div className="rounded-2xl bg-slate-50 px-4 py-10 text-center text-sm text-slate-400">
+            이 달에 조직 내역이 없습니다.
+          </div>
+        ) : (
+          allUsageRecords.map((record) => (
+            <div
+              key={record.id}
+              className="grid min-h-12 grid-cols-[minmax(72px,0.9fr)_minmax(0,2.6fr)_minmax(86px,1fr)_42px_42px] items-center gap-3 rounded-2xl bg-stone-50/70 px-4 py-2.5 text-[14px]"
+            >
+              <span className="truncate font-semibold text-slate-700">
+                {record.member_name}
+              </span>
+              <span className="truncate text-slate-600">
+                {record.description}
+              </span>
+              <span className="text-right font-semibold tabular-nums text-slate-900">
+                {record.amount.toLocaleString()}원
+              </span>
+              <span
+                className={`justify-self-end rounded-md px-2 py-1 text-[12px] font-semibold ${
+                  record.type === "활동비"
+                    ? "bg-amber-50 text-amber-600"
+                    : "bg-sky-50 text-sky-700"
+                }`}
+              >
+                {record.type === "활동비" ? "활동" : "복지"}
+              </span>
+              <span className="justify-self-end text-[13px] tabular-nums text-slate-400">
+                {dayjs(record.used_at).format("M.D")}
+              </span>
+            </div>
+          ))
+        )}
+      </div>
+    </section>
+  );
+
+  const personalLedgerContent = (
+    <section className="rounded-[22px] bg-white shadow-[0_18px_50px_rgba(15,23,42,0.04)]">
+      <div className="flex items-center justify-between gap-4 px-6 pb-4 pt-4">
+        <div className="flex items-center gap-3">
+          <h2 className="text-[19px] font-semibold text-slate-900">
+            사용 내역
+          </h2>
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-500">
+            {dayjs(selectedMonth).format("M월")}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Select
+            value={sortOrder}
+            onValueChange={(
+              value: "newest" | "oldest" | "amount-high" | "amount-low",
+            ) => setSortOrder(value)}
+          >
+            <SelectTrigger className="h-12 min-w-[132px] rounded-xl border-0 bg-white shadow-[0_6px_18px_rgba(15,23,42,0.08)]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">최신순</SelectItem>
+              <SelectItem value="oldest">오래된순</SelectItem>
+              <SelectItem value="amount-high">금액 높은순</SelectItem>
+              <SelectItem value="amount-low">금액 낮은순</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <SelectTrigger className="h-12 min-w-[92px] rounded-xl border-0 bg-white shadow-[0_6px_18px_rgba(15,23,42,0.08)]">
+              <SelectValue placeholder="월" />
+            </SelectTrigger>
+            <SelectContent>
+              {months.map((month) => (
+                <SelectItem key={month.value} value={month.value}>
+                  {month.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {isManager && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-[0_6px_18px_rgba(15,23,42,0.08)]">
+                  <ListFilter className="h-4 w-4 text-slate-600" />
+                  {typeFilter !== "all" && (
+                    <span className="absolute right-3 top-3 h-1.5 w-1.5 rounded-full bg-sky-500" />
+                  )}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-40 p-1">
+                {(
+                  [
+                    { value: "all", label: "전체" },
+                    { value: "welfare", label: "복지포인트" },
+                    { value: "activity", label: "활동비" },
+                  ] as const
+                ).map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setTypeFilter(option.value)}
+                    className={`w-full rounded-md px-3 py-2 text-left text-sm transition-colors ${
+                      typeFilter === option.value
+                        ? "bg-slate-100 font-medium text-slate-900"
+                        : "text-slate-600 hover:bg-slate-50"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </PopoverContent>
+            </Popover>
+          )}
+        </div>
+      </div>
+
+      <button
+        className="mx-6 mb-3 flex min-h-[58px] w-[calc(100%-3rem)] items-center justify-center gap-2 rounded-[20px] border border-dashed border-slate-300 bg-white text-[16px] font-semibold text-slate-900 transition-colors hover:bg-slate-50"
+        onClick={handleAddNewPoint}
+      >
+        <Plus className="h-5 w-5" />새 내역 추가
+      </button>
+
+      <div className="max-h-[690px] overflow-y-auto border-t border-slate-100">
+        {isLoading ? (
+          [1, 2, 3, 4, 5, 6].map((i) => (
+            <div
+              key={i}
+              className="mx-6 my-4 h-16 animate-pulse rounded-2xl bg-slate-50"
+            />
+          ))
+        ) : sortedRecords.length === 0 ? (
+          <div className="px-6 py-16 text-center">
+            <p className="text-sm text-slate-400">
+              {welfareError
+                ? "내역을 불러올 수 없습니다."
+                : "이 달에 내역이 없습니다."}
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {sortedRecords.map((record) => {
+              const isActivity = record.type === "활동비";
+              const reviewStatus = record.review_status ?? 0;
+              const isLocked = reviewStatus >= 1;
+
+              const row = (
+                <button
+                  type="button"
+                  disabled={isLocked}
+                  onClick={() => handleEditPoint(record)}
+                  className={`grid w-full grid-cols-[minmax(0,1fr)_auto] gap-4 px-6 py-5 text-left transition-colors ${
+                    reviewStatus === 2
+                      ? "opacity-60"
+                      : isLocked
+                        ? "opacity-80"
+                        : "hover:bg-slate-50"
+                  }`}
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-[17px] font-semibold text-slate-900">
+                      {record.description}
+                    </p>
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <span className="text-[14px] font-medium text-slate-400">
+                        {shortDate(record.used_at)}
+                      </span>
+                      <span
+                        className={`rounded-md px-2 py-1 text-[12px] font-semibold ${
+                          isActivity
+                            ? "bg-amber-50 text-amber-600"
+                            : "bg-sky-50 text-sky-700"
+                        }`}
+                      >
+                        {record.type}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end justify-between gap-3">
+                    <span className="text-[19px] font-bold tabular-nums text-slate-900">
+                      {record.amount.toLocaleString()}원
+                    </span>
+                    <span
+                      className={`rounded-full px-3 py-1 text-[12px] font-semibold ${
+                        reviewStatus >= 2
+                          ? "bg-emerald-50 text-emerald-700"
+                          : reviewStatus >= 1
+                            ? "bg-orange-50 text-orange-700"
+                            : "bg-slate-100 text-slate-500"
+                      }`}
+                    >
+                      {reviewLabel(reviewStatus)}
+                    </span>
+                  </div>
+                </button>
+              );
+
+              return isLocked ? (
+                <Tooltip key={record.id}>
+                  <TooltipTrigger asChild>
+                    <div>{row}</div>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="top"
+                    className="max-w-60 bg-slate-800 text-slate-100"
+                  >
+                    {reviewStatus === 2
+                      ? "최종확인 완료 항목입니다. 수정하려면 P&C에 문의 바랍니다."
+                      : "P&C 확인완료 항목입니다. 수정하려면 P&C에 문의 바랍니다."}
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <div key={record.id}>{row}</div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </section>
   );
 
   return (
@@ -725,19 +1087,15 @@ export default function Points() {
         </motion.div>
       </div>
 
-      {/* ── PC: 2컬럼 레이아웃 ── */}
-      <div className="max-md:hidden grid grid-cols-[6fr_4fr] gap-6">
-        {/* 좌측: 통계 요약 + 사용 내역 */}
-        <div>
+      {/* ── PC: 참조 이미지 기반 2컬럼 레이아웃 ── */}
+      <div className="max-md:hidden grid grid-cols-[0.92fr_1.02fr] gap-6">
+        <div className="space-y-6">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="mb-6"
           >
-            <div className="rounded-2xl bg-gray-50 p-4">
-              {statsContent}
-            </div>
+            {desktopSummaryContent}
           </motion.div>
 
           <motion.div
@@ -745,49 +1103,17 @@ export default function Points() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
           >
-            {listContent}
+            {orgUsageContent}
           </motion.div>
         </div>
 
-        {/* 우측: 액션 버튼 */}
-        <div className="sticky top-8">
+        <div>
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="grid grid-cols-2 gap-3"
           >
-            <button
-              onClick={() => setIsActivityViewOpen(true)}
-              className="flex items-center justify-between rounded-lg bg-blue-50 px-5 py-4 transition-colors active:bg-blue-100"
-            >
-              <span className="text-sm font-semibold text-slate-800">활동비 내역</span>
-              <Eye className="h-4.5 w-4.5 text-blue-400 shrink-0" />
-            </button>
-
-            <button
-              onClick={() => setIsAllRecordsOpen(true)}
-              className="flex items-center justify-between rounded-lg bg-amber-50 px-5 py-4 transition-colors active:bg-amber-100"
-            >
-              <span className="text-sm font-semibold text-slate-800">ACG 직원 사용 내역</span>
-              <ListFilter className="h-4.5 w-4.5 text-amber-400 shrink-0" />
-            </button>
-
-            <button
-              onClick={handleAddNewPoint}
-              className="flex items-center justify-between rounded-lg bg-emerald-50 px-5 py-4 transition-colors active:bg-emerald-100"
-            >
-              <span className="text-sm font-semibold text-slate-800">새 내역 추가</span>
-              <Plus className="h-4.5 w-4.5 text-emerald-400 shrink-0" />
-            </button>
-
-            <button
-              onClick={() => setIsGuideOpen(true)}
-              className="flex items-center justify-between rounded-lg bg-violet-50 px-5 py-4 transition-colors active:bg-violet-100"
-            >
-              <span className="text-sm font-semibold text-slate-800">매뉴얼</span>
-              <HelpCircle className="h-4.5 w-4.5 text-violet-400 shrink-0" />
-            </button>
+            {personalLedgerContent}
           </motion.div>
         </div>
       </div>

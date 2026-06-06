@@ -19,7 +19,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requireAdminPermission("meal:write");
+    await requireAdminPermission("locker:write");
     const { id } = await params;
     const body = await request.json();
     const supabase = createServiceClient() as any;

@@ -10,7 +10,7 @@ import {
 
 export async function GET() {
   try {
-    await requireAdminPermission("meal:read");
+    await requireAdminPermission("vehicle:read");
     return NextResponse.json(await listVehicleAdminOverview());
   } catch (error) {
     const authStatus = getAuthErrorStatus(error);
@@ -27,7 +27,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    await requireAdminPermission("meal:write");
+    await requireAdminPermission("vehicle:write");
     const body = await request.json();
     const vehicleType = normalizeText(body.vehicleType);
     const vehicleName = normalizeText(body.vehicleName);
@@ -69,11 +69,9 @@ export async function POST(request: Request) {
     if (authStatus) {
       return NextResponse.json({ error: "Unauthorized" }, { status: authStatus });
     }
+    console.error("Error creating vehicle:", error);
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "차량 정보를 추가하지 못했습니다.",
-      },
+      { error: "차량 정보를 추가하지 못했습니다." },
       { status: 400 },
     );
   }

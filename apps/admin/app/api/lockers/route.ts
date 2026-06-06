@@ -17,7 +17,7 @@ function normalizeStatus(value: unknown) {
 
 export async function GET() {
   try {
-    await requireAdminPermission("meal:read");
+    await requireAdminPermission("locker:read");
     return NextResponse.json(await listLockerAdminOverview());
   } catch (error) {
     const authStatus = getAuthErrorStatus(error);
@@ -34,7 +34,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    await requireAdminPermission("meal:write");
+    await requireAdminPermission("locker:write");
     const body = await request.json();
     const code = normalizeText(body.code);
     const locationZone = normalizeText(body.locationZone);
@@ -76,11 +76,9 @@ export async function POST(request: Request) {
     if (authStatus) {
       return NextResponse.json({ error: "Unauthorized" }, { status: authStatus });
     }
+    console.error("Error creating locker:", error);
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "사물함을 추가하지 못했습니다.",
-      },
+      { error: "사물함을 추가하지 못했습니다." },
       { status: 400 },
     );
   }

@@ -11,7 +11,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const session = await requireAdminPermission("meal:write");
+    const session = await requireAdminPermission("locker:write");
     const { id } = await params;
     const body = await request.json();
     const status = normalizeText(body.status);

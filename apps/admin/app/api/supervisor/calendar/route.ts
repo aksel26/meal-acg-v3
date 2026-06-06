@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     if (jpError) {
       console.error("Error fetching job postings:", jpError);
       return NextResponse.json(
-        { error: "공고 조회 실패", details: jpError.message },
+        { error: "공고 조회 실패" },
         { status: 500 }
       );
     }

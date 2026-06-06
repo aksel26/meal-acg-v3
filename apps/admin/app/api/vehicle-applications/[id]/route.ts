@@ -15,7 +15,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requireAdminPermission("meal:write");
+    await requireAdminPermission("vehicle:write");
     const { id } = await params;
     const body = await request.json();
     const status = normalizeApplicationStatus(body.status);

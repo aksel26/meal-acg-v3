@@ -12,7 +12,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requireAdminPermission("meal:write");
+    await requireAdminPermission("vehicle:write");
     const { id } = await params;
     const body = await request.json();
     const vehicleType = normalizeText(body.vehicleType);
@@ -56,11 +56,9 @@ export async function PATCH(
     if (authStatus) {
       return NextResponse.json({ error: "Unauthorized" }, { status: authStatus });
     }
+    console.error("Error updating vehicle:", error);
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "차량 정보를 수정하지 못했습니다.",
-      },
+      { error: "차량 정보를 수정하지 못했습니다." },
       { status: 400 },
     );
   }
@@ -71,7 +69,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requireAdminPermission("meal:write");
+    await requireAdminPermission("vehicle:write");
     const { id } = await params;
     const supabase = createServiceClient() as any;
     const { error } = await supabase.from("company_vehicles").delete().eq("id", id);

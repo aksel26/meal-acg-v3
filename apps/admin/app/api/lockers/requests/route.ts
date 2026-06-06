@@ -4,7 +4,7 @@ import { listLockerAdminOverview } from "@/lib/facilities";
 
 export async function GET() {
   try {
-    await requireAdminPermission("meal:read");
+    await requireAdminPermission("locker:read");
     const overview = await listLockerAdminOverview();
     return NextResponse.json(overview.requests);
   } catch (error) {

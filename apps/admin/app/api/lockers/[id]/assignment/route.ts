@@ -11,7 +11,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const session = await requireAdminPermission("meal:write");
+    const session = await requireAdminPermission("locker:write");
     const { id } = await params;
     const body = await request.json();
     const memberId = normalizeText(body.memberId);
@@ -159,7 +159,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const session = await requireAdminPermission("meal:write");
+    const session = await requireAdminPermission("locker:write");
     const { id } = await params;
     const supabase = createServiceClient() as any;
     const now = new Date().toISOString();

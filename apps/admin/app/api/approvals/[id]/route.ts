@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminPermission, getAuthErrorStatus } from "@/lib/auth";
 
 // PUT /api/approvals/:id - 승인, 반려, 처리 취소
 export async function PUT(
@@ -8,7 +8,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await requireAdmin();
+    const session = await requireAdminPermission("leave:approve");
     const supabase = createServiceClient();
     const { id } = await params;
     const body = await request.json();
@@ -115,8 +115,9 @@ export async function PUT(
     return NextResponse.json(updated);
   } catch (error) {
     console.error("Approval update API error:", error);
-    if (error instanceof Error && error.message === "Unauthorized") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const authStatus = getAuthErrorStatus(error);
+    if (authStatus) {
+      return NextResponse.json({ error: (error as Error).message }, { status: authStatus });
     }
     return NextResponse.json(
       { error: "Internal server error" },

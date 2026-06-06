@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminPermission, getAuthErrorStatus } from "@/lib/auth";
 
 // PATCH /api/dayoffs/[id]/approve - 근태 승인/승인취소
 export async function PATCH(
@@ -8,7 +8,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await requireAdmin();
+    const session = await requireAdminPermission("leave:approve");
     const supabase = createServiceClient();
     const { id } = await params;
     const body = await request.json();
@@ -50,8 +50,9 @@ export async function PATCH(
     return NextResponse.json(data);
   } catch (error) {
     console.error("Dayoffs approve API error:", error);
-    if (error instanceof Error && error.message === "Unauthorized") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const authStatus = getAuthErrorStatus(error);
+    if (authStatus) {
+      return NextResponse.json({ error: (error as Error).message }, { status: authStatus });
     }
     return NextResponse.json(
       { error: "Internal server error" },

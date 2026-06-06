@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthErrorStatus, requireAdminPermission } from "@/lib/auth";
+import { writeAdminAuditLog } from "@/lib/admin-audit";
 import { createServiceClient } from "@/lib/supabase/server";
 
 interface ImportRecord {
@@ -15,7 +16,6 @@ interface ImportRecord {
 
 interface ImportRequest {
   records: ImportRecord[];
-  admin_id: string;
 }
 
 interface ImportResult {
@@ -34,20 +34,13 @@ function getPeriodFromDate(dateStr: string): string {
 
 export async function POST(request: Request): Promise<NextResponse<ImportResult>> {
   try {
-    await requireAdminPermission("points:write");
+    const session = await requireAdminPermission("points:write");
     const body: ImportRequest = await request.json();
-    const { records, admin_id } = body;
+    const { records } = body;
 
     if (!records || records.length === 0) {
       return NextResponse.json(
         { success: false, inserted: 0, failed: 0, errors: ["레코드가 없습니다."], summary: [] },
-        { status: 400 }
-      );
-    }
-
-    if (!admin_id) {
-      return NextResponse.json(
-        { success: false, inserted: 0, failed: 0, errors: ["관리자 ID가 필요합니다."], summary: [] },
         { status: 400 }
       );
     }
@@ -93,6 +86,20 @@ export async function POST(request: Request): Promise<NextResponse<ImportResult>
 
       if (!memberId) {
         errors.push(`"${record.name}"님을 찾을 수 없습니다.`);
+        continue;
+      }
+
+      // 입력 검증: 잘못된 형식의 행은 삽입하지 않고 오류로 분리한다.
+      if (typeof record.used_at !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(record.used_at)) {
+        errors.push(`"${record.name}"님의 사용일자 형식이 올바르지 않습니다: ${record.used_at}`);
+        continue;
+      }
+      if (typeof record.amount !== "number" || !Number.isFinite(record.amount) || record.amount < 0) {
+        errors.push(`"${record.name}"님의 금액이 올바르지 않습니다: ${record.amount}`);
+        continue;
+      }
+      if (record.type !== "활동비" && record.type !== "복지포인트") {
+        errors.push(`"${record.name}"님의 포인트 유형이 올바르지 않습니다: ${record.type}`);
         continue;
       }
 
@@ -194,11 +201,11 @@ export async function POST(request: Request): Promise<NextResponse<ImportResult>
           review_status: 2,
           is_reviewed: true,
           reviewed_at: reviewedAt,
-          reviewed_by: admin_id,
+          reviewed_by: session.userId,
           first_reviewed_at: reviewedAt,
-          first_reviewed_by: admin_id,
+          first_reviewed_by: session.userId,
           second_reviewed_at: reviewedAt,
-          second_reviewed_by: admin_id,
+          second_reviewed_by: session.userId,
         });
       } else {
         toInsert.push({
@@ -233,8 +240,21 @@ export async function POST(request: Request): Promise<NextResponse<ImportResult>
     }
     const finalInsert = [...dedupeMap.values()];
 
-    // 6. 기존 DB 레코드 삭제 (덮어쓰기)
+    // 6. 기존 DB 레코드 삭제 (덮어쓰기) — 삭제 전 스냅샷을 확보해 감사로그로 남긴다.
+    const overwrittenRecords: Record<string, unknown>[] = [];
     for (const r of finalInsert) {
+      const { data: existing } = await supabase
+        .from("usage_records")
+        .select("id, member_id, type, description, amount, used_at, review_status")
+        .eq("member_id", r.member_id)
+        .eq("used_at", r.used_at)
+        .eq("type", r.type)
+        .eq("description", r.description);
+
+      if (existing && existing.length > 0) {
+        overwrittenRecords.push(...existing);
+      }
+
       await supabase
         .from("usage_records")
         .delete()
@@ -264,7 +284,7 @@ export async function POST(request: Request): Promise<NextResponse<ImportResult>
         return {
           usage_record_id: rec.id,
           action: "IMPORT",
-          changed_by: admin_id,
+          changed_by: session.userId,
           new_data: src
             ? {
                 type: src.type,
@@ -278,6 +298,21 @@ export async function POST(request: Request): Promise<NextResponse<ImportResult>
       });
 
       await supabase.from("usage_record_audit_logs").insert(auditLogs);
+    }
+
+    // 덮어쓰기로 삭제된 기존 레코드에 대한 감사 기록 (금전 데이터 변경 이력 보존)
+    if (overwrittenRecords.length > 0) {
+      await writeAdminAuditLog({
+        session,
+        action: "points.import_overwrite",
+        targetType: "usage_records",
+        riskLevel: "high",
+        reason: "포인트 사용내역 임포트로 기존 레코드 덮어쓰기(삭제)",
+        metadata: {
+          overwrittenCount: overwrittenRecords.length,
+          overwritten: overwrittenRecords,
+        },
+      });
     }
 
     const inserted = insertedRecords?.length || 0;

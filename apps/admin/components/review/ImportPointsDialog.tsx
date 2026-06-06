@@ -234,7 +234,7 @@ export function ImportPointsDialog({
       const res = await fetch("/api/import/points-usage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ records, admin_id: user.id }),
+        body: JSON.stringify({ records }),
       });
 
       const result: ImportResult = await res.json();

@@ -48,3 +48,6 @@ dist/
 
 # understand-anything generated cache
 .understand-anything/
+
+# Claude Code runtime artifacts
+.claude/scheduled_tasks.lock

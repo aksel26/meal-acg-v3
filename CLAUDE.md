@@ -17,17 +17,20 @@ pnpm dev          # Start all dev servers (user:3000, admin:3001)
 pnpm dev:user     # Start only user app (port 3000)
 pnpm dev:admin    # Start only admin app (port 3001)
 pnpm dev:part-time-supervisor  # Start supervisor app (port 3002)
+pnpm dev:project-management     # Start project-management app (port 3013)
 
 # Build
 pnpm build        # Build entire monorepo
 pnpm build:user   # Build only user app
 pnpm build:admin  # Build only admin app
 pnpm build:part-time-supervisor  # Build supervisor app
+pnpm build:project-management    # Build project-management app
 
 # Production
 pnpm start:user   # Start production user app (after build)
 pnpm start:admin  # Start production admin app (after build)
 pnpm start:part-time-supervisor  # Start production supervisor app (after build)
+pnpm start:project-management    # Start production project-management app (after build)
 
 # Code quality
 pnpm lint         # ESLint (max warnings = 0)
@@ -44,6 +47,8 @@ apps/
   user/              # User-facing Next.js 15 app (port 3000)
   admin/             # Admin dashboard Next.js 15 app (port 3001)
   part-time-supervisor/ # Supervisor part-time worker management app (port 3002)
+  project-management/ # Project & HR management Next.js 15 app (port 3013)
+  web/               # Empty placeholder (no package.json)
 
 packages/
   ui/                # Shared Radix UI components (@repo/ui)
@@ -189,19 +194,30 @@ Values stored in `meal_logs.attendance` column:
 
 **Available amount formula:** `daily rate × (work days - holidays - remote - individual + weekend work)`
 
+## Attendance Check-in/Out
+
+Separate from the `meal_logs.attendance` enum above. Check-in/out timestamps live in the **`attendance_records`** table (migrations `20260331200000_attendance_records.sql` onward). Key columns: `check_in_at`, `check_out_at`, `status`, `attendance_type`, `overtime_minutes`, `is_weekend`, `modifier_id`/`approver_id`/`approved_at`.
+
+**Check-in status** — decided by `getCheckInStatus(hour, minute, second)` in `apps/user/lib/attendance-status.ts` (flex window 08:00–10:00):
+- before 08:00 → `early_check_in`
+- 08:00–10:00 → `normal`
+- after 10:00 → `late`
+
+**Check-out logic** (`app/api/attendance/check-out/route.ts`):
+- Expected out = `check_in_at + 9h`. If `now < expected out` → `early_leave` (creates an `early_leave_requests` row for approval); otherwise keeps `normal`.
+- Overtime = minutes past `expected out + 2h`.
+
+**API routes** — User: `/api/attendance` (GET by `memberId`+`date`), `check-in`, `check-out`, `modify`, `monthly`, `today`. Admin: `/api/attendance` (list by date or year+month, `allMembers=true`), `/api/attendance/[id]` (PUT), `/api/early-leave-requests`.
+
 ## API Patterns
 
 API routes follow REST conventions in `app/api/` for each app:
 
-- **Admin**: auth, members, member-statuses, meal-logs, stats, export/import (Excel), budget-allocations, budget-summary, usage-records, points-overview, organizations/divisions/teams, notifications, settings, holidays, monthly, lunch-groups, settlement, slack
-- **User**: auth, users, meals, points (welfare/activity/dashboard/lookup), restaurants, scan-receipt (Gemini AI), notifications, settings, monthly, lunch-group, holidays, google-sheets, calendar
+- **Admin**: auth, members, member-statuses, meal-logs, stats, export/import (Excel), budget-allocations, budget-summary, usage-records, points-overview, organizations/divisions/teams/positions/titles, notifications, settings, holidays, monthly, lunch-groups, settlement, slack. **HR domains:** attendance, early-leave-requests, dayoffs, leave-types/leave-balances/leave-calculator, vehicles/vehicle-applications, lockers, finance, evaluations, approvals, work-applications, permission-policies, admin-audit-logs
+- **User**: auth, users, meals, points (welfare/activity/dashboard/lookup), restaurants, scan-receipt (Gemini AI), notifications, settings, monthly, lunch-group, holidays, google-sheets, calendar. **HR domains:** attendance, leave-requests/leave-balances/leave-types, dayoffs, vehicles/vehicle-applications, lockers, assets, evaluations, approvals, requests/my-requests, projects/project-stats, room-reservations, work-applications, profile
 
 ### Database Migrations
-Migrations live in `supabase/migrations/` with naming convention `YYYYMMDD_description.sql`:
-```
-20260219_add_no_to_usage_records.sql
-20260219_get_popular_restaurants_rpc.sql
-```
+Migrations live in `supabase/migrations/` with naming convention `YYYYMMDD[HHMMSS]_description.sql` (latest as of `20260528`). Major recent domains: attendance check-in/out, work-applications, leave/dayoff, finance, asset/locker/vehicle management, admin RBAC + audit-logs.
 
 When adding schema changes:
 1. Create migration file with descriptive name
@@ -300,6 +316,10 @@ Private `contracts` bucket in Supabase Storage. Files accessed via Signed URLs (
 - `/api/workers`, `/api/workers/[id]` — Worker CRUD (detail includes assignments + contracts)
 - `/api/contracts`, `/api/contracts/[id]` — Contract upload/download/delete
 - `/api/assignments`, `/api/assignments/[id]` — Assignment CRUD
+- Also: clients, cost-management, interview, room-assignments/room-reservations, settlement-locks, work-records
+
+### Libraries (supervisor-specific)
+`@sentry/nextjs` (error monitoring), `@tiptap/*` (rich text editor), `qrcode`/`html-to-image`/`signature_pad` (QR + contract signing). These are NOT in user/admin apps.
 
 ### Query Invalidation
 ```typescript

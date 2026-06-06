@@ -99,6 +99,12 @@ export async function GET(
     const session = await requireAdminPermission("members:read");
     const supabase = createServiceClient();
     const { id } = await params;
+
+    // PostgREST .or() 필터에 raw 보간되므로 UUID 형식을 강제해 필터 인젝션을 막는다.
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+      return NextResponse.json({ error: "Invalid member id" }, { status: 400 });
+    }
+
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth() + 1;

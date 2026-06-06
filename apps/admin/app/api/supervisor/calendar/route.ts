@@ -18,6 +18,25 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // year/month 분기는 아래 두 쿼리에서 parseInt로 쓰이므로 미리 정수·범위를 검증한다.
+    if (!date) {
+      const yearNum = Number(yearParam);
+      const monthNum = Number(monthParam);
+      if (
+        !Number.isInteger(yearNum) ||
+        yearNum < 2000 ||
+        yearNum > 2100 ||
+        !Number.isInteger(monthNum) ||
+        monthNum < 1 ||
+        monthNum > 12
+      ) {
+        return NextResponse.json(
+          { error: "year는 2000~2100, month는 1~12의 정수여야 합니다." },
+          { status: 400 }
+        );
+      }
+    }
+
     // 해당 날짜/월 범위에 겹치는 공고 조회
     let query = supabase
       .schema("supervisor")

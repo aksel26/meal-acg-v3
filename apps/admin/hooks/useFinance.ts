@@ -111,12 +111,17 @@ export type FinanceReportSummary = {
 
 type Filters = Record<string, string | undefined>;
 
-function toParams(filters?: Filters) {
-  const params = new URLSearchParams();
+// 빈 값/"all"을 제거한 정규화 필터. 쿼리키와 요청 파라미터가 항상 일치하도록 단일 소스로 쓴다.
+function normalizeFilters(filters?: Filters): Record<string, string> {
+  const normalized: Record<string, string> = {};
   Object.entries(filters || {}).forEach(([key, value]) => {
-    if (value && value !== "all") params.set(key, value);
+    if (value && value !== "all") normalized[key] = value;
   });
-  return params.toString();
+  return normalized;
+}
+
+function toParams(filters?: Filters) {
+  return new URLSearchParams(normalizeFilters(filters)).toString();
 }
 
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
@@ -136,35 +141,35 @@ async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
 
 export function useFinanceClients(filters?: Filters) {
   return useQuery<FinanceClient[]>({
-    queryKey: queryKeys.finance.clients(filters as Record<string, string>),
+    queryKey: queryKeys.finance.clients(normalizeFilters(filters)),
     queryFn: () => requestJson(`/api/finance/clients?${toParams(filters)}`),
   });
 }
 
 export function useFinanceProjects(filters?: Filters) {
   return useQuery<FinanceProject[]>({
-    queryKey: queryKeys.finance.projects(filters as Record<string, string>),
+    queryKey: queryKeys.finance.projects(normalizeFilters(filters)),
     queryFn: () => requestJson(`/api/finance/projects?${toParams(filters)}`),
   });
 }
 
 export function useFinanceQuotes(filters?: Filters) {
   return useQuery<FinanceQuote[]>({
-    queryKey: queryKeys.finance.quotes(filters as Record<string, string>),
+    queryKey: queryKeys.finance.quotes(normalizeFilters(filters)),
     queryFn: () => requestJson(`/api/finance/quotes?${toParams(filters)}`),
   });
 }
 
 export function useFinanceRevenue(filters?: Filters) {
   return useQuery<FinanceRevenue[]>({
-    queryKey: queryKeys.finance.revenue(filters as Record<string, string>),
+    queryKey: queryKeys.finance.revenue(normalizeFilters(filters)),
     queryFn: () => requestJson(`/api/finance/revenue?${toParams(filters)}`),
   });
 }
 
 export function useFinanceExpenses(filters?: Filters) {
   return useQuery<FinanceExpense[]>({
-    queryKey: queryKeys.finance.expenses(filters as Record<string, string>),
+    queryKey: queryKeys.finance.expenses(normalizeFilters(filters)),
     queryFn: () => requestJson(`/api/finance/expenses?${toParams(filters)}`),
   });
 }

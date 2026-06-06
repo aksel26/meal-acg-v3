@@ -27,7 +27,6 @@ import {
 import { queryKeys } from "@/lib/query-keys";
 import { useAuth } from "@/hooks/useAuth";
 import {
-  parsePointsExcelFile,
   type PointsUsageRow,
 } from "@/lib/points-excel-parser";
 
@@ -137,6 +136,7 @@ export function ImportPointsDialog({
 
       try {
         const buffer = await file.arrayBuffer();
+        const { parsePointsExcelFile } = await import("@/lib/points-excel-parser");
         const result = parsePointsExcelFile(buffer);
 
         if (!result.success) {

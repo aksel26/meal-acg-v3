@@ -41,6 +41,10 @@ export const ADMIN_PERMISSIONS = [
   "leave:read",
   "leave:write",
   "leave:approve",
+  "locker:read",
+  "locker:write",
+  "vehicle:read",
+  "vehicle:write",
   "notifications:read",
   "notifications:send",
   "finance:read",
@@ -59,6 +63,7 @@ export const ADMIN_PERMISSION_GROUPS = [
   "민감정보/다운로드",
   "복지포인트/식대",
   "근태/휴가",
+  "자산/시설",
   "재무/평가",
   "설정/감사 로그",
 ] as const;
@@ -97,6 +102,10 @@ export const ADMIN_PERMISSION_METADATA: AdminPermissionMetadata[] = [
   { permission: "leave:read", label: "휴가 조회", group: "근태/휴가" },
   { permission: "leave:write", label: "휴가 수정", group: "근태/휴가" },
   { permission: "leave:approve", label: "휴가 승인", group: "근태/휴가" },
+  { permission: "locker:read", label: "사물함 조회", group: "자산/시설" },
+  { permission: "locker:write", label: "사물함 관리", group: "자산/시설" },
+  { permission: "vehicle:read", label: "차량 조회", group: "자산/시설" },
+  { permission: "vehicle:write", label: "차량 관리", group: "자산/시설" },
   { permission: "notifications:read", label: "알림 조회", group: "설정/감사 로그" },
   { permission: "notifications:send", label: "알림 발송", group: "설정/감사 로그" },
   { permission: "finance:read", label: "재무 조회", group: "재무/평가" },
@@ -129,6 +138,10 @@ const ADMIN_MEMBER_PERMISSIONS: AdminPermission[] = [
   "attendance:write",
   "leave:read",
   "leave:write",
+  "locker:read",
+  "locker:write",
+  "vehicle:read",
+  "vehicle:write",
   "notifications:read",
   "finance:read",
   "finance:write",
@@ -154,6 +167,18 @@ export function isUserAuthority(value: unknown): value is UserAuthority {
 
 export function normalizeAdminRole(value: unknown): AdminRole {
   return isAdminRole(value) ? value : DEFAULT_ADMIN_ROLE;
+}
+
+export const HIGH_RISK_PERMISSIONS: readonly AdminPermission[] =
+  ADMIN_PERMISSION_METADATA.filter((meta) => meta.highRisk).map(
+    (meta) => meta.permission,
+  );
+
+export function isHighRiskPermission(value: unknown): value is AdminPermission {
+  return (
+    isAdminPermission(value) &&
+    HIGH_RISK_PERMISSIONS.includes(value as AdminPermission)
+  );
 }
 
 export function isAdminPermission(value: unknown): value is AdminPermission {

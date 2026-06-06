@@ -5,6 +5,7 @@ import {
   ADMIN_PERMISSIONS,
   getFallbackAdminPermissions,
   isAdminPermission,
+  isHighRiskPermission,
   normalizeAdminRole,
   type AdminPermission,
 } from "./rbac";
@@ -91,7 +92,11 @@ export async function getEffectiveAdminPermissions(
       if (!isAdminPermission(row.permission)) continue;
 
       if (row.effect === "allow") {
-        rolePermissions.add(row.permission);
+        // 고위험 권한은 멤버 override의 allow로 부여할 수 없다(override를 통한 권한 상승 차단).
+        // 고위험 권한 부여는 역할 정책으로만 허용한다.
+        if (!isHighRiskPermission(row.permission)) {
+          rolePermissions.add(row.permission);
+        }
       }
 
       if (row.effect === "deny") {

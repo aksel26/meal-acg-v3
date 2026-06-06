@@ -81,7 +81,9 @@ export async function getEffectiveAdminPermissions(
       }
     }
 
-    if (rolePermissions.size === 0) {
+    // 정책 행이 하나도 없으면 "아직 미설정"으로 보고 정적 기본값으로 폴백한다.
+    // 행이 존재하는데 모두 비활성이면 "명시적으로 비움"이므로 기본값으로 되살리지 않는다.
+    if ((policyRows?.length ?? 0) === 0) {
       return getFallbackAdminPermissions(adminRole);
     }
 

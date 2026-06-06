@@ -244,6 +244,11 @@ export const queryKeys = {
       ["supervisor", "calendar-month", year, month] as const,
   },
 
+  // Lockers
+  lockers: {
+    all: ["lockers"] as const,
+  },
+
   // Usage Records
   usageRecords: {
     all: ["usageRecords"] as const,

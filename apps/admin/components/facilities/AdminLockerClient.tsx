@@ -36,6 +36,7 @@ import {
   type AdminLockerRequest,
   type LockerAdminOverview,
 } from "@/lib/facilities-types";
+import { useLockers, useLockerMutations } from "@/hooks/useLockers";
 
 const STATUS_LABEL: Record<string, string> = {
   available: "사용 가능",
@@ -55,7 +56,9 @@ export function AdminLockerClient({
 }: {
   initialData: LockerAdminOverview;
 }) {
-  const [data, setData] = useState(initialData);
+  const { data } = useLockers(initialData);
+  const { createLocker, processRequest, assignLocker, releaseLocker } =
+    useLockerMutations();
   const [selectedLockerId, setSelectedLockerId] = useState("");
   const [lockerDialogOpen, setLockerDialogOpen] = useState(false);
   const [lockerForm, setLockerForm] = useState(() => createEmptyLockerForm());
@@ -63,7 +66,6 @@ export function AdminLockerClient({
   const [rejectingRequest, setRejectingRequest] =
     useState<AdminLockerRequest | null>(null);
   const [rejectReason, setRejectReason] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const lockerGrid = useMemo(
     () => buildLockerGridCells(data.lockers),
@@ -88,44 +90,25 @@ export function AdminLockerClient({
   const selectedLocker =
     data.lockers.find((locker) => locker.id === selectedLockerId) ?? null;
 
-  async function refresh() {
-    const response = await fetch(`/api/lockers?ts=${Date.now()}`, {
-      cache: "no-store",
-    });
-    const payload = await response.json();
-    if (!response.ok) {
-      throw new Error(
-        payload.error || "사물함 관리 정보를 불러오지 못했습니다.",
-      );
-    }
-    setData(payload);
-  }
+  const isSubmitting =
+    createLocker.isPending ||
+    processRequest.isPending ||
+    assignLocker.isPending ||
+    releaseLocker.isPending;
 
   async function submitLockerForm() {
-    setIsSubmitting(true);
     try {
-      const response = await fetch("/api/lockers", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(lockerForm),
-      });
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.error || "사물함 저장 실패");
-      }
+      await createLocker.mutateAsync(lockerForm);
       toast.success("사물함을 추가했습니다.");
       setLockerDialogOpen(false);
       setLockerForm(createEmptyLockerForm());
-      await refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "사물함 저장 실패");
-    } finally {
-      setIsSubmitting(false);
     }
   }
 
   async function approveRequest(request: AdminLockerRequest) {
-    await processRequest(request, {
+    await handleProcessRequest(request, {
       status: "approved",
       lockerId: request.preferred_locker_id,
     });
@@ -133,7 +116,7 @@ export function AdminLockerClient({
 
   async function rejectRequest() {
     if (!rejectingRequest) return;
-    await processRequest(rejectingRequest, {
+    await handleProcessRequest(rejectingRequest, {
       status: "rejected",
       rejectReason,
     });
@@ -141,7 +124,7 @@ export function AdminLockerClient({
     setRejectReason("");
   }
 
-  async function processRequest(
+  async function handleProcessRequest(
     request: AdminLockerRequest,
     payload: {
       status: "approved" | "rejected";
@@ -149,78 +132,40 @@ export function AdminLockerClient({
       rejectReason?: string;
     },
   ) {
-    setIsSubmitting(true);
     try {
-      const response = await fetch(`/api/lockers/requests/${request.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.error || "사물함 요청 처리 실패");
-      }
+      await processRequest.mutateAsync({ id: request.id, payload });
       toast.success(
         payload.status === "approved"
           ? "사물함 요청을 승인했습니다."
           : "사물함 요청을 반려했습니다.",
       );
-      await refresh();
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "사물함 요청 처리 실패",
       );
-    } finally {
-      setIsSubmitting(false);
     }
   }
 
   async function assignSelectedLocker(memberId: string) {
     if (!selectedLocker || !memberId) return;
-    setIsSubmitting(true);
     try {
-      const response = await fetch(
-        `/api/lockers/${selectedLocker.id}/assignment`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ memberId }),
-        },
-      );
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.error || "사물함 배정 실패");
-      }
+      await assignLocker.mutateAsync({ lockerId: selectedLocker.id, memberId });
       toast.success("사물함을 배정했습니다.");
-      await refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "사물함 배정 실패");
-    } finally {
-      setIsSubmitting(false);
     }
   }
 
   async function releaseSelectedLocker() {
     if (!selectedLocker) return;
-    setIsSubmitting(true);
     try {
-      const response = await fetch(
-        `/api/lockers/${selectedLocker.id}/assignment`,
-        { method: "DELETE" },
-      );
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.error || "사물함 배정 해제 실패");
-      }
+      await releaseLocker.mutateAsync(selectedLocker.id);
       toast.success("사물함 배정을 해제했습니다.");
-      await refresh();
       setAssignmentMemberId("");
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "사물함 배정 해제 실패",
       );
-    } finally {
-      setIsSubmitting(false);
     }
   }
 

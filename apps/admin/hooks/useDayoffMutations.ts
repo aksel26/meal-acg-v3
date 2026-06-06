@@ -124,6 +124,8 @@ export function useApproveDayoff() {
     },
     onSuccess: (_, { action }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.dayoffs.all });
+      // dayoff와 approval_requests는 서버에서 양방향 연동되므로 함께 무효화한다.
+      queryClient.invalidateQueries({ queryKey: queryKeys.approvals.all });
       toast.success(
         action === "approve" ? "승인되었습니다." : "승인이 취소되었습니다."
       );

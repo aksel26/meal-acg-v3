@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getAuthErrorStatus, requireAdminPermission } from "@/lib/auth";
+import { writeAdminAuditLog } from "@/lib/admin-audit";
 import { applyRoleOverride } from "@/lib/constants";
 import { DEFAULT_ADMIN_ROLE } from "@/lib/rbac";
 import {
@@ -92,6 +93,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 관리자 계정 생성 또는 권한 필드 지정 시 rbac:manage 권한 필요 (PUT 경로와 동일 게이트)
+    if (role === "admin" || adminRole || userAuthority) {
+      await requireAdminPermission("rbac:manage");
+    }
+
     // 관리자의 organization_id 조회하여 신규 멤버에 자동 할당
     const { data: adminMember } = await supabase
       .from("members")
@@ -143,6 +149,25 @@ export async function POST(request: NextRequest) {
     }
 
     assertNoSensitiveMemberFields(data as Record<string, unknown>);
+
+    const createdSensitiveFields = [
+      birthDate ? "birth_date" : null,
+      phone ? "phone" : null,
+      passportNumber ? "passport_number" : null,
+    ].filter((field): field is string => field !== null);
+    if (createdSensitiveFields.length > 0) {
+      await writeAdminAuditLog({
+        session,
+        request,
+        action: "member.sensitive_create",
+        targetType: "member",
+        targetId: data.id,
+        targetLabel: data.full_name,
+        riskLevel: "high",
+        reason: "민감정보(생년월일/연락처/여권번호) 포함 신규 생성",
+        metadata: { createdFields: createdSensitiveFields },
+      });
+    }
 
     return NextResponse.json(data, { status: 201 });
   } catch (error) {

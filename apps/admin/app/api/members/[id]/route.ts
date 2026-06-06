@@ -6,6 +6,7 @@ import { MEMBER_DETAIL_SELECT, assertNoSensitiveMemberFields } from "@/lib/priva
 import { DEFAULT_ADMIN_ROLE } from "@/lib/rbac";
 
 const RBAC_FIELDS = ["role", "admin_role", "user_authority"];
+const SENSITIVE_PII_FIELDS = ["birth_date", "phone", "passport_number"];
 
 // GET /api/members/[id] - Get a single member with team/position info
 export async function GET(
@@ -155,6 +156,23 @@ export async function PUT(
         metadata: {
           changedFields: RBAC_FIELDS.filter((field) => field in updateData),
         },
+      });
+    }
+
+    const changedSensitiveFields = SENSITIVE_PII_FIELDS.filter(
+      (field) => field in updateData,
+    );
+    if (changedSensitiveFields.length > 0) {
+      await writeAdminAuditLog({
+        session,
+        request,
+        action: "member.sensitive_update",
+        targetType: "member",
+        targetId: id,
+        targetLabel: data.full_name,
+        riskLevel: "high",
+        reason: "민감정보(생년월일/연락처/여권번호) 변경",
+        metadata: { changedFields: changedSensitiveFields },
       });
     }
 

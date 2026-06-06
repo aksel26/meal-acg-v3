@@ -2,10 +2,18 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ChevronDown, History } from "lucide-react";
 import { Badge } from "@repo/ui/src/badge";
 import { Button } from "@repo/ui/src/button";
 import { Card, CardContent } from "@repo/ui/src/card";
 import { Checkbox } from "@repo/ui/src/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@repo/ui/src/dialog";
 import { SearchableDropdown } from "@repo/ui/src/searchable-dropdown";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/src/tabs";
 import { toast } from "@repo/ui/src/sonner";
@@ -118,6 +126,10 @@ export default function PermissionPoliciesPage() {
   const [overrideDraft, setOverrideDraft] = useState<Map<AdminPermission, OverrideValue>>(
     () => new Map(),
   );
+  const [expandedOverrideGroups, setExpandedOverrideGroups] = useState<Set<AdminPermissionGroup>>(
+    () => new Set(),
+  );
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const hasInitializedMemberSelection = useRef(false);
 
   const { data, isLoading, error } = useQuery({
@@ -216,6 +228,15 @@ export default function PermissionPoliciesPage() {
     });
   }
 
+  function toggleOverrideGroup(group: AdminPermissionGroup) {
+    setExpandedOverrideGroups((current) => {
+      const next = new Set(current);
+      if (next.has(group)) next.delete(group);
+      else next.add(group);
+      return next;
+    });
+  }
+
   if (isLoading) {
     return <div className="p-6 text-sm text-slate-500">권한 정책을 불러오는 중입니다.</div>;
   }
@@ -226,6 +247,13 @@ export default function PermissionPoliciesPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-10">
+      <div className="flex justify-end">
+        <Button variant="outline" onClick={() => setHistoryDialogOpen(true)}>
+          <History className="mr-1 h-4 w-4" />
+          최근 권한 변경 이력
+        </Button>
+      </div>
+
       <section className="grid gap-10 lg:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.85fr)]">
         <Card className="border-0 bg-transparent shadow-none">
           <CardContent className="p-0">
@@ -373,46 +401,83 @@ export default function PermissionPoliciesPage() {
                   )}
                 </div>
 
-                <div className="max-h-[520px] overflow-auto pr-1">
-                  {data.permissions.map((item) => {
-                    const inherited = selectedMemberRole === "대표" ||
-                      Boolean(rolePolicyMap.get(selectedMemberRole)?.has(item.permission));
-                    const override = overrideDraft.get(item.permission) || "inherit";
+                <div className="max-h-[520px] space-y-4 overflow-auto pr-1">
+                  {groupedPermissions.map(({ group, permissions }) => {
+                    const isExpanded = expandedOverrideGroups.has(group);
                     return (
-                      <div
-                        key={item.permission}
-                        className="grid gap-2 border-b border-slate-100 bg-white px-1 py-3 text-sm last:border-b-0"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="font-medium text-slate-800">{item.label}</span>
-                          <Badge variant={inherited ? "secondary" : "outline"}>
-                            {inherited ? "역할 기본 허용" : "권한 없음"}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="text-xs text-slate-500">{item.permission}</span>
-                          <div
-                            className="inline-flex shrink-0 rounded-md bg-slate-100 p-0.5"
-                            role="radiogroup"
-                            aria-label={`${item.label} 예외 권한`}
-                          >
-                            {OVERRIDE_OPTIONS.map((option) => {
-                              const isSelected = override === option.value;
+                      <div key={group} className="overflow-hidden rounded-lg bg-white">
+                        <button
+                          type="button"
+                          aria-expanded={isExpanded}
+                          onClick={() => toggleOverrideGroup(group)}
+                          className="flex w-full items-center justify-between gap-3 border-b border-slate-100 bg-slate-50 px-3 py-2 text-left transition-colors hover:bg-slate-100"
+                        >
+                          <span className="text-sm font-semibold text-slate-900">{group}</span>
+                          <span className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-[10px]">
+                              {permissions.length}개
+                            </Badge>
+                            <ChevronDown
+                              className={cn(
+                                "h-4 w-4 text-slate-500 transition-transform duration-200",
+                                isExpanded && "rotate-180",
+                              )}
+                            />
+                          </span>
+                        </button>
+                        <div
+                          className={cn(
+                            "grid",
+                            isExpanded
+                              ? "grid-rows-[1fr] transition-[grid-template-rows] duration-300 ease-out"
+                              : "grid-rows-[0fr]",
+                          )}
+                        >
+                          <div className="overflow-hidden">
+                            {permissions.map((item) => {
+                              const inherited = selectedMemberRole === "대표" ||
+                                Boolean(rolePolicyMap.get(selectedMemberRole)?.has(item.permission));
+                              const override = overrideDraft.get(item.permission) || "inherit";
                               return (
-                                <button
-                                  key={option.value}
-                                  type="button"
-                                  disabled={selectedMemberIsRepresentative}
-                                  onClick={() => setOverride(item.permission, option.value)}
-                                  className={cn(
-                                    "h-6 rounded px-2 text-[11px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50",
-                                    isSelected
-                                      ? "bg-white text-slate-900 shadow-sm"
-                                      : "text-slate-500 hover:bg-white/60 hover:text-slate-800",
-                                  )}
+                                <div
+                                  key={item.permission}
+                                  className="grid gap-2 border-b border-slate-100 px-3 py-3 text-sm last:border-b-0"
                                 >
-                                  {option.label}
-                                </button>
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="font-medium text-slate-800">{item.label}</span>
+                                    <Badge variant={inherited ? "secondary" : "outline"}>
+                                      {inherited ? "역할 기본 허용" : "권한 없음"}
+                                    </Badge>
+                                  </div>
+                                  <div className="flex items-center justify-between gap-3">
+                                    <span className="text-xs text-slate-500">{item.permission}</span>
+                                    <div
+                                      className="inline-flex shrink-0 rounded-md bg-slate-100 p-0.5"
+                                      role="radiogroup"
+                                      aria-label={`${item.label} 예외 권한`}
+                                    >
+                                      {OVERRIDE_OPTIONS.map((option) => {
+                                        const isSelected = override === option.value;
+                                        return (
+                                          <button
+                                            key={option.value}
+                                            type="button"
+                                            disabled={selectedMemberIsRepresentative}
+                                            onClick={() => setOverride(item.permission, option.value)}
+                                            className={cn(
+                                              "h-6 rounded px-2 text-[11px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+                                              isSelected
+                                                ? "bg-white text-slate-900 shadow-sm"
+                                                : "text-slate-500 hover:bg-white/60 hover:text-slate-800",
+                                            )}
+                                          >
+                                            {option.label}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                </div>
                               );
                             })}
                           </div>
@@ -427,10 +492,15 @@ export default function PermissionPoliciesPage() {
         </Card>
       </section>
 
-      <Card className="border-0 bg-transparent shadow-none">
-        <CardContent className="p-0">
-          <h2 className="mb-4 text-base font-semibold text-slate-900">최근 권한 변경 이력</h2>
-          <div className="overflow-hidden rounded-lg border border-slate-200">
+      <Dialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen}>
+        <DialogContent className="sm:max-w-[760px]">
+          <DialogHeader>
+            <DialogTitle>최근 권한 변경 이력</DialogTitle>
+            <DialogDescription>
+              역할 권한과 직원별 예외 권한 변경 감사 로그입니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-auto rounded-lg border border-slate-200">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 text-xs text-slate-500">
                 <tr>
@@ -443,7 +513,10 @@ export default function PermissionPoliciesPage() {
               <tbody className="divide-y divide-slate-100">
                 {data.auditLogs.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-4 py-8 text-center text-slate-500">
+                    <td
+                      colSpan={4}
+                      className="px-4 py-8 text-center text-slate-500"
+                    >
                       권한 변경 이력이 없습니다.
                     </td>
                   </tr>
@@ -453,8 +526,12 @@ export default function PermissionPoliciesPage() {
                       <td className="px-4 py-3 text-slate-600">
                         {new Date(log.created_at).toLocaleString("ko-KR")}
                       </td>
-                      <td className="px-4 py-3 text-slate-900">{log.actor_name || "-"}</td>
-                      <td className="px-4 py-3 text-slate-900">{log.target_label || "-"}</td>
+                      <td className="px-4 py-3 text-slate-900">
+                        {log.actor_name || "-"}
+                      </td>
+                      <td className="px-4 py-3 text-slate-900">
+                        {log.target_label || "-"}
+                      </td>
                       <td className="px-4 py-3 text-slate-600">{log.action}</td>
                     </tr>
                   ))
@@ -462,8 +539,8 @@ export default function PermissionPoliciesPage() {
               </tbody>
             </table>
           </div>
-        </CardContent>
-      </Card>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

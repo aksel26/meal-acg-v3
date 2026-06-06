@@ -2,6 +2,11 @@ import type { AuthSession } from "@/lib/supabase/types";
 
 const SIGNATURE_ALGORITHM = "SHA-256";
 
+// 세션 유효기간(초). 쿠키 maxAge와 서명 페이로드의 exp를 일치시키기 위해 이 모듈에서 단일 정의한다.
+export const ADMIN_SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 7 days
+
+type SignedSessionPayload = AuthSession & { iat: number; exp: number };
+
 function bytesToBase64Url(bytes: Uint8Array) {
   let binary = "";
   for (const byte of bytes) {
@@ -38,16 +43,17 @@ function base64UrlDecode(value: string) {
 }
 
 function getAdminSessionSecret() {
-  const secret =
-    process.env.ADMIN_SESSION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const secret = process.env.ADMIN_SESSION_SECRET;
 
   if (secret) return secret;
 
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("ADMIN_SESSION_SECRET is required in production");
+  // 로컬 개발 환경에서만 고정 시크릿을 허용한다.
+  // production/preview/staging 등 그 외 모든 환경에서는 전용 시크릿이 필수다.
+  if (process.env.NODE_ENV === "development") {
+    return "meal-acg-v3-admin-session-dev-secret";
   }
 
-  return "meal-acg-v3-admin-session-dev-secret";
+  throw new Error("ADMIN_SESSION_SECRET is required");
 }
 
 async function signPayload(payload: string) {
@@ -82,7 +88,13 @@ function timingSafeEqualString(a: string, b: string) {
 }
 
 export async function encodeAdminSessionCookie(session: AuthSession) {
-  const payload = base64UrlEncode(JSON.stringify(session));
+  const issuedAt = Math.floor(Date.now() / 1000);
+  const payloadData: SignedSessionPayload = {
+    ...session,
+    iat: issuedAt,
+    exp: issuedAt + ADMIN_SESSION_MAX_AGE_SECONDS,
+  };
+  const payload = base64UrlEncode(JSON.stringify(payloadData));
   const signature = await signPayload(payload);
   return `${payload}.${signature}`;
 }
@@ -99,7 +111,17 @@ export async function decodeAdminSessionCookie(
   if (!timingSafeEqualString(signature, expectedSignature)) return null;
 
   try {
-    return JSON.parse(base64UrlDecode(payload)) as AuthSession;
+    const parsed = JSON.parse(
+      base64UrlDecode(payload),
+    ) as Partial<SignedSessionPayload>;
+
+    // 만료 검증: exp가 없거나(구버전 쿠키 포함) 만료된 경우 거부한다.
+    if (typeof parsed.exp !== "number" || Date.now() / 1000 > parsed.exp) {
+      return null;
+    }
+
+    const { iat: _iat, exp: _exp, ...session } = parsed;
+    return session as AuthSession;
   } catch {
     return null;
   }

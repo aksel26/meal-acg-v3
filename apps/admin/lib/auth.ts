@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import type { AuthSession } from "./supabase/types";
 import { createServiceClient } from "./supabase/server";
 import {
+  ADMIN_SESSION_MAX_AGE_SECONDS,
   decodeAdminSessionCookie,
   encodeAdminSessionCookie,
 } from "./admin-session-cookie";
@@ -13,7 +14,7 @@ import {
 import { hasEffectiveAdminPermission } from "./rbac-server";
 
 const SESSION_COOKIE_NAME = "admin-session";
-const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
+const SESSION_MAX_AGE = ADMIN_SESSION_MAX_AGE_SECONDS;
 
 export class AuthError extends Error {
   constructor(

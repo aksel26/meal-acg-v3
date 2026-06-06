@@ -51,3 +51,11 @@ dist/
 
 # Claude Code runtime artifacts
 .claude/scheduled_tasks.lock
+.claude/skills/work-log/
+
+# editor / local tooling
+.vscode/
+.playwright-mcp/
+
+# local docs (project documentation kept out of VCS)
+docs/

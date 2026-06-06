@@ -41,7 +41,6 @@ import {
 } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
 import {
-  parseExcelFile,
   type MealRecord,
   type ParseResult,
 } from "@/lib/excel-parser";
@@ -158,6 +157,7 @@ export default function ImportPage() {
 
         try {
           const buffer = await file.arrayBuffer();
+          const { parseExcelFile } = await import("@/lib/excel-parser");
           const parseResult = parseExcelFile(buffer, file.name);
           // 유니코드 정규화 (NFC) 적용
           const normalizedMemberName = parseResult.memberName.normalize("NFC");

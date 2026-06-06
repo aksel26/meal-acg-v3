@@ -10,9 +10,11 @@ coverage
 
 # next.js
 .next/
+.next-build/
 out/
 build
 .swc/
+.understand-anything/
 
 # misc
 .DS_Store
@@ -41,3 +43,7 @@ yarn-error.log*
 # ui
 dist/
 .omx/
+
+.env
+
+supabase/

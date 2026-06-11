@@ -104,10 +104,20 @@ export async function GET(
     const month = now.getMonth() + 1;
     const range = monthRange(year, month);
 
-    const [canLeave, canAttendance, canSensitive] = await Promise.all([
+    const [
+      canLeave,
+      canAttendance,
+      canSensitive,
+      canSensitiveWrite,
+      canSalary,
+      canSalaryWrite,
+    ] = await Promise.all([
       hasEffectiveAdminPermission(session, "leave:read"),
       hasEffectiveAdminPermission(session, "attendance:read"),
       hasEffectiveAdminPermission(session, "members:sensitive:read"),
+      hasEffectiveAdminPermission(session, "members:sensitive:write"),
+      hasEffectiveAdminPermission(session, "members:salary:read"),
+      hasEffectiveAdminPermission(session, "members:salary:write"),
     ]);
 
     const { data: statusRow, error: statusError } = await supabase
@@ -210,6 +220,9 @@ export async function GET(
         leave: canLeave,
         attendance: canAttendance,
         sensitive: canSensitive,
+        sensitiveWrite: canSensitiveWrite,
+        salary: canSalary,
+        salaryWrite: canSalaryWrite,
       },
     });
   } catch (error) {

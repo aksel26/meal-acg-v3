@@ -22,6 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@repo/ui/src/dialog";
+import { Input } from "@repo/ui/src/input";
 import { Textarea } from "@repo/ui/src/textarea";
 import { cn } from "@repo/ui/lib/utils";
 import { queryKeys } from "@/lib/query-keys";
@@ -81,16 +82,23 @@ type MemberOverview = {
     leave: boolean;
     attendance: boolean;
     sensitive: boolean;
+    sensitiveWrite: boolean;
+    salary: boolean;
+    salaryWrite: boolean;
   };
 };
 
 type SensitiveMember = {
+  full_name?: string;
+  residentId: string | null;
+  account: { bank: string; number: string } | null;
   compensation: {
     annualSalary: number | null;
     currency: string;
     effectiveDate: string | null;
     note: string | null;
     registered: boolean;
+    canView: boolean;
   };
 };
 
@@ -185,6 +193,16 @@ export default function OrganizationMemberDetailPage() {
   const [sensitiveReason, setSensitiveReason] = useState("");
   const [sensitiveError, setSensitiveError] = useState("");
   const [sensitiveData, setSensitiveData] = useState<SensitiveMember | null>(null);
+  const [isHrEditOpen, setIsHrEditOpen] = useState(false);
+  const [hrError, setHrError] = useState("");
+  const [hrForm, setHrForm] = useState({
+    residentId: "",
+    bank: "",
+    accountNumber: "",
+    salary: "",
+    salaryEffectiveDate: "",
+    salaryNote: "",
+  });
 
   const memberQuery = useQuery<MemberDetail>({
     queryKey: queryKeys.members.detail(id),
@@ -230,11 +248,35 @@ export default function OrganizationMemberDetailPage() {
     },
   });
 
+  const hrUpdateMutation = useMutation({
+    mutationFn: async (payload: Record<string, unknown>) => {
+      const res = await fetch(`/api/members/${id}/hr-profile`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error || "저장에 실패했습니다.");
+      return body;
+    },
+    onSuccess: () => {
+      setIsHrEditOpen(false);
+      setHrError("");
+      setSensitiveData(null);
+    },
+    onError: (error: Error) => {
+      setHrError(error.message);
+    },
+  });
+
   const member = memberQuery.data;
   const overview = overviewQuery.data;
   const displayStatus = overview?.currentStatus.status || "정상";
   const statusClass = STATUS_COLORS[displayStatus] || STATUS_COLORS["정상"];
   const canRequestSensitive = overview?.permissions.sensitive ?? false;
+  const canSensitiveWrite = overview?.permissions.sensitiveWrite ?? false;
+  const canSalaryWrite = overview?.permissions.salaryWrite ?? false;
+  const canEditHr = canSensitiveWrite || canSalaryWrite;
   const projects = overview?.projects ?? [];
 
   const handleSensitiveSubmit = () => {
@@ -245,6 +287,31 @@ export default function OrganizationMemberDetailPage() {
     }
     setSensitiveError("");
     sensitiveMutation.mutate(reason);
+  };
+
+  const handleHrSubmit = () => {
+    const payload: Record<string, unknown> = {};
+    if (canSensitiveWrite) {
+      if (hrForm.residentId.trim()) payload.residentId = hrForm.residentId.trim();
+      if (hrForm.bank.trim() || hrForm.accountNumber.trim()) {
+        payload.account = {
+          bank: hrForm.bank.trim(),
+          number: hrForm.accountNumber.trim(),
+        };
+      }
+    }
+    if (canSalaryWrite) {
+      if (hrForm.salary.trim()) payload.salary = hrForm.salary.trim();
+      if (hrForm.salaryEffectiveDate)
+        payload.salaryEffectiveDate = hrForm.salaryEffectiveDate;
+      if (hrForm.salaryNote.trim()) payload.salaryNote = hrForm.salaryNote.trim();
+    }
+    if (Object.keys(payload).length === 0) {
+      setHrError("입력한 내용이 없습니다.");
+      return;
+    }
+    setHrError("");
+    hrUpdateMutation.mutate(payload);
   };
 
   if (memberQuery.isLoading) {
@@ -410,52 +477,88 @@ export default function OrganizationMemberDetailPage() {
             )}
           </InfoCard>
 
-          <InfoCard title="연봉 정보">
-            {sensitiveData ? (
-              sensitiveData.compensation.registered ? (
+          <InfoCard title="민감정보">
+            <div className="space-y-4">
+              {canEditHr && (
+                <div className="flex justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setHrForm({
+                        residentId: "",
+                        bank: "",
+                        accountNumber: "",
+                        salary: "",
+                        salaryEffectiveDate: "",
+                        salaryNote: "",
+                      });
+                      setHrError("");
+                      setIsHrEditOpen(true);
+                    }}
+                  >
+                    민감정보 수정
+                  </Button>
+                </div>
+              )}
+              {sensitiveData ? (
                 <dl>
+                  <Field label="주민등록번호" value={sensitiveData.residentId} />
                   <Field
-                    label="연봉"
+                    label="계좌"
                     value={
-                      sensitiveData.compensation.annualSalary
-                        ? `${sensitiveData.compensation.annualSalary.toLocaleString("ko-KR")}원`
+                      sensitiveData.account
+                        ? `${sensitiveData.account.bank} ${sensitiveData.account.number}`
                         : "-"
                     }
                   />
                   <Field
-                    label="적용일"
-                    value={formatDate(sensitiveData.compensation.effectiveDate)}
+                    label="연봉"
+                    value={
+                      !sensitiveData.compensation.canView
+                        ? "열람 권한 없음"
+                        : sensitiveData.compensation.annualSalary
+                          ? `${sensitiveData.compensation.annualSalary.toLocaleString("ko-KR")}원`
+                          : "-"
+                    }
                   />
-                  <Field label="비고" value={sensitiveData.compensation.note} />
+                  {sensitiveData.compensation.canView && (
+                    <>
+                      <Field
+                        label="적용일"
+                        value={formatDate(sensitiveData.compensation.effectiveDate)}
+                      />
+                      <Field label="비고" value={sensitiveData.compensation.note} />
+                    </>
+                  )}
                 </dl>
-              ) : (
-                <EmptyState>{sensitiveData.compensation.note}</EmptyState>
-              )
-            ) : canRequestSensitive ? (
-              <div className="flex items-start justify-between gap-4 rounded-lg bg-slate-50 p-4">
-                <div>
-                  <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                    <ShieldAlert className="h-4 w-4 text-amber-500" />
-                    조회 사유 필요
+              ) : canRequestSensitive ? (
+                <div className="flex items-start justify-between gap-4 rounded-lg bg-slate-50 p-4">
+                  <div>
+                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                      <ShieldAlert className="h-4 w-4 text-amber-500" />
+                      조회 사유 필요
+                    </div>
+                    <p className="mt-1 text-sm text-slate-500">
+                      조회 시 감사 로그에 사유와 조회 기록이 남습니다.
+                    </p>
                   </div>
-                  <p className="mt-1 text-sm text-slate-500">
-                    조회 시 감사 로그에 사유와 조회 기록이 남습니다.
-                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => setIsSensitiveOpen(true)}
+                  >
+                    <Eye className="h-4 w-4" />
+                    민감정보 보기
+                  </Button>
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() => setIsSensitiveOpen(true)}
-                >
-                  <Eye className="h-4 w-4" />
-                  연봉 보기
-                </Button>
-              </div>
-            ) : (
-              <EmptyState>대표 권한 또는 연봉 정보 조회 권한이 필요합니다.</EmptyState>
-            )}
+              ) : (
+                <EmptyState>민감정보 조회 권한이 필요합니다.</EmptyState>
+              )}
+            </div>
           </InfoCard>
         </div>
       </div>
@@ -494,6 +597,106 @@ export default function OrganizationMemberDetailPage() {
               disabled={sensitiveMutation.isPending}
             >
               {sensitiveMutation.isPending ? "조회 중..." : "조회"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isHrEditOpen} onOpenChange={setIsHrEditOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>민감정보 수정</DialogTitle>
+            <DialogDescription>
+              입력한 값은 암호화되어 저장되며, 변경 시 감사 로그가 남습니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            {canSensitiveWrite && (
+              <>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-slate-500">
+                    주민등록번호
+                  </label>
+                  <Input
+                    value={hrForm.residentId}
+                    onChange={(e) =>
+                      setHrForm((p) => ({ ...p, residentId: e.target.value }))
+                    }
+                    placeholder="숫자 13자리"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-slate-500">은행</label>
+                    <Input
+                      value={hrForm.bank}
+                      onChange={(e) =>
+                        setHrForm((p) => ({ ...p, bank: e.target.value }))
+                      }
+                      placeholder="예: 국민"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-slate-500">
+                      계좌번호
+                    </label>
+                    <Input
+                      value={hrForm.accountNumber}
+                      onChange={(e) =>
+                        setHrForm((p) => ({ ...p, accountNumber: e.target.value }))
+                      }
+                      placeholder="- 없이 입력"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+            {canSalaryWrite && (
+              <>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-slate-500">연봉(원)</label>
+                  <Input
+                    value={hrForm.salary}
+                    onChange={(e) =>
+                      setHrForm((p) => ({ ...p, salary: e.target.value }))
+                    }
+                    placeholder="숫자만"
+                    inputMode="numeric"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-slate-500">적용일</label>
+                  <Input
+                    type="date"
+                    value={hrForm.salaryEffectiveDate}
+                    onChange={(e) =>
+                      setHrForm((p) => ({
+                        ...p,
+                        salaryEffectiveDate: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-slate-500">비고</label>
+                  <Textarea
+                    value={hrForm.salaryNote}
+                    onChange={(e) =>
+                      setHrForm((p) => ({ ...p, salaryNote: e.target.value }))
+                    }
+                    rows={2}
+                  />
+                </div>
+              </>
+            )}
+            {hrError && <p className="text-sm text-rose-600">{hrError}</p>}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsHrEditOpen(false)}>
+              취소
+            </Button>
+            <Button onClick={handleHrSubmit} disabled={hrUpdateMutation.isPending}>
+              {hrUpdateMutation.isPending ? "저장 중..." : "저장"}
             </Button>
           </DialogFooter>
         </DialogContent>

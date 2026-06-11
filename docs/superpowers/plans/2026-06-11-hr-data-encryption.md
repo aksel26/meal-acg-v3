@@ -8,8 +8,9 @@
 
 **Tech Stack:** Next.js 15 App Router(route handlers), TypeScript, Supabase(service client), Node `crypto`(aes-256-gcm). 테스트 프레임워크 없음 → 암호화 모듈은 일회용 `.mjs` 라운드트립 스크립트로, 나머지는 `pnpm check-types`/`pnpm lint` + 수동 API 검증.
 
-**제약 (사용자 메모리):**
-- 원격 DB 미연결 → 마이그레이션은 `supabase/migrations/`에 **파일만** 생성. `supabase db push` 실행 금지. 타입은 수동으로 `types.ts`에 추가.
+**제약 (사용자 지시):**
+- **DB 작업은 로컬 OrbStack Supabase에만 적용** (`supabase migration up`, 로컬 인스턴스 `meal-v3` @ `127.0.0.1:54321`). 원격 저장소·`supabase db push`는 **절대 금지**.
+- 타입은 **수동으로** `types.ts`에 추가. 자동 `supabase gen types`는 기존 수동 타입(`AuthSession` 등)을 덮어쓰므로 사용 금지.
 - 커밋 메시지에 `Co-Authored-By` 금지. 한국어 커밋(feat/fix/...).
 
 ---
@@ -89,10 +90,12 @@ ALTER TABLE public.member_hr_profiles ENABLE ROW LEVEL SECURITY;
 NOTIFY pgrst, 'reload schema';
 ```
 
-- [ ] **Step 2: 마이그레이션 파일이 SQL로 유효한지 육안 확인**
+- [ ] **Step 2: 로컬 OrbStack Supabase에 적용** (원격 절대 금지)
 
-Run: `cat supabase/migrations/20260611_member_hr_profiles.sql`
-Expected: 위 내용 그대로. (원격 적용 금지 — 파일만)
+Run: `supabase migration up`
+Expected: `20260611_member_hr_profiles` 적용 성공. (충돌 시 `supabase migration list`로 로컬/히스토리 상태 확인)
+검증: Studio(`http://127.0.0.1:54323`) 또는 `supabase db diff`로 `member_hr_profiles` 테이블 생성 확인.
+**금지:** `supabase db push`, 원격 프로젝트 연결.
 
 - [ ] **Step 3: admin 타입에 테이블 추가**
 

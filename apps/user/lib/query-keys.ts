@@ -187,6 +187,11 @@ export const queryKeys = {
     all: ["roomReservations"] as const,
     byDate: (date: string) => ["roomReservations", date] as const,
   },
+
+  // 도서관
+  library: {
+    all: ["library"] as const,
+  },
 } as const;
 
 // 타입 유틸리티 함수들

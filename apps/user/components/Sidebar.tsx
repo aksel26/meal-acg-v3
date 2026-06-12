@@ -26,6 +26,7 @@ import {
   LayoutDashboard,
   PackageSearch,
   CarFront,
+  BookOpen,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import LOGO from "@/public/images/ACG_LOGO_GRAY.png";
@@ -132,6 +133,12 @@ const menuGroups: MenuGroup[] = [
         label: "사내 차량",
         href: "/vehicles",
         icon: CarFront,
+      },
+      {
+        id: "library",
+        label: "도서관",
+        href: "/library",
+        icon: BookOpen,
       },
       {
         id: "evaluations",

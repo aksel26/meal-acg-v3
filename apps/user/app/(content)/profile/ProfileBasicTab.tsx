@@ -23,6 +23,7 @@ import {
 import { toast } from "@repo/ui/src/sonner";
 import { useUpdateProfile, useChangePassword, type ProfileData } from "@/hooks/use-profile";
 import dayjs from "dayjs";
+import ProfileHrCard from "./ProfileHrCard";
 
 interface ProfileBasicTabProps {
   profile: ProfileData;
@@ -303,6 +304,7 @@ export default function ProfileBasicTab({ profile, memberId, hireDate }: Profile
           </div>
         </div>
       </motion.div>
+      <ProfileHrCard />
     </div>
   );
 

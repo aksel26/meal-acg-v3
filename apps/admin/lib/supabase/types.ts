@@ -793,6 +793,42 @@ export type Database = {
           },
         ]
       }
+      member_hr_profiles: {
+        Row: {
+          member_id: string
+          resident_id_enc: string | null
+          account_enc: string | null
+          salary_enc: string | null
+          salary_effective_date: string | null
+          salary_note: string | null
+          updated_by: string | null
+          updated_at: string
+          created_at: string
+        }
+        Insert: {
+          member_id: string
+          resident_id_enc?: string | null
+          account_enc?: string | null
+          salary_enc?: string | null
+          salary_effective_date?: string | null
+          salary_note?: string | null
+          updated_by?: string | null
+          updated_at?: string
+          created_at?: string
+        }
+        Update: {
+          member_id?: string
+          resident_id_enc?: string | null
+          account_enc?: string | null
+          salary_enc?: string | null
+          salary_effective_date?: string | null
+          salary_note?: string | null
+          updated_by?: string | null
+          updated_at?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       member_statuses: {
         Row: {
           created_at: string | null

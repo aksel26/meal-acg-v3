@@ -31,6 +31,8 @@ export const ADMIN_PERMISSIONS = [
   "members:write",
   "members:sensitive:read",
   "members:sensitive:write",
+  "members:salary:read",
+  "members:salary:write",
   "rbac:manage",
   "export:bulk",
   "evaluation:read",
@@ -92,6 +94,8 @@ export const ADMIN_PERMISSION_METADATA: AdminPermissionMetadata[] = [
   { permission: "members:write", label: "직원 수정", group: "직원/조직" },
   { permission: "members:sensitive:read", label: "직원 민감정보 조회", group: "민감정보/다운로드", highRisk: true },
   { permission: "members:sensitive:write", label: "직원 민감정보 수정", group: "민감정보/다운로드", highRisk: true },
+  { permission: "members:salary:read", label: "직원 연봉 조회", group: "민감정보/다운로드", highRisk: true },
+  { permission: "members:salary:write", label: "직원 연봉 수정", group: "민감정보/다운로드", highRisk: true },
   { permission: "rbac:manage", label: "권한 정책 관리", group: "설정/감사 로그", highRisk: true },
   { permission: "export:bulk", label: "대량 다운로드", group: "민감정보/다운로드", highRisk: true },
   { permission: "evaluation:read", label: "평가 조회", group: "재무/평가" },
@@ -120,7 +124,10 @@ export const ADMIN_PERMISSION_METADATA: AdminPermissionMetadata[] = [
 const REPRESENTATIVE_PERMISSIONS = ADMIN_PERMISSIONS;
 
 const ADMIN_LEADER_PERMISSIONS: AdminPermission[] = ADMIN_PERMISSIONS.filter(
-  (permission) => permission !== "rbac:manage",
+  (permission) =>
+    permission !== "rbac:manage" &&
+    permission !== "members:salary:read" &&
+    permission !== "members:salary:write",
 );
 
 const ADMIN_MEMBER_PERMISSIONS: AdminPermission[] = [

@@ -39,6 +39,7 @@ import {
   PackageSearch,
   ReceiptText,
   CarFront,
+  BookOpen,
   ShieldCheck,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
@@ -112,6 +113,7 @@ const navigation: NavigationItem[] = [
       { name: "개인 사물함 관리", href: "/lockers", icon: DoorClosed, permission: "meal:read" },
       { name: "물품관리대장", href: "/assets", icon: PackageSearch, permission: "meal:read" },
       { name: "사내 차량관리", href: "/vehicles", icon: CarFront, permission: "meal:read" },
+      { name: "도서 관리", href: "/library", icon: BookOpen, permission: "library:read" },
     ],
   },
   {

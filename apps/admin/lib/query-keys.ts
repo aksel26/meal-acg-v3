@@ -249,6 +249,11 @@ export const queryKeys = {
     all: ["lockers"] as const,
   },
 
+  // Library
+  library: {
+    all: ["library"] as const,
+  },
+
   // Usage Records
   usageRecords: {
     all: ["usageRecords"] as const,

@@ -213,9 +213,10 @@ export default function HomePage() {
                   </div>
 
                   {error && (
-                    <Alert className="rounded-[16px] border border-[rgba(226,59,74,0.22)] bg-[rgba(226,59,74,0.06)] text-[var(--danger)]">
-                      <AlertDescription className="text-sm">
-                        {error}
+                    <Alert className="rounded-[16px] border-0 bg-[rgba(226,59,74,0.06)] text-[var(--danger)]">
+                      <AlertDescription className="space-y-1 text-sm">
+                        <p>{error}</p>
+                        <p>계정을 추가하려면 P&amp;C팀에 문의해주세요.</p>
                       </AlertDescription>
                     </Alert>
                   )}

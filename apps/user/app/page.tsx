@@ -189,8 +189,9 @@ export default function HomePage() {
                     variant="destructive"
                     className="rounded-lg border-red-100 bg-red-50"
                   >
-                    <AlertDescription className="text-sm text-red-600">
-                      {error}
+                    <AlertDescription className="space-y-1 text-sm text-red-600">
+                      <p>{error}</p>
+                      <p>계정을 추가하려면 P&amp;C팀에 문의해주세요.</p>
                     </AlertDescription>
                   </Alert>
                 </motion.div>

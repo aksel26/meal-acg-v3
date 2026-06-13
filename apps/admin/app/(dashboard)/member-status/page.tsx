@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { toast } from "@repo/ui/src/sonner";
@@ -98,6 +98,38 @@ interface UserFormData {
 type SortKey = "member_role" | "team_name" | "current_status";
 type SortDir = "asc" | "desc";
 
+const SORT_STORAGE_KEY = "meal-v3:admin:member-status:sort";
+const SORT_KEYS: SortKey[] = ["member_role", "team_name", "current_status"];
+const SORT_DIRS: SortDir[] = ["asc", "desc"];
+
+interface PersistedSortState {
+  key: SortKey | null;
+  dir: SortDir;
+}
+
+const DEFAULT_SORT_STATE: PersistedSortState = {
+  key: null,
+  dir: "asc",
+};
+
+const readPersistedSortState = (): PersistedSortState => {
+  if (typeof window === "undefined") return DEFAULT_SORT_STATE;
+
+  try {
+    const raw = window.localStorage.getItem(SORT_STORAGE_KEY);
+    if (!raw) return DEFAULT_SORT_STATE;
+
+    const parsed = JSON.parse(raw) as Partial<PersistedSortState>;
+    const key = parsed.key && SORT_KEYS.includes(parsed.key) ? parsed.key : null;
+    const dir =
+      parsed.dir && SORT_DIRS.includes(parsed.dir) ? parsed.dir : "asc";
+
+    return { key, dir };
+  } catch {
+    return DEFAULT_SORT_STATE;
+  }
+};
+
 // ── Main Page ──
 
 export default function MemberStatusPage() {
@@ -109,8 +141,11 @@ export default function MemberStatusPage() {
   const [isClearing, setIsClearing] = useState(false);
 
   // Sort state
-  const [sortKey, setSortKey] = useState<SortKey | null>(null);
-  const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [sortState, setSortState] = useState<PersistedSortState>(
+    readPersistedSortState,
+  );
+  const sortKey = sortState.key;
+  const sortDir = sortState.dir;
 
   // Dialog states
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
@@ -401,13 +436,16 @@ export default function MemberStatusPage() {
 
   // Sort
   const handleSort = (key: SortKey) => {
-    if (sortKey === key) {
-      setSortDir((prev) => (prev === "asc" ? "desc" : "asc"));
-    } else {
-      setSortKey(key);
-      setSortDir("asc");
-    }
+    setSortState((prev) =>
+      prev.key === key
+        ? { key, dir: prev.dir === "asc" ? "desc" : "asc" }
+        : { key, dir: "asc" },
+    );
   };
+
+  useEffect(() => {
+    window.localStorage.setItem(SORT_STORAGE_KEY, JSON.stringify(sortState));
+  }, [sortState]);
 
   const sortedMembers = useMemo(() => {
     if (!sortKey) return members;

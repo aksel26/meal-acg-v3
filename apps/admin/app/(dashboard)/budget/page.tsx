@@ -151,11 +151,42 @@ export default function BudgetPage() {
   const updateAllocation = useUpdateAllocation();
   const bulkUpsert = useBulkUpsertAllocations();
 
+  // 특이사항 인원 ID Set
+  const statusMemberIds = useMemo(() => {
+    return new Set(
+      (statusMembers || [])
+        .map((m) => m.member_id)
+        .filter((id): id is string => Boolean(id)),
+    );
+  }, [statusMembers]);
+
+  const resignedMemberIds = useMemo(() => {
+    return new Set(
+      (statusMembers || [])
+        .filter((m) => m.current_status === "퇴사")
+        .map((m) => m.member_id)
+        .filter((id): id is string => Boolean(id)),
+    );
+  }, [statusMembers]);
+
+  const activeStatusMembersForAllocation = useMemo(
+    () => (statusMembers || []).filter((m) => m.current_status !== "퇴사"),
+    [statusMembers],
+  );
+
+  const budgetMembers = useMemo(
+    () => (members || []).filter((m) => !resignedMemberIds.has(m.id)),
+    [members, resignedMemberIds],
+  );
+
   // Derived data
   const summaryItems: BudgetSummaryItem[] = useMemo(() => {
     if (!summaryData) return [];
-    return Array.isArray(summaryData) ? summaryData : summaryData.data || [];
-  }, [summaryData]);
+    const items = (Array.isArray(summaryData)
+      ? summaryData
+      : summaryData.data || []) as BudgetSummaryItem[];
+    return items.filter((item) => !resignedMemberIds.has(item.member_id));
+  }, [summaryData, resignedMemberIds]);
 
   // 멤버별 그룹화
   const memberRows: MemberBudgetRow[] = useMemo(() => {
@@ -188,44 +219,35 @@ export default function BudgetPage() {
     return map;
   }, [members]);
 
-  // 특이사항 인원 ID Set
-  const statusMemberIds = useMemo(() => {
-    return new Set(
-      (statusMembers || []).map((m) => m.member_id).filter(Boolean),
-    );
-  }, [statusMembers]);
-
   // 복지포인트 할당 대상 인원 수 (전체 멤버, 특이사항 제외)
   const bulkTargetCount = useMemo(() => {
-    if (!members) return 0;
-    return members.filter((m) => !statusMemberIds.has(m.id)).length;
-  }, [members, statusMemberIds]);
+    return budgetMembers.filter((m) => !statusMemberIds.has(m.id)).length;
+  }, [budgetMembers, statusMemberIds]);
 
   // Leaders for auto-calculate (인턴은 팀장 금액에 포함)
   const leaderMembers = useMemo(() => {
-    if (!members) return [];
-    return members.filter(
+    return budgetMembers.filter(
       (m) => m.member_role === "팀장" || m.member_role === "본부장",
     );
-  }, [members]);
+  }, [budgetMembers]);
 
   // Activity preview calculation
   const activityPreview = useMemo(() => {
-    if (!members || !leaderMembers.length) return [];
+    if (!budgetMembers.length || !leaderMembers.length) return [];
     const leaderRate = parseInt(calcLeaderRate) || 0;
     const managerRate = parseInt(calcManagerRate) || 0;
     const pncExtraRate = parseInt(calcPncExtraRate) || 0;
 
     // team_id별 멤버 수 집계 (인턴 제외)
     const teamCounts = new Map<string, number>();
-    members.forEach((m) => {
+    budgetMembers.forEach((m) => {
       if (m.team_id && m.member_role !== "인턴")
         teamCounts.set(m.team_id, (teamCounts.get(m.team_id) || 0) + 1);
     });
 
     // team_id별 인턴 목록 집계
     const teamInterns = new Map<string, Member[]>();
-    members.forEach((m) => {
+    budgetMembers.forEach((m) => {
       if (m.team_id && m.member_role === "인턴" && !statusMemberIds.has(m.id)) {
         const list = teamInterns.get(m.team_id) || [];
         list.push(m);
@@ -243,7 +265,7 @@ export default function BudgetPage() {
 
     // 전체 팀원급+인턴 인원 수 (특이사항 인원 제외, 팀 배정된 멤버만)
     const pncExtraCount = pncTeamId
-      ? members.filter(
+      ? budgetMembers.filter(
           (m) =>
             (m.member_role === "팀원" || m.member_role === "인턴") &&
             m.team_id &&
@@ -315,7 +337,7 @@ export default function BudgetPage() {
       };
     });
   }, [
-    members,
+    budgetMembers,
     leaderMembers,
     calcLeaderRate,
     calcManagerRate,
@@ -414,12 +436,12 @@ export default function BudgetPage() {
       toast.error("올바른 금액을 입력해주세요.");
       return;
     }
-    if (!members || members.length === 0) {
+    if (budgetMembers.length === 0) {
       toast.error("멤버 목록을 불러올 수 없습니다.");
       return;
     }
 
-    const allocations = members.map((m) => ({
+    const allocations = budgetMembers.map((m) => ({
       member_id: m.id,
       type: "복지포인트" as const,
       period,
@@ -832,10 +854,10 @@ export default function BudgetPage() {
                     </span>
                   </p>
                 )}
-                {statusMembers && statusMembers.length > 0 && (
+                {activeStatusMembersForAllocation.length > 0 && (
                   <p className="mt-2 text-xs text-amber-600">
-                    특이사항 인원 {statusMembers.length}명은 할당액 0원으로
-                    포함됩니다.
+                    특이사항 인원 {activeStatusMembersForAllocation.length}명은
+                    할당액 0원으로 포함됩니다.
                   </p>
                 )}
               </CardContent>
@@ -1040,10 +1062,10 @@ export default function BudgetPage() {
                   </table>
                 )}
               </div>
-              {statusMembers && statusMembers.length > 0 && (
+              {activeStatusMembersForAllocation.length > 0 && (
                 <p className="text-xs text-amber-600">
-                  특이사항 인원 {statusMembers.length}명은 할당액 0원으로
-                  포함됩니다.
+                  특이사항 인원 {activeStatusMembersForAllocation.length}명은
+                  할당액 0원으로 포함됩니다.
                 </p>
               )}
             </div>

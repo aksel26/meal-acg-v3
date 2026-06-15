@@ -81,7 +81,7 @@ const navigation: NavigationItem[] = [
     name: "식대 관리",
     icon: Utensils,
     items: [
-      { name: "사용현황 (인원별)", href: "/meal-status", icon: Users },
+      { name: "사용현황", href: "/meal-status", icon: Users },
       { name: "식대 입력", href: "/calendar", icon: Calendar },
       { name: "식대 기본금 설정", href: "/settings", icon: Settings },
       { name: "엑셀 가져오기", href: "/import", icon: Upload },

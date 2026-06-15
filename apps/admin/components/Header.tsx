@@ -9,8 +9,8 @@ dayjs.locale("ko");
 const pageTitles: Record<string, { title: string; subtitle: string }> = {
   "/": { title: "대시보드", subtitle: "식대 관리 현황을 한눈에 확인하세요" },
   "/meal-status": {
-    title: "식대관리 - 사용현황 (인원별)",
-    subtitle: "팀원별 식대 사용 현황 및 정산 관리",
+    title: "식대관리 - 사용현황",
+    subtitle: "식대 사용 내역 및 인원별 정산 관리",
   },
   "/calendar": { title: "식대 입력", subtitle: "일별 식대 기록을 관리합니다" },
   "/monthly": { title: "Monthly 음료", subtitle: "월별 음료 신청 현황 관리" },

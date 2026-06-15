@@ -71,6 +71,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const { data: currentStatus, error: statusError } = await supabase
+      .from("member_current_status")
+      .select("current_status")
+      .eq("member_id", member_id)
+      .maybeSingle();
+
+    if (statusError) {
+      console.error("Error checking member status:", statusError);
+      return NextResponse.json(
+        { error: "Failed to check member status" },
+        { status: 500 }
+      );
+    }
+
+    if (currentStatus?.current_status === "퇴사") {
+      return NextResponse.json(
+        { error: "퇴사자는 예산 할당 대상이 아닙니다." },
+        { status: 400 }
+      );
+    }
+
     const { data, error } = await supabase
       .from("budget_allocations")
       .insert({
@@ -122,10 +143,32 @@ export async function PUT(request: NextRequest) {
 
     const results = [];
 
+    const { data: resignedMembers, error: resignedError } = await supabase
+      .from("member_current_status")
+      .select("member_id")
+      .eq("current_status", "퇴사");
+
+    if (resignedError) {
+      console.error("Error fetching resigned members:", resignedError);
+      return NextResponse.json(
+        { error: "Failed to fetch resigned members" },
+        { status: 500 }
+      );
+    }
+
+    const resignedMemberIds = new Set(
+      (resignedMembers || [])
+        .map((member) => member.member_id)
+        .filter((id): id is string => Boolean(id))
+    );
+
     for (const allocation of allocations) {
       const { member_id, type, period, total_amount, description } = allocation;
 
       if (!member_id || !type || !period || total_amount === undefined) {
+        continue;
+      }
+      if (resignedMemberIds.has(member_id)) {
         continue;
       }
 

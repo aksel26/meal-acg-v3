@@ -6,6 +6,26 @@ interface LoginRequest {
   password: string;
 }
 
+interface MemberStatusLookup {
+  current_status: string | null;
+}
+
+interface MemberCurrentStatusClient {
+  from(table: "member_current_status"): {
+    select(columns: "current_status"): {
+      eq(column: "member_id", value: string): {
+        maybeSingle(): Promise<{
+          data: MemberStatusLookup | null;
+          error: unknown;
+        }>;
+      };
+    };
+  };
+}
+
+const ACCOUNT_NOT_FOUND_ERROR = "계정이 없습니다.";
+const INVALID_CREDENTIALS_ERROR = "아이디 또는 비밀번호가 일치하지 않습니다.";
+
 export async function POST(request: NextRequest) {
   try {
     const body: LoginRequest = await request.json();
@@ -35,7 +55,29 @@ export async function POST(request: NextRequest) {
 
     if (error || !member) {
       return NextResponse.json(
-        { success: false, error: "아이디 또는 비밀번호가 일치하지 않습니다." },
+        { success: false, error: ACCOUNT_NOT_FOUND_ERROR },
+        { status: 401 }
+      );
+    }
+
+    const statusClient = supabase as unknown as MemberCurrentStatusClient;
+    const { data: memberStatus, error: statusError } = await statusClient
+      .from("member_current_status")
+      .select("current_status")
+      .eq("member_id", member.id)
+      .maybeSingle();
+
+    if (statusError) {
+      console.error("Member status query error:", statusError);
+      return NextResponse.json(
+        { success: false, error: "로그인 처리 중 오류가 발생했습니다." },
+        { status: 500 }
+      );
+    }
+
+    if (memberStatus?.current_status === "퇴사") {
+      return NextResponse.json(
+        { success: false, error: ACCOUNT_NOT_FOUND_ERROR },
         { status: 401 }
       );
     }
@@ -43,7 +85,7 @@ export async function POST(request: NextRequest) {
     // 비밀번호 확인 (평문 비교)
     if (member.password !== password) {
       return NextResponse.json(
-        { success: false, error: "아이디 또는 비밀번호가 일치하지 않습니다." },
+        { success: false, error: INVALID_CREDENTIALS_ERROR },
         { status: 401 }
       );
     }

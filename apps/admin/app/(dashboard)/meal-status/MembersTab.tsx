@@ -1,0 +1,703 @@
+"use client";
+
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  FileSpreadsheet,
+  Check,
+  X,
+  Loader2,
+  Send,
+  AlertTriangle,
+  RefreshCw,
+} from "lucide-react";
+import { queryKeys } from "@/lib/query-keys";
+import { toast } from "@repo/ui/src/sonner";
+import { cn } from "@repo/ui/lib/utils";
+import { Button } from "@repo/ui/src/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui/src/tooltip";
+import { useActiveStatusMembers } from "@/hooks/useActiveStatusMembers";
+
+interface UserStats {
+  user_id: string;
+  full_name: string;
+  login_id: string;
+  email: string | null;
+  work_days: number;
+  holiday_count: number;
+  weekend_work_days: number;
+  individual_meals: number;
+  remote_work_days: number;
+  total_allowance: number;
+  total_used: number;
+  balance: number;
+  has_excel_file: boolean;
+  is_settled: boolean;
+}
+
+type InputCheckStatus =
+  | "idle"
+  | "loading"
+  | "complete"
+  | "incomplete"
+  | "error";
+
+interface InputCheckResult {
+  status: InputCheckStatus;
+  missingCount?: number;
+}
+
+const formatCurrency = (amount: number | null) => {
+  if (amount === null || amount === undefined) return "-";
+  return new Intl.NumberFormat("ko-KR").format(amount);
+};
+
+export default function MembersTab({
+  year: selectedYear,
+  month: selectedMonth,
+  selectedUserId,
+}: {
+  year: number;
+  month: number;
+  selectedUserId: string;
+}) {
+  const router = useRouter();
+
+  const [downloadingUserId, setDownloadingUserId] = useState<string | null>(
+    null,
+  );
+
+  // 스크롤 위치 관련
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const SCROLL_STORAGE_KEY = "usersPageScrollPosition";
+
+  // 입력 체크 관련 상태
+  const [inputCheckResults, setInputCheckResults] = useState<
+    Map<string, InputCheckResult>
+  >(new Map());
+  const [isCheckingInputs, setIsCheckingInputs] = useState(false);
+  const [checkProgress, setCheckProgress] = useState({ current: 0, total: 0 });
+
+  const queryClient = useQueryClient();
+
+  // 특이사항 인원 조회
+  const { data: statusMembers } = useActiveStatusMembers();
+  const statusMap = useMemo(() => {
+    const map = new Map<string, string>();
+    statusMembers?.forEach((m) => {
+      if (m.member_id && m.current_status) {
+        map.set(m.member_id, m.current_status);
+      }
+    });
+    return map;
+  }, [statusMembers]);
+
+  // localStorage 키 생성
+  const getStorageKey = useCallback((year: number, month: number) => {
+    return `inputCheckResults_${year}_${month}`;
+  }, []);
+
+  // localStorage에서 체크 결과 복원
+  useEffect(() => {
+    const storageKey = getStorageKey(selectedYear, selectedMonth);
+    const saved = localStorage.getItem(storageKey);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        const restoredMap = new Map<string, InputCheckResult>(
+          Object.entries(parsed),
+        );
+        setInputCheckResults(restoredMap);
+      } catch {
+        setInputCheckResults(new Map());
+      }
+    } else {
+      setInputCheckResults(new Map());
+    }
+  }, [selectedYear, selectedMonth, getStorageKey]);
+
+  // 체크 결과를 localStorage에 저장
+  const saveResultsToStorage = useCallback(
+    (results: Map<string, InputCheckResult>, year: number, month: number) => {
+      const storageKey = getStorageKey(year, month);
+      const obj = Object.fromEntries(results);
+      localStorage.setItem(storageKey, JSON.stringify(obj));
+    },
+    [getStorageKey],
+  );
+
+  // 스크롤 위치 저장
+  const handleScroll = useCallback(() => {
+    if (tableContainerRef.current) {
+      sessionStorage.setItem(
+        SCROLL_STORAGE_KEY,
+        String(tableContainerRef.current.scrollTop),
+      );
+    }
+  }, []);
+
+  const handleUserClick = (userId: string) => {
+    router.push(
+      `/calendar?userId=${userId}&year=${selectedYear}&month=${selectedMonth}`,
+    );
+  };
+
+  // 입력 체크 실행
+  const handleCheckAllInputs = async () => {
+    if (!users || users.length === 0) return;
+
+    setIsCheckingInputs(true);
+    setCheckProgress({ current: 0, total: users.length });
+
+    // 모든 사용자를 loading 상태로 초기화
+    const initialResults = new Map<string, InputCheckResult>();
+    users.forEach((user) => {
+      initialResults.set(user.user_id, { status: "loading" });
+    });
+    setInputCheckResults(initialResults);
+
+    // 최종 결과 저장용
+    const finalResults = new Map<string, InputCheckResult>();
+
+    // 각 사용자별로 순차 체크
+    for (let i = 0; i < users.length; i++) {
+      const user = users[i];
+      if (!user) continue;
+
+      setCheckProgress({ current: i + 1, total: users.length });
+
+      try {
+        const response = await fetch(
+          `/api/stats/incomplete-users?year=${selectedYear}&month=${selectedMonth}&userId=${user.user_id}`,
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          const result: InputCheckResult = data.is_complete
+            ? { status: "complete" }
+            : {
+                status: "incomplete",
+                missingCount: data.missing_dates?.length || 0,
+              };
+
+          finalResults.set(user.user_id, result);
+          setInputCheckResults((prev) => {
+            const newMap = new Map(prev);
+            newMap.set(user.user_id, result);
+            return newMap;
+          });
+        } else {
+          throw new Error("API error");
+        }
+      } catch {
+        const errorResult: InputCheckResult = { status: "error" };
+        finalResults.set(user.user_id, errorResult);
+        setInputCheckResults((prev) => {
+          const newMap = new Map(prev);
+          newMap.set(user.user_id, errorResult);
+          return newMap;
+        });
+      }
+    }
+
+    // 체크 완료 후 localStorage에 저장
+    saveResultsToStorage(finalResults, selectedYear, selectedMonth);
+
+    setIsCheckingInputs(false);
+    setCheckProgress({ current: 0, total: 0 });
+  };
+
+  const { data: users, isLoading } = useQuery<UserStats[]>({
+    queryKey: queryKeys.stats.monthly(selectedYear, selectedMonth),
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/stats/monthly?year=${selectedYear}&month=${selectedMonth}`,
+      );
+      if (!response.ok) throw new Error("Failed to fetch stats");
+      return response.json();
+    },
+  });
+
+  // 스크롤 위치 복원 (데이터 로딩 완료 후)
+  useEffect(() => {
+    if (!isLoading && users && tableContainerRef.current) {
+      const savedPosition = sessionStorage.getItem(SCROLL_STORAGE_KEY);
+      if (savedPosition) {
+        tableContainerRef.current.scrollTop = parseInt(savedPosition, 10);
+      }
+    }
+  }, [isLoading, users]);
+
+  const toggleSettlementMutation = useMutation({
+    mutationFn: async ({
+      userId,
+      isSettled,
+    }: {
+      userId: string;
+      isSettled: boolean;
+    }) => {
+      const response = await fetch("/api/settlement", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          year: selectedYear,
+          month: selectedMonth,
+          isSettled,
+        }),
+      });
+      if (!response.ok) throw new Error("Failed to update settlement status");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.stats.monthly(selectedYear, selectedMonth),
+      });
+      toast.success("정산 상태가 변경되었습니다.");
+    },
+    onError: () => {
+      toast.error("정산 상태 변경에 실패했습니다.");
+    },
+  });
+
+  const handleToggleSettlement = (userId: string, currentStatus: boolean) => {
+    toggleSettlementMutation.mutate({
+      userId,
+      isSettled: !currentStatus,
+    });
+  };
+
+  const sendNotifyMutation = useMutation({
+    mutationFn: async ({
+      userId,
+      fullName,
+    }: {
+      userId: string;
+      fullName: string;
+    }) => {
+      const response = await fetch("/api/notifications/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          memberIds: [userId],
+          title: "식대 정산요청",
+          body: "이번 달 식대 정산이 완료되지 않았습니다. 앱에서 정산 내역을 확인하고 정산을 진행해주세요.",
+          url: "/",
+          tag: "settlement-result",
+        }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "알림 발송에 실패했습니다.");
+      }
+      const data = await response.json();
+      return { ...data, fullName };
+    },
+  });
+
+  const handleDownloadExcel = async (userId: string, fullName: string) => {
+    try {
+      setDownloadingUserId(userId);
+      const half = selectedMonth <= 6 ? "H1" : "H2";
+      const response = await fetch(
+        `/api/export/member?year=${selectedYear}&half=${half}&memberId=${userId}`,
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to download");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${fullName}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      toast.success(`${fullName}님의 엑셀 파일을 다운로드했습니다.`);
+    } catch {
+      toast.error("엑셀 파일 다운로드에 실패했습니다.");
+    } finally {
+      setDownloadingUserId(null);
+    }
+  };
+
+  const filteredUsers = users?.filter((user) => {
+    if (!selectedUserId) return true;
+    return user.user_id === selectedUserId;
+  });
+
+  // Summary stats (js-combine-iterations: single pass)
+  const { totalUsers, settledUsers, totalUsed } = useMemo(() => {
+    if (!users) return { totalUsers: 0, settledUsers: 0, totalUsed: 0 };
+    let settled = 0;
+    let used = 0;
+    for (const u of users) {
+      if (u.is_settled) settled++;
+      used += u.total_used || 0;
+    }
+    return { totalUsers: users.length, settledUsers: settled, totalUsed: used };
+  }, [users]);
+
+  // 입력완료 상태 렌더링
+  const renderInputCheckStatus = (userId: string) => {
+    const result = inputCheckResults.get(userId);
+
+    if (!result || result.status === "idle") {
+      return <span className="text-slate-300">-</span>;
+    }
+
+    if (result.status === "loading") {
+      return (
+        <Loader2 className="h-4 w-4 animate-spin text-slate-400 mx-auto" />
+      );
+    }
+
+    if (result.status === "complete") {
+      return (
+        <div className="flex items-center justify-center">
+          <Check className="h-4 w-4 text-emerald-500" />
+        </div>
+      );
+    }
+
+    if (result.status === "incomplete") {
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center justify-center gap-1 cursor-help">
+              <X className="h-4 w-4 text-rose-500" />
+              <span className="text-xs text-rose-500">
+                {result.missingCount}
+              </span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>{result.missingCount}일 누락</TooltipContent>
+        </Tooltip>
+      );
+    }
+
+    if (result.status === "error") {
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center justify-center cursor-help">
+              <AlertTriangle className="h-4 w-4 text-amber-500" />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>체크 중 오류 발생</TooltipContent>
+        </Tooltip>
+      );
+    }
+
+    return null;
+  };
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col gap-6">
+      {/* Quick Stats */}
+      <div className="flex items-center gap-5 rounded-xl border border-slate-200 bg-white px-5 py-3">
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-sm text-slate-500">총 인원</span>
+          <span className="text-lg font-semibold tabular-nums text-slate-900">
+            {totalUsers}명
+          </span>
+          {statusMembers && statusMembers.length > 0 && (
+            <span className="text-xs text-slate-400">
+              (특이사항 {statusMembers.length})
+            </span>
+          )}
+        </div>
+        <div className="h-4 w-px bg-slate-200" />
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-sm text-slate-500">정산 완료</span>
+          <span className="text-lg font-semibold tabular-nums text-slate-900">
+            {settledUsers}
+          </span>
+          <span className="text-sm text-slate-400">/ {totalUsers}</span>
+        </div>
+        <div className="h-4 w-px bg-slate-200" />
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-sm text-slate-500">총 사용액</span>
+          <span className="text-lg font-semibold tabular-nums text-slate-900">
+            {(totalUsed / 10000).toFixed(1)}
+          </span>
+          <span className="text-sm text-slate-400">만원</span>
+        </div>
+
+        {/* 입력 체크 버튼 */}
+        <Button
+          onClick={handleCheckAllInputs}
+          size="sm"
+          className="ml-auto h-9 gap-1.5"
+          disabled={isCheckingInputs || !users || users.length === 0}
+        >
+          {isCheckingInputs ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              {checkProgress.current}/{checkProgress.total}
+            </>
+          ) : (
+            <>
+              <RefreshCw className="h-4 w-4" />
+              입력 체크
+            </>
+          )}
+        </Button>
+      </div>
+
+      {/* Users Table */}
+      <div className="min-h-0 flex-1 overflow-hidden rounded-xl bg-white">
+        <div
+          ref={tableContainerRef}
+          onScroll={handleScroll}
+          className="h-full overflow-auto"
+        >
+          <table className="w-full">
+            <thead className="sticky top-0 z-10 bg-slate-50 [&>tr>th]:h-9 [&>tr>th]:px-3 [&>tr>th]:py-0">
+              <tr>
+                <th className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  No.
+                </th>
+                <th className="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  성명
+                </th>
+                <th className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  근무
+                </th>
+                <th className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  휴일
+                </th>
+                <th className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  주말
+                </th>
+                <th className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  개별
+                </th>
+                <th className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  재택
+                </th>
+                <th className="text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  사용가능액
+                </th>
+                <th className="text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  사용액
+                </th>
+                <th className="text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  잔액
+                </th>
+                <th className="w-16 whitespace-nowrap text-center text-xs font-semibold tracking-wider text-slate-500">
+                  입력완료
+                </th>
+                <th className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  정산
+                </th>
+                <th className="w-14 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  정산요청
+                </th>
+                <th className="w-12 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  파일
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading ? (
+                Array.from({ length: 8 }).map((_, index) => (
+                  <tr key={index}>
+                    {Array.from({ length: 14 }).map((_, cellIndex) => (
+                      <td key={cellIndex} className="px-3 py-1.5">
+                        <div className="h-4 w-full animate-pulse rounded bg-slate-100" />
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : filteredUsers && filteredUsers.length > 0 ? (
+                filteredUsers.map((user, index) => {
+                  const balance = user.balance ?? 0;
+                  const memberStatus = statusMap.get(user.user_id);
+                  return (
+                    <tr
+                      key={user.user_id || index}
+                      className={cn(
+                        "table-row-interactive",
+                        memberStatus && "opacity-50",
+                      )}
+                    >
+                      <td className="px-3 py-1.5 text-center text-sm text-slate-400">
+                        {index + 1}
+                      </td>
+                      <td className="px-3 py-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => handleUserClick(user.user_id)}
+                            className="text-sm text-[#135bec] hover:text-[#135bec]/80 underline underline-offset-2 decoration-[#135bec]/30 hover:decoration-[#135bec]/60 transition-colors"
+                          >
+                            {user.full_name}
+                          </button>
+                          {memberStatus && (
+                            <span className="inline-flex items-center rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
+                              {memberStatus}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-3 py-1.5 text-center text-sm text-slate-600">
+                        {user.work_days ?? 0}일
+                      </td>
+                      <td className="px-3 py-1.5 text-center text-sm text-slate-600">
+                        {user.holiday_count ?? 0}일
+                      </td>
+                      <td className="px-3 py-1.5 text-center text-sm text-slate-600">
+                        {user.weekend_work_days ?? 0}일
+                      </td>
+                      <td className="px-3 py-1.5 text-center text-sm text-slate-600">
+                        {user.individual_meals ?? 0}회
+                      </td>
+                      <td className="px-3 py-1.5 text-center text-sm text-slate-600">
+                        {user.remote_work_days ?? 0}일
+                      </td>
+                      <td className="px-3 py-1.5 text-right text-sm font-medium text-sky-600">
+                        {formatCurrency(user.total_allowance)}
+                      </td>
+                      <td className="px-3 py-1.5 text-right text-sm font-medium text-[#a855f7]">
+                        {formatCurrency(user.total_used)}
+                      </td>
+                      <td
+                        className={cn(
+                          "px-3 py-1.5 text-right text-sm font-semibold",
+                          balance >= 0 ? "text-emerald-600" : "text-rose-600",
+                        )}
+                      >
+                        {formatCurrency(balance)}
+                      </td>
+                      <td className="px-3 py-1.5 text-center">
+                        {renderInputCheckStatus(user.user_id)}
+                      </td>
+                      <td className="px-2 py-1.5 text-center">
+                        <button
+                          onClick={() =>
+                            handleToggleSettlement(
+                              user.user_id,
+                              user.is_settled,
+                            )
+                          }
+                          disabled={toggleSettlementMutation.isPending}
+                          className={cn(
+                            "inline-flex items-center gap-1.5 rounded-full px-2 py-1.5 text-xs font-medium transition-all",
+                            toggleSettlementMutation.isPending &&
+                              toggleSettlementMutation.variables?.userId ===
+                                user.user_id
+                              ? "bg-slate-100 text-slate-500"
+                              : user.is_settled
+                                ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                                : "bg-slate-100 text-slate-600 hover:bg-slate-200",
+                          )}
+                        >
+                          {toggleSettlementMutation.isPending &&
+                          toggleSettlementMutation.variables?.userId ===
+                            user.user_id ? (
+                            <>
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                              처리중
+                            </>
+                          ) : user.is_settled ? (
+                            <>
+                              <Check className="h-3 w-3" />
+                              완료
+                            </>
+                          ) : (
+                            <>
+                              <X className="h-3 w-3" />
+                              미정산
+                            </>
+                          )}
+                        </button>
+                      </td>
+                      <td className="px-1 py-1.5 text-center">
+                        <button
+                          onClick={async () => {
+                            try {
+                              const data = await sendNotifyMutation.mutateAsync(
+                                {
+                                  userId: user.user_id,
+                                  fullName: user.full_name,
+                                },
+                              );
+
+                              if (data.summary.total === 0) {
+                                toast.error(
+                                  `${user.full_name}님은 푸시 알림을 구독하지 않았습니다.`,
+                                );
+                              } else if (data.summary.success > 0) {
+                                toast.success(
+                                  `${user.full_name}님에게 정산 요청을 보냈습니다.`,
+                                );
+                              } else {
+                                toast.error(
+                                  `${user.full_name}님에게 알림 발송에 실패했습니다.`,
+                                );
+                              }
+                            } catch (error) {
+                              toast.error(
+                                error instanceof Error
+                                  ? error.message
+                                  : "정산 요청 발송에 실패했습니다.",
+                              );
+                            }
+                          }}
+                          disabled={sendNotifyMutation.isPending}
+                          className="inline-flex h-6 w-6 items-center justify-center rounded-md text-sky-500 transition-colors hover:bg-sky-50 hover:text-sky-600"
+                          title="정산 요청 보내기"
+                        >
+                          {sendNotifyMutation.isPending &&
+                          sendNotifyMutation.variables?.userId ===
+                            user.user_id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Send className="h-3.5 w-3.5" />
+                          )}
+                        </button>
+                      </td>
+                      <td className="px-3 py-1.5 text-center">
+                        {user.has_excel_file ? (
+                          <button
+                            onClick={() =>
+                              handleDownloadExcel(user.user_id, user.full_name)
+                            }
+                            disabled={downloadingUserId === user.user_id}
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-emerald-600 transition-colors hover:bg-emerald-50"
+                          >
+                            {downloadingUserId === user.user_id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <FileSpreadsheet className="h-4 w-4" />
+                            )}
+                          </button>
+                        ) : (
+                          <span className="text-slate-300">-</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td
+                    colSpan={15}
+                    className="px-4 py-12 text-center text-sm text-slate-500"
+                  >
+                    데이터가 없습니다.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}

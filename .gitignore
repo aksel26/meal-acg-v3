@@ -47,3 +47,8 @@ dist/
 .env
 
 supabase/
+
+.playwright-mcp
+
+# git worktrees
+.worktrees/

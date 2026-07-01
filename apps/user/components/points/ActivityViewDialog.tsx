@@ -9,7 +9,7 @@ import {
 import { Button } from "@repo/ui/src/button";
 import { ScrollArea } from "@repo/ui/src/scroll-area";
 import { ChevronDown, Receipt } from "@repo/ui/icons";
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Select,
   SelectContent,
@@ -30,14 +30,12 @@ const Skeleton = ({ className }: { className?: string }) => (
   <div className={`skeleton ${className ?? ""}`} />
 );
 
-// 현재 상반기/하반기에 해당하는 월들을 반환
-const getCurrentHalfYearMonths = () => {
-  const currentMonth = dayjs().month() + 1;
-  const isSecondHalf = currentMonth >= 7;
+// 올해 월 목록
+const getCurrentYearMonths = () => {
   const currentYear = dayjs().year();
 
-  return Array.from({ length: 6 }, (_, i) => {
-    const monthNum = isSecondHalf ? i + 7 : i + 1;
+  return Array.from({ length: 12 }, (_, i) => {
+    const monthNum = i + 1;
     return {
       value: `${currentYear}-${String(monthNum).padStart(2, "0")}`,
       label: `${monthNum}월`,
@@ -45,9 +43,9 @@ const getCurrentHalfYearMonths = () => {
   });
 };
 
-const getCurrentHalfYearLabel = (): string => {
-  const currentMonth = dayjs().month() + 1;
-  return currentMonth >= 7 ? "하반기" : "상반기";
+const getHalfYearLabel = (period: string): string => {
+  const month = dayjs(period).month() + 1;
+  return month >= 7 ? "하반기" : "상반기";
 };
 
 // 팀별 비행기 아이콘 매핑
@@ -126,12 +124,17 @@ export function ActivityViewDialog({
   const [expandedAllocId, setExpandedAllocId] = useState<string | null>(null);
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
+  useEffect(() => {
+    setSelectedMonth(period);
+    setExpandedAllocId(null);
+  }, [period]);
+
   // 조직 전체 활동비 대시보드 조회
   const {
     data: summaries,
     isLoading,
     error,
-  } = usePointsDashboard(memberId, period, "활동비");
+  } = usePointsDashboard(memberId, selectedMonth, "활동비");
 
   // 펼쳐진 직원의 사용내역 조회
   const { data: usageRecords, isLoading: usageLoading } = useAllocationRecords(
@@ -140,9 +143,9 @@ export function ActivityViewDialog({
     selectedMonth,
   );
 
-  const months = getCurrentHalfYearMonths();
-  const currentHalfYear = getCurrentHalfYearLabel();
-  const selectedYear = dayjs().year();
+  const months = getCurrentYearMonths();
+  const selectedHalfYear = getHalfYearLabel(selectedMonth);
+  const selectedYear = dayjs(selectedMonth).year();
 
   // 0원 멤버 및 미배정자 필터링 + 사용률순 정렬
   const filteredSummaries = useMemo(() => {
@@ -188,7 +191,7 @@ export function ActivityViewDialog({
           {/* 기간 & 요약 */}
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-gray-700">
-              {selectedYear}년 {currentHalfYear}
+              {selectedYear}년 {selectedHalfYear}
             </span>
             {!isLoading && filteredSummaries.length > 0 && (
               <span className="text-xs text-gray-400">

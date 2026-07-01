@@ -16,8 +16,6 @@ import dayjs from "dayjs";
 export default function PointsDashboard() {
   const currentDate = dayjs();
   const currentYear = currentDate.year();
-  const currentMonth = currentDate.month() + 1;
-  const isSecondHalf = currentMonth >= 7;
 
   const [selectedPeriod, setSelectedPeriod] = useState<string>(currentDate.format("YYYY-MM"));
   const [selectedType, setSelectedType] = useState<string>("all");
@@ -36,8 +34,8 @@ export default function PointsDashboard() {
   const typeFilter = selectedType === "all" ? undefined : selectedType;
   const { data: dashboardData, isLoading } = usePointsDashboard(currentMemberId, selectedPeriod, typeFilter);
 
-  const months = Array.from({ length: 6 }, (_, i) => {
-    const monthNum = isSecondHalf ? i + 7 : i + 1;
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const monthNum = i + 1;
     const date = dayjs().year(currentYear).month(monthNum - 1).date(1);
     return {
       value: date.format("YYYY-MM"),

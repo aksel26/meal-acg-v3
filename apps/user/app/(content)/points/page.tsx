@@ -429,14 +429,12 @@ export default function Points() {
     });
   }, [currentRecords, sortOrder]);
 
-  // 하반기/상반기 월 목록
+  // 올해 월 목록
   const currentDate = dayjs();
   const currentYear = currentDate.year();
-  const currentMonth = currentDate.month() + 1;
-  const isSecondHalf = currentMonth >= 7;
 
-  const months = Array.from({ length: 6 }, (_, i) => {
-    const monthNum = isSecondHalf ? i + 7 : i + 1;
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const monthNum = i + 1;
     const date = dayjs()
       .year(currentYear)
       .month(monthNum - 1)

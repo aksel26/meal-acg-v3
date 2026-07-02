@@ -135,7 +135,7 @@ export function AmountStep({ onSubmit, isSubmitting }: AmountStepProps) {
                 않습니다.
               </li>
               <li>
-                11,000원 초과분은 복지포인트 또는 입금으로 별도 정산해주세요.
+                15,000원 초과분은 복지포인트 또는 입금으로 별도 정산해주세요.
               </li>
               <li>입금자명 예시: 5/21 홍길동 석식초과</li>
             </ul>

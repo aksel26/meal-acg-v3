@@ -88,31 +88,16 @@ export default function SettingsPage() {
     return savedAllowances?.data?.[String(currentMonth)] || null;
   }, [savedAllowances, currentMonth]);
 
+  const savedDailyAllowance = useMemo(() => {
+    if (!savedMonthData?.workdays) return null;
+    return Math.round(savedMonthData.allowance / savedMonthData.workdays);
+  }, [savedMonthData]);
+
   useEffect(() => {
     if (settings) {
-      setDailyAllowance(settings.daily_allowance);
+      setDailyAllowance(savedDailyAllowance ?? settings.daily_allowance);
     }
-  }, [settings]);
-
-  const updateMutation = useMutation({
-    mutationFn: async (newAllowance: number) => {
-      const response = await fetch("/api/settings", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dailyAllowance: newAllowance }),
-      });
-      if (!response.ok) throw new Error("Failed to update settings");
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.settings.global });
-      queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
-      toast.success("설정이 저장되었습니다.");
-    },
-    onError: () => {
-      toast.error("설정 저장 중 오류가 발생했습니다.");
-    },
-  });
+  }, [settings, savedDailyAllowance]);
 
   const saveAllowancesMutation = useMutation({
     mutationFn: async () => {
@@ -133,6 +118,7 @@ export default function SettingsPage() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.settings.monthlyAllowances(currentYear, 0),
       });
+      queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
       toast.success(data.message || "월별 지원금이 저장되었습니다.");
     },
     onError: () => {
@@ -145,7 +131,7 @@ export default function SettingsPage() {
       toast.error("일일 식대 단가는 0원 이상이어야 합니다.");
       return;
     }
-    updateMutation.mutate(dailyAllowance);
+    handleSaveMonthlyAllowances();
   };
 
   const handleSaveMonthlyAllowances = () => {
@@ -174,8 +160,6 @@ export default function SettingsPage() {
     }
   };
 
-  const hasChanges = settings && dailyAllowance !== settings.daily_allowance;
-
   const holidayDates = useMemo(() => {
     return (workdaysData?.holidays || []).map((h) => new Date(h.date));
   }, [workdaysData?.holidays]);
@@ -193,6 +177,7 @@ export default function SettingsPage() {
     savedMonthData &&
     (savedMonthData.workdays !== workdaysData?.actualWorkdays ||
       savedMonthData.allowance !== totalAllowance);
+  const hasMonthlyChanges = !savedMonthData || Boolean(needsUpdate);
 
   return (
     <div className="space-y-8">
@@ -201,7 +186,7 @@ export default function SettingsPage() {
         <div className="mb-5 border-b border-slate-100 pb-4">
           <h2 className="text-lg font-bold text-slate-900">일일 식대 단가</h2>
           <p className="mt-1 text-sm text-slate-500">
-            모든 사용자의 월별 지원금 계산에 적용됩니다
+            선택한 월의 지원금 계산에 적용됩니다
           </p>
         </div>
 
@@ -236,16 +221,22 @@ export default function SettingsPage() {
 
             <button
               onClick={handleSave}
-              disabled={!hasChanges || updateMutation.isPending}
+              disabled={
+                !hasMonthlyChanges ||
+                saveAllowancesMutation.isPending ||
+                !workdaysData?.actualWorkdays
+              }
               className={cn(
                 "flex items-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold transition-all",
-                hasChanges
+                hasMonthlyChanges && workdaysData?.actualWorkdays
                   ? "bg-[#135bec]/5 text-[#135bec] hover:bg-[#135bec]/10"
                   : "cursor-not-allowed bg-slate-100 text-slate-400",
               )}
             >
               <Save className="h-4 w-4" />
-              {updateMutation.isPending ? "저장 중..." : "저장"}
+              {saveAllowancesMutation.isPending
+                ? "저장 중..."
+                : `${currentMonth}월 저장`}
             </button>
           </div>
         )}

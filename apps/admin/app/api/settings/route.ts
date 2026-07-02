@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
 
+const DEFAULT_SETTINGS = {
+  id: 1,
+  daily_allowance: 10000,
+  monthly_allowances: {},
+};
+
 // GET /api/settings - Get global settings
 export async function GET() {
   try {
@@ -12,20 +18,26 @@ export async function GET() {
       .from("global_settings")
       .select("*")
       .eq("id", 1)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error("Error fetching settings:", error);
-      return NextResponse.json({ error: "Failed to fetch settings" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Failed to fetch settings" },
+        { status: 500 },
+      );
     }
 
-    return NextResponse.json(data);
+    return NextResponse.json(data ?? DEFAULT_SETTINGS);
   } catch (error) {
     console.error("Settings API error:", error);
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
 
@@ -41,20 +53,22 @@ export async function PUT(request: NextRequest) {
     if (dailyAllowance === undefined || dailyAllowance < 0) {
       return NextResponse.json(
         { error: "Valid dailyAllowance is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const { data, error } = await supabase
       .from("global_settings")
-      .update({ daily_allowance: dailyAllowance })
-      .eq("id", 1)
+      .upsert({ id: 1, daily_allowance: dailyAllowance })
       .select()
       .single();
 
     if (error) {
       console.error("Error updating settings:", error);
-      return NextResponse.json({ error: "Failed to update settings" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Failed to update settings" },
+        { status: 500 },
+      );
     }
 
     return NextResponse.json(data);
@@ -63,6 +77,9 @@ export async function PUT(request: NextRequest) {
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

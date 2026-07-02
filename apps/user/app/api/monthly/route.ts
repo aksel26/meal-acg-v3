@@ -12,6 +12,30 @@ interface DrinkApplication {
   members: { id: string; full_name: string } | null;
 }
 
+interface MonthlyMember {
+  id: string;
+  full_name: string;
+}
+
+interface MemberCurrentStatusRow {
+  member_id: string | null;
+  full_name: string | null;
+  current_status: string | null;
+}
+
+interface MonthlyMemberStatusClient {
+  from(table: "member_current_status"): {
+    select(columns: "member_id, full_name, current_status"): {
+      or(filter: string): {
+        order(column: "full_name"): Promise<{
+          data: MemberCurrentStatusRow[] | null;
+          error: unknown;
+        }>;
+      };
+    };
+  };
+}
+
 // GET /api/monthly - 월간 음료 데이터 조회
 export async function GET(request: NextRequest) {
   try {
@@ -31,10 +55,12 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const collectionId = searchParams.get("collectionId");
 
-    // 전체 멤버 조회
-    const { data: members } = await supabase
-      .from("members")
-      .select("id, full_name")
+    // 전체 신청 현황에서는 퇴사자만 제외한다.
+    const statusClient = supabase as unknown as MonthlyMemberStatusClient;
+    const { data: members } = await statusClient
+      .from("member_current_status")
+      .select("member_id, full_name, current_status")
+      .or("current_status.is.null,current_status.neq.퇴사")
       .order("full_name");
 
     let drinkOptions: { name: string; available: boolean }[] = [];
@@ -62,10 +88,10 @@ export async function GET(request: NextRequest) {
       }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: apps, error: appError } = await (supabase as any)
+      const { data: apps, error: appError } = (await (supabase as any)
         .from("monthly_drink_applications")
         .select("*")
-        .eq("collection_id", collectionId) as {
+        .eq("collection_id", collectionId)) as {
         data: DrinkApplication[] | null;
         error: unknown;
       };
@@ -78,12 +104,14 @@ export async function GET(request: NextRequest) {
       const month = new Date().getMonth() + 1;
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: settings } = await (supabase as any)
+      const { data: settings } = (await (supabase as any)
         .from("monthly_drink_settings")
         .select("*")
         .eq("year", year)
         .eq("month", month)
-        .single() as { data: { drink_options: string[]; pickup_persons: string[] } | null };
+        .single()) as {
+        data: { drink_options: string[]; pickup_persons: string[] } | null;
+      };
 
       const defaultDrinkOptions = [
         { name: "HOT 아메리카노", available: true },
@@ -107,11 +135,14 @@ export async function GET(request: NextRequest) {
         : [];
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: apps, error: appError } = await (supabase as any)
+      const { data: apps, error: appError } = (await (supabase as any)
         .from("monthly_drink_applications")
         .select("*")
         .eq("year", year)
-        .eq("month", month) as { data: DrinkApplication[] | null; error: unknown };
+        .eq("month", month)) as {
+        data: DrinkApplication[] | null;
+        error: unknown;
+      };
 
       if (appError) console.error("Error fetching applications:", appError);
       applications = apps;
@@ -119,18 +150,24 @@ export async function GET(request: NextRequest) {
 
     // 멤버별 신청 내역 매핑
     const applicationMap = new Map(
-      applications?.map((app) => [app.user_id, app]) || []
+      applications?.map((app) => [app.user_id, app]) || [],
     );
 
     const allApplications =
-      members?.map((member) => {
-        const app = applicationMap.get(member.id);
-        return {
-          name: member.full_name,
-          drink: app?.drink || "",
-          memo: app?.memo || "",
-        };
-      }) || [];
+      (members || [])
+        .flatMap((member): MonthlyMember[] =>
+          member.member_id && member.full_name
+            ? [{ id: member.member_id, full_name: member.full_name }]
+            : [],
+        )
+        .map((member) => {
+          const app = applicationMap.get(member.id);
+          return {
+            name: member.full_name,
+            drink: app?.drink || "",
+            memo: app?.memo || "",
+          };
+        }) || [];
 
     return NextResponse.json({
       success: true,
@@ -163,7 +200,7 @@ export async function POST(request: NextRequest) {
     if (!supabase) {
       return NextResponse.json(
         { success: false, error: "Supabase not configured" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -173,7 +210,7 @@ export async function POST(request: NextRequest) {
     if (!name || !drink) {
       return NextResponse.json(
         { success: false, error: "Name and drink are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -187,7 +224,7 @@ export async function POST(request: NextRequest) {
     if (memberError || !member) {
       return NextResponse.json(
         { success: false, error: "User not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -197,11 +234,11 @@ export async function POST(request: NextRequest) {
     if (collectionId) {
       // collection에서 year/month 가져오기
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: collection } = await (supabase as any)
+      const { data: collection } = (await (supabase as any)
         .from("drink_collections")
         .select("year, month")
         .eq("id", collectionId)
-        .single() as { data: { year: number; month: number | null } | null };
+        .single()) as { data: { year: number; month: number | null } | null };
 
       year = collection?.year || new Date().getFullYear();
       month = collection?.month || new Date().getMonth() + 1;
@@ -232,7 +269,7 @@ export async function POST(request: NextRequest) {
       console.error("Error assigning drink:", error);
       return NextResponse.json(
         { success: false, error: "Failed to assign drink" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -244,7 +281,7 @@ export async function POST(request: NextRequest) {
     console.error("Monthly API error:", error);
     return NextResponse.json(
       { success: false, error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

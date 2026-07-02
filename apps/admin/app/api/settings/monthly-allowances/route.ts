@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
-import type { MonthlyAllowancesJson, MonthlyAllowanceData } from "@/lib/supabase/types";
+import type { MonthlyAllowancesJson } from "@/lib/supabase/types";
 
 // GET /api/settings/monthly-allowances - Get monthly allowances from global_settings
 export async function GET(request: NextRequest) {
@@ -16,14 +16,18 @@ export async function GET(request: NextRequest) {
       .from("global_settings")
       .select("monthly_allowances")
       .eq("id", 1)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error("Error fetching monthly allowances:", error);
-      return NextResponse.json({ error: "Failed to fetch monthly allowances" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Failed to fetch monthly allowances" },
+        { status: 500 },
+      );
     }
 
-    const monthlyAllowances = (data?.monthly_allowances as MonthlyAllowancesJson) || {};
+    const monthlyAllowances =
+      (data?.monthly_allowances as MonthlyAllowancesJson | null) || {};
     const yearData = monthlyAllowances[year] || {};
 
     return NextResponse.json({
@@ -35,7 +39,10 @@ export async function GET(request: NextRequest) {
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
 
@@ -50,8 +57,10 @@ export async function POST(request: NextRequest) {
 
     if (!year || !month || dailyAllowance === undefined || !actualWorkdays) {
       return NextResponse.json(
-        { error: "year, month, dailyAllowance, and actualWorkdays are required" },
-        { status: 400 }
+        {
+          error: "year, month, dailyAllowance, and actualWorkdays are required",
+        },
+        { status: 400 },
       );
     }
 
@@ -62,15 +71,19 @@ export async function POST(request: NextRequest) {
       .from("global_settings")
       .select("monthly_allowances")
       .eq("id", 1)
-      .single();
+      .maybeSingle();
 
     if (fetchError) {
       console.error("Error fetching current settings:", fetchError);
-      return NextResponse.json({ error: "Failed to fetch current settings" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Failed to fetch current settings" },
+        { status: 500 },
+      );
     }
 
     // 기존 데이터에 새 값 병합
-    const currentAllowances = (currentData?.monthly_allowances as MonthlyAllowancesJson) || {};
+    const currentAllowances =
+      (currentData?.monthly_allowances as MonthlyAllowancesJson) || {};
     const yearStr = String(year);
     const monthStr = String(month);
 
@@ -83,15 +96,25 @@ export async function POST(request: NextRequest) {
       workdays: actualWorkdays,
     };
 
-    // 업데이트
-    const { error: updateError } = await supabase
-      .from("global_settings")
-      .update({ monthly_allowances: currentAllowances })
-      .eq("id", 1);
+    const saveQuery = currentData
+      ? supabase
+          .from("global_settings")
+          .update({ monthly_allowances: currentAllowances })
+          .eq("id", 1)
+      : supabase.from("global_settings").insert({
+          id: 1,
+          daily_allowance: dailyAllowance,
+          monthly_allowances: currentAllowances,
+        });
+
+    const { error: updateError } = await saveQuery;
 
     if (updateError) {
       console.error("Error saving monthly allowances:", updateError);
-      return NextResponse.json({ error: "Failed to save monthly allowances" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Failed to save monthly allowances" },
+        { status: 500 },
+      );
     }
 
     return NextResponse.json({
@@ -109,6 +132,9 @@ export async function POST(request: NextRequest) {
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

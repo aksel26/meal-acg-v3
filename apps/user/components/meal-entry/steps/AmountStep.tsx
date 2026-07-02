@@ -24,9 +24,15 @@ interface AmountStepProps {
 }
 
 export function AmountStep({ onSubmit, isSubmitting }: AmountStepProps) {
-  const { formData, selectedMealType, updateFormField, completeStep } =
-    useMealDrawerStore();
-  const { amount: individualMealAmount } = useIndividualMealAmount();
+  const {
+    formData,
+    selectedMealType,
+    selectedDate,
+    updateFormField,
+    completeStep,
+  } = useMealDrawerStore();
+  const { amount: individualMealAmount } =
+    useIndividualMealAmount(selectedDate);
   const currentAmount = formData[selectedMealType].amount;
   const isIndividualMeal =
     selectedMealType === "lunch" &&

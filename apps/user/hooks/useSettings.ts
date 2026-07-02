@@ -3,7 +3,10 @@ import { queryKeys } from "@/lib/query-keys";
 
 interface SettingsData {
   dailyAllowance: number;
-  monthlyAllowances: Record<string, Record<string, { allowance: number; workdays: number }>>;
+  monthlyAllowances: Record<
+    string,
+    Record<string, { allowance: number; workdays: number }>
+  >;
 }
 
 interface SettingsResponse {
@@ -38,11 +41,19 @@ export function useSettings() {
 }
 
 // 개별식사 금액만 가져오는 훅
-export function useIndividualMealAmount() {
+export function useIndividualMealAmount(date?: Date) {
   const { data, isLoading, error } = useSettings();
+  const monthData = date
+    ? data?.monthlyAllowances?.[String(date.getFullYear())]?.[
+        String(date.getMonth() + 1)
+      ]
+    : null;
+  const savedDailyAllowance = monthData?.workdays
+    ? monthData.allowance / monthData.workdays
+    : null;
 
   return {
-    amount: data?.dailyAllowance ?? 10000,
+    amount: savedDailyAllowance ?? data?.dailyAllowance ?? 10000,
     isLoading,
     error,
   };

@@ -8,18 +8,36 @@ import utc from "dayjs/plugin/utc";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
+interface MonthlyAllowanceData {
+  allowance: number;
+  workdays: number;
+}
+
+interface MonthlyAllowancesJson {
+  [year: string]: {
+    [month: string]: MonthlyAllowanceData;
+  };
+}
+
 // 개별식사 기본 금액 조회
-async function getDailyAllowance(): Promise<number> {
+async function getDailyAllowance(year: number, month: number): Promise<number> {
   const supabase = createServiceClient();
   if (!supabase) return 10000;
 
   const { data, error } = await supabase
     .from("global_settings")
-    .select("daily_allowance")
+    .select("daily_allowance, monthly_allowances")
     .eq("id", 1)
     .single();
 
   if (error || !data) return 10000;
+  const monthlyAllowances =
+    (data.monthly_allowances as MonthlyAllowancesJson | null) || {};
+  const monthData = monthlyAllowances[String(year)]?.[String(month)];
+  if (monthData && monthData.workdays > 0) {
+    return monthData.allowance / monthData.workdays;
+  }
+
   return data.daily_allowance ?? 10000;
 }
 
@@ -36,7 +54,7 @@ export async function POST(request: NextRequest) {
           required: ["userName or userId", "date"],
           received: { userName, userId, date },
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -48,7 +66,7 @@ export async function POST(request: NextRequest) {
     if (!targetDateKST.isValid()) {
       return NextResponse.json(
         { error: "올바르지 않은 날짜 형식입니다." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -60,9 +78,14 @@ export async function POST(request: NextRequest) {
     let lunchAmount = parseInt(lunch?.amount) || 0;
 
     if (isIndividualMeal) {
-      const dailyAllowance = await getDailyAllowance();
+      const dailyAllowance = await getDailyAllowance(
+        targetDateKST.year(),
+        targetDateKST.month() + 1,
+      );
       lunchAmount = dailyAllowance;
-      console.log(`Individual meal detected, applying daily allowance: ${dailyAllowance}원`);
+      console.log(
+        `Individual meal detected, applying daily allowance: ${dailyAllowance}원`,
+      );
     }
 
     // 식사 데이터 준비
@@ -95,11 +118,13 @@ export async function POST(request: NextRequest) {
           error: "Failed to save meal data",
           details: result.error,
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
-    console.log(`Successfully saved meal data for ${userIdentifier} on ${date}`);
+    console.log(
+      `Successfully saved meal data for ${userIdentifier} on ${date}`,
+    );
 
     return NextResponse.json({
       success: true,
@@ -117,7 +142,7 @@ export async function POST(request: NextRequest) {
         error: "Failed to submit meal data",
         details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

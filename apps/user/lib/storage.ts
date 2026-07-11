@@ -119,6 +119,35 @@ export async function getAssetImageSignedUrl(
   return getSignedUrlForBucket(ASSET_BUCKET, path);
 }
 
+// 여러 경로의 서명 URL을 한 번의 Storage 호출로 발급 (path → url 매핑 반환)
+export async function getAssetImageSignedUrls(
+  paths: string[],
+): Promise<Map<string, string | null>> {
+  const result = new Map<string, string | null>();
+  if (paths.length === 0) return result;
+
+  const supabase = createServiceClient();
+  if (!supabase) {
+    paths.forEach((p) => result.set(p, null));
+    return result;
+  }
+
+  const { data, error } = await supabase.storage
+    .from(ASSET_BUCKET)
+    .createSignedUrls(paths, 3600);
+
+  if (error || !data) {
+    console.error(`createSignedUrls[${ASSET_BUCKET}] error:`, error?.message);
+    paths.forEach((p) => result.set(p, null));
+    return result;
+  }
+
+  data.forEach((entry) => {
+    result.set(entry.path ?? "", entry.error ? null : entry.signedUrl);
+  });
+  return result;
+}
+
 export async function deleteAssetImage(path: string): Promise<boolean> {
   return deleteFromBucket(ASSET_BUCKET, path);
 }

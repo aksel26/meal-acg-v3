@@ -1,5 +1,5 @@
 import type { SessionUser } from "@/lib/auth";
-import { getAssetImageSignedUrl } from "@/lib/storage";
+import { getAssetImageSignedUrls } from "@/lib/storage";
 import { createWorkClient } from "@/lib/supabase/client-work";
 
 export const ASSET_STATUSES = ["사용중", "보관중", "수리중", "폐기"] as const;
@@ -205,12 +205,14 @@ export async function listAssetsForUser(user: SessionUser): Promise<AssetSummary
     throw imageError;
   }
 
-  const hydratedImages = await Promise.all(
-    ((imageData ?? []) as AssetImageRecord[]).map(async (image) => ({
-      ...image,
-      signed_url: await getAssetImageSignedUrl(image.storage_path),
-    })),
+  const images = (imageData ?? []) as AssetImageRecord[];
+  const signedUrlByPath = await getAssetImageSignedUrls(
+    images.map((image) => image.storage_path),
   );
+  const hydratedImages = images.map((image) => ({
+    ...image,
+    signed_url: signedUrlByPath.get(image.storage_path) ?? null,
+  }));
 
   const imagesByAsset = new Map<string, AssetImageRecord[]>();
   for (const image of hydratedImages) {

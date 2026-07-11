@@ -63,57 +63,60 @@ export async function GET(request: NextRequest) {
       .filter((r) => r.related_table === "work_applications" && r.related_id)
       .map((r) => r.related_id!);
 
-    let dayoffsMap: Record<string, unknown> = {};
-    let attendanceModifyMap: Record<string, unknown> = {};
-    let workApplicationsMap: Record<string, unknown> = {};
-    if (dayoffIds.length > 0) {
-      const { data: dayoffs } = await supabase
-        .from("dayoffs")
-        .select(
-          `
+    // 서로 독립적인 세 관련 데이터 조회를 병렬 실행 (빈 목록은 즉시 resolve)
+    const [dayoffsResult, modifyRequestsResult, workApplicationsResult] =
+      await Promise.all([
+        dayoffIds.length > 0
+          ? supabase
+              .from("dayoffs")
+              .select(
+                `
           *,
           leave_type:leave_types!dayoffs_leave_type_id_fkey(id, name, category)
         `
-        )
-        .in("id", dayoffIds);
-
-      if (dayoffs) {
-        dayoffsMap = Object.fromEntries(dayoffs.map((d) => [d.id, d]));
-      }
-    }
-
-    if (attendanceModifyIds.length > 0) {
-      const { data: modifyRequests } = await supabase
-        .from("attendance_modification_requests")
-        .select(
-          `
+              )
+              .in("id", dayoffIds)
+          : Promise.resolve({ data: null }),
+        attendanceModifyIds.length > 0
+          ? supabase
+              .from("attendance_modification_requests")
+              .select(
+                `
           *,
           attendance_record:attendance_records!attendance_modification_requests_attendance_record_id_fkey(
             id, member_id, date, attendance_type, check_in_at, check_out_at
           )
         `
+              )
+              .in("id", attendanceModifyIds)
+          : Promise.resolve({ data: null }),
+        workApplicationIds.length > 0
+          ? supabase
+              .from("work_applications")
+              .select("*")
+              .in("id", workApplicationIds)
+          : Promise.resolve({ data: null }),
+      ]);
+
+    const dayoffsMap: Record<string, unknown> = dayoffsResult.data
+      ? Object.fromEntries(dayoffsResult.data.map((d) => [d.id, d]))
+      : {};
+    const attendanceModifyMap: Record<string, unknown> = modifyRequestsResult.data
+      ? Object.fromEntries(
+          modifyRequestsResult.data.map((modifyRequest) => [
+            modifyRequest.id,
+            modifyRequest,
+          ]),
         )
-        .in("id", attendanceModifyIds);
-
-      if (modifyRequests) {
-        attendanceModifyMap = Object.fromEntries(
-          modifyRequests.map((modifyRequest) => [modifyRequest.id, modifyRequest]),
-        );
-      }
-    }
-
-    if (workApplicationIds.length > 0) {
-      const { data: workApplications } = await supabase
-        .from("work_applications")
-        .select("*")
-        .in("id", workApplicationIds);
-
-      if (workApplications) {
-        workApplicationsMap = Object.fromEntries(
-          workApplications.map((application) => [application.id, application]),
-        );
-      }
-    }
+      : {};
+    const workApplicationsMap: Record<string, unknown> = workApplicationsResult.data
+      ? Object.fromEntries(
+          workApplicationsResult.data.map((application) => [
+            application.id,
+            application,
+          ]),
+        )
+      : {};
 
     const result = (data || []).map((r) => ({
       ...r,

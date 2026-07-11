@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
 import { buildSessionCookie } from "@/lib/auth";
+import { withContext } from "@repo/logger";
 
 interface LoginRequest {
   login_id: string;
@@ -10,6 +11,7 @@ interface LoginRequest {
 const INVALID_CREDENTIALS_ERROR = "아이디 또는 비밀번호가 일치하지 않습니다.";
 
 export async function POST(request: NextRequest) {
+  const log = withContext({ route: "auth/login" });
   try {
     const body: LoginRequest = await request.json();
     const { login_id, password } = body;
@@ -35,7 +37,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
-      console.error("Authentication error:", error);
+      log.error({ err: error }, "authenticate_user RPC 오류");
       return NextResponse.json(
         { success: false, error: "인증 중 오류가 발생했습니다." },
         { status: 500 },
@@ -44,6 +46,7 @@ export async function POST(request: NextRequest) {
 
     if (!data || data.length === 0) {
       // 유저 열거 방지: 계정 존재 여부와 무관하게 동일 메시지
+      log.warn({ login_id }, "로그인 실패: 인증 불일치");
       return NextResponse.json(
         { success: false, error: INVALID_CREDENTIALS_ERROR },
         { status: 401 }
@@ -60,7 +63,10 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (statusError) {
-      console.error("Member status query error:", statusError);
+      log.error(
+        { err: statusError, memberId: member.user_id },
+        "근무 상태 조회 오류",
+      );
       return NextResponse.json(
         { success: false, error: "로그인 처리 중 오류가 발생했습니다." },
         { status: 500 }
@@ -69,6 +75,10 @@ export async function POST(request: NextRequest) {
 
     if (memberStatus?.current_status === "퇴사") {
       // 유저 열거 방지: 퇴사자 여부를 드러내지 않도록 동일 메시지
+      log.warn(
+        { login_id, memberId: member.user_id },
+        "로그인 차단: 퇴사자",
+      );
       return NextResponse.json(
         { success: false, error: INVALID_CREDENTIALS_ERROR },
         { status: 401 }
@@ -76,6 +86,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 로그인 성공
+    log.info({ login_id, memberId: member.user_id }, "로그인 성공");
     const response = NextResponse.json({
       success: true,
       data: {
@@ -89,7 +100,7 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error("Login error:", error);
+    log.error({ err: error }, "로그인 처리 오류");
     return NextResponse.json(
       { success: false, error: "로그인 처리 중 오류가 발생했습니다." },
       { status: 500 }

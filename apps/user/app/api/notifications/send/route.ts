@@ -18,7 +18,13 @@ export async function POST(request: NextRequest) {
     if (!sessionUser) {
       return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
     }
-    // TODO: 방송 권한(관리자) 검증 필요 — 최소 인증만 적용
+    // 방송은 관리자만 (role은 getSessionUser가 members 테이블에서 조회 — 신뢰 가능)
+    if (sessionUser.role !== "admin") {
+      return NextResponse.json(
+        { error: "관리자만 알림을 발송할 수 있습니다." },
+        { status: 403 }
+      );
+    }
     const senderId = sessionUser.id;
 
     const body: SendRequest = await request.json();

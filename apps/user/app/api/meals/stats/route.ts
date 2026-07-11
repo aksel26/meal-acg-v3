@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
+import { getSessionUser } from "@/lib/auth";
 import dayjs from "dayjs";
 import {
   type ExternalAttendanceRecord,
@@ -25,16 +26,24 @@ interface MonthlyAllowancesJson {
 
 export async function GET(request: NextRequest) {
   try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json(
+        { success: false, error: "로그인이 필요합니다." },
+        { status: 401 },
+      );
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const month = searchParams.get("month");
     const year = searchParams.get("year");
-    const userId = searchParams.get("user_id");
+    const userId = sessionUser.id;
 
-    if (!month || !year || !userId) {
+    if (!month || !year) {
       return NextResponse.json(
         {
           success: false,
-          error: "month, year, user_id 파라미터가 필요합니다.",
+          error: "month, year 파라미터가 필요합니다.",
         },
         { status: 400 },
       );

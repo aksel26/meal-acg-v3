@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
+import { getSessionUser } from "@/lib/auth";
 
-// GET /api/my-requests?memberId=xxx - 내가 신청한 승인 요청 목록
+// GET /api/my-requests - 내가 신청한 승인 요청 목록 (세션 본인 기준)
 export async function GET(request: NextRequest) {
   try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    }
+
     const supabase = createServiceClient();
     if (!supabase) {
       return NextResponse.json(
@@ -13,15 +19,8 @@ export async function GET(request: NextRequest) {
     }
 
     const searchParams = request.nextUrl.searchParams;
-    const memberId = searchParams.get("memberId");
+    const memberId = sessionUser.id;
     const status = searchParams.get("status");
-
-    if (!memberId) {
-      return NextResponse.json(
-        { error: "memberId가 필요합니다." },
-        { status: 400 }
-      );
-    }
 
     let query = supabase
       .from("approval_requests")

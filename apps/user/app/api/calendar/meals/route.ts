@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMealsByMonth, getMealByDate } from "@/lib/supabase/meals";
 import { createServiceClient } from "@/lib/supabase/client";
+import { getSessionUser } from "@/lib/auth";
 import {
   type ExternalAttendanceRecord,
   mergeExternalAttendance,
@@ -139,22 +140,22 @@ async function getExternalAttendance(
 
 export async function GET(request: NextRequest) {
   try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json(
+        { error: "로그인이 필요합니다." },
+        { status: 401 },
+      );
+    }
+    const name = sessionUser.fullName;
+
     const { searchParams } = new URL(request.url);
     const date = searchParams.get("date"); // YYYY-MM-DD format
     const month = searchParams.get("month"); // MM format for month view
     const year = searchParams.get("year"); // YYYY format for year
-    const name = searchParams.get("name");
 
     console.log(`=== Calendar Meals API ===`);
     console.log(`Name: ${name}, Date: ${date}, Month: ${month}, Year: ${year}`);
-
-    if (!name) {
-      console.error("Missing name parameter");
-      return NextResponse.json(
-        { error: "Name parameter is required" },
-        { status: 400 },
-      );
-    }
 
     if (!date && !month) {
       console.error("Missing date or month parameter");

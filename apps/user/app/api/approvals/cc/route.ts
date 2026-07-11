@@ -1,18 +1,21 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
+import { getSessionUser } from "@/lib/auth";
 
-// GET /api/approvals/cc?memberId=xxx - 내가 참조된 요청 목록
-export async function GET(request: NextRequest) {
+// GET /api/approvals/cc - 내가 참조된 요청 목록 (세션 본인 기준)
+export async function GET() {
   try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    }
+
     const supabase = createServiceClient();
     if (!supabase) {
       return NextResponse.json({ error: "DB not configured" }, { status: 500 });
     }
 
-    const memberId = request.nextUrl.searchParams.get("memberId");
-    if (!memberId) {
-      return NextResponse.json({ error: "memberId가 필요합니다." }, { status: 400 });
-    }
+    const memberId = sessionUser.id;
 
     const { data, error } = await supabase
       .from("approval_requests")

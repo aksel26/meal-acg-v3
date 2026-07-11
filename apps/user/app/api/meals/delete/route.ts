@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { deleteMeal, type MealType } from "@/lib/supabase/meals";
+import { getSessionUser } from "@/lib/auth";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
@@ -25,15 +26,25 @@ function isMealType(value: unknown): value is MealType {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const body: DeleteMealRequest = await request.json();
-    const { userName, date, mealType } = body;
+    // 로그인 세션에서 본인 신원을 강제한다 (요청 body의 userName은 신뢰하지 않음)
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json(
+        { success: false, error: "로그인이 필요합니다." },
+        { status: 401 },
+      );
+    }
 
-    if (!userName || !date) {
+    const body: DeleteMealRequest = await request.json();
+    const { date, mealType } = body;
+    const userName = sessionUser.fullName;
+
+    if (!date) {
       return NextResponse.json(
         {
           success: false,
           error: "필수 파라미터가 누락되었습니다.",
-          details: "userName과 date가 필요합니다.",
+          details: "date가 필요합니다.",
         },
         { status: 400 },
       );

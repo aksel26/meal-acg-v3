@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { saveMeal, MealData } from "@/lib/supabase/meals";
 import { createServiceClient } from "@/lib/supabase/client";
+import { getSessionUser } from "@/lib/auth";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
@@ -25,23 +26,27 @@ async function getDailyAllowance(): Promise<number> {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { userName, userId, date, breakfast, lunch, dinner } = body;
+    // 로그인 세션에서 본인 신원을 강제한다 (요청 body의 userId/userName은 신뢰하지 않음)
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    }
 
-    // 필수 파라미터 검증 (userId 또는 userName 필요)
-    if ((!userName && !userId) || !date) {
+    const body = await request.json();
+    const { date, breakfast, lunch, dinner } = body;
+
+    if (!date) {
       return NextResponse.json(
         {
           error: "필수 파라미터가 누락되었습니다.",
-          required: ["userName or userId", "date"],
-          received: { userName, userId, date },
+          required: ["date"],
         },
         { status: 400 }
       );
     }
 
-    // userId 우선 사용, 없으면 userName 사용
-    const userIdentifier = userId || userName;
+    // 항상 세션 사용자 본인으로 저장
+    const userIdentifier = sessionUser.id;
 
     // 날짜 파싱 (한국 시간대로 처리)
     const targetDateKST = dayjs(date).tz("Asia/Seoul");

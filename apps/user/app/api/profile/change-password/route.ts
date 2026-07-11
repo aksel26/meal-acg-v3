@@ -1,20 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
+import { getSessionUser } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
-    const { memberId, currentPassword, newPassword } = await request.json();
+    // 본인 비밀번호만 변경 (body의 memberId는 신뢰하지 않음)
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    }
 
-    if (!memberId || !currentPassword || !newPassword) {
+    const { currentPassword, newPassword } = await request.json();
+    const memberId = sessionUser.id;
+
+    if (!currentPassword || !newPassword) {
       return NextResponse.json(
         { error: "모든 필드를 입력해주세요." },
         { status: 400 },
       );
     }
 
-    if (newPassword.length < 4) {
+    if (newPassword.length < 8) {
       return NextResponse.json(
-        { error: "새 비밀번호는 4자 이상이어야 합니다." },
+        { error: "새 비밀번호는 8자 이상이어야 합니다." },
         { status: 400 },
       );
     }

@@ -28,6 +28,20 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // allocation이 본인 소유인지 검증 (임의 allocation_id로 타인 활동비 상세 조회 차단)
+    const { data: allocation } = await supabase
+      .from("budget_allocations")
+      .select("member_id")
+      .eq("id", allocationId)
+      .single();
+
+    if (!allocation || allocation.member_id !== sessionUser.id) {
+      return NextResponse.json(
+        { error: "본인 예산의 사용내역만 조회할 수 있습니다." },
+        { status: 403 }
+      );
+    }
+
     // usage_records에서 allocation_id로 필터
     let query = supabase
       .from("usage_records")

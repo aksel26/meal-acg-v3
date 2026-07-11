@@ -24,8 +24,9 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const year = searchParams.get("year");
     const month = searchParams.get("month");
-    // 조회 대상은 세션에서 강제 (본인 근태만)
-    const targetId = sessionUser.id;
+    // 대시보드 팀 휴가 캘린더는 무param 시 전사 휴가를 조회한다.
+    // 무인증 유출만 차단하고(위 401), 조회 범위는 기존 동작을 유지한다.
+    const targetId = searchParams.get("target_id");
 
     let query = supabase
       .from("dayoffs")

@@ -160,25 +160,33 @@ export async function PUT(request: NextRequest) {
         .filter((id): id is string => Boolean(id))
     );
 
-    const validAllocations = allocations.filter(
-      ({ member_id, type, period, total_amount }) =>
-        member_id &&
-        type &&
-        period &&
-        total_amount !== undefined &&
-        !resignedMemberIds.has(member_id)
-    );
-
-    if (validAllocations.length === 0) {
-      return NextResponse.json([]);
-    }
-
-    // 기존 레코드를 한 번에 조회해 (member_id|type|period) 복합키로 매칭
+    // (member_id|type|period) 복합키
     const allocationKey = (a: {
       member_id: string;
       type: string;
       period: string;
     }) => `${a.member_id}|${a.type}|${a.period}`;
+
+    // 유효 항목 필터 + 입력 내 중복 복합키 제거 (last-wins).
+    // budget_allocations에 unique 제약이 없어 중복 입력 시 중복 행이 생기는 것을 방지한다.
+    const validAllocations = [
+      ...new Map(
+        allocations
+          .filter(
+            ({ member_id, type, period, total_amount }) =>
+              member_id &&
+              type &&
+              period &&
+              total_amount !== undefined &&
+              !resignedMemberIds.has(member_id)
+          )
+          .map((a) => [allocationKey(a), a]),
+      ).values(),
+    ];
+
+    if (validAllocations.length === 0) {
+      return NextResponse.json([]);
+    }
 
     const { data: existingRows, error: existingError } = await supabase
       .from("budget_allocations")

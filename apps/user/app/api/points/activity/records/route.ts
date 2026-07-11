@@ -1,20 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
+import { getSessionUser } from "@/lib/auth";
 
-// GET: 특정 allocation의 사용내역 조회 (읽기 전용 — 모든 사용자 접근 가능)
+// GET: 특정 allocation의 사용내역 조회 (읽기 전용 — 로그인 필요)
 export async function GET(request: NextRequest) {
   try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    }
     const { searchParams } = new URL(request.url);
-    const memberId = searchParams.get("member_id");
     const allocationId = searchParams.get("allocation_id");
     const yearMonth = searchParams.get("year_month"); // optional: "YYYY-MM"
-
-    if (!memberId) {
-      return NextResponse.json(
-        { error: "member_id는 필수입니다." },
-        { status: 400 }
-      );
-    }
 
     if (!allocationId) {
       return NextResponse.json(

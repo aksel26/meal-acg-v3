@@ -1,11 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
+import { getSessionUser } from "@/lib/auth";
 
-// GET: 멤버 목록 조회 (member_id가 있으면 같은 조직만, 없으면 전체)
-export async function GET(request: NextRequest) {
+// GET: 멤버 목록 조회 (세션 사용자와 같은 조직만)
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const memberId = searchParams.get("member_id");
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    }
+    const memberId = sessionUser.id;
 
     const supabase = createServiceClient();
     if (!supabase) {
@@ -15,35 +19,31 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    let organizationId: string | null = null;
+    // 세션 사용자의 organization_id 조회
+    const { data: currentMember, error: memberError } = await supabase
+      .from("members")
+      .select("id, organization_id")
+      .eq("id", memberId)
+      .single();
 
-    if (memberId) {
-      // 요청한 멤버의 organization_id 조회
-      const { data: currentMember, error: memberError } = await supabase
-        .from("members")
-        .select("id, organization_id")
-        .eq("id", memberId)
-        .single();
-
-      if (memberError || !currentMember) {
-        return NextResponse.json(
-          { error: "멤버 정보를 찾을 수 없습니다." },
-          { status: 404 }
-        );
-      }
-
-      if (!currentMember.organization_id) {
-        return NextResponse.json(
-          { error: "멤버의 조직 정보가 없습니다." },
-          { status: 400 }
-        );
-      }
-
-      organizationId = currentMember.organization_id;
+    if (memberError || !currentMember) {
+      return NextResponse.json(
+        { error: "멤버 정보를 찾을 수 없습니다." },
+        { status: 404 }
+      );
     }
 
-    // 멤버 조회 (member_id가 있으면 같은 조직만, 없으면 전체)
-    let query = supabase
+    if (!currentMember.organization_id) {
+      return NextResponse.json(
+        { error: "멤버의 조직 정보가 없습니다." },
+        { status: 400 }
+      );
+    }
+
+    const organizationId = currentMember.organization_id;
+
+    // 같은 조직 멤버만 조회
+    const query = supabase
       .from("members")
       .select(
         `
@@ -56,11 +56,8 @@ export async function GET(request: NextRequest) {
         )
       `
       )
-      .order("full_name");
-
-    if (organizationId) {
-      query = query.eq("organization_id", organizationId);
-    }
+      .order("full_name")
+      .eq("organization_id", organizationId);
 
     const { data: members, error: membersError } = await query;
 

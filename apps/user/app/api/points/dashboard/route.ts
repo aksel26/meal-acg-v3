@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
+import { getSessionUser } from "@/lib/auth";
 
 // "YYYY-MM" → "YYYY-H1" or "YYYY-H2", "YYYY-H1"/"YYYY-H2"는 그대로
 function toHalfYearPeriod(period: string): string {
@@ -12,17 +13,14 @@ function toHalfYearPeriod(period: string): string {
 // GET: 조직 전체 예산 현황 조회 (읽기 전용)
 export async function GET(request: NextRequest) {
   try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    }
     const { searchParams } = new URL(request.url);
-    const memberId = searchParams.get("member_id");
+    const memberId = sessionUser.id;
     const period = searchParams.get("period");
     const type = searchParams.get("type"); // optional: '복지포인트' | '활동비'
-
-    if (!memberId) {
-      return NextResponse.json(
-        { error: "member_id는 필수입니다." },
-        { status: 400 }
-      );
-    }
 
     if (!period) {
       return NextResponse.json(

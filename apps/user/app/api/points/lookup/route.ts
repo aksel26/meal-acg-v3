@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
+import { getSessionUser } from "@/lib/auth";
 
-// GET: 이름으로 멤버 ID 조회
+// GET: 이름으로 멤버 ID 조회 (로그인 필요 — 결재자 선택 등에 사용)
 export async function GET(request: NextRequest) {
   try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    }
     const { searchParams } = new URL(request.url);
     const name = searchParams.get("name");
 

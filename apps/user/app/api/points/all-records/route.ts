@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
+import { getSessionUser } from "@/lib/auth";
 
 // "YYYY-MM" → "YYYY-H1" or "YYYY-H2" 변환
 function toHalfYearPeriod(monthlyPeriod: string): string {
@@ -23,23 +24,19 @@ function halfYearToDateRange(period: string): { start: string; end: string } | n
 // GET /api/points/all-records - 조직 전체 사용 내역 조회
 export async function GET(request: NextRequest) {
   try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    }
     const { searchParams } = new URL(request.url);
 
-    const memberId = searchParams.get("member_id");
+    const memberId = sessionUser.id;
     const period = searchParams.get("period");
     const type = searchParams.get("type");
     const filterMemberId = searchParams.get("filter_member_id");
     const reviewStatus = searchParams.get("review_status");
     const limitStr = searchParams.get("limit");
     const offsetStr = searchParams.get("offset");
-
-    // member_id 필수 검증 (현재 사용자 확인용)
-    if (!memberId) {
-      return NextResponse.json(
-        { error: "member_id는 필수입니다." },
-        { status: 400 }
-      );
-    }
 
     const supabase = createServiceClient();
     if (!supabase) {
@@ -79,7 +76,6 @@ export async function GET(request: NextRequest) {
     const orgMemberIds = orgMembers?.map((m: { id: string }) => m.id) || [];
 
     // 같은 조직의 모든 usage_records 조회
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let query = supabase
       .from("usage_records")
       .select(
@@ -92,6 +88,7 @@ export async function GET(request: NextRequest) {
         )
       `,
         { count: "exact" }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ) as any;
 
     // 같은 조직 필터링 (member_id IN 방식)

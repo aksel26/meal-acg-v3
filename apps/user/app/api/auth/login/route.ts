@@ -7,7 +7,6 @@ interface LoginRequest {
   password: string;
 }
 
-const ACCOUNT_NOT_FOUND_ERROR = "계정이 없습니다.";
 const INVALID_CREDENTIALS_ERROR = "아이디 또는 비밀번호가 일치하지 않습니다.";
 
 export async function POST(request: NextRequest) {
@@ -44,20 +43,9 @@ export async function POST(request: NextRequest) {
     }
 
     if (!data || data.length === 0) {
-      // 계정 존재 여부에 따라 에러 메시지를 구분한다
-      const { data: existingMember } = await supabase
-        .from("members")
-        .select("id")
-        .eq("login_id", login_id)
-        .maybeSingle();
-
+      // 유저 열거 방지: 계정 존재 여부와 무관하게 동일 메시지
       return NextResponse.json(
-        {
-          success: false,
-          error: existingMember
-            ? INVALID_CREDENTIALS_ERROR
-            : ACCOUNT_NOT_FOUND_ERROR,
-        },
+        { success: false, error: INVALID_CREDENTIALS_ERROR },
         { status: 401 }
       );
     }
@@ -80,8 +68,9 @@ export async function POST(request: NextRequest) {
     }
 
     if (memberStatus?.current_status === "퇴사") {
+      // 유저 열거 방지: 퇴사자 여부를 드러내지 않도록 동일 메시지
       return NextResponse.json(
-        { success: false, error: ACCOUNT_NOT_FOUND_ERROR },
+        { success: false, error: INVALID_CREDENTIALS_ERROR },
         { status: 401 }
       );
     }

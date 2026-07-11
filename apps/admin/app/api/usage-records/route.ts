@@ -27,6 +27,14 @@ export async function GET(request: NextRequest) {
     const reviewStatus = searchParams.get("review_status");
     const allocationId = searchParams.get("allocation_id");
 
+    // 무필터 요청은 usage_records 전체 반환이 되므로 차단 (UI는 항상 period를 보냄)
+    if (!period && !type && !memberId && reviewStatus === null && !allocationId) {
+      return NextResponse.json(
+        { error: "At least one filter is required" },
+        { status: 400 }
+      );
+    }
+
     let query = supabase
       .from("usage_records")
       .select(

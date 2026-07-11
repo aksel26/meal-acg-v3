@@ -14,6 +14,14 @@ export async function GET(request: NextRequest) {
     const month = searchParams.get("month");
     const date = searchParams.get("date");
 
+    // 무필터 요청은 meal_logs 전체 반환이 되므로 차단 (UI는 항상 userId/기간을 보냄)
+    if (!userId && !date && !(year && month)) {
+      return NextResponse.json(
+        { error: "userId, date, or year+month filter is required" },
+        { status: 400 }
+      );
+    }
+
     let query = supabase
       .from("meal_logs")
       .select("*, members(full_name)")

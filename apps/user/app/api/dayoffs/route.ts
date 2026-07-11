@@ -99,7 +99,6 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const {
-      targetId,
       startDate,
       endDate,
       leaveTypeId,
@@ -110,12 +109,13 @@ export async function POST(request: NextRequest) {
       reason,
     } = body;
 
-    // 작성자는 세션에서 강제 (body 값 신뢰하지 않음)
+    // 작성자·대상 모두 세션 본인으로 강제 (본인 휴가만 신청, 대리 신청 불가)
     const authorId = sessionUser.id;
+    const targetId = sessionUser.id;
 
-    if (!targetId || !startDate || !leaveTypeId) {
+    if (!startDate || !leaveTypeId) {
       return NextResponse.json(
-        { error: "targetId, startDate, leaveTypeId are required" },
+        { error: "startDate, leaveTypeId are required" },
         { status: 400 }
       );
     }

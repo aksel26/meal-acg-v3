@@ -139,13 +139,18 @@ export async function POST(request: NextRequest) {
     const currentHalf = now.getMonth() < 6 ? "H1" : "H2";
     const period = `${now.getFullYear()}-${currentHalf}`;
 
-    for (const type of ["복지포인트", "활동비"] as const) {
-      const { error: allocError } = await supabase
-        .from("budget_allocations")
-        .insert({ member_id: data.id, type, period, total_amount: 0 });
-      if (allocError) {
-        console.error(`Error creating ${type} allocation:`, allocError);
-      }
+    const { error: allocError } = await supabase
+      .from("budget_allocations")
+      .insert(
+        (["복지포인트", "활동비"] as const).map((type) => ({
+          member_id: data.id,
+          type,
+          period,
+          total_amount: 0,
+        }))
+      );
+    if (allocError) {
+      console.error("Error creating initial allocations:", allocError);
     }
 
     assertNoSensitiveMemberFields(data as Record<string, unknown>);

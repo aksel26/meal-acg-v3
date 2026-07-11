@@ -141,8 +141,6 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const results = [];
-
     const { data: resignedMembers, error: resignedError } = await supabase
       .from("member_current_status")
       .select("member_id")
@@ -162,63 +160,95 @@ export async function PUT(request: NextRequest) {
         .filter((id): id is string => Boolean(id))
     );
 
-    for (const allocation of allocations) {
-      const { member_id, type, period, total_amount, description } = allocation;
+    const validAllocations = allocations.filter(
+      ({ member_id, type, period, total_amount }) =>
+        member_id &&
+        type &&
+        period &&
+        total_amount !== undefined &&
+        !resignedMemberIds.has(member_id)
+    );
 
-      if (!member_id || !type || !period || total_amount === undefined) {
-        continue;
-      }
-      if (resignedMemberIds.has(member_id)) {
-        continue;
-      }
+    if (validAllocations.length === 0) {
+      return NextResponse.json([]);
+    }
 
-      // Try to find existing allocation by member_id + type + period
-      const { data: existing } = await supabase
+    // 기존 레코드를 한 번에 조회해 (member_id|type|period) 복합키로 매칭
+    const allocationKey = (a: {
+      member_id: string;
+      type: string;
+      period: string;
+    }) => `${a.member_id}|${a.type}|${a.period}`;
+
+    const { data: existingRows, error: existingError } = await supabase
+      .from("budget_allocations")
+      .select("id, member_id, type, period")
+      .in("member_id", [...new Set(validAllocations.map((a) => a.member_id))])
+      .in("type", [...new Set(validAllocations.map((a) => a.type))])
+      .in("period", [...new Set(validAllocations.map((a) => a.period))]);
+
+    if (existingError) {
+      console.error("Error fetching existing allocations:", existingError);
+      return NextResponse.json(
+        { error: "Failed to fetch existing allocations" },
+        { status: 500 }
+      );
+    }
+
+    const existingIdByKey = new Map(
+      (existingRows || []).map((row) => [allocationKey(row), row.id])
+    );
+
+    const toInsert = validAllocations.filter(
+      (a) => !existingIdByKey.has(allocationKey(a))
+    );
+    const toUpdate = validAllocations.filter((a) =>
+      existingIdByKey.has(allocationKey(a))
+    );
+
+    const results = [];
+
+    if (toInsert.length > 0) {
+      const { data, error } = await supabase
         .from("budget_allocations")
-        .select("id")
-        .eq("member_id", member_id)
-        .eq("type", type)
-        .eq("period", period)
-        .single();
-
-      if (existing) {
-        // Update existing
-        const { data, error } = await supabase
-          .from("budget_allocations")
-          .update({
-            total_amount,
-            description: description || null,
-          })
-          .eq("id", existing.id)
-          .select()
-          .single();
-
-        if (error) {
-          console.error("Error updating allocation:", error);
-        } else {
-          results.push(data);
-        }
-      } else {
-        // Insert new
-        const { data, error } = await supabase
-          .from("budget_allocations")
-          .insert({
+        .insert(
+          toInsert.map(({ member_id, type, period, total_amount, description }) => ({
             member_id,
             type,
             period,
             total_amount,
             description: description || null,
+          }))
+        )
+        .select();
+
+      if (error) {
+        console.error("Error inserting allocations:", error);
+      } else {
+        results.push(...(data || []));
+      }
+    }
+
+    const updated = await Promise.all(
+      toUpdate.map(async (a) => {
+        const { data, error } = await supabase
+          .from("budget_allocations")
+          .update({
+            total_amount: a.total_amount,
+            description: a.description || null,
           })
+          .eq("id", existingIdByKey.get(allocationKey(a))!)
           .select()
           .single();
 
         if (error) {
-          console.error("Error inserting allocation:", error);
-        } else {
-          results.push(data);
+          console.error("Error updating allocation:", error);
+          return null;
         }
-      }
-    }
+        return data;
+      })
+    );
+    results.push(...updated.filter((row) => row !== null));
 
     return NextResponse.json(results);
   } catch (error) {

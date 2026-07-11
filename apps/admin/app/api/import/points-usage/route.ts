@@ -241,27 +241,34 @@ export async function POST(request: Request): Promise<NextResponse<ImportResult>
     const finalInsert = [...dedupeMap.values()];
 
     // 6. 기존 DB 레코드 삭제 (덮어쓰기) — 삭제 전 스냅샷을 확보해 감사로그로 남긴다.
-    const overwrittenRecords: Record<string, unknown>[] = [];
-    for (const r of finalInsert) {
-      const { data: existing } = await supabase
-        .from("usage_records")
-        .select("id, member_id, type, description, amount, used_at, review_status")
-        .eq("member_id", r.member_id)
-        .eq("used_at", r.used_at)
-        .eq("type", r.type)
-        .eq("description", r.description);
+    // 후보를 한 번에 조회한 뒤 (member_id|used_at|type|description) 복합키로 매칭한다.
+    const overwriteKey = (r: {
+      member_id: string | null;
+      used_at: string | null;
+      type: string | null;
+      description: string | null;
+    }) => `${r.member_id}|${r.used_at}|${r.type}|${r.description}`;
+    const overwriteKeys = new Set(finalInsert.map(overwriteKey));
 
-      if (existing && existing.length > 0) {
-        overwrittenRecords.push(...existing);
-      }
+    const { data: overwriteCandidates } = await supabase
+      .from("usage_records")
+      .select("id, member_id, type, description, amount, used_at, review_status")
+      .in("member_id", [...new Set(finalInsert.map((r) => r.member_id))])
+      .in("used_at", [...new Set(finalInsert.map((r) => r.used_at))])
+      .in("type", [...new Set(finalInsert.map((r) => r.type))]);
 
+    const overwrittenRecords: Record<string, unknown>[] = (
+      overwriteCandidates || []
+    ).filter((row) => overwriteKeys.has(overwriteKey(row)));
+
+    if (overwrittenRecords.length > 0) {
       await supabase
         .from("usage_records")
         .delete()
-        .eq("member_id", r.member_id)
-        .eq("used_at", r.used_at)
-        .eq("type", r.type)
-        .eq("description", r.description);
+        .in(
+          "id",
+          overwrittenRecords.map((r) => r.id as string)
+        );
     }
 
     // 7. batch insert usage_records

@@ -14,7 +14,8 @@ export async function GET(
     const supabase = createServiceClient();
     const { id } = await params;
 
-    if (!id) {
+    // .or() 필터 문자열에 삽입되므로 UUID 형식을 강제한다
+    if (!id || !/^[0-9a-fA-F-]{36}$/.test(id)) {
       return NextResponse.json({ error: "Organization ID is required" }, { status: 400 });
     }
 

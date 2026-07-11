@@ -1,17 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
+import { getSessionUser } from "@/lib/auth";
 
 interface UnsubscribeRequest {
-  memberId: string;
   endpoint: string;
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const body: UnsubscribeRequest = await request.json();
-    const { memberId, endpoint } = body;
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    }
+    const memberId = sessionUser.id;
 
-    if (!memberId || !endpoint) {
+    const body: UnsubscribeRequest = await request.json();
+    const { endpoint } = body;
+
+    if (!endpoint) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }

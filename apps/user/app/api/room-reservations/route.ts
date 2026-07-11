@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
+import { getSessionUser } from "@/lib/auth";
 
 function isValidTime(t: string): boolean {
   const [, min] = t.split(":");
@@ -13,6 +14,11 @@ function db(supabase: any) {
 
 export async function GET(request: NextRequest) {
   try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    }
+
     const date = request.nextUrl.searchParams.get("date");
     if (!date) {
       return NextResponse.json({ error: "date is required" }, { status: 400 });
@@ -38,8 +44,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    }
+
     const body = await request.json();
-    const { room_id, date, start_time, end_time, type, title, content, reserved_by, cc_members } = body;
+    const { room_id, date, start_time, end_time, type, title, content, cc_members } = body;
+    // 예약자는 세션 사용자로 고정 (reserved_by 컬럼은 이름 text)
+    const reserved_by = sessionUser.fullName;
 
     if (!room_id || !date || !start_time || !end_time || !type) {
       const missing = [

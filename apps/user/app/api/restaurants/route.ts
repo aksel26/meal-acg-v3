@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { createServiceClient } from "@/lib/supabase/client";
+import { getSessionUser } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export interface RestaurantData {
@@ -49,6 +50,14 @@ export async function GET() {
 // POST: 새 식당 등록
 export async function POST(request: NextRequest) {
   try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json(
+        { success: false, message: "로그인이 필요합니다." },
+        { status: 401 }
+      );
+    }
+
     const supabase = createServiceClient();
     if (!supabase) {
       throw new Error("Supabase 클라이언트를 초기화할 수 없습니다.");

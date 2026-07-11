@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
+import { getSessionUser } from "@/lib/auth";
 
 interface DrinkApplication {
   id: string;
@@ -167,29 +168,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
-    const { name, drink, collectionId } = body;
-
-    if (!name || !drink) {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
       return NextResponse.json(
-        { success: false, error: "Name and drink are required" },
+        { success: false, error: "로그인이 필요합니다." },
+        { status: 401 }
+      );
+    }
+
+    const body = await request.json();
+    const { drink, collectionId } = body;
+
+    if (!drink) {
+      return NextResponse.json(
+        { success: false, error: "Drink is required" },
         { status: 400 }
       );
     }
 
-    // 이름으로 사용자 찾기
-    const { data: member, error: memberError } = await supabase
-      .from("members")
-      .select("id")
-      .eq("full_name", name)
-      .single();
-
-    if (memberError || !member) {
-      return NextResponse.json(
-        { success: false, error: "User not found" },
-        { status: 404 }
-      );
-    }
+    // 신청자는 세션 사용자로 고정
+    const name = sessionUser.fullName;
+    const member = { id: sessionUser.id };
 
     let year: number;
     let month: number;

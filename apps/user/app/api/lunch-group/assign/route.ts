@@ -1,4 +1,5 @@
 import { createServiceClient } from "@/lib/supabase/client";
+import { getSessionUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import dayjs from "dayjs";
 
@@ -19,36 +20,23 @@ interface LunchGroupWithMembers {
   }[];
 }
 
-export async function POST(request: Request) {
+export async function POST() {
   try {
     const supabase = createServiceClient();
     if (!supabase) {
       throw new Error("Supabase 클라이언트를 초기화할 수 없습니다.");
     }
 
-    // 1. 요청 파싱
-    let requestBody;
-    try {
-      requestBody = await request.json();
-    } catch {
-      throw new Error("잘못된 JSON 형식입니다.");
+    // 1. 세션 확인 — 배정 대상은 세션 사용자로 고정
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json(
+        { success: false, error: "로그인이 필요합니다." },
+        { status: 401 }
+      );
     }
 
-    const { userName } = requestBody;
-    if (!userName || typeof userName !== "string" || userName.trim().length === 0) {
-      throw new Error("유효하지 않은 사용자 이름입니다.");
-    }
-
-    // 2. 사용자 조회 (full_name으로)
-    const { data: member, error: memberError } = await supabase
-      .from("members")
-      .select("id, full_name")
-      .eq("full_name", userName.trim())
-      .single();
-
-    if (memberError || !member) {
-      throw new Error("등록되지 않은 사용자입니다.");
-    }
+    const member = { id: sessionUser.id, full_name: sessionUser.fullName };
 
     const weekStartDate = getWeekStartDate();
 

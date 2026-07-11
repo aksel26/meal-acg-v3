@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
+import { getSessionUser } from "@/lib/auth";
 import { sendPushNotification, type PushPayload } from "@/lib/web-push";
 
 interface SendRequest {
-  senderId: string;
   memberIds?: string[];
   names?: string[];
   title: string;
@@ -14,12 +14,19 @@ interface SendRequest {
 
 export async function POST(request: NextRequest) {
   try {
-    const body: SendRequest = await request.json();
-    const { senderId, memberIds, names, title, body: messageBody, url, tag } = body;
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    }
+    // TODO: 방송 권한(관리자) 검증 필요 — 최소 인증만 적용
+    const senderId = sessionUser.id;
 
-    if (!senderId || !title || !messageBody) {
+    const body: SendRequest = await request.json();
+    const { memberIds, names, title, body: messageBody, url, tag } = body;
+
+    if (!title || !messageBody) {
       return NextResponse.json(
-        { error: "senderId, title, and body are required" },
+        { error: "title and body are required" },
         { status: 400 }
       );
     }

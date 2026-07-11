@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
+import { getSessionUser } from "@/lib/auth";
 
 interface SubscribeRequest {
-  memberId: string;
   subscription: {
     endpoint: string;
     p256dh: string;
@@ -13,10 +13,16 @@ interface SubscribeRequest {
 
 export async function POST(request: NextRequest) {
   try {
-    const body: SubscribeRequest = await request.json();
-    const { memberId, subscription, userAgent } = body;
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    }
+    const memberId = sessionUser.id;
 
-    if (!memberId || !subscription?.endpoint || !subscription?.p256dh || !subscription?.auth) {
+    const body: SubscribeRequest = await request.json();
+    const { subscription, userAgent } = body;
+
+    if (!subscription?.endpoint || !subscription?.p256dh || !subscription?.auth) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }

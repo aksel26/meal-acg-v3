@@ -7,6 +7,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR ?? ".next",
   reactStrictMode: true,
+  transpilePackages: ["@repo/logger"],
+  serverExternalPackages: ["pino"],
   typescript: {
     ignoreBuildErrors: true,
   },

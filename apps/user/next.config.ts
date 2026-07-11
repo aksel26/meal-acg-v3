@@ -2,6 +2,8 @@ import withPWA from "@ducanh2912/next-pwa";
 
 const nextConfig = {
   reactStrictMode: true,
+  transpilePackages: ["@repo/logger"],
+  serverExternalPackages: ["pino"],
   typescript: {
     ignoreBuildErrors: true,
   },

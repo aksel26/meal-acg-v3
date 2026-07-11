@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
+import { getSessionUser } from "@/lib/auth";
 
 // GET /api/attendance/modify?memberId=xxx - 내 수정 요청 목록
 // GET /api/attendance/modify?memberId=xxx&attendanceRecordId=xxx - 특정 근태 수정 요청
@@ -67,6 +68,12 @@ export async function GET(request: NextRequest) {
 // POST /api/attendance/modify - 근태 수정 요청 생성
 export async function POST(request: NextRequest) {
   try {
+    // 요청자는 로그인 세션 본인으로 강제한다 (requesterId 위조 차단)
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    }
+
     const supabase = createServiceClient();
     if (!supabase) {
       return NextResponse.json(
@@ -75,10 +82,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { attendanceRecordId, requesterId, approverId, originalType, requestedType, reason } =
+    const { attendanceRecordId, approverId, originalType, requestedType, reason } =
       await request.json();
+    const requesterId = sessionUser.id;
 
-    if (!attendanceRecordId || !requesterId || !approverId || !originalType || !requestedType || !reason) {
+    if (!attendanceRecordId || !approverId || !originalType || !requestedType || !reason) {
       return NextResponse.json(
         { error: "모든 필드는 필수입니다." },
         { status: 400 }

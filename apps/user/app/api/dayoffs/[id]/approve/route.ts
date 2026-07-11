@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
+import { getSessionUser } from "@/lib/auth";
 
 // PATCH /api/dayoffs/[id]/approve - 근태 승인
 export async function PATCH(
@@ -7,6 +8,12 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // 승인자는 로그인 세션 본인으로 강제한다 (요청 body의 approverId 위조 차단)
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    }
+
     const supabase = createServiceClient();
     if (!supabase) {
       return NextResponse.json(
@@ -16,15 +23,7 @@ export async function PATCH(
     }
 
     const { id } = await params;
-    const body = await request.json();
-    const { approverId } = body;
-
-    if (!approverId) {
-      return NextResponse.json(
-        { error: "approverId is required" },
-        { status: 400 }
-      );
-    }
+    const approverId = sessionUser.id;
 
     const { data, error } = await supabase
       .from("dayoffs")

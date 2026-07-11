@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
+import { getSessionUser } from "@/lib/auth";
 
 // GET /api/dayoffs/[id] - 근태 상세 조회
 export async function GET(
@@ -55,6 +56,12 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // 수정자는 로그인 세션 본인으로 강제하고, 본인 소유 근태만 수정 허용
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    }
+
     const supabase = createServiceClient();
     if (!supabase) {
       return NextResponse.json(
@@ -66,7 +73,6 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
     const {
-      editorId,
       leaveDate,
       leaveTypeId,
       lateHour,
@@ -77,21 +83,27 @@ export async function PUT(
       editReason,
     } = body;
 
-    if (!editorId) {
-      return NextResponse.json(
-        { error: "editorId is required" },
-        { status: 400 }
-      );
-    }
+    const editorId = sessionUser.id;
 
     const { data: existing } = await supabase
       .from("dayoffs")
-      .select("approver_id")
+      .select("approver_id, author_id, target_id")
       .eq("id", id)
       .eq("is_deleted", false)
       .single();
 
-    if (existing?.approver_id && !editReason?.trim()) {
+    if (!existing) {
+      return NextResponse.json({ error: "근태를 찾을 수 없습니다." }, { status: 404 });
+    }
+
+    if (
+      existing.author_id !== sessionUser.id &&
+      existing.target_id !== sessionUser.id
+    ) {
+      return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
+    }
+
+    if (existing.approver_id && !editReason?.trim()) {
       return NextResponse.json(
         { error: "승인된 근태 수정 시 수정 사유가 필요합니다." },
         { status: 400 }
@@ -148,6 +160,12 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // 본인 소유 근태만 삭제 허용
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    }
+
     const supabase = createServiceClient();
     if (!supabase) {
       return NextResponse.json(
@@ -157,6 +175,24 @@ export async function DELETE(
     }
 
     const { id } = await params;
+
+    const { data: existing } = await supabase
+      .from("dayoffs")
+      .select("author_id, target_id")
+      .eq("id", id)
+      .eq("is_deleted", false)
+      .single();
+
+    if (!existing) {
+      return NextResponse.json({ error: "근태를 찾을 수 없습니다." }, { status: 404 });
+    }
+
+    if (
+      existing.author_id !== sessionUser.id &&
+      existing.target_id !== sessionUser.id
+    ) {
+      return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
+    }
 
     const { error } = await supabase
       .from("dayoffs")

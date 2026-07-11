@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
+import { getSessionUser } from "@/lib/auth";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
@@ -18,9 +19,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json(
+        { error: "로그인이 필요합니다." },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const {
-      memberId,
       startDate,
       endDate,
       leaveTypeId,
@@ -30,9 +38,12 @@ export async function POST(request: NextRequest) {
       reason,
     } = body;
 
-    if (!memberId || !startDate || !leaveTypeId) {
+    // 신청자는 세션에서 강제 (body 값 신뢰하지 않음)
+    const memberId = sessionUser.id;
+
+    if (!startDate || !leaveTypeId) {
       return NextResponse.json(
-        { error: "memberId, startDate, leaveTypeId는 필수입니다." },
+        { error: "startDate, leaveTypeId는 필수입니다." },
         { status: 400 }
       );
     }

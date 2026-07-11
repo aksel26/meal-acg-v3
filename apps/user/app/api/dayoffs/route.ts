@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
+import { getSessionUser } from "@/lib/auth";
 
-// GET /api/dayoffs - 근태 목록 조회 (월별)
+// GET /api/dayoffs - 근태 목록 조회 (월별, 본인 것만)
 export async function GET(request: NextRequest) {
   try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json(
+        { error: "로그인이 필요합니다." },
+        { status: 401 }
+      );
+    }
+
     const supabase = createServiceClient();
     if (!supabase) {
       return NextResponse.json(
@@ -15,7 +24,8 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const year = searchParams.get("year");
     const month = searchParams.get("month");
-    const targetId = searchParams.get("target_id");
+    // 조회 대상은 세션에서 강제 (본인 근태만)
+    const targetId = sessionUser.id;
 
     let query = supabase
       .from("dayoffs")
@@ -70,6 +80,14 @@ export async function GET(request: NextRequest) {
 // POST /api/dayoffs - 근태 등록 (영업일만 INSERT)
 export async function POST(request: NextRequest) {
   try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json(
+        { error: "로그인이 필요합니다." },
+        { status: 401 }
+      );
+    }
+
     const supabase = createServiceClient();
     if (!supabase) {
       return NextResponse.json(
@@ -80,7 +98,6 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const {
-      authorId,
       targetId,
       startDate,
       endDate,
@@ -92,9 +109,12 @@ export async function POST(request: NextRequest) {
       reason,
     } = body;
 
-    if (!authorId || !targetId || !startDate || !leaveTypeId) {
+    // 작성자는 세션에서 강제 (body 값 신뢰하지 않음)
+    const authorId = sessionUser.id;
+
+    if (!targetId || !startDate || !leaveTypeId) {
       return NextResponse.json(
-        { error: "authorId, targetId, startDate, leaveTypeId are required" },
+        { error: "targetId, startDate, leaveTypeId are required" },
         { status: 400 }
       );
     }

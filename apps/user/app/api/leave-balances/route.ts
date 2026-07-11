@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
+import { getSessionUser } from "@/lib/auth";
 
-// GET /api/leave-balances?memberId=xxx&year=2026
+// GET /api/leave-balances?year=2026 (본인 잔액만 조회)
 export async function GET(request: NextRequest) {
   try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json(
+        { error: "로그인이 필요합니다." },
+        { status: 401 }
+      );
+    }
+
     const supabase = createServiceClient();
     if (!supabase) {
       return NextResponse.json(
@@ -13,12 +22,14 @@ export async function GET(request: NextRequest) {
     }
 
     const searchParams = request.nextUrl.searchParams;
-    const memberId = searchParams.get("memberId");
     const year = searchParams.get("year");
 
-    if (!memberId || !year) {
+    // 조회 대상은 세션에서 강제 (본인 잔액만)
+    const memberId = sessionUser.id;
+
+    if (!year) {
       return NextResponse.json(
-        { error: "memberId, year는 필수입니다." },
+        { error: "year는 필수입니다." },
         { status: 400 }
       );
     }

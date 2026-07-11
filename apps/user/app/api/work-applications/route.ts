@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
+import { getSessionUser } from "@/lib/auth";
 
 type ApplicationType = "overtime" | "weekend";
 type ApplicationStatus = "pending" | "approved" | "rejected";
@@ -113,20 +114,23 @@ async function attachApprovalIds(
 
 export async function GET(request: NextRequest) {
   try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    }
+
     const supabase = createServiceClient();
     if (!supabase) {
       return NextResponse.json({ error: "데이터베이스 연결 오류" }, { status: 500 });
     }
 
     const searchParams = request.nextUrl.searchParams;
-    const memberId = searchParams.get("memberId");
     const scope = searchParams.get("scope") || "mine";
     const status = searchParams.get("status");
     const type = searchParams.get("type");
 
-    if (!memberId) {
-      return NextResponse.json({ error: "memberId가 필요합니다." }, { status: 400 });
-    }
+    // 조회 기준 멤버는 세션에서 강제 (managed 스코프도 세션 사용자 기준으로 산출)
+    const memberId = sessionUser.id;
 
     let requesterIds = [memberId];
 
@@ -165,13 +169,19 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    }
+
     const supabase = createServiceClient();
     if (!supabase) {
       return NextResponse.json({ error: "데이터베이스 연결 오류" }, { status: 500 });
     }
 
     const body = await request.json();
-    const requesterId = normalizeText(body.requesterId);
+    // 신청자는 세션에서 강제 (body 값 신뢰하지 않음), 승인자는 body 값 유지
+    const requesterId = sessionUser.id;
     const applicationType = normalizeText(body.applicationType);
     const workDate = normalizeText(body.workDate);
     const startTime = normalizeText(body.startTime);

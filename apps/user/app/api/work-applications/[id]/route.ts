@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
+import { getSessionUser } from "@/lib/auth";
 
 type Action = "approve" | "reject";
 
@@ -12,6 +13,11 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    }
+
     const supabase = createServiceClient();
     if (!supabase) {
       return NextResponse.json({ error: "데이터베이스 연결 오류" }, { status: 500 });
@@ -19,12 +25,13 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const approverId = normalizeText(body.approverId);
+    // 승인자는 세션에서 강제 (아래 approver_id 일치 검사가 실제 권한 검증이 됨)
+    const approverId = sessionUser.id;
     const action = normalizeText(body.action) as Action;
     const rejectReason = normalizeText(body.rejectReason);
 
-    if (!approverId || !["approve", "reject"].includes(action)) {
-      return NextResponse.json({ error: "승인자와 처리 액션이 필요합니다." }, { status: 400 });
+    if (!["approve", "reject"].includes(action)) {
+      return NextResponse.json({ error: "처리 액션이 필요합니다." }, { status: 400 });
     }
 
     if (action === "reject" && !rejectReason) {

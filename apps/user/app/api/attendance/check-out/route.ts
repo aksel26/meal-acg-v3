@@ -1,15 +1,21 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+import { getSessionUser } from "@/lib/auth";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 // POST /api/attendance/check-out - 퇴근 체크아웃
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    }
+
     const supabase = createServiceClient();
     if (!supabase) {
       return NextResponse.json(
@@ -18,13 +24,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { memberId } = await request.json();
-    if (!memberId) {
-      return NextResponse.json(
-        { error: "memberId가 필요합니다." },
-        { status: 400 }
-      );
-    }
+    const memberId = sessionUser.id;
 
     const today = dayjs().tz("Asia/Seoul").format("YYYY-MM-DD");
 

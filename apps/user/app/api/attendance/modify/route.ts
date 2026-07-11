@@ -2,10 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
 import { getSessionUser } from "@/lib/auth";
 
-// GET /api/attendance/modify?memberId=xxx - 내 수정 요청 목록
-// GET /api/attendance/modify?memberId=xxx&attendanceRecordId=xxx - 특정 근태 수정 요청
+// GET /api/attendance/modify - 내 수정 요청 목록
+// GET /api/attendance/modify?attendanceRecordId=xxx - 특정 근태 수정 요청
 export async function GET(request: NextRequest) {
   try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    }
+
     const supabase = createServiceClient();
     if (!supabase) {
       return NextResponse.json(
@@ -14,15 +19,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const memberId = request.nextUrl.searchParams.get("memberId");
+    const memberId = sessionUser.id;
     const attendanceRecordId =
       request.nextUrl.searchParams.get("attendanceRecordId");
-    if (!memberId) {
-      return NextResponse.json(
-        { error: "memberId가 필요합니다." },
-        { status: 400 }
-      );
-    }
 
     let query = supabase
       .from("attendance_modification_requests")

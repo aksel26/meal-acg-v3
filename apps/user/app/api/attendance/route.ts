@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
 import { getCheckInStatus } from "@/lib/attendance-status";
+import { getSessionUser } from "@/lib/auth";
 
 const INVALID_MEMBER_ERROR =
   "사용자 정보가 현재 DB와 일치하지 않습니다. 로그아웃 후 다시 로그인해 주세요.";
@@ -8,6 +9,11 @@ const INVALID_MEMBER_ERROR =
 // GET /api/attendance?memberId=xxx&date=YYYY-MM-DD
 export async function GET(request: NextRequest) {
   try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    }
+
     const supabase = createServiceClient();
     if (!supabase) {
       return NextResponse.json(
@@ -17,12 +23,12 @@ export async function GET(request: NextRequest) {
     }
 
     const searchParams = request.nextUrl.searchParams;
-    const memberId = searchParams.get("memberId");
+    const memberId = sessionUser.id;
     const date = searchParams.get("date");
 
-    if (!memberId || !date) {
+    if (!date) {
       return NextResponse.json(
-        { error: "memberId and date are required" },
+        { error: "date is required" },
         { status: 400 },
       );
     }
@@ -55,6 +61,11 @@ export async function GET(request: NextRequest) {
 // POST /api/attendance - 출근/퇴근 기록
 export async function POST(request: NextRequest) {
   try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    }
+
     const supabase = createServiceClient();
     if (!supabase) {
       return NextResponse.json(
@@ -63,11 +74,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { memberId, action, earlyLeaveReason } = await request.json();
+    const { action, earlyLeaveReason } = await request.json();
+    const memberId = sessionUser.id;
 
-    if (!memberId || !action) {
+    if (!action) {
       return NextResponse.json(
-        { error: "memberId and action are required" },
+        { error: "action is required" },
         { status: 400 },
       );
     }

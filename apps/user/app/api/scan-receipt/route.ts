@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
 import { ScanReceiptRequest, ScanReceiptResponse, ReceiptScanResult } from "@/lib/types/receipt-types";
+import { getSessionUser } from "@/lib/auth";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
@@ -53,6 +54,15 @@ function extractAmount(amountStr: string): number {
 
 export async function POST(request: NextRequest): Promise<NextResponse<ScanReceiptResponse>> {
   try {
+    // 무인증으로 유료 Gemini API가 호출되지 않도록 로그인 필수
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json(
+        { success: false, error: "로그인이 필요합니다." },
+        { status: 401 }
+      );
+    }
+
     const body: ScanReceiptRequest = await request.json();
     const { image, mimeType } = body;
 

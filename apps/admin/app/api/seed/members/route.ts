@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth";
+import { getAuthErrorStatus, requireAdmin } from "@/lib/auth";
 
 const MEMBERS_DATA = [
   { login_id: "권동균", full_name: "권동균", role: "user" },
@@ -43,6 +43,11 @@ const MEMBERS_DATA = [
 // POST /api/seed/members - Seed members data
 export async function POST() {
   try {
+    // 운영 환경에서는 시드 실행 자체를 차단한다
+    if (process.env.NODE_ENV === "production") {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
     await requireAdmin();
     const supabase = createServiceClient();
 
@@ -51,11 +56,12 @@ export async function POST() {
       password: "password123", // Default password
     }));
 
+    // ignoreDuplicates: 기존 계정의 password/role을 절대 덮어쓰지 않는다
     const { data, error } = await supabase
       .from("members")
       .upsert(membersToInsert, {
         onConflict: "login_id",
-        ignoreDuplicates: false,
+        ignoreDuplicates: true,
       })
       .select("id, login_id, full_name, role");
 
@@ -74,8 +80,9 @@ export async function POST() {
     });
   } catch (error) {
     console.error("Seed members API error:", error);
-    if (error instanceof Error && error.message === "Unauthorized") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const authStatus = getAuthErrorStatus(error);
+    if (authStatus) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: authStatus });
     }
     return NextResponse.json(
       { error: "Internal server error" },
@@ -111,8 +118,9 @@ export async function GET() {
     });
   } catch (error) {
     console.error("Get members API error:", error);
-    if (error instanceof Error && error.message === "Unauthorized") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const authStatus = getAuthErrorStatus(error);
+    if (authStatus) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: authStatus });
     }
     return NextResponse.json(
       { error: "Internal server error" },

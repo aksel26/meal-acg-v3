@@ -1,18 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
+import { getSessionUser } from "@/lib/auth";
 
 // GET: 프로필 정보 조회
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const memberId = searchParams.get("memberId");
-
-    if (!memberId) {
-      return NextResponse.json(
-        { error: "memberId는 필수입니다." },
-        { status: 400 },
-      );
+    // 본인 프로필만 조회 (요청 파라미터의 memberId는 신뢰하지 않음)
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
     }
+    const memberId = sessionUser.id;
 
     const supabase = createServiceClient();
     if (!supabase) {
@@ -58,14 +56,14 @@ export async function GET(request: NextRequest) {
 // PATCH: 프로필 정보 수정
 export async function PATCH(request: NextRequest) {
   try {
-    const { memberId, email, phone, passport_number } = await request.json();
-
-    if (!memberId) {
-      return NextResponse.json(
-        { error: "memberId는 필수입니다." },
-        { status: 400 },
-      );
+    // 본인 프로필만 수정 (요청 body의 memberId는 신뢰하지 않음)
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
     }
+
+    const { email, phone, passport_number } = await request.json();
+    const memberId = sessionUser.id;
 
     const supabase = createServiceClient();
     if (!supabase) {

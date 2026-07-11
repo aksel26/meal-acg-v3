@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const [memberResult, statusResult] = await Promise.all([
+    const [memberResult, statusResult, currentStatusResult] = await Promise.all([
       supabase
         .from("members")
         .select("admin_role, user_authority")
@@ -61,7 +61,20 @@ export async function POST(request: NextRequest) {
         .order("start_date", { ascending: true })
         .limit(1)
         .single(),
+      supabase
+        .from("member_current_status")
+        .select("current_status")
+        .eq("member_id", user.user_id)
+        .maybeSingle(),
     ]);
+
+    // 퇴사자 로그인 차단 (user 앱과 동일 정책)
+    if (currentStatusResult.data?.current_status === "퇴사") {
+      return NextResponse.json(
+        { error: "계정이 없습니다." },
+        { status: 401 }
+      );
+    }
 
     const adminRole = normalizeAdminRole(memberResult.data?.admin_role);
     const userAuthority = isUserAuthority(memberResult.data?.user_authority)

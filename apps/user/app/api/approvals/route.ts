@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
+import { getSessionUser } from "@/lib/auth";
 
 // GET /api/approvals?memberId=xxx - 내가 승인할 요청 목록
 export async function GET(request: NextRequest) {
@@ -145,6 +146,12 @@ export async function GET(request: NextRequest) {
 // PUT /api/approvals - 승인/반려 처리
 export async function PUT(request: NextRequest) {
   try {
+    // 결재자는 로그인 세션 본인으로 강제한다 (body의 memberId 위조 차단)
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    }
+
     const supabase = createServiceClient();
     if (!supabase) {
       return NextResponse.json(
@@ -154,21 +161,21 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { approvalId, memberId, action, rejectReason } = body as {
+    const { approvalId, action, rejectReason } = body as {
       approvalId: string;
-      memberId: string;
       action: "approve" | "reject";
       rejectReason?: string;
     };
+    const memberId = sessionUser.id;
 
-    if (!approvalId || !memberId || !action) {
+    if (!approvalId || !action) {
       return NextResponse.json(
-        { error: "approvalId, memberId, action은 필수입니다." },
+        { error: "approvalId, action은 필수입니다." },
         { status: 400 }
       );
     }
 
-    // 승인 요청 조회 + 권한 확인
+    // 승인 요청 조회 + 권한 확인 (approver_id === 세션 사용자)
     const { data: approvalData, error: fetchError } = await supabase
       .from("approval_requests")
       .select("*")

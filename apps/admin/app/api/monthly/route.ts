@@ -15,44 +15,42 @@ export async function GET(request: NextRequest) {
     const month =
       parseInt(searchParams.get("month") || "") || new Date().getMonth() + 1;
 
-    // 전체 멤버 조회
-    const { data: members } = await supabase
-      .from("members")
-      .select("id, full_name")
-      .order("full_name");
+    // 서로 독립적인 쿼리 3개를 병렬 실행
+    const [{ data: members }, sourceResult, appsResult] = await Promise.all([
+      supabase.from("members").select("id, full_name").order("full_name"),
+      collectionId
+        ? supabase
+            .from("drink_collections")
+            .select("*")
+            .eq("id", collectionId)
+            .single()
+        : supabase
+            .from("monthly_drink_settings")
+            .select("*")
+            .eq("year", year)
+            .eq("month", month)
+            .single(),
+      collectionId
+        ? supabase
+            .from("monthly_drink_applications")
+            .select("*")
+            .eq("collection_id", collectionId)
+        : supabase
+            .from("monthly_drink_applications")
+            .select("*")
+            .eq("year", year)
+            .eq("month", month),
+    ]);
 
     let drinkOptions: string[];
     let pickupPersons: string[];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let applications: any[] | null = null;
 
     if (collectionId) {
       // collection 기반 조회
-      const { data: collection } = await supabase
-        .from("drink_collections")
-        .select("*")
-        .eq("id", collectionId)
-        .single();
-
-      drinkOptions = (collection?.drink_options as string[]) || [];
-      pickupPersons = (collection?.pickup_persons as string[]) || [];
-
-      const { data: apps, error: appError } = await supabase
-        .from("monthly_drink_applications")
-        .select("*")
-        .eq("collection_id", collectionId);
-
-      if (appError) console.error("Error fetching applications:", appError);
-      applications = apps;
+      drinkOptions = (sourceResult.data?.drink_options as string[]) || [];
+      pickupPersons = (sourceResult.data?.pickup_persons as string[]) || [];
     } else {
       // 기존 year/month 기반 조회 (하위호환)
-      const { data: settings } = await supabase
-        .from("monthly_drink_settings")
-        .select("*")
-        .eq("year", year)
-        .eq("month", month)
-        .single();
-
       const defaultDrinkOptions = [
         "HOT 아메리카노",
         "ICE 아메리카노",
@@ -64,18 +62,14 @@ export async function GET(request: NextRequest) {
       ];
 
       drinkOptions =
-        (settings?.drink_options as string[]) || defaultDrinkOptions;
-      pickupPersons = (settings?.pickup_persons as string[]) || [];
-
-      const { data: apps, error: appError } = await supabase
-        .from("monthly_drink_applications")
-        .select("*")
-        .eq("year", year)
-        .eq("month", month);
-
-      if (appError) console.error("Error fetching applications:", appError);
-      applications = apps;
+        (sourceResult.data?.drink_options as string[]) || defaultDrinkOptions;
+      pickupPersons = (sourceResult.data?.pickup_persons as string[]) || [];
     }
+
+    if (appsResult.error) {
+      console.error("Error fetching applications:", appsResult.error);
+    }
+    const applications = appsResult.data;
 
     // 멤버별 신청 내역 매핑
     const applicationMap = new Map(

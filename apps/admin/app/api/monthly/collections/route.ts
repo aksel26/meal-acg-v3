@@ -20,7 +20,12 @@ export async function GET(request: NextRequest) {
       query = query.eq("year", parseInt(year));
     }
 
-    const { data: collections, error } = await query;
+    // 전체 인원 수는 취합 건과 무관하므로 한 번만 조회
+    const [{ data: collections, error }, { count: totalMembers }] =
+      await Promise.all([
+        query,
+        supabase.from("members").select("*", { count: "exact", head: true }),
+      ]);
 
     if (error) {
       console.error("Error fetching collections:", error);
@@ -39,10 +44,6 @@ export async function GET(request: NextRequest) {
           .eq("collection_id", collection.id)
           .not("drink", "is", null)
           .neq("drink", "");
-
-        const { count: totalMembers } = await supabase
-          .from("members")
-          .select("*", { count: "exact", head: true });
 
         return {
           ...collection,

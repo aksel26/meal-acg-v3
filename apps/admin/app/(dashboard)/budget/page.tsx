@@ -110,7 +110,7 @@ export default function BudgetPage() {
   // Period & filter state
   const currentYear = new Date().getFullYear();
   const [periodYear, setPeriodYear] = useState(String(currentYear));
-  const [periodHalf, setPeriodHalf] = useState("H1");
+  const [periodHalf, setPeriodHalf] = useState(new Date().getMonth() < 6 ? "H1" : "H2");
   const period = periodYear && periodHalf ? `${periodYear}-${periodHalf}` : "";
   const [typeFilter, setTypeFilter] = useState("전체");
 

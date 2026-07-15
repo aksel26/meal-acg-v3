@@ -316,15 +316,24 @@ function buildGuideSheet(
   );
   const pncTeamId = pncMember?.team_id;
 
-  // P&C 추가 인원 수 (전체 팀원+인턴, 특이사항 제외, 팀 배정된 멤버만)
-  const pncExtraCount = pncTeamId
+  // 고충상담비 대상: 전체 팀원(팀장 제외, 특이사항 제외, 팀 배정된 멤버만)은 전액,
+  // 인턴은 개월수 비례(50,000/6×개월) — budget page와 동일
+  const pncExtraStaffCount = pncTeamId
     ? membersData.filter(
         (m: any) =>
-          (m.member_role === "팀원" || m.member_role === "인턴") &&
+          m.member_role === "팀원" &&
           m.team_id &&
           !statusMemberIds.has(m.id)
       ).length
     : 0;
+  const pncExtraInterns = pncTeamId
+    ? membersData.filter(
+        (m: any) =>
+          m.member_role === "인턴" &&
+          m.team_id &&
+          !statusMemberIds.has(m.id),
+      )
+    : [];
 
   // membersData → id 기반 lookup
   const memberById = new Map<string, any>();
@@ -362,8 +371,16 @@ function buildGuideSheet(
       if (memberCount > 1) {
         parts.push(`${fmtCurrency(MANAGER_RATE)}원 × ${memberCount - 1}명`);
       }
-      if (pncExtraCount > 0) {
-        parts.push(`${fmtCurrency(PNC_EXTRA_RATE)}원 × ${pncExtraCount}명 (팀원+인턴)`);
+      if (pncExtraStaffCount > 0) {
+        parts.push(
+          `${fmtCurrency(PNC_EXTRA_RATE)}원 × ${pncExtraStaffCount}명 (팀원)`,
+        );
+      }
+      for (const intern of pncExtraInterns) {
+        const months = intern.intern_months || 1;
+        parts.push(
+          `인턴 ${intern.full_name} ${fmtCurrency(PNC_EXTRA_RATE)}원/6×${months}개월`,
+        );
       }
       basis = parts.join(" + ");
     } else {

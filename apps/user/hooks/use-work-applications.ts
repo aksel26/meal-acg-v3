@@ -11,6 +11,7 @@ export interface WorkApplication {
   work_date: string;
   start_time: string;
   end_time: string;
+  location: string | null;
   project_name: string;
   reason: string;
   status: WorkApplicationStatus;
@@ -20,6 +21,10 @@ export interface WorkApplication {
   created_at: string;
   updated_at: string;
   approval_id: string | null;
+  approval_ids?: string[];
+  approver_ids?: string[];
+  cc_member_ids?: string[];
+  my_approval_status?: WorkApplicationStatus | null;
   requester?: {
     id: string;
     full_name: string;
@@ -37,7 +42,8 @@ export function useWorkApplications(
   filters: { status?: string; type?: string } = {},
 ) {
   const params = new URLSearchParams({ memberId, scope });
-  if (filters.status && filters.status !== "all") params.set("status", filters.status);
+  if (filters.status && filters.status !== "all")
+    params.set("status", filters.status);
   if (filters.type && filters.type !== "all") params.set("type", filters.type);
 
   return useQuery<WorkApplication[]>({
@@ -71,7 +77,10 @@ export function useCreateWorkApplication() {
       endTime: string;
       projectName: string;
       reason: string;
-      approverId: string;
+      location?: string;
+      approverId?: string;
+      approverIds?: string[];
+      ccMemberIds?: string[];
     }) => {
       const res = await fetch("/api/work-applications", {
         method: "POST",
@@ -87,7 +96,9 @@ export function useCreateWorkApplication() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.workApplications.all });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.workApplications.all,
+      });
       queryClient.invalidateQueries({ queryKey: queryKeys.myRequests.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.approvals.all });
     },
@@ -118,7 +129,9 @@ export function useProcessWorkApplication() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.workApplications.all });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.workApplications.all,
+      });
       queryClient.invalidateQueries({ queryKey: queryKeys.approvals.all });
     },
   });

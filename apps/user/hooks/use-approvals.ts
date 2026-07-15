@@ -31,9 +31,22 @@ export interface AttendanceModifyApprovalData {
   } | null;
 }
 
+export interface WorkApplicationApprovalData {
+  id: string;
+  application_type: "overtime" | "weekend";
+  work_date: string;
+  start_time: string;
+  end_time: string;
+  location: string | null;
+  project_name: string;
+  reason: string;
+  status: string;
+}
+
 export type ApprovalRelatedData =
   | DayoffApprovalData
   | AttendanceModifyApprovalData
+  | WorkApplicationApprovalData
   | null;
 
 export interface ApprovalRequest {
@@ -88,7 +101,9 @@ export function useMyRequests(memberId: string) {
 // 참조된 요청 목록 (내가 CC에 포함된 건)
 export function useCcRequests(memberId: string) {
   return useQuery<ApprovalRequest[]>({
-    queryKey: queryKeys.approvals.cc ? queryKeys.approvals.cc(memberId) : ["approvals", "cc", memberId],
+    queryKey: queryKeys.approvals.cc
+      ? queryKeys.approvals.cc(memberId)
+      : ["approvals", "cc", memberId],
     queryFn: async () => {
       const res = await fetch(`/api/approvals/cc?memberId=${memberId}`);
       if (!res.ok) throw new Error("참조 목록 조회 실패");

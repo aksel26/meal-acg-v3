@@ -21,6 +21,7 @@ import {
   type ApprovalRequest,
   type AttendanceModifyApprovalData,
   type DayoffApprovalData,
+  type WorkApplicationApprovalData,
 } from "@/hooks/use-approvals";
 import { usePathname } from "next/navigation";
 import { formatDateKorean } from "utils";
@@ -57,7 +58,9 @@ const Header = () => {
   const isDashboard = pathname === "/dashboard";
   const pageTitle =
     PAGE_TITLES[pathname] ||
-    Object.entries(PAGE_TITLES).find(([key]) => pathname.startsWith(key + "/"))?.[1] ||
+    Object.entries(PAGE_TITLES).find(([key]) =>
+      pathname.startsWith(key + "/"),
+    )?.[1] ||
     "";
 
   const getGreeting = () => {
@@ -148,7 +151,8 @@ function ApprovalBell() {
   const rejectMutation = useRejectRequest();
 
   const pendingCount = inboxItems?.length || 0;
-  const items = tab === "inbox" ? inboxItems : tab === "sent" ? sentItems : ccItems;
+  const items =
+    tab === "inbox" ? inboxItems : tab === "sent" ? sentItems : ccItems;
   const ccCount = ccItems?.length || 0;
   const tabMeta = {
     inbox: {
@@ -176,10 +180,15 @@ function ApprovalBell() {
     );
   };
 
-  const handleReject = (id: string) => {
+  const handleReject = (item: ApprovalRequest) => {
     if (!memberId) return;
+    if (item.related_table === "work_applications") {
+      toast.info("연장·주말근무 반려 사유는 결재 관리에서 입력해주세요.");
+      window.location.assign("/approvals");
+      return;
+    }
     rejectMutation.mutate(
-      { approvalId: id, memberId },
+      { approvalId: item.id, memberId },
       { onSuccess: () => toast.success("반려되었습니다.") },
     );
   };
@@ -253,7 +262,11 @@ function ApprovalBell() {
                 <FileText className="h-5 w-5" />
               </span>
               <p className="text-sm font-medium text-slate-700">
-                {tab === "inbox" ? "대기 중인 요청이 없습니다." : tab === "sent" ? "보낸 요청이 없습니다." : "참조된 요청이 없습니다."}
+                {tab === "inbox"
+                  ? "대기 중인 요청이 없습니다."
+                  : tab === "sent"
+                    ? "보낸 요청이 없습니다."
+                    : "참조된 요청이 없습니다."}
               </p>
               <p className="mt-1 text-xs text-slate-400">
                 새 요청이 생기면 이곳에 표시됩니다.
@@ -318,7 +331,9 @@ function NotificationTabButton({
   );
 }
 
-function isDayoffData(data: ApprovalRequest["related_data"]): data is DayoffApprovalData {
+function isDayoffData(
+  data: ApprovalRequest["related_data"],
+): data is DayoffApprovalData {
   return !!data && "leave_date" in data;
 }
 
@@ -326,6 +341,12 @@ function isAttendanceModifyData(
   data: ApprovalRequest["related_data"],
 ): data is AttendanceModifyApprovalData {
   return !!data && "requested_type" in data;
+}
+
+function isWorkApplicationData(
+  data: ApprovalRequest["related_data"],
+): data is WorkApplicationApprovalData {
+  return !!data && "application_type" in data;
 }
 
 function ApprovalItem({
@@ -337,14 +358,23 @@ function ApprovalItem({
   item: ApprovalRequest;
   viewMode: "inbox" | "sent" | "cc";
   onApprove: (id: string) => void;
-  onReject: (id: string) => void;
+  onReject: (item: ApprovalRequest) => void;
 }) {
   const dayoff = isDayoffData(item.related_data) ? item.related_data : null;
   const modifyRequest = isAttendanceModifyData(item.related_data)
     ? item.related_data
     : null;
+  const workApplication = isWorkApplicationData(item.related_data)
+    ? item.related_data
+    : null;
   const leaveType = dayoff?.leave_type;
-  const title = modifyRequest ? "근태 수정 요청" : leaveType?.name || "휴가 요청";
+  const title = modifyRequest
+    ? "근태 수정 요청"
+    : workApplication
+      ? workApplication.application_type === "overtime"
+        ? "연장근무 신청"
+        : "주말근무 신청"
+      : leaveType?.name || "휴가 요청";
 
   const personLabel =
     viewMode === "inbox"
@@ -363,22 +393,24 @@ function ApprovalItem({
           {dayjs(item.requested_at).format("MM/DD")}
         </span>
       </div>
-      <p className="mb-1 text-xs font-medium text-slate-500">
-        {personLabel}
-      </p>
+      <p className="mb-1 text-xs font-medium text-slate-500">{personLabel}</p>
       {dayoff && (
         <p className="text-sm font-semibold text-slate-900">
           {dayjs(dayoff.leave_date).format("YYYY-MM-DD (ddd)")}
         </p>
       )}
       {dayoff?.reason && (
-        <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">사유: {dayoff.reason}</p>
+        <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
+          사유: {dayoff.reason}
+        </p>
       )}
       {modifyRequest && (
         <div className="space-y-1">
           <p className="text-sm font-semibold text-slate-900">
             {modifyRequest.attendance_record
-              ? dayjs(modifyRequest.attendance_record.date).format("YYYY-MM-DD (ddd)")
+              ? dayjs(modifyRequest.attendance_record.date).format(
+                  "YYYY-MM-DD (ddd)",
+                )
               : "대상 날짜 없음"}
           </p>
           <p className="text-xs font-medium text-slate-600">
@@ -389,8 +421,26 @@ function ApprovalItem({
           </p>
         </div>
       )}
+      {workApplication && (
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-slate-900">
+            {dayjs(workApplication.work_date).format("YYYY-MM-DD (ddd)")} ·{" "}
+            {workApplication.start_time.slice(0, 5)}-
+            {workApplication.end_time.slice(0, 5)}
+          </p>
+          <p className="text-xs font-medium text-slate-600">
+            {workApplication.project_name}
+            {workApplication.location ? ` · ${workApplication.location}` : ""}
+          </p>
+          <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
+            사유: {workApplication.reason}
+          </p>
+        </div>
+      )}
       {item.reject_reason && (
-        <p className="mt-1 line-clamp-2 text-xs leading-5 text-red-600">반려: {item.reject_reason}</p>
+        <p className="mt-1 line-clamp-2 text-xs leading-5 text-red-600">
+          반려: {item.reject_reason}
+        </p>
       )}
       {viewMode === "inbox" && item.status === "pending" && (
         <div className="mt-3 flex justify-end gap-2">
@@ -405,7 +455,7 @@ function ApprovalItem({
             size="sm"
             variant="outline"
             className="h-8 rounded-lg border-rose-200 px-3 text-xs text-rose-600 hover:bg-rose-50 hover:text-rose-700"
-            onClick={() => onReject(item.id)}
+            onClick={() => onReject(item)}
           >
             반려
           </Button>

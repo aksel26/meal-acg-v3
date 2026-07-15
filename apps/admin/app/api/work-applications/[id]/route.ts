@@ -19,49 +19,62 @@ export async function PUT(
     const rejectReason = normalizeText(body.rejectReason);
 
     if (!["pending", "approved", "rejected"].includes(status)) {
-      return NextResponse.json({ error: "상태 값이 올바르지 않습니다." }, { status: 400 });
+      return NextResponse.json(
+        { error: "상태 값이 올바르지 않습니다." },
+        { status: 400 },
+      );
     }
 
     if (status === "rejected" && !rejectReason) {
-      return NextResponse.json({ error: "반려 사유를 입력해주세요." }, { status: 400 });
+      return NextResponse.json(
+        { error: "반려 사유를 입력해주세요." },
+        { status: 400 },
+      );
     }
 
-    const now = new Date().toISOString();
-    const { data: updated, error: updateError } = await supabase
+    const { data: previousApplication, error: fetchError } = await supabase
       .from("work_applications")
-      .update({
-        status,
-        approver_id: status === "pending" ? null : session.userId,
-        approved_at: status === "approved" ? now : null,
-        reject_reason: status === "rejected" ? rejectReason : null,
-      })
+      .select("id")
       .eq("id", id)
-      .select()
+      .single();
+
+    if (fetchError || !previousApplication) {
+      return NextResponse.json(
+        { error: "근무 신청을 찾을 수 없습니다." },
+        { status: 404 },
+      );
+    }
+
+    const { data: updated, error: updateError } = await supabase
+      .rpc("set_work_application_approval_status", {
+        p_application_id: id,
+        p_status: status,
+        p_resolved_by: session.userId,
+        p_reject_reason: rejectReason || undefined,
+      })
       .single();
 
     if (updateError) {
       console.error("Admin work application update error:", updateError);
-      return NextResponse.json({ error: "근무 신청 상태 변경 실패" }, { status: 500 });
+      return NextResponse.json(
+        { error: "근무 신청 상태 변경 실패" },
+        { status: 500 },
+      );
     }
-
-    await supabase
-      .from("approval_requests")
-      .update({
-        status,
-        reject_reason: status === "rejected" ? rejectReason : null,
-        resolved_at: status === "pending" ? null : now,
-        resolved_by: status === "pending" ? null : session.userId,
-      })
-      .eq("related_table", "work_applications")
-      .eq("related_id", id);
 
     return NextResponse.json(updated);
   } catch (error) {
     console.error("Admin work application update API error:", error);
     const authStatus = getAuthErrorStatus(error);
     if (authStatus) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: authStatus });
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: authStatus },
+      );
     }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

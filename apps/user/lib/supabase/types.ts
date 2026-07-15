@@ -215,6 +215,7 @@ export type Database = {
           work_date: string
           start_time: string
           end_time: string
+          location: string | null
           project_name: string
           reason: string
           status: string
@@ -231,6 +232,7 @@ export type Database = {
           work_date: string
           start_time: string
           end_time: string
+          location?: string | null
           project_name: string
           reason: string
           status?: string
@@ -247,6 +249,7 @@ export type Database = {
           work_date?: string
           start_time?: string
           end_time?: string
+          location?: string | null
           project_name?: string
           reason?: string
           status?: string
@@ -2293,6 +2296,35 @@ export type Database = {
       record_attendance_check_out: {
         Args: { p_early_leave_reason?: string; p_member_id: string }
         Returns: Database["public"]["Tables"]["attendance_records"]["Row"][]
+      }
+      create_work_application_with_approvals: {
+        Args: {
+          p_application_type: string
+          p_approver_ids: string[]
+          p_cc_member_ids?: string[]
+          p_end_time: string
+          p_location?: string
+          p_project_name: string
+          p_reason: string
+          p_requester_id: string
+          p_start_time: string
+          p_work_date: string
+        }
+        Returns: Database["public"]["Tables"]["work_applications"]["Row"][]
+      }
+      get_cc_approval_request_ids: {
+        Args: { p_limit?: number; p_member_id: string }
+        Returns: { approval_id: string }[]
+      }
+      resolve_work_application_approval: {
+        Args: {
+          p_action: string
+          p_approval_id: string
+          p_approver_id: string
+          p_reject_reason?: string
+          p_resolved_by?: string
+        }
+        Returns: Database["public"]["Tables"]["work_applications"]["Row"][]
       }
       advance_review_status: {
         Args: { p_reviewer_id: string; p_usage_record_id: string }

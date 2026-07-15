@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
-import { requireAdminPermission, getAuthErrorStatus } from "@/lib/auth";
+import {
+  requireAdmin,
+  requireAdminPermission,
+  getAuthErrorStatus,
+} from "@/lib/auth";
 
 // PUT /api/approvals/:id - 승인, 반려, 처리 취소
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const session = await requireAdminPermission("leave:approve");
+    const session = await requireAdmin();
     const supabase = createServiceClient();
     const { id } = await params;
     const body = await request.json();
@@ -21,7 +25,7 @@ export async function PUT(
     if (!action || !["approve", "reject", "cancel"].includes(action)) {
       return NextResponse.json(
         { error: "action must be 'approve', 'reject', or 'cancel'" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -35,8 +39,14 @@ export async function PUT(
     if (fetchError || !request_data) {
       return NextResponse.json(
         { error: "Approval request not found" },
-        { status: 404 }
+        { status: 404 },
       );
+    }
+
+    if (request_data.related_table === "work_applications") {
+      await requireAdminPermission("attendance:write");
+    } else {
+      await requireAdminPermission("leave:approve");
     }
 
     if (
@@ -45,19 +55,84 @@ export async function PUT(
     ) {
       return NextResponse.json(
         { error: "승인 또는 반려 완료된 요청만 취소할 수 있습니다." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (action !== "cancel" && request_data.status !== "pending") {
       return NextResponse.json(
         { error: "이미 처리된 요청입니다." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
+    const normalizedRejectReason =
+      typeof rejectReason === "string" ? rejectReason.trim() : "";
+
+    if (
+      request_data.related_table === "work_applications" &&
+      request_data.related_id
+    ) {
+      if (action === "reject" && !normalizedRejectReason) {
+        return NextResponse.json(
+          { error: "반려 사유를 입력해주세요." },
+          { status: 400 },
+        );
+      }
+
+      const rpcResult =
+        action === "cancel"
+          ? await supabase
+              .rpc("set_work_application_approval_status", {
+                p_application_id: request_data.related_id,
+                p_status: "pending",
+                p_resolved_by: session.userId,
+              })
+              .single()
+          : await supabase
+              .rpc("resolve_work_application_approval", {
+                p_approval_id: request_data.id,
+                p_approver_id: request_data.approver_id,
+                p_action: action,
+                p_reject_reason: normalizedRejectReason || undefined,
+                p_resolved_by: session.userId,
+              })
+              .single();
+
+      if (rpcResult.error) {
+        console.error(
+          "Admin work application approval error:",
+          rpcResult.error,
+        );
+        return NextResponse.json(
+          { error: "근무 신청 결재 상태 반영 실패" },
+          { status: 500 },
+        );
+      }
+
+      const { data: resolvedApproval, error: resolvedApprovalError } =
+        await supabase
+          .from("approval_requests")
+          .select()
+          .eq("id", request_data.id)
+          .single();
+
+      if (resolvedApprovalError) {
+        return NextResponse.json(
+          { error: "처리된 승인 요청 조회 실패" },
+          { status: 500 },
+        );
+      }
+
+      return NextResponse.json(resolvedApproval);
+    }
+
     const newStatus =
-      action === "approve" ? "approved" : action === "reject" ? "rejected" : "pending";
+      action === "approve"
+        ? "approved"
+        : action === "reject"
+          ? "rejected"
+          : "pending";
 
     // 승인 요청 상태 업데이트
     const { data: updated, error: updateError } = await supabase
@@ -76,7 +151,7 @@ export async function PUT(
       console.error("Error updating approval:", updateError);
       return NextResponse.json(
         { error: "Failed to update approval" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -100,28 +175,19 @@ export async function PUT(
         .eq("id", request_data.related_id);
     }
 
-    if (request_data.related_table === "work_applications" && request_data.related_id) {
-      await supabase
-        .from("work_applications")
-        .update({
-          status: newStatus,
-          approver_id: action === "cancel" ? null : session.userId,
-          approved_at: action === "approve" ? new Date().toISOString() : null,
-          reject_reason: action === "reject" ? rejectReason || null : null,
-        })
-        .eq("id", request_data.related_id);
-    }
-
     return NextResponse.json(updated);
   } catch (error) {
     console.error("Approval update API error:", error);
     const authStatus = getAuthErrorStatus(error);
     if (authStatus) {
-      return NextResponse.json({ error: (error as Error).message }, { status: authStatus });
+      return NextResponse.json(
+        { error: (error as Error).message },
+        { status: authStatus },
+      );
     }
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -2,13 +2,7 @@
 
 import React, { useState } from "react";
 import { motion } from "motion/react";
-import {
-  Check,
-  X,
-  Clock,
-  FileText,
-  Send,
-} from "lucide-react";
+import { Check, X, Clock, FileText, Send } from "lucide-react";
 import { Button } from "@repo/ui/src/button";
 import { Textarea } from "@repo/ui/src/textarea";
 import {
@@ -28,14 +22,26 @@ import {
   type ApprovalRequest,
   type AttendanceModifyApprovalData,
   type DayoffApprovalData,
+  type WorkApplicationApprovalData,
 } from "@/hooks/use-approvals";
 import dayjs from "dayjs";
 
 type ViewMode = "inbox" | "sent";
 
-const STATUS_BADGE: Record<string, { label: string; className: string; icon: typeof Check }> = {
-  pending: { label: "대기", className: "bg-amber-50 text-amber-600", icon: Clock },
-  approved: { label: "승인", className: "bg-emerald-50 text-emerald-600", icon: Check },
+const STATUS_BADGE: Record<
+  string,
+  { label: string; className: string; icon: typeof Check }
+> = {
+  pending: {
+    label: "대기",
+    className: "bg-amber-50 text-amber-600",
+    icon: Clock,
+  },
+  approved: {
+    label: "승인",
+    className: "bg-emerald-50 text-emerald-600",
+    icon: Check,
+  },
   rejected: { label: "반려", className: "bg-red-50 text-red-600", icon: X },
 };
 const DEFAULT_STATUS_BADGE = {
@@ -48,17 +54,18 @@ export default function ApprovalsPage() {
   const { memberId } = useUserStore();
   const [viewMode, setViewMode] = useState<ViewMode>("inbox");
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
-  const [rejectTarget, setRejectTarget] = useState<ApprovalRequest | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<ApprovalRequest | null>(
+    null,
+  );
   const [rejectReason, setRejectReason] = useState("");
 
-  const {
-    data: inboxItems,
-    isLoading: inboxLoading,
-  } = useApprovals(memberId || "", "pending");
-  const {
-    data: sentItems,
-    isLoading: sentLoading,
-  } = useMyRequests(memberId || "");
+  const { data: inboxItems, isLoading: inboxLoading } = useApprovals(
+    memberId || "",
+    "pending",
+  );
+  const { data: sentItems, isLoading: sentLoading } = useMyRequests(
+    memberId || "",
+  );
 
   const approveMutation = useApproveRequest();
   const rejectMutation = useRejectRequest();
@@ -70,7 +77,7 @@ export default function ApprovalsPage() {
       {
         onSuccess: () => toast.success("승인되었습니다."),
         onError: (err: Error) => toast.error(err.message),
-      }
+      },
     );
   };
 
@@ -84,7 +91,11 @@ export default function ApprovalsPage() {
   const handleReject = () => {
     if (!rejectTarget || !memberId) return;
     rejectMutation.mutate(
-      { approvalId: rejectTarget.id, memberId, rejectReason: rejectReason || undefined },
+      {
+        approvalId: rejectTarget.id,
+        memberId,
+        rejectReason: rejectReason || undefined,
+      },
       {
         onSuccess: () => {
           toast.success("반려되었습니다.");
@@ -92,7 +103,7 @@ export default function ApprovalsPage() {
           setRejectTarget(null);
         },
         onError: (err: Error) => toast.error(err.message),
-      }
+      },
     );
   };
 
@@ -113,11 +124,13 @@ export default function ApprovalsPage() {
         <Clock size={14} />
         받은 요청
         {inboxItems && inboxItems.length > 0 && (
-          <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-            viewMode === "inbox"
-              ? "bg-white/20 text-white"
-              : "bg-amber-100 text-amber-700"
-          }`}>
+          <span
+            className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+              viewMode === "inbox"
+                ? "bg-white/20 text-white"
+                : "bg-amber-100 text-amber-700"
+            }`}
+          >
             {inboxItems.length}
           </span>
         )}
@@ -170,7 +183,11 @@ export default function ApprovalsPage() {
             key={item.id}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
+            transition={{
+              duration: 0.3,
+              delay: index * 0.05,
+              ease: [0.16, 1, 0.3, 1],
+            }}
           >
             <ApprovalCard
               item={item}
@@ -184,8 +201,9 @@ export default function ApprovalsPage() {
     </div>
   );
 
-  const isAttendanceModifyReject =
-    rejectTarget?.related_table === "attendance_modification_requests";
+  const isRejectReasonRequired =
+    rejectTarget?.related_table === "attendance_modification_requests" ||
+    rejectTarget?.related_table === "work_applications";
 
   return (
     <React.Fragment>
@@ -222,7 +240,7 @@ export default function ApprovalsPage() {
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
             placeholder={
-              isAttendanceModifyReject
+              isRejectReasonRequired
                 ? "반려 사유를 입력해주세요"
                 : "반려 사유를 입력해주세요 (선택)"
             }
@@ -240,7 +258,7 @@ export default function ApprovalsPage() {
               onClick={handleReject}
               disabled={
                 rejectMutation.isPending ||
-                (isAttendanceModifyReject && !rejectReason.trim())
+                (isRejectReasonRequired && !rejectReason.trim())
               }
             >
               반려
@@ -252,7 +270,9 @@ export default function ApprovalsPage() {
   );
 }
 
-function isDayoffData(data: ApprovalRequest["related_data"]): data is DayoffApprovalData {
+function isDayoffData(
+  data: ApprovalRequest["related_data"],
+): data is DayoffApprovalData {
   return !!data && "leave_date" in data;
 }
 
@@ -260,6 +280,12 @@ function isAttendanceModifyData(
   data: ApprovalRequest["related_data"],
 ): data is AttendanceModifyApprovalData {
   return !!data && "requested_type" in data;
+}
+
+function isWorkApplicationData(
+  data: ApprovalRequest["related_data"],
+): data is WorkApplicationApprovalData {
+  return !!data && "application_type" in data;
 }
 
 function ApprovalCard({
@@ -278,7 +304,16 @@ function ApprovalCard({
   const modifyRequest = isAttendanceModifyData(item.related_data)
     ? item.related_data
     : null;
-  const requestTitle = modifyRequest ? "근태 수정 요청" : dayoff?.leave_type?.name;
+  const workApplication = isWorkApplicationData(item.related_data)
+    ? item.related_data
+    : null;
+  const requestTitle = modifyRequest
+    ? "근태 수정 요청"
+    : workApplication
+      ? workApplication.application_type === "overtime"
+        ? "연장근무 신청"
+        : "주말근무 신청"
+      : dayoff?.leave_type?.name;
 
   return (
     <div className="rounded-xl bg-white p-4 transition-colors">
@@ -329,6 +364,24 @@ function ApprovalCard({
               </p>
               <p className="text-xs text-slate-400">
                 사유: {modifyRequest.reason}
+              </p>
+            </div>
+          )}
+          {workApplication && (
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-slate-900">
+                {dayjs(workApplication.work_date).format("YYYY-MM-DD (ddd)")} ·{" "}
+                {workApplication.start_time.slice(0, 5)}-
+                {workApplication.end_time.slice(0, 5)}
+              </p>
+              <p className="text-xs font-medium text-slate-600">
+                {workApplication.project_name}
+                {workApplication.location
+                  ? ` · ${workApplication.location}`
+                  : ""}
+              </p>
+              <p className="text-xs text-slate-400">
+                사유: {workApplication.reason}
               </p>
             </div>
           )}

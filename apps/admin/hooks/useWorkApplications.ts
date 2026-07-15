@@ -11,6 +11,7 @@ export interface WorkApplication {
   work_date: string;
   start_time: string;
   end_time: string;
+  location: string | null;
   project_name: string;
   reason: string;
   status: WorkApplicationStatus;
@@ -75,7 +76,9 @@ export function useUpdateWorkApplicationStatus() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.workApplications.all });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.workApplications.all,
+      });
       queryClient.invalidateQueries({ queryKey: queryKeys.approvals.all });
       toast.success("상태가 변경되었습니다.");
     },

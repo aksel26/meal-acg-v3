@@ -7,14 +7,17 @@ export async function GET(request: NextRequest) {
   try {
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
-      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+      return NextResponse.json(
+        { error: "로그인이 필요합니다." },
+        { status: 401 },
+      );
     }
 
     const supabase = createServiceClient();
     if (!supabase) {
       return NextResponse.json(
         { error: "데이터베이스 연결 오류" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -28,7 +31,7 @@ export async function GET(request: NextRequest) {
         `
         *,
         requester:members!approval_requests_requester_id_fkey(id, full_name)
-      `
+      `,
       )
       .eq("approver_id", memberId)
       .order("requested_at", { ascending: false });
@@ -43,7 +46,7 @@ export async function GET(request: NextRequest) {
       console.error("Error fetching approvals:", error);
       return NextResponse.json(
         { error: "승인 목록 조회 실패" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -73,7 +76,7 @@ export async function GET(request: NextRequest) {
           *,
           target:members!dayoffs_target_id_fkey(id, full_name),
           leave_type:leave_types!dayoffs_leave_type_id_fkey(id, name, category)
-        `
+        `,
               )
               .in("id", dayoffIds)
           : Promise.resolve({ data: null }),
@@ -87,7 +90,7 @@ export async function GET(request: NextRequest) {
           attendance_record:attendance_records!attendance_modification_requests_attendance_record_id_fkey(
             id, member_id, date, attendance_type, check_in_at, check_out_at
           )
-        `
+        `,
               )
               .in("id", attendanceModifyIds)
           : Promise.resolve({ data: null }),
@@ -102,33 +105,36 @@ export async function GET(request: NextRequest) {
     const dayoffsMap: Record<string, unknown> = dayoffsResult.data
       ? Object.fromEntries(dayoffsResult.data.map((d) => [d.id, d]))
       : {};
-    const attendanceModifyMap: Record<string, unknown> = modifyRequestsResult.data
-      ? Object.fromEntries(
-          modifyRequestsResult.data.map((modifyRequest) => [
-            modifyRequest.id,
-            modifyRequest,
-          ]),
-        )
-      : {};
-    const workApplicationsMap: Record<string, unknown> = workApplicationsResult.data
-      ? Object.fromEntries(
-          workApplicationsResult.data.map((application) => [
-            application.id,
-            application,
-          ]),
-        )
-      : {};
+    const attendanceModifyMap: Record<string, unknown> =
+      modifyRequestsResult.data
+        ? Object.fromEntries(
+            modifyRequestsResult.data.map((modifyRequest) => [
+              modifyRequest.id,
+              modifyRequest,
+            ]),
+          )
+        : {};
+    const workApplicationsMap: Record<string, unknown> =
+      workApplicationsResult.data
+        ? Object.fromEntries(
+            workApplicationsResult.data.map((application) => [
+              application.id,
+              application,
+            ]),
+          )
+        : {};
 
     const result = (data || []).map((r) => ({
       ...r,
       related_data:
         r.related_table === "dayoffs" && r.related_id
           ? dayoffsMap[r.related_id] || null
-          : r.related_table === "attendance_modification_requests" && r.related_id
+          : r.related_table === "attendance_modification_requests" &&
+              r.related_id
             ? attendanceModifyMap[r.related_id] || null
-          : r.related_table === "work_applications" && r.related_id
-            ? workApplicationsMap[r.related_id] || null
-          : null,
+            : r.related_table === "work_applications" && r.related_id
+              ? workApplicationsMap[r.related_id] || null
+              : null,
     }));
 
     return NextResponse.json(result);
@@ -136,7 +142,7 @@ export async function GET(request: NextRequest) {
     console.error("Approvals API error:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -147,14 +153,17 @@ export async function PUT(request: NextRequest) {
     // 결재자는 로그인 세션 본인으로 강제한다 (body의 memberId 위조 차단)
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
-      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+      return NextResponse.json(
+        { error: "로그인이 필요합니다." },
+        { status: 401 },
+      );
     }
 
     const supabase = createServiceClient();
     if (!supabase) {
       return NextResponse.json(
         { error: "데이터베이스 연결 오류" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -166,10 +175,10 @@ export async function PUT(request: NextRequest) {
     };
     const memberId = sessionUser.id;
 
-    if (!approvalId || !action) {
+    if (!approvalId || !["approve", "reject"].includes(action)) {
       return NextResponse.json(
-        { error: "approvalId, action은 필수입니다." },
-        { status: 400 }
+        { error: "유효한 approvalId와 action이 필요합니다." },
+        { status: 400 },
       );
     }
 
@@ -184,14 +193,14 @@ export async function PUT(request: NextRequest) {
     if (fetchError || !approvalData) {
       return NextResponse.json(
         { error: "승인 요청을 찾을 수 없거나 권한이 없습니다." },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     if (approvalData.status !== "pending") {
       return NextResponse.json(
         { error: "이미 처리된 요청입니다." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -201,12 +210,13 @@ export async function PUT(request: NextRequest) {
 
     if (
       action === "reject" &&
-      approvalData.related_table === "attendance_modification_requests" &&
+      (approvalData.related_table === "attendance_modification_requests" ||
+        approvalData.related_table === "work_applications") &&
       !normalizedRejectReason
     ) {
       return NextResponse.json(
         { error: "반려 사유를 입력해주세요." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -232,7 +242,7 @@ export async function PUT(request: NextRequest) {
         console.error("Error updating dayoff approval:", dayoffUpdateError);
         return NextResponse.json(
           { error: "휴가 결재 상태 반영 실패" },
-          { status: 500 }
+          { status: 500 },
         );
       }
     }
@@ -250,7 +260,7 @@ export async function PUT(request: NextRequest) {
       if (modifyFetchError || !modifyRequest) {
         return NextResponse.json(
           { error: "근태 수정 요청을 찾을 수 없습니다." },
-          { status: 404 }
+          { status: 404 },
         );
       }
 
@@ -267,10 +277,13 @@ export async function PUT(request: NextRequest) {
           .eq("id", modifyRequest.attendance_record_id);
 
         if (attendanceError) {
-          console.error("Error applying attendance modify request:", attendanceError);
+          console.error(
+            "Error applying attendance modify request:",
+            attendanceError,
+          );
           return NextResponse.json(
             { error: "근태 수정 요청 반영 실패" },
-            { status: 500 }
+            { status: 500 },
           );
         }
       }
@@ -289,10 +302,13 @@ export async function PUT(request: NextRequest) {
         .eq("id", approvalData.related_id);
 
       if (modifyUpdateError) {
-        console.error("Error updating attendance modify request:", modifyUpdateError);
+        console.error(
+          "Error updating attendance modify request:",
+          modifyUpdateError,
+        );
         return NextResponse.json(
           { error: "근태 수정 결재 상태 반영 실패" },
-          { status: 500 }
+          { status: 500 },
         );
       }
     }
@@ -302,28 +318,40 @@ export async function PUT(request: NextRequest) {
       approvalData.related_id
     ) {
       const { error: workApplicationUpdateError } = await supabase
-        .from("work_applications")
-        .update({
-          status: newStatus,
-          approved_at: action === "approve" ? now : null,
-          reject_reason: action === "reject" ? normalizedRejectReason || null : null,
+        .rpc("resolve_work_application_approval", {
+          p_approval_id: approvalData.id,
+          p_approver_id: memberId,
+          p_action: action,
+          p_reject_reason: normalizedRejectReason || undefined,
         })
-        .eq("id", approvalData.related_id);
+        .single();
 
       if (workApplicationUpdateError) {
-        console.error("Error updating work application approval:", workApplicationUpdateError);
+        console.error(
+          "Error updating work application approval:",
+          workApplicationUpdateError,
+        );
         return NextResponse.json(
           { error: "근무 신청 결재 상태 반영 실패" },
-          { status: 500 }
+          { status: 500 },
         );
       }
+
+      const { data: resolvedApproval } = await supabase
+        .from("approval_requests")
+        .select()
+        .eq("id", approvalData.id)
+        .single();
+
+      return NextResponse.json(resolvedApproval);
     }
 
     const { data: updated, error: updateError } = await supabase
       .from("approval_requests")
       .update({
         status: newStatus,
-        reject_reason: action === "reject" ? normalizedRejectReason || null : null,
+        reject_reason:
+          action === "reject" ? normalizedRejectReason || null : null,
         resolved_at: now,
         resolved_by: memberId,
       })
@@ -333,10 +361,7 @@ export async function PUT(request: NextRequest) {
 
     if (updateError) {
       console.error("Error updating approval:", updateError);
-      return NextResponse.json(
-        { error: "승인 처리 실패" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "승인 처리 실패" }, { status: 500 });
     }
 
     return NextResponse.json(updated);
@@ -344,7 +369,7 @@ export async function PUT(request: NextRequest) {
     console.error("Approval update API error:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

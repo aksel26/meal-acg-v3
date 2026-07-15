@@ -1,253 +1,81 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServiceClient } from "@/lib/supabase/client";
-import { getCheckInStatus } from "@/lib/attendance-status";
-import { getSessionUser } from "@/lib/auth";
+import {
+  AttendanceActionError,
+  getAttendanceForDate,
+  recordCheckIn,
+  recordCheckOut,
+} from "@/lib/attendance-actions";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 
-const INVALID_MEMBER_ERROR =
-  "사용자 정보가 현재 DB와 일치하지 않습니다. 로그아웃 후 다시 로그인해 주세요.";
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
-// GET /api/attendance?memberId=xxx&date=YYYY-MM-DD
 export async function GET(request: NextRequest) {
   try {
-    const sessionUser = await getSessionUser();
-    if (!sessionUser) {
-      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
-    }
-
-    const supabase = createServiceClient();
-    if (!supabase) {
-      return NextResponse.json(
-        { error: "Supabase client initialization failed" },
-        { status: 500 },
-      );
-    }
-
-    const searchParams = request.nextUrl.searchParams;
-    const memberId = sessionUser.id;
-    const date = searchParams.get("date");
-
+    const date = request.nextUrl.searchParams.get("date");
     if (!date) {
-      return NextResponse.json(
-        { error: "date is required" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "date is required" }, { status: 400 });
     }
 
-    const { data, error } = await supabase
-      .from("attendance_records")
-      .select("*")
-      .eq("member_id", memberId)
-      .eq("date", date)
-      .maybeSingle();
-
-    if (error) {
-      console.error("Error fetching attendance:", error);
-      return NextResponse.json(
-        { error: "Failed to fetch attendance" },
-        { status: 500 },
-      );
-    }
-
-    return NextResponse.json(data);
+    const today = dayjs().tz("Asia/Seoul").format("YYYY-MM-DD");
+    return NextResponse.json(await getAttendanceForDate(date, date === today));
   } catch (error) {
-    console.error("Attendance API error:", error);
+    if (error instanceof AttendanceActionError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status },
+      );
+    }
+
+    console.error("Attendance GET API error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unknown error" },
+      { error: "출퇴근 기록 조회 실패" },
       { status: 500 },
     );
   }
 }
 
-// POST /api/attendance - 출근/퇴근 기록
 export async function POST(request: NextRequest) {
   try {
-    const sessionUser = await getSessionUser();
-    if (!sessionUser) {
-      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
-    }
-
-    const supabase = createServiceClient();
-    if (!supabase) {
-      return NextResponse.json(
-        { error: "Supabase client initialization failed" },
-        { status: 500 },
-      );
-    }
-
-    const { action, earlyLeaveReason } = await request.json();
-    const memberId = sessionUser.id;
-
-    if (!action) {
-      return NextResponse.json(
-        { error: "action is required" },
-        { status: 400 },
-      );
-    }
-
-    if (action !== "check_in" && action !== "check_out") {
-      return NextResponse.json(
-        { error: "action must be 'check_in' or 'check_out'" },
-        { status: 400 },
-      );
-    }
-
-    const { data: member, error: memberError } = await supabase
-      .from("members")
-      .select("id")
-      .eq("id", memberId)
-      .maybeSingle();
-
-    if (memberError) {
-      console.error("Error validating attendance member:", memberError);
-      return NextResponse.json(
-        { error: "사용자 정보 확인에 실패했습니다." },
-        { status: 500 },
-      );
-    }
-
-    if (!member) {
-      return NextResponse.json(
-        { error: INVALID_MEMBER_ERROR },
-        { status: 400 },
-      );
-    }
-
-    // KST 기준 오늘 날짜
-    const now = new Date();
-    const kstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
-    const kstDate = kstNow.toISOString().split("T")[0]!;
+    const body = await request.json();
+    const action = body?.action;
 
     if (action === "check_in") {
-      // UPSERT: 오늘 레코드가 없으면 생성, 있으면 이미 출근한 것
-      const { data: existing } = await supabase
-        .from("attendance_records")
-        .select("id, check_in_at")
-        .eq("member_id", memberId)
-        .eq("date", kstDate)
-        .maybeSingle();
-
-      if (existing?.check_in_at) {
-        return NextResponse.json(
-          { error: "이미 출근 처리되었습니다." },
-          { status: 409 },
-        );
-      }
-
-      const status = getCheckInStatus(
-        kstNow.getUTCHours(),
-        kstNow.getUTCMinutes(),
-        kstNow.getUTCSeconds(),
-      );
-      const isWeekend = kstNow.getUTCDay() === 0 || kstNow.getUTCDay() === 6;
-
-      const { data, error } = await supabase
-        .from("attendance_records")
-        .upsert(
-          {
-            member_id: memberId,
-            date: kstDate,
-            check_in_at: now.toISOString(),
-            status,
-            is_weekend: isWeekend,
-          },
-          { onConflict: "member_id,date" },
-        )
-        .select()
-        .single();
-
-      if (error) {
-        console.error("Error checking in:", error);
-        return NextResponse.json(
-          { error: `출근 처리에 실패했습니다: ${error.message}` },
-          { status: 500 },
-        );
-      }
-
-      return NextResponse.json(data, { status: 201 });
+      return NextResponse.json(await recordCheckIn(), { status: 201 });
     }
 
-    // check_out
-    const { data: record } = await supabase
-      .from("attendance_records")
-      .select("id, check_in_at, check_out_at, status")
-      .eq("member_id", memberId)
-      .eq("date", kstDate)
-      .maybeSingle();
+    if (action === "check_out") {
+      const earlyLeaveReason =
+        typeof body.earlyLeaveReason === "string"
+          ? body.earlyLeaveReason
+          : undefined;
+      return NextResponse.json(await recordCheckOut(earlyLeaveReason));
+    }
 
-    if (!record?.check_in_at) {
+    return NextResponse.json(
+      { error: "action must be 'check_in' or 'check_out'" },
+      { status: 400 },
+    );
+  } catch (error) {
+    if (error instanceof AttendanceActionError) {
       return NextResponse.json(
-        { error: "출근 기록이 없습니다. 먼저 출근해주세요." },
+        { error: error.message },
+        { status: error.status },
+      );
+    }
+
+    if (error instanceof SyntaxError) {
+      return NextResponse.json(
+        { error: "요청 형식이 올바르지 않습니다." },
         { status: 400 },
       );
     }
 
-    if (record.check_out_at) {
-      return NextResponse.json(
-        { error: "이미 퇴근 처리되었습니다." },
-        { status: 409 },
-      );
-    }
-
-    // 조기퇴근 판단: 출근 + 9시간 전에 퇴근하면 조퇴
-    const checkInTime = new Date(record.check_in_at).getTime();
-    const expectedOutTime = checkInTime + 9 * 60 * 60 * 1000;
-    const isEarlyLeave = now.getTime() < expectedOutTime;
-
-    // 초과근무 계산: (퇴근 - 퇴근가능 - 2시간), 양수만
-    const overtimeThreshold = expectedOutTime + 2 * 60 * 60 * 1000;
-    const overtimeMs = now.getTime() - overtimeThreshold;
-    const overtimeMinutes = overtimeMs > 0 ? Math.floor(overtimeMs / 60000) : 0;
-
-    const status = isEarlyLeave ? "early_leave" : (record.status ?? "normal");
-
-    const updateFields: Record<string, unknown> = {
-      check_out_at: now.toISOString(),
-      status,
-      overtime_minutes: overtimeMinutes,
-    };
-
-    // 정상 퇴근: 자동 최종승인
-    if (!isEarlyLeave) {
-      updateFields.approved_at = now.toISOString();
-    }
-
-    const { data, error } = await supabase
-      .from("attendance_records")
-      .update(updateFields)
-      .eq("id", record.id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Error checking out:", error);
-      return NextResponse.json(
-        { error: "퇴근 처리에 실패했습니다." },
-        { status: 500 },
-      );
-    }
-
-    // 조기퇴근: early_leave_requests 생성
-    if (isEarlyLeave && earlyLeaveReason) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: reqError } = await (supabase as any)
-        .from("early_leave_requests")
-        .insert({
-          attendance_record_id: record.id,
-          requester_id: memberId,
-          reason: earlyLeaveReason,
-          approval_status: "pending",
-        });
-
-      if (reqError) {
-        console.error("Error creating early leave request:", reqError);
-      }
-    }
-
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error("Attendance API error:", error);
+    console.error("Attendance POST API error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unknown error" },
+      { error: "출퇴근 처리에 실패했습니다." },
       { status: 500 },
     );
   }

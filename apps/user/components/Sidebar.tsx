@@ -40,6 +40,7 @@ import {
 } from "@/lib/push-notifications";
 import { toast } from "@repo/ui/src/sonner";
 import { useAttendance, useCheckIn, useCheckOut } from "@/hooks/use-attendance";
+import { getAttendanceStatusInfos } from "@/lib/attendance-status";
 import AttendanceConfirmDialog from "./dashboard/AttendanceConfirmDialog";
 import { useMemberIdLookup } from "@/hooks/use-points-data";
 import dayjs from "dayjs";
@@ -203,25 +204,6 @@ function formatElapsedTime(milliseconds: number) {
     .join(":");
 }
 
-function getAttendanceStatusLabel(status?: string | null) {
-  switch (status) {
-    case "early_check_in":
-      return "조기출근";
-    case "normal":
-      return "정상";
-    case "late":
-      return "지각";
-    case "early_leave":
-      return "조퇴";
-    case "absent":
-      return "결근";
-    case "pending":
-      return "미출근";
-    default:
-      return null;
-  }
-}
-
 // ─── Sub-components ───
 
 function UserInfoCard() {
@@ -288,7 +270,9 @@ export function AttendanceSection({
     : null;
   const attendanceStatusTime = attendance?.check_in_at
     ? [
-        getAttendanceStatusLabel(attendance.status),
+        getAttendanceStatusInfos(attendance)
+          .map((status) => status.text)
+          .join(" · "),
         formatTimeWithSeconds(attendance.check_in_at),
       ]
         .filter(Boolean)

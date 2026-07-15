@@ -13,7 +13,10 @@ export async function GET(request: NextRequest) {
   try {
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
-      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+      return NextResponse.json(
+        { error: "로그인이 필요합니다." },
+        { status: 401 },
+      );
     }
 
     const supabase = createServiceClient();
@@ -92,6 +95,8 @@ export async function GET(request: NextRequest) {
         date: r.date,
         check_in_at: r.check_in_at,
         check_out_at: r.check_out_at,
+        check_in_status: r.check_in_status,
+        check_out_status: r.check_out_status,
         attendance_type: r.attendance_type ?? "근무",
         status: r.status,
         overtime_minutes: r.overtime_minutes ?? 0,
@@ -113,11 +118,14 @@ export async function GET(request: NextRequest) {
         0,
       ),
       early_check_in_count: workRecords.filter(
-        (r) => r.status === "early_check_in",
+        (r) => (r.check_in_status ?? r.status) === "early_check_in",
       ).length,
-      late_count: workRecords.filter((r) => r.status === "late").length,
-      early_leave_count: workRecords.filter((r) => r.status === "early_leave")
-        .length,
+      late_count: workRecords.filter(
+        (r) => (r.check_in_status ?? r.status) === "late",
+      ).length,
+      early_leave_count: workRecords.filter(
+        (r) => (r.check_out_status ?? r.status) === "early_leave",
+      ).length,
     };
 
     return NextResponse.json({ records: enrichedRecords, summary });

@@ -7,6 +7,7 @@ import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import { ChevronRight } from "lucide-react";
 import type { DayoffRecord } from "@/hooks/use-dayoffs";
+import { getAttendanceStatusInfos } from "@/lib/attendance-status";
 
 dayjs.locale("ko");
 dayjs.extend(utc);
@@ -17,6 +18,8 @@ interface AttendanceRecord {
   date: string;
   check_in_at: string | null;
   check_out_at: string | null;
+  check_in_status: string | null;
+  check_out_status: string | null;
   attendance_type: string;
   status: string;
   overtime_minutes: number;
@@ -30,14 +33,6 @@ const TYPE_BADGE_STYLES: Record<string, string> = {
   재택: "bg-amber-50 text-amber-700",
   외근: "bg-blue-50 text-blue-700",
 };
-
-const STATUS_LABELS: Record<string, { text: string; color: string }> = {
-  early_check_in: { text: "조기출근", color: "text-blue-600" },
-  normal: { text: "정상", color: "text-emerald-600" },
-  late: { text: "지각", color: "text-rose-600" },
-  early_leave: { text: "조퇴", color: "text-amber-600" },
-};
-const DEFAULT_STATUS_INFO = { text: "정상", color: "text-emerald-600" };
 
 function formatTime(isoString: string | null): string {
   if (!isoString) return "-";
@@ -103,7 +98,7 @@ export default function AttendanceCard({
 
   const badgeStyle =
     TYPE_BADGE_STYLES[record.attendance_type] || "bg-slate-100 text-slate-700";
-  const statusInfo = STATUS_LABELS[record.status] || DEFAULT_STATUS_INFO;
+  const statusInfos = getAttendanceStatusInfos(record);
 
   return (
     <motion.div
@@ -138,8 +133,13 @@ export default function AttendanceCard({
       <div className="mb-4 space-y-2.5">
         <div className="flex items-center justify-between">
           <span className="text-sm text-slate-500">출근현황</span>
-          <span className={`text-sm font-medium ${statusInfo.color}`}>
-            {statusInfo.text}
+          <span className="flex items-center gap-1 text-sm font-medium">
+            {statusInfos.map((statusInfo, index) => (
+              <span key={statusInfo.text} className={statusInfo.color}>
+                {index > 0 && <span className="mr-1 text-slate-300">·</span>}
+                {statusInfo.text}
+              </span>
+            ))}
           </span>
         </div>
         <div className="flex items-center justify-between">

@@ -96,7 +96,9 @@ export type Database = {
           member_id: string
           date: string
           check_in_at: string | null
+          check_in_status: string | null
           check_out_at: string | null
+          check_out_status: string | null
           status: string
           attendance_type: string
           overtime_minutes: number
@@ -110,7 +112,9 @@ export type Database = {
           member_id: string
           date: string
           check_in_at?: string | null
+          check_in_status?: string | null
           check_out_at?: string | null
+          check_out_status?: string | null
           status?: string
           attendance_type?: string
           overtime_minutes?: number
@@ -124,7 +128,9 @@ export type Database = {
           member_id?: string
           date?: string
           check_in_at?: string | null
+          check_in_status?: string | null
           check_out_at?: string | null
+          check_out_status?: string | null
           status?: string
           attendance_type?: string
           overtime_minutes?: number
@@ -2280,6 +2286,14 @@ export type Database = {
       }
     }
     Functions: {
+      record_attendance_check_in: {
+        Args: { p_member_id: string }
+        Returns: Database["public"]["Tables"]["attendance_records"]["Row"][]
+      }
+      record_attendance_check_out: {
+        Args: { p_early_leave_reason?: string; p_member_id: string }
+        Returns: Database["public"]["Tables"]["attendance_records"]["Row"][]
+      }
       advance_review_status: {
         Args: { p_reviewer_id: string; p_usage_record_id: string }
         Returns: {

@@ -7,9 +7,11 @@ import { toast } from "@repo/ui/src/sonner";
 interface AttendanceRecord {
   id: string;
   member_id: string;
-  work_date: string;
+  date: string;
   check_in_at: string | null;
   check_out_at: string | null;
+  check_in_status?: string | null;
+  check_out_status?: string | null;
   attendance_type?: string | null;
   status?: string | null;
   created_at: string;

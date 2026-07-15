@@ -7,6 +7,7 @@ import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import { Filter } from "lucide-react";
 import type { ModifyRequest } from "@/hooks/use-attendance-modify";
+import { getAttendanceStatusInfos } from "@/lib/attendance-status";
 
 dayjs.locale("ko");
 dayjs.extend(utc);
@@ -17,6 +18,8 @@ interface AttendanceRecord {
   date: string;
   check_in_at: string | null;
   check_out_at: string | null;
+  check_in_status: string | null;
+  check_out_status: string | null;
   attendance_type: string;
   status: string;
   overtime_minutes: number;
@@ -24,13 +27,6 @@ interface AttendanceRecord {
   work_minutes: number;
   modification_status: string | null;
 }
-
-const STATUS_LABELS: Record<string, { text: string; color: string }> = {
-  early_check_in: { text: "조기출근", color: "text-blue-600" },
-  normal: { text: "정상", color: "text-emerald-600" },
-  late: { text: "지각", color: "text-rose-600" },
-  early_leave: { text: "조퇴", color: "text-amber-600" },
-};
 
 const TYPE_BADGE_STYLES: Record<string, string> = {
   근무: "bg-slate-100 text-slate-700",
@@ -179,22 +175,18 @@ export default function AttendanceTable({
               const d = dayjs(record.date);
               const dayOfWeek = d.day();
               const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-              const DEFAULT_STATUS = {
-                text: "정상",
-                color: "text-emerald-600",
-              };
-              const statusInfo = STATUS_LABELS[record.status] ?? DEFAULT_STATUS;
+              const statusInfos = getAttendanceStatusInfos(record);
               const modifyRequest = modifyRequestByRecordId.get(record.id);
               const displayAttendanceType =
                 modifyRequest && modifyRequest.approval_status !== "반려"
                   ? modifyRequest.requested_type
                   : record.attendance_type;
-              const displayStatus =
+              const displayStatuses =
                 modifyRequest && modifyRequest.approval_status !== "승인"
                   ? modifyRequest.approval_status === "반려"
-                    ? { text: "반려", color: "text-rose-600" }
-                    : { text: "승인 전", color: "text-amber-600" }
-                  : statusInfo;
+                    ? [{ text: "반려", color: "text-rose-600" }]
+                    : [{ text: "승인 전", color: "text-amber-600" }]
+                  : statusInfos;
               const badgeStyle =
                 TYPE_BADGE_STYLES[displayAttendanceType] ||
                 TYPE_BADGE_STYLES["근무"];
@@ -237,10 +229,20 @@ export default function AttendanceTable({
                       {displayAttendanceType}
                     </span>
                   </td>
-                  <td
-                    className={`px-2 py-3 font-medium ${displayStatus.color}`}
-                  >
-                    {displayStatus.text}
+                  <td className="px-2 py-3 font-medium">
+                    <span className="flex items-center gap-1">
+                      {displayStatuses.map((displayStatus, index) => (
+                        <span
+                          key={displayStatus.text}
+                          className={displayStatus.color}
+                        >
+                          {index > 0 && (
+                            <span className="mr-1 text-slate-300">·</span>
+                          )}
+                          {displayStatus.text}
+                        </span>
+                      ))}
+                    </span>
                   </td>
                   <td className="px-2 py-3">
                     {modifyRequest ? (

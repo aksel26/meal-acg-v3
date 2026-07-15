@@ -8,6 +8,8 @@ export interface MyAttendance {
   date: string;
   check_in_at: string | null;
   check_out_at: string | null;
+  check_in_status: string | null;
+  check_out_status: string | null;
   status: string;
   overtime_minutes: number;
   is_weekend: boolean;

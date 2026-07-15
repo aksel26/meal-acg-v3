@@ -12,6 +12,8 @@ interface AttendanceRecord {
   date: string;
   attendance_type: string;
   status: string;
+  check_in_status: string | null;
+  check_out_status: string | null;
 }
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
@@ -128,10 +130,13 @@ export default function AttendanceCalendar({
               const dotColor = record
                 ? TYPE_COLORS[record.attendance_type] || DEFAULT_TYPE_COLOR
                 : null;
-              const isSpecialStatus =
-                record?.status === "early_check_in" ||
-                record?.status === "late" ||
-                record?.status === "early_leave";
+              const isSpecialStatus = Boolean(
+                record &&
+                  (["early_check_in", "late"].includes(
+                    record.check_in_status ?? record.status,
+                  ) ||
+                    record.check_out_status === "early_leave"),
+              );
 
               return (
                 <button

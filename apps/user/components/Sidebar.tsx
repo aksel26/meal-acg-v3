@@ -252,7 +252,13 @@ function UserInfoCard() {
   );
 }
 
-function AttendanceSection({ memberId }: { memberId: string | null }) {
+export function AttendanceSection({
+  memberId,
+  className = "mx-3 mb-4",
+}: {
+  memberId: string | null;
+  className?: string;
+}) {
   const todayStr = dayjs().tz("Asia/Seoul").format("YYYY-MM-DD");
   const { data: attendance } = useAttendance(memberId, todayStr);
   const checkInMutation = useCheckIn();
@@ -277,9 +283,11 @@ function AttendanceSection({ memberId }: { memberId: string | null }) {
     isWorking && attendance?.check_in_at
       ? formatElapsedTime(now - new Date(attendance.check_in_at).getTime())
       : null;
-  const attendanceSummary = attendance?.check_in_at
+  const attendanceType = attendance?.check_in_at
+    ? attendance.attendance_type || "출근"
+    : null;
+  const attendanceStatusTime = attendance?.check_in_at
     ? [
-        attendance.attendance_type || "출근",
         getAttendanceStatusLabel(attendance.status),
         formatTimeWithSeconds(attendance.check_in_at),
       ]
@@ -323,7 +331,7 @@ function AttendanceSection({ memberId }: { memberId: string | null }) {
 
   return (
     <>
-      <div className="mx-3 mb-4">
+      <div className={className}>
         <div className="mb-2 flex items-center justify-between gap-2 px-1">
           <p className="text-[11px] font-medium uppercase tracking-widest text-slate-400">
             출퇴근
@@ -345,12 +353,17 @@ function AttendanceSection({ memberId }: { memberId: string | null }) {
         ) : !hasCheckedOut ? (
           <div className="space-y-2">
             {elapsedTime && (
-              <div className="rounded-lg border border-emerald-100 bg-white px-3 py-2.5">
-                {attendanceSummary && (
-                  <div className="mb-2 flex items-center justify-between gap-2 border-b border-emerald-50 pb-2">
+              <div className="rounded-lg bg-slate-50 px-3 py-2.5">
+                {attendanceType && (
+                  <div className="mb-2 flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
                     <p className="truncate text-xs font-semibold text-[#131313]">
-                      {attendanceSummary}
+                      {attendanceType}
                     </p>
+                    {attendanceStatusTime && (
+                      <p className="shrink-0 text-[11px] font-medium tabular-nums text-slate-500">
+                        {attendanceStatusTime}
+                      </p>
+                    )}
                   </div>
                 )}
                 <div className="flex items-center justify-between gap-2">
@@ -381,10 +394,17 @@ function AttendanceSection({ memberId }: { memberId: string | null }) {
           </div>
         ) : (
           <div className="space-y-2 rounded-lg bg-[#f9f9fa] px-3 py-2">
-            {attendanceSummary && (
-              <p className="truncate text-xs font-semibold text-[#131313]">
-                {attendanceSummary}
-              </p>
+            {attendanceType && (
+              <div className="flex items-center justify-between gap-2">
+                <p className="truncate text-xs font-semibold text-[#131313]">
+                  {attendanceType}
+                </p>
+                {attendanceStatusTime && (
+                  <p className="shrink-0 text-[11px] font-medium tabular-nums text-slate-500">
+                    {attendanceStatusTime}
+                  </p>
+                )}
+              </div>
             )}
             <div className="flex items-center gap-2">
               <svg

@@ -8,8 +8,9 @@ import {
   Wallet,
   Cake,
   Coffee,
-  Bell,
 } from "lucide-react";
+import { AttendanceSection } from "@/components/Sidebar";
+import { useMemberIdLookup } from "@/hooks/use-points-data";
 import Link from "next/link";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
@@ -27,6 +28,9 @@ import type { SupervisorPosting } from "@/hooks/use-supervisor-calendar";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
+
+// 세션 첫 진입에만 스태거 애니메이션 재생 (페이지 전환마다 재마운트되므로)
+let hasAnimatedDashboard = false;
 
 function buildPostingsByDate(postings: SupervisorPosting[] = []) {
   const map = new Map<string, SupervisorPosting[]>();
@@ -57,38 +61,30 @@ function ApprovalShortcuts() {
     <div className="grid grid-cols-3 gap-3">
       <Link
         href="/leave-request"
-        className="flex items-center justify-between rounded-lg bg-blue-50 px-4 py-4 transition-colors active:bg-blue-100"
+        className="flex flex-col items-start gap-2 rounded-lg bg-blue-50 px-4 py-4 transition-colors active:bg-blue-100"
       >
+        <CalendarPlus className="h-5 w-5 text-slate-400" strokeWidth={1.5} />
         <p className="text-sm font-medium text-slate-700">휴가 신청</p>
-        <CalendarPlus className="h-5 w-5 text-slate-400" />
       </Link>
       <Link
         href="/meal"
-        className="flex items-center justify-between rounded-lg bg-emerald-50 px-4 py-4 transition-colors active:bg-emerald-100"
+        className="flex flex-col items-start gap-2 rounded-lg bg-blue-50 px-4 py-4 transition-colors active:bg-blue-100"
       >
+        <UtensilsCrossed className="h-5 w-5 text-slate-400" strokeWidth={1.5} />
         <p className="text-sm font-medium text-slate-700">식대 입력</p>
-        <UtensilsCrossed className="h-5 w-5 text-slate-400" />
       </Link>
       <Link
         href="/points"
-        className="flex items-center justify-between rounded-lg bg-violet-50 px-4 py-4 transition-colors active:bg-violet-100"
+        className="flex flex-col items-start gap-2 rounded-lg bg-blue-50 px-4 py-4 transition-colors active:bg-blue-100"
       >
+        <Wallet className="h-5 w-5 text-slate-400" strokeWidth={1.5} />
         <p className="text-sm font-medium text-slate-700">복지포인트</p>
-        <Wallet className="h-5 w-5 text-slate-400" />
       </Link>
     </div>
   );
 }
 
 // ─── 탭 콘텐츠: 공지 / 생일자 / 음료 ───
-
-type TabId = "notices" | "birthdays" | "drinks";
-
-const tabs: { id: TabId; label: string; icon: React.ElementType }[] = [
-  { id: "notices", label: "공지", icon: Bell },
-  { id: "birthdays", label: "생일자", icon: Cake },
-  { id: "drinks", label: "음료", icon: Coffee },
-];
 
 function NoticesContent() {
   return (
@@ -114,12 +110,8 @@ function NoticesContent() {
 }
 
 function BirthdaysContent() {
-  const today = dayjs().tz("Asia/Seoul");
-  const monthName = today.format("M");
-
   return (
     <div className="space-y-3">
-      <p className="text-xs text-slate-400">{monthName}월 생일자</p>
       <div className="flex flex-col gap-2">
         {[
           { name: "홍길동", date: "04.05", team: "개발팀" },
@@ -128,10 +120,10 @@ function BirthdaysContent() {
         ].map((person) => (
           <div
             key={person.name}
-            className="flex items-center gap-3 rounded-xl bg-pink-50 p-3"
+            className="flex items-center gap-3 rounded-xl bg-rose-50 p-3"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/60 text-sm">
-              🎂
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/60">
+              <Cake className="h-4 w-4 text-rose-400" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-slate-800">
@@ -150,7 +142,6 @@ function BirthdaysContent() {
 function DrinksContent() {
   return (
     <div className="space-y-3">
-      <p className="text-xs text-slate-400">이번 달 음료 취합</p>
       <div className="rounded-xl bg-amber-50 p-4 text-center">
         <Coffee className="mx-auto mb-2 h-8 w-8 text-slate-500" />
         <p className="text-sm font-medium text-slate-700">
@@ -167,35 +158,27 @@ function DrinksContent() {
   );
 }
 
-function InfoTabs() {
-  const [activeTab, setActiveTab] = useState<TabId>("notices");
+function InfoSection() {
+  const monthName = dayjs().tz("Asia/Seoul").format("M");
 
   return (
-    <div className="rounded-2xl bg-gray-50 overflow-hidden">
-      {/* Tab Headers */}
-      <div className="flex">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex flex-1 items-center justify-center gap-1.5 px-4 py-4 text-xs font-medium transition-colors ${
-              activeTab === tab.id
-                ? "bg-slate-100 text-slate-800"
-                : "text-slate-400 hover:text-slate-600"
-            }`}
-          >
-            <tab.icon size={14} />
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Tab Content */}
-      <div className="p-4">
-        {activeTab === "notices" && <NoticesContent />}
-        {activeTab === "birthdays" && <BirthdaysContent />}
-        {activeTab === "drinks" && <DrinksContent />}
-      </div>
+    <div className="space-y-6">
+      <section>
+        <h3 className="mb-3 text-sm font-semibold text-[#131313]">공지</h3>
+        <NoticesContent />
+      </section>
+      <section>
+        <h3 className="mb-3 text-sm font-semibold text-[#131313]">
+          {monthName}월 생일
+        </h3>
+        <BirthdaysContent />
+      </section>
+      <section>
+        <h3 className="mb-3 text-sm font-semibold text-[#131313]">
+          Monthly 음료
+        </h3>
+        <DrinksContent />
+      </section>
     </div>
   );
 }
@@ -209,21 +192,21 @@ function LeaveSummary() {
         내 휴가 요약
       </h3>
       <div className="grid grid-cols-4 gap-3">
-        <div className="rounded-xl bg-gray-50 p-3 text-center">
+        <div className="rounded-xl bg-slate-50 p-3 text-center">
           <p className="text-[11px] text-[#131313]/50 mb-1">총 연차</p>
-          <p className="text-lg font-bold text-[#131313]">15일</p>
+          <p className="text-lg font-bold tabular-nums text-[#131313]">15일</p>
         </div>
-        <div className="rounded-xl bg-gray-50 p-3 text-center">
+        <div className="rounded-xl bg-slate-50 p-3 text-center">
           <p className="text-[11px] text-[#131313]/50 mb-1">잔여</p>
-          <p className="text-lg font-bold text-[#131313]">8일</p>
+          <p className="text-lg font-bold tabular-nums text-[#131313]">8일</p>
         </div>
-        <div className="rounded-xl bg-gray-50 p-3 text-center">
+        <div className="rounded-xl bg-slate-50 p-3 text-center">
           <p className="text-[11px] text-[#131313]/50 mb-1">사용</p>
-          <p className="text-lg font-bold text-[#131313]">7일</p>
+          <p className="text-lg font-bold tabular-nums text-[#131313]">7일</p>
         </div>
-        <div className="rounded-xl bg-gray-50 p-3 text-center">
-          <p className="text-[11px] text-[#131313]/50 mb-1">예정</p>
-          <p className="text-lg font-bold text-[#131313]">1일</p>
+        <div className="rounded-xl bg-slate-50 p-3 text-center">
+          <p className="text-[11px] text-[#131313]/50 mb-1">사용 예정</p>
+          <p className="text-lg font-bold tabular-nums text-[#131313]">1일</p>
         </div>
       </div>
     </div>
@@ -262,7 +245,7 @@ function SelectedDateDetail({
         return (
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
             {/* 검사/면접 일정 */}
-            <div className="rounded-xl bg-gray-50 p-3">
+            <div className="rounded-xl bg-slate-50 p-3">
               <p className="text-xs font-semibold text-[#131313] mb-2">
                 검사/면접 일정
               </p>
@@ -290,7 +273,7 @@ function SelectedDateDetail({
             </div>
 
             {/* 프로젝트 일정 */}
-            <div className="rounded-xl bg-gray-50 p-3">
+            <div className="rounded-xl bg-slate-50 p-3">
               <p className="text-xs font-semibold text-[#131313] mb-2">
                 프로젝트 일정
               </p>
@@ -319,7 +302,7 @@ function SelectedDateDetail({
             </div>
 
             {/* 요청 마감 */}
-            <div className="rounded-xl bg-gray-50 p-3">
+            <div className="rounded-xl bg-slate-50 p-3">
               <p className="text-xs font-semibold text-[#131313] mb-2">
                 요청 마감
               </p>
@@ -356,6 +339,20 @@ function SelectedDateDetail({
 
 // ─── Dashboard Page ───
 
+// ─── 오늘 헤더 ───
+
+function TodayHeader({ userName }: { userName: string }) {
+  const today = dayjs().tz("Asia/Seoul");
+  return (
+    <div className="mb-5">
+      <p className="text-xs text-slate-400">{today.format("M월 D일 dddd")}</p>
+      <h2 className="mt-0.5 text-lg font-semibold tracking-tight text-slate-900">
+        {userName}님, 안녕하세요
+      </h2>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const [mounted, setMounted] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
@@ -373,6 +370,17 @@ export default function DashboardPage() {
   const isLoggedIn = useUserStore((s) => s.isLoggedIn);
   const hydrate = useUserStore((s) => s.hydrate);
   const hasHydrated = useUserStore((s) => s.hasHydrated);
+  const memberId = useUserStore((s) => s.memberId);
+
+  // 모바일 출퇴근 카드용 memberId (Sidebar와 동일한 fallback 조회)
+  const { data: memberLookup } = useMemberIdLookup(userName || null);
+  const resolvedMemberId = memberLookup?.id ?? memberId;
+
+  // 세션 첫 진입에만 스태거 애니메이션 재생
+  const shouldAnimate = !hasAnimatedDashboard;
+  useEffect(() => {
+    hasAnimatedDashboard = true;
+  }, []);
 
   const { data: calendarData } = useDashboardCalendar(
     currentYear,
@@ -491,13 +499,25 @@ export default function DashboardPage() {
 
   return (
     <React.Fragment>
+      <TodayHeader userName={displayUserName} />
+
+      {/* 모바일 전용 출퇴근 카드 (데스크톱은 사이드바에 표시) */}
+      <motion.div
+        initial={shouldAnimate ? { opacity: 0, y: 12 } : false}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        className="mb-6 md:hidden"
+      >
+        <AttendanceSection memberId={resolvedMemberId} className="" />
+      </motion.div>
+
       <div className="md:grid md:grid-cols-2 md:gap-6">
-        {/* ── 좌측: 캘린더 + 바로가기 ── */}
+        {/* ── 좌측: 캘린더 + 선택 날짜 상세 ── */}
         <div>
           <motion.div
-            initial={{ opacity: 0, y: 12 }}
+            initial={shouldAnimate ? { opacity: 0, y: 12 } : false}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.5, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
             className="mb-6"
           >
             <DashboardGridCalendar
@@ -510,23 +530,11 @@ export default function DashboardPage() {
               dayDataMap={dayDataMap}
             />
           </motion.div>
-        </div>
 
-        {/* ── 우측: 바로가기 + 탭 + 휴가요약 ── */}
-        <div>
           <motion.div
-            initial={{ opacity: 0, y: 12 }}
+            initial={shouldAnimate ? { opacity: 0, y: 12 } : false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="mb-6"
-          >
-            <ApprovalShortcuts />
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
             className="mb-6"
           >
             <SelectedDateDetail
@@ -536,9 +544,21 @@ export default function DashboardPage() {
               projects={selectedProjects}
             />
           </motion.div>
+        </div>
+
+        {/* ── 우측: 바로가기 + 휴가요약 + 정보 ── */}
+        <div>
+          <motion.div
+            initial={shouldAnimate ? { opacity: 0, y: 12 } : false}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
+            className="mb-6"
+          >
+            <ApprovalShortcuts />
+          </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 12 }}
+            initial={shouldAnimate ? { opacity: 0, y: 12 } : false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
             className="mb-6"
@@ -547,12 +567,12 @@ export default function DashboardPage() {
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 12 }}
+            initial={shouldAnimate ? { opacity: 0, y: 12 } : false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className="mb-6"
           >
-            <InfoTabs />
+            <InfoSection />
           </motion.div>
         </div>
       </div>

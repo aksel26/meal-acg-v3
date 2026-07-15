@@ -38,9 +38,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 제외된 멤버를 제외한 대상 멤버 필터링
+    // 특이사항(휴직/퇴사 등) 있는 멤버 조회 — 제외 선택 UI(exclude_status=true)와 동일 기준
+    const { data: statusMembers, error: statusError } = await supabase
+      .from("member_current_status")
+      .select("member_id")
+      .not("current_status", "is", null);
+
+    if (statusError) {
+      console.error("Error fetching member statuses:", statusError);
+      return NextResponse.json(
+        { error: "Failed to fetch member statuses" },
+        { status: 500 }
+      );
+    }
+
+    const statusMemberIds = new Set(
+      (statusMembers || []).map((m) => m.member_id).filter(Boolean)
+    );
+
+    // 특이사항 멤버 + 제외 선택된 멤버를 뺀 대상 멤버 필터링
     const targetMembers = members.filter(
-      (member) => !excludedUserIds.includes(member.id)
+      (member) =>
+        !statusMemberIds.has(member.id) && !excludedUserIds.includes(member.id)
     );
 
     if (targetMembers.length === 0) {

@@ -204,6 +204,17 @@ export function UserLibraryClient({
                     <span className="text-slate-400">없음</span>
                   )}
                 </div>
+                {activeRental && (
+                  <div>
+                    대여 상태{" "}
+                    <span className="font-medium text-slate-900">
+                      {BOOK_RENTAL_STATUS_LABEL[activeRental.status]}
+                      {activeRental.due_at
+                        ? ` · 반납 예정 ${formatDate(activeRental.due_at)}`
+                        : ""}
+                    </span>
+                  </div>
+                )}
                 {book.memo && <p className="text-slate-500">{book.memo}</p>}
               </div>
 
@@ -213,7 +224,11 @@ export function UserLibraryClient({
                 onClick={() => requestRental(book.id)}
                 className="mt-5 inline-flex h-10 w-full items-center justify-center rounded-lg bg-slate-950 px-4 text-sm font-medium text-white transition disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
               >
-                {isMine ? "신청/대여중" : isRentable ? "대여 신청" : "대여 불가"}
+                {isMine
+                  ? "신청/대여중"
+                  : isRentable
+                    ? "대여 신청"
+                    : "대여 불가"}
               </button>
             </article>
           );
@@ -222,7 +237,9 @@ export function UserLibraryClient({
 
       <section className="rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
         <div className="border-b border-slate-100 px-5 py-4">
-          <h2 className="text-base font-semibold text-slate-950">나의 대여 내역</h2>
+          <h2 className="text-base font-semibold text-slate-950">
+            나의 대여 내역
+          </h2>
         </div>
         <div className="divide-y divide-slate-100">
           {data.myRentals.map((rental) => (

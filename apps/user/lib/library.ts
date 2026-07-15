@@ -152,11 +152,7 @@ export async function listLibraryForUser(
     { data: myRentals, error: myRentalError },
     { data: activeRentals, error: activeRentalError },
   ] = await Promise.all([
-    client
-      .from("books")
-      .select("*")
-      .neq("status", "disabled")
-      .order("title", { ascending: true }),
+    client.from("books").select("*").order("title", { ascending: true }),
     client.from("library_settings").select("*").eq("id", "default").single(),
     client
       .from("book_rentals")

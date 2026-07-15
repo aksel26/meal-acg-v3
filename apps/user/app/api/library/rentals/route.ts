@@ -30,16 +30,44 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data: blockedRentals } = await client
-      .from("book_rentals")
-      .select("id, requester_id, status")
-      .eq("book_id", payload.bookId)
-      .or(`status.eq.pending,and(status.in.(approved,return_requested),returned_at.is.null)`)
-      .limit(1);
+    const [activeRentalResult, pendingRentalResult] = await Promise.all([
+      client
+        .from("book_rentals")
+        .select("id")
+        .eq("book_id", payload.bookId)
+        .in("status", ["approved", "return_requested"])
+        .is("returned_at", null)
+        .limit(1),
+      client
+        .from("book_rentals")
+        .select("id")
+        .eq("book_id", payload.bookId)
+        .eq("requester_id", session.id)
+        .eq("status", "pending")
+        .limit(1),
+    ]);
 
-    if (blockedRentals?.length) {
+    if (activeRentalResult.error || pendingRentalResult.error) {
+      console.error("Library rental conflict check error:", {
+        activeRentalError: activeRentalResult.error,
+        pendingRentalError: pendingRentalResult.error,
+      });
       return NextResponse.json(
-        { error: "이미 대여중이거나 승인 대기중인 도서입니다." },
+        { error: "도서 대여 상태를 확인하지 못했습니다." },
+        { status: 500 },
+      );
+    }
+
+    if (activeRentalResult.data?.length) {
+      return NextResponse.json(
+        { error: "이미 대여중인 도서입니다." },
+        { status: 409 },
+      );
+    }
+
+    if (pendingRentalResult.data?.length) {
+      return NextResponse.json(
+        { error: "이미 승인 대기중인 신청이 있습니다." },
         { status: 409 },
       );
     }
@@ -53,6 +81,13 @@ export async function POST(request: NextRequest) {
       })
       .select()
       .single();
+
+    if (error?.code === "23505") {
+      return NextResponse.json(
+        { error: "이미 승인 대기중인 신청이 있습니다." },
+        { status: 409 },
+      );
+    }
 
     if (error || !data) {
       console.error("Library rental create error:", error);

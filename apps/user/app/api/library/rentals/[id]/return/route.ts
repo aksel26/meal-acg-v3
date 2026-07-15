@@ -60,14 +60,23 @@ export async function PATCH(
         return_requested_at: new Date().toISOString(),
       })
       .eq("id", id)
+      .eq("requester_id", session.id)
+      .eq("status", "approved")
+      .is("returned_at", null)
       .select()
-      .single();
+      .maybeSingle();
 
-    if (error || !data) {
+    if (error) {
       console.error("Library return request error:", error);
       return NextResponse.json(
         { error: "도서 반납 신청에 실패했습니다." },
         { status: 500 },
+      );
+    }
+    if (!data) {
+      return NextResponse.json(
+        { error: "승인된 대여만 반납 신청할 수 있습니다." },
+        { status: 409 },
       );
     }
 

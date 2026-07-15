@@ -38,14 +38,22 @@ export async function PATCH(
         processed_by: session.userId,
       })
       .eq("id", id)
+      .eq("status", "return_requested")
+      .is("returned_at", null)
       .select()
-      .single();
+      .maybeSingle();
 
-    if (error || !data) {
+    if (error) {
       console.error("Book return confirmation error:", error);
       return NextResponse.json(
         { error: "반납완료 처리에 실패했습니다." },
         { status: 500 },
+      );
+    }
+    if (!data) {
+      return NextResponse.json(
+        { error: "P&C 접수중인 대여만 반납완료 처리할 수 있습니다." },
+        { status: 409 },
       );
     }
 

@@ -90,14 +90,27 @@ export async function PATCH(
           reject_reason: null,
         })
         .eq("id", id)
+        .eq("status", "pending")
         .select()
-        .single();
+        .maybeSingle();
 
-      if (error || !data) {
+      if (error?.code === "23505") {
+        return NextResponse.json(
+          { error: ACTIVE_RENTAL_CONFLICT_MESSAGE },
+          { status: 409 },
+        );
+      }
+      if (error) {
         console.error("Book rental approval error:", error);
         return NextResponse.json(
           { error: "대여 신청을 승인하지 못했습니다." },
           { status: 500 },
+        );
+      }
+      if (!data) {
+        return NextResponse.json(
+          { error: "대기 상태의 신청만 처리할 수 있습니다." },
+          { status: 409 },
         );
       }
       return NextResponse.json(data);
@@ -111,14 +124,21 @@ export async function PATCH(
         reject_reason: payload.rejectReason,
       })
       .eq("id", id)
+      .eq("status", "pending")
       .select()
-      .single();
+      .maybeSingle();
 
-    if (error || !data) {
+    if (error) {
       console.error("Book rental rejection error:", error);
       return NextResponse.json(
         { error: "대여 신청을 반려하지 못했습니다." },
         { status: 500 },
+      );
+    }
+    if (!data) {
+      return NextResponse.json(
+        { error: "대기 상태의 신청만 처리할 수 있습니다." },
+        { status: 409 },
       );
     }
 

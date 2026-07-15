@@ -26,9 +26,9 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const STATUS_CLASS: Record<string, string> = {
-  pending: "border-amber-200 bg-amber-50 text-amber-700",
-  approved: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  rejected: "border-red-200 bg-red-50 text-red-700",
+  pending: "border-slate-200 bg-slate-50 text-slate-700",
+  approved: "border-slate-200 bg-slate-50 text-slate-700",
+  rejected: "border-slate-200 bg-slate-50 text-slate-700",
 };
 const actionIconClass = "mr-1 h-3.5 w-3.5 shrink-0";
 
@@ -219,8 +219,8 @@ export default function WorkApplicationsAdminPage() {
       </section>
 
       {rejectingId && (
-        <section className="rounded-xl border border-red-100 bg-red-50 p-4">
-          <h3 className="font-semibold text-red-900">반려 사유</h3>
+        <section className="rounded-xl bg-slate-50 p-4">
+          <h3 className="font-semibold text-slate-900">반려 사유</h3>
           <Textarea
             className="mt-2 bg-white"
             value={rejectReason}

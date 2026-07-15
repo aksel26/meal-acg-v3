@@ -12,7 +12,7 @@ export default function DashboardContentFrame({
 
   return (
     <div
-      className={`flex-1 overflow-y-auto scroll-smooth px-6 py-4 ${isDashboardPage ? "bg-[#fafafc]" : ""}`}
+      className={`flex-1 overflow-y-auto scroll-smooth px-6 py-4 ${isDashboardPage ? "bg-[#f8fafc]" : ""}`}
     >
       <div className="md:px-2">{children}</div>
     </div>

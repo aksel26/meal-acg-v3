@@ -361,12 +361,12 @@ function AssetThumbnail({
 function AssetStatusBadge({ status }: { status: AssetStatus }) {
   const className =
     status === "사용중"
-      ? "bg-emerald-50 text-emerald-700"
+      ? "bg-slate-50 text-slate-700"
       : status === "보관중"
         ? "bg-slate-100 text-slate-600"
         : status === "수리중"
-          ? "bg-amber-50 text-amber-700"
-          : "bg-zinc-100 text-zinc-500";
+          ? "bg-slate-50 text-slate-700"
+          : "bg-slate-100 text-slate-500";
 
   return (
     <span className={`inline-flex rounded px-2 py-1 text-[11px] font-medium ${className}`}>

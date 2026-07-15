@@ -86,7 +86,7 @@ export default function FinanceExpensesPage() {
             <div className="flex gap-1">
               <button className="text-xs text-slate-600 hover:underline" onClick={() => statusMutation.mutate({ id: item.id, status: "approved" })}>승인</button>
               <button className="text-xs text-slate-600 hover:underline" onClick={() => statusMutation.mutate({ id: item.id, status: "paid" })}>지급</button>
-              <button className="text-xs text-red-600 hover:underline" onClick={() => statusMutation.mutate({ id: item.id, status: "rejected", reject_reason: "관리자 반려" })}>반려</button>
+              <button className="text-xs text-slate-600 hover:underline" onClick={() => statusMutation.mutate({ id: item.id, status: "rejected", reject_reason: "관리자 반려" })}>반려</button>
             </div>
           ),
         },

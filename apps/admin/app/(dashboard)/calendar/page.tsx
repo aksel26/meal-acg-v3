@@ -634,7 +634,7 @@ function CalendarPageContent() {
               <div
                 key={day}
                 className={`text-center text-sm font-medium py-2 ${
-                  i === 0 ? "text-red-500" : i === 6 ? "text-slate-700" : ""
+                  i === 0 ? "text-slate-500" : i === 6 ? "text-slate-700" : ""
                 }`}
               >
                 {day}
@@ -665,8 +665,8 @@ function CalendarPageContent() {
                 if (!attendance)
                   return {
                     Icon: Briefcase,
-                    bg: "bg-gray-100",
-                    text: "text-gray-500",
+                    bg: "bg-slate-100",
+                    text: "text-slate-500",
                     label: "",
                   };
                 const lower = attendance.toLowerCase();
@@ -687,8 +687,8 @@ function CalendarPageContent() {
                 if (lower.includes("재택") || lower.includes("홈"))
                   return {
                     Icon: Home,
-                    bg: "bg-amber-50",
-                    text: "text-amber-600",
+                    bg: "bg-slate-50",
+                    text: "text-slate-600",
                     label: "재택",
                   };
                 if (
@@ -698,21 +698,21 @@ function CalendarPageContent() {
                 )
                   return {
                     Icon: Sun,
-                    bg: "bg-sky-50",
-                    text: "text-sky-600",
+                    bg: "bg-slate-50",
+                    text: "text-slate-600",
                     label: "휴가",
                   };
                 if (lower.includes("반차"))
                   return {
                     Icon: Clock,
-                    bg: "bg-violet-50",
-                    text: "text-violet-600",
+                    bg: "bg-slate-50",
+                    text: "text-slate-600",
                     label: lower.includes("오전") ? "오전 반차" : "오후 반차",
                   };
                 return {
                   Icon: Briefcase,
-                  bg: "bg-gray-100",
-                  text: "text-gray-500",
+                  bg: "bg-slate-100",
+                  text: "text-slate-500",
                   label: "",
                 };
               };
@@ -762,7 +762,7 @@ function CalendarPageContent() {
                     isToday
                       ? "ring-2 ring-slate-700 bg-slate-100/30"
                       : isHoliday
-                        ? "bg-rose-50/60"
+                        ? "bg-slate-50/60"
                         : isWeekend
                           ? "bg-slate-100/60"
                           : "bg-slate-50/50"
@@ -775,7 +775,7 @@ function CalendarPageContent() {
                         isToday
                           ? "text-slate-800"
                           : isHoliday || dayOfWeek === 0
-                            ? "text-rose-500"
+                            ? "text-slate-500"
                             : dayOfWeek === 6
                               ? "text-slate-700"
                               : "text-slate-600"
@@ -785,7 +785,7 @@ function CalendarPageContent() {
                     </span>
                     {isHoliday && (
                       <span
-                        className="text-[7px] text-rose-400 truncate max-w-[40px] leading-none"
+                        className="text-[7px] text-slate-400 truncate max-w-[40px] leading-none"
                         title={holidayName}
                       >
                         {holidayName}
@@ -836,59 +836,59 @@ function CalendarPageContent() {
                           )}
                           {mealLog.breakfast_amount &&
                           mealLog.breakfast_amount > 0 ? (
-                            <div className="flex items-center justify-between rounded bg-orange-50 px-2 py-1">
-                              <span className="text-sm font-bold tabular-nums text-orange-700">
+                            <div className="flex items-center justify-between rounded bg-slate-50 px-2 py-1">
+                              <span className="text-sm font-bold tabular-nums text-slate-700">
                                 {formatAmount(mealLog.breakfast_amount)}
                               </span>
-                              <span className="text-xs font-semibold text-orange-500">
+                              <span className="text-xs font-semibold text-slate-500">
                                 조식
                               </span>
                             </div>
                           ) : mealLog.breakfast_store ? (
-                            <div className="flex items-center justify-between rounded bg-orange-50/60 px-2 py-1">
-                              <span className="text-sm font-bold tabular-nums text-orange-700/50">
+                            <div className="flex items-center justify-between rounded bg-slate-50/60 px-2 py-1">
+                              <span className="text-sm font-bold tabular-nums text-slate-700/50">
                                 0
                               </span>
-                              <span className="text-xs font-semibold text-orange-400">
+                              <span className="text-xs font-semibold text-slate-400">
                                 조식
                               </span>
                             </div>
                           ) : null}
                           {mealLog.lunch_amount && mealLog.lunch_amount > 0 ? (
-                            <div className="flex items-center justify-between rounded bg-emerald-50 px-2 py-1">
-                              <span className="text-sm font-bold tabular-nums text-emerald-700">
+                            <div className="flex items-center justify-between rounded bg-slate-50 px-2 py-1">
+                              <span className="text-sm font-bold tabular-nums text-slate-700">
                                 {formatAmount(mealLog.lunch_amount)}
                               </span>
-                              <span className="text-xs font-semibold text-emerald-500">
+                              <span className="text-xs font-semibold text-slate-500">
                                 중식
                               </span>
                             </div>
                           ) : (mealLog.lunch_store || isWork) ? (
-                            <div className="flex items-center justify-between rounded bg-emerald-50/60 px-2 py-1">
-                              <span className="text-sm font-bold tabular-nums text-emerald-700/50">
+                            <div className="flex items-center justify-between rounded bg-slate-50/60 px-2 py-1">
+                              <span className="text-sm font-bold tabular-nums text-slate-700/50">
                                 0
                               </span>
-                              <span className="text-xs font-semibold text-emerald-400">
+                              <span className="text-xs font-semibold text-slate-400">
                                 중식
                               </span>
                             </div>
                           ) : null}
                           {mealLog.dinner_amount &&
                           mealLog.dinner_amount > 0 ? (
-                            <div className="flex items-center justify-between rounded bg-indigo-50 px-2 py-1">
-                              <span className="text-sm font-bold tabular-nums text-indigo-700">
+                            <div className="flex items-center justify-between rounded bg-slate-50 px-2 py-1">
+                              <span className="text-sm font-bold tabular-nums text-slate-700">
                                 {formatAmount(mealLog.dinner_amount)}
                               </span>
-                              <span className="text-xs font-semibold text-indigo-500">
+                              <span className="text-xs font-semibold text-slate-500">
                                 석식
                               </span>
                             </div>
                           ) : mealLog.dinner_store ? (
-                            <div className="flex items-center justify-between rounded bg-indigo-50/60 px-2 py-1">
-                              <span className="text-sm font-bold tabular-nums text-indigo-700/50">
+                            <div className="flex items-center justify-between rounded bg-slate-50/60 px-2 py-1">
+                              <span className="text-sm font-bold tabular-nums text-slate-700/50">
                                 0
                               </span>
-                              <span className="text-xs font-semibold text-indigo-400">
+                              <span className="text-xs font-semibold text-slate-400">
                                 석식
                               </span>
                             </div>
@@ -1021,7 +1021,7 @@ function CalendarPageContent() {
                       key={member.id}
                       type="button"
                       onClick={() => toggleExcludeMember(member.id)}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
                     >
                       {member.full_name}
                       <X className="h-3 w-3" />
@@ -1053,17 +1053,17 @@ function CalendarPageContent() {
                       onClick={() => toggleExcludeMember(member.id)}
                       className={`flex items-center justify-between px-3 py-2.5 cursor-pointer transition-colors ${
                         isExcluded
-                          ? "bg-red-50 hover:bg-red-100"
+                          ? "bg-slate-50 hover:bg-slate-100"
                           : "hover:bg-slate-50"
                       }`}
                     >
                       <span
-                        className={`text-sm ${isExcluded ? "text-red-700" : "text-slate-700"}`}
+                        className={`text-sm ${isExcluded ? "text-slate-700" : "text-slate-700"}`}
                       >
                         {member.full_name}
                       </span>
                       {isExcluded && (
-                        <span className="text-xs text-red-500 font-medium">
+                        <span className="text-xs text-slate-500 font-medium">
                           제외됨
                         </span>
                       )}
@@ -1323,7 +1323,7 @@ function CalendarPageContent() {
                   size="sm"
                   onClick={handleDelete}
                   disabled={deleteMutation.isPending}
-                  className="text-slate-500 hover:text-red-600 hover:bg-red-50"
+                  className="text-slate-500 hover:text-slate-600 hover:bg-slate-50"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>

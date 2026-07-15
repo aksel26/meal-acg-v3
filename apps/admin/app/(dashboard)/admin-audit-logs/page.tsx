@@ -38,8 +38,8 @@ const RISK_LABELS = {
 
 const RISK_STYLES = {
   low: "border-slate-200 bg-slate-50 text-slate-600",
-  medium: "border-amber-200 bg-amber-50 text-amber-700",
-  high: "border-red-200 bg-red-50 text-red-700",
+  medium: "border-slate-200 bg-slate-50 text-slate-700",
+  high: "border-slate-200 bg-slate-50 text-slate-700",
 } as const;
 
 function formatDateTime(value: string) {
@@ -94,7 +94,7 @@ export default function AdminAuditLogsPage() {
           <select
             value={action}
             onChange={(event) => setAction(event.target.value)}
-            className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-slate-400"
+            className="h-9 rounded-md bg-white px-3 text-sm text-slate-700 outline-none focus:border-slate-400"
           >
             <option value="all">전체 액션</option>
             {Object.entries(ACTION_LABELS).map(([value, label]) => (
@@ -110,7 +110,7 @@ export default function AdminAuditLogsPage() {
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+      <section className="overflow-hidden rounded-lg bg-white">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200 text-sm">
             <thead className="bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-slate-500">

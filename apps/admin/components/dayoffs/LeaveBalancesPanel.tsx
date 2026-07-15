@@ -253,7 +253,7 @@ export function LeaveBalancesPanel({ year }: { year: number }) {
             </div>
             <div className="space-y-2">
               <Label htmlFor="adjust-reason">
-                사유 <span className="text-rose-500">*</span>
+                사유 <span className="text-slate-500">*</span>
               </Label>
               <Input
                 id="adjust-reason"

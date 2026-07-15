@@ -177,8 +177,8 @@ function Metric({
       <div
         className={cn(
           "mt-1 text-base font-semibold tabular-nums text-slate-900",
-          tone === "amber" && "text-amber-600",
-          tone === "rose" && "text-rose-600",
+          tone === "amber" && "text-slate-600",
+          tone === "rose" && "text-slate-600",
         )}
       >
         {value}
@@ -366,7 +366,7 @@ export default function OrganizationMemberDetailPage() {
       </div>
 
       {hasOverviewError && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-800">
           요약 정보를 불러오지 못했습니다. 기본 정보만 표시합니다.
         </div>
       )}
@@ -438,7 +438,7 @@ export default function OrganizationMemberDetailPage() {
                           <Badge className="border-0 bg-slate-200 px-2 py-0.5 text-xs text-slate-700">
                             {project.status}
                           </Badge>
-                          <Badge className="border-0 bg-indigo-100 px-2 py-0.5 text-xs text-indigo-700">
+                          <Badge className="border-0 bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
                             {project.role}
                           </Badge>
                         </div>
@@ -537,7 +537,7 @@ export default function OrganizationMemberDetailPage() {
                 <div className="flex items-start justify-between gap-4 rounded-lg bg-slate-50 p-4">
                   <div>
                     <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                      <ShieldAlert className="h-4 w-4 text-amber-500" />
+                      <ShieldAlert className="h-4 w-4 text-slate-500" />
                       조회 사유 필요
                     </div>
                     <p className="mt-1 text-sm text-slate-500">
@@ -579,7 +579,7 @@ export default function OrganizationMemberDetailPage() {
               rows={4}
             />
             {sensitiveError && (
-              <p className="text-sm text-rose-600">{sensitiveError}</p>
+              <p className="text-sm text-slate-600">{sensitiveError}</p>
             )}
           </div>
           <DialogFooter>
@@ -689,7 +689,7 @@ export default function OrganizationMemberDetailPage() {
                 </div>
               </>
             )}
-            {hrError && <p className="text-sm text-rose-600">{hrError}</p>}
+            {hrError && <p className="text-sm text-slate-600">{hrError}</p>}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsHrEditOpen(false)}>

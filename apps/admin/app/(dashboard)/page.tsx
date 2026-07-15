@@ -46,14 +46,14 @@ interface EvaluationRound {
 }
 
 const LEAVE_TYPE_COLORS: Record<string, string> = {
-  "지각/조퇴": "bg-orange-50 text-orange-700",
-  반차: "bg-purple-50 text-purple-700",
-  연차: "bg-yellow-50 text-yellow-700",
+  "지각/조퇴": "bg-slate-50 text-slate-700",
+  반차: "bg-slate-50 text-slate-700",
+  연차: "bg-slate-50 text-slate-700",
   대체휴무: "bg-slate-100 text-slate-800",
-  경조휴무: "bg-pink-50 text-pink-700",
-  특별휴무: "bg-teal-50 text-teal-700",
+  경조휴무: "bg-slate-50 text-slate-700",
+  특별휴무: "bg-slate-50 text-slate-700",
   훈련: "bg-slate-50 text-slate-700",
-  휴무: "bg-green-50 text-green-700",
+  휴무: "bg-slate-50 text-slate-700",
 };
 
 // ── Detail Panel Sections ──
@@ -573,11 +573,11 @@ export default function DashboardPage() {
                             className={cn(
                               "h-5 px-1.5 py-0 text-xs",
                               jp.status === "open" &&
-                                "bg-green-50 text-green-700",
+                                "bg-slate-50 text-slate-700",
                               jp.status === "closed" &&
                                 "bg-slate-100 text-slate-500",
                               jp.status === "draft" &&
-                                "bg-yellow-50 text-yellow-600",
+                                "bg-slate-50 text-slate-600",
                             )}
                           >
                             {jp.status}
@@ -614,11 +614,11 @@ export default function DashboardPage() {
                             className={cn(
                               "h-5 px-1.5 py-0 text-xs",
                               ip.status === "open" &&
-                                "bg-green-50 text-green-700",
+                                "bg-slate-50 text-slate-700",
                               ip.status === "closed" &&
                                 "bg-slate-100 text-slate-500",
                               ip.status === "draft" &&
-                                "bg-yellow-50 text-yellow-600",
+                                "bg-slate-50 text-slate-600",
                             )}
                           >
                             {ip.status}

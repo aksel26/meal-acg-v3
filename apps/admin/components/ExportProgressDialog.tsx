@@ -208,7 +208,7 @@ export function ExportProgressDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <FileSpreadsheet className="h-5 w-5 text-amber-600" />
+            <FileSpreadsheet className="h-5 w-5 text-slate-600" />
             엑셀 내보내기
           </DialogTitle>
           <DialogDescription>
@@ -229,7 +229,7 @@ export function ExportProgressDialog({
           </div>
 
           {/* Member list with status */}
-          <div className="max-h-60 overflow-y-auto rounded-md border border-slate-200">
+          <div className="max-h-60 overflow-y-auto rounded-md">
             <div className="divide-y divide-slate-100">
               {exportStates.map((state) => (
                 <div
@@ -250,13 +250,13 @@ export function ExportProgressDialog({
             <div className="rounded-md bg-slate-50 p-3">
               <div className="flex items-center gap-4 text-sm">
                 {successCount > 0 && (
-                  <span className="flex items-center gap-1 text-emerald-600">
+                  <span className="flex items-center gap-1 text-slate-600">
                     <Check className="h-4 w-4" />
                     성공 {successCount}명
                   </span>
                 )}
                 {failedCount > 0 && (
-                  <span className="flex items-center gap-1 text-rose-600">
+                  <span className="flex items-center gap-1 text-slate-600">
                     <X className="h-4 w-4" />
                     실패 {failedCount}명
                   </span>
@@ -312,14 +312,14 @@ function StatusBadge({
       );
     case "processing":
       return (
-        <span className="flex items-center gap-1 text-xs text-amber-600">
+        <span className="flex items-center gap-1 text-xs text-slate-600">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
           처리 중
         </span>
       );
     case "completed":
       return (
-        <span className="flex items-center gap-1 text-xs text-emerald-600">
+        <span className="flex items-center gap-1 text-xs text-slate-600">
           <Check className="h-3.5 w-3.5" />
           완료
         </span>
@@ -327,7 +327,7 @@ function StatusBadge({
     case "failed":
       return (
         <span
-          className="flex items-center gap-1 text-xs text-rose-600"
+          className="flex items-center gap-1 text-xs text-slate-600"
           title={error}
         >
           <X className="h-3.5 w-3.5" />

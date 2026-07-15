@@ -108,7 +108,7 @@ export function SlackNotifyDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Send className="h-5 w-5 text-amber-600" />
+            <Send className="h-5 w-5 text-slate-600" />
             Slack 정산 알림 발송
           </DialogTitle>
           <DialogDescription>
@@ -128,14 +128,14 @@ export function SlackNotifyDialog({
 
           {/* Warning for users without email */}
           {usersWithoutEmail.length > 0 && (
-            <div className="rounded-md bg-amber-50 p-3">
+            <div className="rounded-md bg-slate-50 p-3">
               <div className="flex items-start gap-2">
-                <AlertCircle className="h-4 w-4 mt-0.5 text-amber-600" />
+                <AlertCircle className="h-4 w-4 mt-0.5 text-slate-600" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-amber-800">
+                  <p className="text-sm font-medium text-slate-800">
                     이메일 미등록 ({usersWithoutEmail.length}명)
                   </p>
-                  <p className="mt-0.5 text-xs text-amber-700">
+                  <p className="mt-0.5 text-xs text-slate-700">
                     {usersWithoutEmail.map((u) => u.full_name).join(", ")}
                   </p>
                 </div>
@@ -144,7 +144,7 @@ export function SlackNotifyDialog({
           )}
 
           {/* User list or results */}
-          <div className="max-h-60 overflow-y-auto rounded-md border border-slate-200">
+          <div className="max-h-60 overflow-y-auto rounded-md">
             {results ? (
               // Results view
               <div className="divide-y divide-slate-100">
@@ -157,12 +157,12 @@ export function SlackNotifyDialog({
                       {result.fullName}
                     </span>
                     {result.success ? (
-                      <span className="flex items-center gap-1 text-xs text-emerald-600">
+                      <span className="flex items-center gap-1 text-xs text-slate-600">
                         <Check className="h-3.5 w-3.5" />
                         발송 완료
                       </span>
                     ) : (
-                      <span className="flex items-center gap-1 text-xs text-rose-600">
+                      <span className="flex items-center gap-1 text-xs text-slate-600">
                         <X className="h-3.5 w-3.5" />
                         {result.error}
                       </span>

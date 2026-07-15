@@ -404,7 +404,7 @@ function MemberNode({
       className={cn(
         "flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-center",
         data.pendingMove
-          ? "bg-slate-100 outline-dashed outline-1 outline-blue-300"
+          ? "bg-slate-100 outline-dashed outline-1 outline-slate-300"
           : "bg-slate-50"
       )}
     >
@@ -1322,14 +1322,14 @@ export default function OrgChart({
           type: "smoothstep",
           style: defaultEdgeStyle,
         }}
-        connectionLineStyle={{ stroke: "#3b82f6", strokeWidth: 2 }}
+        connectionLineStyle={{ stroke: "#94a3b8", strokeWidth: 2 }}
       >
         <Background color="#e2e8f0" gap={20} size={1} />
 
         {/* Toolbar */}
         <Panel
           position="top-left"
-          className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-white/95 px-3 py-2 shadow-sm backdrop-blur"
+          className="flex flex-wrap items-center gap-2 rounded-lg bg-white/95 px-3 py-2 backdrop-blur"
         >
           <Button
             variant="outline"
@@ -1407,7 +1407,7 @@ export default function OrgChart({
         {hasPending && (
           <Panel
             position="bottom-left"
-            className="max-w-xs rounded-lg border border-slate-300 bg-slate-100/95 px-3 py-2 shadow-sm backdrop-blur"
+            className="max-w-xs rounded-lg bg-slate-100/95 px-3 py-2 backdrop-blur"
           >
             <p className="mb-1 text-xs font-semibold text-slate-900">
               대기 중인 변경 ({pendingChanges.length})
@@ -1429,7 +1429,7 @@ export default function OrgChart({
 
         <Controls
           showInteractive={false}
-          className="!bg-white !border-slate-200 !shadow-sm [&>button]:!border-slate-200 [&>button]:!bg-white [&>button:hover]:!bg-slate-50"
+          className="!bg-white !border-slate-200 ![&>button]:!border-slate-200 [&>button]:!bg-white [&>button:hover]:!bg-slate-50"
         />
         <MiniMap
           nodeStrokeWidth={2}

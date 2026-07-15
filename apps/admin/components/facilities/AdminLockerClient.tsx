@@ -251,16 +251,16 @@ export function AdminLockerClient({
           </div>
           <div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-500">
             <LegendDot
-              className="bg-white ring-1 ring-slate-200"
+              className="bg-white"
               label="빈칸"
             />
             <LegendDot className="bg-slate-200" label="배정됨" />
             <LegendDot
-              className="bg-amber-50 ring-1 ring-amber-200"
+              className="bg-slate-50"
               label="요청 대기"
             />
             <LegendDot
-              className="bg-red-50 ring-1 ring-red-200"
+              className="bg-slate-50"
               label="사용 중지"
             />
           </div>
@@ -501,7 +501,7 @@ function GridAssignmentDropdown({
           </div>
         )}
         {locker?.status === "disabled" && (
-          <p className="text-xs text-red-600">
+          <p className="text-xs text-slate-600">
             사용 중지된 사물함은 직원을 배정할 수 없습니다.
           </p>
         )}
@@ -529,13 +529,13 @@ const AdminLockerGridCell = forwardRef<
       ? "사용중지"
       : member?.full_name || (pendingRequest ? "대기" : "빈칸");
   const className = isSelected
-    ? "border-sky-400 bg-sky-50 text-sky-950 ring-2 ring-sky-200"
+    ? "border-slate-400 bg-slate-50 text-slate-950 ring-2 ring-slate-200"
     : locker.status === "disabled"
-      ? "border-red-200 bg-red-50 text-red-700"
+      ? "border-slate-200 bg-slate-50 text-slate-700"
       : isAssigned
         ? "border-slate-300 bg-slate-200 text-slate-700"
         : pendingRequest
-          ? "border-amber-200 bg-amber-50 text-amber-700 ring-1 ring-amber-200"
+          ? "border-slate-200 bg-slate-50 text-slate-700"
           : "border-slate-200 bg-white text-slate-900 hover:border-slate-400 hover:bg-slate-50";
 
   return (
@@ -604,7 +604,7 @@ function AdminRequestItem({
         </p>
         <p className="mt-1 line-clamp-2">{request.reason}</p>
         {request.reject_reason && (
-          <p className="mt-1 text-xs text-red-600">
+          <p className="mt-1 text-xs text-slate-600">
             반려 사유: {request.reject_reason}
           </p>
         )}
@@ -639,12 +639,12 @@ function AdminRequestItem({
 function StatusBadge({ value }: { value: string }) {
   const className =
     value === "approved" || value === "assigned"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+      ? "border-slate-200 bg-slate-50 text-slate-700"
       : value === "cancelled"
         ? "border-slate-200 bg-slate-100 text-slate-500"
         : value === "pending" || value === "available" || value === "assign"
-          ? "border-amber-200 bg-amber-50 text-amber-700"
-          : "border-red-200 bg-red-50 text-red-700";
+          ? "border-slate-200 bg-slate-50 text-slate-700"
+          : "border-slate-200 bg-slate-50 text-slate-700";
 
   return (
     <span

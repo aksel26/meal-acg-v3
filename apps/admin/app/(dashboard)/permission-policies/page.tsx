@@ -242,7 +242,7 @@ export default function PermissionPoliciesPage() {
   }
 
   if (error || !data) {
-    return <div className="p-6 text-sm text-red-600">권한 정책을 불러오지 못했습니다.</div>;
+    return <div className="p-6 text-sm text-slate-600">권한 정책을 불러오지 못했습니다.</div>;
   }
 
   return (
@@ -289,7 +289,7 @@ export default function PermissionPoliciesPage() {
 
                   <div className="grid gap-4 xl:grid-cols-2">
                     {groupedPermissions.map(({ group, permissions }) => (
-                      <div key={group} className="rounded-lg border border-slate-200 p-4">
+                      <div key={group} className="rounded-lg p-4">
                         <h3 className="mb-3 text-sm font-semibold text-slate-900">{group}</h3>
                         <div className="space-y-3">
                           {permissions.map((item) => {
@@ -356,7 +356,7 @@ export default function PermissionPoliciesPage() {
               renderItem={(member, isHighlighted) => (
                 <div
                   className={`flex cursor-pointer items-center justify-between gap-3 px-3 py-2.5 transition-colors ${
-                    isHighlighted ? "bg-blue-50" : "hover:bg-slate-50"
+                    isHighlighted ? "bg-slate-50" : "hover:bg-slate-50"
                   }`}
                 >
                   <span className="truncate text-sm text-slate-900">{member.full_name}</span>
@@ -370,7 +370,7 @@ export default function PermissionPoliciesPage() {
                     }
                     className={
                       member.admin_role === "팀장"
-                        ? "shrink-0 border-amber-200 bg-amber-50 text-[10px] text-amber-700"
+                        ? "shrink-0 border-slate-200 bg-slate-50 text-[10px] text-slate-700"
                         : "shrink-0 text-[10px]"
                     }
                   >
@@ -467,7 +467,7 @@ export default function PermissionPoliciesPage() {
                                             className={cn(
                                               "h-6 rounded px-2 text-[11px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50",
                                               isSelected
-                                                ? "bg-white text-slate-900 shadow-sm"
+                                                ? "bg-white text-slate-900"
                                                 : "text-slate-500 hover:bg-white/60 hover:text-slate-800",
                                             )}
                                           >
@@ -500,7 +500,7 @@ export default function PermissionPoliciesPage() {
               역할 권한과 직원별 예외 권한 변경 감사 로그입니다.
             </DialogDescription>
           </DialogHeader>
-          <div className="max-h-[60vh] overflow-auto rounded-lg border border-slate-200">
+          <div className="max-h-[60vh] overflow-auto rounded-lg">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 text-xs text-slate-500">
                 <tr>

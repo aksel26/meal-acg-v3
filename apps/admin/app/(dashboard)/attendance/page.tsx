@@ -118,7 +118,7 @@ export default function AttendancePage() {
       {/* Header */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
-          <div className="flex rounded-lg border border-slate-200 p-0.5">
+          <div className="flex rounded-lg p-0.5">
             <button
               onClick={() => setViewMode("date")}
               className={cn(
@@ -217,13 +217,13 @@ export default function AttendancePage() {
             </span>
             <span className="flex h-full items-center gap-1.5 px-3">
               조기출근{" "}
-              <strong className="inline-flex h-full items-center text-xl font-semibold leading-none text-sky-600">
+              <strong className="inline-flex h-full items-center text-xl font-semibold leading-none text-slate-600">
                 {summary.earlyCheckIn}
               </strong>
             </span>
             <span className="flex h-full items-center gap-1.5 px-3">
               지각{" "}
-              <strong className="inline-flex h-full items-center text-xl font-semibold leading-none text-red-600">
+              <strong className="inline-flex h-full items-center text-xl font-semibold leading-none text-slate-600">
                 {summary.late}
               </strong>
             </span>
@@ -234,7 +234,7 @@ export default function AttendancePage() {
               </strong>
             </span>
             {summary.lateMembers.length > 0 && (
-              <span className="flex h-full items-center px-3 text-sm font-medium text-red-500">
+              <span className="flex h-full items-center px-3 text-sm font-medium text-slate-500">
                 지각: {summary.lateMembers.map((m) => m.name).join(", ")}
               </span>
             )}
@@ -333,7 +333,7 @@ function TimeEditDropdown({
   return (
     <div
       ref={ref}
-      className="absolute top-full left-0 z-50 rounded-md border bg-white p-3 shadow-md animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-150"
+      className="absolute top-full left-0 z-50 rounded-md border bg-white p-3 animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-150"
     >
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-medium text-slate-500">{label}</label>

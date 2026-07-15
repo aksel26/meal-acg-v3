@@ -329,7 +329,7 @@ export default function ImportPage() {
         {/* 왼쪽: 업로드 영역 */}
         <div className="col-span-5 space-y-4">
           {/* 드롭존 */}
-          <Card className="admin-card border border-gray-100 shadow-none">
+          <Card className="admin-card shadow-none">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <Upload className="w-4 h-4" />
@@ -345,21 +345,21 @@ export default function ImportPage() {
                 className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all ${
                   isDragActive
                     ? "border-slate-500 bg-slate-100"
-                    : "border-gray-300 hover:border-gray-400 hover:bg-gray-50"
+                    : "border-slate-300 hover:border-slate-400 hover:bg-slate-50"
                 }`}
               >
                 <input {...getInputProps()} />
-                <FileSpreadsheet className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+                <FileSpreadsheet className="w-12 h-12 mx-auto text-slate-400 mb-3" />
                 {isDragActive ? (
                   <p className="text-slate-800 font-medium">
                     파일을 여기에 놓으세요
                   </p>
                 ) : (
                   <>
-                    <p className="text-gray-600 font-medium">
+                    <p className="text-slate-600 font-medium">
                       클릭하거나 파일을 드래그하세요
                     </p>
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-slate-400 mt-1">
                       여러 파일 동시 업로드 가능 (.xlsx)
                     </p>
                   </>
@@ -369,7 +369,7 @@ export default function ImportPage() {
           </Card>
 
           {/* 옵션 */}
-          <Card className="admin-card border border-gray-100 shadow-none">
+          <Card className="admin-card shadow-none">
             <CardContent className="pt-4">
               <div className="flex items-center space-x-2">
                 <Checkbox
@@ -381,7 +381,7 @@ export default function ImportPage() {
                   기존 데이터 덮어쓰기
                 </Label>
               </div>
-              <p className="text-xs text-gray-400 mt-1 ml-6">
+              <p className="text-xs text-slate-400 mt-1 ml-6">
                 체크 해제 시 이미 존재하는 날짜는 건너뜁니다.
               </p>
             </CardContent>
@@ -389,7 +389,7 @@ export default function ImportPage() {
 
           {/* 파일 목록 */}
           {uploadedFiles.length > 0 && (
-            <Card className="admin-card border border-gray-100 shadow-none">
+            <Card className="admin-card shadow-none">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base">
@@ -416,7 +416,7 @@ export default function ImportPage() {
                     className={`flex items-center gap-3 p-3 rounded-md border cursor-pointer transition-all ${
                       selectedPreview === fileState.file.name
                         ? "border-slate-500 bg-slate-100"
-                        : "border-gray-200 hover:border-gray-300"
+                        : "border-slate-200 hover:border-slate-300"
                     }`}
                     onClick={() => setSelectedPreview(fileState.file.name)}
                   >
@@ -424,32 +424,32 @@ export default function ImportPage() {
                     {fileState.status === "importing" ? (
                       <Loader2 className="w-5 h-5 text-slate-700 animate-spin flex-shrink-0" />
                     ) : fileState.status === "success" ? (
-                      <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                      <CheckCircle2 className="w-5 h-5 text-slate-500 flex-shrink-0" />
                     ) : fileState.status === "error" ? (
-                      <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                      <XCircle className="w-5 h-5 text-slate-500 flex-shrink-0" />
                     ) : !fileState.success && fileState.records.length === 0 ? (
-                      <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                      <XCircle className="w-5 h-5 text-slate-500 flex-shrink-0" />
                     ) : !fileState.matchedMember && membersLoading ? (
-                      <Loader2 className="w-5 h-5 text-gray-400 animate-spin flex-shrink-0" />
+                      <Loader2 className="w-5 h-5 text-slate-400 animate-spin flex-shrink-0" />
                     ) : !fileState.matchedMember ? (
-                      <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
+                      <AlertCircle className="w-5 h-5 text-slate-500 flex-shrink-0" />
                     ) : (
-                      <FileSpreadsheet className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                      <FileSpreadsheet className="w-5 h-5 text-slate-400 flex-shrink-0" />
                     )}
                     {/* 파일 정보 */}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-700 truncate">
+                      <p className="text-sm font-medium text-slate-700 truncate">
                         {fileState.file.name}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-slate-500">
                         {fileState.matchedMember ? (
-                          <span className="text-green-600">
+                          <span className="text-slate-600">
                             → {fileState.matchedMember.full_name}
                           </span>
                         ) : membersLoading ? (
-                          <span className="text-gray-400">매칭 중...</span>
+                          <span className="text-slate-400">매칭 중...</span>
                         ) : (
-                          <span className="text-amber-600">매칭 실패</span>
+                          <span className="text-slate-600">매칭 실패</span>
                         )}
                         {" · "}
                         {fileState.records.length}건
@@ -483,7 +483,7 @@ export default function ImportPage() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-8 w-8 p-0 text-gray-400 hover:text-red-500"
+                        className="h-8 w-8 p-0 text-slate-400 hover:text-slate-500"
                         onClick={(e) => {
                           e.stopPropagation();
                           removeFile(fileState.file.name);
@@ -501,7 +501,7 @@ export default function ImportPage() {
 
         {/* 오른쪽: 미리보기 */}
         <div className="col-span-7">
-          <Card className="admin-card border border-gray-100 shadow-none h-full">
+          <Card className="admin-card shadow-none h-full">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">데이터 미리보기</CardTitle>
               <CardDescription>
@@ -540,7 +540,7 @@ export default function ImportPage() {
                                   <span>
                                     {record.breakfast_store}
                                     {record.breakfast_amount && (
-                                      <span className="text-gray-500 ml-1">
+                                      <span className="text-slate-500 ml-1">
                                         (
                                         {record.breakfast_amount.toLocaleString()}
                                         원)
@@ -556,7 +556,7 @@ export default function ImportPage() {
                                   <span>
                                     {record.lunch_store}
                                     {record.lunch_amount && (
-                                      <span className="text-gray-500 ml-1">
+                                      <span className="text-slate-500 ml-1">
                                         ({record.lunch_amount.toLocaleString()}
                                         원)
                                       </span>
@@ -571,7 +571,7 @@ export default function ImportPage() {
                                   <span>
                                     {record.dinner_store}
                                     {record.dinner_amount && (
-                                      <span className="text-gray-500 ml-1">
+                                      <span className="text-slate-500 ml-1">
                                         ({record.dinner_amount.toLocaleString()}
                                         원)
                                       </span>
@@ -587,14 +587,14 @@ export default function ImportPage() {
                     </Table>
                   </div>
                   {selectedFile.records.length > 50 && (
-                    <div className="p-2 text-center text-xs text-gray-400 border-t">
+                    <div className="p-2 text-center text-xs text-slate-400 border-t">
                       처음 50건만 표시됩니다. 전체 {selectedFile.records.length}
                       건
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="flex items-center justify-center h-64 text-gray-400">
+                <div className="flex items-center justify-center h-64 text-slate-400">
                   <div className="text-center">
                     <FileSpreadsheet className="w-12 h-12 mx-auto mb-3 opacity-30" />
                     <p>파일을 선택하면 미리보기가 표시됩니다</p>
@@ -604,11 +604,11 @@ export default function ImportPage() {
 
               {/* 파싱 에러 표시 */}
               {selectedFile && selectedFile.errors.length > 0 && (
-                <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md">
-                  <p className="text-sm font-medium text-amber-700 mb-2">
+                <div className="mt-4 p-3 bg-slate-50 rounded-md">
+                  <p className="text-sm font-medium text-slate-700 mb-2">
                     파싱 경고 ({selectedFile.errors.length}건)
                   </p>
-                  <ul className="text-xs text-amber-600 space-y-1">
+                  <ul className="text-xs text-slate-600 space-y-1">
                     {selectedFile.errors.slice(0, 5).map((err, idx) => (
                       <li key={idx}>{err}</li>
                     ))}
@@ -667,7 +667,7 @@ export default function ImportPage() {
               </TableBody>
             </Table>
           </div>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-slate-600">
             총 {importResults.reduce((sum, r) => sum + r.inserted, 0)}건 추가,{" "}
             {importResults.reduce((sum, r) => sum + r.updated, 0)}건 업데이트
           </p>

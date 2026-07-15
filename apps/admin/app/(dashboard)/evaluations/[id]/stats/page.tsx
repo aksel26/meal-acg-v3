@@ -166,7 +166,7 @@ export default function EvaluationRoundStatsPage() {
             회차 목록
           </Link>
         </Button>
-        <div className="rounded-xl border border-rose-100 bg-rose-50 px-5 py-4 text-sm text-rose-700">
+        <div className="rounded-xl bg-slate-50 px-5 py-4 text-sm text-slate-700">
           {error instanceof Error ? error.message : "통계를 불러오지 못했습니다."}
         </div>
       </div>
@@ -177,7 +177,7 @@ export default function EvaluationRoundStatsPage() {
     {
       name: "제출",
       value: data.summary.submittedCount,
-      fill: "#111827",
+      fill: "#0f172a",
     },
     {
       name: "미제출",
@@ -189,7 +189,7 @@ export default function EvaluationRoundStatsPage() {
     name: item.label,
     value: item.averageWeightedScore ?? item.averageScore ?? 0,
     count: item.count,
-    fill: item.label === "상사" ? "#111827" : "#64748b",
+    fill: item.label === "상사" ? "#0f172a" : "#64748b",
   }));
   const teamChartData = toAverageChartData(data.teamAverages, 8);
   const positionChartData = toAverageChartData(data.positionAverages, 8);
@@ -294,7 +294,7 @@ export default function EvaluationRoundStatsPage() {
                   {
                     label: "제출",
                     value: `${data.summary.submittedCount}건`,
-                    color: "#111827",
+                    color: "#0f172a",
                   },
                   {
                     label: "미제출",
@@ -311,7 +311,7 @@ export default function EvaluationRoundStatsPage() {
           title="상사/동료 평균"
           description="가중 평균 기준, 척도 문항만 포함"
         >
-          <VerticalBarChart data={evaluatorChartData} height={240} barColor="#111827" />
+          <VerticalBarChart data={evaluatorChartData} height={240} barColor="#0f172a" />
         </ChartPanel>
         <ChartPanel
           title="팀별 평균"
@@ -428,7 +428,7 @@ function MetricTile({
   detail: string;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white px-5 py-4">
+    <div className="rounded-xl bg-white px-5 py-4">
       <div className="text-xs font-medium text-slate-500">{label}</div>
       <div className="mt-2 text-2xl font-semibold text-slate-950">{value}</div>
       <div className="mt-1 text-xs text-slate-400">{detail}</div>
@@ -559,7 +559,7 @@ function ChartTooltip({
   if (!item) return null;
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs shadow-sm">
+    <div className="rounded-lg bg-white px-3 py-2 text-xs">
       <div className="font-medium text-slate-900">{item.name}</div>
       <div className="mt-1 text-slate-500">
         {suffix === "건" ? `${item.value}${suffix}` : `${formatScore(item.value)}${suffix}`}
@@ -900,18 +900,18 @@ function compactQuestionLabel(label: string) {
 }
 
 function questionCategoryColor(category: QuestionCategory) {
-  if (category === "공통") return "#111827";
+  if (category === "공통") return "#0f172a";
   if (category === "상사") return "#475569";
   return "#94a3b8";
 }
 
 const CHART_COLORS = [
-  "#111827",
+  "#0f172a",
   "#334155",
   "#475569",
   "#64748b",
-  "#0f766e",
-  "#0369a1",
-  "#7c3aed",
-  "#be123c",
+  "#334155",
+  "#475569",
+  "#94a3b8",
+  "#64748b",
 ];

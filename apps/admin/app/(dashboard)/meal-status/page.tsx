@@ -402,7 +402,7 @@ function UsersPageContent() {
     if (result.status === "complete") {
       return (
         <div className="flex items-center justify-center">
-          <Check className="h-4 w-4 text-emerald-500" />
+          <Check className="h-4 w-4 text-slate-500" />
         </div>
       );
     }
@@ -412,8 +412,8 @@ function UsersPageContent() {
         <Tooltip>
           <TooltipTrigger asChild>
             <div className="flex items-center justify-center gap-1 cursor-help">
-              <X className="h-4 w-4 text-rose-500" />
-              <span className="text-xs text-rose-500">
+              <X className="h-4 w-4 text-slate-500" />
+              <span className="text-xs text-slate-500">
                 {result.missingCount}
               </span>
             </div>
@@ -428,7 +428,7 @@ function UsersPageContent() {
         <Tooltip>
           <TooltipTrigger asChild>
             <div className="flex items-center justify-center cursor-help">
-              <AlertTriangle className="h-4 w-4 text-amber-500" />
+              <AlertTriangle className="h-4 w-4 text-slate-500" />
             </div>
           </TooltipTrigger>
           <TooltipContent>체크 중 오류 발생</TooltipContent>
@@ -442,7 +442,7 @@ function UsersPageContent() {
   return (
     <div className="flex h-[calc(100vh-10rem)] flex-col gap-6">
       {/* Quick Stats */}
-      <div className="flex items-center gap-5 rounded-xl border border-slate-200 bg-white px-5 py-3">
+      <div className="flex items-center gap-5 rounded-xl bg-white px-5 py-3">
         <div className="flex items-baseline gap-1.5">
           <span className="text-sm text-slate-500">총 인원</span>
           <span className="text-lg font-semibold tabular-nums text-slate-900">
@@ -481,7 +481,7 @@ function UsersPageContent() {
               setIsYearOpen(!isYearOpen);
               setIsMonthOpen(false);
             }}
-            className="flex h-9 items-center gap-2 rounded-md bg-white px-3 text-sm font-medium text-slate-700 ring-1 ring-slate-200/60 transition-all hover:bg-slate-50"
+            className="flex h-9 items-center gap-2 rounded-md bg-white px-3 text-sm font-medium text-slate-700 transition-all hover:bg-slate-50"
           >
             {selectedYear}년
             <ChevronDown
@@ -492,7 +492,7 @@ function UsersPageContent() {
             />
           </button>
           {isYearOpen && (
-            <div className="absolute left-0 top-full z-50 mt-2 w-32 rounded-md bg-white p-1 shadow-lg ring-1 ring-slate-200/60">
+            <div className="absolute left-0 top-full z-50 mt-2 w-32 rounded-md bg-white p-1">
               {years.map((year) => (
                 <button
                   key={year}
@@ -521,7 +521,7 @@ function UsersPageContent() {
               setIsMonthOpen(!isMonthOpen);
               setIsYearOpen(false);
             }}
-            className="flex h-9 items-center gap-2 rounded-md bg-white px-3 text-sm font-medium text-slate-700 ring-1 ring-slate-200/60 transition-all hover:bg-slate-50"
+            className="flex h-9 items-center gap-2 rounded-md bg-white px-3 text-sm font-medium text-slate-700 transition-all hover:bg-slate-50"
           >
             {selectedMonth}월
             <ChevronDown
@@ -532,7 +532,7 @@ function UsersPageContent() {
             />
           </button>
           {isMonthOpen && (
-            <div className="absolute left-0 top-full z-50 mt-2 grid w-48 grid-cols-4 gap-1 rounded-md bg-white p-2 shadow-lg ring-1 ring-slate-200/60">
+            <div className="absolute left-0 top-full z-50 mt-2 grid w-48 grid-cols-4 gap-1 rounded-md bg-white p-2">
               {MONTHS.map((month) => (
                 <button
                   key={month}
@@ -702,16 +702,16 @@ function UsersPageContent() {
                       <td className="px-3 py-1.5 text-center text-sm text-slate-600">
                         {user.remote_work_days ?? 0}일
                       </td>
-                      <td className="px-3 py-1.5 text-right text-sm font-medium text-sky-600">
+                      <td className="px-3 py-1.5 text-right text-sm font-medium text-slate-600">
                         {formatCurrency(user.total_allowance)}
                       </td>
-                      <td className="px-3 py-1.5 text-right text-sm font-medium text-[#a855f7]">
+                      <td className="px-3 py-1.5 text-right text-sm font-medium text-[#94a3b8]">
                         {formatCurrency(user.total_used)}
                       </td>
                       <td
                         className={cn(
                           "px-3 py-1.5 text-right text-sm font-semibold",
-                          balance >= 0 ? "text-emerald-600" : "text-rose-600",
+                          balance >= 0 ? "text-slate-600" : "text-slate-600",
                         )}
                       >
                         {formatCurrency(balance)}
@@ -735,7 +735,7 @@ function UsersPageContent() {
                                 user.user_id
                               ? "bg-slate-100 text-slate-500"
                               : user.is_settled
-                                ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                                ? "bg-slate-50 text-slate-700 hover:bg-slate-100"
                                 : "bg-slate-100 text-slate-600 hover:bg-slate-200",
                           )}
                         >
@@ -792,7 +792,7 @@ function UsersPageContent() {
                             }
                           }}
                           disabled={sendNotifyMutation.isPending}
-                          className="inline-flex h-6 w-6 items-center justify-center rounded-md text-sky-500 transition-colors hover:bg-sky-50 hover:text-sky-600"
+                          className="inline-flex h-6 w-6 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-600"
                           title="정산 요청 보내기"
                         >
                           {sendNotifyMutation.isPending &&
@@ -811,7 +811,7 @@ function UsersPageContent() {
                               handleDownloadExcel(user.user_id, user.full_name)
                             }
                             disabled={downloadingUserId === user.user_id}
-                            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-emerald-600 transition-colors hover:bg-emerald-50"
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-50"
                           >
                             {downloadingUserId === user.user_id ? (
                               <Loader2 className="h-4 w-4 animate-spin" />

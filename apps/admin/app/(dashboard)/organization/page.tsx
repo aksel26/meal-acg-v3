@@ -255,7 +255,7 @@ function TeamSection({
           </button>
           <button
             onClick={() => onDeleteTeam(team)}
-            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-500"
             title="팀 삭제"
           >
             <Trash2 className="h-3.5 w-3.5" />
@@ -308,7 +308,7 @@ function UnassignedMembersSection({
       ref={setNodeRef}
       className={cn(
         "overflow-hidden rounded-xl bg-white transition-colors",
-        isOver && "bg-orange-50/60 ring-2 ring-orange-200"
+        isOver && "bg-slate-50/60 ring-2 ring-slate-200"
       )}
     >
       <div className="flex items-center justify-between px-5 py-4">
@@ -319,7 +319,7 @@ function UnassignedMembersSection({
           </span>
           <Badge
             variant="secondary"
-            className="text-xs py-0 px-2 bg-orange-50 text-orange-600"
+            className="text-xs py-0 px-2 bg-slate-50 text-slate-600"
           >
             {members.length}명
           </Badge>
@@ -400,7 +400,7 @@ function DivisionSection({
           </button>
           <button
             onClick={() => onDeleteDivision(division)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-500"
             title="본부 삭제"
           >
             <Trash2 className="h-3.5 w-3.5" />

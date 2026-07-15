@@ -26,13 +26,13 @@ export function MemberChip({ member }: MemberChipProps) {
       className={`flex items-center gap-2 px-3 py-2 rounded-md border transition-all cursor-grab active:cursor-grabbing ${
         isDragging
           ? "opacity-50 border-slate-400 bg-slate-100"
-          : "bg-gray-50 border-gray-100 hover:border-gray-200 hover:bg-gray-100"
+          : "bg-slate-50 border-slate-100 hover:border-slate-200 hover:bg-slate-100"
       }`}
       {...listeners}
       {...attributes}
     >
-      <GripVertical className="w-3 h-3 text-gray-400 flex-shrink-0" />
-      <span className="text-sm font-medium text-gray-700">{member.full_name}</span>
+      <GripVertical className="w-3 h-3 text-slate-400 flex-shrink-0" />
+      <span className="text-sm font-medium text-slate-700">{member.full_name}</span>
     </div>
   );
 }

@@ -240,12 +240,12 @@ export default function NotificationsPage() {
             </span>
           </div>
           <div className="flex items-center gap-1.5 text-[13px]">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            <span className="h-1.5 w-1.5 rounded-full bg-slate-500" />
             <span className="text-slate-400">구독</span>
-            <span className="font-semibold tabular-nums text-emerald-600">
+            <span className="font-semibold tabular-nums text-slate-600">
               {summary.subscribed}
             </span>
-            <span className="text-[11px] text-emerald-500">
+            <span className="text-[11px] text-slate-500">
               ({subscriptionRate}%)
             </span>
           </div>
@@ -459,7 +459,7 @@ export default function NotificationsPage() {
                     {logDetail.log.cleaned_count > 0 && (
                       <div className="flex justify-between">
                         <span className="text-slate-400">만료 정리</span>
-                        <span className="text-amber-600">
+                        <span className="text-slate-600">
                           {logDetail.log.cleaned_count}건
                         </span>
                       </div>
@@ -478,12 +478,12 @@ export default function NotificationsPage() {
                               {result.fullName}
                             </span>
                             {result.success ? (
-                              <span className="flex items-center gap-1 text-[11px] text-emerald-600">
+                              <span className="flex items-center gap-1 text-[11px] text-slate-600">
                                 <Check className="h-3 w-3" />
                                 성공
                               </span>
                             ) : (
-                              <span className="flex items-center gap-1 text-[11px] text-rose-600">
+                              <span className="flex items-center gap-1 text-[11px] text-slate-600">
                                 <X className="h-3 w-3" />
                                 실패
                               </span>
@@ -551,7 +551,7 @@ export default function NotificationsPage() {
                         </div>
                         <div className="shrink-0 text-right">
                           <span className="inline-flex items-center gap-1 text-[11px] tabular-nums">
-                            <span className="text-emerald-600">
+                            <span className="text-slate-600">
                               {log.success_count}
                             </span>
                             <span className="text-slate-300">/</span>
@@ -560,7 +560,7 @@ export default function NotificationsPage() {
                             </span>
                           </span>
                           {log.failed_count > 0 && (
-                            <div className="text-[10px] text-rose-500">
+                            <div className="text-[10px] text-slate-500">
                               {log.failed_count} failed
                             </div>
                           )}

@@ -249,7 +249,7 @@ export default function LeaveTypesPage() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-4">
+              <div className="rounded-lg bg-slate-50/70 p-4">
                 <p className="text-xs font-semibold text-slate-700">
                   차감 설정
                 </p>
@@ -288,7 +288,7 @@ export default function LeaveTypesPage() {
                 ) : null}
               </div>
 
-              <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-4">
+              <div className="rounded-lg bg-slate-50/70 p-4">
                 <p className="text-xs font-semibold text-slate-700">
                   할당 설정
                 </p>
@@ -327,7 +327,7 @@ export default function LeaveTypesPage() {
               </div>
             </div>
 
-            <div className="rounded-lg border border-slate-200 p-4">
+            <div className="rounded-lg p-4">
               <p className="text-xs font-semibold text-slate-700">통계 설정</p>
               <div className="mt-3 flex items-center gap-2">
                 <Checkbox
@@ -444,7 +444,7 @@ export default function LeaveTypesPage() {
             <AlertDialogCancel>취소</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-slate-600 hover:bg-slate-700"
             >
               삭제
             </AlertDialogAction>
@@ -514,7 +514,7 @@ function LeaveTypeRow({
       className={[
         "group flex flex-col gap-3 rounded-lg border bg-white px-4 py-3 transition-colors sm:flex-row sm:items-center sm:justify-between",
         isEditing
-          ? "border-slate-900 ring-1 ring-slate-900"
+          ? "border-slate-900"
           : "border-slate-200 hover:border-slate-300 hover:bg-slate-50/60",
       ].join(" ")}
     >
@@ -560,7 +560,7 @@ function LeaveTypeRow({
           <button
             type="button"
             onClick={() => onDelete(leaveType)}
-            className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-200"
+            className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-200"
             aria-label={`${leaveType.name} 삭제`}
           >
             <Trash2 className="h-3.5 w-3.5" />

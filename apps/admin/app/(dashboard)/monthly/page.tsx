@@ -256,7 +256,7 @@ function CollectionListView({
             <Card
               key={col.id}
               className={cn(
-                "admin-card cursor-pointer transition-all hover:ring-1 hover:ring-slate-300",
+                "admin-card cursor-pointer transition-all",
                 !col.is_active && "opacity-50"
               )}
               onClick={() => onSelect(col.id)}
@@ -269,7 +269,7 @@ function CollectionListView({
                     </h3>
                     <div className="flex items-center gap-1.5 mt-1">
                       {col.is_one_time ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] text-violet-600 bg-violet-50 px-1.5 py-0.5 rounded">
+                        <span className="inline-flex items-center gap-1 text-[11px] text-slate-600 bg-slate-50 px-1.5 py-0.5 rounded">
                           <Sparkles className="h-3 w-3" />
                           일회성
                         </span>
@@ -283,7 +283,7 @@ function CollectionListView({
                         className={cn(
                           "text-[11px] px-1.5 py-0.5 rounded font-medium",
                           col.is_active
-                            ? "text-emerald-700 bg-emerald-50"
+                            ? "text-slate-700 bg-slate-50"
                             : "text-slate-400 bg-slate-100"
                         )}
                       >
@@ -304,7 +304,7 @@ function CollectionListView({
                       title={col.is_active ? "비활성화" : "활성화"}
                     >
                       {col.is_active ? (
-                        <ToggleRight className="h-5 w-5 text-emerald-500" />
+                        <ToggleRight className="h-5 w-5 text-slate-500" />
                       ) : (
                         <ToggleLeft className="h-5 w-5" />
                       )}
@@ -314,7 +314,7 @@ function CollectionListView({
                         e.stopPropagation();
                         setDeleteTarget(col);
                       }}
-                      className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
+                      className="p-1 rounded hover:bg-slate-50 text-slate-400 hover:text-slate-500 transition-colors"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -671,7 +671,7 @@ function CollectionDetailView({
             <div className="h-4 w-px bg-slate-200" />
             <div className="flex items-center gap-2">
               <span className="text-sm text-slate-500">특이사항</span>
-              <span className="text-base font-semibold tabular-nums text-amber-600">
+              <span className="text-base font-semibold tabular-nums text-slate-600">
                 {activeStatusMembers.length}
                 <span className="text-sm font-normal">명</span>
               </span>
@@ -828,7 +828,7 @@ function CollectionDetailView({
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7 text-slate-400 hover:text-red-500"
+                          className="h-7 w-7 text-slate-400 hover:text-slate-500"
                           onClick={(e) => {
                             e.stopPropagation();
                             setDeleteTarget({ id: app.id, name: app.name });
@@ -921,7 +921,7 @@ function CollectionDetailView({
                           editDrinkOptions.filter((_, i) => i !== index)
                         )
                       }
-                      className="text-slate-400 hover:text-red-500"
+                      className="text-slate-400 hover:text-slate-500"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -969,7 +969,7 @@ function CollectionDetailView({
                 {editPickupPersons.map((person, index) => (
                   <div
                     key={index}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-violet-100 text-violet-700 rounded-full"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-100 text-slate-700 rounded-full"
                   >
                     <span className="text-sm">{person}</span>
                     <button
@@ -978,7 +978,7 @@ function CollectionDetailView({
                           editPickupPersons.filter((_, i) => i !== index)
                         )
                       }
-                      className="text-violet-400 hover:text-red-500"
+                      className="text-slate-400 hover:text-slate-500"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -1000,10 +1000,10 @@ function CollectionDetailView({
                   <div
                     className={cn(
                       "flex items-center gap-2 px-4 py-2.5",
-                      isHighlighted && "bg-violet-50"
+                      isHighlighted && "bg-slate-50"
                     )}
                   >
-                    <div className="w-7 h-7 bg-violet-100 rounded-full flex items-center justify-center text-xs font-medium text-violet-700">
+                    <div className="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center text-xs font-medium text-slate-700">
                       {member.full_name.charAt(0)}
                     </div>
                     <span className="text-slate-700">{member.full_name}</span>

@@ -82,7 +82,7 @@ export default function ExportPage() {
         {/* 왼쪽: 설정 및 내보내기 정보 */}
         <div className="col-span-5 space-y-4">
           {/* 기간 선택 */}
-          <Card className="admin-card border border-slate-200 shadow-none">
+          <Card className="admin-card shadow-none">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">기준 기간</CardTitle>
             </CardHeader>
@@ -121,26 +121,26 @@ export default function ExportPage() {
           </Card>
 
           {/* 내보내기 정보 */}
-          <Card className="admin-card border border-slate-200 shadow-none">
+          <Card className="admin-card shadow-none">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">내보내기 정보</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-start gap-3 p-3 bg-sky-50 rounded-md">
-                  <FileSpreadsheet className="h-6 w-6 text-sky-600 flex-shrink-0 mt-0.5" />
+                <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-md">
+                  <FileSpreadsheet className="h-6 w-6 text-slate-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-medium text-sky-900 text-sm">
+                    <p className="font-medium text-slate-900 text-sm">
                       원본 양식과 동일한 형식
                     </p>
-                    <p className="text-xs text-sky-700">
+                    <p className="text-xs text-slate-700">
                       Import에 사용한 엑셀 파일과 동일한 구조로 내보냅니다.
                     </p>
                   </div>
                 </div>
 
-                <div className="text-sm text-gray-600">
-                  <p className="font-medium text-gray-900 mb-1">
+                <div className="text-sm text-slate-600">
+                  <p className="font-medium text-slate-900 mb-1">
                     생성되는 시트
                   </p>
                   <ul className="space-y-1 text-xs">
@@ -155,7 +155,7 @@ export default function ExportPage() {
                   </ul>
                 </div>
 
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-slate-500">
                   <p>1명 선택: 엑셀 파일(.xlsx)로 다운로드</p>
                   <p>2명 이상 선택: ZIP 파일로 다운로드</p>
                 </div>
@@ -181,7 +181,7 @@ export default function ExportPage() {
 
         {/* 오른쪽: 멤버 선택 */}
         <div className="col-span-7">
-          <Card className="admin-card border border-slate-200 shadow-none h-full">
+          <Card className="admin-card shadow-none h-full">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div>
@@ -217,13 +217,13 @@ export default function ExportPage() {
                         "flex items-center gap-2 p-2 rounded-md border cursor-pointer transition-all",
                         isSelected
                           ? "border-[#1d1d1f] bg-[#1d1d1f]/10"
-                          : "border-gray-200 hover:border-gray-300",
+                          : "border-slate-200 hover:border-slate-300",
                       )}
                     >
                       {isSelected ? (
                         <CheckCircle2 className="h-4 w-4 text-[#1d1d1f] flex-shrink-0" />
                       ) : (
-                        <div className="h-4 w-4 rounded-full border border-gray-300 flex-shrink-0" />
+                        <div className="h-4 w-4 rounded-full flex-shrink-0" />
                       )}
                       <span className="text-sm truncate">
                         {member.full_name}

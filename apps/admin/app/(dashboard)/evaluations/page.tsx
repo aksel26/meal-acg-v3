@@ -175,7 +175,7 @@ export default function EvaluationsPage() {
   return (
     <div className="evaluations-page space-y-5 p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex gap-1 rounded-lg border border-slate-200 bg-white p-1">
+        <div className="inline-flex gap-1 rounded-lg bg-white p-1">
           <button
             type="button"
             onClick={() => setActiveTab("rounds")}
@@ -268,7 +268,7 @@ export default function EvaluationsPage() {
                               {round.question_set.name}
                             </span>
                             {round.question_set.is_default && (
-                              <Badge className="border-0 bg-amber-100 text-[10px] text-amber-700">
+                              <Badge className="border-0 bg-slate-100 text-[10px] text-slate-700">
                                 기본
                               </Badge>
                             )}
@@ -290,7 +290,7 @@ export default function EvaluationsPage() {
                         className={cn(
                           "border-0 text-[11px]",
                           round.is_deployed
-                            ? "bg-emerald-100 text-emerald-700"
+                            ? "bg-slate-100 text-slate-700"
                             : "bg-slate-100 text-slate-500",
                         )}
                       >
@@ -322,7 +322,7 @@ export default function EvaluationsPage() {
                           type="button"
                           variant="outline"
                           size="icon"
-                          className="h-8 w-8 text-slate-500 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                          className="h-8 w-8 text-slate-500 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-600"
                           aria-label={`${round.name} 삭제`}
                           onClick={(event) => {
                             event.stopPropagation();
@@ -484,7 +484,7 @@ export default function EvaluationsPage() {
               취소
             </AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 text-white hover:bg-red-700"
+              className="bg-slate-600 text-white hover:bg-slate-700"
               disabled={deleteRoundMutation.isPending || !deleteTarget}
               onClick={(event) => {
                 event.preventDefault();

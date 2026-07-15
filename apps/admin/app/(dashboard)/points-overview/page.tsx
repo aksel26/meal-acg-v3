@@ -49,7 +49,7 @@ interface MemberPointsData {
 function roleBadgeStyle(role: string) {
   switch (role) {
     case "본부장":
-      return "bg-purple-50 text-purple-700 border-purple-200";
+      return "bg-slate-50 text-slate-700 border-slate-200";
     case "팀장":
       return "bg-slate-100 text-slate-800 border-slate-300";
     default:
@@ -215,7 +215,7 @@ export default function PointsOverviewPage() {
                   </TableHead>
                   <TableHead
                     colSpan={months.length}
-                    className="text-center text-xs font-semibold text-amber-500"
+                    className="text-center text-xs font-semibold text-slate-500"
                   >
                     활동비 월별
                   </TableHead>
@@ -228,19 +228,19 @@ export default function PointsOverviewPage() {
                 </TableRow>
                 {/* 두 번째 행: 세부 열 */}
                 <TableRow className="bg-slate-50/80 [&>th]:bg-slate-50/80 [&>th]:h-8 [&>th]:px-2 [&>th]:py-0">
-                  <TableHead className="text-center text-[11px] font-medium text-amber-500">
+                  <TableHead className="text-center text-[11px] font-medium text-slate-500">
                     활동비
                   </TableHead>
                   <TableHead className="text-center text-[11px] font-medium text-slate-600">
                     복지
                   </TableHead>
-                  <TableHead className="text-center text-[11px] font-medium text-amber-500">
+                  <TableHead className="text-center text-[11px] font-medium text-slate-500">
                     활동비
                   </TableHead>
                   <TableHead className="text-center text-[11px] font-medium text-slate-600">
                     복지
                   </TableHead>
-                  <TableHead className="text-center text-[11px] font-medium text-amber-500">
+                  <TableHead className="text-center text-[11px] font-medium text-slate-500">
                     활동비
                   </TableHead>
                   <TableHead className="text-center text-[11px] font-medium text-slate-600">
@@ -249,7 +249,7 @@ export default function PointsOverviewPage() {
                   {months.map((mo) => (
                     <TableHead
                       key={`activity-${mo}`}
-                      className="text-center text-[11px] font-medium text-amber-500"
+                      className="text-center text-[11px] font-medium text-slate-500"
                     >
                       {mo}월
                     </TableHead>
@@ -304,7 +304,7 @@ export default function PointsOverviewPage() {
                       className={cn(
                         "text-right text-xs tabular-nums",
                         row.activity.remaining_amount < 0
-                          ? "text-rose-600 font-medium"
+                          ? "text-slate-600 font-medium"
                           : "text-slate-700",
                       )}
                     >
@@ -314,7 +314,7 @@ export default function PointsOverviewPage() {
                       className={cn(
                         "text-right text-xs tabular-nums",
                         row.welfare.remaining_amount < 0
-                          ? "text-rose-600 font-medium"
+                          ? "text-slate-600 font-medium"
                           : "text-slate-700",
                       )}
                     >

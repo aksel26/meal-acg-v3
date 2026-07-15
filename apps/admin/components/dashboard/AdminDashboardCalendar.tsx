@@ -224,7 +224,7 @@ export function AdminDashboardCalendar({
             </Button>
           ))}
         </div>
-        <div className="rounded-full bg-[#fafafc] px-3 py-1 text-xs font-normal tracking-[-0.01em] text-[#333333]">
+        <div className="rounded-full bg-[#f8fafc] px-3 py-1 text-xs font-normal tracking-[-0.01em] text-[#333333]">
           {dateLabel} 기준 현황
         </div>
       </div>
@@ -316,7 +316,7 @@ export function AdminDashboardCalendar({
         <button
           type="button"
           onClick={() => setIsCollapsed((prev) => !prev)}
-          className="admin-pressable flex w-full items-center justify-center gap-1 rounded-full bg-[#fafafc] py-2 text-xs font-normal text-[#333333] hover:bg-[#f5f5f7] hover:text-[#1d1d1f]"
+          className="admin-pressable flex w-full items-center justify-center gap-1 rounded-full bg-[#f8fafc] py-2 text-xs font-normal text-[#333333] hover:bg-[#f5f5f7] hover:text-[#1d1d1f]"
         >
           {isCollapsed ? (
             <>

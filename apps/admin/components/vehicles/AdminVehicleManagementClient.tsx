@@ -739,7 +739,7 @@ function HipassNestedTable({
   application: VehicleApplication;
 }) {
   return (
-    <div className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-slate-100">
+    <div className="overflow-hidden rounded-lg bg-white">
       <div className="px-3 pt-3 text-xs font-semibold text-slate-500">
         하이패스카드 작성 내역
       </div>
@@ -865,14 +865,14 @@ function getVehicleApplicationStatusBadgeClass(
 ) {
   switch (status) {
     case "approved":
-      return "border-emerald-200 bg-emerald-50 text-emerald-700";
+      return "border-slate-200 bg-slate-50 text-slate-700";
     case "rejected":
-      return "border-red-200 bg-red-50 text-red-700";
+      return "border-slate-200 bg-slate-50 text-slate-700";
     case "cancelled":
       return "border-slate-200 bg-slate-50 text-slate-500";
     case "pending":
     default:
-      return "border-amber-200 bg-amber-50 text-amber-700";
+      return "border-slate-200 bg-slate-50 text-slate-700";
   }
 }
 
@@ -1394,7 +1394,7 @@ function FormField({
     <label className={`grid gap-1 text-sm ${className}`}>
       <span className="text-xs font-medium text-slate-500">
         {label}
-        {required && <span className="ml-0.5 text-red-500">*</span>}
+        {required && <span className="ml-0.5 text-slate-500">*</span>}
       </span>
       {children}
     </label>
@@ -1422,7 +1422,7 @@ function StatusPill({
 
 function getVehicleStatusPillClass(status: VehicleStatus) {
   if (status === "available") {
-    return "bg-emerald-50 text-emerald-700";
+    return "bg-slate-50 text-slate-700";
   }
 
   return "bg-slate-100 text-slate-700";

@@ -126,7 +126,7 @@ function DraggableMemberInList({
       style={style}
       className={`flex items-center gap-2 px-3 py-2 rounded-md border transition-all ${
         isDragging
-          ? "opacity-50 border-[#1d1d1f] bg-[#1d1d1f]/10 shadow-lg z-50"
+          ? "opacity-50 border-[#1d1d1f] bg-[#1d1d1f]/10 z-50"
           : isSelected
             ? "bg-[#1d1d1f]/10 border-[#1d1d1f]/40"
             : "bg-white border-slate-200 hover:border-slate-300"
@@ -181,7 +181,7 @@ function DraggableMemberInGroup({
       style={style}
       className={`flex items-center gap-2 px-3 py-2 rounded-md border transition-all ${
         isDragging
-          ? "opacity-50 border-[#1d1d1f] bg-[#1d1d1f]/10 shadow-lg z-50"
+          ? "opacity-50 border-[#1d1d1f] bg-[#1d1d1f]/10 z-50"
           : "bg-[#1d1d1f]/5 border-[#1d1d1f]/20"
       }`}
     >
@@ -235,7 +235,7 @@ function DroppableGroup({
         isOver && !isFull
           ? "border-[#1d1d1f] bg-[#1d1d1f]/5 scale-[1.02]"
           : isOver && isFull
-            ? "border-red-300 bg-red-50/50"
+            ? "border-slate-300 bg-slate-50/50"
             : "border-slate-200"
       }`}
     >
@@ -950,7 +950,7 @@ export default function LunchGroupsPage() {
                               <Button
                                 variant="outline"
                                 size="icon"
-                                className="h-8 w-8 bg-red-50 text-red-500 border-red-200 hover:bg-red-100 hover:border-red-300"
+                                className="h-8 w-8 bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100 hover:border-slate-300"
                                 disabled={
                                   !isTableCreated || resetMutation.isPending
                                 }
@@ -979,7 +979,7 @@ export default function LunchGroupsPage() {
                               <AlertDialogCancel>취소</AlertDialogCancel>
                               <AlertDialogAction
                                 onClick={() => resetMutation.mutate()}
-                                className="bg-red-500 hover:bg-red-600"
+                                className="bg-slate-500 hover:bg-slate-600"
                               >
                                 초기화
                               </AlertDialogAction>
@@ -1073,7 +1073,7 @@ export default function LunchGroupsPage() {
       {/* 드래그 오버레이 */}
       <DragOverlay>
         {activeMember && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-md border border-[#1d1d1f] bg-[#1d1d1f]/10 shadow-xl">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-md border border-[#1d1d1f] bg-[#1d1d1f]/10">
             <GripVertical className="w-3 h-3 text-[#1d1d1f] flex-shrink-0" />
             <span className="text-sm font-medium text-[#1d1d1f]">
               {activeMember.full_name}

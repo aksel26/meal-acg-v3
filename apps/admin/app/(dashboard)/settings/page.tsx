@@ -197,7 +197,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-8">
       {/* 일일 식대 단가 설정 */}
-      <section className="admin-card rounded-xl border border-slate-200 p-6">
+      <section className="admin-card rounded-xl p-6">
         <div className="mb-5 border-b border-slate-100 pb-4">
           <h2 className="text-lg font-bold text-slate-900">일일 식대 단가</h2>
           <p className="mt-1 text-sm text-slate-500">
@@ -226,7 +226,7 @@ export default function SettingsPage() {
                   }
                   min={0}
                   step={1000}
-                  className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 pr-12 text-lg font-semibold text-slate-900 transition-all focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+                  className="w-full rounded-lg bg-white px-4 py-3 pr-12 text-lg font-semibold text-slate-900 transition-all focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
                 />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-400">
                   원/일
@@ -254,7 +254,7 @@ export default function SettingsPage() {
       {/* 월별 지원금 계산 & 연간 현황 */}
       <div className="grid grid-cols-12 gap-6">
         {/* 월별 지원금 계산 */}
-        <section className="col-span-6 admin-card rounded-xl border border-slate-200 p-6">
+        <section className="col-span-6 admin-card rounded-xl p-6">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
             <div>
               <h2 className="text-lg font-bold text-slate-900">
@@ -371,7 +371,7 @@ export default function SettingsPage() {
                         <div className="text-xs text-slate-400">공휴일</div>
                       </div>
                       <Equal className="h-4 w-4 text-slate-300" />
-                      <div className="text-center rounded-md bg-white px-3 py-1 shadow-sm ring-1 ring-slate-200">
+                      <div className="text-center rounded-md bg-white px-3 py-1">
                         <div className="font-bold text-slate-900">
                           {workdaysData?.actualWorkdays || 0}
                         </div>
@@ -402,7 +402,7 @@ export default function SettingsPage() {
                     <div
                       className={cn(
                         "flex items-center justify-between rounded-lg p-4",
-                        needsUpdate ? "bg-orange-50" : "bg-slate-50",
+                        needsUpdate ? "bg-slate-50" : "bg-slate-50",
                       )}
                     >
                       <div>
@@ -415,7 +415,7 @@ export default function SettingsPage() {
                         </div>
                       </div>
                       {needsUpdate ? (
-                        <div className="flex items-center gap-1.5 text-sm font-medium text-orange-600">
+                        <div className="flex items-center gap-1.5 text-sm font-medium text-slate-600">
                           <AlertCircle className="h-4 w-4" />
                           변경됨
                         </div>
@@ -454,7 +454,7 @@ export default function SettingsPage() {
         </section>
 
         {/* 연간 현황 */}
-        <section className="col-span-6 admin-card rounded-xl border border-slate-200 p-6">
+        <section className="col-span-6 admin-card rounded-xl p-6">
           <div className="mb-5 border-b border-slate-100 pb-4">
             <h2 className="text-lg font-bold text-slate-900">
               {currentYear}년 현황
@@ -480,7 +480,7 @@ export default function SettingsPage() {
                       ? "bg-[#1d1d1f]/5 text-[#1d1d1f] ring-1 ring-[#1d1d1f]/20"
                       : isSaved
                         ? "bg-slate-50 text-slate-900 hover:bg-slate-100"
-                        : "bg-white text-slate-400 ring-1 ring-slate-100 hover:ring-slate-200",
+                        : "bg-white text-slate-400 hover:ring-slate-200",
                   )}
                 >
                   <div className="text-sm font-bold">{month}월</div>

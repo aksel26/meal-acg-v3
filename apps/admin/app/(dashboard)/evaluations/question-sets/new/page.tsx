@@ -474,7 +474,7 @@ export default function NewQuestionSetPage() {
               "border-0",
               CONTROL_FOCUS_CLASS,
               isActive
-                ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
+                ? "bg-slate-100 text-slate-700 hover:bg-slate-100"
                 : "bg-slate-100 text-slate-500 hover:bg-slate-100",
             )}
             onClick={() => {
@@ -493,7 +493,7 @@ export default function NewQuestionSetPage() {
               "border-0",
               CONTROL_FOCUS_CLASS,
               isDefault
-                ? "bg-amber-100 text-amber-700 hover:bg-amber-100"
+                ? "bg-slate-100 text-slate-700 hover:bg-slate-100"
                 : "bg-slate-100 text-slate-500 hover:bg-slate-100",
             )}
             onClick={() => setIsDefault((current) => !current)}
@@ -551,7 +551,7 @@ export default function NewQuestionSetPage() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-transparent p-4">
+      <div className="rounded-xl bg-transparent p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-sm font-semibold text-slate-900">
@@ -691,7 +691,7 @@ export default function NewQuestionSetPage() {
                                   variant="ghost"
                                   size="icon"
                                   className={cn(
-                                    "h-8 w-8 text-rose-600 hover:text-rose-700",
+                                    "h-8 w-8 text-slate-600 hover:text-slate-700",
                                     CONTROL_FOCUS_CLASS,
                                   )}
                                   aria-label="문항 삭제"

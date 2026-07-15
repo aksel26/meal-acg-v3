@@ -585,7 +585,7 @@ export default function Sidebar() {
               </p>
             </div>
             {user?.hireDate && (
-              <span className="rounded-full border border-black/8 bg-[#fafafc] px-2 py-0.5 text-[13px] font-semibold text-[#7a7a7a]">
+              <span className="rounded-full border border-black/8 bg-[#f8fafc] px-2 py-0.5 text-[13px] font-semibold text-[#7a7a7a]">
                 D+{dayjs().diff(dayjs(user.hireDate), "day")}
               </span>
             )}
@@ -695,7 +695,7 @@ export default function Sidebar() {
               />
             </div>
             {passwordError && (
-              <p className="text-sm text-red-500">{passwordError}</p>
+              <p className="text-sm text-slate-500">{passwordError}</p>
             )}
           </div>
           <DialogFooter>

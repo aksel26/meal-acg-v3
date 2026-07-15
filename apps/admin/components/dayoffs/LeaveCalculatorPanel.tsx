@@ -42,7 +42,7 @@ export function LeaveCalculatorPanel({ year }: { year: number }) {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-end gap-3">
-        <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-500">
+        <div className="flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs text-slate-500">
           <HelpCircle className="h-3.5 w-3.5" />
           계산 확인 전용 화면입니다. 휴가 수량은 여기서 적용되지 않습니다.
         </div>
@@ -99,7 +99,7 @@ export function LeaveCalculatorPanel({ year }: { year: number }) {
                 <tr>
                   <td
                     colSpan={8}
-                    className="py-12 text-center text-sm text-rose-500"
+                    className="py-12 text-center text-sm text-slate-500"
                   >
                     계산 데이터를 불러오지 못했습니다.
                   </td>
@@ -191,7 +191,7 @@ export function LeaveCalculatorPanel({ year }: { year: number }) {
                             </p>
                           ))}
                           {member.notes.map((note) => (
-                            <p key={note} className="text-amber-600">
+                            <p key={note} className="text-slate-600">
                               {note}
                             </p>
                           ))}

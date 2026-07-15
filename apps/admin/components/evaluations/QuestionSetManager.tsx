@@ -261,8 +261,8 @@ export function QuestionSetManager() {
                         className={cn(
                           "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors",
                           questionSet.is_default
-                            ? "text-amber-500"
-                            : "text-slate-300 hover:bg-amber-50 hover:text-amber-500",
+                            ? "text-slate-500"
+                            : "text-slate-300 hover:bg-slate-50 hover:text-slate-500",
                           (!questionSet.is_active ||
                             updateMutation.isPending) &&
                             "cursor-not-allowed opacity-50 hover:bg-transparent hover:text-slate-300",
@@ -279,7 +279,7 @@ export function QuestionSetManager() {
                         {questionSet.name}
                       </span>
                       {questionSet.is_default && (
-                        <Badge className="border-0 bg-amber-100 text-amber-700">
+                        <Badge className="border-0 bg-slate-100 text-slate-700">
                           기본
                         </Badge>
                       )}
@@ -310,7 +310,7 @@ export function QuestionSetManager() {
                         className={cn(
                           "cursor-pointer border-0 text-[11px]",
                           questionSet.is_active
-                            ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                            ? "bg-slate-100 text-slate-700 hover:bg-slate-200"
                             : "bg-slate-100 text-slate-500 hover:bg-slate-200",
                         )}
                       >

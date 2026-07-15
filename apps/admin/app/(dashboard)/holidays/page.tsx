@@ -236,15 +236,15 @@ export default function HolidaysPage() {
 
                   return (
                     <TableRow key={holiday.holiday_date}>
-                      <TableCell className="py-0.5 text-gray-500">{index + 1}</TableCell>
+                      <TableCell className="py-0.5 text-slate-500">{index + 1}</TableCell>
                       <TableCell className="py-0.5">
                         {date.format("YYYY-MM-DD")}
                         <span className={`ml-0.5 ${
                           date.day() === 0
-                            ? "text-red-500"
+                            ? "text-slate-500"
                             : date.day() === 6
                             ? "text-slate-700"
-                            : "text-gray-500"
+                            : "text-slate-500"
                         }`}>({dayOfWeek})</span>
                       </TableCell>
                       <TableCell className="py-0.5 font-medium">
@@ -259,7 +259,7 @@ export default function HolidaysPage() {
                             <Pencil className="h-3 w-3" />
                           </button>
                           <button
-                            className="inline-flex items-center justify-center h-6 w-6 rounded hover:bg-red-50 transition-colors text-red-400 hover:text-red-600"
+                            className="inline-flex items-center justify-center h-6 w-6 rounded hover:bg-slate-50 transition-colors text-slate-400 hover:text-slate-600"
                             onClick={() => deleteMutation.mutate(holiday.holiday_date)}
                             disabled={deleteMutation.isPending}
                           >
@@ -273,7 +273,7 @@ export default function HolidaysPage() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={4} className="py-12">
-                    <div className="flex flex-col items-center gap-2 text-gray-400">
+                    <div className="flex flex-col items-center gap-2 text-slate-400">
                       <CalendarOff className="h-8 w-8" />
                       <p className="text-sm">등록된 공휴일이 없습니다.</p>
                       <p className="text-xs">Google 동기화 또는 직접 추가해 주세요.</p>

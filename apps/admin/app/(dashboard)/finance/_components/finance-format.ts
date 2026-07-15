@@ -33,16 +33,16 @@ export function statusBadgeClass(value: string | null | undefined) {
     case "approved":
     case "paid":
     case "issued":
-      return "rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700";
+      return "rounded-full bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700";
     case "sent":
     case "submitted":
     case "invoiced":
     case "scheduled":
-      return "rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700";
+      return "rounded-full bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700";
     case "rejected":
     case "canceled":
     case "overdue":
-      return "rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700";
+      return "rounded-full bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700";
     case "paused":
     case "expired":
     case "inactive":

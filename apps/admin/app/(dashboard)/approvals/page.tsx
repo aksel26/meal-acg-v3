@@ -57,23 +57,23 @@ const CATEGORY_FILTERS: { key: Category; label: string; description: string }[] 
 const STATUS_BADGE: Record<string, { label: string; className: string; dotClassName: string }> = {
   pending: {
     label: "대기",
-    className: "border-amber-200 bg-amber-50 text-amber-700",
-    dotClassName: "bg-amber-500",
+    className: "border-slate-200 bg-slate-50 text-slate-700",
+    dotClassName: "bg-slate-500",
   },
   approved: {
     label: "승인",
-    className: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    dotClassName: "bg-emerald-500",
+    className: "border-slate-200 bg-slate-50 text-slate-700",
+    dotClassName: "bg-slate-500",
   },
   rejected: {
     label: "반려",
-    className: "border-red-200 bg-red-50 text-red-700",
-    dotClassName: "bg-red-500",
+    className: "border-slate-200 bg-slate-50 text-slate-700",
+    dotClassName: "bg-slate-500",
   },
   pre_approved: {
     label: "가승인",
-    className: "border-blue-200 bg-blue-50 text-blue-700",
-    dotClassName: "bg-blue-500",
+    className: "border-slate-200 bg-slate-50 text-slate-700",
+    dotClassName: "bg-slate-500",
   },
 };
 
@@ -753,7 +753,7 @@ function ApprovalActions({
         <Button
           size="sm"
           variant="outline"
-          className="h-8 gap-1 border-amber-200 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
+          className="h-8 gap-1 border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-800"
           onClick={onCancel}
           disabled={isPending}
         >
@@ -771,7 +771,7 @@ function ApprovalActions({
       <Button
         size="sm"
         variant="outline"
-        className="h-8 gap-1 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
+        className="h-8 gap-1 border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-800"
         onClick={onApprove}
         disabled={isPending}
       >
@@ -781,7 +781,7 @@ function ApprovalActions({
       <Button
         size="sm"
         variant="outline"
-        className="h-8 gap-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+        className="h-8 gap-1 border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-700"
         onClick={onReject}
         disabled={isPending}
       >
@@ -825,7 +825,7 @@ function EarlyLeaveActions({
           <Button
             size="sm"
             variant="outline"
-            className="h-8 gap-1 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
+            className="h-8 gap-1 border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-800"
             onClick={() => onAction(request.id, "approve")}
             disabled={isPending}
           >
@@ -851,7 +851,7 @@ function RejectButton({ onClick, disabled }: { onClick: () => void; disabled: bo
     <Button
       size="sm"
       variant="outline"
-      className="h-8 gap-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+      className="h-8 gap-1 border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-700"
       onClick={onClick}
       disabled={disabled}
     >

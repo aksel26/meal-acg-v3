@@ -467,12 +467,12 @@ export function AdminLibraryClient({
                     </td>
                     <td className="px-5 py-4">
                       {dayState.remainingDays !== null && (
-                        <span className="font-medium text-[#0071e3]">
+                        <span className="font-medium text-[#64748b]">
                           {dayState.remainingDays}일 남음
                         </span>
                       )}
                       {dayState.overdueDays !== null && (
-                        <span className="font-medium text-[#d70015]">
+                        <span className="font-medium text-[#64748b]">
                           {dayState.overdueDays}일 초과
                         </span>
                       )}
@@ -685,15 +685,15 @@ function StatusBadge({
 function getStatusBadgeClass(status?: BookRentalStatus) {
   switch (status) {
     case "pending":
-      return "bg-[#fff4d6] text-[#8a5a00]";
+      return "bg-[#e2e8f0] text-[#334155]";
     case "approved":
-      return "bg-[#e8f3ff] text-[#0057b8]";
+      return "bg-[#f1f5f9] text-[#475569]";
     case "rejected":
-      return "bg-[#ffe9e8] text-[#c10015]";
+      return "bg-[#f1f5f9] text-[#475569]";
     case "return_requested":
-      return "bg-[#fff0e5] text-[#a14600]";
+      return "bg-[#f1f5f9] text-[#475569]";
     case "returned":
-      return "bg-[#e8f7ed] text-[#167c3b]";
+      return "bg-[#f1f5f9] text-[#334155]";
     default:
       return "bg-[#f5f5f7] text-[#424245]";
   }

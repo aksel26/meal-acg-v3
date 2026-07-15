@@ -232,10 +232,10 @@ export function PushNotifyDialog({
 
           {/* No subscription warning */}
           {results && results.length === 0 && (
-            <div className="rounded-md bg-amber-50 p-3">
+            <div className="rounded-md bg-slate-50 p-3">
               <div className="flex items-start gap-2">
-                <AlertCircle className="h-4 w-4 mt-0.5 text-amber-600" />
-                <p className="text-sm text-amber-800">
+                <AlertCircle className="h-4 w-4 mt-0.5 text-slate-600" />
+                <p className="text-sm text-slate-800">
                   푸시 알림 구독이 등록된 사용자가 없습니다.
                 </p>
               </div>
@@ -244,7 +244,7 @@ export function PushNotifyDialog({
 
           {/* Results */}
           {results && results.length > 0 && (
-            <div className="max-h-60 overflow-y-auto rounded-md border border-slate-200">
+            <div className="max-h-60 overflow-y-auto rounded-md">
               <div className="divide-y divide-slate-100">
                 {results.map((result) => (
                   <div
@@ -255,12 +255,12 @@ export function PushNotifyDialog({
                       {result.fullName}
                     </span>
                     {result.success ? (
-                      <span className="flex items-center gap-1 text-xs text-emerald-600">
+                      <span className="flex items-center gap-1 text-xs text-slate-600">
                         <Check className="h-3.5 w-3.5" />
                         발송 완료
                       </span>
                     ) : (
-                      <span className="flex items-center gap-1 text-xs text-rose-600">
+                      <span className="flex items-center gap-1 text-xs text-slate-600">
                         <X className="h-3.5 w-3.5" />
                         {result.error || "발송 실패"}
                       </span>
@@ -273,7 +273,7 @@ export function PushNotifyDialog({
 
           {/* Member list (pre-send) */}
           {!results && !sendToAll && selectedMembers.length > 0 && (
-            <div className="max-h-40 overflow-y-auto rounded-md border border-slate-200">
+            <div className="max-h-40 overflow-y-auto rounded-md">
               <div className="divide-y divide-slate-100">
                 {selectedMembers.map((member) => (
                   <div key={member.id} className="p-3">

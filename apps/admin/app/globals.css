@@ -47,7 +47,7 @@
   --muted-foreground: oklch(0.556 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
+  --destructive: oklch(0.145 0 0);
   --destructive-foreground: #ffffff;
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
@@ -74,7 +74,7 @@
   --shadow-glow-emerald: none;
   --shadow-glow-primary: none;
   --shadow-glass: none;
-  --shadow-product: 3px 5px 30px rgba(0, 0, 0, 0.22);
+  --shadow-product: none;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --chart-1: oklch(0.87 0 0);
@@ -184,9 +184,24 @@ body {
 }
 
 /* Dialog: borderless (B&W tone — content stands on the overlay) */
-[data-slot="dialog-content"] {
+[data-slot="dialog-content"],
+[data-slot="alert-dialog-content"] {
   border: 0 !important;
   box-shadow: none !important;
+}
+
+/* 공용 Card(@repo/ui) 박스 테두리 제거 — admin 전용 오버라이드 */
+.bg-card.border {
+  border-width: 0;
+}
+
+/* 라운딩 상한: 과한 둥글기 억제 (rounded-xl 12px→8px, 2xl/3xl→10px) */
+.rounded-xl {
+  border-radius: 0.5rem;
+}
+.rounded-2xl,
+.rounded-3xl {
+  border-radius: 0.625rem;
 }
 
 body:has(.question-set-editor-sheet) [data-slot="sheet-overlay"] {

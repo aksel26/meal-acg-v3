@@ -132,7 +132,7 @@ function typeBadgeStyle(type: string) {
     case "복지포인트":
       return "bg-slate-100/60 text-slate-800 border-transparent";
     case "활동비":
-      return "bg-amber-50 text-amber-500 border-transparent";
+      return "bg-slate-50 text-slate-500 border-transparent";
     default:
       return "bg-slate-50 text-slate-600 border-slate-200";
   }
@@ -337,7 +337,7 @@ function ReviewStepIndicator({
             ? "border-slate-300 bg-white hover:border-slate-400"
             : status === 1
               ? "border-slate-500 bg-slate-100 hover:border-slate-600"
-              : "border-emerald-500 bg-emerald-500 hover:border-emerald-600 hover:bg-emerald-600",
+              : "border-slate-500 bg-slate-500 hover:border-slate-600 hover:bg-slate-600",
         )}
         title={tooltip}
       >
@@ -375,7 +375,7 @@ function ReviewStepIndicator({
       {revertMenuOpen && (
         <div
           ref={menuRef}
-          className="absolute top-full z-20 mt-1 rounded border border-slate-200 bg-white py-1 shadow-lg"
+          className="absolute top-full z-20 mt-1 rounded bg-white py-1"
         >
           {status === 2 && (
             <button
@@ -817,8 +817,8 @@ function ReviewPageContent() {
 
       {/* Bulk Action Bar */}
       {selectedIds.size > 0 && (
-        <div className="flex items-center gap-3 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2">
-          <span className="text-sm font-medium text-rose-700">
+        <div className="flex items-center gap-3 rounded-lg bg-slate-50 px-4 py-2">
+          <span className="text-sm font-medium text-slate-700">
             {selectedIds.size}개 선택됨
           </span>
           <Button
@@ -933,7 +933,7 @@ function ReviewPageContent() {
                     key={record.id}
                     className={cn(
                       "transition-colors hover:bg-slate-50/60",
-                      selectedIds.has(record.id) && "bg-rose-50/40",
+                      selectedIds.has(record.id) && "bg-slate-50/40",
                     )}
                   >
                     <td className="px-2 py-1 text-center">
@@ -999,7 +999,7 @@ function ReviewPageContent() {
                           <TooltipProvider delayDuration={0}>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-violet-100 text-violet-600 text-[10px] font-bold cursor-default shrink-0">
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold cursor-default shrink-0">
                                   +{record.co_payers.length}
                                 </span>
                               </TooltipTrigger>
@@ -1032,7 +1032,7 @@ function ReviewPageContent() {
                         </button>
                         <button
                           onClick={() => handleDeleteClick(record)}
-                          className="inline-flex h-6 w-6 items-center justify-center rounded text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                          className="inline-flex h-6 w-6 items-center justify-center rounded text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-600"
                           title="삭제"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -1056,9 +1056,9 @@ function ReviewPageContent() {
 
           <div className="space-y-4 py-2">
             {editingRecord && (editingRecord.review_status ?? 0) >= 1 && (
-              <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3">
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-                <p className="text-sm text-amber-700">
+              <div className="flex items-start gap-2 rounded-md bg-slate-50 p-3">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-slate-600" />
+                <p className="text-sm text-slate-700">
                   {REVIEW_STATUS_LABELS[editingRecord.review_status] || "확인"}{" "}
                   상태의 내역을 수정합니다. 변경 이력이 기록됩니다.
                 </p>
@@ -1085,7 +1085,7 @@ function ReviewPageContent() {
                 onChange={(e) => setEditDescription(e.target.value)}
                 placeholder="사용처를 입력하세요"
                 rows={2}
-                className="flex w-full rounded border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                className="flex w-full rounded border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               />
             </div>
 
@@ -1172,9 +1172,9 @@ function ReviewPageContent() {
           </DialogHeader>
 
           <div className="space-y-3 py-2">
-            <div className="flex items-start gap-2 rounded-md border border-rose-200 bg-rose-50 p-3">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
-              <p className="text-sm text-rose-700">
+            <div className="flex items-start gap-2 rounded-md bg-slate-50 p-3">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-slate-600" />
+              <p className="text-sm text-slate-700">
                 이 작업은 되돌릴 수 없습니다. 삭제 이력이 기록됩니다.
               </p>
             </div>
@@ -1229,9 +1229,9 @@ function ReviewPageContent() {
           </DialogHeader>
 
           <div className="space-y-3 py-2">
-            <div className="flex items-start gap-2 rounded-md border border-rose-200 bg-rose-50 p-3">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
-              <p className="text-sm text-rose-700">
+            <div className="flex items-start gap-2 rounded-md bg-slate-50 p-3">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-slate-600" />
+              <p className="text-sm text-slate-700">
                 선택한{" "}
                 <span className="font-semibold">{selectedIds.size}개</span>{" "}
                 항목을 삭제합니다. 이 작업은 되돌릴 수 없습니다.
@@ -1305,7 +1305,7 @@ function ReviewPageContent() {
                 {auditLogs.map((log) => (
                   <div
                     key={log.id}
-                    className="rounded-md border border-slate-200 bg-white p-3"
+                    className="rounded-md bg-white p-3"
                   >
                     <div className="flex items-center justify-between">
                       <Badge
@@ -1313,8 +1313,8 @@ function ReviewPageContent() {
                         className={cn(
                           "text-[11px] px-1.5 py-0",
                           log.action === "DELETE"
-                            ? "border-rose-200 bg-rose-50 text-rose-700"
-                            : "border-sky-200 bg-sky-50 text-sky-700",
+                            ? "border-slate-200 bg-slate-50 text-slate-700"
+                            : "border-slate-200 bg-slate-50 text-slate-700",
                         )}
                       >
                         {log.action}

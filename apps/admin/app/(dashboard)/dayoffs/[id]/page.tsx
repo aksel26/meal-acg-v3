@@ -24,14 +24,14 @@ import {
 } from "@/hooks/useDayoffs";
 
 const LEAVE_TYPE_COLORS: Record<string, string> = {
-  "지각/조퇴": "bg-orange-50 text-orange-700 border-orange-200",
-  반차: "bg-purple-50 text-purple-700 border-purple-200",
-  연차: "bg-yellow-50 text-yellow-700 border-yellow-200",
+  "지각/조퇴": "bg-slate-50 text-slate-700 border-slate-200",
+  반차: "bg-slate-50 text-slate-700 border-slate-200",
+  연차: "bg-slate-50 text-slate-700 border-slate-200",
   대체휴무: "bg-slate-100 text-slate-800 border-slate-300",
-  경조휴무: "bg-pink-50 text-pink-700 border-pink-200",
-  특별휴무: "bg-teal-50 text-teal-700 border-teal-200",
+  경조휴무: "bg-slate-50 text-slate-700 border-slate-200",
+  특별휴무: "bg-slate-50 text-slate-700 border-slate-200",
   훈련: "bg-slate-50 text-slate-700 border-slate-200",
-  휴무: "bg-green-50 text-green-700 border-green-200",
+  휴무: "bg-slate-50 text-slate-700 border-slate-200",
 };
 
 interface MemberDetail {
@@ -44,7 +44,7 @@ interface MemberDetail {
 
 function getLeaveTypeBadge(record: DayoffRecord) {
   const category = record.leave_type?.category || "";
-  const colorClass = LEAVE_TYPE_COLORS[category] || "bg-gray-50 text-gray-700 border-gray-200";
+  const colorClass = LEAVE_TYPE_COLORS[category] || "bg-slate-50 text-slate-700 border-slate-200";
   let label = record.leave_type?.name || "";
   if (record.leave_type_id === 1 && record.late_hour) {
     label = `지각-${record.late_hour}시${record.late_minute || "00"}분`;
@@ -153,7 +153,7 @@ export default function DayoffDetailPage() {
         </div>
         <div className="rounded-xl bg-slate-50 px-4 py-3">
           <div className="text-xs text-slate-500">{year}년 사용일수</div>
-          <div className="mt-1 text-sm font-semibold text-red-600">
+          <div className="mt-1 text-sm font-semibold text-slate-600">
             {monthlyData.total}일
           </div>
         </div>
@@ -215,7 +215,7 @@ export default function DayoffDetailPage() {
                       <span>합계</span>
                       <span className="font-medium">{md.count > 0 ? md.count : "-"}</span>
                     </div>
-                    <div className="flex justify-between px-2 py-1 text-[10px] font-semibold text-red-600 border-t border-slate-200 bg-slate-100/70">
+                    <div className="flex justify-between px-2 py-1 text-[10px] font-semibold text-slate-600 border-t border-slate-200 bg-slate-100/70">
                       <span>누적</span>
                       <span>{cumulative > 0 ? cumulative : "-"}</span>
                     </div>

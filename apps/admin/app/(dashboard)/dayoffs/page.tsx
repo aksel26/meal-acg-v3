@@ -59,14 +59,14 @@ import { LeaveCalculatorPanel } from "@/components/dayoffs/LeaveCalculatorPanel"
 dayjs.locale("ko");
 
 const LEAVE_TYPE_COLORS: Record<string, string> = {
-  "지각/조퇴": "bg-orange-50 text-orange-700 border-orange-200",
-  반차: "bg-purple-50 text-purple-700 border-purple-200",
-  연차: "bg-yellow-50 text-yellow-700 border-yellow-200",
+  "지각/조퇴": "bg-slate-50 text-slate-700 border-slate-200",
+  반차: "bg-slate-50 text-slate-700 border-slate-200",
+  연차: "bg-slate-50 text-slate-700 border-slate-200",
   대체휴무: "bg-slate-100 text-slate-800 border-slate-300",
-  경조휴무: "bg-pink-50 text-pink-700 border-pink-200",
-  특별휴무: "bg-teal-50 text-teal-700 border-teal-200",
+  경조휴무: "bg-slate-50 text-slate-700 border-slate-200",
+  특별휴무: "bg-slate-50 text-slate-700 border-slate-200",
   훈련: "bg-slate-50 text-slate-700 border-slate-200",
-  휴무: "bg-green-50 text-green-700 border-green-200",
+  휴무: "bg-slate-50 text-slate-700 border-slate-200",
 };
 
 interface MemberOption {
@@ -278,7 +278,7 @@ export default function DayoffsPage() {
   const getLeaveTypeBadge = (record: DayoffRecord) => {
     const category = record.leave_type?.category || "";
     const colorClass =
-      LEAVE_TYPE_COLORS[category] || "bg-gray-50 text-gray-700 border-gray-200";
+      LEAVE_TYPE_COLORS[category] || "bg-slate-50 text-slate-700 border-slate-200";
     let label = record.leave_type?.name || "";
     if (record.leave_type_id === 1 && record.late_hour) {
       label = `지각-${record.late_hour}시${record.late_minute || "00"}분`;
@@ -309,7 +309,7 @@ export default function DayoffsPage() {
         >
           <Badge
             variant="outline"
-            className="border-transparent bg-green-50 text-green-700 transition-colors hover:bg-green-100"
+            className="border-transparent bg-slate-50 text-slate-700 transition-colors hover:bg-slate-100"
           >
             {label}
           </Badge>
@@ -325,7 +325,7 @@ export default function DayoffsPage() {
       >
         <Badge
           variant="outline"
-          className="border-transparent bg-amber-50 text-amber-700 transition-colors hover:bg-amber-100"
+          className="border-transparent bg-slate-50 text-slate-700 transition-colors hover:bg-slate-100"
         >
           {label}
         </Badge>
@@ -419,7 +419,7 @@ export default function DayoffsPage() {
           </div>
 
           <div className="flex gap-2">
-            <div className="flex rounded-lg border border-slate-200 p-0.5">
+            <div className="flex rounded-lg p-0.5">
               <button
                 className={cn(
                   "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
@@ -457,7 +457,7 @@ export default function DayoffsPage() {
               {["일", "월", "화", "수", "목", "금", "토"].map((day, i) => (
                 <div
                   key={day}
-                  className={`bg-slate-50 p-2 text-center text-xs font-semibold ${i === 0 ? "text-red-500" : i === 6 ? "text-slate-700" : "text-slate-600"}`}
+                  className={`bg-slate-50 p-2 text-center text-xs font-semibold ${i === 0 ? "text-slate-500" : i === 6 ? "text-slate-700" : "text-slate-600"}`}
                 >
                   {day}
                 </div>
@@ -474,7 +474,7 @@ export default function DayoffsPage() {
                     }
                   >
                     <div
-                      className={`text-xs font-medium mb-0.5 ${dow === 0 ? "text-red-500" : dow === 6 ? "text-slate-700" : "text-slate-700"}`}
+                      className={`text-xs font-medium mb-0.5 ${dow === 0 ? "text-slate-500" : dow === 6 ? "text-slate-700" : "text-slate-700"}`}
                     >
                       {day.dayOfMonth}
                     </div>
@@ -482,7 +482,7 @@ export default function DayoffsPage() {
                       {records.slice(0, 3).map((r) => (
                         <div
                           key={r.id}
-                          className={`truncate rounded px-1 py-0.5 text-[10px] cursor-pointer ${r.approver_id ? "bg-yellow-50 text-yellow-800" : "bg-green-50 text-green-800"}`}
+                          className={`truncate rounded px-1 py-0.5 text-[10px] cursor-pointer ${r.approver_id ? "bg-slate-50 text-slate-800" : "bg-slate-50 text-slate-800"}`}
                           onClick={(e) => {
                             e.stopPropagation();
                             handleOpenEdit(r);
@@ -557,7 +557,7 @@ export default function DayoffsPage() {
                             className={cn(
                               "ml-1",
                               date.day() === 0
-                                ? "text-red-500"
+                                ? "text-slate-500"
                                 : date.day() === 6
                                   ? "text-slate-700"
                                   : "text-slate-400",
@@ -601,7 +601,7 @@ export default function DayoffsPage() {
                               수정
                             </button>
                             <button
-                              className="font-medium text-red-400 transition-colors hover:text-red-600"
+                              className="font-medium text-slate-400 transition-colors hover:text-slate-600"
                               onClick={() => setDeleteTarget(record.id)}
                               title="삭제"
                             >
@@ -864,7 +864,7 @@ export default function DayoffsPage() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-red-50 text-red-600 shadow-none hover:bg-red-100"
+              className="bg-slate-50 text-slate-600 shadow-none hover:bg-slate-100"
             >
               삭제
             </AlertDialogAction>

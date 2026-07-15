@@ -73,7 +73,7 @@ function Metric({
   return (
     <div className="rounded-xl bg-white p-4">
       <p className="text-xs text-slate-500">{label}</p>
-      <p className={emphasis === "negative" ? "mt-1 text-xl font-semibold text-red-600" : "mt-1 text-xl font-semibold text-slate-900"}>
+      <p className={emphasis === "negative" ? "mt-1 text-xl font-semibold text-slate-600" : "mt-1 text-xl font-semibold text-slate-900"}>
         {value}
       </p>
     </div>

@@ -87,9 +87,9 @@ const STATUS_TYPES: MemberStatusType[] = [
 ];
 
 const ADMIN_ROLE_BADGE_STYLES: Record<string, string> = {
-  대표: "bg-indigo-100 text-indigo-800",
-  팀장: "bg-sky-50 text-sky-700",
-  일반: "bg-emerald-50 text-emerald-700",
+  대표: "bg-slate-100 text-slate-800",
+  팀장: "bg-slate-50 text-slate-700",
+  일반: "bg-slate-50 text-slate-700",
 };
 
 interface MemberOption {
@@ -805,7 +805,7 @@ export default function MemberStatusView({
             <span
               className={cn(
                 "font-semibold tabular-nums",
-                activeStatusCount > 0 ? "text-amber-600" : "text-slate-800",
+                activeStatusCount > 0 ? "text-slate-600" : "text-slate-800",
               )}
             >
               {activeStatusCount}
@@ -1045,7 +1045,7 @@ export default function MemberStatusView({
                                 setActualMonths(member?.intern_months || 1);
                                 setIsDeleteOpen(true);
                               }}
-                              className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                              className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-600"
                               title="멤버 삭제"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -1088,7 +1088,7 @@ export default function MemberStatusView({
                       placeholder="홍길동"
                       className={
                         addFormErrors.fullName
-                          ? "border-red-500 focus-visible:ring-red-500"
+                          ? "border-slate-500 focus-visible:ring-slate-500"
                           : ""
                       }
                       {...register("fullName", {
@@ -1096,7 +1096,7 @@ export default function MemberStatusView({
                       })}
                     />
                     {addFormErrors.fullName && (
-                      <p className="text-sm text-red-500">
+                      <p className="text-sm text-slate-500">
                         {addFormErrors.fullName.message}
                       </p>
                     )}
@@ -1109,7 +1109,7 @@ export default function MemberStatusView({
                       placeholder="hong@example.com"
                       className={
                         addFormErrors.email
-                          ? "border-red-500 focus-visible:ring-red-500"
+                          ? "border-slate-500 focus-visible:ring-slate-500"
                           : ""
                       }
                       {...register("email", {
@@ -1120,7 +1120,7 @@ export default function MemberStatusView({
                       })}
                     />
                     {addFormErrors.email && (
-                      <p className="text-sm text-red-500">
+                      <p className="text-sm text-slate-500">
                         {addFormErrors.email.message}
                       </p>
                     )}
@@ -1167,7 +1167,7 @@ export default function MemberStatusView({
                         if (selected?.name !== "인턴") setAddFormValue("internMonths", "");
                       }}
                     >
-                      <SelectTrigger className="border border-slate-200 w-full">
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="직급 선택" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1194,7 +1194,7 @@ export default function MemberStatusView({
                         })}
                       />
                       {addFormErrors.internMonths && (
-                        <p className="text-sm text-red-500">
+                        <p className="text-sm text-slate-500">
                           {addFormErrors.internMonths.message}
                         </p>
                       )}
@@ -1208,7 +1208,7 @@ export default function MemberStatusView({
                         setAddFormValue("title_id", val === "__none__" ? "" : val)
                       }
                     >
-                      <SelectTrigger className="border border-slate-200 w-full">
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="직책 선택" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1235,7 +1235,7 @@ export default function MemberStatusView({
                       placeholder="hong123"
                       className={
                         addFormErrors.loginId
-                          ? "border-red-500 focus-visible:ring-red-500"
+                          ? "border-slate-500 focus-visible:ring-slate-500"
                           : ""
                       }
                       {...register("loginId", {
@@ -1243,7 +1243,7 @@ export default function MemberStatusView({
                       })}
                     />
                     {addFormErrors.loginId && (
-                      <p className="text-sm text-red-500">
+                      <p className="text-sm text-slate-500">
                         {addFormErrors.loginId.message}
                       </p>
                     )}
@@ -1257,7 +1257,7 @@ export default function MemberStatusView({
                         placeholder="••••••••"
                         className={
                           addFormErrors.password
-                            ? "border-red-500 focus-visible:ring-red-500 pr-10"
+                            ? "border-slate-500 focus-visible:ring-slate-500 pr-10"
                             : "pr-10"
                         }
                         {...register("password", {
@@ -1277,13 +1277,13 @@ export default function MemberStatusView({
                       </button>
                     </div>
                     {addFormErrors.password && (
-                      <p className="text-sm text-red-500">
+                      <p className="text-sm text-slate-500">
                         {addFormErrors.password.message}
                       </p>
                     )}
                   </div>
                 </div>
-                <label className="flex w-full items-center justify-between rounded-md border border-slate-200 bg-white px-3 py-2.5 cursor-pointer hover:bg-slate-100 transition-colors">
+                <label className="flex w-full items-center justify-between rounded-md bg-white px-3 py-2.5 cursor-pointer hover:bg-slate-100 transition-colors">
                   <span className="text-sm font-medium">관리자 권한</span>
                   <Checkbox
                     checked={watchedRole === "admin"}
@@ -1299,7 +1299,7 @@ export default function MemberStatusView({
                       value={watchAddForm("adminRole")}
                       onValueChange={(value) => setAddFormValue("adminRole", value)}
                     >
-                      <SelectTrigger className="border border-slate-200 w-full">
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="어드민 권한 선택" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1323,7 +1323,7 @@ export default function MemberStatusView({
                       )
                     }
                   >
-                    <SelectTrigger className="border border-slate-200 w-full">
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="User 권한 선택" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1399,7 +1399,7 @@ export default function MemberStatusView({
             <div className="space-y-2">
               <Label className="text-xs font-medium text-slate-500">특이사항</Label>
               <Select value={formStatus} onValueChange={setFormStatus}>
-                <SelectTrigger className="w-full border border-slate-200">
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="특이사항 선택" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1506,7 +1506,7 @@ export default function MemberStatusView({
             <div className="space-y-2">
               <Label>특이사항</Label>
               <Select value={formStatus} onValueChange={setFormStatus}>
-                <SelectTrigger className="border border-slate-200 w-full">
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="특이사항 선택" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1572,9 +1572,9 @@ export default function MemberStatusView({
             )}
 
             {formStatus === "정상" && (
-              <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3">
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-                <p className="text-sm text-amber-700">
+              <div className="flex items-start gap-2 rounded-md bg-slate-50 p-3">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-slate-600" />
+                <p className="text-sm text-slate-700">
                   정상으로 변경하면 현재 특이사항 기록이 삭제됩니다.
                 </p>
               </div>
@@ -1615,9 +1615,9 @@ export default function MemberStatusView({
           </DialogHeader>
 
           <div className="space-y-3 py-2">
-            <div className="flex items-start gap-2 rounded-md border border-rose-200 bg-rose-50 p-3">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
-              <p className="text-sm text-rose-700">
+            <div className="flex items-start gap-2 rounded-md bg-slate-50 p-3">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-slate-600" />
+              <p className="text-sm text-slate-700">
                 {deletingItem?.memberId
                   ? "이 작업은 되돌릴 수 없습니다. 해당 멤버와 관련 데이터가 삭제됩니다."
                   : "이 작업은 되돌릴 수 없습니다. 해당 특이사항 기록이 삭제됩니다."}
@@ -1625,7 +1625,7 @@ export default function MemberStatusView({
             </div>
 
             {deletingItem && (
-              <div className="rounded-md border border-slate-200 bg-slate-50 p-3 space-y-1">
+              <div className="rounded-md bg-slate-50 p-3 space-y-1">
                 <p className="text-sm text-slate-600">
                   <span className="font-medium text-slate-700">이름:</span>{" "}
                   {deletingItem.name}
@@ -1638,7 +1638,7 @@ export default function MemberStatusView({
             )}
 
             {deletingItem?.memberRole === "인턴" && (
-              <div className="space-y-1.5 rounded-md border border-slate-200 bg-slate-50 p-3">
+              <div className="space-y-1.5 rounded-md bg-slate-50 p-3">
                 <Label htmlFor="actual-months" className="text-sm font-medium text-slate-700">
                   실제 근무 개월
                 </Label>
@@ -1789,7 +1789,7 @@ export default function MemberStatusView({
                         setEditingMember({ ...editingMember, position_id: val })
                       }
                     >
-                      <SelectTrigger className="border border-slate-200 w-full">
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="직급 선택" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1812,7 +1812,7 @@ export default function MemberStatusView({
                         })
                       }
                     >
-                      <SelectTrigger className="border border-slate-200 w-full">
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="직책 선택" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1838,7 +1838,7 @@ export default function MemberStatusView({
                         })
                       }
                     >
-                      <SelectTrigger className="border border-slate-200 w-full">
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="직군 선택" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1919,7 +1919,7 @@ export default function MemberStatusView({
                     </div>
                   </div>
                 </div>
-                <label className="flex w-full items-center justify-between rounded-md border border-slate-200 bg-white px-3 py-2.5 cursor-pointer hover:bg-slate-100 transition-colors">
+                <label className="flex w-full items-center justify-between rounded-md bg-white px-3 py-2.5 cursor-pointer hover:bg-slate-100 transition-colors">
                   <span className="text-sm font-medium">관리자 권한</span>
                   <Checkbox
                     checked={editingMember.role === "admin"}
@@ -1943,7 +1943,7 @@ export default function MemberStatusView({
                         })
                       }
                     >
-                      <SelectTrigger className="border border-slate-200 w-full">
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="어드민 권한 선택" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1967,7 +1967,7 @@ export default function MemberStatusView({
                       })
                     }
                   >
-                    <SelectTrigger className="border border-slate-200 w-full">
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="User 권한 선택" />
                     </SelectTrigger>
                     <SelectContent>
@@ -2049,7 +2049,7 @@ export default function MemberStatusView({
                   return (
                     <div
                       key={record.id}
-                      className="rounded-md border border-slate-200 bg-white p-3"
+                      className="rounded-md bg-white p-3"
                     >
                       <div className="flex items-center justify-between">
                         <Badge
@@ -2075,7 +2075,7 @@ export default function MemberStatusView({
                           </button>
                           <button
                             onClick={() => handleHistoryDeleteOpen(record)}
-                            className="inline-flex h-6 w-6 items-center justify-center rounded text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                            className="inline-flex h-6 w-6 items-center justify-center rounded text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-600"
                             title="삭제"
                           >
                             <Trash2 className="h-3 w-3" />

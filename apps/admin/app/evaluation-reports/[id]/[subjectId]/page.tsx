@@ -105,7 +105,7 @@ type TooltipPayload = {
 
 const EVALUATOR_TYPES: EvaluatorType[] = ["상사", "동료"];
 const CATEGORY_COLORS: Record<QuestionCategory, string> = {
-  공통: "#111827",
+  공통: "#0f172a",
   상사: "#475569",
   동료: "#94a3b8",
 };
@@ -147,7 +147,7 @@ export default function EvaluationPersonalReportPrintPage() {
   if (isError || !data) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-100 p-6">
-        <div className="w-full max-w-xl border border-rose-100 bg-white px-6 py-5 text-sm text-rose-700 shadow-sm">
+        <div className="w-full max-w-xl bg-white px-6 py-5 text-sm text-slate-700">
           {error instanceof Error
             ? error.message
             : "개인별 리포트를 불러오지 못했습니다."}
@@ -160,7 +160,7 @@ export default function EvaluationPersonalReportPrintPage() {
     name: item.label,
     value: scoreValue(item),
     count: item.count,
-    fill: item.label === "상사" ? "#111827" : "#94a3b8",
+    fill: item.label === "상사" ? "#0f172a" : "#94a3b8",
   }));
   const categoryChartData = buildCategoryChartData(data.questionScores);
   const questionChartData = data.questionScores.slice(0, 8).map((item) => ({
@@ -248,8 +248,8 @@ export default function EvaluationPersonalReportPrintPage() {
                     <PolarAngleAxis dataKey="name" tick={{ fontSize: 11, fill: "#475569" }} />
                     <Radar
                       dataKey="value"
-                      stroke="#111827"
-                      fill="#111827"
+                      stroke="#0f172a"
+                      fill="#0f172a"
                       fillOpacity={0.18}
                     />
                     <Tooltip content={<ChartTooltip />} />
@@ -373,12 +373,12 @@ export default function EvaluationPersonalReportPrintPage() {
             <SectionTitle eyebrow="Original Comments" title="주관식 답변 원문" />
             <div className="mt-3 grid gap-3">
               {data.subjectiveAnswers.length === 0 ? (
-                <div className="border border-slate-200 px-4 py-8 text-center text-xs text-slate-400">
+                <div className="px-4 py-8 text-center text-xs text-slate-400">
                   제출된 주관식 답변이 없습니다.
                 </div>
               ) : (
                 data.subjectiveAnswers.map((item) => (
-                  <div key={item.key} className="border border-slate-200">
+                  <div key={item.key} className="">
                     <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-3 py-2">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
@@ -453,7 +453,7 @@ function ReportPage({
   children: ReactNode;
 }) {
   return (
-    <section className="report-a4-page relative bg-white px-[16mm] py-[14mm] shadow-xl print:shadow-none">
+    <section className="report-a4-page relative bg-white px-[16mm] py-[14mm] print:shadow-none">
       {children}
       <div className="absolute bottom-[9mm] left-[16mm] right-[16mm] flex items-center justify-between border-t border-slate-200 pt-2 text-[10px] text-slate-400">
         <span>ACG 다면평가 개인 리포트</span>
@@ -587,7 +587,7 @@ function ChartTooltip({
   if (!active || !payload?.length) return null;
   const item = payload[0]?.payload;
   return (
-    <div className="border border-slate-200 bg-white px-3 py-2 text-xs shadow-sm">
+    <div className="bg-white px-3 py-2 text-xs">
       <div className="font-medium text-slate-900">{item?.name}</div>
       <div className="mt-1 text-slate-500">
         점수 {formatScore(payload[0]?.value)}

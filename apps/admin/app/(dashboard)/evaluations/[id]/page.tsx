@@ -855,7 +855,7 @@ export default function EvaluationDetailPage() {
               className={cn(
                 "border-0",
                 roundDetail.is_deployed
-                  ? "bg-emerald-100 text-emerald-700"
+                  ? "bg-slate-100 text-slate-700"
                   : "bg-slate-100 text-slate-600",
               )}
             >
@@ -1048,7 +1048,7 @@ export default function EvaluationDetailPage() {
                   )}
                   {selectedQuestionSet &&
                     selectedQuestionSet.id !== roundDetail.question_set_id && (
-                      <p className="text-blue-600">
+                      <p className="text-slate-600">
                         선택됨: {selectedQuestionSet.name}
                       </p>
                     )}
@@ -1422,7 +1422,7 @@ export default function EvaluationDetailPage() {
                 description="회차 설정을 저장하면 감사 로그가 기록됩니다."
               />
             ) : (
-              <div className="overflow-hidden rounded-lg border border-slate-200">
+              <div className="overflow-hidden rounded-lg">
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50 text-left text-xs text-slate-500">
                     <tr>

@@ -140,7 +140,7 @@ function PositionsPanel() {
                       </button>
                       <button
                         type="button"
-                        className="rounded px-1.5 py-1 text-xs font-medium text-rose-500 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                        className="rounded px-1.5 py-1 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-600"
                         onClick={() => setDeleteTarget(position)}
                       >
                         삭제
@@ -317,7 +317,7 @@ function TitlesPanel() {
                       </button>
                       <button
                         type="button"
-                        className="rounded px-1.5 py-1 text-xs font-medium text-rose-500 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                        className="rounded px-1.5 py-1 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-600"
                         onClick={() => setDeleteTarget(title)}
                       >
                         삭제

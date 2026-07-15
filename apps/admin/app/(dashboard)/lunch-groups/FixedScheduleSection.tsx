@@ -185,7 +185,7 @@ export default function FixedScheduleSection({ members }: FixedScheduleSectionPr
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-gray-400">불러오는 중...</div>
+          <div className="text-center py-8 text-slate-400">불러오는 중...</div>
         </CardContent>
       </Card>
     );
@@ -223,7 +223,7 @@ export default function FixedScheduleSection({ members }: FixedScheduleSectionPr
             <div key={day.value} className="border rounded-md p-3">
               {/* 요일 헤더 */}
               <div className="flex items-center justify-between mb-2">
-                <span className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-md text-sm font-bold">
+                <span className="w-8 h-8 flex items-center justify-center bg-slate-100 rounded-md text-sm font-bold">
                   {day.label}
                 </span>
                 <div className="flex gap-1">
@@ -299,7 +299,7 @@ export default function FixedScheduleSection({ members }: FixedScheduleSectionPr
               {/* 스케줄 항목 */}
               <div className="flex flex-wrap gap-2">
                 {daySchedules.length === 0 && !isAddingMember && !isAddingLabel ? (
-                  <span className="text-xs text-gray-400">(비어있음)</span>
+                  <span className="text-xs text-slate-400">(비어있음)</span>
                 ) : (
                   daySchedules.map((item, index) => (
                     <div
@@ -307,7 +307,7 @@ export default function FixedScheduleSection({ members }: FixedScheduleSectionPr
                       className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
                         item.user_id
                           ? "bg-slate-200 text-slate-800"
-                          : "bg-amber-100 text-amber-700"
+                          : "bg-slate-100 text-slate-700"
                       }`}
                     >
                       {item.user_id ? (

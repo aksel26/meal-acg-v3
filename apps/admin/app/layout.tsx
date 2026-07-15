@@ -1,4 +1,4 @@
-import { Sonner } from "@repo/ui/src/sonner";
+import { AdminToaster } from "@/components/AdminToaster";
 import "@repo/ui/styles.css";
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
@@ -33,7 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head />
       <body>
         <QueryProvider>{children}</QueryProvider>
-        <Sonner />
+        <AdminToaster />
       </body>
     </html>
   );

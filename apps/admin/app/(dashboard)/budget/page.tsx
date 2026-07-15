@@ -87,11 +87,11 @@ interface Member {
 function roleBadgeStyle(role: string) {
   switch (role) {
     case "본부장":
-      return "bg-purple-50 text-purple-700 border-purple-200";
+      return "bg-slate-50 text-slate-700 border-slate-200";
     case "팀장":
       return "bg-slate-100 text-slate-800 border-slate-300";
     case "인턴":
-      return "bg-emerald-50 text-emerald-700 border-emerald-200";
+      return "bg-slate-50 text-slate-700 border-slate-200";
     default:
       return "bg-slate-50 text-slate-600 border-slate-200";
   }
@@ -523,7 +523,7 @@ export default function BudgetPage() {
     <div className="flex h-[calc(100vh-10rem)] flex-col gap-6">
       {/* Quick Stats */}
       {period && summaryItems.length > 0 && (
-        <div className="flex items-center gap-5 rounded-xl border border-slate-200 bg-white px-5 py-3">
+        <div className="flex items-center gap-5 rounded-xl bg-white px-5 py-3">
           <div className="flex items-center gap-2">
             <span className="text-sm text-slate-500">총 할당액</span>
             <span className="text-lg font-semibold tabular-nums text-slate-800">
@@ -545,7 +545,7 @@ export default function BudgetPage() {
             <span
               className={cn(
                 "text-xs tabular-nums",
-                welfareRemaining < 0 ? "text-rose-500" : "text-slate-400",
+                welfareRemaining < 0 ? "text-slate-500" : "text-slate-400",
               )}
             >
               (잔액 {(welfareRemaining / 10000).toFixed(1)}만원)
@@ -563,7 +563,7 @@ export default function BudgetPage() {
             <span
               className={cn(
                 "text-xs tabular-nums",
-                activityRemaining < 0 ? "text-rose-500" : "text-slate-400",
+                activityRemaining < 0 ? "text-slate-500" : "text-slate-400",
               )}
             >
               (잔액 {(activityRemaining / 10000).toFixed(1)}만원)
@@ -801,7 +801,7 @@ export default function BudgetPage() {
                 onChange={(e) => setEditDescription(e.target.value)}
                 placeholder="설명을 입력하세요 (선택)"
                 rows={3}
-                className="flex w-full rounded border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                className="flex w-full rounded border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               />
             </div>
           </div>
@@ -855,7 +855,7 @@ export default function BudgetPage() {
                 onChange={(e) => setBulkDescription(e.target.value)}
                 placeholder="설명을 입력하세요 (선택)"
                 rows={2}
-                className="flex w-full rounded border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                className="flex w-full rounded border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               />
             </div>
 
@@ -879,7 +879,7 @@ export default function BudgetPage() {
                   </p>
                 )}
                 {activeStatusMembersForAllocation.length > 0 && (
-                  <p className="mt-2 text-xs text-amber-600">
+                  <p className="mt-2 text-xs text-slate-600">
                     특이사항 인원 {activeStatusMembersForAllocation.length}명은
                     할당액 0원으로 포함됩니다.
                   </p>
@@ -1028,13 +1028,13 @@ export default function BudgetPage() {
                           <tr
                             key={row.id}
                             className={cn(
-                              isExcluded && "bg-amber-50/50 text-slate-400",
+                              isExcluded && "bg-slate-50/50 text-slate-400",
                             )}
                           >
                             <td className="px-3 py-2 font-medium">
                               {row.full_name}
                               {isExcluded && (
-                                <span className="ml-1 text-[10px] text-amber-500">
+                                <span className="ml-1 text-[10px] text-slate-500">
                                   (특이사항)
                                 </span>
                               )}
@@ -1058,7 +1058,7 @@ export default function BudgetPage() {
                                 ? `${row.memberCount}+${row.pncExtraCount}`
                                 : row.memberCount}
                               {row.internCount > 0 && (
-                                <span className="ml-0.5 text-emerald-600">
+                                <span className="ml-0.5 text-slate-600">
                                   +{row.internCount}인턴
                                 </span>
                               )}
@@ -1087,7 +1087,7 @@ export default function BudgetPage() {
                 )}
               </div>
               {activeStatusMembersForAllocation.length > 0 && (
-                <p className="text-xs text-amber-600">
+                <p className="text-xs text-slate-600">
                   특이사항 인원 {activeStatusMembersForAllocation.length}명은
                   할당액 0원으로 포함됩니다.
                 </p>

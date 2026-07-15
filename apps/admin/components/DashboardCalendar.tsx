@@ -11,14 +11,14 @@ import dayjs from "dayjs";
 import { cn } from "@repo/ui/lib/utils";
 
 const LEAVE_TYPE_COLORS: Record<string, string> = {
-  "지각/조퇴": "bg-orange-50 text-orange-700",
-  반차: "bg-purple-50 text-purple-700",
-  연차: "bg-yellow-50 text-yellow-700",
+  "지각/조퇴": "bg-slate-50 text-slate-700",
+  반차: "bg-slate-50 text-slate-700",
+  연차: "bg-slate-50 text-slate-700",
   대체휴무: "bg-slate-100 text-slate-800",
-  경조휴무: "bg-pink-50 text-pink-700",
-  특별휴무: "bg-teal-50 text-teal-700",
+  경조휴무: "bg-slate-50 text-slate-700",
+  특별휴무: "bg-slate-50 text-slate-700",
   훈련: "bg-slate-50 text-slate-700",
-  휴무: "bg-green-50 text-green-700",
+  휴무: "bg-slate-50 text-slate-700",
 };
 
 export default function DashboardCalendar() {
@@ -154,9 +154,9 @@ export default function DashboardCalendar() {
             </Button>
           </div>
           <div className="flex items-center gap-3">
-            <LegendDot color="bg-purple-500" label="휴가" />
-            <LegendDot color="bg-orange-400" label="특이사항" />
-            <LegendDot color="bg-emerald-500" label="감독관 공고" />
+            <LegendDot color="bg-slate-500" label="휴가" />
+            <LegendDot color="bg-slate-400" label="특이사항" />
+            <LegendDot color="bg-slate-500" label="감독관 공고" />
             <LegendDot color="bg-slate-1000" label="교육운영 공고" />
           </div>
         </div>
@@ -166,7 +166,7 @@ export default function DashboardCalendar() {
           {["일", "월", "화", "수", "목", "금", "토"].map((day, i) => (
             <div key={day} className={cn(
               "bg-slate-50 p-2 text-center text-xs font-semibold",
-              i === 0 ? "text-red-500" : i === 6 ? "text-slate-700" : "text-slate-600"
+              i === 0 ? "text-slate-500" : i === 6 ? "text-slate-700" : "text-slate-600"
             )}>
               {day}
             </div>
@@ -195,7 +195,7 @@ export default function DashboardCalendar() {
               >
                 <div className={cn(
                   "text-xs font-medium mb-0.5 w-5 h-5 flex items-center justify-center rounded-full",
-                  dow === 0 ? "text-red-500" : dow === 6 ? "text-slate-700" : "text-slate-700",
+                  dow === 0 ? "text-slate-500" : dow === 6 ? "text-slate-700" : "text-slate-700",
                   isToday && "bg-slate-900 text-white"
                 )}>
                   {day.dayOfMonth}
@@ -218,7 +218,7 @@ export default function DashboardCalendar() {
                   {statuses.length > 0 && shown < maxShow && statuses.slice(0, maxShow - shown).map((s) => {
                     shown++;
                     return (
-                      <div key={s.member_id} className="truncate rounded px-1 py-0.5 text-[10px] bg-orange-50 text-orange-700">
+                      <div key={s.member_id} className="truncate rounded px-1 py-0.5 text-[10px] bg-slate-50 text-slate-700">
                         {s.full_name} {s.current_status}
                       </div>
                     );
@@ -226,7 +226,7 @@ export default function DashboardCalendar() {
                   {svPostings.length > 0 && shown < maxShow && svPostings.slice(0, maxShow - shown).map((jp) => {
                     shown++;
                     return (
-                      <div key={jp.id} className="truncate rounded px-1 py-0.5 text-[10px] bg-emerald-50 text-emerald-700">
+                      <div key={jp.id} className="truncate rounded px-1 py-0.5 text-[10px] bg-slate-50 text-slate-700">
                         {jp.title}
                       </div>
                     );
@@ -319,9 +319,9 @@ export default function DashboardCalendar() {
                   <span className="text-xs text-slate-400">{jp.assigned_count}/{jp.headcount}명</span>
                   <Badge variant="secondary" className={cn(
                     "text-xs px-1.5 py-0 h-5",
-                    jp.status === "open" && "bg-green-50 text-green-700",
+                    jp.status === "open" && "bg-slate-50 text-slate-700",
                     jp.status === "closed" && "bg-slate-100 text-slate-500",
-                    jp.status === "draft" && "bg-yellow-50 text-yellow-600"
+                    jp.status === "draft" && "bg-slate-50 text-slate-600"
                   )}>
                     {jp.status}
                   </Badge>
@@ -346,9 +346,9 @@ export default function DashboardCalendar() {
                   <span className="text-xs text-slate-400">{ip.total_headcount}명</span>
                   <Badge variant="secondary" className={cn(
                     "text-xs px-1.5 py-0 h-5",
-                    ip.status === "open" && "bg-green-50 text-green-700",
+                    ip.status === "open" && "bg-slate-50 text-slate-700",
                     ip.status === "closed" && "bg-slate-100 text-slate-500",
-                    ip.status === "draft" && "bg-yellow-50 text-yellow-600"
+                    ip.status === "draft" && "bg-slate-50 text-slate-600"
                   )}>
                     {ip.status}
                   </Badge>
@@ -380,7 +380,7 @@ const accentBorder: Record<string, string> = {
 
 function Section({ title, accent, children }: { title: string; accent: "purple" | "orange" | "emerald" | "blue"; children: React.ReactNode }) {
   return (
-    <div className={cn("rounded-lg border border-slate-100 bg-white px-3 py-2.5 shadow-sm border-l-2", accentBorder[accent])}>
+    <div className={cn("rounded-lg bg-white px-3 py-2.5 border-l-2", accentBorder[accent])}>
       <p className="text-xs uppercase tracking-wider text-slate-400 font-medium mb-1.5">{title}</p>
       <div className="flex flex-col gap-0.5">{children}</div>
     </div>

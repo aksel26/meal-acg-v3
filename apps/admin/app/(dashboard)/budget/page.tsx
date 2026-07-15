@@ -483,6 +483,7 @@ export default function BudgetPage() {
       type: "활동비",
       period,
       total_amount: statusMemberIds.has(p.id) ? 0 : p.amount,
+      description: statusMemberIds.has(p.id) ? undefined : p.basis,
     }));
 
     bulkUpsert.mutate(

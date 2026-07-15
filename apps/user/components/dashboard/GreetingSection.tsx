@@ -68,7 +68,7 @@ export default function GreetingSection({ userName }: GreetingSectionProps) {
         transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
         className="mb-6"
       >
-        <div className="rounded-2xl bg-gray-50 p-5">
+        <div className="rounded-2xl bg-slate-50 p-5">
           {!hasCheckedIn ? (
             <motion.button
               whileTap={{ scale: 0.97 }}

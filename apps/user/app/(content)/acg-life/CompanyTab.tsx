@@ -17,7 +17,7 @@ export default function CompanyTab() {
       {COMPANY_SECTIONS.map((section) => {
         const Icon = SECTION_ICONS[section.id] || Target;
         return (
-          <div key={section.id} className="rounded-xl bg-gray-50 p-4">
+          <div key={section.id} className="rounded-xl bg-slate-50 p-4">
             <div className="mb-2 flex items-center gap-2.5">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white shadow-sm">
                 <Icon size={16} className="text-slate-600" />

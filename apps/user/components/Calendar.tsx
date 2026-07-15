@@ -223,25 +223,25 @@ export default function CalendarComponent({
       <div className="flex items-center justify-between mb-3 px-1">
         <button
           onClick={handlePrevClick}
-          className="p-2 -ml-2 rounded-xl hover:bg-gray-100 active:bg-gray-200 transition-colors touch-manipulation"
+          className="p-2 -ml-2 rounded-xl hover:bg-slate-100 active:bg-slate-200 transition-colors touch-manipulation"
           aria-label="이전 달"
         >
-          <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
 
         <div className="flex items-baseline gap-1.5">
-          <span className="text-xl sm:text-2xl font-bold text-gray-900">{currentMonth}월</span>
-          <span className="text-sm text-gray-400">{currentYear}</span>
+          <span className="text-xl sm:text-2xl font-bold text-slate-900">{currentMonth}월</span>
+          <span className="text-sm text-slate-400">{currentYear}</span>
         </div>
 
         <button
           onClick={handleNextClick}
-          className="p-2 -mr-2 rounded-xl hover:bg-gray-100 active:bg-gray-200 transition-colors touch-manipulation"
+          className="p-2 -mr-2 rounded-xl hover:bg-slate-100 active:bg-slate-200 transition-colors touch-manipulation"
           aria-label="다음 달"
         >
-          <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </button>

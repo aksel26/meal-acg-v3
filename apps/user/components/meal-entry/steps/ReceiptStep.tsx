@@ -37,10 +37,10 @@ export function ReceiptStep() {
       className="space-y-4"
     >
       <div className="space-y-1">
-        <h3 className="text-lg font-semibold text-gray-900">
+        <h3 className="text-lg font-semibold text-slate-900">
           영수증이 있나요?
         </h3>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-slate-500">
           영수증을 스캔하면 자동으로 입력돼요
         </p>
       </div>
@@ -51,16 +51,16 @@ export function ReceiptStep() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1, duration: 0.3 }}
-          className="rounded-2xl overflow-hidden border-2 border-dashed border-gray-200 bg-gray-50/50 hover:border-gray-300 hover:bg-gray-50 transition-all"
+          className="rounded-2xl overflow-hidden border-2 border-dashed border-slate-200 bg-slate-50/50 hover:border-slate-300 hover:bg-slate-50 transition-all"
         >
           <ReceiptScanner onScanComplete={handleScanComplete} />
         </motion.div>
 
         {/* Divider */}
         <div className="flex items-center gap-3">
-          <div className="flex-1 h-px bg-gray-200" />
-          <span className="text-xs text-gray-400 font-medium">또는</span>
-          <div className="flex-1 h-px bg-gray-200" />
+          <div className="flex-1 h-px bg-slate-200" />
+          <span className="text-xs text-slate-400 font-medium">또는</span>
+          <div className="flex-1 h-px bg-slate-200" />
         </div>
 
         {/* Manual Input Button */}
@@ -70,7 +70,7 @@ export function ReceiptStep() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.3 }}
           onClick={handleManualInput}
-          className="w-full flex items-center justify-center py-4 px-4 rounded-xl border-2 border-gray-100 bg-white text-gray-700 hover:border-gray-200 hover:bg-gray-50 transition-all duration-200"
+          className="w-full flex items-center justify-center py-4 px-4 rounded-xl border-2 border-slate-100 bg-white text-slate-700 hover:border-slate-200 hover:bg-slate-50 transition-all duration-200"
         >
           <span className="text-sm font-medium">직접 입력할게요</span>
         </motion.button>

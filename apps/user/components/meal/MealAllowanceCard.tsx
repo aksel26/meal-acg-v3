@@ -43,7 +43,10 @@ const copyAccount = () => {
 
 /** 조정 내역 한 줄 마커 (캘린더 마커와 시각적으로 통일) */
 function AdjustmentMarker({ kind }: { kind: "individual" | "off" | "half" | "weekend" }) {
-  if (kind === "off") return <span className="text-[11px] leading-none">🌴</span>;
+  if (kind === "off")
+    return (
+      <span className="text-[9px] font-semibold leading-none text-emerald-600">휴</span>
+    );
   if (kind === "individual")
     return <span className="h-[7px] w-[7px] rounded-full border-[1.5px] border-blue-500" />;
   if (kind === "half") return <span className="h-[7px] w-[7px] rounded-full bg-amber-400" />;
@@ -146,7 +149,7 @@ export default function MealAllowanceCard({
   // ── 로딩 / 에러 ──
   if (isLoading) {
     return (
-      <div className="rounded-2xl border border-gray-100 bg-white p-5">
+      <div className="rounded-2xl border border-slate-100 bg-white p-5">
         <div className="space-y-4">
           <div className="flex justify-between">
             <div className="skeleton h-4 w-28 rounded" />
@@ -165,7 +168,7 @@ export default function MealAllowanceCard({
 
   if (error) {
     return (
-      <div className="rounded-2xl border border-gray-100 bg-white p-6 text-center">
+      <div className="rounded-2xl border border-slate-100 bg-white p-6 text-center">
         <p className="mb-3 text-sm text-slate-500">{error.message}</p>
         <Button
           onClick={() => refetch()}
@@ -181,9 +184,9 @@ export default function MealAllowanceCard({
 
   if (!data) {
     return (
-      <div className="flex items-center justify-center rounded-2xl border border-gray-100 bg-white py-12">
+      <div className="flex items-center justify-center rounded-2xl border border-slate-100 bg-white py-12">
         <div className="flex items-center gap-2 text-slate-400">
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-500" />
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-gray-500" />
           <span className="text-sm">불러오는 중...</span>
         </div>
       </div>
@@ -211,7 +214,7 @@ export default function MealAllowanceCard({
     (data.halfDayOffCount ?? 0) > 0;
 
   return (
-    <div className="divide-y divide-gray-100 overflow-hidden rounded-2xl border border-gray-100 bg-white">
+    <div className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-100 bg-white">
       {/* ── 잔액 + 프로그레스 ── */}
       <div className="p-5">
         <div className="mb-4 flex items-center justify-between">
@@ -219,7 +222,7 @@ export default function MealAllowanceCard({
           <button
             type="button"
             onClick={copyAccount}
-            className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-gray-50 px-2.5 py-1.5 text-[11px] font-medium text-slate-500 transition-colors hover:bg-gray-100 hover:text-slate-700"
+            className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
           >
             <Copy className="h-3 w-3" />
             계좌번호 복사
@@ -251,7 +254,7 @@ export default function MealAllowanceCard({
           </span>
         </div>
 
-        <div className="h-2.5 overflow-hidden rounded-full bg-gray-100">
+        <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${usagePercent}%` }}
@@ -273,7 +276,7 @@ export default function MealAllowanceCard({
 
       {/* ── 지급 총액 / 사용금액 ── */}
       <div className="grid grid-cols-2">
-        <div className="border-r border-gray-100 px-5 py-4">
+        <div className="border-r border-slate-100 px-5 py-4">
           <p className="mb-1 text-[11px] text-slate-400">지급 총액</p>
           <p className="text-base font-semibold text-slate-800">
             {formatCurrency(grossAllowance)}
@@ -345,7 +348,7 @@ export default function MealAllowanceCard({
       {/* ── 최근 식대 입력 (빈 UI) ── */}
       <div className="p-5">
         <p className="mb-3 text-xs font-medium text-slate-400">최근 식대 입력</p>
-        <div className="flex flex-col items-center justify-center gap-1 rounded-xl bg-gray-50/60 py-8 text-center">
+        <div className="flex flex-col items-center justify-center gap-1 rounded-xl bg-slate-50/60 py-8 text-center">
           <p className="text-sm text-slate-400">최근 입력 내역이 없습니다.</p>
           <p className="text-[11px] text-slate-300">
             식대를 입력하면 여기에 표시됩니다.
@@ -362,7 +365,7 @@ export default function MealAllowanceCard({
           </DialogHeader>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">정산금액</label>
+            <label className="text-sm font-medium text-slate-700">정산금액</label>
             <Input
               type="number"
               value={paymentAmount}
@@ -398,7 +401,7 @@ export default function MealAllowanceCard({
             );
           })()}
 
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-slate-500">
             {month}월 점심식대 초과분을 복지포인트에서 차감합니다.
           </p>
 

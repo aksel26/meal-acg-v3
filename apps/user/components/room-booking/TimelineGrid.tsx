@@ -310,7 +310,7 @@ export function TimelineGrid({
                 {moveGhost && (() => {
                   const ghostStyle = moveGhost.type === "supervisor"
                     ? "border-blue-400 bg-blue-100/40"
-                    : "border-indigo-400 bg-indigo-100/40";
+                    : "border-blue-400 bg-blue-100/40";
                   return (
                     <div
                       className={`absolute top-1 bottom-1 rounded border-2 border-dashed ${ghostStyle}`}

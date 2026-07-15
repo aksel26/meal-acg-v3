@@ -59,21 +59,21 @@ export function UpdateNotificationDialog() {
     <Dialog open={isOpen} onOpenChange={handleClose} modal={true}>
       <DialogContent className="max-w-sm mx-auto max-h-[85vh] flex flex-col">
         <DialogHeader className="text-center shrink-0">
-          <DialogTitle className="text-lg sm:text-xl text-center font-medium text-gray-900">
+          <DialogTitle className="text-lg sm:text-xl text-center font-medium text-slate-900">
             복지포인트 입력 안내
           </DialogTitle>
         </DialogHeader>
 
         <div className="py-3 space-y-3 overflow-y-auto flex-1 min-h-0">
           {guideItems.map((item, index) => (
-            <div key={index} className="p-3 bg-gray-50 rounded-lg">
+            <div key={index} className="p-3 bg-slate-50 rounded-lg">
               <div className="flex items-center space-x-2 mb-2">
                 <span className="text-lg shrink-0">{item.icon}</span>
-                <h4 className="text-base font-medium text-gray-900">{item.title}</h4>
+                <h4 className="text-base font-medium text-slate-900">{item.title}</h4>
               </div>
               <ol className="space-y-1.5 pl-6">
                 {item.steps.map((step, stepIndex) => (
-                  <li key={stepIndex} className="text-sm text-gray-600 leading-relaxed list-decimal">
+                  <li key={stepIndex} className="text-sm text-slate-600 leading-relaxed list-decimal">
                     {step}
                   </li>
                 ))}
@@ -92,7 +92,7 @@ export function UpdateNotificationDialog() {
         </div>
 
         <div className="px-1 pb-2 shrink-0">
-          <p className="text-sm text-gray-500 text-center">
+          <p className="text-sm text-slate-500 text-center">
             입력이 어려우시거나 궁금한 점이 있으시면
             <br />
             <span className="font-semibold">P&C팀</span> 또는 <span className="font-semibold">HR Tech팀 김현민 선임</span>에게 문의해 주세요.
@@ -104,7 +104,7 @@ export function UpdateNotificationDialog() {
             checked={dontShowAgain}
             onCheckedChange={(checked) => setDontShowAgain(checked as boolean)}
           />
-          <label htmlFor="dontShowAgain" className="text-sm text-gray-600 cursor-pointer select-none">
+          <label htmlFor="dontShowAgain" className="text-sm text-slate-600 cursor-pointer select-none">
             다시 보지 않기
           </label>
         </div>

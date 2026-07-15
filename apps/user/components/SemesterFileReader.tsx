@@ -5,17 +5,17 @@ import dynamic from 'next/dynamic';
 
 // 코드 스플리팅을 위한 동적 컴포넌트들
 const SemesterFolderFinder = dynamic(() => import('./SemesterFolderFinder'), {
-  loading: () => <div className="animate-pulse bg-gray-200 h-32 rounded"></div>,
+  loading: () => <div className="animate-pulse bg-slate-200 h-32 rounded"></div>,
   ssr: false
 });
 
 const ExcelFileFinder = dynamic(() => import('./ExcelFileFinder'), {
-  loading: () => <div className="animate-pulse bg-gray-200 h-32 rounded"></div>,
+  loading: () => <div className="animate-pulse bg-slate-200 h-32 rounded"></div>,
   ssr: false
 });
 
 const CellValueReader = dynamic(() => import('./CellValueReader'), {
-  loading: () => <div className="animate-pulse bg-gray-200 h-32 rounded"></div>,
+  loading: () => <div className="animate-pulse bg-slate-200 h-32 rounded"></div>,
   ssr: false
 });
 
@@ -96,8 +96,8 @@ export default function SemesterFileReader() {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">반기별 엑셀 파일 셀 값 조회</h1>
-        <p className="text-gray-600">
+        <h1 className="text-3xl font-bold text-slate-900 mb-2">반기별 엑셀 파일 셀 값 조회</h1>
+        <p className="text-slate-600">
           현재 반기 폴더에서 로컬스토리지의 name 값({userName || '설정되지 않음'})과 일치하는 엑셀 파일을 찾아 특정 셀 값을 읽습니다.
         </p>
       </div>
@@ -105,30 +105,30 @@ export default function SemesterFileReader() {
       {/* 프로세스 진행 상태 */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
-          <div className={`flex items-center ${currentStep === 'folder' ? 'text-blue-600' : 'text-gray-400'}`}>
+          <div className={`flex items-center ${currentStep === 'folder' ? 'text-blue-600' : 'text-slate-400'}`}>
             <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${
               currentStep === 'folder' ? 'border-blue-600 bg-blue-50' : 
-              selectedFolder ? 'border-green-600 bg-green-50' : 'border-gray-300'
+              selectedFolder ? 'border-green-600 bg-green-50' : 'border-slate-300'
             }`}>
               {selectedFolder ? '✓' : '1'}
             </div>
             <span className="ml-2 font-medium">폴더 찾기</span>
           </div>
           
-          <div className={`flex items-center ${currentStep === 'file' ? 'text-blue-600' : 'text-gray-400'}`}>
+          <div className={`flex items-center ${currentStep === 'file' ? 'text-blue-600' : 'text-slate-400'}`}>
             <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${
               currentStep === 'file' ? 'border-blue-600 bg-blue-50' : 
-              selectedFile ? 'border-green-600 bg-green-50' : 'border-gray-300'
+              selectedFile ? 'border-green-600 bg-green-50' : 'border-slate-300'
             }`}>
               {selectedFile ? '✓' : '2'}
             </div>
             <span className="ml-2 font-medium">파일 찾기</span>
           </div>
           
-          <div className={`flex items-center ${currentStep === 'cell' ? 'text-blue-600' : 'text-gray-400'}`}>
+          <div className={`flex items-center ${currentStep === 'cell' ? 'text-blue-600' : 'text-slate-400'}`}>
             <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${
               currentStep === 'cell' ? 'border-blue-600 bg-blue-50' : 
-              cellData ? 'border-green-600 bg-green-50' : 'border-gray-300'
+              cellData ? 'border-green-600 bg-green-50' : 'border-slate-300'
             }`}>
               {cellData ? '✓' : '3'}
             </div>
@@ -136,7 +136,7 @@ export default function SemesterFileReader() {
           </div>
         </div>
         
-        <div className="w-full bg-gray-200 rounded-full h-2">
+        <div className="w-full bg-slate-200 rounded-full h-2">
           <div 
             className={`bg-blue-600 h-2 rounded-full transition-all duration-300 ${
               currentStep === 'folder' ? 'w-1/3' : 

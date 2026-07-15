@@ -133,7 +133,7 @@ export default function ProfileBasicTab({ profile, memberId, hireDate }: Profile
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
     >
-      <div className="rounded-2xl bg-gray-50 p-5">
+      <div className="rounded-2xl bg-slate-50 p-5">
         <div className="mb-5">
           <h2 className="text-xl font-bold text-slate-900">{profile.full_name}</h2>
           <p className="mt-1 text-sm text-slate-500">
@@ -269,7 +269,7 @@ export default function ProfileBasicTab({ profile, memberId, hireDate }: Profile
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
       >
-        <div className="rounded-2xl bg-gray-50 p-5">
+        <div className="rounded-2xl bg-slate-50 p-5">
           <div className="mb-4 flex items-center gap-2">
             <KeyRound className="h-4 w-4 text-slate-500" />
             <h3 className="text-sm font-semibold text-slate-800">비밀번호 변경</h3>

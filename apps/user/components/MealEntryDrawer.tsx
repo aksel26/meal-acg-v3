@@ -87,7 +87,7 @@ export default function MealEntryDrawer({
                     exit={{ opacity: 0, x: -10 }}
                     type="button"
                     onClick={prevStep}
-                    className="px-2 py-1.5 -ml-2 rounded-lg text-xs font-medium text-gray-500 hover:bg-gray-100 transition-colors"
+                    className="px-2 py-1.5 -ml-2 rounded-lg text-xs font-medium text-slate-500 hover:bg-slate-100 transition-colors"
                   >
                     뒤로
                   </motion.button>
@@ -97,10 +97,10 @@ export default function MealEntryDrawer({
 
             {/* Center: Title and date */}
             <div className="flex-1 text-center">
-              <DialogTitle className="text-base font-semibold text-gray-900">
+              <DialogTitle className="text-base font-semibold text-slate-900">
                 {isEditMode ? "식대 기록 수정" : "식대 기록"}
               </DialogTitle>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-xs text-slate-500 mt-0.5">
                 {selectedDate?.toLocaleDateString("ko-KR", {
                   year: "numeric",
                   month: "long",
@@ -137,7 +137,7 @@ export default function MealEntryDrawer({
                 <DialogClose asChild>
                   <button
                     type="button"
-                    className="px-2 py-1.5 -mr-2 rounded-lg text-xs font-medium text-gray-500 hover:bg-gray-100 transition-colors"
+                    className="px-2 py-1.5 -mr-2 rounded-lg text-xs font-medium text-slate-500 hover:bg-slate-100 transition-colors"
                   >
                     닫기
                   </button>

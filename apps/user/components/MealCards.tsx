@@ -58,7 +58,7 @@ export function MealCards({
         animate={{ opacity: 1 }}
         className="card-premium p-6 text-center mt-4"
       >
-        <p className="text-sm text-gray-400">날짜를 선택해주세요</p>
+        <p className="text-sm text-slate-400">날짜를 선택해주세요</p>
       </motion.div>
     );
   }
@@ -104,8 +104,8 @@ export function MealCards({
       title: "석식",
       data: currentMealData?.dinner,
       type: "dinner" as const,
-      color: "bg-violet-50",
-      dotColor: "bg-violet-400",
+      color: "bg-blue-50",
+      dotColor: "bg-blue-400",
     },
   ];
 
@@ -169,9 +169,9 @@ export function MealCards({
         className="card-premium p-5 mt-4"
       >
         <div className="text-center py-6">
-          <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-3">
+          <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-3">
             <svg
-              className="w-6 h-6 text-gray-300"
+              className="w-6 h-6 text-slate-300"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -184,12 +184,12 @@ export function MealCards({
               />
             </svg>
           </div>
-          <p className="text-sm text-gray-400 mb-4">
+          <p className="text-sm text-slate-400 mb-4">
             {formatDate(selectedDate)} 기록 없음
           </p>
           <Button
             onClick={() => onAddMeal?.("lunch")}
-            className="h-9 px-4 text-sm font-medium bg-gray-900 hover:bg-gray-800 text-white rounded-lg"
+            className="h-9 px-4 text-sm font-medium bg-slate-900 hover:bg-slate-800 text-white rounded-lg"
           >
             기록 추가
           </Button>
@@ -208,17 +208,17 @@ export function MealCards({
         className="card-premium p-5 mt-4"
       >
         <div className="flex items-center justify-between mb-4">
-          <span className="text-sm font-medium text-gray-900">
+          <span className="text-sm font-medium text-slate-900">
             {formatDate(selectedDate)}
           </span>
           <span className="text-xs px-2 py-1 rounded-full bg-orange-50 text-orange-600 font-medium">
             휴무
           </span>
         </div>
-        <p className="text-sm text-gray-400 text-center py-4">식대 미지급</p>
+        <p className="text-sm text-slate-400 text-center py-4">식대 미지급</p>
         <button
           onClick={() => currentMealData && onHolidayEdit?.(currentMealData)}
-          className="w-full text-sm text-gray-500 hover:text-gray-700 py-2"
+          className="w-full text-sm text-slate-500 hover:text-slate-700 py-2"
         >
           근태 수정
         </button>
@@ -236,17 +236,17 @@ export function MealCards({
         className="card-premium p-5 mt-4"
       >
         <div className="flex items-center justify-between mb-4">
-          <span className="text-sm font-medium text-gray-900">
+          <span className="text-sm font-medium text-slate-900">
             {formatDate(selectedDate)}
           </span>
           <span className="text-xs px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 font-medium">
             재택
           </span>
         </div>
-        <p className="text-sm text-gray-400 text-center py-4">식대 미지급</p>
+        <p className="text-sm text-slate-400 text-center py-4">식대 미지급</p>
         <button
           onClick={() => currentMealData && onHolidayEdit?.(currentMealData)}
-          className="w-full text-sm text-gray-500 hover:text-gray-700 py-2"
+          className="w-full text-sm text-slate-500 hover:text-slate-700 py-2"
         >
           근태 수정
         </button>
@@ -264,24 +264,24 @@ export function MealCards({
         className="card-premium p-5 mt-4"
       >
         <div className="flex items-center justify-between mb-4">
-          <span className="text-sm font-medium text-gray-900">
+          <span className="text-sm font-medium text-slate-900">
             {formatDate(selectedDate)}
           </span>
           {currentMealData?.attendance && (
-            <span className="text-xs px-2 py-1 rounded-full bg-gray-50 text-gray-500 font-medium">
+            <span className="text-xs px-2 py-1 rounded-full bg-slate-50 text-slate-500 font-medium">
               {currentMealData.attendance}
             </span>
           )}
         </div>
         <div className="text-center py-4">
-          <p className="text-sm text-gray-400 mb-3">식사 기록 없음</p>
+          <p className="text-sm text-slate-400 mb-3">식사 기록 없음</p>
           {isHalfDay ? (
             <div className="flex justify-center gap-2">
               {availableHalfDayMeals.map((mealType) => (
                 <button
                   key={mealType}
                   onClick={() => onAddMeal?.(mealType)}
-                  className="rounded-lg bg-gray-100 px-3 py-2 text-sm text-gray-600 hover:bg-gray-200 hover:text-gray-800"
+                  className="rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-600 hover:bg-slate-200 hover:text-slate-800"
                 >
                   + {mealType === "breakfast" ? "조식" : "석식"} 추가
                 </button>
@@ -290,7 +290,7 @@ export function MealCards({
           ) : (
             <button
               onClick={() => onAddMeal?.("lunch")}
-              className="text-sm text-gray-500 hover:text-gray-700"
+              className="text-sm text-slate-500 hover:text-slate-700"
             >
               + 추가
             </button>
@@ -310,12 +310,12 @@ export function MealCards({
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-3 px-1">
-        <span className="text-sm font-medium text-gray-900">
+        <span className="text-sm font-medium text-slate-900">
           {formatDate(selectedDate)}
         </span>
         {currentMealData?.attendance &&
           !currentMealData.attendance.includes("근무") && (
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-slate-400">
               {currentMealData.attendance}
             </span>
           )}
@@ -336,34 +336,34 @@ export function MealCards({
                 onAddMeal?.(meal.type);
               }
             }}
-            className="flex items-center justify-between p-3 rounded-xl bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors"
+            className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors"
           >
             <div className="flex items-center gap-3">
               <div className={`w-2 h-2 rounded-full ${meal.dotColor}`} />
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-sm font-medium text-slate-700">
                 {meal.title}
               </span>
               {meal.data?.store && (
-                <span className="text-sm text-gray-400 truncate max-w-[120px]">
+                <span className="text-sm text-slate-400 truncate max-w-[120px]">
                   {meal.data.store}
                 </span>
               )}
               {meal.type === "lunch" &&
                 currentMealData?.attendance?.includes("개별식사") &&
                 !meal.data?.store && (
-                  <span className="text-sm text-gray-400">개별식사</span>
+                  <span className="text-sm text-slate-400">개별식사</span>
                 )}
             </div>
             <div className="flex items-center gap-2">
               {meal.data?.amount && meal.data.amount > 0 ? (
-                <span className="text-sm font-semibold text-gray-900">
+                <span className="text-sm font-semibold text-slate-900">
                   {meal.data.amount.toLocaleString()}원
                 </span>
               ) : (
-                <span className="text-sm text-gray-300">-</span>
+                <span className="text-sm text-slate-300">-</span>
               )}
               <svg
-                className="w-4 h-4 text-gray-300"
+                className="w-4 h-4 text-slate-300"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -388,7 +388,7 @@ export function MealCards({
               <button
                 key={mealType}
                 onClick={() => onAddMeal?.(mealType)}
-                className="flex-1 rounded-lg py-2 text-sm text-gray-400 transition-colors hover:text-gray-600"
+                className="flex-1 rounded-lg py-2 text-sm text-slate-400 transition-colors hover:text-slate-600"
               >
                 + {mealType === "breakfast" ? "조식" : "석식"} 추가
               </button>
@@ -399,7 +399,7 @@ export function MealCards({
         visibleMeals.length < 3 && (
           <button
             onClick={() => onAddMeal?.("dinner")}
-            className="w-full mt-2 py-2 text-sm text-gray-400 hover:text-gray-600 transition-colors"
+            className="w-full mt-2 py-2 text-sm text-slate-400 hover:text-slate-600 transition-colors"
           >
             + 식사 추가
           </button>

@@ -1051,7 +1051,7 @@ function TimelineSelectionBlock({
   if (endSlot <= startSlot) return null;
   return (
     <div
-      className="absolute bottom-1 top-1 z-10 rounded-md border-2 border-dashed border-sky-400 bg-sky-100/60"
+      className="absolute bottom-1 top-1 z-10 rounded-md border-2 border-dashed border-blue-400 bg-blue-100/60"
       style={{
         left: `${(startSlot / SLOT_COUNT) * 100}%`,
         width: `${((endSlot - startSlot) / SLOT_COUNT) * 100}%`,

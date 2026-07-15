@@ -77,7 +77,7 @@ const Header = () => {
       }}
       className="sticky top-0 z-20 px-4 pt-3 md:px-8 md:pt-4"
     >
-      <div className="rounded-2xl bg-gray-50 md:bg-transparent px-4 py-3 flex items-center justify-between">
+      <div className="rounded-2xl bg-slate-50 md:bg-transparent px-4 py-3 flex items-center justify-between">
         {/* 좌측: 햄버거(모바일) + 인사 or 페이지 제목 */}
         <div className="flex items-center gap-3">
           <button
@@ -193,7 +193,7 @@ function ApprovalBell() {
         >
           <Bell size={20} />
           {pendingCount > 0 && (
-            <span className="absolute right-1 top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-gray-50 bg-rose-500 px-1 text-[10px] font-bold leading-none text-white">
+            <span className="absolute right-1 top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-slate-50 bg-rose-500 px-1 text-[10px] font-bold leading-none text-white">
               {pendingCount > 99 ? "99+" : pendingCount}
             </span>
           )}

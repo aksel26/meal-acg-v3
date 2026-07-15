@@ -20,7 +20,7 @@ const TYPE_COLORS: Record<string, string> = {
   근무: "bg-slate-500",
   휴가: "bg-emerald-500",
   재택: "bg-amber-500",
-  외근: "bg-violet-500",
+  외근: "bg-blue-500",
 };
 const DEFAULT_TYPE_COLOR = "bg-slate-500";
 

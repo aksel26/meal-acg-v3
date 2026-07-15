@@ -30,7 +30,7 @@ const TYPE_BADGE_STYLES: Record<string, string> = {
   근무: "bg-slate-100 text-slate-700",
   휴가: "bg-emerald-50 text-emerald-700",
   재택: "bg-amber-50 text-amber-700",
-  외근: "bg-violet-50 text-violet-700",
+  외근: "bg-blue-50 text-blue-700",
 };
 
 const MAX_REASON_LENGTH = 300;

@@ -153,7 +153,7 @@ export function AllUsageRecordsDialog({
         <div className="flex items-center gap-1.5 px-6 pb-3">
           {/* Month Select */}
           <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger className="data-[size=default]:h-9 w-[72px] shrink-0 border border-gray-300 rounded-xl text-xs bg-white">
+            <SelectTrigger className="data-[size=default]:h-9 w-[72px] shrink-0 border border-slate-300 rounded-xl text-xs bg-white">
               <SelectValue placeholder="기간" />
             </SelectTrigger>
             <SelectContent>
@@ -168,7 +168,7 @@ export function AllUsageRecordsDialog({
 
           {/* Type Filter */}
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="data-[size=default]:h-9 w-[72px] shrink-0 border border-gray-300 rounded-xl text-xs bg-white">
+            <SelectTrigger className="data-[size=default]:h-9 w-[72px] shrink-0 border border-slate-300 rounded-xl text-xs bg-white">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -189,12 +189,12 @@ export function AllUsageRecordsDialog({
               allowFreeText={true}
               maxSuggestions={memberNames.length}
               emptyText="조직원을 찾을 수 없습니다"
-              className="h-9 text-xs rounded-xl border border-gray-300 bg-white"
+              className="h-9 text-xs rounded-xl border border-slate-300 bg-white"
             />
             {memberFilter && (
               <button
                 onClick={handleMemberClear}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -215,7 +215,7 @@ export function AllUsageRecordsDialog({
                 className={`h-9 px-3 text-xs rounded-xl transition-all whitespace-nowrap ${
                   reviewStatus === opt.value
                     ? "bg-blue-600 text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                 }`}
               >
                 {opt.label}
@@ -225,9 +225,9 @@ export function AllUsageRecordsDialog({
         </div>
 
         {/* Stats Summary */}
-        <div className="mx-6 mb-3 bg-gray-50 rounded-xl p-3 flex justify-between text-sm">
-          <span className="text-gray-600">총 {totalCount}건</span>
-          <span className="font-semibold text-gray-900">
+        <div className="mx-6 mb-3 bg-slate-50 rounded-xl p-3 flex justify-between text-sm">
+          <span className="text-slate-600">총 {totalCount}건</span>
+          <span className="font-semibold text-slate-900">
             {totalAmount.toLocaleString()}원
           </span>
         </div>
@@ -240,7 +240,7 @@ export function AllUsageRecordsDialog({
                 {[1, 2, 3, 4, 5].map((i) => (
                   <div
                     key={i}
-                    className="h-20 bg-gray-100 rounded-xl animate-pulse"
+                    className="h-20 bg-slate-100 rounded-xl animate-pulse"
                   />
                 ))}
               </div>
@@ -249,7 +249,7 @@ export function AllUsageRecordsDialog({
                 오류가 발생했습니다: {error.message}
               </div>
             ) : allRecords.length === 0 ? (
-              <div className="py-12 text-center text-sm text-gray-400">
+              <div className="py-12 text-center text-sm text-slate-400">
                 조회 결과가 없습니다
               </div>
             ) : (
@@ -260,30 +260,30 @@ export function AllUsageRecordsDialog({
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.2, delay: index * 0.03 }}
-                    className="bg-white border border-gray-100 rounded-xl p-3 hover:border-gray-200 transition-colors"
+                    className="bg-white border border-slate-100 rounded-xl p-3 hover:border-slate-200 transition-colors"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
+                        <p className="text-sm font-medium text-slate-900 truncate">
                           {record.description}
                         </p>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-slate-500">
                             {record.member_name}
                           </span>
                           {record.team_name && (
-                            <span className="text-xs text-gray-400">
+                            <span className="text-xs text-slate-400">
                               · {record.team_name}
                             </span>
                           )}
                         </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="text-sm font-semibold text-gray-900">
+                        <p className="text-sm font-semibold text-slate-900">
                           {record.amount.toLocaleString()}원
                         </p>
                         <div className="flex items-center gap-1.5 mt-1">
-                          <span className="text-xs text-gray-400">
+                          <span className="text-xs text-slate-400">
                             {dayjs(record.used_at).format("M.DD")}
                           </span>
                           <span
@@ -300,22 +300,22 @@ export function AllUsageRecordsDialog({
                     </div>
                     <div className="mt-2 flex items-center gap-2">
                       <span className={`flex items-center gap-1 ${
-                        (record.review_status ?? 0) >= 1 ? "text-blue-500" : "text-gray-300"
+                        (record.review_status ?? 0) >= 1 ? "text-blue-500" : "text-slate-300"
                       }`}>
                         <span className={`inline-block w-[6px] h-[6px] rounded-full border ${
                           (record.review_status ?? 0) >= 1
                             ? "bg-blue-500 border-blue-500"
-                            : "bg-transparent border-gray-300"
+                            : "bg-transparent border-slate-300"
                         }`} />
                         <span className="text-[10px]">P&C</span>
                       </span>
                       <span className={`flex items-center gap-1 ${
-                        (record.review_status ?? 0) >= 2 ? "text-emerald-500" : "text-gray-300"
+                        (record.review_status ?? 0) >= 2 ? "text-emerald-500" : "text-slate-300"
                       }`}>
                         <span className={`inline-block w-[6px] h-[6px] rounded-full border ${
                           (record.review_status ?? 0) >= 2
                             ? "bg-emerald-500 border-emerald-500"
-                            : "bg-transparent border-gray-300"
+                            : "bg-transparent border-slate-300"
                         }`} />
                         <span className="text-[10px]">최종</span>
                       </span>
@@ -326,7 +326,7 @@ export function AllUsageRecordsDialog({
                   <button
                     onClick={handleLoadMore}
                     disabled={isLoading}
-                    className="w-full py-3 text-sm text-gray-600 hover:bg-gray-50 rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="w-full py-3 text-sm text-slate-600 hover:bg-slate-50 rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {isLoading && offset > 0 && (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -340,7 +340,7 @@ export function AllUsageRecordsDialog({
         </ScrollArea>
 
         {/* Footer */}
-        <DialogFooter className="px-6 py-4 border-t border-gray-100">
+        <DialogFooter className="px-6 py-4 border-t border-slate-100">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             닫기
           </Button>

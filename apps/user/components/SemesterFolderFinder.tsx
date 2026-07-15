@@ -58,11 +58,11 @@ export default function SemesterFolderFinder({ onFolderFound }: Props) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-md">
         <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2 mb-6"></div>
+          <div className="h-6 bg-slate-200 rounded w-3/4 mb-4"></div>
+          <div className="h-4 bg-slate-200 rounded w-1/2 mb-6"></div>
           <div className="space-y-3">
-            <div className="h-16 bg-gray-200 rounded"></div>
-            <div className="h-16 bg-gray-200 rounded"></div>
+            <div className="h-16 bg-slate-200 rounded"></div>
+            <div className="h-16 bg-slate-200 rounded"></div>
           </div>
         </div>
       </div>
@@ -134,22 +134,22 @@ export default function SemesterFolderFinder({ onFolderFound }: Props) {
             {folders.map((folder) => (
               <div
                 key={folder.id}
-                className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 cursor-pointer transition-colors"
+                className="p-4 border border-slate-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 cursor-pointer transition-colors"
                 onClick={() => onFolderFound(semesterInfo!, folder)}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <h4 className="font-medium text-gray-900">{folder.name}</h4>
-                    <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
+                    <h4 className="font-medium text-slate-900">{folder.name}</h4>
+                    <div className="flex items-center gap-4 text-sm text-slate-600 mt-1">
                       <span className={`px-2 py-1 text-xs rounded-full ${
                         folder.source === 'personal' 
                           ? 'bg-green-100 text-green-800' 
-                          : 'bg-purple-100 text-purple-800'
+                          : 'bg-blue-100 text-blue-800'
                       }`}>
                         {folder.source === 'personal' ? '개인 드라이브' : '공유 드라이브'}
                       </span>
                       {folder.sharedDriveName && (
-                        <span className="text-purple-600">📁 {folder.sharedDriveName}</span>
+                        <span className="text-blue-600">📁 {folder.sharedDriveName}</span>
                       )}
                     </div>
                   </div>

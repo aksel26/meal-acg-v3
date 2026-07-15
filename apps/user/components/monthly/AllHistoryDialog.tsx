@@ -11,6 +11,14 @@ import {
 import { useMonthlyData } from "@/hooks/useMonthlyData";
 import { useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import {
+  Coffee,
+  IceCreamCone,
+  Citrus,
+  Snowflake,
+  Flame,
+  TriangleAlert,
+} from "@repo/ui/icons";
 
 interface AllHistoryDialogProps {
   isOpen: boolean;
@@ -20,16 +28,16 @@ interface AllHistoryDialogProps {
 
 const getDrinkInfo = (drink: string) => {
   if (drink === "선택안함")
-    return { icon: "☕", gradient: "from-slate-100 to-slate-200" };
+    return { icon: Coffee, bg: "bg-slate-100", fg: "text-slate-500" };
   if (drink.includes("바닐라"))
-    return { icon: "🍦", gradient: "from-amber-50 to-orange-100" };
+    return { icon: IceCreamCone, bg: "bg-amber-50", fg: "text-amber-600" };
   if (drink.includes("자몽"))
-    return { icon: "🍊", gradient: "from-rose-50 to-pink-100" };
+    return { icon: Citrus, bg: "bg-rose-50", fg: "text-rose-500" };
   if (drink.includes("ICE"))
-    return { icon: "🧊", gradient: "from-sky-50 to-blue-100" };
+    return { icon: Snowflake, bg: "bg-blue-50", fg: "text-blue-500" };
   if (drink.includes("HOT"))
-    return { icon: "🔥", gradient: "from-orange-50 to-red-100" };
-  return { icon: "☕", gradient: "from-gray-50 to-gray-100" };
+    return { icon: Flame, bg: "bg-orange-50", fg: "text-orange-500" };
+  return { icon: Coffee, bg: "bg-slate-50", fg: "text-slate-500" };
 };
 
 export const AllHistoryDialog = ({
@@ -67,15 +75,15 @@ export const AllHistoryDialog = ({
         {/* Header */}
         <div className="p-6">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-center text-gray-900">
+            <DialogTitle className="text-xl font-bold text-center text-slate-900">
               전체 신청 현황
             </DialogTitle>
-            <DialogDescription className="text-gray-500 text-center mt-2">
+            <DialogDescription className="text-slate-500 text-center mt-2">
               {isLoading ? (
                 <span className="skeleton inline-block w-24 h-4" />
               ) : (
                 <>
-                  <span className="text-gray-900 font-semibold">
+                  <span className="text-slate-900 font-semibold">
                     {completedCount}
                   </span>
                   /{applications.length}명 신청 완료
@@ -86,14 +94,14 @@ export const AllHistoryDialog = ({
 
           {/* Progress bar */}
           {!isLoading && applications.length > 0 && (
-            <div className="mt-4 h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div className="mt-4 h-2 bg-slate-100 rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{
                   width: `${(completedCount / applications.length) * 100}%`,
                 }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
-                className="h-full bg-gradient-to-r from-[oklch(0.55_0.18_250)] to-[oklch(0.48_0.20_270)] rounded-full"
+                className="h-full bg-blue-500 rounded-full"
               />
             </div>
           )}
@@ -121,8 +129,8 @@ export const AllHistoryDialog = ({
                 animate={{ opacity: 1 }}
                 className="flex flex-col items-center justify-center py-12"
               >
-                <span className="text-4xl mb-3">😢</span>
-                <p className="text-gray-500">오류가 발생했습니다</p>
+                <TriangleAlert className="h-10 w-10 mb-3 text-slate-300" />
+                <p className="text-slate-500">오류가 발생했습니다</p>
               </motion.div>
             ) : applications.length === 0 ? (
               <motion.div
@@ -131,8 +139,8 @@ export const AllHistoryDialog = ({
                 animate={{ opacity: 1 }}
                 className="flex flex-col items-center justify-center py-12"
               >
-                <span className="text-4xl mb-3">☕</span>
-                <p className="text-gray-500">아직 신청 내역이 없습니다</p>
+                <Coffee className="h-10 w-10 mb-3 text-slate-300" />
+                <p className="text-slate-500">아직 신청 내역이 없습니다</p>
               </motion.div>
             ) : (
               <motion.div
@@ -143,6 +151,7 @@ export const AllHistoryDialog = ({
               >
                 {drinkGroups.map(([drink, users], groupIndex) => {
                   const info = getDrinkInfo(drink);
+                  const DrinkIcon = info.icon;
                   return (
                     <motion.div
                       key={drink}
@@ -153,14 +162,14 @@ export const AllHistoryDialog = ({
                       {/* Group Header */}
                       <div className="flex items-center gap-2 mb-2">
                         <div
-                          className={`w-8 h-8 bg-gradient-to-br ${info.gradient} rounded-lg flex items-center justify-center`}
+                          className={`w-8 h-8 ${info.bg} rounded-lg flex items-center justify-center`}
                         >
-                          <span className="text-lg">{info.icon}</span>
+                          <DrinkIcon className={`h-4 w-4 ${info.fg}`} />
                         </div>
-                        <span className="text-sm font-semibold text-gray-800">
+                        <span className="text-sm font-semibold text-slate-800">
                           {drink}
                         </span>
-                        <span className="text-xs text-gray-400 font-medium bg-gray-100 px-2 py-0.5 rounded-full">
+                        <span className="text-xs text-slate-400 font-medium bg-slate-100 px-2 py-0.5 rounded-full">
                           {users.length}명
                         </span>
                       </div>
@@ -175,13 +184,13 @@ export const AllHistoryDialog = ({
                             transition={{
                               delay: groupIndex * 0.05 + userIndex * 0.02,
                             }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 rounded-full border border-gray-200 transition-colors"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 rounded-full border border-slate-200 transition-colors"
                           >
-                            <span className="text-sm font-medium text-gray-700">
+                            <span className="text-sm font-medium text-slate-700">
                               {user.name}
                             </span>
                             {user.memo && (
-                              <span className="text-xs text-gray-400">
+                              <span className="text-xs text-slate-400">
                                 ({user.memo})
                               </span>
                             )}
@@ -197,11 +206,11 @@ export const AllHistoryDialog = ({
         </div>
 
         {/* Footer */}
-        <DialogFooter className="p-4 border-t border-gray-100">
+        <DialogFooter className="p-4 border-t border-slate-100">
           <Button
             variant="ghost"
             onClick={onClose}
-            className="w-full h-12 text-gray-600 hover:text-gray-900 hover:bg-gray-50 font-medium rounded-xl"
+            className="w-full h-12 text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium rounded-xl"
           >
             닫기
           </Button>

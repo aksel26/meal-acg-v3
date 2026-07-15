@@ -70,7 +70,7 @@ export default function NoticeDetailPage() {
                 {notice.attachments.map((file) => (
                   <span
                     key={file.name}
-                    className="inline-flex items-center gap-1 rounded-md bg-gray-50 px-2.5 py-1 text-xs text-slate-600"
+                    className="inline-flex items-center gap-1 rounded-md bg-slate-50 px-2.5 py-1 text-xs text-slate-600"
                   >
                     <FileText className="h-3.5 w-3.5 text-slate-400" />
                     {file.name}
@@ -87,7 +87,7 @@ export default function NoticeDetailPage() {
       <div className="h-px bg-slate-100 mb-6" />
 
       {/* 본문 */}
-      <div className="rounded-xl bg-gray-50 p-6">
+      <div className="rounded-xl bg-slate-50 p-6">
         <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">
           {notice.content}
         </p>
@@ -105,7 +105,7 @@ export default function NoticeDetailPage() {
               <button
                 onClick={() => prev && router.push(`/notices/${prev.id}`)}
                 disabled={!prev}
-                className="flex-1 rounded-lg bg-gray-50 px-4 py-3 text-left transition-colors hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex-1 rounded-lg bg-slate-50 px-4 py-3 text-left transition-colors hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <p className="text-[11px] text-slate-400 mb-0.5">이전 글</p>
                 <p className="text-sm text-slate-700 truncate">
@@ -115,7 +115,7 @@ export default function NoticeDetailPage() {
               <button
                 onClick={() => next && router.push(`/notices/${next.id}`)}
                 disabled={!next}
-                className="flex-1 rounded-lg bg-gray-50 px-4 py-3 text-right transition-colors hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex-1 rounded-lg bg-slate-50 px-4 py-3 text-right transition-colors hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <p className="text-[11px] text-slate-400 mb-0.5">다음 글</p>
                 <p className="text-sm text-slate-700 truncate">

@@ -44,7 +44,7 @@ export default function ProfileHrCard() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
     >
-      <div className="rounded-2xl bg-gray-50 p-5">
+      <div className="rounded-2xl bg-slate-50 p-5">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-4 w-4 text-slate-500" />

@@ -26,7 +26,7 @@ interface AttendanceRecord {
 }
 
 const STATUS_LABELS: Record<string, { text: string; color: string }> = {
-  early_check_in: { text: "조기출근", color: "text-sky-600" },
+  early_check_in: { text: "조기출근", color: "text-blue-600" },
   normal: { text: "정상", color: "text-emerald-600" },
   late: { text: "지각", color: "text-rose-600" },
   early_leave: { text: "조퇴", color: "text-amber-600" },
@@ -36,7 +36,7 @@ const TYPE_BADGE_STYLES: Record<string, string> = {
   근무: "bg-slate-100 text-slate-700",
   휴가: "bg-emerald-50 text-emerald-700",
   재택: "bg-amber-50 text-amber-700",
-  외근: "bg-violet-50 text-violet-700",
+  외근: "bg-blue-50 text-blue-700",
 };
 
 const ATTENDANCE_TYPES = ["전체", "근무", "휴가", "재택", "외근"] as const;

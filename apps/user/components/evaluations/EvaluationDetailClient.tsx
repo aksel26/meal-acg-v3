@@ -520,10 +520,10 @@ function QuestionField({
           </div>
 
           {parsedPrompt.guideLines.length > 0 && (
-            <div className="mt-3 rounded-lg bg-sky-50/60 px-3.5 py-3">
+            <div className="mt-3 rounded-lg bg-blue-50/60 px-3.5 py-3">
               <div className="flex items-center gap-1.5">
-                <Info className="h-3.5 w-3.5 text-sky-600" />
-                <SectionLabel label="안내문" className="text-sky-700" />
+                <Info className="h-3.5 w-3.5 text-blue-600" />
+                <SectionLabel label="안내문" className="text-blue-700" />
               </div>
               <div className="mt-2 space-y-1.5">
                 {parsedPrompt.guideLines.map((line) => (
@@ -624,7 +624,7 @@ function GuideLine({ line }: { line: string }) {
 
   return (
     <p className="text-xs leading-5 text-slate-700">
-      <span className="font-semibold text-sky-800">{label}:</span> {body}
+      <span className="font-semibold text-blue-800">{label}:</span> {body}
     </p>
   );
 }

@@ -75,10 +75,10 @@ export function AmountStep({ onSubmit, isSubmitting }: AmountStepProps) {
       className="space-y-4"
     >
       <div className="space-y-1">
-        <h3 className="text-lg font-semibold text-gray-900">
+        <h3 className="text-lg font-semibold text-slate-900">
           {isIndividualMeal ? "개별식사로 처리할게요" : "얼마였나요?"}
         </h3>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-slate-500">
           {isIndividualMeal
             ? `총 금액에서 ${individualMealAmount.toLocaleString()}원이 차감됩니다`
             : "결제 금액을 입력해주세요"}
@@ -102,10 +102,10 @@ export function AmountStep({ onSubmit, isSubmitting }: AmountStepProps) {
               value={formatNumberWithCommas(currentAmount)}
               onChange={handleValueChange}
               onKeyDown={handleKeyDown}
-              className="h-14 text-2xl font-semibold text-right rounded-xl border-2 border-gray-100 bg-white focus:border-gray-300 focus:ring-0 transition-all placeholder:text-gray-300 placeholder:font-normal"
+              className="h-14 text-2xl font-semibold text-right rounded-xl border-2 border-slate-100 bg-white focus:border-slate-300 focus:ring-0 transition-all placeholder:text-slate-300 placeholder:font-normal"
               style={{ paddingRight: '2.3rem' }}
             />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-lg text-gray-400 font-medium pointer-events-none">
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-lg text-slate-400 font-medium pointer-events-none">
               원
             </span>
           </motion.div>
@@ -118,12 +118,12 @@ export function AmountStep({ onSubmit, isSubmitting }: AmountStepProps) {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3"
+            className="rounded-xl bg-slate-50 border border-slate-100 px-4 py-3"
           >
-            <p className="text-sm font-medium text-gray-900">
+            <p className="text-sm font-medium text-slate-900">
               석식 입력 안내
             </p>
-            <ul className="mt-2 space-y-1 text-xs leading-relaxed text-gray-600">
+            <ul className="mt-2 space-y-1 text-xs leading-relaxed text-slate-600">
               <li>
                 사용 금액 전체를 입력해주세요. 석식 금액은 중식 통계에 반영되지
                 않습니다.
@@ -163,7 +163,7 @@ export function AmountStep({ onSubmit, isSubmitting }: AmountStepProps) {
         transition={{ duration: 0.2 }}
         onClick={handleSubmit}
         disabled={!canSubmit || isSubmitting}
-        className="w-full py-4 px-4 rounded-xl bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full py-4 px-4 rounded-xl bg-slate-900 text-white font-medium hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isSubmitting ? (
           <div className="flex items-center justify-center gap-2">

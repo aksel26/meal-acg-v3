@@ -97,11 +97,11 @@ export default function ExcelFileFinder({ folder, fileName, onFileFound, onBack 
     return (
       <div className="bg-white p-6 rounded-lg shadow-md">
         <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2 mb-6"></div>
+          <div className="h-6 bg-slate-200 rounded w-3/4 mb-4"></div>
+          <div className="h-4 bg-slate-200 rounded w-1/2 mb-6"></div>
           <div className="space-y-3">
-            <div className="h-20 bg-gray-200 rounded"></div>
-            <div className="h-20 bg-gray-200 rounded"></div>
+            <div className="h-20 bg-slate-200 rounded"></div>
+            <div className="h-20 bg-slate-200 rounded"></div>
           </div>
         </div>
       </div>
@@ -114,15 +114,15 @@ export default function ExcelFileFinder({ folder, fileName, onFileFound, onBack 
         <h2 className="text-xl font-semibold">2. 엑셀 파일 찾기</h2>
         <button
           onClick={onBack}
-          className="px-3 py-1 text-sm bg-gray-500 text-white rounded hover:bg-gray-600"
+          className="px-3 py-1 text-sm bg-slate-500 text-white rounded hover:bg-slate-600"
         >
           ← 뒤로
         </button>
       </div>
       
-      <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-        <h3 className="font-semibold text-gray-800 mb-2">검색 조건</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
+      <div className="mb-6 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+        <h3 className="font-semibold text-slate-800 mb-2">검색 조건</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-slate-700">
           <div>
             <p><strong>폴더:</strong> {folder.name}</p>
             <p><strong>파일명:</strong> {fileName}</p>
@@ -181,7 +181,7 @@ export default function ExcelFileFinder({ folder, fileName, onFileFound, onBack 
                 className={`p-4 border rounded-lg hover:bg-blue-50 cursor-pointer transition-colors ${
                   file.isExactMatch 
                     ? 'border-green-300 bg-green-50' 
-                    : 'border-gray-200 hover:border-blue-300'
+                    : 'border-slate-200 hover:border-blue-300'
                 }`}
                 onClick={() => onFileFound(file)}
               >
@@ -190,7 +190,7 @@ export default function ExcelFileFinder({ folder, fileName, onFileFound, onBack 
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-2xl">{getFileIcon(file.mimeType)}</span>
                       <div>
-                        <h4 className="font-medium text-gray-900">{file.name}</h4>
+                        <h4 className="font-medium text-slate-900">{file.name}</h4>
                         {file.isExactMatch && (
                           <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
                             정확히 일치
@@ -199,7 +199,7 @@ export default function ExcelFileFinder({ folder, fileName, onFileFound, onBack 
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm text-gray-600">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm text-slate-600">
                       <div>
                         <p><strong>파일 형식:</strong></p>
                         <p className="text-xs">{file.mimeType.split('/').pop()}</p>

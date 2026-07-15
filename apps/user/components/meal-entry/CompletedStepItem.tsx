@@ -24,17 +24,17 @@ export function CompletedStepItem({ stepId, value, onEdit, index }: CompletedSte
     >
       <div
         onClick={onEdit}
-        className="flex items-center justify-between px-4 py-3 bg-gray-50/80 rounded-xl border border-gray-100 cursor-pointer hover:bg-gray-100/80 hover:border-gray-200 transition-all duration-200"
+        className="flex items-center justify-between px-4 py-3 bg-slate-50/80 rounded-xl border border-slate-100 cursor-pointer hover:bg-slate-100/80 hover:border-slate-200 transition-all duration-200"
       >
         <div className="flex flex-col">
-          <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
+          <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">
             {STEP_LABELS[stepId]}
           </span>
-          <span className="text-sm font-medium text-gray-800 leading-tight">
+          <span className="text-sm font-medium text-slate-800 leading-tight">
             {value || "-"}
           </span>
         </div>
-        <span className="opacity-0 group-hover:opacity-100 px-2 py-1 rounded-lg text-xs font-medium text-gray-500 hover:bg-gray-200 transition-all duration-200">
+        <span className="opacity-0 group-hover:opacity-100 px-2 py-1 rounded-lg text-xs font-medium text-slate-500 hover:bg-slate-200 transition-all duration-200">
           수정
         </span>
       </div>

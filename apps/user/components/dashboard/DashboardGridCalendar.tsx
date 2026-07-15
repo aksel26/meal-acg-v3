@@ -70,7 +70,7 @@ export default function DashboardGridCalendar({
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={onPrevMonth}
-          className="rounded-lg p-1.5 text-slate-400 hover:bg-gray-100 hover:text-slate-600 transition-colors"
+          className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
@@ -79,7 +79,7 @@ export default function DashboardGridCalendar({
         </h2>
         <button
           onClick={onNextMonth}
-          className="rounded-lg p-1.5 text-slate-400 hover:bg-gray-100 hover:text-slate-600 transition-colors"
+          className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
         >
           <ChevronRight className="h-5 w-5" />
         </button>
@@ -91,7 +91,7 @@ export default function DashboardGridCalendar({
         {["일", "월", "화", "수", "목", "금", "토"].map((day, i) => (
           <div
             key={day}
-            className={`bg-gray-50 p-2 text-center text-xs font-semibold ${
+            className={`bg-slate-50 p-2 text-center text-xs font-semibold ${
               i === 0 ? "text-red-400" : i === 6 ? "text-blue-400" : "text-slate-500"
             }`}
           >

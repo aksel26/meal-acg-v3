@@ -73,7 +73,7 @@ export function BottomNavigation() {
               >
                 {/* Active Background */}
                 {isActive && (
-                  <div className="absolute inset-0 bg-gradient-to-br from-[oklch(0.94_0.05_250)] to-[oklch(0.91_0.07_270)] rounded-xl" />
+                  <div className="absolute inset-0 bg-blue-100 rounded-xl" />
                 )}
 
                 {/* Icon */}
@@ -99,7 +99,7 @@ export function BottomNavigation() {
                 <span
                   className={`relative z-10 text-[10px] font-medium transition-colors duration-200 ${
                     isActive
-                      ? "text-[oklch(0.40_0.12_250)]"
+                      ? "text-[oklch(0.40_0.11_250)]"
                       : "text-[oklch(0.50_0.01_250)]"
                   }`}
                 >

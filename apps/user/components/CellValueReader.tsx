@@ -112,20 +112,20 @@ export default function CellValueReader({ file, folder, onCellRead, onBack }: Pr
         <h2 className="text-xl font-semibold">3. 셀 값 읽기</h2>
         <button
           onClick={onBack}
-          className="px-3 py-1 text-sm bg-gray-500 text-white rounded hover:bg-gray-600"
+          className="px-3 py-1 text-sm bg-slate-500 text-white rounded hover:bg-slate-600"
         >
           ← 뒤로
         </button>
       </div>
       
       {/* 파일 정보 */}
-      <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-        <h3 className="font-semibold text-gray-800 mb-3">선택된 파일</h3>
+      <div className="mb-6 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+        <h3 className="font-semibold text-slate-800 mb-3">선택된 파일</h3>
         <div className="flex items-start gap-3">
           <span className="text-3xl">{getFileIcon(file.mimeType)}</span>
           <div className="flex-1">
-            <h4 className="font-medium text-gray-900 mb-2">{file.name}</h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+            <h4 className="font-medium text-slate-900 mb-2">{file.name}</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-slate-600">
               <div>
                 <p><strong>크기:</strong> {formatFileSize(file.size)}</p>
               </div>
@@ -154,7 +154,7 @@ export default function CellValueReader({ file, folder, onCellRead, onBack }: Pr
         <h3 className="font-semibold mb-3">읽을 셀 지정</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               셀 주소 <span className="text-red-500">*</span>
             </label>
             <input
@@ -162,15 +162,15 @@ export default function CellValueReader({ file, folder, onCellRead, onBack }: Pr
               value={cellAddress}
               onChange={(e) => setCellAddress(e.target.value)}
               placeholder="예: A1, B2, C10"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-slate-500 mt-1">
               Excel 셀 주소 형식 (A1, B2, C10 등)
             </p>
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               시트명 (선택사항)
             </label>
             <input
@@ -178,9 +178,9 @@ export default function CellValueReader({ file, folder, onCellRead, onBack }: Pr
               value={sheetName}
               onChange={(e) => setSheetName(e.target.value)}
               placeholder="시트명 (비어있으면 첫 번째 시트)"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-slate-500 mt-1">
               지정하지 않으면 첫 번째 시트를 사용
             </p>
           </div>
@@ -256,7 +256,7 @@ export default function CellValueReader({ file, folder, onCellRead, onBack }: Pr
                     className={`px-2 py-1 text-xs rounded-full ${
                       sheet === cellData.sheetName
                         ? 'bg-green-200 text-green-800'
-                        : 'bg-gray-100 text-gray-700'
+                        : 'bg-slate-100 text-slate-700'
                     }`}
                   >
                     {sheet}

@@ -57,7 +57,7 @@ const ScratchLottery: React.FC = () => {
           transition={{ duration: 0.4 }}
           className="flex flex-col items-center gap-4"
         >
-          <p className="text-sm text-gray-500 font-medium">
+          <p className="text-sm text-slate-500 font-medium">
             카드를 긁어서 점심조를 뽑아보세요!
           </p>
           <ScratchToReveal
@@ -68,8 +68,8 @@ const ScratchLottery: React.FC = () => {
             gradientColors={["#A97CF8", "#F38CB8", "#FDCC92"]}
           >
             <div className="flex flex-col items-center justify-center gap-2">
-              <span className="text-6xl font-black text-purple-200">?</span>
-              <span className="text-sm font-medium text-gray-300">
+              <span className="text-6xl font-black text-blue-200">?</span>
+              <span className="text-sm font-medium text-slate-300">
                 긁어서 확인하기
               </span>
             </div>
@@ -84,10 +84,10 @@ const ScratchLottery: React.FC = () => {
           animate={{ opacity: 1 }}
           className="flex flex-col items-center gap-4"
         >
-          <div className="w-[300px] h-[200px] bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 rounded-2xl flex items-center justify-center">
+          <div className="w-[300px] h-[200px] bg-gradient-to-br from-blue-50 via-pink-50 to-orange-50 rounded-2xl flex items-center justify-center">
             <div className="flex flex-col items-center gap-3">
-              <div className="w-8 h-8 border-3 border-purple-200 border-t-purple-500 rounded-full animate-spin" />
-              <p className="text-sm text-purple-400 font-medium">
+              <div className="w-8 h-8 border-3 border-blue-200 border-t-purple-500 rounded-full animate-spin" />
+              <p className="text-sm text-blue-400 font-medium">
                 배정 중...
               </p>
             </div>
@@ -103,12 +103,12 @@ const ScratchLottery: React.FC = () => {
           transition={{ type: "spring", damping: 12 }}
           className="flex flex-col items-center gap-4"
         >
-          <div className="w-[300px] h-[200px] bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 rounded-2xl flex flex-col items-center justify-center gap-2">
+          <div className="w-[300px] h-[200px] bg-gradient-to-br from-blue-50 via-pink-50 to-orange-50 rounded-2xl flex flex-col items-center justify-center gap-2">
             <motion.span
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", damping: 8, delay: 0.1 }}
-              className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400"
+              className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-blue-600 via-pink-500 to-orange-400"
             >
               {result}조
             </motion.span>
@@ -116,7 +116,7 @@ const ScratchLottery: React.FC = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="text-sm font-medium text-gray-500"
+              className="text-sm font-medium text-slate-500"
             >
               배정되었습니다!
             </motion.span>
@@ -129,8 +129,8 @@ const ScratchLottery: React.FC = () => {
             transition={{ delay: 0.4 }}
             className="w-[300px]"
           >
-            <div className="bg-gradient-to-br from-purple-50/50 via-pink-50/50 to-orange-50/50 rounded-xl p-3">
-              <p className="text-xs font-semibold text-gray-500 mb-2">
+            <div className="bg-gradient-to-br from-blue-50/50 via-pink-50/50 to-orange-50/50 rounded-xl p-3">
+              <p className="text-xs font-semibold text-slate-500 mb-2">
                 {result}조 멤버
               </p>
               {groupMembers.length > 0 ? (
@@ -138,9 +138,9 @@ const ScratchLottery: React.FC = () => {
                   {groupMembers.map((member, i) => (
                     <span
                       key={i}
-                      className="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-700 rounded-md text-xs font-medium"
+                      className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-xs font-medium"
                     >
-                      <span className="w-4 h-4 rounded-full bg-purple-200 flex items-center justify-center text-[10px] font-bold text-purple-600">
+                      <span className="w-4 h-4 rounded-full bg-blue-200 flex items-center justify-center text-[10px] font-bold text-blue-600">
                         {member.charAt(0)}
                       </span>
                       {member}
@@ -148,7 +148,7 @@ const ScratchLottery: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-slate-400">
                   멤버 정보를 불러오는 중...
                 </p>
               )}
@@ -184,7 +184,7 @@ const ScratchLottery: React.FC = () => {
           </div>
           <button
             onClick={handleRetry}
-            className="w-[300px] py-3 rounded-2xl text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
+            className="w-[300px] py-3 rounded-2xl text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
           >
             다시 시도
           </button>

@@ -28,7 +28,7 @@ export default function AlbumsTab() {
             className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
               filter === cat
                 ? "bg-slate-800 text-white"
-                : "bg-gray-100 text-slate-500 hover:bg-gray-200"
+                : "bg-slate-100 text-slate-500 hover:bg-slate-200"
             }`}
           >
             {cat}
@@ -47,7 +47,7 @@ export default function AlbumsTab() {
           {filtered.map((album) => (
             <div
               key={album.id}
-              className="group overflow-hidden rounded-xl bg-gray-50 transition-colors hover:bg-gray-100"
+              className="group overflow-hidden rounded-xl bg-slate-50 transition-colors hover:bg-slate-100"
             >
               {/* 커버 플레이스홀더 */}
               <div className="flex h-40 items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200">

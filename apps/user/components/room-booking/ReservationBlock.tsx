@@ -20,9 +20,9 @@ const TYPE_STYLES: Record<string, { bg: string; indicator: string; text: string;
     label: "감독관",
   },
   interview: {
-    bg: "bg-indigo-50",
-    indicator: "bg-indigo-500",
-    text: "text-indigo-800",
+    bg: "bg-blue-50",
+    indicator: "bg-blue-500",
+    text: "text-blue-800",
     label: "면접",
   },
   meeting: {

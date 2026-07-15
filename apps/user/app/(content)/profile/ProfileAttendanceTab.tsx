@@ -93,7 +93,7 @@ const DEFAULT_STATUS_LABEL: StatusLabel = {
 const STATUS_LABELS: Record<string, StatusLabel> = {
   early_check_in: {
     text: "조기출근",
-    className: "bg-sky-50 text-sky-700 ring-sky-100",
+    className: "bg-blue-50 text-blue-700 ring-blue-100",
   },
   normal: DEFAULT_STATUS_LABEL,
   late: {
@@ -110,7 +110,7 @@ const TYPE_BADGE_STYLES: Record<string, string> = {
   근무: "bg-slate-100 text-slate-700",
   휴가: "bg-emerald-50 text-emerald-700",
   재택: "bg-amber-50 text-amber-700",
-  외근: "bg-violet-50 text-violet-700",
+  외근: "bg-blue-50 text-blue-700",
 };
 
 export default function ProfileAttendanceTab({

@@ -15,7 +15,7 @@ type MealType = "breakfast" | "lunch" | "dinner";
 const MEAL_SLOTS: { type: MealType; title: string; dotColor: string }[] = [
   { type: "breakfast", title: "조식", dotColor: "bg-amber-400" },
   { type: "lunch", title: "중식", dotColor: "bg-blue-500" },
-  { type: "dinner", title: "석식", dotColor: "bg-violet-400" },
+  { type: "dinner", title: "석식", dotColor: "bg-blue-400" },
 ];
 
 function hasMealSlotRecord(meal: MealData | undefined, type: MealType) {
@@ -79,7 +79,7 @@ export default function MealEntryCard({
   };
 
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-5">
+    <div className="rounded-2xl border border-slate-100 bg-white p-5">
       <SectionLabel>Meal Entry</SectionLabel>
 
       <h3 className="mt-3 mb-4 text-lg font-bold tracking-tight text-slate-900">
@@ -114,7 +114,7 @@ export default function MealEntryCard({
               type="button"
               disabled={!selectedDate}
               onClick={() => handleSlotClick(slot.type)}
-              className="flex min-h-[78px] cursor-pointer flex-col rounded-xl border border-dashed border-gray-200 p-2.5 text-left transition-colors hover:border-gray-300 hover:bg-gray-50 disabled:cursor-default disabled:opacity-50"
+              className="flex min-h-[78px] cursor-pointer flex-col rounded-xl border border-dashed border-slate-200 p-2.5 text-left transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:cursor-default disabled:opacity-50"
             >
               {/* 상단: 식사명 + 타입 점 */}
               <div className="flex items-start justify-between">

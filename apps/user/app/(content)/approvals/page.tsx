@@ -107,7 +107,7 @@ export default function ApprovalsPage() {
         className={`flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
           viewMode === "inbox"
             ? "bg-slate-800 text-white"
-            : "bg-gray-50 text-slate-400 hover:text-slate-600"
+            : "bg-slate-50 text-slate-400 hover:text-slate-600"
         }`}
       >
         <Clock size={14} />
@@ -127,7 +127,7 @@ export default function ApprovalsPage() {
         className={`flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
           viewMode === "sent"
             ? "bg-slate-800 text-white"
-            : "bg-gray-50 text-slate-400 hover:text-slate-600"
+            : "bg-slate-50 text-slate-400 hover:text-slate-600"
         }`}
       >
         <Send size={14} />
@@ -138,21 +138,21 @@ export default function ApprovalsPage() {
 
   // 요청 리스트
   const listContent = isLoading ? (
-    <div className="rounded-2xl bg-gray-50 p-5">
+    <div className="rounded-2xl bg-slate-50 p-5">
       <div className="space-y-3">
         {[1, 2, 3].map((i) => (
           <div key={i} className="animate-pulse rounded-xl bg-white p-4">
             <div className="flex justify-between mb-2">
-              <div className="bg-gray-100 rounded h-4 w-24" />
-              <div className="bg-gray-100 rounded h-3 w-12" />
+              <div className="bg-slate-100 rounded h-4 w-24" />
+              <div className="bg-slate-100 rounded h-3 w-12" />
             </div>
-            <div className="bg-gray-50 rounded h-3 w-40" />
+            <div className="bg-slate-50 rounded h-3 w-40" />
           </div>
         ))}
       </div>
     </div>
   ) : !items || items.length === 0 ? (
-    <div className="rounded-2xl bg-gray-50 p-5">
+    <div className="rounded-2xl bg-slate-50 p-5">
       <div className="flex flex-col items-center justify-center py-12 text-slate-400">
         <FileText className="mb-3 h-8 w-8" />
         <p className="text-sm">
@@ -163,7 +163,7 @@ export default function ApprovalsPage() {
       </div>
     </div>
   ) : (
-    <div className="rounded-2xl bg-gray-50 p-4">
+    <div className="rounded-2xl bg-slate-50 p-4">
       <div className="space-y-2.5">
         {items.map((item, index) => (
           <motion.div

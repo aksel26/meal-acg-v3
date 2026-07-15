@@ -6,8 +6,8 @@ import QueryProvider from "./providers/QueryProvider"; // 위에서 생성한 Pr
 import { Analytics } from "@vercel/analytics/next";
 import dayjs from "dayjs";
 
-const APP_NAME = "🍙 ACG 식대";
-const APP_DEFAULT_TITLE = "🍙 ACG 식대관리 서비스";
+const APP_NAME = "ACG 식대";
+const APP_DEFAULT_TITLE = "ACG 식대관리 서비스";
 const APP_TITLE_TEMPLATE = "%s - PWA App";
 const APP_DESCRIPTION = "ACG 직원을 위한 식대관리 서비스입니다.";
 import "dayjs/locale/ko";

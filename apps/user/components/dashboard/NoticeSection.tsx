@@ -56,10 +56,10 @@ export default function NoticeSection() {
 
             {/* Text Content */}
             <div className="flex flex-col">
-              <span className="text-[10px] font-medium text-[oklch(0.55_0.15_250)] uppercase tracking-wider mb-0.5">
+              <span className="text-[10px] font-medium text-[oklch(0.55_0.11_250)] uppercase tracking-wider mb-0.5">
                 공지사항
               </span>
-              <p className="text-sm font-medium text-[oklch(0.35_0.10_250)]">
+              <p className="text-sm font-medium text-[oklch(0.35_0.11_250)]">
                 식대앱이 업데이트 되었습니다! (v1.3)
               </p>
             </div>
@@ -67,7 +67,7 @@ export default function NoticeSection() {
 
           {/* Arrow */}
           <motion.div
-            className="text-[oklch(0.55_0.12_250)]"
+            className="text-[oklch(0.55_0.11_250)]"
             whileHover={{ x: 3 }}
           >
             <ChevronRightIcon size={20} />

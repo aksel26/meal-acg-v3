@@ -53,9 +53,9 @@ const WeeklySchedule = ({ isLoading }: WeeklyScheduleProps) => {
 
   if (isLoading || schedulesLoading) {
     return (
-      <div className="pt-4 border-t border-gray-100 grid grid-cols-2 gap-2">
+      <div className="pt-4 border-t border-slate-100 grid grid-cols-2 gap-2">
         {[1, 2].map((i) => (
-          <div key={i} className="bg-gray-50 rounded-xl p-2">
+          <div key={i} className="bg-slate-50 rounded-xl p-2">
             <div className="skeleton w-6 h-3 rounded mb-1.5 mx-auto" />
             <div className="skeleton w-10 h-3 rounded mx-auto" />
           </div>
@@ -70,7 +70,7 @@ const WeeklySchedule = ({ isLoading }: WeeklyScheduleProps) => {
   }
 
   return (
-    <div className={`pt-4 border-t border-gray-100 grid gap-2 ${
+    <div className={`pt-4 border-t border-slate-100 grid gap-2 ${
       daysWithData.length === 1 ? "grid-cols-1" :
       daysWithData.length === 2 ? "grid-cols-2" :
       daysWithData.length === 3 ? "grid-cols-3" :
@@ -83,14 +83,14 @@ const WeeklySchedule = ({ isLoading }: WeeklyScheduleProps) => {
         return (
           <Popover key={day.value}>
             <PopoverTrigger asChild>
-              <button className="w-full rounded-xl p-2.5 text-center transition-colors group bg-gray-50 hover:bg-gray-100">
-                <p className="text-xs font-medium text-gray-700">{day.label}</p>
+              <button className="w-full rounded-xl p-2.5 text-center transition-colors group bg-slate-50 hover:bg-slate-100">
+                <p className="text-xs font-medium text-slate-700">{day.label}</p>
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-64 p-0 rounded-xl border border-gray-100 shadow-lg" align="center">
-              <div className="p-3 border-b border-gray-100">
-                <h4 className="font-medium text-sm text-gray-800">{day.fullLabel} 고정 스케줄</h4>
-                <p className="text-xs text-gray-500 mt-0.5">이번 주 담당자</p>
+            <PopoverContent className="w-64 p-0 rounded-xl border border-slate-100 shadow-lg" align="center">
+              <div className="p-3 border-b border-slate-100">
+                <h4 className="font-medium text-sm text-slate-800">{day.fullLabel} 고정 스케줄</h4>
+                <p className="text-xs text-slate-500 mt-0.5">이번 주 담당자</p>
               </div>
               <div className="p-2 max-h-48 overflow-y-auto">
                 <div className="space-y-1.5">

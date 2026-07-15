@@ -55,10 +55,10 @@ export function AttendanceStep({
   return (
     <div className="space-y-4">
       <div className="space-y-1">
-        <h3 className="text-lg font-medium text-gray-900">
+        <h3 className="text-lg font-medium text-slate-900">
           오늘 근태는 어떤가요?
         </h3>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-slate-500">
           중식 기록에 필요한 근태 정보예요
         </p>
       </div>
@@ -75,8 +75,8 @@ export function AttendanceStep({
               onClick={() => handleSelect(option.value)}
               className={`flex items-center py-3.5 px-4 rounded-xl border-2 transition-all duration-200 text-left ${
                 isSelected
-                  ? "bg-gray-900 border-gray-900 text-white shadow-lg shadow-gray-900/20"
-                  : "bg-white border-gray-100 text-gray-700 hover:border-gray-200 hover:bg-gray-50"
+                  ? "bg-slate-900 border-slate-900 text-white shadow-lg shadow-gray-900/20"
+                  : "bg-white border-slate-100 text-slate-700 hover:border-slate-200 hover:bg-slate-50"
               }`}
             >
               <span className="text-sm font-medium">{config?.shortLabel}</span>
@@ -115,7 +115,7 @@ export function AttendanceStep({
             type="button"
             onClick={handleSave}
             disabled={isSubmitting}
-            className="w-full py-4 px-4 rounded-xl bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-4 px-4 rounded-xl bg-slate-900 text-white font-medium hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? (
               <div className="flex items-center justify-center gap-2">

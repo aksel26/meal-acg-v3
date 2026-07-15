@@ -35,7 +35,7 @@ export default function RegulationsTab() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="규정 검색"
-          className="w-full rounded-lg bg-gray-50 py-2.5 pl-10 pr-4 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition-shadow focus:ring-2 focus:ring-slate-200"
+          className="w-full rounded-lg bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition-shadow focus:ring-2 focus:ring-slate-200"
         />
       </div>
 
@@ -52,7 +52,7 @@ export default function RegulationsTab() {
             return (
               <div
                 key={category.id}
-                className="overflow-hidden rounded-xl bg-gray-50"
+                className="overflow-hidden rounded-xl bg-slate-50"
               >
                 <button
                   onClick={() => toggleCategory(category.id)}

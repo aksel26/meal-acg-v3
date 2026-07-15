@@ -142,7 +142,7 @@ export default function AttendanceConfirmDialog({
             <div className="flex items-center justify-between text-sm">
               <span className="text-slate-500">근태 현황</span>
               {isEarlyCheckIn ? (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-sky-100 text-sky-700">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
                   조기출근
                 </span>
               ) : isLate ? (

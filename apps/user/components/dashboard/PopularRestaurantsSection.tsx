@@ -5,13 +5,11 @@ import { useState } from "react";
 import Image from "next/image";
 import { usePopularRestaurants, PopularRestaurant } from "@/hooks/use-popular-restaurants";
 
-const medalColors = [
-  { bg: "bg-gradient-to-br from-amber-300 to-yellow-500", text: "text-amber-900", shadow: "shadow-amber-300/50" },
-  { bg: "bg-gradient-to-br from-slate-300 to-slate-400", text: "text-slate-700", shadow: "shadow-slate-300/50" },
-  { bg: "bg-gradient-to-br from-orange-300 to-orange-500", text: "text-orange-900", shadow: "shadow-orange-300/50" },
+const rankStyles = [
+  "bg-slate-900 text-white",
+  "bg-slate-600 text-white",
+  "bg-slate-400 text-white",
 ];
-
-const rankEmojis = ["🥇", "🥈", "🥉"];
 
 export default function PopularRestaurantsSection() {
   const [showAll, setShowAll] = useState(false);
@@ -61,13 +59,13 @@ export default function PopularRestaurantsSection() {
       >
         <div className="card-premium p-5 text-center relative overflow-hidden">
           {/* Decorative Elements */}
-          <div className="absolute -top-12 -right-12 w-32 h-32 bg-[oklch(0.95_0.12_80/0.4)] rounded-full blur-3xl" />
-          <div className="absolute -bottom-8 -left-8 w-24 h-24 bg-[oklch(0.92_0.08_60/0.3)] rounded-full blur-2xl" />
+          <div className="absolute -top-12 -right-12 w-32 h-32 bg-[oklch(0.95_0.01_250/0.4)] rounded-full blur-3xl" />
+          <div className="absolute -bottom-8 -left-8 w-24 h-24 bg-[oklch(0.92_0.01_250/0.3)] rounded-full blur-2xl" />
 
           <div className="relative flex flex-col items-center justify-center gap-2">
             <Image src="/icons/onigiri.png" alt="restaurant" width={32} height={32} className="opacity-50" />
-            <h3 className="text-sm font-semibold text-gray-800">ACG 인기 음식점 랭킹</h3>
-            <p className="text-xs text-gray-500">아직 등록된 음식점이 없습니다</p>
+            <h3 className="text-sm font-semibold text-slate-800">ACG 인기 음식점 랭킹</h3>
+            <p className="text-xs text-slate-500">아직 등록된 음식점이 없습니다</p>
           </div>
         </div>
       </motion.div>
@@ -94,8 +92,8 @@ export default function PopularRestaurantsSection() {
         aria-label={hasMore ? (showAll ? "음식점 랭킹 접기" : "음식점 랭킹 더보기") : undefined}
       >
         {/* Decorative Elements */}
-        <div className="absolute -top-12 -right-12 w-32 h-32 bg-[oklch(0.95_0.12_80/0.4)] rounded-full blur-3xl" />
-        <div className="absolute -bottom-8 -left-8 w-24 h-24 bg-[oklch(0.92_0.08_60/0.3)] rounded-full blur-2xl" />
+        <div className="absolute -top-12 -right-12 w-32 h-32 bg-[oklch(0.95_0.01_250/0.4)] rounded-full blur-3xl" />
+        <div className="absolute -bottom-8 -left-8 w-24 h-24 bg-[oklch(0.92_0.01_250/0.3)] rounded-full blur-2xl" />
 
         {/* Header */}
         <div className="relative flex items-center justify-between mb-4">
@@ -106,11 +104,11 @@ export default function PopularRestaurantsSection() {
             >
               <Image src="/icons/onigiri.png" alt="restaurant" width={24} height={24} />
             </motion.div>
-            <h3 className="text-sm font-semibold text-gray-800">ACG 인기 음식점 랭킹</h3>
+            <h3 className="text-sm font-semibold text-slate-800">ACG 인기 음식점 랭킹</h3>
           </div>
           {hasMore && (
             <motion.div
-              className="flex items-center gap-1 text-xs text-gray-400"
+              className="flex items-center gap-1 text-xs text-slate-400"
               animate={{ opacity: 1 }}
             >
               <span>{showAll ? "접기" : "더보기"}</span>
@@ -186,19 +184,19 @@ function RestaurantItem({
           delay: index * 0.03,
         }}
         className={`
-          w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0
-          ${isTopThree && medalColors[index] ? `${medalColors[index].bg} ${medalColors[index].text} shadow-md ${medalColors[index].shadow}` : "bg-gray-100 text-gray-500"}
+          w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold tabular-nums shrink-0
+          ${isTopThree && rankStyles[index] ? rankStyles[index] : "bg-slate-100 text-slate-500"}
         `}
       >
-        {isTopThree ? rankEmojis[index] : index + 1}
+        {index + 1}
       </motion.div>
 
       {/* Restaurant Info */}
       <div className="flex-1 min-w-0 flex items-center justify-between">
-        <span className={`text-sm font-medium truncate ${isTopThree ? "text-gray-800" : "text-gray-600"}`}>
+        <span className={`text-sm font-medium truncate ${isTopThree ? "text-slate-800" : "text-slate-600"}`}>
           {restaurant.name}
         </span>
-        <span className="text-xs font-semibold text-gray-500 shrink-0 ml-2">{restaurant.count}회</span>
+        <span className="text-xs font-semibold text-slate-500 shrink-0 ml-2">{restaurant.count}회</span>
       </div>
     </motion.div>
   );

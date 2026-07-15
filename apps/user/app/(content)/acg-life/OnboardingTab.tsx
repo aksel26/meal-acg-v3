@@ -7,7 +7,7 @@ export default function OnboardingTab() {
   return (
     <div className="space-y-4">
       {ONBOARDING_STEPS.map((step, index) => (
-        <div key={step.id} className="rounded-xl bg-gray-50 p-4">
+        <div key={step.id} className="rounded-xl bg-slate-50 p-4">
           <div className="mb-3 flex items-center gap-3">
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-white">
               {index + 1}

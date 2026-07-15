@@ -101,7 +101,7 @@ function CalculationResult({
   if (isLoading) {
     return (
       <div className="card-premium rounded-2xl p-5 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-[oklch(0.92_0.06_200/0.25)] rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
+        <div className="absolute top-0 right-0 w-32 h-32 bg-[oklch(0.92_0.01_250/0.25)] rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
         <div className="space-y-4 relative">
           <div className="flex justify-between items-center">
             <div className="skeleton h-4 w-16 rounded" />
@@ -120,7 +120,7 @@ function CalculationResult({
   if (error) {
     return (
       <div className="card-premium rounded-2xl p-6 text-center relative overflow-hidden">
-        <p className="text-sm text-gray-500 mb-3">{error.message}</p>
+        <p className="text-sm text-slate-500 mb-3">{error.message}</p>
         <Button
           onClick={() => refetch()}
           variant="outline"
@@ -136,8 +136,8 @@ function CalculationResult({
   if (!data) {
     return (
       <div className="flex items-center justify-center py-8">
-        <div className="flex items-center gap-2 text-gray-400">
-          <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-500 rounded-full animate-spin" />
+        <div className="flex items-center gap-2 text-slate-400">
+          <div className="w-4 h-4 border-2 border-slate-300 border-t-gray-500 rounded-full animate-spin" />
           <span className="text-sm">불러오는 중...</span>
         </div>
       </div>
@@ -161,14 +161,14 @@ function CalculationResult({
   return (
     <div className="card-premium rounded-2xl relative">
       {/* Decorative Elements */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-[oklch(0.92_0.06_200/0.25)] rounded-full blur-2xl -translate-y-1/2 translate-x-1/4" />
-      <div className="absolute bottom-0 left-0 w-24 h-24 bg-[oklch(0.90_0.08_250/0.2)] rounded-full blur-2xl translate-y-1/2 -translate-x-1/4" />
+      <div className="absolute top-0 right-0 w-32 h-32 bg-[oklch(0.92_0.01_250/0.25)] rounded-full blur-2xl -translate-y-1/2 translate-x-1/4" />
+      <div className="absolute bottom-0 left-0 w-24 h-24 bg-[oklch(0.90_0.04_250/0.2)] rounded-full blur-2xl translate-y-1/2 -translate-x-1/4" />
 
       {/* 메인 잔액 표시 */}
       <div className="relative px-5 pt-5 pb-4">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <p className="text-xs text-gray-500 mb-1">이번 달 잔액</p>
+            <p className="text-xs text-slate-500 mb-1">이번 달 잔액</p>
             <div className="flex items-baseline gap-1 relative">
               {isOverBudget && (
                 <span className="text-2xl font-bold text-red-500">-</span>
@@ -180,7 +180,7 @@ function CalculationResult({
                     ? "text-red-500"
                     : isLowBalance
                       ? "text-amber-600"
-                      : "text-gray-900"
+                      : "text-slate-900"
                 }`}
               />
               <span
@@ -189,7 +189,7 @@ function CalculationResult({
                     ? "text-red-400"
                     : isLowBalance
                       ? "text-amber-500"
-                      : "text-gray-400"
+                      : "text-slate-400"
                 }`}
               >
                 원
@@ -215,7 +215,7 @@ function CalculationResult({
 
         {/* 사용량 프로그레스 바 */}
         <div className="space-y-2">
-          <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+          <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
             <motion.div
               initial={{ width: 0, opacity: 0 }}
               animate={{ width: `${Math.min(usagePercent, 100)}%`, opacity: 1 }}
@@ -225,10 +225,10 @@ function CalculationResult({
               }}
               className={`h-full rounded-full relative ${
                 isOverBudget
-                  ? "bg-gradient-to-r from-red-400 to-red-500"
+                  ? "bg-red-500"
                   : isLowBalance
-                    ? "bg-gradient-to-r from-amber-400 to-amber-500"
-                    : "bg-gradient-to-r from-[oklch(0.55_0.18_250)] to-[oklch(0.48_0.20_270)]"
+                    ? "bg-amber-400"
+                    : "bg-blue-500"
               }`}
             >
               {/* 글로우 효과 */}
@@ -240,7 +240,7 @@ function CalculationResult({
               />
             </motion.div>
           </div>
-          <div className="flex justify-between text-[11px] text-gray-400">
+          <div className="flex justify-between text-[11px] text-slate-400">
             <motion.span
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -284,7 +284,7 @@ function CalculationResult({
                     className="relative whitespace-nowrap"
                   >
                     {/* 말풍선 본체 */}
-                    <div className="bg-gradient-to-r from-[oklch(0.55_0.15_270)] to-[oklch(0.55_0.15_300)] text-white rounded-xl px-3 py-1.5 text-[11px] font-semibold shadow-lg shadow-violet-500/25 active:scale-95 transition-transform">
+                    <div className="bg-slate-900 text-white rounded-xl px-3 py-1.5 text-[11px] font-semibold active:scale-95 transition-transform">
                       복지포인트로 지불하기
                     </div>
                     {/* 왼쪽 삼각형 포인터 */}
@@ -295,7 +295,7 @@ function CalculationResult({
                         height: 0,
                         borderTop: "5px solid transparent",
                         borderBottom: "5px solid transparent",
-                        borderRight: "6px solid oklch(0.55 0.15 270)",
+                        borderRight: "6px solid oklch(0.55 0.11 250)",
                       }}
                     />
                   </motion.div>
@@ -311,7 +311,7 @@ function CalculationResult({
           </DialogHeader>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
+            <label className="text-sm font-medium text-slate-700">
               정산금액
             </label>
             <Input
@@ -356,7 +356,7 @@ function CalculationResult({
             );
           })()}
 
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-slate-500">
             {month}월 점심식대 초과분을 복지포인트에서 차감합니다.
           </p>
 
@@ -378,17 +378,17 @@ function CalculationResult({
       {/* 상세 내역 */}
       <div className="relative grid grid-cols-2 border-t border-white/40">
         <div className="px-5 py-4 border-r border-white/40">
-          <p className="text-[11px] text-gray-400 mb-1">사용가능액</p>
-          <p className="text-base font-semibold text-gray-700">
+          <p className="text-[11px] text-slate-400 mb-1">사용가능액</p>
+          <p className="text-base font-semibold text-slate-700">
             {formatCurrency(data.allowanceAmount)}
-            <span className="text-xs font-normal text-gray-400 ml-0.5">원</span>
+            <span className="text-xs font-normal text-slate-400 ml-0.5">원</span>
           </p>
         </div>
         <div className="px-5 py-4">
-          <p className="text-[11px] text-gray-400 mb-1">사용금액</p>
-          <p className="text-base font-semibold text-gray-700">
+          <p className="text-[11px] text-slate-400 mb-1">사용금액</p>
+          <p className="text-base font-semibold text-slate-700">
             {formatCurrency(data.totalUsed)}
-            <span className="text-xs font-normal text-gray-400 ml-0.5">원</span>
+            <span className="text-xs font-normal text-slate-400 ml-0.5">원</span>
           </p>
         </div>
       </div>
@@ -399,7 +399,7 @@ function CalculationResult({
           {/* 주말 근무 가산 */}
           {(data.weekendWorkCount ?? 0) > 0 && (
             <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-500">
+              <span className="text-slate-500">
                 주말근무 {data.weekendWorkCount}일
               </span>
               <span className="font-medium text-blue-600">
@@ -410,10 +410,10 @@ function CalculationResult({
           {/* 개별식사 차감 */}
           {(data.individualMealCount ?? 0) > 0 && (
             <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-500">
+              <span className="text-slate-500">
                 개별식사 {data.individualMealCount}회
               </span>
-              <span className="font-medium text-gray-600">
+              <span className="font-medium text-slate-600">
                 -{formatCurrency(data.individualMealDeduction || 0)}원
               </span>
             </div>
@@ -421,10 +421,10 @@ function CalculationResult({
           {/* 연차/재택/휴무 차감 */}
           {(data.noMealFullDayCount ?? 0) > 0 && (
             <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-500">
+              <span className="text-slate-500">
                 연차/재택/휴무 {data.noMealFullDayCount}일
               </span>
-              <span className="font-medium text-gray-600">
+              <span className="font-medium text-slate-600">
                 -{formatCurrency(data.noMealDeduction || 0)}원
               </span>
             </div>
@@ -432,10 +432,10 @@ function CalculationResult({
           {/* 반차 차감 */}
           {(data.halfDayOffCount ?? 0) > 0 && (
             <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-500">
+              <span className="text-slate-500">
                 반차 {data.halfDayOffCount}일
               </span>
-              <span className="font-medium text-gray-600">
+              <span className="font-medium text-slate-600">
                 -{formatCurrency(data.halfDayDeduction || 0)}원
               </span>
             </div>
@@ -456,10 +456,10 @@ function CalculationResult({
           className="flex items-center justify-between w-full text-xs active:opacity-70 transition-opacity"
         >
           <div className="flex items-center gap-1.5">
-            <span className="text-[11px] text-gray-400">입금계좌</span>
-            <span className="font-medium text-gray-600">국민 005701-04-142344 ㈜에이시지알</span>
+            <span className="text-[11px] text-slate-400">입금계좌</span>
+            <span className="font-medium text-slate-600">국민 005701-04-142344 ㈜에이시지알</span>
           </div>
-          <Copy className="w-3.5 h-3.5 text-gray-400" />
+          <Copy className="w-3.5 h-3.5 text-slate-400" />
         </button>
       </div>
 

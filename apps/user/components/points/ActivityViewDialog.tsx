@@ -182,16 +182,16 @@ export function ActivityViewDialog({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-lg flex flex-col">
-        <SheetHeader className="space-y-3 pb-4 border-b border-gray-100">
+        <SheetHeader className="space-y-3 pb-4 border-b border-slate-100">
           <SheetTitle className="text-lg font-bold">활동비 현황</SheetTitle>
 
           {/* 기간 & 요약 */}
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-slate-700">
               {selectedYear}년 {currentHalfYear}
             </span>
             {!isLoading && filteredSummaries.length > 0 && (
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-slate-400">
                 총 {totalUsed.toLocaleString()} / {totalBudget.toLocaleString()}
                 원 사용
               </span>
@@ -212,7 +212,7 @@ export function ActivityViewDialog({
                 {[1, 2, 3].map((i) => (
                   <div
                     key={i}
-                    className="rounded-xl bg-white border border-gray-100 p-4 space-y-3"
+                    className="rounded-xl bg-white border border-slate-100 p-4 space-y-3"
                   >
                     <div className="flex items-center justify-between">
                       <Skeleton className="h-5 w-20" />
@@ -227,7 +227,7 @@ export function ActivityViewDialog({
                 ))}
               </div>
             ) : filteredSummaries.length === 0 ? (
-              <div className="text-center py-12 text-gray-400">
+              <div className="text-center py-12 text-slate-400">
                 <Receipt className="w-8 h-8 mx-auto mb-3 opacity-40" />
                 <p className="text-sm">활동비 데이터가 없습니다.</p>
               </div>
@@ -243,14 +243,14 @@ export function ActivityViewDialog({
 
                 {/* 월 선택 */}
                 <div className="flex items-center justify-between px-2">
-                  <span className="text-xs font-medium text-gray-500">
+                  <span className="text-xs font-medium text-slate-500">
                     사용 내역
                   </span>
                   <Select
                     value={selectedMonth}
                     onValueChange={setSelectedMonth}
                   >
-                    <SelectTrigger className="w-auto min-w-[90px] h-8 text-xs border-gray-200">
+                    <SelectTrigger className="w-auto min-w-[90px] h-8 text-xs border-slate-200">
                       <SelectValue placeholder="월 선택" />
                     </SelectTrigger>
                     <SelectContent>
@@ -288,7 +288,7 @@ export function ActivityViewDialog({
           </div>
         </ScrollArea>
 
-        <SheetFooter className="pt-3 border-t border-gray-100">
+        <SheetFooter className="pt-3 border-t border-slate-100">
           <SheetClose asChild>
             <Button variant="outline" className="w-full">
               닫기
@@ -408,7 +408,7 @@ function RaceTrack({
       </div>
 
       {/* 축 라벨 */}
-      <div className="flex justify-between px-4 py-1.5 bg-white/80 text-[10px] text-gray-400 font-medium">
+      <div className="flex justify-between px-4 py-1.5 bg-white/80 text-[10px] text-slate-400 font-medium">
         <span>0%</span>
         <span>25%</span>
         <span>50%</span>
@@ -453,7 +453,7 @@ function LegendRow({
 
   return (
     <div
-      className={`rounded-xl bg-white border overflow-hidden transition-all ${isHovered ? "shadow-sm" : "border-gray-100"}`}
+      className={`rounded-xl bg-white border overflow-hidden transition-all ${isHovered ? "shadow-sm" : "border-slate-100"}`}
       style={isHovered ? { borderColor: color } : undefined}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
@@ -470,7 +470,7 @@ function LegendRow({
 
         {/* 이름 + % */}
         <div className="flex-1 min-w-0 flex items-center gap-2">
-          <span className="text-sm font-semibold text-gray-900 truncate">
+          <span className="text-sm font-semibold text-slate-900 truncate">
             {summary.member_name}
           </span>
           <span
@@ -479,7 +479,7 @@ function LegendRow({
                 ? "text-red-600"
                 : summary.percent >= 80
                   ? "text-amber-600"
-                  : "text-gray-500"
+                  : "text-slate-500"
             }`}
           >
             {summary.percent}%
@@ -487,13 +487,13 @@ function LegendRow({
         </div>
 
         {/* 금액 */}
-        <span className="text-xs text-gray-400 shrink-0">
+        <span className="text-xs text-slate-400 shrink-0">
           {summary.used_amount.toLocaleString()} /{" "}
           {summary.total_amount.toLocaleString()}원
         </span>
 
         <ChevronDown
-          className={`w-4 h-4 text-gray-400 transition-transform duration-200 shrink-0 ${
+          className={`w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 ${
             isExpanded ? "rotate-180" : ""
           }`}
         />
@@ -509,7 +509,7 @@ function LegendRow({
             transition={{ duration: 0.2, ease: "easeInOut" }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4 pt-3 border-t border-gray-50">
+            <div className="px-4 pb-4 pt-3 border-t border-slate-50">
               {/* 사용 내역 리스트 */}
               {usageLoading ? (
                 <div className="space-y-2">
@@ -541,18 +541,18 @@ function LegendRow({
                     return (
                       <div
                         key={record.id}
-                        className="flex justify-between items-center p-2.5 rounded-lg bg-gray-50 text-xs"
+                        className="flex justify-between items-center p-2.5 rounded-lg bg-slate-50 text-xs"
                       >
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-800 truncate">
+                          <p className="font-medium text-slate-800 truncate">
                             {record.description}
                           </p>
-                          <p className="text-[11px] text-gray-400 mt-0.5">
+                          <p className="text-[11px] text-slate-400 mt-0.5">
                             {recordDate.month() + 1}/{recordDate.date()}(
                             {dayOfWeek})
                           </p>
                         </div>
-                        <span className="font-semibold text-gray-700 shrink-0 ml-3">
+                        <span className="font-semibold text-slate-700 shrink-0 ml-3">
                           {record.amount.toLocaleString()}원
                         </span>
                       </div>
@@ -560,7 +560,7 @@ function LegendRow({
                   })}
                 </div>
               ) : (
-                <div className="text-center py-6 text-gray-400">
+                <div className="text-center py-6 text-slate-400">
                   <p className="text-xs">이 달에 사용 내역이 없습니다.</p>
                 </div>
               )}

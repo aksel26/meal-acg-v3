@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-gradient-to-b from-white to-gray-50">
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-gradient-to-b from-white to-slate-50">
       <style>{`
         @keyframes wiggle {
           0%, 100% { transform: rotate(-6deg); }
@@ -21,12 +21,12 @@ export default function NotFound() {
           priority
         />
 
-        <p className="text-6xl font-extrabold text-gray-200 mb-2">404</p>
+        <p className="text-6xl font-extrabold text-slate-200 mb-2">404</p>
 
-        <h1 className="text-lg font-bold text-gray-800 mb-2">
+        <h1 className="text-lg font-bold text-slate-800 mb-2">
           앗, 여긴 어디지...?
         </h1>
-        <p className="text-sm text-gray-400 leading-relaxed mb-8">
+        <p className="text-sm text-slate-400 leading-relaxed mb-8">
           찾으시는 페이지가 밥 먹으러 간 것 같아요.
           <br />
           아래 버튼을 눌러 홈으로 돌아가 주세요!
@@ -34,7 +34,7 @@ export default function NotFound() {
 
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white bg-gray-800 hover:bg-gray-700 active:scale-[0.97] transition-all shadow-md"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white bg-slate-800 hover:bg-slate-700 active:scale-[0.97] transition-all shadow-md"
         >
           홈으로 돌아가기
         </Link>

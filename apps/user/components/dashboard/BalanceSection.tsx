@@ -55,8 +55,8 @@ export default function BalanceSection({ currentMonth, calculationData }: Balanc
     >
       <div className="card-premium p-6 relative overflow-hidden">
         {/* Decorative Elements */}
-        <div className="absolute top-0 right-0 w-40 h-40 bg-[oklch(0.90_0.08_250/0.3)] rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-[oklch(0.92_0.06_200/0.25)] rounded-full blur-2xl translate-y-1/2 -translate-x-1/4" />
+        <div className="absolute top-0 right-0 w-40 h-40 bg-[oklch(0.90_0.04_250/0.3)] rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-[oklch(0.92_0.01_250/0.25)] rounded-full blur-2xl translate-y-1/2 -translate-x-1/4" />
 
         <div className="relative">
           {/* Header */}
@@ -100,7 +100,7 @@ export default function BalanceSection({ currentMonth, calculationData }: Balanc
               <Button
                 variant="ghost"
                 onClick={copyAccount}
-                className="h-9 px-3 text-xs font-medium text-[oklch(0.45_0.08_250)] hover:text-[oklch(0.35_0.10_250)] hover:bg-[oklch(0.95_0.03_250)] rounded-xl gap-1.5 transition-all"
+                className="h-9 px-3 text-xs font-medium text-[oklch(0.45_0.11_250)] hover:text-[oklch(0.35_0.11_250)] hover:bg-[oklch(0.95_0.03_250)] rounded-xl gap-1.5 transition-all"
               >
                 <Copy size={14} />
                 계좌번호 복사

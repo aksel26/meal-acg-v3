@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@repo/ui/src/button";
-import { X } from "@repo/ui/icons";
+import { X, Share, SquarePlus } from "@repo/ui/icons";
+import Image from "next/image";
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -100,30 +101,30 @@ export default function PWAInstallPrompt() {
     <div className="fixed top-4 left-4 right-4 z-50 animate-in fade-in-0 slide-in-from-top-8 duration-700 ease-out">
       <div className="max-w-md mx-auto">
         {/* 카드 컨테이너 */}
-        <div className="bg-white/95 backdrop-blur-md border border-gray-200/50 rounded-2xl shadow-xl overflow-hidden animate-in zoom-in-95 duration-700 delay-100 ease-out">
+        <div className="bg-white/95 backdrop-blur-md border border-slate-200/50 rounded-2xl shadow-xl overflow-hidden animate-in zoom-in-95 duration-700 delay-100 ease-out">
           {/* 카드 헤더 */}
-          <div className="bg-gradient-to-r from-slate-50 to-gray-50 border-b border-gray-100/80 px-4 py-3 animate-in slide-in-from-left duration-700 delay-200 ease-out">
+          <div className="bg-gradient-to-r from-slate-50 to-slate-50 border-b border-slate-100/80 px-4 py-3 animate-in slide-in-from-left duration-700 delay-200 ease-out">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 {/* 앱 아이콘 */}
                 <div className="flex-shrink-0 w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center border border-blue-100/50 animate-in zoom-in-0 duration-500 delay-400 ease-out">
-                  <span className="text-lg">🍙</span>
+                  <Image src="/icons/onigiri.png" alt="ACG 식대관리" width={22} height={22} />
                 </div>
 
                 {/* 앱 정보 */}
                 <div className="animate-in slide-in-from-left duration-600 delay-300 ease-out">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-semibold text-gray-800">ACG 식대관리</h3>
+                    <h3 className="text-sm font-semibold text-slate-800">ACG 식대관리</h3>
                     <span className="px-2 py-0.5 text-xs font-medium bg-blue-50 text-blue-700 rounded-full border border-blue-100/50 animate-in fade-in-0 duration-500 delay-500 ease-out">앱</span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-0.5">식대 관리를 더욱 편리하게</p>
+                  <p className="text-xs text-slate-500 mt-0.5">식대 관리를 더욱 편리하게</p>
                 </div>
               </div>
 
               {/* 닫기 버튼 */}
               <button
                 onClick={handleDismiss}
-                className="flex-shrink-0 w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-lg transition-colors duration-200 text-gray-400 hover:text-gray-600 animate-in fade-in-0 duration-500 delay-600 ease-out"
+                className="flex-shrink-0 w-7 h-7 flex items-center justify-center hover:bg-slate-100 rounded-lg transition-colors duration-200 text-slate-400 hover:text-slate-600 animate-in fade-in-0 duration-500 delay-600 ease-out"
                 aria-label="닫기"
               >
                 <X size={16} />
@@ -136,7 +137,7 @@ export default function PWAInstallPrompt() {
             <div className="flex items-start justify-between gap-4">
               {/* 설명 텍스트 */}
               <div className="flex-1 animate-in fade-in-0 duration-600 delay-500 ease-out">
-                <p className="text-xs text-gray-600 leading-relaxed">
+                <p className="text-xs text-slate-600 leading-relaxed">
                   {isIOS ? "Safari에서 공유 버튼을 누르고 '홈 화면에 추가'를 선택하여 앱을 설치하세요" : "홈 화면에 추가하여 네이티브 앱처럼 빠르고 편리하게 이용하세요"}
                 </p>
               </div>
@@ -155,18 +156,18 @@ export default function PWAInstallPrompt() {
 
             {/* iOS 전용 안내 */}
             {isIOS && (
-              <div className="mt-3 pt-3 border-t border-gray-100 animate-in slide-in-from-bottom duration-500 delay-800 ease-out">
-                <div className="flex items-center gap-2 text-xs text-gray-500">
+              <div className="mt-3 pt-3 border-t border-slate-100 animate-in slide-in-from-bottom duration-500 delay-800 ease-out">
+                <div className="flex items-center gap-2 text-xs text-slate-500">
                   <div className="flex items-center gap-1 animate-in fade-in-0 duration-400 delay-900 ease-out">
-                    <span className="w-4 h-4 bg-blue-100 rounded flex items-center justify-center">
-                      <span className="text-xs">📤</span>
+                    <span className="w-4 h-4 bg-slate-100 rounded flex items-center justify-center">
+                      <Share className="h-3 w-3 text-slate-600" />
                     </span>
                     <span>공유</span>
                   </div>
                   <span className="animate-in fade-in-0 duration-300 delay-1000 ease-out">→</span>
                   <div className="flex items-center gap-1 animate-in fade-in-0 duration-400 delay-1100 ease-out">
-                    <span className="w-4 h-4 bg-green-100 rounded flex items-center justify-center">
-                      <span className="text-xs">➕</span>
+                    <span className="w-4 h-4 bg-slate-100 rounded flex items-center justify-center">
+                      <SquarePlus className="h-3 w-3 text-slate-600" />
                     </span>
                     <span>홈 화면에 추가</span>
                   </div>

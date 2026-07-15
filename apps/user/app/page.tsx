@@ -111,7 +111,7 @@ export default function HomePage() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.35, duration: 0.5 }}
-                className="mt-2 text-sm leading-relaxed text-neutral-400"
+                className="mt-2 text-sm leading-relaxed text-slate-400"
               >
                 인트라넷
               </motion.p>
@@ -130,7 +130,7 @@ export default function HomePage() {
                   className={`ml-0.5 text-xs font-medium transition-colors duration-200 ${
                     focusedField === "id"
                       ? "text-[#131313]"
-                      : "text-neutral-400"
+                      : "text-slate-400"
                   }`}
                 >
                   아이디
@@ -145,7 +145,7 @@ export default function HomePage() {
                   onBlur={() => setFocusedField(null)}
                   placeholder="사용자명을 입력하세요"
                   required
-                  className="h-12 rounded-lg border-neutral-200 bg-neutral-50/50 text-sm transition-all duration-200 placeholder:text-neutral-300 focus:border-[#131313] focus:bg-white focus:ring-1 focus:ring-[#131313]/10"
+                  className="h-12 rounded-lg border-slate-200 bg-slate-50/50 text-sm transition-all duration-200 placeholder:text-slate-300 focus:border-[#131313] focus:bg-white focus:ring-1 focus:ring-[#131313]/10"
                 />
               </motion.div>
 
@@ -160,7 +160,7 @@ export default function HomePage() {
                   className={`ml-0.5 text-xs font-medium transition-colors duration-200 ${
                     focusedField === "password"
                       ? "text-[#131313]"
-                      : "text-neutral-400"
+                      : "text-slate-400"
                   }`}
                 >
                   비밀번호
@@ -175,7 +175,7 @@ export default function HomePage() {
                   onBlur={() => setFocusedField(null)}
                   placeholder="비밀번호를 입력하세요"
                   required
-                  className="h-12 rounded-lg border-neutral-200 bg-neutral-50/50 text-sm transition-all duration-200 placeholder:text-neutral-300 focus:border-[#131313] focus:bg-white focus:ring-1 focus:ring-[#131313]/10"
+                  className="h-12 rounded-lg border-slate-200 bg-slate-50/50 text-sm transition-all duration-200 placeholder:text-slate-300 focus:border-[#131313] focus:bg-white focus:ring-1 focus:ring-[#131313]/10"
                 />
               </motion.div>
 
@@ -252,7 +252,7 @@ export default function HomePage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.8 }}
-              className="mt-10 text-center text-xs text-neutral-300"
+              className="mt-10 text-center text-xs text-slate-300"
             >
               &copy; {new Date().getFullYear()} ACG. All rights reserved.
             </motion.p>

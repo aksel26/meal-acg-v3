@@ -41,14 +41,14 @@ export function ReceiptScanner({ onScanComplete, className = "" }: ReceiptScanne
 
       {/* Idle state */}
       {status === "idle" && (
-        <div className="p-[1px] rounded-lg bg-gradient-to-r from-blue-100 via-purple-100 to-pink-100">
+        <div className="p-[1px] rounded-lg bg-slate-100">
           <div className="flex gap-2 p-3">
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={handleCameraClick}
-              className="flex-1 h-9 text-xs border-gray-200 hover:bg-gray-50"
+              className="flex-1 h-9 text-xs border-slate-200 hover:bg-slate-50"
             >
               촬영
             </Button>
@@ -57,7 +57,7 @@ export function ReceiptScanner({ onScanComplete, className = "" }: ReceiptScanne
               variant="outline"
               size="sm"
               onClick={handleGalleryClick}
-              className="flex-1 h-9 text-xs border-gray-200 hover:bg-gray-50"
+              className="flex-1 h-9 text-xs border-slate-200 hover:bg-slate-50"
             >
               갤러리
             </Button>
@@ -67,9 +67,9 @@ export function ReceiptScanner({ onScanComplete, className = "" }: ReceiptScanne
 
       {/* Processing state */}
       {status === "processing" && (
-        <div className="flex items-center justify-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-          <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-400 border-t-transparent"></div>
-          <span className="text-xs text-gray-600">영수증 분석 중...</span>
+        <div className="flex items-center justify-center gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
+          <div className="animate-spin rounded-full h-4 w-4 border-2 border-slate-400 border-t-transparent"></div>
+          <span className="text-xs text-slate-600">영수증 분석 중...</span>
         </div>
       )}
 

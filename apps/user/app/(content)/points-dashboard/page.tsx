@@ -77,8 +77,8 @@ export default function PointsDashboard() {
     <React.Fragment>
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-xl font-semibold text-gray-900">전체 포인트 현황</h1>
-        <p className="text-sm text-gray-500 mt-1">조직 전체 예산 사용 현황을 확인하세요</p>
+        <h1 className="text-xl font-semibold text-slate-900">전체 포인트 현황</h1>
+        <p className="text-sm text-slate-500 mt-1">조직 전체 예산 사용 현황을 확인하세요</p>
       </div>
 
       {/* Filters */}
@@ -106,29 +106,29 @@ export default function PointsDashboard() {
       <div className="grid grid-cols-2 gap-3 mb-6">
         <Card className="border-0 shadow-none bg-white">
           <CardContent className="p-4">
-            <p className="text-xs text-gray-500 mb-1">총 예산</p>
-            <p className="text-lg font-bold text-gray-900">{stats.totalBudget.toLocaleString()}원</p>
+            <p className="text-xs text-slate-500 mb-1">총 예산</p>
+            <p className="text-lg font-bold text-slate-900">{stats.totalBudget.toLocaleString()}원</p>
           </CardContent>
         </Card>
         <Card className="border-0 shadow-none bg-white">
           <CardContent className="p-4">
-            <p className="text-xs text-gray-500 mb-1">총 사용</p>
-            <p className="text-lg font-bold text-gray-900">{stats.totalUsed.toLocaleString()}원</p>
+            <p className="text-xs text-slate-500 mb-1">총 사용</p>
+            <p className="text-lg font-bold text-slate-900">{stats.totalUsed.toLocaleString()}원</p>
           </CardContent>
         </Card>
         <Card className="border-0 shadow-none bg-white">
           <CardContent className="p-4">
-            <p className="text-xs text-gray-500 mb-1">총 잔액</p>
-            <p className={`text-lg font-bold ${stats.totalRemaining < 0 ? "text-red-600" : "text-gray-900"}`}>
+            <p className="text-xs text-slate-500 mb-1">총 잔액</p>
+            <p className={`text-lg font-bold ${stats.totalRemaining < 0 ? "text-red-600" : "text-slate-900"}`}>
               {stats.totalRemaining.toLocaleString()}원
             </p>
           </CardContent>
         </Card>
         <Card className="border-0 shadow-none bg-white">
           <CardContent className="p-4">
-            <p className="text-xs text-gray-500 mb-1">사용률</p>
-            <p className="text-lg font-bold text-gray-900">{usageRate}%</p>
-            <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <p className="text-xs text-slate-500 mb-1">사용률</p>
+            <p className="text-lg font-bold text-slate-900">{usageRate}%</p>
+            <div className="mt-2 h-1.5 bg-slate-100 rounded-full overflow-hidden">
               <div
                 className="h-full bg-blue-500 rounded-full transition-all duration-300"
                 style={{ width: `${Math.min(usageRate, 100)}%` }}
@@ -140,15 +140,15 @@ export default function PointsDashboard() {
 
       {/* Team Breakdown */}
       <div className="space-y-4">
-        <h2 className="text-md font-semibold text-gray-900">팀별 현황</h2>
+        <h2 className="text-md font-semibold text-slate-900">팀별 현황</h2>
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
               <Card key={i} className="border-0 shadow-none bg-white">
                 <CardContent className="p-4">
                   <div className="animate-pulse space-y-3">
-                    <div className="bg-gray-200 rounded h-4 w-24"></div>
-                    <div className="bg-gray-200 rounded h-12 w-full"></div>
+                    <div className="bg-slate-200 rounded h-4 w-24"></div>
+                    <div className="bg-slate-200 rounded h-12 w-full"></div>
                   </div>
                 </CardContent>
               </Card>
@@ -157,7 +157,7 @@ export default function PointsDashboard() {
         ) : Object.keys(groupedByTeam).length === 0 ? (
           <Card className="border-0 shadow-none bg-white">
             <CardContent className="p-8 text-center">
-              <p className="text-gray-500 text-sm">해당 기간에 예산 데이터가 없습니다.</p>
+              <p className="text-slate-500 text-sm">해당 기간에 예산 데이터가 없습니다.</p>
             </CardContent>
           </Card>
         ) : (
@@ -165,7 +165,7 @@ export default function PointsDashboard() {
             <Card key={teamName} className="border-0 shadow-none bg-white">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-gray-900">{teamName}</h3>
+                  <h3 className="text-sm font-semibold text-slate-900">{teamName}</h3>
                   <Badge variant="outline" className="text-xs">{members.length}건</Badge>
                 </div>
                 <div className="space-y-2">
@@ -174,9 +174,9 @@ export default function PointsDashboard() {
                       ? Math.round((member.used_amount / member.total_amount) * 100)
                       : 0;
                     return (
-                      <div key={`${member.member_id}-${member.type}`} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                      <div key={`${member.member_id}-${member.type}`} className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-900">{member.member_name}</span>
+                          <span className="text-sm text-slate-900">{member.member_name}</span>
                           <Badge variant={member.type === "활동비" ? "secondary" : "outline"} className="text-[10px] px-1.5">
                             {member.type}
                           </Badge>
@@ -185,7 +185,7 @@ export default function PointsDashboard() {
                           <p className="text-sm font-medium">
                             {member.used_amount.toLocaleString()} / {member.total_amount.toLocaleString()}원
                           </p>
-                          <p className={`text-xs ${rate > 80 ? "text-red-500" : "text-gray-400"}`}>
+                          <p className={`text-xs ${rate > 80 ? "text-red-500" : "text-slate-400"}`}>
                             {rate}% 사용
                           </p>
                         </div>

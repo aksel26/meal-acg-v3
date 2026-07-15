@@ -155,5 +155,5 @@ export const NOTICES: Notice[] = [
 export const CATEGORY_COLORS: Record<Notice["category"], string> = {
   공지: "bg-blue-50 text-slate-600",
   일정: "bg-emerald-50 text-slate-600",
-  업데이트: "bg-violet-50 text-slate-600",
+  업데이트: "bg-blue-50 text-slate-600",
 };

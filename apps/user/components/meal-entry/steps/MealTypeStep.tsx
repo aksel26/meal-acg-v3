@@ -23,11 +23,11 @@ const mealTypeConfig = {
   },
   dinner: {
     label: "석식",
-    bgColor: "bg-violet-50",
-    activeColor: "bg-violet-100",
-    textColor: "text-violet-700",
-    borderColor: "border-violet-200",
-    hoverBorder: "hover:border-violet-300",
+    bgColor: "bg-blue-50",
+    activeColor: "bg-blue-100",
+    textColor: "text-blue-700",
+    borderColor: "border-blue-200",
+    hoverBorder: "hover:border-blue-300",
   },
 };
 
@@ -48,10 +48,10 @@ export function MealTypeStep() {
       className="space-y-4"
     >
       <div className="space-y-1">
-        <h3 className="text-lg font-semibold text-gray-900">
+        <h3 className="text-lg font-semibold text-slate-900">
           어떤 식사인가요?
         </h3>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-slate-500">
           기록할 식사 타입을 선택해주세요
         </p>
       </div>
@@ -72,7 +72,7 @@ export function MealTypeStep() {
               className={`relative flex flex-col items-center justify-center gap-2 py-5 px-4 rounded-2xl border-2 transition-all duration-200 ${
                 isSelected
                   ? `${config.activeColor} ${config.borderColor} ${config.textColor} shadow-sm`
-                  : `bg-white border-gray-100 text-gray-600 ${config.hoverBorder} hover:bg-gray-50`
+                  : `bg-white border-slate-100 text-slate-600 ${config.hoverBorder} hover:bg-slate-50`
               }`}
             >
               <span className="text-sm font-semibold">{config.label}</span>

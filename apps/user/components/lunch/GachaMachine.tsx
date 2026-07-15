@@ -103,7 +103,7 @@ const RotarySwitch = ({
   return (
     <div className="absolute -top-8 left-1/2 -translate-x-1/2 z-20">
       {/* 스위치 베이스 */}
-      <div className="w-12 h-12 bg-gradient-to-b from-stone-300 to-stone-400 rounded-full shadow-lg border-4 border-stone-200 flex items-center justify-center">
+      <div className="w-12 h-12 bg-gradient-to-b from-slate-300 to-slate-400 rounded-full shadow-lg border-4 border-slate-200 flex items-center justify-center">
         {/* 회전하는 스위치 핸들 */}
         <div
           ref={switchRef}
@@ -202,7 +202,7 @@ const RevealBall = ({
 
         {/* 결과 뱃지 */}
         <div ref={resultRef} className="absolute opacity-0">
-          <div className="bg-gradient-to-br from-stone-700 to-stone-800 text-white px-8 py-4 rounded-2xl shadow-2xl">
+          <div className="bg-gradient-to-br from-slate-700 to-slate-800 text-white px-8 py-4 rounded-2xl shadow-2xl">
             <span className="text-3xl font-bold">{result}조</span>
           </div>
         </div>
@@ -460,8 +460,8 @@ const GachaMachine = () => {
 
           {/* 출구 */}
           <div className="flex justify-center -mt-1 relative z-10">
-            <div className="w-16 h-8 bg-gradient-to-b from-stone-300 to-stone-400 rounded-b-xl relative shadow-inner">
-              <div className="absolute inset-x-2 top-1.5 h-3 bg-stone-500 rounded" />
+            <div className="w-16 h-8 bg-gradient-to-b from-slate-300 to-slate-400 rounded-b-xl relative shadow-inner">
+              <div className="absolute inset-x-2 top-1.5 h-3 bg-slate-500 rounded" />
             </div>
           </div>
 
@@ -471,7 +471,7 @@ const GachaMachine = () => {
               <button
                 onClick={handlePull}
                 disabled={assignMutation.isPending}
-                className="w-full py-3.5 rounded-2xl text-base font-bold text-white bg-gradient-to-r from-[oklch(0.65_0.20_250)] via-[oklch(0.60_0.22_280)] to-[oklch(0.65_0.18_310)] hover:from-[oklch(0.70_0.18_250)] hover:via-[oklch(0.65_0.20_280)] hover:to-[oklch(0.70_0.16_310)] active:scale-[0.98] transition-all shadow-lg disabled:from-stone-400 disabled:to-stone-500 disabled:cursor-not-allowed"
+                className="w-full py-3.5 rounded-2xl text-base font-bold text-white bg-gradient-to-r from-[oklch(0.65_0.20_250)] via-[oklch(0.60_0.22_280)] to-[oklch(0.65_0.18_310)] hover:from-[oklch(0.70_0.18_250)] hover:via-[oklch(0.65_0.20_280)] hover:to-[oklch(0.70_0.16_310)] active:scale-[0.98] transition-all shadow-lg disabled:from-slate-400 disabled:to-slate-500 disabled:cursor-not-allowed"
               >
                 {assignMutation.isPending ? "처리 중..." : "뽑기!"}
               </button>
@@ -484,7 +484,7 @@ const GachaMachine = () => {
             )}
 
             {(phase === "dropping" || phase === "revealing") && (
-              <div className="w-full py-3.5 rounded-2xl text-base font-bold text-purple-600 bg-purple-50 text-center border-2 border-purple-200 animate-pulse">
+              <div className="w-full py-3.5 rounded-2xl text-base font-bold text-blue-600 bg-blue-50 text-center border-2 border-blue-200 animate-pulse">
                 두근두근...
               </div>
             )}
@@ -492,7 +492,7 @@ const GachaMachine = () => {
             {phase === "result" && (
               <button
                 onClick={handleReset}
-                className="w-full py-3.5 rounded-2xl text-base font-medium text-stone-600 bg-stone-100 hover:bg-white transition-colors border-2 border-stone-300"
+                className="w-full py-3.5 rounded-2xl text-base font-medium text-slate-600 bg-slate-100 hover:bg-white transition-colors border-2 border-slate-300"
               >
                 다시 하기
               </button>
@@ -501,7 +501,7 @@ const GachaMachine = () => {
             {phase === "error" && (
               <button
                 onClick={handleReset}
-                className="w-full py-3.5 rounded-2xl text-base font-medium text-stone-600 bg-stone-100 hover:bg-white transition-colors border-2 border-stone-300"
+                className="w-full py-3.5 rounded-2xl text-base font-medium text-slate-600 bg-slate-100 hover:bg-white transition-colors border-2 border-slate-300"
               >
                 다시 시도
               </button>

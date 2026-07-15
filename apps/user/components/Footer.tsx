@@ -22,7 +22,7 @@ export function Footer({ className = "" }: FooterProps) {
       <div className="card-premium mx-0 rounded-2xl overflow-hidden">
         <div className="p-6 space-y-5 relative">
           {/* Decorative gradient */}
-          <div className="absolute top-0 right-0 w-32 h-32 bg-[oklch(0.92_0.05_250/0.3)] rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[oklch(0.92_0.04_250/0.3)] rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
 
           {/* App Info */}
           <div className="text-center relative">

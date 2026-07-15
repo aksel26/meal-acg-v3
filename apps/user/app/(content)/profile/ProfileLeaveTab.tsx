@@ -14,7 +14,7 @@ import { useLeaveBalances } from "@/hooks/use-leave-balances";
 
 const LEAVE_TYPE_COLORS: Record<string, string> = {
   "지각/조퇴": "bg-orange-50 text-orange-700",
-  반차: "bg-violet-50 text-violet-700",
+  반차: "bg-blue-50 text-blue-700",
   연차: "bg-amber-50 text-amber-700",
   대체휴무: "bg-blue-50 text-blue-700",
   경조휴무: "bg-rose-50 text-rose-700",

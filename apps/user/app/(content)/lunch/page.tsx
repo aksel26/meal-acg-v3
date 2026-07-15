@@ -26,11 +26,11 @@ const WeeklySchedule = dynamic(
     ssr: false,
     loading: () => (
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-gray-50 rounded-xl p-3">
+        <div className="bg-slate-50 rounded-xl p-3">
           <div className="w-12 h-3 skeleton rounded mb-2"></div>
           <div className="w-16 h-3 skeleton rounded"></div>
         </div>
-        <div className="bg-gray-50 rounded-xl p-3">
+        <div className="bg-slate-50 rounded-xl p-3">
           <div className="w-12 h-3 skeleton rounded mb-2"></div>
           <div className="w-16 h-3 skeleton rounded"></div>
         </div>
@@ -111,18 +111,18 @@ const Lunch = () => {
         className="card-premium rounded-2xl mb-4 overflow-hidden"
       >
         {/* 상단 헤더 */}
-        <div className="px-5 py-4 border-b border-gray-50">
+        <div className="px-5 py-4 border-b border-slate-50">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-lg font-semibold text-gray-900">
+              <h1 className="text-lg font-semibold text-slate-900">
                 점심조 편성
               </h1>
               {isLoading ? (
-                <p className="text-xs text-gray-400 mt-0.5">로딩 중...</p>
+                <p className="text-xs text-slate-400 mt-0.5">로딩 중...</p>
               ) : error ? (
                 <p className="text-xs text-red-500 mt-0.5">데이터 로딩 실패</p>
               ) : (
-                <p className="text-xs text-gray-500 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5">
                   총 {validGroupCount}개 조 ·{" "}
                   {lunchGroupData?.totalMembers || "0"}명
                 </p>
@@ -151,22 +151,22 @@ const Lunch = () => {
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-72 p-0" align="end">
-                  <div className="p-4 border-b border-gray-100">
-                    <h4 className="font-medium text-sm text-gray-900">
+                  <div className="p-4 border-b border-slate-100">
+                    <h4 className="font-medium text-sm text-slate-900">
                       미추첨 인원
                     </h4>
-                    <p className="text-xs text-gray-500 mt-0.5">
+                    <p className="text-xs text-slate-500 mt-0.5">
                       아직 점심조에 배정되지 않은 인원
                     </p>
                   </div>
 
                   <div className="p-3 max-h-52 overflow-y-auto">
                     {usersLoading ? (
-                      <p className="text-sm text-gray-400 text-center py-4">
+                      <p className="text-sm text-slate-400 text-center py-4">
                         로딩 중...
                       </p>
                     ) : unassignedMembers.length === 0 ? (
-                      <p className="text-sm text-gray-500 text-center py-4">
+                      <p className="text-sm text-slate-500 text-center py-4">
                         모든 인원이 배정됨
                       </p>
                     ) : (
@@ -174,12 +174,12 @@ const Lunch = () => {
                         {unassignedMembers.map((member, index) => (
                           <div
                             key={`unassigned-${index}`}
-                            className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg"
+                            className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg"
                           >
-                            <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-600">
+                            <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-xs font-medium text-slate-600">
                               {member.charAt(0)}
                             </div>
-                            <span className="text-xs text-gray-700 truncate">
+                            <span className="text-xs text-slate-700 truncate">
                               {member}
                             </span>
                           </div>
@@ -188,8 +188,8 @@ const Lunch = () => {
                     )}
                   </div>
 
-                  <div className="px-4 py-3 bg-gray-50 border-t border-gray-100">
-                    <p className="text-xs text-gray-400 text-center">
+                  <div className="px-4 py-3 bg-slate-50 border-t border-slate-100">
+                    <p className="text-xs text-slate-400 text-center">
                       총 {unassignedMembers.length}명 미배정
                     </p>
                   </div>
@@ -203,14 +203,14 @@ const Lunch = () => {
         <div className="px-5 py-4">
           <div className="flex gap-8 mb-4">
             <div>
-              <p className="text-[11px] text-gray-400 mb-0.5">시작일</p>
-              <p className="text-sm font-medium text-gray-800">
+              <p className="text-[11px] text-slate-400 mb-0.5">시작일</p>
+              <p className="text-sm font-medium text-slate-800">
                 {lunchGroupData?.prevDate || "-"}
               </p>
             </div>
             <div>
-              <p className="text-[11px] text-gray-400 mb-0.5">다음 뽑기</p>
-              <p className="text-sm font-medium text-gray-800">
+              <p className="text-[11px] text-slate-400 mb-0.5">다음 뽑기</p>
+              <p className="text-sm font-medium text-slate-800">
                 {lunchGroupData?.nextDate || "-"}
               </p>
             </div>
@@ -230,8 +230,8 @@ const Lunch = () => {
         <button
           className={`w-full mb-4 py-3.5 rounded-xl text-sm font-semibold transition-all ${
             isExcluded
-              ? "text-gray-400 bg-gray-100 cursor-not-allowed"
-              : "text-white bg-gradient-to-r from-purple-400 via-pink-400 to-orange-300 hover:from-purple-500 hover:via-pink-500 hover:to-orange-400"
+              ? "text-slate-400 bg-slate-100 cursor-not-allowed"
+              : "text-white bg-slate-900 hover:bg-slate-800 active:scale-[0.98]"
           }`}
           onClick={() => !isExcluded && setIsLotteryOpen(true)}
           disabled={isExcluded}
@@ -262,7 +262,7 @@ const Lunch = () => {
                   {Array.from({ length: 4 }, (_, i) => (
                     <div
                       key={i}
-                      className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg"
+                      className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg"
                     >
                       <div className="skeleton w-6 h-6 rounded-full" />
                       <div className="skeleton h-4 w-14 rounded" />
@@ -277,7 +277,7 @@ const Lunch = () => {
             <p className="text-sm text-red-500 mb-1">
               데이터를 불러오는데 실패했습니다
             </p>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-slate-400">
               {error?.message || "알 수 없는 오류"}
             </p>
           </div>
@@ -292,11 +292,11 @@ const Lunch = () => {
       {/* 점심조 뽑기 다이얼로그 */}
       <Dialog open={isLotteryOpen} onOpenChange={setIsLotteryOpen}>
         <DialogContent className="max-w-sm w-[90vw] p-0 rounded-2xl overflow-hidden">
-          <DialogHeader className="px-6 py-5 border-b border-gray-100">
-            <DialogTitle className="text-base font-semibold text-gray-900">
+          <DialogHeader className="px-6 py-5 border-b border-slate-100">
+            <DialogTitle className="text-base font-semibold text-slate-900">
               점심조 뽑기
             </DialogTitle>
-            <DialogDescription className="text-sm text-gray-500">
+            <DialogDescription className="text-sm text-slate-500">
               스크래치 카드를 긁어서 배정된 조를 확인하세요
             </DialogDescription>
           </DialogHeader>
@@ -305,7 +305,7 @@ const Lunch = () => {
             <ScratchLottery />
           </div>
 
-          <DialogFooter className="px-6 py-4 border-t border-gray-100 bg-gray-50">
+          <DialogFooter className="px-6 py-4 border-t border-slate-100 bg-slate-50">
             <Button
               variant="outline"
               onClick={() => setIsLotteryOpen(false)}

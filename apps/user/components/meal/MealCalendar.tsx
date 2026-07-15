@@ -55,7 +55,9 @@ function resolveMarker(meal: MealData | undefined): MarkerType | null {
 
 function DayMarker({ type }: { type: MarkerType }) {
   if (type === "off") {
-    return <span className="text-[11px] leading-none">🌴</span>;
+    return (
+      <span className="text-[9px] font-semibold leading-none text-emerald-600">휴</span>
+    );
   }
   if (type === "individual") {
     return (
@@ -148,7 +150,7 @@ export default function MealCalendar({
   const todayStr = dayjs().format("YYYY-MM-DD");
 
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-4">
+    <div className="rounded-2xl border border-slate-100 bg-white p-4">
       {/* 헤더 */}
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-baseline gap-2.5">
@@ -163,7 +165,7 @@ export default function MealCalendar({
             type="button"
             onClick={onPrevMonth}
             aria-label="이전 달"
-            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-gray-50 text-slate-500 transition-colors hover:bg-gray-100 hover:text-slate-700"
+            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-slate-50 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -171,7 +173,7 @@ export default function MealCalendar({
             type="button"
             onClick={onNextMonth}
             aria-label="다음 달"
-            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-gray-50 text-slate-500 transition-colors hover:bg-gray-100 hover:text-slate-700"
+            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-slate-50 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
@@ -217,7 +219,7 @@ export default function MealCalendar({
               className={`group flex min-h-[58px] flex-col items-center justify-center gap-0.5 rounded-lg px-0.5 py-1.5 transition-colors ${
                 !day.isCurrentMonth
                   ? "cursor-default opacity-0"
-                  : "cursor-pointer hover:bg-gray-50"
+                  : "cursor-pointer hover:bg-slate-50"
               } ${isSelected ? "bg-[#f5f3ef]" : ""}`}
             >
               <span

@@ -263,15 +263,25 @@ export default function BudgetPage() {
     );
     const pncTeamId = pncLeader?.team_id;
 
-    // 전체 팀원급+인턴 인원 수 (특이사항 인원 제외, 팀 배정된 멤버만)
-    const pncExtraCount = pncTeamId
+    // 고충상담비 대상: 전체 팀원(팀장 제외, 특이사항 제외, 팀 배정된 멤버만)은 전액,
+    // 인턴은 개월수 비례(50,000/6×개월)
+    const pncExtraStaffCount = pncTeamId
       ? budgetMembers.filter(
           (m) =>
-            (m.member_role === "팀원" || m.member_role === "인턴") &&
+            m.member_role === "팀원" &&
             m.team_id &&
             !statusMemberIds.has(m.id),
         ).length
       : 0;
+    const pncExtraInterns = pncTeamId
+      ? budgetMembers.filter(
+          (m) =>
+            m.member_role === "인턴" &&
+            m.team_id &&
+            !statusMemberIds.has(m.id),
+        )
+      : [];
+    const pncExtraCount = pncExtraStaffCount + pncExtraInterns.length;
 
     return leaderMembers.map((leader) => {
       const memberCount = leader.team_id
@@ -294,17 +304,30 @@ export default function BudgetPage() {
         amount = memberCount * leaderRate;
         basis = `${formatCurrency(leaderRate)}원 × ${memberCount}명`;
       } else if (isPnC) {
-        amount = memberCount * managerRate + pncExtraCount * pncExtraRate;
+        const pncInternAmount = pncExtraInterns.reduce((sum, intern) => {
+          const months = intern.intern_months || 1;
+          return sum + Math.round((pncExtraRate / 6) * months);
+        }, 0);
+        amount =
+          memberCount * managerRate +
+          pncExtraStaffCount * pncExtraRate +
+          pncInternAmount;
         const parts: string[] = [];
         parts.push(`본인 ${formatCurrency(managerRate)}`);
         if (memberCount > 1) {
           parts.push(`${formatCurrency(managerRate)} × ${memberCount - 1}명`);
         }
-        if (pncExtraCount > 0) {
+        if (pncExtraStaffCount > 0) {
           parts.push(
-            `${formatCurrency(pncExtraRate)} × ${pncExtraCount}명 (팀원+인턴)`,
+            `${formatCurrency(pncExtraRate)} × ${pncExtraStaffCount}명 (팀원)`,
           );
         }
+        pncExtraInterns.forEach((intern) => {
+          const months = intern.intern_months || 1;
+          parts.push(
+            `인턴 ${intern.full_name} ${formatCurrency(pncExtraRate)}/6×${months}개월`,
+          );
+        });
         basis = parts.join(" + ");
       } else {
         amount = memberCount * managerRate;
@@ -483,6 +506,7 @@ export default function BudgetPage() {
       type: "활동비",
       period,
       total_amount: statusMemberIds.has(p.id) ? 0 : p.amount,
+      description: statusMemberIds.has(p.id) ? undefined : p.basis,
     }));
 
     bulkUpsert.mutate(

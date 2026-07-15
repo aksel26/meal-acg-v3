@@ -9,6 +9,24 @@ function toHalfYearPeriod(monthlyPeriod: string): string {
   return `${parts[0]}-${half}`;
 }
 
+// 사용날짜(used_at)가 속한 반기의 예산 할당 조회
+async function findAllocationByUsedAt(
+  supabase: NonNullable<ReturnType<typeof createServiceClient>>,
+  memberId: string,
+  type: "복지포인트" | "활동비",
+  usedAt: string
+) {
+  const period = toHalfYearPeriod(usedAt);
+  const { data, error } = await supabase
+    .from("budget_allocations")
+    .select("id")
+    .eq("member_id", memberId)
+    .eq("type", type)
+    .eq("period", period)
+    .maybeSingle();
+  return { allocation: data, period, error };
+}
+
 /**
  * 활동비 권한 확인: 팀장 또는 본부장만 허용
  * 팀원은 403 반환
@@ -200,24 +218,29 @@ export async function POST(request: NextRequest) {
       return permission.error!;
     }
 
-    // allocation이 본인 소유인지 검증 (남의 예산에 청구 차단)
-    const { data: allocation } = await supabase
-      .from("budget_allocations")
-      .select("member_id")
-      .eq("id", allocation_id)
-      .single();
+    // 사용날짜가 속한 반기의 본인 예산에서 차감되도록 allocation을 서버에서 결정
+    const { allocation, period, error: allocationError } =
+      await findAllocationByUsedAt(supabase, member_id, "활동비", used_at);
 
-    if (!allocation || allocation.member_id !== member_id) {
+    if (allocationError) {
+      console.error("예산 할당 조회 오류:", allocationError);
       return NextResponse.json(
-        { error: "본인 예산에만 사용내역을 등록할 수 있습니다." },
-        { status: 403 }
+        { error: "예산 할당 조회에 실패했습니다." },
+        { status: 500 }
+      );
+    }
+
+    if (!allocation) {
+      return NextResponse.json(
+        { error: `${period} 기간의 활동비 예산 할당이 없습니다.` },
+        { status: 400 }
       );
     }
 
     const { data, error } = await supabase
       .from("usage_records")
       .insert({
-        allocation_id,
+        allocation_id: allocation.id,
         member_id,
         type: "활동비" as const,
         amount,
@@ -317,7 +340,30 @@ export async function PUT(request: NextRequest) {
     const updateData: Record<string, unknown> = {};
     if (amount !== undefined) updateData.amount = amount;
     if (description !== undefined) updateData.description = description;
-    if (used_at !== undefined) updateData.used_at = used_at;
+    if (used_at !== undefined) {
+      updateData.used_at = used_at;
+
+      // 사용날짜 변경 시 해당 반기 예산으로 재연결
+      const { allocation, period, error: allocationError } =
+        await findAllocationByUsedAt(supabase, member_id, "활동비", used_at);
+
+      if (allocationError) {
+        console.error("예산 할당 조회 오류:", allocationError);
+        return NextResponse.json(
+          { error: "예산 할당 조회에 실패했습니다." },
+          { status: 500 }
+        );
+      }
+
+      if (!allocation) {
+        return NextResponse.json(
+          { error: `${period} 기간의 활동비 예산 할당이 없습니다.` },
+          { status: 400 }
+        );
+      }
+
+      updateData.allocation_id = allocation.id;
+    }
     if (companions !== undefined) updateData.companions = companions;
     if (co_payers !== undefined) updateData.co_payers = co_payers;
     if (receipt_url !== undefined) updateData.receipt_url = receipt_url;

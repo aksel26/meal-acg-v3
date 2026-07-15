@@ -74,6 +74,7 @@ import {
   useDeleteUsageRecords,
 } from "@/hooks/useUsageRecordMutations";
 import { useAuditLogs } from "@/hooks/useAuditLogs";
+import { useActiveStatusMembers } from "@/hooks/useActiveStatusMembers";
 
 // ── Types ──
 
@@ -831,13 +832,27 @@ function ReviewPageContent() {
     [amountOptionRecords],
   );
 
+  const { data: statusMembers } = useActiveStatusMembers();
+
+  const resignedMemberIds = useMemo(
+    () =>
+      new Set(
+        (statusMembers || [])
+          .filter((m) => m.current_status === "퇴사")
+          .map((m) => m.member_id),
+      ),
+    [statusMembers],
+  );
+
   const memberOptions = useMemo(
     () =>
-      (members || []).map((member) => ({
-        value: member.id,
-        label: member.full_name,
-      })),
-    [members],
+      (members || [])
+        .filter((member) => !resignedMemberIds.has(member.id))
+        .map((member) => ({
+          value: member.id,
+          label: member.full_name,
+        })),
+    [members, resignedMemberIds],
   );
 
   const typeOptions = useMemo(

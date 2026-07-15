@@ -128,6 +128,28 @@ export async function GET(request: NextRequest) {
       query = query.eq("allocation_id", allocationId);
     }
 
+    // 퇴사자 기록 제외
+    const { data: resignedMembers, error: resignedError } = await supabase
+      .from("member_current_status")
+      .select("member_id")
+      .eq("current_status", "퇴사");
+
+    if (resignedError) {
+      console.error("Error fetching resigned members:", resignedError);
+      return NextResponse.json(
+        { error: "Failed to fetch resigned members" },
+        { status: 500 },
+      );
+    }
+
+    const resignedIds = (resignedMembers || [])
+      .map((m) => m.member_id)
+      .filter((id): id is string => Boolean(id));
+
+    if (resignedIds.length > 0) {
+      query = query.not("member_id", "in", `(${resignedIds.join(",")})`);
+    }
+
     const { data, error } = await query
       .order("no", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false });

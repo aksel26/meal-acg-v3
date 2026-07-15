@@ -8,6 +8,24 @@ function toHalfYearPeriod(monthlyPeriod: string): string {
   return `${parts[0]}-${half}`;
 }
 
+// 사용날짜(used_at)가 속한 반기의 예산 할당 조회
+async function findAllocationByUsedAt(
+  supabase: NonNullable<ReturnType<typeof createServiceClient>>,
+  memberId: string,
+  type: "복지포인트" | "활동비",
+  usedAt: string
+) {
+  const period = toHalfYearPeriod(usedAt);
+  const { data, error } = await supabase
+    .from("budget_allocations")
+    .select("id")
+    .eq("member_id", memberId)
+    .eq("type", type)
+    .eq("period", period)
+    .maybeSingle();
+  return { allocation: data, period, error };
+}
+
 // GET: 복지포인트 데이터 조회
 export async function GET(request: NextRequest) {
   try {
@@ -136,10 +154,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 사용날짜가 속한 반기의 예산에서 차감되도록 allocation을 서버에서 결정
+    const { allocation, period, error: allocationError } =
+      await findAllocationByUsedAt(supabase, member_id, "복지포인트", used_at);
+
+    if (allocationError) {
+      console.error("예산 할당 조회 오류:", allocationError);
+      return NextResponse.json(
+        { error: "예산 할당 조회에 실패했습니다." },
+        { status: 500 }
+      );
+    }
+
+    if (!allocation) {
+      return NextResponse.json(
+        { error: `${period} 기간의 복지포인트 예산 할당이 없습니다.` },
+        { status: 400 }
+      );
+    }
+
     const { data, error } = await supabase
       .from("usage_records")
       .insert({
-        allocation_id,
+        allocation_id: allocation.id,
         member_id,
         type: "복지포인트" as const,
         amount,
@@ -196,7 +233,7 @@ export async function PUT(request: NextRequest) {
     // 검토 완료 여부 확인
     const { data: existing, error: fetchError } = await supabase
       .from("usage_records")
-      .select("id, is_reviewed, review_status")
+      .select("id, is_reviewed, review_status, member_id")
       .eq("id", id)
       .single();
 
@@ -218,7 +255,35 @@ export async function PUT(request: NextRequest) {
     const updateData: Record<string, unknown> = {};
     if (amount !== undefined) updateData.amount = amount;
     if (description !== undefined) updateData.description = description;
-    if (used_at !== undefined) updateData.used_at = used_at;
+    if (used_at !== undefined) {
+      updateData.used_at = used_at;
+
+      // 사용날짜 변경 시 해당 반기 예산으로 재연결
+      const { allocation, period, error: allocationError } =
+        await findAllocationByUsedAt(
+          supabase,
+          existing.member_id,
+          "복지포인트",
+          used_at
+        );
+
+      if (allocationError) {
+        console.error("예산 할당 조회 오류:", allocationError);
+        return NextResponse.json(
+          { error: "예산 할당 조회에 실패했습니다." },
+          { status: 500 }
+        );
+      }
+
+      if (!allocation) {
+        return NextResponse.json(
+          { error: `${period} 기간의 복지포인트 예산 할당이 없습니다.` },
+          { status: 400 }
+        );
+      }
+
+      updateData.allocation_id = allocation.id;
+    }
     if (companions !== undefined) updateData.companions = companions;
     if (co_payers !== undefined) updateData.co_payers = co_payers;
     if (receipt_url !== undefined) updateData.receipt_url = receipt_url;

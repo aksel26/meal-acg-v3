@@ -58,6 +58,7 @@ import {
   useDeleteUsageRecords,
 } from "@/hooks/useUsageRecordMutations";
 import { useAuditLogs } from "@/hooks/useAuditLogs";
+import { useActiveStatusMembers } from "@/hooks/useActiveStatusMembers";
 
 // ── Types ──
 
@@ -536,6 +537,24 @@ function ReviewPageContent() {
     return Array.isArray(recordsData) ? recordsData : recordsData.data || [];
   }, [recordsData]);
 
+  const { data: statusMembers } = useActiveStatusMembers();
+
+  const resignedMemberIds = useMemo(
+    () =>
+      new Set(
+        (statusMembers || [])
+          .filter((m) => m.current_status === "퇴사")
+          .map((m) => m.member_id),
+      ),
+    [statusMembers],
+  );
+
+  const activeMembers = useMemo(
+    () =>
+      (members || []).filter((member) => !resignedMemberIds.has(member.id)),
+    [members, resignedMemberIds],
+  );
+
   const auditLogs: AuditLog[] = useMemo(() => {
     if (!auditLogsData) return [];
     return Array.isArray(auditLogsData)
@@ -729,7 +748,7 @@ function ReviewPageContent() {
             </SelectContent>
           </Select>
           <SearchableDropdown
-            items={members || []}
+            items={activeMembers}
             value={memberFilter !== "전체" ? memberFilter : undefined}
             getItemKey={(m) => m.id}
             getItemLabel={(m) => m.full_name}

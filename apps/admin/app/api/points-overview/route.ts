@@ -50,6 +50,26 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // 퇴사자 제외 대상 조회
+    const { data: resignedMembers, error: resignedError } = await supabase
+      .from("member_current_status")
+      .select("member_id")
+      .eq("current_status", "퇴사");
+
+    if (resignedError) {
+      console.error("Error fetching resigned members:", resignedError);
+      return NextResponse.json(
+        { error: "Failed to fetch resigned members" },
+        { status: 500 },
+      );
+    }
+
+    const resignedMemberIds = new Set(
+      (resignedMembers || [])
+        .map((m) => m.member_id)
+        .filter((id): id is string => Boolean(id)),
+    );
+
     // 2) usage_records에서 월별 사용 금액 집계
     const { data: usageData, error: usageError } = await supabase
       .from("usage_records")
@@ -153,7 +173,11 @@ export async function GET(request: NextRequest) {
     }
 
     const members = Array.from(memberMap.values())
-      .filter((m) => !HIDDEN_MEMBER_NAMES.has(m.member_name))
+      .filter(
+        (m) =>
+          !HIDDEN_MEMBER_NAMES.has(m.member_name) &&
+          !resignedMemberIds.has(m.member_id),
+      )
       .sort((a, b) => {
         const roleOrder: Record<string, number> = { 대표: 0, 본부장: 1, 팀장: 2, 팀원: 3 };
         const ra = roleOrder[a.member_role] ?? 4;

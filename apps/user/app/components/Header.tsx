@@ -61,7 +61,7 @@ const PAGE_HEADERS: Record<string, { title: string; description: string }> = {
     description: "연도별 휴가 잔여와 사용 내역을 확인합니다.",
   },
   "/attendance-stats": {
-    title: "근태/통계",
+    title: "근태/연차 관리",
     description: "월별 근태 기록과 근속 통계를 확인합니다.",
   },
   "/overtime": {

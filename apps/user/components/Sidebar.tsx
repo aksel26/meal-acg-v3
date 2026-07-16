@@ -68,18 +68,8 @@ const menuGroups: MenuGroup[] = [
     icon: Clock,
     items: [
       {
-        id: "attendance",
-        label: "근태 관리",
-        href: "/attendance",
-      },
-      {
-        id: "leave",
-        label: "연차 관리",
-        href: "/leave",
-      },
-      {
         id: "attendance-stats",
-        label: "근태/통계",
+        label: "근태/연차 관리",
         href: "/attendance-stats",
       },
       {

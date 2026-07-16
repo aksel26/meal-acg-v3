@@ -46,10 +46,7 @@ export default function LeaveRequestPage() {
         if (Array.isArray(data)) {
           // 지각/조퇴 제외 (신청 대상이 아님)
           setLeaveTypes(
-            data.filter(
-              (t: LeaveType) =>
-                t.category !== "지각/조퇴"
-            )
+            data.filter((t: LeaveType) => t.category !== "지각/조퇴"),
           );
         }
       })
@@ -87,34 +84,26 @@ export default function LeaveRequestPage() {
       },
       {
         onSuccess: (data) => {
-          toast.success(
-            `휴가 신청이 완료되었습니다. (${data.dates_count}일)`
-          );
+          toast.success(`휴가 신청이 완료되었습니다. (${data.dates_count}일)`);
           router.push("/dashboard");
         },
         onError: (error: Error) => {
           toast.error(error.message);
         },
-      }
+      },
     );
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
+      <div>
         <button
           onClick={() => router.back()}
           className="rounded-xl p-2 transition-colors hover:bg-white/60"
+          aria-label="이전 페이지로 이동"
         >
           <ChevronLeft className="h-5 w-5 text-slate-600" />
         </button>
-        <div>
-          <h1 className="text-lg font-bold text-slate-900">휴가 신청</h1>
-          <p className="text-xs text-slate-500">
-            승인자에게 자동으로 요청이 전달됩니다.
-          </p>
-        </div>
       </div>
 
       {/* Form */}

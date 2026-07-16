@@ -2,7 +2,13 @@
 
 import { Badge } from "@repo/ui/src/badge";
 import { Card, CardContent } from "@repo/ui/src/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/src/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/src/select";
 import { Tabs, TabsList, TabsTrigger } from "@repo/ui/src/tabs";
 import React, { useState, useMemo, useEffect } from "react";
 import {
@@ -19,7 +25,9 @@ export default function PointsDashboard() {
   const currentMonth = currentDate.month() + 1;
   const isSecondHalf = currentMonth >= 7;
 
-  const [selectedPeriod, setSelectedPeriod] = useState<string>(currentDate.format("YYYY-MM"));
+  const [selectedPeriod, setSelectedPeriod] = useState<string>(
+    currentDate.format("YYYY-MM"),
+  );
   const [selectedType, setSelectedType] = useState<string>("all");
 
   const { userName, memberId, setMemberInfo } = useUserStore();
@@ -27,18 +35,29 @@ export default function PointsDashboard() {
 
   useEffect(() => {
     if (memberLookup && !memberId) {
-      setMemberInfo(memberLookup.id, memberLookup.member_role, memberLookup.hire_date);
+      setMemberInfo(
+        memberLookup.id,
+        memberLookup.member_role,
+        memberLookup.hire_date,
+      );
     }
   }, [memberLookup, memberId, setMemberInfo]);
 
   const currentMemberId = memberId || memberLookup?.id || null;
 
   const typeFilter = selectedType === "all" ? undefined : selectedType;
-  const { data: dashboardData, isLoading } = usePointsDashboard(currentMemberId, selectedPeriod, typeFilter);
+  const { data: dashboardData, isLoading } = usePointsDashboard(
+    currentMemberId,
+    selectedPeriod,
+    typeFilter,
+  );
 
   const months = Array.from({ length: 6 }, (_, i) => {
     const monthNum = isSecondHalf ? i + 7 : i + 1;
-    const date = dayjs().year(currentYear).month(monthNum - 1).date(1);
+    const date = dayjs()
+      .year(currentYear)
+      .month(monthNum - 1)
+      .date(1);
     return {
       value: date.format("YYYY-MM"),
       label: `${monthNum}월`,
@@ -47,13 +66,30 @@ export default function PointsDashboard() {
 
   // 전체 통계
   const stats = useMemo(() => {
-    if (!dashboardData?.length) return { totalBudget: 0, totalUsed: 0, totalRemaining: 0, memberCount: 0 };
+    if (!dashboardData?.length)
+      return {
+        totalBudget: 0,
+        totalUsed: 0,
+        totalRemaining: 0,
+        memberCount: 0,
+      };
 
-    const uniqueMembers = new Set(dashboardData.map((d: BudgetSummary) => d.member_id));
+    const uniqueMembers = new Set(
+      dashboardData.map((d: BudgetSummary) => d.member_id),
+    );
     return {
-      totalBudget: dashboardData.reduce((sum: number, d: BudgetSummary) => sum + d.total_amount, 0),
-      totalUsed: dashboardData.reduce((sum: number, d: BudgetSummary) => sum + d.used_amount, 0),
-      totalRemaining: dashboardData.reduce((sum: number, d: BudgetSummary) => sum + d.remaining_amount, 0),
+      totalBudget: dashboardData.reduce(
+        (sum: number, d: BudgetSummary) => sum + d.total_amount,
+        0,
+      ),
+      totalUsed: dashboardData.reduce(
+        (sum: number, d: BudgetSummary) => sum + d.used_amount,
+        0,
+      ),
+      totalRemaining: dashboardData.reduce(
+        (sum: number, d: BudgetSummary) => sum + d.remaining_amount,
+        0,
+      ),
       memberCount: uniqueMembers.size,
     };
   }, [dashboardData]);
@@ -71,23 +107,30 @@ export default function PointsDashboard() {
     return groups;
   }, [dashboardData]);
 
-  const usageRate = stats.totalBudget > 0 ? Math.round((stats.totalUsed / stats.totalBudget) * 100) : 0;
+  const usageRate =
+    stats.totalBudget > 0
+      ? Math.round((stats.totalUsed / stats.totalBudget) * 100)
+      : 0;
 
   return (
     <React.Fragment>
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold text-slate-900">전체 포인트 현황</h1>
-        <p className="text-sm text-slate-500 mt-1">조직 전체 예산 사용 현황을 확인하세요</p>
-      </div>
-
       {/* Filters */}
       <div className="flex gap-2 mb-6">
-        <Tabs defaultValue="all" className="flex-1" onValueChange={setSelectedType}>
+        <Tabs
+          defaultValue="all"
+          className="flex-1"
+          onValueChange={setSelectedType}
+        >
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="all" className="text-xs">전체</TabsTrigger>
-            <TabsTrigger value="복지포인트" className="text-xs">복지포인트</TabsTrigger>
-            <TabsTrigger value="활동비" className="text-xs">활동비</TabsTrigger>
+            <TabsTrigger value="all" className="text-xs">
+              전체
+            </TabsTrigger>
+            <TabsTrigger value="복지포인트" className="text-xs">
+              복지포인트
+            </TabsTrigger>
+            <TabsTrigger value="활동비" className="text-xs">
+              활동비
+            </TabsTrigger>
           </TabsList>
         </Tabs>
         <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
@@ -96,7 +139,9 @@ export default function PointsDashboard() {
           </SelectTrigger>
           <SelectContent>
             {months.map((m) => (
-              <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+              <SelectItem key={m.value} value={m.value}>
+                {m.label}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -107,19 +152,25 @@ export default function PointsDashboard() {
         <Card className="border-0 shadow-none bg-white">
           <CardContent className="p-4">
             <p className="text-xs text-slate-500 mb-1">총 예산</p>
-            <p className="text-lg font-bold text-slate-900">{stats.totalBudget.toLocaleString()}원</p>
+            <p className="text-lg font-bold text-slate-900">
+              {stats.totalBudget.toLocaleString()}원
+            </p>
           </CardContent>
         </Card>
         <Card className="border-0 shadow-none bg-white">
           <CardContent className="p-4">
             <p className="text-xs text-slate-500 mb-1">총 사용</p>
-            <p className="text-lg font-bold text-slate-900">{stats.totalUsed.toLocaleString()}원</p>
+            <p className="text-lg font-bold text-slate-900">
+              {stats.totalUsed.toLocaleString()}원
+            </p>
           </CardContent>
         </Card>
         <Card className="border-0 shadow-none bg-white">
           <CardContent className="p-4">
             <p className="text-xs text-slate-500 mb-1">총 잔액</p>
-            <p className={`text-lg font-bold ${stats.totalRemaining < 0 ? "text-red-600" : "text-slate-900"}`}>
+            <p
+              className={`text-lg font-bold ${stats.totalRemaining < 0 ? "text-red-600" : "text-slate-900"}`}
+            >
               {stats.totalRemaining.toLocaleString()}원
             </p>
           </CardContent>
@@ -157,7 +208,9 @@ export default function PointsDashboard() {
         ) : Object.keys(groupedByTeam).length === 0 ? (
           <Card className="border-0 shadow-none bg-white">
             <CardContent className="p-8 text-center">
-              <p className="text-slate-500 text-sm">해당 기간에 예산 데이터가 없습니다.</p>
+              <p className="text-slate-500 text-sm">
+                해당 기간에 예산 데이터가 없습니다.
+              </p>
             </CardContent>
           </Card>
         ) : (
@@ -165,27 +218,47 @@ export default function PointsDashboard() {
             <Card key={teamName} className="border-0 shadow-none bg-white">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-slate-900">{teamName}</h3>
-                  <Badge variant="outline" className="text-xs">{members.length}건</Badge>
+                  <h3 className="text-sm font-semibold text-slate-900">
+                    {teamName}
+                  </h3>
+                  <Badge variant="outline" className="text-xs">
+                    {members.length}건
+                  </Badge>
                 </div>
                 <div className="space-y-2">
                   {members.map((member) => {
-                    const rate = member.total_amount > 0
-                      ? Math.round((member.used_amount / member.total_amount) * 100)
-                      : 0;
+                    const rate =
+                      member.total_amount > 0
+                        ? Math.round(
+                            (member.used_amount / member.total_amount) * 100,
+                          )
+                        : 0;
                     return (
-                      <div key={`${member.member_id}-${member.type}`} className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
+                      <div
+                        key={`${member.member_id}-${member.type}`}
+                        className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0"
+                      >
                         <div className="flex items-center gap-2">
-                          <span className="text-sm text-slate-900">{member.member_name}</span>
-                          <Badge variant={member.type === "활동비" ? "secondary" : "outline"} className="text-[10px] px-1.5">
+                          <span className="text-sm text-slate-900">
+                            {member.member_name}
+                          </span>
+                          <Badge
+                            variant={
+                              member.type === "활동비" ? "secondary" : "outline"
+                            }
+                            className="text-[10px] px-1.5"
+                          >
                             {member.type}
                           </Badge>
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-medium">
-                            {member.used_amount.toLocaleString()} / {member.total_amount.toLocaleString()}원
+                            {member.used_amount.toLocaleString()} /{" "}
+                            {member.total_amount.toLocaleString()}원
                           </p>
-                          <p className={`text-xs ${rate > 80 ? "text-red-500" : "text-slate-400"}`}>
+                          <p
+                            className={`text-xs ${rate > 80 ? "text-red-500" : "text-slate-400"}`}
+                          >
                             {rate}% 사용
                           </p>
                         </div>
@@ -198,7 +271,6 @@ export default function PointsDashboard() {
           ))
         )}
       </div>
-
     </React.Fragment>
   );
 }

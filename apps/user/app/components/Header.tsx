@@ -1,12 +1,36 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import React from "react";
 import { useHeaderVisibility } from "@/hooks/useHeaderVisibility";
 import { SearchLauncher } from "@/components/search/SearchLauncher";
 import { motion } from "motion/react";
-import { Menu, Bell, Clock, Send, FileText, Users } from "lucide-react";
+import {
+  Menu,
+  Bell,
+  Clock,
+  Send,
+  FileText,
+  Users,
+  CalendarPlus,
+  UtensilsCrossed,
+  Wallet,
+  Coffee,
+  LogOut,
+} from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/src/popover";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@repo/ui/src/alert-dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui/src/tooltip";
 import { Button } from "@repo/ui/src/button";
 import { ScrollArea } from "@repo/ui/src/scroll-area";
 import { toast } from "@repo/ui/src/sonner";
@@ -23,27 +47,103 @@ import {
   type DayoffApprovalData,
   type WorkApplicationApprovalData,
 } from "@/hooks/use-approvals";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { formatDateKorean } from "utils";
 import dayjs from "dayjs";
 
-const PAGE_TITLES: Record<string, string> = {
-  "/attendance": "근태 관리",
-  "/meal": "식대",
-  "/points": "복지포인트",
-  "/points-dashboard": "활동비",
-  "/approvals": "결재/승인",
-  "/leave-request": "휴가 신청",
-  "/monthly": "월간 취합",
-  "/lunch": "점심 그룹",
-  "/notices": "공지/일정",
-  "/profile": "내 정보",
-  "/acg-life": "ACG 라이프",
-  "/lockers": "개인 사물함",
-  "/vehicles": "차량신청내역",
-  "/project-dashboard": "대시보드",
-  "/projects": "프로젝트",
-  "/requests": "업무 요청",
+const PAGE_HEADERS: Record<string, { title: string; description: string }> = {
+  "/attendance": {
+    title: "근태 관리",
+    description: "출퇴근 기록과 휴가/연차 신청 내역을 한 곳에서 확인합니다.",
+  },
+  "/leave": {
+    title: "연차 관리",
+    description: "연도별 휴가 잔여와 사용 내역을 확인합니다.",
+  },
+  "/attendance-stats": {
+    title: "근태/통계",
+    description: "월별 근태 기록과 근속 통계를 확인합니다.",
+  },
+  "/overtime": {
+    title: "시간외·주말근무",
+    description: "승인 후에도 출퇴근/식대/정산에는 자동 반영되지 않습니다.",
+  },
+  "/meal": {
+    title: "식대",
+    description: "월별 식대 사용 내역을 입력하고 확인합니다.",
+  },
+  "/points": {
+    title: "복지포인트",
+    description: "복지포인트와 활동비 사용 현황을 확인합니다.",
+  },
+  "/points-dashboard": {
+    title: "전체 포인트 현황",
+    description: "조직 전체 예산 사용 현황을 확인하세요.",
+  },
+  "/approvals": {
+    title: "결재/승인",
+    description: "받은 요청과 보낸 요청의 처리 상태를 확인합니다.",
+  },
+  "/leave-request": {
+    title: "휴가 신청",
+    description: "승인자에게 자동으로 요청이 전달됩니다.",
+  },
+  "/monthly": {
+    title: "음료 취합",
+    description: "참여할 취합을 선택하세요.",
+  },
+  "/lunch": {
+    title: "점심조 편성",
+    description: "점심조 배정 현황을 확인합니다.",
+  },
+  "/notices": {
+    title: "공지/일정",
+    description: "사내 공지사항과 일정을 확인합니다.",
+  },
+  "/profile": {
+    title: "내 정보",
+    description: "내 기본정보를 확인하고 수정합니다.",
+  },
+  "/acg-life": {
+    title: "ACG 라이프",
+    description: "온보딩, 회사 소개, 행사 자료와 사규를 확인합니다.",
+  },
+  "/room-booking": {
+    title: "회의실 예약",
+    description: "회의실 예약 현황을 확인하고 일정을 등록합니다.",
+  },
+  "/lockers": {
+    title: "개인 사물함",
+    description: "개인 사물함 배정 현황을 확인하고 신청합니다.",
+  },
+  "/assets": {
+    title: "물품관리대장",
+    description: "사내 물품의 보유와 대여 현황을 확인합니다.",
+  },
+  "/vehicles": {
+    title: "차량신청내역",
+    description: "사내 차량 이용 현황을 확인하고 신청합니다.",
+  },
+  "/library": {
+    title: "도서관",
+    description: "도서 대여 현황을 확인하고 신청합니다.",
+  },
+  "/evaluations": {
+    title: "다면평가",
+    description: "활성화된 회차를 확인하고 배정된 평가를 작성합니다.",
+  },
+  "/project-dashboard": {
+    title: "대시보드",
+    description: "업무 요청과 프로젝트 현황을 한 곳에서 확인합니다.",
+  },
+  "/projects": {
+    title: "프로젝트",
+    description: "참여 중인 프로젝트와 진행 현황을 확인합니다.",
+  },
+  "/requests": {
+    title: "전체 업무 요청",
+    description: "접근 가능한 모든 업무 요청을 확인합니다.",
+  },
 };
 
 const Header = () => {
@@ -53,21 +153,29 @@ const Header = () => {
   });
   const { open } = useSidebarStore();
   const userName = useUserStore((s) => s.userName);
+  const logout = useUserStore((s) => s.logout);
   const pathname = usePathname();
+  const router = useRouter();
+  const [logoutDialogOpen, setLogoutDialogOpen] = React.useState(false);
 
   const isDashboard = pathname === "/dashboard";
-  const pageTitle =
-    PAGE_TITLES[pathname] ||
-    Object.entries(PAGE_TITLES).find(([key]) =>
+  const pageHeader =
+    PAGE_HEADERS[pathname] ||
+    Object.entries(PAGE_HEADERS).find(([key]) =>
       pathname.startsWith(key + "/"),
-    )?.[1] ||
-    "";
+    )?.[1];
 
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return "좋은 아침이에요";
     if (hour < 18) return "안녕하세요";
     return "좋은 저녁이에요";
+  };
+
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" }).catch(() => null);
+    logout();
+    router.push("/");
   };
 
   return (
@@ -80,7 +188,7 @@ const Header = () => {
       }}
       className="sticky top-0 z-20 px-4 pt-3 md:px-8 md:pt-4"
     >
-      <div className="rounded-2xl bg-slate-50 md:bg-transparent px-4 py-3 flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 md:flex-nowrap md:bg-transparent">
         {/* 좌측: 햄버거(모바일) + 인사 or 페이지 제목 */}
         <div className="flex items-center gap-3">
           <button
@@ -114,31 +222,103 @@ const Header = () => {
               </p>
             </div>
           ) : (
-            <h1 className="text-lg font-semibold text-slate-800">
-              {pageTitle}
-            </h1>
+            <div>
+              <h1 className="text-lg font-semibold text-slate-800">
+                {pageHeader?.title}
+              </h1>
+              {pageHeader?.description && (
+                <p className="mt-0.5 text-xs text-slate-500">
+                  {pageHeader.description}
+                </p>
+              )}
+            </div>
           )}
         </div>
 
-        {/* 우측: 날짜 뱃지(대시보드만) + 알림 */}
+        {/* 우측: 빠른 메뉴 + 알림 + 검색 */}
         <div className="flex items-center gap-3">
-          {isDashboard && (
-            <div className="flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-slate-100 text-slate-700">
-              <span className="text-[10px] font-medium text-slate-500">
-                {new Date().toLocaleDateString("ko-KR", { weekday: "short" })}
-              </span>
-              <span className="text-lg font-bold -mt-0.5">
-                {new Date().getDate()}
-              </span>
-            </div>
-          )}
-          <SearchLauncher />
+          <HeaderShortcuts />
+          <div aria-hidden="true" className="h-6 w-px bg-slate-200" />
           <ApprovalBell />
+          <SearchLauncher />
+          <div aria-hidden="true" className="h-6 w-px bg-slate-200" />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => setLogoutDialogOpen(true)}
+                aria-label="로그아웃"
+                className="flex h-11 w-11 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/20"
+              >
+                <LogOut size={20} strokeWidth={1.5} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" sideOffset={8}>
+              로그아웃
+            </TooltipContent>
+          </Tooltip>
+          <AlertDialog
+            open={logoutDialogOpen}
+            onOpenChange={setLogoutDialogOpen}
+          >
+            <AlertDialogContent className="max-w-sm rounded-2xl">
+              <AlertDialogHeader>
+                <AlertDialogTitle>로그아웃하시겠어요?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  현재 계정에서 로그아웃하고 로그인 화면으로 이동합니다.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>취소</AlertDialogCancel>
+                <AlertDialogAction onClick={handleLogout}>
+                  로그아웃
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
     </motion.header>
   );
 };
+
+const headerShortcuts = [
+  { href: "/leave-request", label: "휴가 신청", icon: CalendarPlus },
+  { href: "/meal", label: "식대 입력", icon: UtensilsCrossed },
+  { href: "/points", label: "복지포인트", icon: Wallet },
+  { href: "/monthly", label: "Monthly 음료", icon: Coffee },
+];
+
+function HeaderShortcuts() {
+  return (
+    <nav aria-label="빠른 메뉴" className="flex gap-1">
+      {headerShortcuts.map(({ href, label, icon: Icon }, index) => (
+        <React.Fragment key={href}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                href={href}
+                aria-label={label}
+                className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/20 active:bg-slate-200"
+              >
+                <Icon size={19} strokeWidth={1.5} />
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" sideOffset={8}>
+              {label}
+            </TooltipContent>
+          </Tooltip>
+          {index === 0 && (
+            <div
+              aria-hidden="true"
+              className="mx-1 h-6 w-px self-center bg-slate-200"
+            />
+          )}
+        </React.Fragment>
+      ))}
+    </nav>
+  );
+}
 
 function ApprovalBell() {
   const { memberId } = useUserStore();

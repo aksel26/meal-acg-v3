@@ -15,11 +15,7 @@ import {
   DialogTitle,
 } from "@repo/ui/src/dialog";
 import { AllHistoryDialog } from "@/components/monthly/AllHistoryDialog";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@repo/ui/src/popover";
+import { Popover, PopoverTrigger, PopoverContent } from "@repo/ui/src/popover";
 import { DRINKS } from "@/lib/const/const";
 import { motion } from "motion/react";
 
@@ -48,16 +44,7 @@ function CollectionListView({
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       className="card-premium rounded-2xl pb-12"
     >
-      <header className="px-5 pt-10 pb-5">
-        <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-          음료 취합
-        </h1>
-        <p className="text-xs text-slate-400 mt-1">
-          참여할 취합을 선택하세요
-        </p>
-      </header>
-
-      <div className="px-5">
+      <div className="px-5 pt-5">
         {isLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 2 }).map((_, i) => (
@@ -134,8 +121,7 @@ function DrinkSelectionView({
   const [isAllHistoryDialogOpen, setIsAllHistoryDialogOpen] = useState(false);
 
   const { data, isLoading } = useMonthlyData(collection.id);
-  const { mutateAsync: assignDrink, isPending: isAssigning } =
-    useAssignDrink();
+  const { mutateAsync: assignDrink, isPending: isAssigning } = useAssignDrink();
 
   const drinkOptions = data?.drinkOptions || [];
   const pickupPersons = data?.pickupPersons || [];
@@ -165,9 +151,7 @@ function DrinkSelectionView({
     }
 
     const drinkValue =
-      selectedDrink === "기타"
-        ? customDrink.trim() || "기타"
-        : selectedDrink;
+      selectedDrink === "기타" ? customDrink.trim() || "기타" : selectedDrink;
 
     if (!drinkValue) {
       alert("음료를 선택해주세요.");
@@ -185,7 +169,7 @@ function DrinkSelectionView({
       setCustomDrink("");
     } catch (error) {
       alert(
-        `음료 선택 중 오류가 발생했습니다: ${error instanceof Error ? error.message : "알 수 없는 오류"}`
+        `음료 선택 중 오류가 발생했습니다: ${error instanceof Error ? error.message : "알 수 없는 오류"}`,
       );
     }
   };
@@ -265,7 +249,9 @@ function DrinkSelectionView({
                     trigger.click();
                   }}
                 >
-                  <p className="text-[11px] text-slate-400 font-medium">픽업담당</p>
+                  <p className="text-[11px] text-slate-400 font-medium">
+                    픽업담당
+                  </p>
                   {isLoading ? (
                     <p className="text-sm font-semibold text-slate-900 mt-1.5">
                       <span className="skeleton inline-block w-14 h-5" />
@@ -289,7 +275,9 @@ function DrinkSelectionView({
                   <span className="skeleton inline-block w-14 h-5" />
                 </p>
               ) : (
-                <p className="text-sm font-semibold text-slate-300 mt-1.5">미정</p>
+                <p className="text-sm font-semibold text-slate-300 mt-1.5">
+                  미정
+                </p>
               )}
             </div>
           )}
@@ -343,9 +331,7 @@ function DrinkSelectionView({
 
       {/* Drink Options */}
       <div className="px-5">
-        <p className="text-[11px] text-slate-400 font-medium mb-3">
-          음료 선택
-        </p>
+        <p className="text-[11px] text-slate-400 font-medium mb-3">음료 선택</p>
         <div className="space-y-2">
           {isLoading
             ? Array.from({ length: 6 }).map((_, index) => (
@@ -444,8 +430,7 @@ function DrinkSelectionView({
             <Button
               onClick={handleDrinkAssign}
               disabled={
-                isAssigning ||
-                (selectedDrink === "기타" && !customDrink.trim())
+                isAssigning || (selectedDrink === "기타" && !customDrink.trim())
               }
               className="flex-1 h-11 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl disabled:opacity-40"
             >
@@ -466,8 +451,7 @@ function DrinkSelectionView({
 
 // ─── 메인 페이지 ──────────────────────────────────────────────
 const MonthlyDrink = () => {
-  const { data: collections, isLoading: collectionsLoading } =
-    useCollections();
+  const { data: collections, isLoading: collectionsLoading } = useCollections();
   const [selectedCollection, setSelectedCollection] =
     useState<DrinkCollectionItem | null>(null);
 

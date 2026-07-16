@@ -2,19 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Clock,
-  AlarmClock,
-  UtensilsCrossed,
   Wallet,
-  UserPen,
-  Megaphone,
-  DoorOpen,
-  DoorClosed,
-  ClipboardCheck,
-  LogOut,
   X,
   Bell,
   BellOff,
@@ -22,11 +14,10 @@ import {
   ChevronRight,
   ExternalLink,
   FolderKanban,
-  Inbox,
-  LayoutDashboard,
-  PackageSearch,
-  CarFront,
-  BookOpen,
+  Ellipsis,
+  Heart,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import LOGO from "@/public/images/ACG_LOGO_GRAY.png";
@@ -39,6 +30,8 @@ import {
   getExistingSubscription,
 } from "@/lib/push-notifications";
 import { toast } from "@repo/ui/src/sonner";
+import { Skeleton } from "@repo/ui/src/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui/src/tooltip";
 import { useAttendance, useCheckIn, useCheckOut } from "@/hooks/use-attendance";
 import { getAttendanceStatusInfos } from "@/lib/attendance-status";
 import AttendanceConfirmDialog from "./dashboard/AttendanceConfirmDialog";
@@ -57,7 +50,6 @@ interface MenuItem {
   id: string;
   label: string;
   href: string;
-  icon: LucideIcon;
   badge?: string;
   external?: boolean;
 }
@@ -73,104 +65,107 @@ interface MenuGroup {
 const menuGroups: MenuGroup[] = [
   {
     label: "근태",
+    icon: Clock,
     items: [
       {
         id: "attendance",
         label: "근태 관리",
         href: "/attendance",
-        icon: Clock,
+      },
+      {
+        id: "leave",
+        label: "연차 관리",
+        href: "/leave",
+      },
+      {
+        id: "attendance-stats",
+        label: "근태/통계",
+        href: "/attendance-stats",
       },
       {
         id: "overtime",
         label: "시간외 근무 관리",
         href: "/overtime",
-        icon: AlarmClock,
       },
     ],
   },
   {
     label: "복지",
+    icon: Wallet,
     items: [
-      { id: "meals", label: "식대", href: "/meal", icon: UtensilsCrossed },
+      { id: "meals", label: "식대", href: "/meal" },
       {
         id: "points",
         label: "복지포인트/활동비",
         href: "/points",
-        icon: Wallet,
       },
     ],
   },
   {
     label: "기타",
+    icon: Ellipsis,
     items: [
-      { id: "profile", label: "내 정보", href: "/profile", icon: UserPen },
+      { id: "profile", label: "내 정보", href: "/profile" },
       {
         id: "notices",
         label: "공지/일정",
         href: "/notices",
-        icon: Megaphone,
         badge: "New",
       },
       {
         id: "room",
         label: "회의실 예약",
         href: "/room-booking",
-        icon: DoorOpen,
       },
       {
         id: "lockers",
         label: "개인 사물함",
         href: "/lockers",
-        icon: DoorClosed,
       },
       {
         id: "assets",
         label: "물품관리대장",
         href: "/assets",
-        icon: PackageSearch,
       },
       {
         id: "vehicles",
         label: "사내 차량",
         href: "/vehicles",
-        icon: CarFront,
       },
       {
         id: "library",
         label: "도서관",
         href: "/library",
-        icon: BookOpen,
       },
       {
         id: "evaluations",
         label: "다면평가",
         href: "/evaluations",
-        icon: ClipboardCheck,
       },
     ],
   },
   {
     label: "업무 / 프로젝트",
+    icon: FolderKanban,
     items: [
       {
         id: "project-dashboard",
         label: "대시보드",
         href: "/project-dashboard",
-        icon: LayoutDashboard,
       },
       {
         id: "projects",
         label: "프로젝트",
         href: "/projects",
-        icon: FolderKanban,
       },
-      { id: "requests", label: "업무 요청", href: "/requests", icon: Inbox },
+      { id: "requests", label: "업무 요청", href: "/requests" },
     ],
   },
   {
     label: "ACG 라이프",
     items: [],
     href: "/acg-life",
+    icon: Heart,
   },
   {
     label: "감독관/면접교육 운영",
@@ -242,7 +237,7 @@ export function AttendanceSection({
   className?: string;
 }) {
   const todayStr = dayjs().tz("Asia/Seoul").format("YYYY-MM-DD");
-  const { data: attendance } = useAttendance(memberId, todayStr);
+  const { data: attendance, isLoading } = useAttendance(memberId, todayStr);
   const checkInMutation = useCheckIn();
   const checkOutMutation = useCheckOut();
 
@@ -268,15 +263,17 @@ export function AttendanceSection({
   const attendanceType = attendance?.check_in_at
     ? attendance.attendance_type || "출근"
     : null;
+  const checkInStatus = attendance?.check_in_at
+    ? getAttendanceStatusInfos(attendance)[0]
+    : null;
+  const checkInStatusBadgeClass =
+    checkInStatus?.text === "지각"
+      ? "bg-rose-50 text-rose-600"
+      : checkInStatus?.text === "조기출근"
+        ? "bg-blue-50 text-blue-600"
+        : "bg-emerald-50 text-emerald-600";
   const attendanceStatusTime = attendance?.check_in_at
-    ? [
-        getAttendanceStatusInfos(attendance)
-          .map((status) => status.text)
-          .join(" · "),
-        formatTimeWithSeconds(attendance.check_in_at),
-      ]
-        .filter(Boolean)
-        .join(" ")
+    ? formatTimeWithSeconds(attendance.check_in_at)
     : null;
 
   useEffect(() => {
@@ -313,18 +310,43 @@ export function AttendanceSection({
     );
   };
 
+  if (!memberId || isLoading) {
+    return (
+      <div
+        className={className}
+        aria-busy="true"
+        aria-label="근태현황 불러오는 중"
+      >
+        <div className="mb-2 flex items-center justify-between px-1">
+          <Skeleton className="h-3 w-14" />
+          <Skeleton className="h-5 w-14 rounded-full" />
+        </div>
+        <Skeleton className="h-10 w-full rounded-lg" />
+      </div>
+    );
+  }
+
   return (
     <>
       <div className={className}>
         <div className="mb-2 flex items-center justify-between gap-2 px-1">
           <p className="text-[11px] font-medium uppercase tracking-widest text-slate-400">
-            출퇴근
+            근태현황
           </p>
-          <span
-            className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusBadge.className}`}
-          >
-            {statusBadge.label}
-          </span>
+          <div className="flex items-center gap-1.5">
+            {isWorking && checkInStatus && (
+              <span
+                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${checkInStatusBadgeClass}`}
+              >
+                {checkInStatus.text}
+              </span>
+            )}
+            <span
+              className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusBadge.className}`}
+            >
+              {statusBadge.label}
+            </span>
+          </div>
         </div>
         {!hasCheckedIn ? (
           <button
@@ -338,18 +360,6 @@ export function AttendanceSection({
           <div className="space-y-2">
             {elapsedTime && (
               <div className="rounded-lg bg-slate-50 px-3 py-2.5">
-                {attendanceType && (
-                  <div className="mb-2 flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
-                    <p className="truncate text-xs font-semibold text-[#131313]">
-                      {attendanceType}
-                    </p>
-                    {attendanceStatusTime && (
-                      <p className="shrink-0 text-[11px] font-medium tabular-nums text-slate-500">
-                        {attendanceStatusTime}
-                      </p>
-                    )}
-                  </div>
-                )}
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-[11px] font-medium text-slate-400">
                     출근 시간
@@ -440,7 +450,13 @@ export function AttendanceSection({
   );
 }
 
-function NavMenu() {
+function NavMenu({
+  iconOnly = false,
+  onExpand,
+}: {
+  iconOnly?: boolean;
+  onExpand?: () => void;
+}) {
   const pathname = usePathname();
   const { close } = useSidebarStore();
 
@@ -460,42 +476,119 @@ function NavMenu() {
     setCollapsed((prev) => ({ ...prev, [label]: !prev[label] }));
   }, []);
 
+  if (iconOnly) {
+    return (
+      <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-1">
+        {menuGroups.map((group) => {
+          const Icon = group.icon;
+          if (!Icon) return null;
+          const isActive = group.href
+            ? pathname === group.href || pathname.startsWith(`${group.href}/`)
+            : group.items.some(
+                (item) =>
+                  pathname === item.href ||
+                  pathname.startsWith(`${item.href}/`),
+              );
+          const className = `flex h-10 w-10 items-center justify-center rounded-lg transition-colors ${
+            isActive
+              ? "bg-[#111111] text-white"
+              : "text-slate-500 hover:bg-[#f3f3f3] hover:text-[#111111]"
+          }`;
+          const control = group.href ? (
+            group.external ? (
+              <a
+                href={group.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={close}
+                className={className}
+                aria-label={group.label}
+              >
+                <Icon size={18} strokeWidth={SIDEBAR_ICON_STROKE_WIDTH} />
+              </a>
+            ) : (
+              <Link
+                href={group.href}
+                onClick={close}
+                className={className}
+                aria-label={group.label}
+              >
+                <Icon size={18} strokeWidth={SIDEBAR_ICON_STROKE_WIDTH} />
+              </Link>
+            )
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setCollapsed((current) => ({
+                  ...current,
+                  [group.label]: false,
+                }));
+                onExpand?.();
+              }}
+              className={className}
+              aria-label={`${group.label} 메뉴 펼치기`}
+            >
+              <Icon size={18} strokeWidth={SIDEBAR_ICON_STROKE_WIDTH} />
+            </button>
+          );
+
+          return (
+            <Tooltip key={group.label}>
+              <TooltipTrigger asChild>{control}</TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8}>
+                {group.label}
+              </TooltipContent>
+            </Tooltip>
+          );
+        })}
+      </nav>
+    );
+  }
+
   return (
-    <nav className="flex-1 overflow-y-auto px-3">
+    <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-2">
       {menuGroups.map((group) => {
+        const Icon = group.icon;
         // 링크 그룹: 제목 자체가 링크 (외부 또는 내부)
         if (group.href) {
-          const Icon = group.icon;
           const isActive = pathname === group.href;
           return (
-            <div key={group.label} className="mb-4">
+            <div key={group.label}>
               {group.external ? (
                 <a
                   href={group.href}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={close}
-                  className="flex w-full items-center justify-between px-1 mb-1.5 group"
+                  className="group flex h-8 w-full items-center gap-2 rounded-md p-2"
                 >
-                  <p className="text-sm font-semibold text-slate-700">
-                    {group.label}
-                  </p>
                   {Icon && (
                     <Icon
-                      size={14}
+                      size={16}
                       strokeWidth={SIDEBAR_ICON_STROKE_WIDTH}
-                      className="text-slate-300 group-hover:text-slate-400"
+                      className="shrink-0 text-slate-500"
                     />
                   )}
+                  <p className="flex-1 text-left text-sm font-medium text-slate-700">
+                    {group.label}
+                  </p>
                 </a>
               ) : (
                 <Link
                   href={group.href}
                   onClick={close}
-                  className="flex w-full items-center justify-between px-1 mb-1.5 group"
+                  className="group flex h-8 w-full items-center gap-2 rounded-md p-2"
                 >
+                  {Icon && (
+                    <Icon
+                      size={16}
+                      strokeWidth={SIDEBAR_ICON_STROKE_WIDTH}
+                      className="shrink-0 text-slate-500"
+                    />
+                  )}
                   <p
-                    className={`text-sm font-semibold transition-colors duration-200 ${
+                    className={`flex-1 text-left text-sm font-medium transition-colors duration-200 ${
                       isActive
                         ? "text-[#111111]"
                         : "text-slate-700 group-hover:text-[#111111]"
@@ -516,12 +609,19 @@ function NavMenu() {
 
         const isCollapsed = collapsed[group.label];
         return (
-          <div key={group.label} className="mb-4">
+          <div key={group.label}>
             <button
               onClick={() => toggleGroup(group.label)}
-              className="flex w-full items-center justify-between px-1 mb-1.5 group"
+              className="group flex h-8 w-full items-center gap-2 rounded-md p-2"
             >
-              <p className="text-sm font-semibold text-slate-700">
+              {Icon && (
+                <Icon
+                  size={16}
+                  strokeWidth={SIDEBAR_ICON_STROKE_WIDTH}
+                  className="shrink-0 text-slate-500"
+                />
+              )}
+              <p className="flex-1 text-left text-sm font-medium text-slate-700">
                 {group.label}
               </p>
               <ChevronDown
@@ -533,12 +633,12 @@ function NavMenu() {
               />
             </button>
             {!isCollapsed && (
-              <div className="space-y-0.5">
+              <div className="mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-l border-slate-200 px-2.5 py-0.5">
                 {group.items.map((item) => {
                   const isActive =
                     pathname === item.href ||
                     pathname.startsWith(`${item.href}/`);
-                  const className = `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                  const className = `flex h-7 min-w-0 -translate-x-px items-center overflow-hidden rounded-md px-2 text-sm transition-colors ${
                     isActive
                       ? "bg-[#111111] font-medium text-white"
                       : "text-slate-500 hover:bg-[#f9f9fa] hover:text-[#111111]"
@@ -546,11 +646,6 @@ function NavMenu() {
 
                   const content = (
                     <>
-                      <item.icon
-                        size={18}
-                        strokeWidth={SIDEBAR_ICON_STROKE_WIDTH}
-                        className="shrink-0"
-                      />
                       <span className="flex-1 truncate">{item.label}</span>
                       {item.badge && (
                         <span className="rounded-full bg-rose-500 px-1.5 py-0.5 text-[9px] font-bold leading-none text-white">
@@ -593,7 +688,7 @@ function NavMenu() {
 
 // ─── Notification Toggle ───
 
-function NotificationToggle() {
+function NotificationToggle({ iconOnly = false }: { iconOnly?: boolean }) {
   const { userId } = useUserStore();
   const [status, setStatus] = useState<
     "loading" | "unsupported" | "denied" | "subscribed" | "unsubscribed"
@@ -660,17 +755,22 @@ function NotificationToggle() {
     <button
       onClick={handleToggle}
       disabled={isSubscribed || isDenied}
-      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-400 transition-colors hover:bg-[#f9f9fa] hover:text-slate-500 disabled:hover:bg-transparent disabled:hover:text-slate-400"
+      className={`flex w-full items-center rounded-lg py-2.5 text-sm text-slate-400 transition-colors hover:bg-[#f9f9fa] hover:text-slate-500 disabled:hover:bg-transparent disabled:hover:text-slate-400 ${
+        iconOnly ? "justify-center px-0" : "gap-3 px-3"
+      }`}
+      aria-label={
+        isSubscribed ? "알림 켜짐" : isDenied ? "알림 차단됨" : "알림 받기"
+      }
     >
       {isSubscribed ? (
         <Bell size={18} strokeWidth={SIDEBAR_ICON_STROKE_WIDTH} />
       ) : (
         <BellOff size={18} strokeWidth={SIDEBAR_ICON_STROKE_WIDTH} />
       )}
-      <span className="flex-1 text-left">
+      <span className={iconOnly ? "sr-only" : "flex-1 text-left"}>
         {isSubscribed ? "알림 켜짐" : isDenied ? "알림 차단됨" : "알림 받기"}
       </span>
-      {isSubscribed && (
+      {isSubscribed && !iconOnly && (
         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
       )}
     </button>
@@ -680,9 +780,8 @@ function NotificationToggle() {
 // ─── Main Sidebar ───
 
 export function Sidebar() {
-  const router = useRouter();
-  const { userName, memberId, memberRole, setMemberInfo, logout } =
-    useUserStore();
+  const { isCollapsed, toggleCollapsed } = useSidebarStore();
+  const { userName, memberId, memberRole, setMemberInfo } = useUserStore();
   const { data: memberLookup } = useMemberIdLookup(userName);
   const resolvedMemberId = memberLookup?.id ?? memberId;
 
@@ -699,45 +798,54 @@ export function Sidebar() {
     }
   }, [memberLookup, memberId, memberRole, setMemberInfo]);
 
-  const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" }).catch(() => null);
-    logout();
-    router.push("/");
-  };
-
   return (
-    <aside className="flex h-screen w-60 shrink-0 flex-col border-r border-[#f3f3f3] bg-white py-5 text-slate-900">
-      {/* Logo */}
-      <Link href="/dashboard" className="mb-5 flex items-center gap-2 px-5">
-        <Image
-          src={LOGO}
-          alt="ACG"
-          width={48}
-          height={48}
-          className="h-12 w-12 object-contain"
-        />
-        <p className="text-sm text-[#111111]">ACG 그룹웨어</p>
-      </Link>
+    <aside
+      className={`relative flex h-screen shrink-0 flex-col border-r border-[#f3f3f3] bg-white py-5 text-slate-900 transition-[width] duration-200 ${
+        isCollapsed ? "w-16" : "w-60"
+      }`}
+    >
+      {/* Header */}
+      <div
+        className={`mb-5 flex items-center ${isCollapsed ? "justify-center" : "px-5"}`}
+      >
+        <Link href="/dashboard" className="flex min-w-0 items-center gap-2">
+          <Image
+            src={LOGO}
+            alt="ACG"
+            width={48}
+            height={48}
+            className="h-10 w-10 shrink-0 object-contain"
+          />
+          {!isCollapsed && (
+            <p className="truncate text-sm text-[#111111]">ACG 그룹웨어</p>
+          )}
+        </Link>
+      </div>
+      <button
+        type="button"
+        onClick={toggleCollapsed}
+        aria-label={isCollapsed ? "사이드바 펼치기" : "사이드바 접기"}
+        className="absolute -right-3 top-8 z-10 flex h-6 w-6 items-center justify-center rounded-full border border-[#e5e7eb] bg-white text-slate-400 shadow-sm transition-colors hover:bg-[#f9f9fa] hover:text-slate-700"
+      >
+        {isCollapsed ? (
+          <PanelLeftOpen size={14} strokeWidth={SIDEBAR_ICON_STROKE_WIDTH} />
+        ) : (
+          <PanelLeftClose size={14} strokeWidth={SIDEBAR_ICON_STROKE_WIDTH} />
+        )}
+      </button>
 
       {/* User Info */}
-      <UserInfoCard />
+      {!isCollapsed && <UserInfoCard />}
 
       {/* Attendance */}
-      <AttendanceSection memberId={resolvedMemberId} />
+      {!isCollapsed && <AttendanceSection memberId={resolvedMemberId} />}
 
       {/* Navigation (scrollable) */}
-      <NavMenu />
+      <NavMenu iconOnly={isCollapsed} onExpand={toggleCollapsed} />
 
-      {/* Bottom actions */}
-      <div className="px-3 space-y-0.5 pt-2">
-        <NotificationToggle />
-        <button
-          onClick={handleLogout}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-400 transition-colors hover:bg-[#f9f9fa] hover:text-slate-500"
-        >
-          <LogOut size={18} strokeWidth={SIDEBAR_ICON_STROKE_WIDTH} />
-          로그아웃
-        </button>
+      {/* Footer */}
+      <div className={`${isCollapsed ? "px-2" : "px-3"} space-y-0.5 pt-2`}>
+        <NotificationToggle iconOnly={isCollapsed} />
       </div>
     </aside>
   );
@@ -746,10 +854,8 @@ export function Sidebar() {
 // ─── Mobile Sidebar (overlay) ───
 
 export function MobileSidebar() {
-  const router = useRouter();
   const { isOpen, close } = useSidebarStore();
-  const { userName, memberId, memberRole, setMemberInfo, logout } =
-    useUserStore();
+  const { userName, memberId, memberRole, setMemberInfo } = useUserStore();
   const { data: memberLookup } = useMemberIdLookup(userName);
   const resolvedMemberId = memberLookup?.id ?? memberId;
 
@@ -765,13 +871,6 @@ export function MobileSidebar() {
       );
     }
   }, [memberLookup, memberId, memberRole, setMemberInfo]);
-
-  const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" }).catch(() => null);
-    close();
-    logout();
-    router.push("/");
-  };
 
   return (
     <AnimatePresence>
@@ -827,13 +926,6 @@ export function MobileSidebar() {
             {/* Bottom actions */}
             <div className="px-3 space-y-0.5 pt-2">
               <NotificationToggle />
-              <button
-                onClick={handleLogout}
-                className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-400 transition-colors hover:bg-[#f9f9fa] hover:text-slate-500"
-              >
-                <LogOut size={18} strokeWidth={SIDEBAR_ICON_STROKE_WIDTH} />
-                로그아웃
-              </button>
             </div>
           </motion.aside>
         </>

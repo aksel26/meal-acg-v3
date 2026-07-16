@@ -137,11 +137,7 @@ function BudgetRow({
               opacity: { duration: 0.3 },
             }}
             className={`h-full rounded-full ${
-              isOver
-                ? "bg-red-500"
-                : isLow
-                  ? "bg-amber-400"
-                  : "bg-blue-500"
+              isOver ? "bg-red-500" : isLow ? "bg-amber-400" : "bg-blue-500"
             }`}
           />
         </div>
@@ -458,17 +454,12 @@ export default function Points() {
       >
         <div className="relative px-4 pt-4 pb-5">
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <h1 className="text-base font-semibold text-slate-900">
-                복지포인트{isManager ? " · 활동비" : ""}
-              </h1>
-              <span onClick={(e) => e.stopPropagation()}>
-                <PointsGuideDialog
-                  open={isGuideOpen}
-                  onOpenChange={setIsGuideOpen}
-                />
-              </span>
-            </div>
+            <span onClick={(e) => e.stopPropagation()}>
+              <PointsGuideDialog
+                open={isGuideOpen}
+                onOpenChange={setIsGuideOpen}
+              />
+            </span>
             <span className="flex items-center gap-0.5 text-sm text-blue-500/100">
               팀별 활동비 내역
               <ChevronRight className="w-4 h-4" />

@@ -9,13 +9,7 @@ export default async function RequestsPage() {
 
   return (
     <div className="space-y-5 p-4 md:p-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-[#111111]">전체 업무 요청</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            접근 가능한 모든 요청 {requests.length}건
-          </p>
-        </div>
+      <div className="flex justify-end">
         <CreateRequestDialog />
       </div>
       <RequestList requests={requests} emptyText="표시할 요청이 없습니다." />

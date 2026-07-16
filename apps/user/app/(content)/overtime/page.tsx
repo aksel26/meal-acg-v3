@@ -306,13 +306,7 @@ export default function OvertimePage() {
 
   return (
     <div className="w-full space-y-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">시간외·주말근무</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            승인 후에도 출퇴근/식대/정산에는 자동 반영되지 않습니다.
-          </p>
-        </div>
+      <div className="flex justify-end">
         <Button type="button" onClick={openOvertimeDialog}>
           <Plus className="mr-2 h-4 w-4" />
           연장근무 신청하기

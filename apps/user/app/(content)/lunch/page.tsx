@@ -114,15 +114,12 @@ const Lunch = () => {
         <div className="px-5 py-4 border-b border-slate-50">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-lg font-semibold text-slate-900">
-                점심조 편성
-              </h1>
               {isLoading ? (
-                <p className="text-xs text-slate-400 mt-0.5">로딩 중...</p>
+                <p className="text-xs text-slate-400">로딩 중...</p>
               ) : error ? (
-                <p className="text-xs text-red-500 mt-0.5">데이터 로딩 실패</p>
+                <p className="text-xs text-red-500">데이터 로딩 실패</p>
               ) : (
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-slate-500">
                   총 {validGroupCount}개 조 ·{" "}
                   {lunchGroupData?.totalMembers || "0"}명
                 </p>
@@ -250,10 +247,7 @@ const Lunch = () => {
           // 로딩 스켈레톤
           <div className="space-y-3">
             {Array.from({ length: 4 }, (_, index) => (
-              <div
-                key={index}
-                className="card-premium rounded-2xl p-4"
-              >
+              <div key={index} className="card-premium rounded-2xl p-4">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="skeleton h-6 w-12 rounded-lg" />
                   <div className="skeleton h-4 w-16 rounded" />

@@ -121,13 +121,10 @@ export function UserLibraryClient({
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-3 rounded-2xl bg-white p-5 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-950">도서관</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            {userName}님 · 대여 가능 {rentableCount}권 · 기본 대여 기간{" "}
-            {data.settings.default_rental_period_days}일
-          </p>
-        </div>
+        <p className="text-sm text-slate-500">
+          {userName}님 · 대여 가능 {rentableCount}권 · 기본 대여 기간{" "}
+          {data.settings.default_rental_period_days}일
+        </p>
         <div className="relative w-full md:max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input

@@ -16,10 +16,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@repo/ui/src/alert-dialog";
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import { PopoverCalendar } from "../PopoverCalendar";
-import { ReceiptScanner } from "../ReceiptScanner";
-import { ReceiptScanResult } from "@/lib/types/receipt-types";
 
 interface WelfarePoint {
   id: string;
@@ -45,27 +43,6 @@ interface EditPointDrawerProps {
 
 export function EditPointDrawer({ isOpen, onOpenChange, editingPoint, onSave, onDelete, onPointChange, isNewPoint, isDeleting = false }: EditPointDrawerProps) {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
-
-  // 영수증 스캔 완료 핸들러
-  const handleScanComplete = useCallback(
-    (result: ReceiptScanResult) => {
-      if (!editingPoint) return;
-      const updates: Partial<WelfarePoint> = {};
-      if (result.storeName) {
-        updates.vendor = result.storeName;
-      }
-      if (result.totalAmount > 0) {
-        updates.amount = result.totalAmount;
-      }
-      if (result.date) {
-        updates.date = result.date;
-      }
-      if (Object.keys(updates).length > 0) {
-        onPointChange({ ...editingPoint, ...updates });
-      }
-    },
-    [editingPoint, onPointChange]
-  );
 
   if (!editingPoint) return null;
 
@@ -153,15 +130,6 @@ export function EditPointDrawer({ isOpen, onOpenChange, editingPoint, onSave, on
         </DrawerHeader>
 
         <form className="px-6 py-4 space-y-6 overflow-y-auto flex-1">
-          {/* 영수증 스캔 섹션 */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-semibold text-slate-700">영수증 스캔</h3>
-              <div className="h-px flex-1 bg-slate-200"></div>
-            </div>
-            <ReceiptScanner onScanComplete={handleScanComplete} />
-          </div>
-
           {/* 기본 정보 섹션 */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">

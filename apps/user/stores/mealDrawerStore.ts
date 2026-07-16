@@ -2,11 +2,11 @@ import { create } from "zustand";
 import { FormData, MealData } from "@/components/dashboard/types";
 
 // Step definitions
-export type StepId = "mealType" | "attendance" | "receipt" | "payer" | "store" | "amount";
+export type StepId = "mealType" | "attendance" | "payer" | "store" | "amount";
 
 // 중식: 근태 먼저, 그 외: mealType 먼저
-export const STEP_ORDER_LUNCH: StepId[] = ["attendance", "mealType", "receipt", "payer", "store", "amount"];
-export const STEP_ORDER_OTHER: StepId[] = ["mealType", "receipt", "payer", "store", "amount"];
+export const STEP_ORDER_LUNCH: StepId[] = ["attendance", "mealType", "payer", "store", "amount"];
+export const STEP_ORDER_OTHER: StepId[] = ["mealType", "payer", "store", "amount"];
 
 // 기본 스텝 순서 (하위 호환)
 export const STEP_ORDER: StepId[] = STEP_ORDER_LUNCH;
@@ -18,7 +18,6 @@ export const INDIVIDUAL_MEAL_ATTENDANCE = "근무(개별식사 / 식사안함)";
 export const STEP_LABELS: Record<StepId, string> = {
   mealType: "식사 타입",
   attendance: "근태",
-  receipt: "영수증",
   payer: "결제자",
   store: "식당명",
   amount: "금액",
@@ -37,7 +36,6 @@ interface MealDrawerState {
   // Step state
   currentStep: StepId;
   completedSteps: StepId[];
-  isManualInput: boolean; // 영수증 스캔 대신 직접 입력 선택 여부
 
   // Actions
   openDrawer: (mealType: "breakfast" | "lunch" | "dinner", date: Date | undefined, existingMealData?: MealData) => void;
@@ -53,7 +51,6 @@ interface MealDrawerState {
   prevStep: () => void;
   goToStep: (step: StepId) => void;
   completeStep: (step: StepId) => void;
-  setManualInput: (value: boolean) => void;
   resetSteps: () => void;
 }
 
@@ -137,7 +134,6 @@ export const useMealDrawerStore = create<MealDrawerState>((set, get) => ({
   // Step state
   currentStep: "mealType",
   completedSteps: [],
-  isManualInput: false,
 
   // Actions
   openDrawer: (mealType, date, existingMealData) => {
@@ -186,7 +182,6 @@ export const useMealDrawerStore = create<MealDrawerState>((set, get) => ({
       formData: updatedFormData,
       currentStep: firstStep,
       completedSteps: [],
-      isManualInput: false,
     });
   },
 
@@ -246,7 +241,6 @@ export const useMealDrawerStore = create<MealDrawerState>((set, get) => ({
       formData: updatedFormData,
       currentStep: "mealType",
       completedSteps: allSteps,
-      isManualInput: true,
     });
   },
 
@@ -303,7 +297,6 @@ export const useMealDrawerStore = create<MealDrawerState>((set, get) => ({
       formData: updatedFormData,
       currentStep: "mealType",
       completedSteps: allSteps,
-      isManualInput: true,
     });
   },
 
@@ -314,7 +307,6 @@ export const useMealDrawerStore = create<MealDrawerState>((set, get) => ({
       formData: initialFormData,
       currentStep: "mealType",
       completedSteps: [],
-      isManualInput: false,
     });
   },
 
@@ -358,7 +350,6 @@ export const useMealDrawerStore = create<MealDrawerState>((set, get) => ({
       formData: initialFormData,
       currentStep: "mealType",
       completedSteps: [],
-      isManualInput: false,
     });
   },
 
@@ -488,15 +479,10 @@ export const useMealDrawerStore = create<MealDrawerState>((set, get) => ({
     }
   },
 
-  setManualInput: (value) => {
-    set({ isManualInput: value });
-  },
-
   resetSteps: () => {
     set({
       currentStep: "mealType",
       completedSteps: [],
-      isManualInput: false,
     });
   },
 }));

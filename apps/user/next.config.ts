@@ -1,5 +1,3 @@
-import withPWA from "@ducanh2912/next-pwa";
-
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ["@repo/logger"],
@@ -23,16 +21,4 @@ const nextConfig = {
   },
 };
 
-const isDevelopment = process.env.NODE_ENV === "development";
-
-const withPWAConfig = withPWA({
-  dest: "public",
-  disable: isDevelopment,
-  register: !isDevelopment,
-  workboxOptions: {
-    skipWaiting: true,
-    clientsClaim: true,
-  },
-});
-
-export default withPWAConfig(nextConfig);
+export default nextConfig;

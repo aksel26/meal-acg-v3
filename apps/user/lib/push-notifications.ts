@@ -20,20 +20,6 @@ export function isPushSupported(): boolean {
   );
 }
 
-export function isStandalonePWA(): boolean {
-  if (typeof window === "undefined") return false;
-  return (
-    window.matchMedia("(display-mode: standalone)").matches ||
-    (navigator as unknown as { standalone?: boolean }).standalone === true
-  );
-}
-
-export function isIOSSafari(): boolean {
-  if (typeof window === "undefined") return false;
-  const ua = navigator.userAgent;
-  return /iPad|iPhone|iPod/.test(ua) && !isStandalonePWA();
-}
-
 async function waitForActivation(reg: ServiceWorkerRegistration): Promise<boolean> {
   if (reg.active) return true;
 
@@ -55,49 +41,15 @@ async function waitForActivation(reg: ServiceWorkerRegistration): Promise<boolea
 }
 
 async function getReadyRegistration(): Promise<ServiceWorkerRegistration | null> {
-  const registrations = await navigator.serviceWorker.getRegistrations();
-  if (registrations.length > 0) {
-    if (process.env.NODE_ENV === "development") {
-      const fullPwaRegistrations = registrations.filter((reg) =>
-        reg.active?.scriptURL.endsWith("/sw.js"),
-      );
-      for (const reg of fullPwaRegistrations) {
-        await reg.unregister();
-      }
-      if (fullPwaRegistrations.length > 0) {
-        await navigator.serviceWorker.register("/push-sw.js");
-      }
-    }
-    return navigator.serviceWorker.ready;
-  }
-
-  if (process.env.NODE_ENV === "development") {
-    await navigator.serviceWorker.register("/push-sw.js");
-    return navigator.serviceWorker.ready;
-  }
-
-  // Turbopack dev mode 등에서 next-pwa가 SW를 자동 등록하지 못한 경우 수동 등록
-  // 1) sw.js (full PWA) 시도
   try {
-    const reg = await navigator.serviceWorker.register("/sw.js");
+    const reg = await navigator.serviceWorker.register("/push-sw.js");
     const activated = await waitForActivation(reg);
     if (activated) return navigator.serviceWorker.ready;
   } catch {
-    // sw.js 등록 실패
-  }
-
-  // 2) sw.js install 실패 시 push-sw.js (push-only) 폴백
-  try {
-    // 실패한 sw.js registration 정리
-    const regs = await navigator.serviceWorker.getRegistrations();
-    for (const reg of regs) {
-      if (!reg.active) await reg.unregister();
-    }
-    await navigator.serviceWorker.register("/push-sw.js");
-    return navigator.serviceWorker.ready;
-  } catch {
     return null;
   }
+
+  return null;
 }
 
 export async function subscribeToPush(memberId: string): Promise<boolean> {

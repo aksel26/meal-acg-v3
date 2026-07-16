@@ -7,7 +7,6 @@ import { motion } from "motion/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import CI from "@/public/images/ACG_LOGO_WHITE.png";
 import { useUserStore } from "@/stores/userStore";
 
@@ -66,8 +65,6 @@ export default function HomePage() {
 
   return (
     <>
-      <PWAInstallPrompt />
-
       <div className="flex min-h-dvh bg-white">
         {/* ── Left: Login Form ── */}
         <div className="flex flex-1 items-center justify-center px-6 py-12">

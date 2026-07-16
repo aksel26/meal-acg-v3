@@ -14,7 +14,6 @@ import { CompletedStepItem } from "./CompletedStepItem";
 import {
   MealTypeStep,
   AttendanceStep,
-  ReceiptStep,
   PayerStep,
   StoreStep,
   AmountStep,
@@ -86,8 +85,6 @@ export function StepFormContainer({
           return mealTypeLabels[selectedMealType];
         case "attendance":
           return attendanceShortLabels[formData.lunch.attendance] || formData.lunch.attendance;
-        case "receipt":
-          return "스캔 완료";
         case "payer":
           return currentFormData.payer;
         case "store":
@@ -116,10 +113,7 @@ export function StepFormContainer({
     [completedSteps]
   );
 
-  // Steps that require form input (excluding receipt which is optional)
-  const formSteps = useMemo(() => {
-    return visibleSteps.filter((step) => step !== "receipt");
-  }, [visibleSteps]);
+  const formSteps = visibleSteps;
 
   // Check if all form steps are completed
   const allStepsCompleted = useMemo(() => {
@@ -137,9 +131,7 @@ export function StepFormContainer({
       return formSteps;
     }
     // In edit mode or normal mode, show completed steps except current
-    return visibleSteps.filter(
-      (step) => isStepCompleted(step) && step !== currentStep && step !== "receipt"
-    );
+    return visibleSteps.filter((step) => isStepCompleted(step) && step !== currentStep);
   }, [visibleSteps, formSteps, isStepCompleted, currentStep, isShowingSummary]);
 
   // Save new restaurant if needed
@@ -194,8 +186,6 @@ export function StepFormContainer({
             isSubmitting={isSubmitting}
           />
         );
-      case "receipt":
-        return <ReceiptStep key="receipt" />;
       case "payer":
         return <PayerStep key="payer" />;
       case "store":

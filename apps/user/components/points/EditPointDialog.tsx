@@ -25,8 +25,6 @@ import {
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { AutoCompleteInput } from "@repo/ui/src/autocomplete-input";
-import { ReceiptScanner } from "../ReceiptScanner";
-import { ReceiptScanResult } from "@/lib/types/receipt-types";
 import { useUsers } from "@/hooks/useUsers";
 import { useUserStore } from "@/stores/userStore";
 import { toast } from "@repo/ui/src/sonner";
@@ -48,13 +46,12 @@ interface WelfarePoint {
   companion_names?: string[];   // 동반 결제자 이름들 (UI 전용, DB 저장 안함)
 }
 
-type StepId = "scan" | "type" | "vendor" | "proxy" | "amount";
+type StepId = "type" | "vendor" | "proxy" | "amount";
 
 const STEP_ORDER_NEW: StepId[] = ["type", "vendor", "proxy", "amount"];
 const STEP_ORDER_EDIT: StepId[] = ["type", "vendor", "proxy", "amount"];
 
 const STEP_LABELS: Record<StepId, string> = {
-  scan: "영수증",
   type: "유형",
   vendor: "사용처",
   proxy: "결제자",
@@ -169,7 +166,7 @@ export function EditPointDialog({
         setCompletedSteps([]);
       } else {
         // 수정 모드: 모든 스텝 완료 상태로 시작 (요약 뷰)
-        setCompletedSteps([...stepOrder.filter((s) => s !== "scan")]);
+        setCompletedSteps([...stepOrder]);
         setCurrentStep(stepOrder[stepOrder.length - 1] as StepId);
       }
     }
@@ -185,22 +182,6 @@ export function EditPointDialog({
     }, 350);
     return () => clearTimeout(timer);
   }, [currentStep, isOpen]);
-
-  const handleScanComplete = useCallback(
-    (result: ReceiptScanResult) => {
-      if (!editingPoint) return;
-      const updates: Partial<WelfarePoint> = {};
-      if (result.storeName) updates.vendor = result.storeName;
-      if (result.totalAmount > 0) updates.amount = result.totalAmount;
-      if (result.date) updates.date = result.date;
-      if (Object.keys(updates).length > 0) {
-        onPointChange({ ...editingPoint, ...updates });
-      }
-      // 스캔 완료 후 다음 스텝으로
-      completeAndNext("scan");
-    },
-    [editingPoint, onPointChange]
-  );
 
   if (!editingPoint) return null;
 
@@ -236,7 +217,7 @@ export function EditPointDialog({
 
   // --- Summary view (edit mode) ---
 
-  const formSteps = stepOrder.filter((s) => s !== "scan");
+  const formSteps = stepOrder;
   const allFormCompleted = formSteps.every((s) => completedSteps.includes(s));
   const isSummaryView = !isNewPoint && allFormCompleted && completedSteps.includes(currentStep);
 
@@ -299,8 +280,6 @@ export function EditPointDialog({
 
   const getStepValue = (stepId: StepId): string => {
     switch (stepId) {
-      case "scan":
-        return "스캔 완료";
       case "type":
         return editingPoint.type === "welfare" ? "복지포인트" : "활동비";
       case "vendor":
@@ -328,7 +307,7 @@ export function EditPointDialog({
 
   const displayedCompletedSteps = isSummaryView
     ? formSteps
-    : stepOrder.filter((s) => completedSteps.includes(s) && s !== currentStep && s !== "scan");
+    : stepOrder.filter((s) => completedSteps.includes(s) && s !== currentStep);
 
   const selectedDate = editingPoint.date ? new Date(editingPoint.date) : undefined;
 
@@ -336,31 +315,6 @@ export function EditPointDialog({
 
   const renderCurrentStep = () => {
     switch (currentStep) {
-      case "scan":
-        return (
-          <motion.div
-            key="scan"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.25 }}
-            className="space-y-4"
-          >
-            <div className="text-center space-y-1 mb-2">
-              <h3 className="text-sm font-semibold text-slate-800">영수증을 스캔하시겠어요?</h3>
-              <p className="text-xs text-slate-500">스캔하면 사용처, 금액, 날짜가 자동 입력됩니다</p>
-            </div>
-            <ReceiptScanner onScanComplete={handleScanComplete} />
-            <button
-              type="button"
-              onClick={() => completeAndNext("scan")}
-              className="w-full py-3 text-sm text-slate-500 hover:text-slate-700 transition-colors"
-            >
-              건너뛰기
-            </button>
-          </motion.div>
-        );
-
       case "type":
         return (
           <motion.div

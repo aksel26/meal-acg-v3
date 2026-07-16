@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from "motion/react";
 import { useUserStore } from "@/stores/userStore";
 import {
   isPushSupported,
-  isIOSSafari,
   subscribeToPush,
   getExistingSubscription,
 } from "@/lib/push-notifications";
@@ -19,19 +18,9 @@ export default function PushNotificationPrompt() {
   const { userId, isLoggedIn } = useUserStore();
   const [visible, setVisible] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
-  const [iosSafariWarning, setIosSafariWarning] = useState(false);
 
   useEffect(() => {
     if (!isLoggedIn || !userId) return;
-
-    // iOS Safari (standalone 아닌 경우) 안내
-    if (isIOSSafari()) {
-      const dismissed = localStorage.getItem(DISMISS_KEY);
-      if (dismissed && Date.now() - Number(dismissed) < DISMISS_DURATION_MS) return;
-      setIosSafariWarning(true);
-      setVisible(true);
-      return;
-    }
 
     if (!isPushSupported()) return;
 
@@ -92,35 +81,7 @@ export default function PushNotificationPrompt() {
           className={`fixed top-0 z-40 px-4 pt-4 max-xl:w-full max-xl:max-w-lg max-xl:inset-x-0 max-xl:mx-auto xl:left-[calc(50%_+_17rem)] xl:right-4 xl:max-w-md`}
         >
           <div className="rounded-2xl border border-white/30 bg-white/20 p-4 shadow-xl backdrop-blur-xl">
-            {iosSafariWarning ? (
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-blue-500/15 backdrop-blur-sm">
-                  <motion.div
-                    animate={{ rotate: [0, 15, -15, 10, -10, 5, -5, 0] }}
-                    transition={{ duration: 0.8, delay: 0.5, repeat: Infinity, repeatDelay: 1.5 }}
-                    style={{ originX: 0.5, originY: 0.15 }}
-                  >
-                    <Bell className="h-5 w-5 text-blue-600" />
-                  </motion.div>
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-slate-900">
-                    알림을 받으려면 홈 화면에 추가해주세요
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Safari 하단의 공유 버튼을 누르고 &quot;홈 화면에 추가&quot;를 선택하면 푸시
-                    알림을 받을 수 있습니다.
-                  </p>
-                </div>
-                <button
-                  onClick={handleDismiss}
-                  className="flex-shrink-0 rounded-full p-1 text-slate-400 hover:bg-white/30 hover:text-slate-600"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            ) : (
-              <AnimatePresence mode="wait">
+            <AnimatePresence mode="wait">
                 {subscribed ? (
                   <motion.div
                     key="success"
@@ -186,8 +147,7 @@ export default function PushNotificationPrompt() {
                     </button>
                   </motion.div>
                 )}
-              </AnimatePresence>
-            )}
+            </AnimatePresence>
           </div>
         </motion.div>
       )}

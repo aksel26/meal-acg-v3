@@ -24,8 +24,10 @@ export default function Header() {
         : "");
 
   return (
-    <header className="flex h-14 items-center border-b px-6">
-      <h2 className="text-lg font-semibold">{title}</h2>
+    <header className="sticky top-0 z-20 px-4 pt-3 md:px-8 md:pt-4">
+      <div className="flex min-h-12 items-center rounded-2xl bg-slate-50 px-4 py-3 md:bg-transparent md:px-0">
+        <h2 className="text-lg font-semibold text-slate-800">{title}</h2>
+      </div>
     </header>
   );
 }

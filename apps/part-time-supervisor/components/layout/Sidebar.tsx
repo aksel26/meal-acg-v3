@@ -94,20 +94,20 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="flex h-full w-60 flex-col rounded-lg border border-[#f3f3f3] bg-white p-4 text-slate-900">
-      <Link href="/" className="mb-8 flex items-center gap-3 px-2 py-4">
+    <aside className="flex h-full w-60 shrink-0 flex-col border-r border-[#f3f3f3] bg-white py-5 text-slate-900">
+      <Link href="/" className="mb-5 flex items-center gap-2 px-5">
         <Image
           src="/acg_ci_gray.png"
           alt="ACG"
-          width={48}
-          height={48}
-          className="h-12 w-12 object-contain"
+          width={40}
+          height={40}
+          className="h-10 w-10 object-contain"
           priority
         />
         <p className="text-sm text-[#111111]">아르바이트 관리</p>
       </Link>
 
-      <nav className="flex flex-1 flex-col gap-1">
+      <nav className="flex flex-1 flex-col gap-1 px-2">
         {navEntries.map((entry) => {
           if (!isGroup(entry)) {
             const isActive = pathname === entry.href;
@@ -116,13 +116,13 @@ export default function Sidebar() {
               <Link
                 key={entry.href}
                 href={entry.href}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                className={`flex h-8 items-center gap-2 rounded-md px-2 text-sm transition-colors ${
                   isActive
                     ? "bg-[#111111] font-medium text-white"
                     : "text-slate-500 hover:bg-[#f9f9fa] hover:text-[#111111]"
                 }`}
               >
-                <Icon size={18} />
+                <Icon size={16} strokeWidth={1.25} />
                 {entry.label}
               </Link>
             );
@@ -137,16 +137,17 @@ export default function Sidebar() {
               <button
                 type="button"
                 onClick={() => handleGroupClick(entry)}
-                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                className={`flex h-8 w-full items-center gap-2 rounded-md px-2 text-sm transition-colors ${
                   active
                     ? "text-[#111111]"
                     : "text-slate-500 hover:bg-[#f9f9fa] hover:text-[#111111]"
                 }`}
               >
-                <GroupIcon size={18} />
+                <GroupIcon size={16} strokeWidth={1.25} />
                 <span className="flex-1 text-left">{entry.label}</span>
                 <ChevronDown
-                  size={16}
+                  size={14}
+                  strokeWidth={1.25}
                   className={`transition-transform duration-200 ${open ? "rotate-180" : ""}`}
                 />
               </button>
@@ -160,13 +161,13 @@ export default function Sidebar() {
                       <Link
                         key={`${entry.label}-${child.href}`}
                         href={child.href}
-                        className={`flex items-center gap-3 rounded-lg py-2 pl-9 pr-3 text-sm transition-colors ${
+                        className={`flex h-7 items-center gap-2 rounded-md py-0 pl-8 pr-2 text-sm transition-colors ${
                           isChildActive
                             ? "bg-[#111111] font-medium text-white"
                             : "text-slate-500 hover:bg-[#f9f9fa] hover:text-[#111111]"
                         }`}
                       >
-                        <ChildIcon size={16} />
+                        <ChildIcon size={15} strokeWidth={1.25} />
                         {child.label}
                       </Link>
                     );

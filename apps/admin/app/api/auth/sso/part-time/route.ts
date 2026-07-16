@@ -1,21 +1,22 @@
 import { createHash, randomBytes } from "node:crypto";
-import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
-import { requireAdmin } from "@/lib/auth";
+import { AuthError, requireAdmin } from "@/lib/auth";
+import { createSupervisorServiceClient } from "@/lib/supabase/server";
 
-export async function GET() {
-  const user = await requireAdmin();
+export async function GET(request: Request) {
+  let user;
+  try {
+    user = await requireAdmin();
+  } catch (error) {
+    if (error instanceof AuthError) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+    throw error;
+  }
   const code = randomBytes(32).toString("base64url");
   const codeHash = createHash("sha256").update(code).digest("hex");
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      db: { schema: "supervisor" },
-      auth: { autoRefreshToken: false, persistSession: false },
-    },
-  );
+  const supabase = createSupervisorServiceClient();
   await supabase
     .from("sso_handoffs")
     .delete()

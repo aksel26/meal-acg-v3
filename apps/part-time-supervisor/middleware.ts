@@ -72,7 +72,11 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // 2. 세션 없음 → 로컬 로그인 페이지. 앱 간 SSO는 1회용 코드로 세션을 발급함.
+  // 2. 세션 없음. API는 fetch/XHR가 파싱할 수 있도록 401 JSON, 페이지는 로그인으로.
+  //    앱 간 SSO는 1회용 코드로 세션을 발급함.
+  if (pathname.startsWith("/api/")) {
+    return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+  }
   const loginUrl = new URL("/login", request.url);
   return NextResponse.redirect(loginUrl);
 }

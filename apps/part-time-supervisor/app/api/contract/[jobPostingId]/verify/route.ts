@@ -40,7 +40,7 @@ export async function POST(
     // 1. worker 매칭
     const { data: workers, error: workerError } = await supabase
       .from("workers")
-      .select("id, name, phone")
+      .select("id, name, phone, email")
       .eq("name", name.trim())
       .eq("phone", phone.trim());
 
@@ -75,17 +75,17 @@ export async function POST(
 
     // 이메일 검증/저장
     if (email) {
-      const { data: workerDetail } = await supabase
-        .from("workers")
-        .select("email")
-        .eq("id", worker.id)
-        .single();
-
-      if (workerDetail?.email && workerDetail.email !== email.trim()) {
+      if (worker.email && worker.email !== email.trim()) {
         return NextResponse.json(
           { error: "입력 정보를 확인할 수 없습니다." },
           { status: 401 },
         );
+      }
+      if (!worker.email) {
+        await supabase
+          .from("workers")
+          .update({ email: email.trim() })
+          .eq("id", worker.id);
       }
     }
 

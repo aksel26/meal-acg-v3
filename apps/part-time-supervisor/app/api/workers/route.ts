@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
+import { stripWorkerPII } from "@/lib/worker-privacy";
 
 export async function GET(request: Request) {
   try {
@@ -38,7 +39,7 @@ export async function GET(request: Request) {
         : null;
 
       return {
-        ...worker,
+        ...stripWorkerPII(worker),
         assignments: [{ count: completedCount }],
         latest_assigned_at: latestAssignedAt,
       };

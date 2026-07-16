@@ -21,7 +21,22 @@ const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 const OPERATIONS_TEAM_ID =
   process.env.SUPERVISOR_EDITOR_TEAM_ID ||
   "a1000000-0000-0000-0000-000000000001";
-const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+const PNC_TEAM_PATTERN = /p&c|people\s*&\s*culture/i;
+
+type AccessMember = {
+  role: string | null;
+  team_id: string | null;
+  teams?: { name: string | null } | { name: string | null }[] | null;
+};
+
+// 감독관 앱 접근/편집 권한은 관리자, 운영팀(HR 운영팀), P&C팀으로 제한한다.
+// P&C팀은 고정 UUID가 없어 팀 이름으로 식별한다(admin 앱 규칙과 동일).
+export function hasSupervisorAccess(member: AccessMember): boolean {
+  if (member.role === "admin") return true;
+  if (member.team_id === OPERATIONS_TEAM_ID) return true;
+  const team = Array.isArray(member.teams) ? member.teams[0] : member.teams;
+  return PNC_TEAM_PATTERN.test(team?.name ?? "");
+}
 
 export class AuthError extends Error {
   constructor(
@@ -81,7 +96,7 @@ export async function requireAuth(): Promise<SessionUser> {
   const [{ data: member }, { data: status }] = await Promise.all([
     supabase
       .from("members")
-      .select("id, full_name, role, team_id")
+      .select("id, full_name, role, team_id, teams(name)")
       .eq("id", forwarded.id)
       .maybeSingle(),
     supabase
@@ -95,17 +110,16 @@ export async function requireAuth(): Promise<SessionUser> {
     throw new AuthError("Unauthorized", 401);
   }
 
-  const canEdit =
-    member.role === "admin" || member.team_id === OPERATIONS_TEAM_ID;
-  const method = (await headers()).get("x-session-request-method") || "GET";
-  if (!SAFE_METHODS.has(method) && !canEdit) {
+  // 접근 자체가 운영팀/P&C팀/관리자로 제한되므로 권한이 없으면 전면 차단한다.
+  const canEdit = hasSupervisorAccess(member);
+  if (!canEdit) {
     throw new AuthError("Forbidden", 403);
   }
 
   return {
     id: member.id,
     fullName: member.full_name,
-    role: member.role,
+    role: member.role ?? "user",
     canEdit,
   };
 }
@@ -117,7 +131,7 @@ export async function resolveFreshSession(
   const [{ data: member }, { data: status }] = await Promise.all([
     supabase
       .from("members")
-      .select("id, full_name, role, team_id")
+      .select("id, full_name, role, team_id, teams(name)")
       .eq("id", session.userId)
       .maybeSingle(),
     supabase
@@ -131,7 +145,7 @@ export async function resolveFreshSession(
   return {
     id: member.id,
     fullName: member.full_name,
-    role: member.role,
-    canEdit: member.role === "admin" || member.team_id === OPERATIONS_TEAM_ID,
+    role: member.role ?? "user",
+    canEdit: hasSupervisorAccess(member),
   };
 }

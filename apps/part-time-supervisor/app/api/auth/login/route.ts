@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { setSession } from "@/lib/auth";
+import { hasSupervisorAccess, setSession } from "@/lib/auth";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { createServiceClient } from "@/lib/supabase/server";
 
@@ -63,11 +63,19 @@ export async function POST(request: Request) {
     }
 
     const user = data[0];
-    const { data: member, error: memberError } = await supabase
-      .from("members")
-      .select("role, team_id")
-      .eq("id", user.user_id)
-      .single();
+    const [{ data: member, error: memberError }, { data: currentStatus }] =
+      await Promise.all([
+        supabase
+          .from("members")
+          .select("role, team_id, teams(name)")
+          .eq("id", user.user_id)
+          .single(),
+        supabase
+          .from("member_current_status")
+          .select("current_status")
+          .eq("member_id", user.user_id)
+          .maybeSingle(),
+      ]);
 
     if (memberError || !member) {
       return NextResponse.json(
@@ -76,11 +84,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const { data: currentStatus } = await supabase
-      .from("member_current_status")
-      .select("current_status")
-      .eq("member_id", user.user_id)
-      .maybeSingle();
     if (currentStatus?.current_status === "퇴사") {
       return NextResponse.json(
         { error: "아이디 또는 비밀번호가 일치하지 않습니다." },
@@ -88,16 +91,19 @@ export async function POST(request: Request) {
       );
     }
 
-    const operationsTeamId =
-      process.env.SUPERVISOR_EDITOR_TEAM_ID ||
-      "a1000000-0000-0000-0000-000000000001";
-    const canEdit =
-      member.role === "admin" || member.team_id === operationsTeamId;
+    // 감독관 앱 접근은 관리자/운영팀/P&C팀으로 제한한다.
+    const canEdit = hasSupervisorAccess(member);
+    if (!canEdit) {
+      return NextResponse.json(
+        { error: "감독관 앱 접근 권한이 없습니다." },
+        { status: 403 },
+      );
+    }
 
     await setSession({
       userId: user.user_id,
       fullName: user.full_name,
-      role: member.role,
+      role: member.role ?? "user",
       canEdit,
     });
 
@@ -106,7 +112,7 @@ export async function POST(request: Request) {
       user: {
         id: user.user_id,
         fullName: user.full_name,
-        role: member.role,
+        role: member.role ?? "user",
         canEdit,
       },
     });

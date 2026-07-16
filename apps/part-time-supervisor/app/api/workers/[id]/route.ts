@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
+import { stripWorkerPII } from "@/lib/worker-privacy";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -31,7 +32,7 @@ export async function GET(request: Request, { params }: Params) {
     if (workerRes.error) throw workerRes.error;
 
     return NextResponse.json({
-      ...workerRes.data,
+      ...stripWorkerPII(workerRes.data),
       assignments: assignmentsRes.data || [],
       contracts: contractsRes.data || [],
     });

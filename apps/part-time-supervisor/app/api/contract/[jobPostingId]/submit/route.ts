@@ -90,22 +90,20 @@ export async function POST(
 
     const signaturePath = `signatures/${jobPostingId}/${session.workerId}.png`;
     const contractPath = `${session.workerId}/${jobPostingId}_contract.png`;
-    const { error: signatureUploadError } = await supabase.storage
-      .from("signatures")
-      .upload(signaturePath, signatureBuffer, {
-        contentType: "image/png",
-        upsert: true,
-      });
+    const [{ error: signatureUploadError }, { error: contractUploadError }] =
+      await Promise.all([
+        supabase.storage.from("signatures").upload(signaturePath, signatureBuffer, {
+          contentType: "image/png",
+          upsert: true,
+        }),
+        supabase.storage.from("contracts").upload(contractPath, contractBuffer, {
+          contentType: "image/png",
+          upsert: true,
+        }),
+      ]);
     if (signatureUploadError) {
       throw signatureUploadError;
     }
-
-    const { error: contractUploadError } = await supabase.storage
-      .from("contracts")
-      .upload(contractPath, contractBuffer, {
-        contentType: "image/png",
-        upsert: true,
-      });
     if (contractUploadError) {
       throw contractUploadError;
     }

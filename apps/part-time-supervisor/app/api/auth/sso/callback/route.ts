@@ -30,8 +30,9 @@ export async function GET(request: NextRequest) {
       return loginRedirect(request);
     }
 
+    // 접근 권한(관리자/운영팀/P&C팀)이 없으면 어느 앱에서 왔든 세션을 발급하지 않는다.
     const user = await resolveFreshSession({ userId: handoff.member_id });
-    if (!user || (handoff.source_app === "admin" && user.role !== "admin")) {
+    if (!user || !user.canEdit) {
       return loginRedirect(request);
     }
 

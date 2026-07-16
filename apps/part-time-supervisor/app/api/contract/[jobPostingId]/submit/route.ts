@@ -1,126 +1,165 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { encryptField } from "utils/hr-crypto";
+
 import { createServiceClient } from "@/lib/supabase/server";
+import {
+  buildWorkerSessionLogoutCookie,
+  getWorkerSession,
+} from "@/lib/worker-session";
+
+const SIGNATURE_MAX_BYTES = 2 * 1024 * 1024;
+const CONTRACT_MAX_BYTES = 8 * 1024 * 1024;
+const PNG_SIGNATURE = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+
+function decodePngDataUrl(value: unknown, maxBytes: number): Buffer | null {
+  if (typeof value !== "string") return null;
+  const match = /^data:image\/png;base64,([A-Za-z0-9+/]+={0,2})$/.exec(value);
+  const base64 = match?.[1];
+  if (!base64 || base64.length > Math.ceil(maxBytes / 3) * 4 + 4) return null;
+
+  const buffer = Buffer.from(base64, "base64");
+  if (
+    buffer.length === 0 ||
+    buffer.length > maxBytes ||
+    !buffer.subarray(0, PNG_SIGNATURE.length).equals(PNG_SIGNATURE)
+  ) {
+    return null;
+  }
+  return buffer;
+}
 
 export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ jobPostingId: string }> }
+  request: NextRequest,
+  { params }: { params: Promise<{ jobPostingId: string }> },
 ) {
   try {
     const { jobPostingId } = await params;
-    const { assignment_id, worker_id, signature_image, resident_id, contract_image } = await request.json();
-
-    if (!assignment_id || !worker_id || !signature_image) {
-      return NextResponse.json({ error: "필수 정보가 누락되었습니다." }, { status: 400 });
+    const session = await getWorkerSession(request, jobPostingId);
+    if (!session) {
+      return NextResponse.json(
+        { error: "본인 확인이 만료되었습니다." },
+        { status: 401 },
+      );
     }
 
-    const supabase = createServiceClient();
+    const { signature_image, resident_id, contract_image } =
+      await request.json();
+    const residentId =
+      typeof resident_id === "string" ? resident_id.replace(/\D/g, "") : "";
+    const signatureBuffer = decodePngDataUrl(
+      signature_image,
+      SIGNATURE_MAX_BYTES,
+    );
+    const contractBuffer = decodePngDataUrl(contract_image, CONTRACT_MAX_BYTES);
 
-    // 1. assignment 유효성 확인
+    if (residentId.length !== 13 || !signatureBuffer || !contractBuffer) {
+      return NextResponse.json(
+        { error: "계약 정보 또는 이미지 형식이 올바르지 않습니다." },
+        { status: 400 },
+      );
+    }
+
+    const encryptedResidentId = encryptField(residentId);
+    const supabase = createServiceClient();
     const { data: assignment, error: checkError } = await supabase
       .from("assignments")
-      .select("id, contract_status")
-      .eq("id", assignment_id)
-      .eq("worker_id", worker_id)
+      .select("id, contract_status, attendance_status")
+      .eq("id", session.assignmentId)
+      .eq("worker_id", session.workerId)
       .eq("job_posting_id", jobPostingId)
       .single();
 
     if (checkError || !assignment) {
-      return NextResponse.json({ error: "유효하지 않은 배정 정보입니다." }, { status: 400 });
+      return NextResponse.json(
+        { error: "유효하지 않은 배정 정보입니다." },
+        { status: 400 },
+      );
     }
-
     if (assignment.contract_status !== null) {
-      return NextResponse.json({ error: "이미 서명이 완료되었습니다." }, { status: 409 });
+      return NextResponse.json(
+        { error: "이미 서명이 완료되었습니다." },
+        { status: 409 },
+      );
+    }
+    if (assignment.attendance_status !== "confirmed") {
+      return NextResponse.json(
+        { error: "출석 확인 후 계약서를 제출할 수 있습니다." },
+        { status: 409 },
+      );
     }
 
-    // 2. 서명 이미지 저장
-    const base64Data = signature_image.replace(/^data:image\/\w+;base64,/, "");
-    const buffer = Buffer.from(base64Data, "base64");
-    const filePath = `signatures/${jobPostingId}/${worker_id}.png`;
-
-    const { error: uploadError } = await supabase.storage
+    const signaturePath = `signatures/${jobPostingId}/${session.workerId}.png`;
+    const contractPath = `${session.workerId}/${jobPostingId}_contract.png`;
+    const { error: signatureUploadError } = await supabase.storage
       .from("signatures")
-      .upload(filePath, buffer, {
+      .upload(signaturePath, signatureBuffer, {
         contentType: "image/png",
         upsert: true,
       });
-
-    if (uploadError) {
-      console.error("[submit] step 2 - signature upload failed:", uploadError);
-      return NextResponse.json({ error: "서명 이미지 업로드에 실패했습니다." }, { status: 500 });
+    if (signatureUploadError) {
+      throw signatureUploadError;
     }
 
-    // 3. assignment 업데이트
-    const { error: updateError } = await supabase
+    const { error: contractUploadError } = await supabase.storage
+      .from("contracts")
+      .upload(contractPath, contractBuffer, {
+        contentType: "image/png",
+        upsert: true,
+      });
+    if (contractUploadError) {
+      throw contractUploadError;
+    }
+
+    const { error: workerUpdateError } = await supabase
+      .from("workers")
+      .update({ resident_id: null, resident_id_enc: encryptedResidentId })
+      .eq("id", session.workerId);
+    if (workerUpdateError) {
+      throw workerUpdateError;
+    }
+
+    const { data: updatedAssignment, error: updateError } = await supabase
       .from("assignments")
       .update({
         contract_status: "signed",
-        signature_image_path: filePath,
+        signature_image_path: signaturePath,
         signed_at: new Date().toISOString(),
       })
-      .eq("id", assignment_id);
-
-    if (updateError) {
-      console.error("[submit] step 3 - assignment update failed:", updateError);
-      return NextResponse.json({ error: "계약 상태 업데이트에 실패했습니다." }, { status: 500 });
+      .eq("id", session.assignmentId)
+      .eq("worker_id", session.workerId)
+      .is("contract_status", null)
+      .select("id")
+      .maybeSingle();
+    if (updateError) throw updateError;
+    if (!updatedAssignment) {
+      return NextResponse.json(
+        { error: "이미 서명이 완료되었습니다." },
+        { status: 409 },
+      );
     }
 
-    // 4. 주민등록번호 저장 (non-fatal: 마이그레이션 미적용 시에도 서명 제출은 성공)
-    if (resident_id) {
-      try {
-        const { error: workerUpdateError } = await supabase
-          .from("workers")
-          .update({ resident_id })
-          .eq("id", worker_id);
-
-        if (workerUpdateError) {
-          console.error("[submit] step 4 - resident_id update failed (non-fatal):", workerUpdateError);
-        }
-      } catch (e) {
-        console.error("[submit] step 4 - resident_id exception (non-fatal):", e);
-      }
+    const { error: documentError } = await supabase
+      .from("contract_documents")
+      .insert({
+        worker_id: session.workerId,
+        assignment_id: session.assignmentId,
+        file_name: "표준근로계약서.png",
+        file_path: contractPath,
+        file_size: contractBuffer.length,
+        mime_type: "image/png",
+      });
+    if (documentError) {
+      console.error("Contract metadata insert failed:", documentError);
     }
 
-    // 5. 계약서 이미지 저장 (non-fatal)
-    if (contract_image) {
-      try {
-        const contractBase64 = contract_image.replace(/^data:image\/\w+;base64,/, "");
-        const contractBuffer = Buffer.from(contractBase64, "base64");
-        const contractPath = `${worker_id}/${jobPostingId}_contract.png`;
-
-        const { error: contractUploadError } = await supabase.storage
-          .from("contracts")
-          .upload(contractPath, contractBuffer, {
-            contentType: "image/png",
-            upsert: true,
-          });
-
-        if (contractUploadError) {
-          console.error("[submit] step 5 - contract image upload failed (non-fatal):", contractUploadError);
-        } else {
-          // contract_documents 레코드 삽입
-          const { error: docInsertError } = await supabase
-            .from("contract_documents")
-            .insert({
-              worker_id,
-              assignment_id,
-              file_name: "표준근로계약서.png",
-              file_path: contractPath,
-              file_size: contractBuffer.length,
-              mime_type: "image/png",
-            });
-
-          if (docInsertError) {
-            console.error("[submit] step 5 - contract_documents insert failed (non-fatal):", docInsertError);
-          }
-        }
-      } catch (e) {
-        console.error("[submit] step 5 - contract image exception (non-fatal):", e);
-      }
-    }
-
-    return NextResponse.json({ success: true });
+    const response = NextResponse.json({ success: true });
+    response.cookies.set(buildWorkerSessionLogoutCookie());
+    return response;
   } catch (error) {
-    console.error("[submit] unexpected error:", error);
-    return NextResponse.json({ error: "서명 제출에 실패했습니다." }, { status: 500 });
+    console.error("POST /api/contract/[jobPostingId]/submit error:", error);
+    return NextResponse.json(
+      { error: "서명 제출에 실패했습니다." },
+      { status: 500 },
+    );
   }
 }

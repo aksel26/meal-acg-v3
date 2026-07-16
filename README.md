@@ -15,16 +15,16 @@
 
 ## 기술 스택
 
-| 영역             | 기술                                                    |
-| ---------------- | ------------------------------------------------------- |
-| 모노레포         | Turborepo, pnpm workspace                               |
-| 프레임워크       | Next.js 15 App Router, React 19                         |
-| 언어             | TypeScript 5                                            |
-| 스타일           | Tailwind CSS 4, Radix UI, Motion, lucide-react          |
-| 상태/서버 상태   | Zustand, TanStack React Query v5                        |
-| 백엔드           | Supabase PostgreSQL, RLS, RPC, Next.js Route Handlers   |
-| 외부 연동        | Google Sheets, Google Calendar, Slack, Web Push, Gemini |
-| 문서/데이터 처리 | ExcelJS, xlsx, Tiptap, Sentry 일부 앱 적용              |
+| 영역             | 기술                                                  |
+| ---------------- | ----------------------------------------------------- |
+| 모노레포         | Turborepo, pnpm workspace                             |
+| 프레임워크       | Next.js 15 App Router, React 19                       |
+| 언어             | TypeScript 5                                          |
+| 스타일           | Tailwind CSS 4, Radix UI, Motion, lucide-react        |
+| 상태/서버 상태   | Zustand, TanStack React Query v5                      |
+| 백엔드           | Supabase PostgreSQL, RLS, RPC, Next.js Route Handlers |
+| 외부 연동        | Google Sheets, Google Calendar, Slack, Web Push       |
+| 문서/데이터 처리 | ExcelJS, xlsx, Tiptap, Sentry 일부 앱 적용            |
 
 ## 빠른 시작
 
@@ -115,7 +115,7 @@ meal-acg-v3/
 - 공지, 점심조, 회의실 예약
 - 사내 자산, 사물함, 차량 사용 신청
 - 다면평가, 프로젝트/요청 관리 진입점
-- PWA 설치와 Web Push 알림
+- Web Push 알림
 
 ### Admin
 
@@ -161,17 +161,18 @@ GOOGLE_PRIVATE_KEY=
 GOOGLE_CLIENT_EMAIL=
 GOOGLE_SHEET_ID=
 GOOGLE_SHEET_ID_WELFARE_POINTS=
-GEMINI_API_KEY=
 NEXT_PUBLIC_VAPID_PUBLIC_KEY=
 VAPID_PUBLIC_KEY=
 VAPID_PRIVATE_KEY=
 VAPID_SUBJECT=
+SUPERVISOR_APP_URL=
 ```
 
 ### Admin
 
 ```bash
 ADMIN_SESSION_SECRET=
+SUPERVISOR_APP_URL=
 GOOGLE_CALENDAR_API_KEY=
 SLACK_BOT_TOKEN=
 VAPID_PUBLIC_KEY=
@@ -192,11 +193,16 @@ openssl rand -base64 32
 ### Part-time Supervisor
 
 ```bash
-ADMIN_APP_URL=
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
+SUPERVISOR_SESSION_SECRET=
+SUPERVISOR_EDITOR_TEAM_ID=
+HR_ENCRYPTION_KEY=
 ```
+
+`SUPERVISOR_SESSION_SECRET`은 운영 환경에서 로컬 로그인 세션을 서명하는 긴 랜덤 문자열입니다.
+`SUPERVISOR_EDITOR_TEAM_ID`는 편집 권한을 가진 운영팀의 고정 UUID이며, `HR_ENCRYPTION_KEY`는 Base64로 인코딩한 32바이트 AES 키입니다.
 
 ### Project Management
 

@@ -43,7 +43,14 @@ function verify(token: string): SessionPayload | null {
     .createHmac("sha256", getSecret())
     .update(body)
     .digest("base64url");
-  if (sig !== expected) return null;
+  const actualBuffer = Buffer.from(sig);
+  const expectedBuffer = Buffer.from(expected);
+  if (
+    actualBuffer.length !== expectedBuffer.length ||
+    !crypto.timingSafeEqual(actualBuffer, expectedBuffer)
+  ) {
+    return null;
+  }
   try {
     const parsed = JSON.parse(
       Buffer.from(body, "base64url").toString("utf8"),

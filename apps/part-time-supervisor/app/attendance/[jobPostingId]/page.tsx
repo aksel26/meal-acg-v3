@@ -8,8 +8,6 @@ import type { JobPosting } from "@/lib/supabase/types";
 import TermsStep from "@/components/contract/TermsStep";
 
 type VerifiedData = {
-  worker_id: string;
-  assignment_id: string;
   worker_name: string;
 };
 
@@ -286,8 +284,6 @@ function VerifyStep({
       }
 
       onVerified({
-        worker_id: data.worker_id,
-        assignment_id: data.assignment_id,
         worker_name: data.worker_name,
       });
     } catch {
@@ -530,13 +526,11 @@ export default function AttendancePage({
 
     // 출석 상태 확인 — confirmed면 계약서 페이지로 리다이렉트
     try {
-      const statusRes = await fetch(
-        `/api/attendance/${jobPostingId}/status?assignment_id=${data.assignment_id}`
-      );
+      const statusRes = await fetch(`/api/attendance/${jobPostingId}/status`);
       if (statusRes.ok) {
         const statusData = await statusRes.json();
         if (statusData.attendance_status === "confirmed") {
-          window.location.href = `/contract/${jobPostingId}?worker_id=${data.worker_id}&assignment_id=${data.assignment_id}`;
+          window.location.href = `/contract/${jobPostingId}`;
           return;
         }
         if (statusData.attendance_status === "checked_in") {
@@ -556,19 +550,19 @@ export default function AttendancePage({
 
     // 체크인 API 호출
     try {
-      await fetch(`/api/attendance/${jobPostingId}/check-in`, {
+      const response = await fetch(`/api/attendance/${jobPostingId}/check-in`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          assignment_id: verified.assignment_id,
-          worker_id: verified.worker_id,
-        }),
       });
-
+      if (!response.ok) {
+        const result = await response.json();
+        setErrorMsg(result.error || "출석 처리에 실패했습니다.");
+        setStep("error");
+        return;
+      }
       setStep("checked_in");
     } catch {
-      // 체크인 실패해도 일단 대기 화면으로
-      setStep("checked_in");
+      setErrorMsg("출석 처리 중 서버 오류가 발생했습니다.");
+      setStep("error");
     }
   };
 

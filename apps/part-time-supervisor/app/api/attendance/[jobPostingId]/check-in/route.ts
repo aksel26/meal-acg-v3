@@ -1,19 +1,22 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { syncWorkerStatus } from "@/lib/worker-status";
+import {
+  buildWorkerSessionLogoutCookie,
+  getWorkerSession,
+} from "@/lib/worker-session";
 
 export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ jobPostingId: string }> }
+  request: NextRequest,
+  { params }: { params: Promise<{ jobPostingId: string }> },
 ) {
   try {
     const { jobPostingId } = await params;
-    const { assignment_id, worker_id } = await request.json();
-
-    if (!assignment_id || !worker_id) {
+    const session = await getWorkerSession(request, jobPostingId);
+    if (!session) {
       return NextResponse.json(
-        { error: "assignment_id와 worker_id가 필요합니다." },
-        { status: 400 }
+        { error: "본인 확인이 만료되었습니다." },
+        { status: 401 },
       );
     }
 
@@ -23,22 +26,25 @@ export async function POST(
     const { data: assignment, error: fetchError } = await supabase
       .from("assignments")
       .select("id, attendance_status")
-      .eq("id", assignment_id)
-      .eq("worker_id", worker_id)
+      .eq("id", session.assignmentId)
+      .eq("worker_id", session.workerId)
       .eq("job_posting_id", jobPostingId)
       .single();
 
     if (fetchError || !assignment) {
       return NextResponse.json(
         { error: "배정 정보를 찾을 수 없습니다." },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     if (assignment.attendance_status) {
       return NextResponse.json(
-        { error: "이미 출석 처리되었습니다.", attendance_status: assignment.attendance_status },
-        { status: 409 }
+        {
+          error: "이미 출석 처리되었습니다.",
+          attendance_status: assignment.attendance_status,
+        },
+        { status: 409 },
       );
     }
 
@@ -48,18 +54,25 @@ export async function POST(
         attendance_status: "checked_in",
         checked_in_at: new Date().toISOString(),
       })
-      .eq("id", assignment_id);
+      .eq("id", session.assignmentId)
+      .eq("worker_id", session.workerId)
+      .is("attendance_status", null);
 
     if (updateError) throw updateError;
 
-    await syncWorkerStatus(supabase, worker_id);
+    await syncWorkerStatus(supabase, session.workerId);
 
-    return NextResponse.json({ success: true, attendance_status: "checked_in" });
+    const response = NextResponse.json({
+      success: true,
+      attendance_status: "checked_in",
+    });
+    response.cookies.set(buildWorkerSessionLogoutCookie());
+    return response;
   } catch (error) {
     console.error("POST /api/attendance/[jobPostingId]/check-in error:", error);
     return NextResponse.json(
       { error: "서버 오류가 발생했습니다." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

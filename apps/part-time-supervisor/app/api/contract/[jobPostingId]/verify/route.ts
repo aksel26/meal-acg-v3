@@ -1,19 +1,41 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
+import { buildWorkerSessionCookie } from "@/lib/worker-session";
+import { consumeRateLimit } from "@/lib/rate-limit";
 
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ jobPostingId: string }> }
+  { params }: { params: Promise<{ jobPostingId: string }> },
 ) {
   try {
     const { jobPostingId } = await params;
     const { name, phone, email } = await request.json();
 
     if (!name || !phone) {
-      return NextResponse.json({ error: "이름과 전화번호를 입력해주세요." }, { status: 400 });
+      return NextResponse.json(
+        { error: "이름과 전화번호를 입력해주세요." },
+        { status: 400 },
+      );
     }
 
     const supabase = createServiceClient();
+    const [addressAllowed, identityAllowed] = await Promise.all([
+      consumeRateLimit(supabase, request, "worker-verify-address", {
+        limit: 30,
+        windowSeconds: 15 * 60,
+      }),
+      consumeRateLimit(supabase, request, "worker-verify-identity", {
+        limit: 5,
+        windowSeconds: 15 * 60,
+        subject: `${jobPostingId}:${phone.replace(/\D/g, "")}`,
+      }),
+    ]);
+    if (!addressAllowed || !identityAllowed) {
+      return NextResponse.json(
+        { error: "잠시 후 다시 시도해주세요." },
+        { status: 429 },
+      );
+    }
 
     // 1. worker 매칭
     const { data: workers, error: workerError } = await supabase
@@ -25,7 +47,10 @@ export async function POST(
     if (workerError) throw workerError;
 
     if (!workers || workers.length === 0) {
-      return NextResponse.json({ error: "등록되지 않은 지원자입니다." }, { status: 404 });
+      return NextResponse.json(
+        { error: "입력 정보를 확인할 수 없습니다." },
+        { status: 401 },
+      );
     }
 
     // 2. 해당 공고의 assignment 확인
@@ -39,7 +64,10 @@ export async function POST(
     if (assignmentError) throw assignmentError;
 
     if (!assignments || assignments.length === 0) {
-      return NextResponse.json({ error: "해당 공고에 배정되지 않은 지원자입니다." }, { status: 404 });
+      return NextResponse.json(
+        { error: "입력 정보를 확인할 수 없습니다." },
+        { status: 401 },
+      );
     }
 
     const assignment = assignments[0]!;
@@ -54,25 +82,30 @@ export async function POST(
         .single();
 
       if (workerDetail?.email && workerDetail.email !== email.trim()) {
-        return NextResponse.json({ error: "등록된 이메일과 일치하지 않습니다." }, { status: 400 });
-      }
-
-      if (!workerDetail?.email) {
-        await supabase
-          .from("workers")
-          .update({ email: email.trim() })
-          .eq("id", worker.id);
+        return NextResponse.json(
+          { error: "입력 정보를 확인할 수 없습니다." },
+          { status: 401 },
+        );
       }
     }
 
-    return NextResponse.json({
-      worker_id: worker.id,
-      assignment_id: assignment.id,
+    const response = NextResponse.json({
       worker_name: worker.name,
       already_signed: assignment.contract_status !== null,
     });
+    response.cookies.set(
+      await buildWorkerSessionCookie({
+        jobPostingId,
+        workerId: worker.id,
+        assignmentId: assignment.id,
+      }),
+    );
+    return response;
   } catch (error) {
     console.error("POST /api/contract/[jobPostingId]/verify error:", error);
-    return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 });
+    return NextResponse.json(
+      { error: "서버 오류가 발생했습니다." },
+      { status: 500 },
+    );
   }
 }

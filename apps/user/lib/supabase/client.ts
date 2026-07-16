@@ -7,7 +7,9 @@ export function createServiceClient() {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !serviceRoleKey) {
-    console.warn("Supabase environment variables not configured - sync disabled");
+    console.warn(
+      "Supabase environment variables not configured - sync disabled",
+    );
     return null;
   }
 
@@ -16,5 +18,16 @@ export function createServiceClient() {
       autoRefreshToken: false,
       persistSession: false,
     },
+  });
+}
+
+export function createSupervisorServiceClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceRoleKey) return null;
+
+  return createClient(supabaseUrl, serviceRoleKey, {
+    db: { schema: "supervisor" },
+    auth: { autoRefreshToken: false, persistSession: false },
   });
 }

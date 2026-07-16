@@ -11,16 +11,12 @@ export default function SignatureStep({
   job,
   workerName,
   jobPostingId,
-  assignmentId,
-  workerId,
   onComplete,
   onBack,
 }: {
   job: JobPosting;
   workerName: string;
   jobPostingId: string;
-  assignmentId: string;
-  workerId: string;
   onComplete: () => void;
   onBack: () => void;
 }) {
@@ -62,8 +58,6 @@ export default function SignatureStep({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          assignment_id: assignmentId,
-          worker_id: workerId,
           terms_agreed: true,
           signature_image: signatureData,
         }),

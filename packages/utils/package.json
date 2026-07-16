@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "main": "./index.ts",
   "types": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./auth-rate-limit": "./auth-rate-limit.ts",
+    "./hr-crypto": "./hr-crypto.ts"
+  },
   "dependencies": {
     "dayjs": "^1.11.13"
   }

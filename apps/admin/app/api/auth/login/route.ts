@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServiceClient } from "@/lib/supabase/server";
+import {
+  createServiceClient,
+  createSupervisorServiceClient,
+} from "@/lib/supabase/server";
 import { setSession } from "@/lib/auth";
 import { isUserAuthority, normalizeAdminRole } from "@/lib/rbac";
 import { getEffectiveAdminPermissions } from "@/lib/rbac-server";
+import { consumeRateLimit } from "utils/auth-rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,7 +15,26 @@ export async function POST(request: NextRequest) {
     if (!loginId || !password) {
       return NextResponse.json(
         { error: "아이디와 비밀번호를 입력해주세요." },
-        { status: 400 }
+        { status: 400 },
+      );
+    }
+
+    const rateLimitClient = createSupervisorServiceClient();
+    const [addressAllowed, accountAllowed] = await Promise.all([
+      consumeRateLimit(rateLimitClient, request, "admin-login-address", {
+        limit: 20,
+        windowSeconds: 15 * 60,
+      }),
+      consumeRateLimit(rateLimitClient, request, "admin-login-account", {
+        limit: 5,
+        windowSeconds: 15 * 60,
+        subject: loginId,
+      }),
+    ]);
+    if (!addressAllowed || !accountAllowed) {
+      return NextResponse.json(
+        { error: "잠시 후 다시 시도해주세요." },
+        { status: 429 },
       );
     }
 
@@ -27,14 +50,14 @@ export async function POST(request: NextRequest) {
       console.error("Authentication error:", error);
       return NextResponse.json(
         { error: "인증 중 오류가 발생했습니다." },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     if (!data || data.length === 0) {
       return NextResponse.json(
         { error: "아이디 또는 비밀번호가 일치하지 않습니다." },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -44,36 +67,35 @@ export async function POST(request: NextRequest) {
     if (user.role !== "admin") {
       return NextResponse.json(
         { error: "관리자 권한이 없습니다." },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
-    const [memberResult, statusResult, currentStatusResult] = await Promise.all([
-      supabase
-        .from("members")
-        .select("admin_role, user_authority")
-        .eq("id", user.user_id)
-        .single(),
-      supabase
-        .from("member_statuses")
-        .select("start_date")
-        .eq("member_id", user.user_id)
-        .order("start_date", { ascending: true })
-        .limit(1)
-        .single(),
-      supabase
-        .from("member_current_status")
-        .select("current_status")
-        .eq("member_id", user.user_id)
-        .maybeSingle(),
-    ]);
+    const [memberResult, statusResult, currentStatusResult] = await Promise.all(
+      [
+        supabase
+          .from("members")
+          .select("admin_role, user_authority")
+          .eq("id", user.user_id)
+          .single(),
+        supabase
+          .from("member_statuses")
+          .select("start_date")
+          .eq("member_id", user.user_id)
+          .order("start_date", { ascending: true })
+          .limit(1)
+          .single(),
+        supabase
+          .from("member_current_status")
+          .select("current_status")
+          .eq("member_id", user.user_id)
+          .maybeSingle(),
+      ],
+    );
 
     // 퇴사자 로그인 차단 (user 앱과 동일 정책)
     if (currentStatusResult.data?.current_status === "퇴사") {
-      return NextResponse.json(
-        { error: "계정이 없습니다." },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "계정이 없습니다." }, { status: 401 });
     }
 
     const adminRole = normalizeAdminRole(memberResult.data?.admin_role);
@@ -112,7 +134,7 @@ export async function POST(request: NextRequest) {
     console.error("Login error:", error);
     return NextResponse.json(
       { error: "로그인 처리 중 오류가 발생했습니다." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

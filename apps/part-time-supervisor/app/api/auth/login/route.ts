@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { setSession } from "@/lib/auth";
+import { consumeRateLimit } from "@/lib/rate-limit";
+import { createServiceClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
   try {
@@ -10,6 +12,25 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "아이디와 비밀번호를 입력해주세요." },
         { status: 400 }
+      );
+    }
+
+    const rateLimitClient = createServiceClient();
+    const [addressAllowed, accountAllowed] = await Promise.all([
+      consumeRateLimit(rateLimitClient, request, "supervisor-login-address", {
+        limit: 20,
+        windowSeconds: 15 * 60,
+      }),
+      consumeRateLimit(rateLimitClient, request, "supervisor-login-account", {
+        limit: 5,
+        windowSeconds: 15 * 60,
+        subject: loginId,
+      }),
+    ]);
+    if (!addressAllowed || !accountAllowed) {
+      return NextResponse.json(
+        { error: "잠시 후 다시 시도해주세요." },
+        { status: 429 },
       );
     }
 
@@ -42,11 +63,42 @@ export async function POST(request: Request) {
     }
 
     const user = data[0];
+    const { data: member, error: memberError } = await supabase
+      .from("members")
+      .select("role, team_id")
+      .eq("id", user.user_id)
+      .single();
+
+    if (memberError || !member) {
+      return NextResponse.json(
+        { error: "사용자 권한을 확인할 수 없습니다." },
+        { status: 500 },
+      );
+    }
+
+    const { data: currentStatus } = await supabase
+      .from("member_current_status")
+      .select("current_status")
+      .eq("member_id", user.user_id)
+      .maybeSingle();
+    if (currentStatus?.current_status === "퇴사") {
+      return NextResponse.json(
+        { error: "아이디 또는 비밀번호가 일치하지 않습니다." },
+        { status: 401 },
+      );
+    }
+
+    const operationsTeamId =
+      process.env.SUPERVISOR_EDITOR_TEAM_ID ||
+      "a1000000-0000-0000-0000-000000000001";
+    const canEdit =
+      member.role === "admin" || member.team_id === operationsTeamId;
 
     await setSession({
       userId: user.user_id,
       fullName: user.full_name,
-      role: user.role,
+      role: member.role,
+      canEdit,
     });
 
     return NextResponse.json({
@@ -54,7 +106,8 @@ export async function POST(request: Request) {
       user: {
         id: user.user_id,
         fullName: user.full_name,
-        role: user.role,
+        role: member.role,
+        canEdit,
       },
     });
   } catch (error) {

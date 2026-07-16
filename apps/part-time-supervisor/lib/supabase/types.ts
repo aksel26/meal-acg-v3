@@ -49,6 +49,7 @@ export type Worker = {
   experience: string | null;
   address: string | null;
   resident_id: string | null;
+  resident_id_enc: string | null;
   email: string | null;
   warning: string | null;
   status: "registered" | "contracted" | "working" | "completed";

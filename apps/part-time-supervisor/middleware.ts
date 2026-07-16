@@ -1,10 +1,18 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { decodeSessionCookie } from "@/lib/session-cookie";
 
-const ADMIN_APP_URL = process.env.ADMIN_APP_URL || "http://localhost:3001";
 const SESSION_COOKIE_NAME = "supervisor-session";
 
-const PUBLIC_PATHS = ["/api/auth", "/api/contract/", "/api/attendance", "/login", "/contract", "/attendance"];
+const PUBLIC_PATHS = [
+  "/api/auth",
+  "/api/contract/",
+  "/api/attendance",
+  "/login",
+  "/contract",
+  "/attendance",
+];
+const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -21,55 +29,50 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 1. 자체 세션 쿠키 확인
-  const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME);
-  if (sessionCookie?.value) {
-    try {
-      const session = JSON.parse(sessionCookie.value);
-      if (session.userId && session.fullName && session.role) {
-        const requestHeaders = new Headers(request.headers);
-        requestHeaders.set("x-session-user-id", session.userId);
-        requestHeaders.set(
-          "x-session-user-name",
-          encodeURIComponent(session.fullName)
-        );
-        requestHeaders.set("x-session-user-role", session.role);
-        return NextResponse.next({ request: { headers: requestHeaders } });
-      }
-    } catch {
-      // invalid cookie, fall through to SSO
+  function authorizedResponse(user: {
+    id: string;
+    fullName: string;
+    role: string;
+    canEdit: boolean;
+  }) {
+    if (
+      pathname.startsWith("/api/") &&
+      !SAFE_METHODS.has(request.method) &&
+      !user.canEdit
+    ) {
+      return NextResponse.json(
+        { error: "편집 권한이 없습니다." },
+        { status: 403 },
+      );
+    }
+
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-session-user-id", user.id);
+    requestHeaders.set(
+      "x-session-user-name",
+      encodeURIComponent(user.fullName),
+    );
+    requestHeaders.set("x-session-user-role", user.role);
+    requestHeaders.set("x-session-user-can-edit", String(user.canEdit));
+    requestHeaders.set("x-session-request-method", request.method);
+    return NextResponse.next({ request: { headers: requestHeaders } });
+  }
+
+  // 1. 자체 세션 — API 라우트의 requireAuth가 DB 권한을 다시 검증함
+  const localCookie = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+  if (localCookie) {
+    const session = await decodeSessionCookie(localCookie);
+    if (session) {
+      return authorizedResponse({
+        id: session.userId,
+        fullName: session.fullName,
+        role: session.role,
+        canEdit: session.canEdit,
+      });
     }
   }
 
-  // 2. SSO fallback — admin 앱 세션 확인
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5000);
-
-  try {
-    const response = await fetch(`${ADMIN_APP_URL}/api/auth/session`, {
-      headers: { cookie: request.headers.get("cookie") || "" },
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
-
-    if (response.ok) {
-      const data = await response.json();
-      if (data.authenticated && data.user) {
-        const requestHeaders = new Headers(request.headers);
-        requestHeaders.set("x-session-user-id", data.user.id);
-        requestHeaders.set(
-          "x-session-user-name",
-          encodeURIComponent(data.user.fullName)
-        );
-        requestHeaders.set("x-session-user-role", data.user.role);
-        return NextResponse.next({ request: { headers: requestHeaders } });
-      }
-    }
-  } catch {
-    clearTimeout(timeout);
-  }
-
-  // 3. 둘 다 실패 → 로컬 로그인 페이지
+  // 2. 세션 없음 → 로컬 로그인 페이지. 앱 간 SSO는 1회용 코드로 세션을 발급함.
   const loginUrl = new URL("/login", request.url);
   return NextResponse.redirect(loginUrl);
 }

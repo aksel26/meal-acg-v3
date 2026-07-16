@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServiceClient } from "@/lib/supabase/client";
+import {
+  createServiceClient,
+  createSupervisorServiceClient,
+} from "@/lib/supabase/client";
 import { buildSessionCookie } from "@/lib/auth";
 import { withContext } from "@repo/logger";
+import { consumeRateLimit } from "utils/auth-rate-limit";
 
 interface LoginRequest {
   login_id: string;
@@ -19,7 +23,32 @@ export async function POST(request: NextRequest) {
     if (!login_id || !password) {
       return NextResponse.json(
         { success: false, error: "아이디와 비밀번호를 입력해주세요." },
-        { status: 400 }
+        { status: 400 },
+      );
+    }
+
+    const rateLimitClient = createSupervisorServiceClient();
+    if (!rateLimitClient) {
+      return NextResponse.json(
+        { success: false, error: "데이터베이스 연결 오류" },
+        { status: 500 },
+      );
+    }
+    const [addressAllowed, accountAllowed] = await Promise.all([
+      consumeRateLimit(rateLimitClient, request, "user-login-address", {
+        limit: 20,
+        windowSeconds: 15 * 60,
+      }),
+      consumeRateLimit(rateLimitClient, request, "user-login-account", {
+        limit: 5,
+        windowSeconds: 15 * 60,
+        subject: login_id,
+      }),
+    ]);
+    if (!addressAllowed || !accountAllowed) {
+      return NextResponse.json(
+        { success: false, error: "잠시 후 다시 시도해주세요." },
+        { status: 429 },
       );
     }
 
@@ -27,7 +56,7 @@ export async function POST(request: NextRequest) {
     if (!supabase) {
       return NextResponse.json(
         { success: false, error: "데이터베이스 연결 오류" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -49,7 +78,7 @@ export async function POST(request: NextRequest) {
       log.warn({ login_id }, "로그인 실패: 인증 불일치");
       return NextResponse.json(
         { success: false, error: INVALID_CREDENTIALS_ERROR },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -69,19 +98,16 @@ export async function POST(request: NextRequest) {
       );
       return NextResponse.json(
         { success: false, error: "로그인 처리 중 오류가 발생했습니다." },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     if (memberStatus?.current_status === "퇴사") {
       // 유저 열거 방지: 퇴사자 여부를 드러내지 않도록 동일 메시지
-      log.warn(
-        { login_id, memberId: member.user_id },
-        "로그인 차단: 퇴사자",
-      );
+      log.warn({ login_id, memberId: member.user_id }, "로그인 차단: 퇴사자");
       return NextResponse.json(
         { success: false, error: INVALID_CREDENTIALS_ERROR },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -96,14 +122,16 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    response.cookies.set(buildSessionCookie(member.user_id, member.role ?? null));
+    response.cookies.set(
+      buildSessionCookie(member.user_id, member.role ?? null),
+    );
 
     return response;
   } catch (error) {
     log.error({ err: error }, "로그인 처리 오류");
     return NextResponse.json(
       { success: false, error: "로그인 처리 중 오류가 발생했습니다." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

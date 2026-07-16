@@ -157,7 +157,7 @@ const navigation: NavigationItem[] = [
   },
   {
     name: "아르바이트 관리",
-    href: process.env.NEXT_PUBLIC_SUPERVISOR_APP_URL || "http://localhost:3002",
+    href: "/api/auth/sso/part-time",
     icon: HardHat,
     external: true,
   },

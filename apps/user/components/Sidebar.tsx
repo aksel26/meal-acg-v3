@@ -25,7 +25,6 @@ import { useUserStore } from "@/stores/userStore";
 import { useSidebarStore } from "@/stores/sidebarStore";
 import {
   isPushSupported,
-  isIOSSafari,
   subscribeToPush,
   getExistingSubscription,
 } from "@/lib/push-notifications";
@@ -160,7 +159,7 @@ const menuGroups: MenuGroup[] = [
   {
     label: "감독관/면접교육 운영",
     items: [],
-    href: "/part-time-supervisor",
+    href: "/api/auth/sso/part-time",
     icon: ExternalLink,
     external: true,
   },
@@ -686,15 +685,6 @@ function NotificationToggle({ iconOnly = false }: { iconOnly?: boolean }) {
 
   useEffect(() => {
     if (!userId) return;
-
-    const isStandalone =
-      "standalone" in navigator &&
-      Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
-
-    if (isIOSSafari() && !isStandalone) {
-      setStatus("unsupported");
-      return;
-    }
 
     if (!isPushSupported()) {
       setStatus("unsupported");

@@ -8,8 +8,6 @@ import ContractTemplate from "@/components/contract/ContractTemplate";
 import CompleteStep from "@/components/contract/CompleteStep";
 
 type VerifiedData = {
-  worker_id: string;
-  assignment_id: string;
   worker_name: string;
 };
 
@@ -32,16 +30,6 @@ export default function ContractPage({ params }: { params: Promise<{ jobPostingI
   useEffect(() => {
     const fetchJob = async () => {
       try {
-        const url = new URL(window.location.href);
-        const workerId = url.searchParams.get("worker_id");
-        const assignmentId = url.searchParams.get("assignment_id");
-
-        if (!workerId || !assignmentId) {
-          setStep("invalid_access");
-          setLoading(false);
-          return;
-        }
-
         const res = await fetch(`/api/contract/${jobPostingId}`);
         if (!res.ok) {
           setError("공고를 찾을 수 없습니다.");
@@ -49,17 +37,19 @@ export default function ContractPage({ params }: { params: Promise<{ jobPostingI
         }
         setJob(await res.json());
 
-        const statusRes = await fetch(
-          `/api/attendance/${jobPostingId}/status?assignment_id=${assignmentId}`
-        );
+        const statusRes = await fetch(`/api/attendance/${jobPostingId}/status`);
         if (statusRes.ok) {
           const statusData = await statusRes.json();
+          if (statusData.attendance_status !== "confirmed") {
+            setStep("invalid_access");
+            return;
+          }
           setVerified({
-            worker_id: workerId,
-            assignment_id: assignmentId,
             worker_name: statusData.worker_name || "",
           });
           setStep("contract");
+        } else {
+          setStep("invalid_access");
         }
       } catch {
         setError("서버 오류가 발생했습니다.");
@@ -81,8 +71,6 @@ export default function ContractPage({ params }: { params: Promise<{ jobPostingI
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        assignment_id: verified.assignment_id,
-        worker_id: verified.worker_id,
         signature_image: data.signature_image,
         resident_id: data.resident_id,
         contract_image: data.contract_image,

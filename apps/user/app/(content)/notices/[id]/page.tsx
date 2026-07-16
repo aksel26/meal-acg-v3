@@ -3,8 +3,8 @@
 import React from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "motion/react";
-import { ArrowLeft, Users, Paperclip, FileText } from "lucide-react";
-import { NOTICES, CATEGORY_COLORS } from "../data";
+import { ArrowLeft, Users, Paperclip, FileText, Tag } from "lucide-react";
+import { NOTICES } from "../data";
 
 export default function NoticeDetailPage() {
   const params = useParams();
@@ -36,13 +36,6 @@ export default function NoticeDetailPage() {
 
       {/* 헤더 */}
       <div className="mb-6">
-        <div className="flex items-center gap-2 mb-3">
-          <span
-            className={`rounded px-2 py-0.5 text-xs font-medium ${CATEGORY_COLORS[notice.category]}`}
-          >
-            {notice.category}
-          </span>
-        </div>
         <h1 className="text-xl font-bold text-slate-800 mb-3">
           {notice.title}
         </h1>
@@ -52,36 +45,41 @@ export default function NoticeDetailPage() {
         </div>
       </div>
 
-      {/* 참조인원 / 첨부파일 메타 */}
-      {(notice.references.length > 0 || notice.attachments.length > 0) && (
-        <div className="flex flex-col gap-2 mb-6">
-          {notice.references.length > 0 && (
-            <div className="flex items-center gap-2 text-sm text-slate-500">
-              <Users className="h-4 w-4 text-slate-400 shrink-0" />
-              <span className="text-slate-400">참조</span>
-              <span className="text-slate-600">{notice.references.join(", ")}</span>
-            </div>
-          )}
-          {notice.attachments.length > 0 && (
-            <div className="flex items-start gap-2 text-sm text-slate-500">
-              <Paperclip className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
-              <span className="text-slate-400 shrink-0">첨부</span>
-              <div className="flex flex-wrap gap-2">
-                {notice.attachments.map((file) => (
-                  <span
-                    key={file.name}
-                    className="inline-flex items-center gap-1 rounded-md bg-slate-50 px-2.5 py-1 text-xs text-slate-600"
-                  >
-                    <FileText className="h-3.5 w-3.5 text-slate-400" />
-                    {file.name}
-                    <span className="text-slate-400">({file.size})</span>
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+      {/* 공지 메타데이터 */}
+      <div className="flex flex-col gap-2 mb-6">
+        {notice.references.length > 0 && (
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <Users className="h-4 w-4 text-slate-400 shrink-0" />
+            <span className="text-slate-400">참조</span>
+            <span className="text-slate-600">
+              {notice.references.join(", ")}
+            </span>
+          </div>
+        )}
+        <div className="flex items-center gap-2 text-sm text-slate-500">
+          <Tag className="h-4 w-4 shrink-0 text-slate-400" />
+          <span className="text-slate-400">유형</span>
+          <span className="text-slate-600">{notice.category}</span>
         </div>
-      )}
+        {notice.attachments.length > 0 && (
+          <div className="flex items-start gap-2 text-sm text-slate-500">
+            <Paperclip className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
+            <span className="text-slate-400 shrink-0">첨부</span>
+            <div className="flex flex-wrap gap-2">
+              {notice.attachments.map((file) => (
+                <span
+                  key={file.name}
+                  className="inline-flex items-center gap-1 rounded-md bg-slate-50 px-2.5 py-1 text-xs text-slate-600"
+                >
+                  <FileText className="h-3.5 w-3.5 text-slate-400" />
+                  {file.name}
+                  <span className="text-slate-400">({file.size})</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* 구분선 */}
       <div className="h-px bg-slate-100 mb-6" />

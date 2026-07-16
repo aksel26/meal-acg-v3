@@ -36,9 +36,15 @@ type DragState =
 type Props = {
   reservations: RoomReservation[];
   onCreateRequest: (roomId: string, startTime: string, endTime: string) => void;
-  onMoveReservation: (id: string, roomId: string, startTime: string, endTime: string) => void;
+  onMoveReservation: (
+    id: string,
+    roomId: string,
+    startTime: string,
+    endTime: string,
+  ) => void;
   onResizeReservation: (id: string, startTime: string, endTime: string) => void;
   onClickReservation: (reservation: RoomReservation) => void;
+  readOnly?: boolean;
 };
 
 function slotToTime(slot: number): string {
@@ -59,9 +65,8 @@ function clamp(val: number, min: number, max: number): number {
 
 const hours = Array.from(
   { length: END_HOUR - START_HOUR },
-  (_, i) => START_HOUR + i
+  (_, i) => START_HOUR + i,
 );
-const slots = Array.from({ length: SLOT_COUNT }, (_, i) => i);
 
 export function TimelineGrid({
   reservations,
@@ -69,6 +74,7 @@ export function TimelineGrid({
   onMoveReservation,
   onResizeReservation,
   onClickReservation,
+  readOnly = false,
 }: Props) {
   const gridRef = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<DragState>({ mode: "idle" });
@@ -98,7 +104,7 @@ export function TimelineGrid({
       didDragRef.current = false;
       setDrag({ mode: "create", roomId, startSlot: slot, endSlot: slot });
     },
-    [getSlotFromX]
+    [getSlotFromX],
   );
 
   const handleMouseMove = useCallback(
@@ -143,7 +149,7 @@ export function TimelineGrid({
         });
       }
     },
-    [drag.mode, getSlotFromX, getRoomFromY]
+    [drag.mode, getSlotFromX, getRoomFromY],
   );
 
   const handleMouseUp = useCallback(() => {
@@ -156,7 +162,8 @@ export function TimelineGrid({
     } else if (drag.mode === "move") {
       if (
         didDragRef.current &&
-        (drag.currentRoomId !== drag.originRoomId || drag.currentSlotOffset !== 0)
+        (drag.currentRoomId !== drag.originRoomId ||
+          drag.currentSlotOffset !== 0)
       ) {
         const newStart = drag.originStartSlot + drag.currentSlotOffset;
         const newEnd = drag.originEndSlot + drag.currentSlotOffset;
@@ -172,7 +179,7 @@ export function TimelineGrid({
         onResizeReservation(
           drag.reservationId,
           slotToTime(drag.startSlot),
-          slotToTime(drag.endSlot)
+          slotToTime(drag.endSlot),
         );
       }
     }
@@ -196,7 +203,7 @@ export function TimelineGrid({
         currentSlotOffset: 0,
       });
     },
-    [reservations, getSlotFromX]
+    [reservations, getSlotFromX],
   );
 
   const handleBlockResizeStart = useCallback(
@@ -210,7 +217,7 @@ export function TimelineGrid({
         endSlot: timeToSlot(reservation.end_time),
       });
     },
-    []
+    [],
   );
 
   const handleBlockClick = useCallback(
@@ -219,33 +226,34 @@ export function TimelineGrid({
         onClickReservation(reservation);
       }
     },
-    [onClickReservation]
+    [onClickReservation],
   );
 
   return (
     <div
       ref={gridRef}
-      className="select-none overflow-x-auto rounded-lg border bg-white"
+      className="select-none overflow-x-auto rounded-lg bg-white"
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
       <div style={{ minWidth: 900 }}>
-        <div className="flex border-b bg-slate-50" style={{ height: HEADER_HEIGHT }}>
+        <div
+          className="flex border-b border-slate-100 bg-slate-50"
+          style={{ height: HEADER_HEIGHT }}
+        >
           <div
-            className="shrink-0 border-r"
+            className="shrink-0 border-r border-slate-50"
             style={{ width: ROOM_LABEL_WIDTH }}
           />
           <div className="relative flex-1">
             {hours.map((h, i) => (
               <div
                 key={h}
-                className="absolute top-0 flex h-full items-center border-l border-slate-200 text-xs text-slate-500"
+                className="absolute top-0 flex h-full items-center border-l border-slate-50 text-xs text-slate-500"
                 style={{ left: `${((i * 2) / SLOT_COUNT) * 100}%` }}
               >
-                <span className="pl-1">
-                  {String(h).padStart(2, "0")}:00
-                </span>
+                <span className="pl-1">{String(h).padStart(2, "0")}:00</span>
               </div>
             ))}
           </div>
@@ -253,7 +261,7 @@ export function TimelineGrid({
 
         {ROOMS.map((room) => {
           const roomReservations = reservations.filter(
-            (r) => r.room_id === room.id
+            (r) => r.room_id === room.id,
           );
           const isCreateTarget =
             drag.mode === "create" && drag.roomId === room.id;
@@ -262,18 +270,20 @@ export function TimelineGrid({
               ? {
                   startSlot: drag.originStartSlot + drag.currentSlotOffset,
                   endSlot: drag.originEndSlot + drag.currentSlotOffset,
-                  type: reservations.find((r) => r.id === drag.reservationId)?.type ?? "supervisor",
+                  type:
+                    reservations.find((r) => r.id === drag.reservationId)
+                      ?.type ?? "supervisor",
                 }
               : null;
 
           return (
             <div
               key={room.id}
-              className="flex border-b"
+              className="flex border-b border-slate-50 last:border-b-0"
               style={{ minHeight: ROW_HEIGHT }}
             >
               <div
-                className="flex shrink-0 flex-col justify-center border-r px-2"
+                className="flex shrink-0 flex-col justify-center border-r border-slate-50 px-2"
                 style={{ width: ROOM_LABEL_WIDTH }}
               >
                 <div className="text-sm font-medium">{room.name}</div>
@@ -282,45 +292,50 @@ export function TimelineGrid({
 
               <div
                 className="relative flex-1"
-                onMouseDown={(e) => handleMouseDown(e, room.id)}
+                onMouseDown={
+                  readOnly ? undefined : (e) => handleMouseDown(e, room.id)
+                }
               >
-                {slots.map((i) => (
+                {hours.map((_, i) => (
                   <div
                     key={i}
-                    className={`absolute top-0 bottom-0 ${i % 2 === 0 ? "border-l border-slate-200" : "border-l border-slate-100"}`}
-                    style={{ left: `${(i / SLOT_COUNT) * 100}%` }}
+                    className="absolute top-0 bottom-0 border-l border-slate-50"
+                    style={{ left: `${((i * 2) / SLOT_COUNT) * 100}%` }}
                   />
                 ))}
 
-                {isCreateTarget && (() => {
-                  const s = Math.min(drag.startSlot, drag.endSlot);
-                  const e = Math.max(drag.startSlot, drag.endSlot);
-                  if (e <= s) return null;
-                  return (
-                    <div
-                      className="absolute top-1 bottom-1 rounded border-2 border-dashed border-blue-400 bg-blue-100/50"
-                      style={{
-                        left: `${(s / SLOT_COUNT) * 100}%`,
-                        width: `${((e - s) / SLOT_COUNT) * 100}%`,
-                      }}
-                    />
-                  );
-                })()}
+                {isCreateTarget &&
+                  (() => {
+                    const s = Math.min(drag.startSlot, drag.endSlot);
+                    const e = Math.max(drag.startSlot, drag.endSlot);
+                    if (e <= s) return null;
+                    return (
+                      <div
+                        className="absolute top-1 bottom-1 rounded border-2 border-dashed border-blue-400 bg-blue-100/50"
+                        style={{
+                          left: `${(s / SLOT_COUNT) * 100}%`,
+                          width: `${((e - s) / SLOT_COUNT) * 100}%`,
+                        }}
+                      />
+                    );
+                  })()}
 
-                {moveGhost && (() => {
-                  const ghostStyle = moveGhost.type === "supervisor"
-                    ? "border-blue-400 bg-blue-100/40"
-                    : "border-blue-400 bg-blue-100/40";
-                  return (
-                    <div
-                      className={`absolute top-1 bottom-1 rounded border-2 border-dashed ${ghostStyle}`}
-                      style={{
-                        left: `${(moveGhost.startSlot / SLOT_COUNT) * 100}%`,
-                        width: `${(((moveGhost.endSlot - moveGhost.startSlot) / SLOT_COUNT) * 100)}%`,
-                      }}
-                    />
-                  );
-                })()}
+                {moveGhost &&
+                  (() => {
+                    const ghostStyle =
+                      moveGhost.type === "supervisor"
+                        ? "border-blue-400 bg-blue-100/40"
+                        : "border-blue-400 bg-blue-100/40";
+                    return (
+                      <div
+                        className={`absolute top-1 bottom-1 rounded border-2 border-dashed ${ghostStyle}`}
+                        style={{
+                          left: `${(moveGhost.startSlot / SLOT_COUNT) * 100}%`,
+                          width: `${((moveGhost.endSlot - moveGhost.startSlot) / SLOT_COUNT) * 100}%`,
+                        }}
+                      />
+                    );
+                  })()}
 
                 {roomReservations.map((r) => {
                   const isResizing =
@@ -346,6 +361,7 @@ export function TimelineGrid({
                       onResizeStart={(edge) =>
                         handleBlockResizeStart(r.id, edge, r)
                       }
+                      readOnly={readOnly}
                     />
                   );
                 })}

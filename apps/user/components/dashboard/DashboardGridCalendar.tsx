@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import dayjs from "dayjs";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -25,6 +25,7 @@ interface Props {
   onPrevMonth: () => void;
   onNextMonth: () => void;
   dayDataMap?: Map<string, DayData>;
+  headerAction?: ReactNode;
 }
 
 export default function DashboardGridCalendar({
@@ -35,6 +36,7 @@ export default function DashboardGridCalendar({
   onPrevMonth,
   onNextMonth,
   dayDataMap,
+  headerAction,
 }: Props) {
   const calendarDays = useMemo(() => {
     const start = dayjs(`${year}-${String(month).padStart(2, "0")}-01`);
@@ -44,45 +46,67 @@ export default function DashboardGridCalendar({
 
     for (let i = 0; i < startDay; i++) {
       const d = start.subtract(startDay - i, "day");
-      days.push({ date: d.format("YYYY-MM-DD"), dayOfMonth: d.date(), isCurrentMonth: false });
+      days.push({
+        date: d.format("YYYY-MM-DD"),
+        dayOfMonth: d.date(),
+        isCurrentMonth: false,
+      });
     }
     for (let i = 1; i <= daysInMonth; i++) {
       const d = start.date(i);
-      days.push({ date: d.format("YYYY-MM-DD"), dayOfMonth: i, isCurrentMonth: true });
+      days.push({
+        date: d.format("YYYY-MM-DD"),
+        dayOfMonth: i,
+        isCurrentMonth: true,
+      });
     }
     const remaining = 7 - (days.length % 7);
     if (remaining < 7) {
       const lastDay = dayjs(days[days.length - 1]!.date);
       for (let i = 1; i <= remaining; i++) {
         const d = lastDay.add(i, "day");
-        days.push({ date: d.format("YYYY-MM-DD"), dayOfMonth: d.date(), isCurrentMonth: false });
+        days.push({
+          date: d.format("YYYY-MM-DD"),
+          dayOfMonth: d.date(),
+          isCurrentMonth: false,
+        });
       }
     }
     return days;
   }, [year, month]);
 
-  const selectedStr = selectedDate ? dayjs(selectedDate).format("YYYY-MM-DD") : "";
+  const selectedStr = selectedDate
+    ? dayjs(selectedDate).format("YYYY-MM-DD")
+    : "";
   const todayStr = dayjs().format("YYYY-MM-DD");
 
   return (
     <div>
       {/* 헤더: 월 네비게이션 */}
-      <div className="flex items-center justify-between mb-4">
-        <button
-          onClick={onPrevMonth}
-          className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </button>
-        <h2 className="text-base font-semibold text-slate-800">
-          {year}년 {month}월
-        </h2>
-        <button
-          onClick={onNextMonth}
-          className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
-        >
-          <ChevronRight className="h-5 w-5" />
-        </button>
+      <div className="mb-4 grid grid-cols-[1fr_auto_1fr] items-center">
+        <div />
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onPrevMonth}
+            aria-label="이전 달"
+            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <h2 className="min-w-24 text-center text-base font-semibold text-slate-800">
+            {year}년 {month}월
+          </h2>
+          <button
+            type="button"
+            onClick={onNextMonth}
+            aria-label="다음 달"
+            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="justify-self-end">{headerAction}</div>
       </div>
 
       {/* 캘린더 그리드 */}
@@ -92,7 +116,11 @@ export default function DashboardGridCalendar({
           <div
             key={day}
             className={`bg-slate-50 p-2 text-center text-xs font-semibold ${
-              i === 0 ? "text-red-400" : i === 6 ? "text-blue-400" : "text-slate-500"
+              i === 0
+                ? "text-red-400"
+                : i === 6
+                  ? "text-blue-400"
+                  : "text-slate-500"
             }`}
           >
             {day}
@@ -109,9 +137,13 @@ export default function DashboardGridCalendar({
           return (
             <div
               key={day.date}
-              onClick={() => day.isCurrentMonth && onDateSelect(dayjs(day.date).toDate())}
+              onClick={() =>
+                day.isCurrentMonth && onDateSelect(dayjs(day.date).toDate())
+              }
               className={`min-h-[80px] bg-white p-1.5 transition-colors ${
-                !day.isCurrentMonth ? "opacity-30" : "cursor-pointer hover:bg-slate-50"
+                !day.isCurrentMonth
+                  ? "opacity-30"
+                  : "cursor-pointer hover:bg-slate-50"
               } ${isSelected ? "ring-1 ring-inset ring-slate-800" : ""}`}
             >
               {/* 날짜 숫자 */}
@@ -157,7 +189,9 @@ export default function DashboardGridCalendar({
                   )}
                   {extra && extra.requests.length > 0 && (
                     <div className="truncate rounded px-1 py-0.5 text-[10px] bg-amber-50 text-slate-600">
-                      {extra.requests.length === 1 ? "요청" : `요청 +${extra.requests.length}`}
+                      {extra.requests.length === 1
+                        ? "요청"
+                        : `요청 +${extra.requests.length}`}
                     </div>
                   )}
                 </div>

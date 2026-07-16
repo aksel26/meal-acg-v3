@@ -2,13 +2,6 @@
 
 import DashboardGridCalendar from "@/components/dashboard/DashboardGridCalendar";
 import { useUserStore } from "@/stores/userStore";
-import {
-  CalendarPlus,
-  UtensilsCrossed,
-  Wallet,
-  Cake,
-  Coffee,
-} from "lucide-react";
 import { AttendanceSection } from "@/components/Sidebar";
 import { useMemberIdLookup } from "@/hooks/use-points-data";
 import Link from "next/link";
@@ -16,15 +9,24 @@ import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import React, { useEffect, useState } from "react";
-import { UpdateNotificationDialog } from "@/components/UpdateNotificationDialog";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { NOTICES } from "../notices/data";
+import { Skeleton } from "@repo/ui/src/skeleton";
+import {
+  type RoomReservation,
+  useRoomReservations,
+} from "@/hooks/use-room-reservations";
+import { TimelineGrid } from "@/components/room-booking/TimelineGrid";
+import { getRoomById } from "@/lib/room-constants";
 import {
   type DashboardDueRequest,
   type DashboardProjectSchedule,
   useDashboardCalendar,
 } from "@/hooks/use-dashboard-calendar";
 import type { SupervisorPosting } from "@/hooks/use-supervisor-calendar";
+import type { DayoffRecord } from "@/hooks/use-dayoffs";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -54,57 +56,39 @@ function buildPostingsByDate(postings: SupervisorPosting[] = []) {
   return map;
 }
 
-// ─── 바로가기 ───
-
-function ApprovalShortcuts() {
-  return (
-    <div className="grid grid-cols-3 gap-3">
-      <Link
-        href="/leave-request"
-        className="flex flex-col items-start gap-2 rounded-lg bg-blue-50 px-4 py-4 transition-colors active:bg-blue-100"
-      >
-        <CalendarPlus className="h-5 w-5 text-slate-400" strokeWidth={1.5} />
-        <p className="text-sm font-medium text-slate-700">휴가 신청</p>
-      </Link>
-      <Link
-        href="/meal"
-        className="flex flex-col items-start gap-2 rounded-lg bg-blue-50 px-4 py-4 transition-colors active:bg-blue-100"
-      >
-        <UtensilsCrossed className="h-5 w-5 text-slate-400" strokeWidth={1.5} />
-        <p className="text-sm font-medium text-slate-700">식대 입력</p>
-      </Link>
-      <Link
-        href="/points"
-        className="flex flex-col items-start gap-2 rounded-lg bg-blue-50 px-4 py-4 transition-colors active:bg-blue-100"
-      >
-        <Wallet className="h-5 w-5 text-slate-400" strokeWidth={1.5} />
-        <p className="text-sm font-medium text-slate-700">복지포인트</p>
-      </Link>
-    </div>
-  );
-}
-
-// ─── 탭 콘텐츠: 공지 / 생일자 / 음료 ───
+// ─── 탭 콘텐츠: 공지 / 생일자 ───
 
 function NoticesContent() {
+  const notices = NOTICES.slice(0, 5);
+
   return (
     <div className="space-y-3">
-      <div className="rounded-xl bg-slate-50 p-4">
-        <p className="text-xs text-slate-400 mb-1">2026.04.01</p>
-        <p className="text-sm font-medium text-slate-800">4월 식대 정책 안내</p>
-        <p className="mt-1 text-xs text-slate-500 line-clamp-2">
-          4월부터 식대 한도가 조정됩니다. 자세한 내용은 공지사항을 확인해주세요.
-        </p>
-      </div>
-      <div className="rounded-xl bg-slate-50 p-4">
-        <p className="text-xs text-slate-400 mb-1">2026.03.28</p>
-        <p className="text-sm font-medium text-slate-800">
-          시스템 업데이트 공지
-        </p>
-        <p className="mt-1 text-xs text-slate-500 line-clamp-2">
-          앱 v1.3 업데이트가 적용되었습니다. 새로운 기능을 확인해보세요.
-        </p>
-      </div>
+      {notices.map((notice) => (
+        <Link
+          key={notice.id}
+          href={`/notices/${notice.id}`}
+          className="group flex items-center gap-3 rounded-xl p-4 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/20"
+        >
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-sm font-medium text-slate-800">
+                {notice.title}
+              </p>
+              <time className="shrink-0 text-xs text-slate-400">
+                {notice.createdAt.replaceAll("-", ".")}
+              </time>
+            </div>
+            <p className="mt-1 line-clamp-1 text-xs text-slate-500">
+              {notice.content}
+            </p>
+          </div>
+          <ChevronRight
+            aria-hidden="true"
+            className="h-4 w-4 shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-500"
+            strokeWidth={1.5}
+          />
+        </Link>
+      ))}
     </div>
   );
 }
@@ -120,16 +104,15 @@ function BirthdaysContent() {
         ].map((person) => (
           <div
             key={person.name}
-            className="flex items-center gap-3 rounded-xl bg-rose-50 p-3"
+            className="flex items-center gap-3 rounded-xl bg-slate-50 p-3"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/60">
-              <Cake className="h-4 w-4 text-rose-400" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-800">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              <span className="w-20 shrink-0 truncate text-[11px] text-slate-400">
+                {person.team}
+              </span>
+              <span className="truncate text-sm font-medium text-slate-800">
                 {person.name}
-              </p>
-              <p className="text-[11px] text-slate-400">{person.team}</p>
+              </span>
             </div>
             <span className="text-xs text-slate-400">{person.date}</span>
           </div>
@@ -139,76 +122,319 @@ function BirthdaysContent() {
   );
 }
 
-function DrinksContent() {
+function InfoSection() {
   return (
-    <div className="space-y-3">
-      <div className="rounded-xl bg-amber-50 p-4 text-center">
-        <Coffee className="mx-auto mb-2 h-8 w-8 text-slate-500" />
-        <p className="text-sm font-medium text-slate-700">
-          음료 취합이 진행 중입니다
-        </p>
-        <Link
-          href="/monthly"
-          className="mt-2 inline-block text-xs font-medium text-slate-600 hover:text-slate-800"
-        >
-          참여하기 →
-        </Link>
-      </div>
-    </div>
+    <section>
+      <h3 className="mb-3 text-sm font-semibold text-[#131313]">공지사항</h3>
+      <NoticesContent />
+    </section>
   );
 }
 
-function InfoSection() {
-  const monthName = dayjs().tz("Asia/Seoul").format("M");
-
+function BirthdaySection() {
   return (
-    <div className="space-y-6">
-      <section>
-        <h3 className="mb-3 text-sm font-semibold text-[#131313]">공지</h3>
-        <NoticesContent />
-      </section>
-      <section>
-        <h3 className="mb-3 text-sm font-semibold text-[#131313]">
-          {monthName}월 생일
-        </h3>
-        <BirthdaysContent />
-      </section>
-      <section>
-        <h3 className="mb-3 text-sm font-semibold text-[#131313]">
-          Monthly 음료
-        </h3>
-        <DrinksContent />
-      </section>
-    </div>
+    <section>
+      <h3 className="mb-3 text-sm font-semibold text-[#131313]">
+        {dayjs().tz("Asia/Seoul").format("M")}월 생일자
+      </h3>
+      <BirthdaysContent />
+    </section>
   );
 }
 
 // ─── 휴가 요약 ───
 
-function LeaveSummary() {
+function LeaveSummary({
+  hireDate,
+  dayoffs,
+}: {
+  hireDate: string | null;
+  dayoffs: DayoffRecord[];
+}) {
+  const yearsOfService = hireDate
+    ? dayjs().diff(dayjs(hireDate), "year")
+    : null;
+  const usedLeaveCounts = dayoffs.reduce<Record<string, number>>(
+    (counts, dayoff) => {
+      if (dayjs(dayoff.leave_date).isAfter(dayjs(), "day")) return counts;
+      const name = dayoff.leave_type?.name ?? "기타 휴가";
+      counts[name] = (counts[name] ?? 0) + 1;
+      return counts;
+    },
+    {},
+  );
+  const usedLeaveEntries = Object.entries(usedLeaveCounts);
+
   return (
     <div>
-      <h3 className="mb-3 text-sm font-semibold text-[#131313]">
-        내 휴가 요약
-      </h3>
-      <div className="grid grid-cols-4 gap-3">
-        <div className="rounded-xl bg-slate-50 p-3 text-center">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h3 className="text-sm font-semibold text-[#131313]">내 휴가 요약</h3>
+        <Link
+          href="/leave"
+          className="flex items-center gap-0.5 text-xs text-slate-400 transition-colors hover:text-slate-600"
+        >
+          자세히보기
+          <ChevronRight aria-hidden="true" className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+      <div className="grid grid-cols-3 divide-x divide-slate-200/60 overflow-hidden rounded-xl bg-slate-50">
+        <div className="p-3 text-center">
           <p className="text-[11px] text-[#131313]/50 mb-1">총 연차</p>
           <p className="text-lg font-bold tabular-nums text-[#131313]">15일</p>
         </div>
-        <div className="rounded-xl bg-slate-50 p-3 text-center">
-          <p className="text-[11px] text-[#131313]/50 mb-1">잔여</p>
-          <p className="text-lg font-bold tabular-nums text-[#131313]">8일</p>
-        </div>
-        <div className="rounded-xl bg-slate-50 p-3 text-center">
+        <div className="p-3 text-center">
           <p className="text-[11px] text-[#131313]/50 mb-1">사용</p>
           <p className="text-lg font-bold tabular-nums text-[#131313]">7일</p>
         </div>
-        <div className="rounded-xl bg-slate-50 p-3 text-center">
-          <p className="text-[11px] text-[#131313]/50 mb-1">사용 예정</p>
-          <p className="text-lg font-bold tabular-nums text-[#131313]">1일</p>
+        <div className="p-3 text-center">
+          <p className="text-[11px] text-[#131313]/50 mb-1">잔여</p>
+          <p className="text-lg font-bold tabular-nums text-[#131313]">8일</p>
         </div>
       </div>
+      <div className="mt-2 space-y-1 text-[11px] text-slate-400">
+        <div>
+          내 근속년수:{" "}
+          {yearsOfService === null
+            ? "-"
+            : yearsOfService === 0
+              ? "1년 미만"
+              : `${yearsOfService}년`}
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span>이번 달 사용:</span>
+          {usedLeaveEntries.length > 0 ? (
+            usedLeaveEntries.map(([name, count], index) => (
+              <React.Fragment key={name}>
+                {index > 0 && <span aria-hidden="true">·</span>}
+                <span>
+                  {name} {count}개
+                </span>
+              </React.Fragment>
+            ))
+          ) : (
+            <span>없음</span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type ScheduleView = "calendar" | "rooms";
+
+function ScheduleViewSegment({
+  value,
+  onChange,
+}: {
+  value: ScheduleView;
+  onChange: (value: ScheduleView) => void;
+}) {
+  return (
+    <div
+      role="tablist"
+      aria-label="일정 보기"
+      className="inline-flex rounded-lg bg-slate-100 p-1"
+    >
+      {(
+        [
+          ["calendar", "캘린더"],
+          ["rooms", "회의실"],
+        ] as const
+      ).map(([view, label]) => (
+        <button
+          key={view}
+          type="button"
+          role="tab"
+          aria-selected={value === view}
+          onClick={() => onChange(view)}
+          className={`h-7 rounded-md px-2.5 text-xs font-medium transition-colors ${
+            value === view
+              ? "bg-white text-slate-900 shadow-sm"
+              : "text-slate-500 hover:text-slate-700"
+          }`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+const ROOM_DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
+const ROOM_TYPE_LABELS: Record<RoomReservation["type"], string> = {
+  supervisor: "감독관",
+  interview: "면접",
+  meeting: "회의",
+  client_meeting: "고객사 미팅",
+  partner_meeting: "협력사 미팅",
+};
+
+const TODAY_ROOM_RESERVATIONS: RoomReservation[] = [
+  {
+    id: "dashboard-dummy-room-1",
+    room_id: "C1",
+    date: dayjs().tz("Asia/Seoul").format("YYYY-MM-DD"),
+    start_time: "10:00",
+    end_time: "11:30",
+    type: "meeting",
+    title: "주간 운영 회의",
+    content: "이번 주 운영 현황과 주요 이슈를 공유합니다.",
+    reserved_by: "정진우",
+    cc_members: ["김철수", "이영희"],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "dashboard-dummy-room-2",
+    room_id: "R",
+    date: dayjs().tz("Asia/Seoul").format("YYYY-MM-DD"),
+    start_time: "13:00",
+    end_time: "14:00",
+    type: "client_meeting",
+    title: "고객사 프로젝트 미팅",
+    content: "프로젝트 진행 일정과 요청사항을 논의합니다.",
+    reserved_by: "김관리",
+    cc_members: ["박영희"],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "dashboard-dummy-room-3",
+    room_id: "406-1",
+    date: dayjs().tz("Asia/Seoul").format("YYYY-MM-DD"),
+    start_time: "15:30",
+    end_time: "17:00",
+    type: "interview",
+    title: "면접위원 사전 교육",
+    content: "평가 기준과 면접 진행 방식을 안내합니다.",
+    reserved_by: "이지원",
+    cc_members: [],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+];
+
+function RoomReservationStatus({
+  date,
+  reservations,
+  isLoading,
+  onPrevDate,
+  onNextDate,
+  headerAction,
+}: {
+  date: Date;
+  reservations: RoomReservation[];
+  isLoading: boolean;
+  onPrevDate: () => void;
+  onNextDate: () => void;
+  headerAction: React.ReactNode;
+}) {
+  return (
+    <div>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onPrevDate}
+            aria-label="이전 날짜"
+            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <h2 className="min-w-36 text-center text-base font-semibold text-slate-800">
+            {dayjs(date).format("M월 D일")} ({ROOM_DAY_NAMES[dayjs(date).day()]}
+            )
+          </h2>
+          <button
+            type="button"
+            onClick={onNextDate}
+            aria-label="다음 날짜"
+            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        </div>
+        {headerAction}
+      </div>
+
+      {isLoading ? (
+        <Skeleton className="h-[400px] w-full rounded-lg" />
+      ) : (
+        <>
+          <TimelineGrid
+            reservations={reservations}
+            onCreateRequest={() => undefined}
+            onMoveReservation={() => undefined}
+            onResizeReservation={() => undefined}
+            onClickReservation={() => undefined}
+            readOnly
+          />
+
+          <div className="mt-5">
+            <h3 className="mb-3 text-sm font-semibold text-slate-800">
+              예약 상세
+            </h3>
+            <div className="space-y-3">
+              {reservations.length === 0 ? (
+                <div className="rounded-xl bg-slate-50 p-4 text-sm text-slate-400">
+                  예약이 없습니다.
+                </div>
+              ) : (
+                [...reservations]
+                  .sort((a, b) => a.start_time.localeCompare(b.start_time))
+                  .map((reservation) => (
+                    <article
+                      key={reservation.id}
+                      className="rounded-xl bg-slate-50 p-4"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="mb-1.5 flex items-center gap-2">
+                            <span className="text-xs font-medium text-slate-500">
+                              {getRoomById(reservation.room_id)?.name ??
+                                reservation.room_id}
+                            </span>
+                            <span className="rounded bg-white px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
+                              {ROOM_TYPE_LABELS[reservation.type]}
+                            </span>
+                          </div>
+                          <div className="flex min-w-0 items-center gap-2">
+                            <p className="max-w-[45%] shrink-0 truncate text-sm font-semibold text-slate-800">
+                              {reservation.title || "제목 없음"}
+                            </p>
+                            {reservation.content && (
+                              <>
+                                <span
+                                  aria-hidden="true"
+                                  className="shrink-0 text-slate-300"
+                                >
+                                  ·
+                                </span>
+                                <p className="truncate text-xs text-slate-500">
+                                  {reservation.content}
+                                </p>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <time className="shrink-0 text-xs tabular-nums text-slate-500">
+                          {reservation.start_time.slice(0, 5)}–
+                          {reservation.end_time.slice(0, 5)}
+                        </time>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 border-t border-slate-200/70 pt-3 text-[11px] text-slate-400">
+                        <span>예약자 {reservation.reserved_by}</span>
+                        {reservation.cc_members.length > 0 && (
+                          <span>참조 {reservation.cc_members.join(", ")}</span>
+                        )}
+                      </div>
+                    </article>
+                  ))
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -339,20 +565,6 @@ function SelectedDateDetail({
 
 // ─── Dashboard Page ───
 
-// ─── 오늘 헤더 ───
-
-function TodayHeader({ userName }: { userName: string }) {
-  const today = dayjs().tz("Asia/Seoul");
-  return (
-    <div className="mb-5">
-      <p className="text-xs text-slate-400">{today.format("M월 D일 dddd")}</p>
-      <h2 className="mt-0.5 text-lg font-semibold tracking-tight text-slate-900">
-        {userName}님, 안녕하세요
-      </h2>
-    </div>
-  );
-}
-
 export default function DashboardPage() {
   const [mounted, setMounted] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
@@ -364,6 +576,7 @@ export default function DashboardPage() {
   const [currentYear, setCurrentYear] = useState<number>(
     dayjs().tz("Asia/Seoul").year(),
   );
+  const [scheduleView, setScheduleView] = useState<ScheduleView>("calendar");
   const router = useRouter();
 
   const userName = useUserStore((s) => s.userName);
@@ -371,6 +584,7 @@ export default function DashboardPage() {
   const hydrate = useUserStore((s) => s.hydrate);
   const hasHydrated = useUserStore((s) => s.hasHydrated);
   const memberId = useUserStore((s) => s.memberId);
+  const storedHireDate = useUserStore((s) => s.hireDate);
 
   // 모바일 출퇴근 카드용 memberId (Sidebar와 동일한 fallback 조회)
   const { data: memberLookup } = useMemberIdLookup(userName || null);
@@ -386,6 +600,11 @@ export default function DashboardPage() {
     currentYear,
     currentMonth,
   );
+  const today = dayjs().tz("Asia/Seoul");
+  const { data: currentMonthCalendarData } = useDashboardCalendar(
+    today.year(),
+    today.month() + 1,
+  );
   const postingsByDate = React.useMemo(
     () => buildPostingsByDate(calendarData?.postings),
     [calendarData?.postings],
@@ -394,6 +613,12 @@ export default function DashboardPage() {
   const selectedDateStr = selectedDate
     ? dayjs(selectedDate).format("YYYY-MM-DD")
     : "";
+  const { data: roomReservations = [], isLoading: roomReservationsLoading } =
+    useRoomReservations(scheduleView === "rooms" ? selectedDateStr : "");
+  const displayedRoomReservations =
+    selectedDateStr === dayjs().tz("Asia/Seoul").format("YYYY-MM-DD")
+      ? [...roomReservations, ...TODAY_ROOM_RESERVATIONS]
+      : roomReservations;
   const selectedPostings = selectedDateStr
     ? postingsByDate.get(selectedDateStr) || []
     : [];
@@ -474,6 +699,12 @@ export default function DashboardPage() {
       setCurrentMonth(1);
     } else setCurrentMonth(currentMonth + 1);
   };
+  const handleRoomDateChange = (amount: -1 | 1) => {
+    const nextDate = dayjs(selectedDate ?? new Date()).add(amount, "day");
+    setSelectedDate(nextDate.toDate());
+    setCurrentYear(nextDate.year());
+    setCurrentMonth(nextDate.month() + 1);
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -499,8 +730,6 @@ export default function DashboardPage() {
 
   return (
     <React.Fragment>
-      <TodayHeader userName={displayUserName} />
-
       {/* 모바일 전용 출퇴근 카드 (데스크톱은 사이드바에 표시) */}
       <motion.div
         initial={shouldAnimate ? { opacity: 0, y: 12 } : false}
@@ -520,50 +749,73 @@ export default function DashboardPage() {
             transition={{ duration: 0.5, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
             className="mb-6"
           >
-            <DashboardGridCalendar
-              year={currentYear}
-              month={currentMonth}
-              selectedDate={selectedDate}
-              onDateSelect={setSelectedDate}
-              onPrevMonth={handlePrevMonth}
-              onNextMonth={handleNextMonth}
-              dayDataMap={dayDataMap}
-            />
+            {scheduleView === "calendar" ? (
+              <DashboardGridCalendar
+                year={currentYear}
+                month={currentMonth}
+                selectedDate={selectedDate}
+                onDateSelect={setSelectedDate}
+                onPrevMonth={handlePrevMonth}
+                onNextMonth={handleNextMonth}
+                dayDataMap={dayDataMap}
+                headerAction={
+                  <ScheduleViewSegment
+                    value={scheduleView}
+                    onChange={setScheduleView}
+                  />
+                }
+              />
+            ) : (
+              <RoomReservationStatus
+                date={selectedDate ?? new Date()}
+                reservations={displayedRoomReservations}
+                isLoading={roomReservationsLoading}
+                onPrevDate={() => handleRoomDateChange(-1)}
+                onNextDate={() => handleRoomDateChange(1)}
+                headerAction={
+                  <ScheduleViewSegment
+                    value={scheduleView}
+                    onChange={setScheduleView}
+                  />
+                }
+              />
+            )}
           </motion.div>
 
-          <motion.div
-            initial={shouldAnimate ? { opacity: 0, y: 12 } : false}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="mb-6"
-          >
-            <SelectedDateDetail
-              date={selectedDate}
-              postings={selectedPostings}
-              requests={selectedRequests}
-              projects={selectedProjects}
-            />
-          </motion.div>
+          {scheduleView === "calendar" && (
+            <motion.div
+              initial={shouldAnimate ? { opacity: 0, y: 12 } : false}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: 0.5,
+                delay: 0.1,
+                ease: [0.16, 1, 0.3, 1],
+              }}
+              className="mb-6"
+            >
+              <SelectedDateDetail
+                date={selectedDate}
+                postings={selectedPostings}
+                requests={selectedRequests}
+                projects={selectedProjects}
+              />
+            </motion.div>
+          )}
         </div>
 
-        {/* ── 우측: 바로가기 + 휴가요약 + 정보 ── */}
+        {/* ── 우측: 휴가요약 + 정보 ── */}
         <div>
           <motion.div
             initial={shouldAnimate ? { opacity: 0, y: 12 } : false}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
-            className="mb-6"
-          >
-            <ApprovalShortcuts />
-          </motion.div>
-
-          <motion.div
-            initial={shouldAnimate ? { opacity: 0, y: 12 } : false}
-            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="mb-6"
+            className="mb-6 grid gap-6 lg:grid-cols-[3fr_2fr]"
           >
-            <LeaveSummary />
+            <LeaveSummary
+              hireDate={memberLookup?.hire_date ?? storedHireDate}
+              dayoffs={currentMonthCalendarData?.dayoffs ?? []}
+            />
+            <BirthdaySection />
           </motion.div>
 
           <motion.div
@@ -576,8 +828,6 @@ export default function DashboardPage() {
           </motion.div>
         </div>
       </div>
-
-      <UpdateNotificationDialog />
     </React.Fragment>
   );
 }

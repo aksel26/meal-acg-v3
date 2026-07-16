@@ -10,9 +10,13 @@ type Props = {
   onClick: () => void;
   onDragStart: (e: React.MouseEvent) => void;
   onResizeStart: (edge: "left" | "right") => void;
+  readOnly?: boolean;
 };
 
-const TYPE_STYLES: Record<string, { bg: string; indicator: string; text: string; label: string }> = {
+const TYPE_STYLES: Record<
+  string,
+  { bg: string; indicator: string; text: string; label: string }
+> = {
   supervisor: {
     bg: "bg-blue-50",
     indicator: "bg-blue-500",
@@ -53,33 +57,36 @@ export function ReservationBlock({
   onClick,
   onDragStart,
   onResizeStart,
+  readOnly = false,
 }: Props) {
   const style = (TYPE_STYLES[reservation.type] ?? TYPE_STYLES["supervisor"])!;
 
   return (
     <div
       data-reservation={reservation.id}
-      className={`group absolute top-1 bottom-1 flex items-center gap-1.5 overflow-hidden rounded px-2 text-xs transition-shadow ${style.bg} ${style.text} ${isDragging ? "opacity-50 shadow-lg" : "cursor-grab"}`}
+      className={`group absolute top-1 bottom-1 flex items-center gap-1.5 overflow-hidden rounded-lg px-2 text-xs transition-shadow ${style.bg} ${style.text} ${isDragging ? "opacity-50 shadow-lg" : readOnly ? "" : "cursor-grab"}`}
       style={{ left, width }}
       onMouseDown={(e) => {
         e.stopPropagation();
-        if (!(e.target as HTMLElement).dataset.resize) {
+        if (!readOnly && !(e.target as HTMLElement).dataset.resize) {
           onDragStart(e);
         }
       }}
       onClick={(e) => {
         e.stopPropagation();
-        onClick();
+        if (!readOnly) onClick();
       }}
     >
-      <div
-        data-resize="left"
-        className="absolute left-0 top-0 bottom-0 w-1.5 cursor-col-resize opacity-0 group-hover:opacity-100"
-        onMouseDown={(e) => {
-          e.stopPropagation();
-          onResizeStart("left");
-        }}
-      />
+      {!readOnly && (
+        <div
+          data-resize="left"
+          className="absolute left-0 top-0 bottom-0 w-1.5 cursor-col-resize opacity-0 group-hover:opacity-100"
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            onResizeStart("left");
+          }}
+        />
+      )}
 
       <span className={`h-3.5 w-1.5 shrink-0 rounded-sm ${style.indicator}`} />
 
@@ -88,14 +95,16 @@ export function ReservationBlock({
         {reservation.title ? ` - ${reservation.title}` : ""}
       </span>
 
-      <div
-        data-resize="right"
-        className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize opacity-0 group-hover:opacity-100"
-        onMouseDown={(e) => {
-          e.stopPropagation();
-          onResizeStart("right");
-        }}
-      />
+      {!readOnly && (
+        <div
+          data-resize="right"
+          className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize opacity-0 group-hover:opacity-100"
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            onResizeStart("right");
+          }}
+        />
+      )}
     </div>
   );
 }

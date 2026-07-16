@@ -1,14 +1,30 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import type { ReactNode } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import { motion } from "motion/react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Ellipsis } from "lucide-react";
 import dayjs from "dayjs";
 import "dayjs/locale/ko";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
-import { AlertCircle, CalendarDays, Clock3, TimerReset } from "lucide-react";
-import { useAttendanceMonthly } from "@/hooks/use-attendance-monthly";
+import AttendanceCalendar from "@/components/attendance/AttendanceCalendar";
+import LeaveYearGrid, {
+  buildDummyLeaveRecords,
+} from "@/components/dayoffs/LeaveYearGrid";
+import {
+  useAttendanceMonthly,
+  type AttendanceRecord,
+} from "@/hooks/use-attendance-monthly";
+import { useDayoffsYearly, type DayoffRecord } from "@/hooks/use-dayoffs";
+import { useLeaveBalances } from "@/hooks/use-leave-balances";
+import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/src/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/src/select";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -16,63 +32,20 @@ dayjs.locale("ko");
 
 interface ProfileAttendanceTabProps {
   memberId: string;
-  hireDate: string | null;
 }
 
-function formatMinutesToHM(minutes: number) {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  if (h === 0) return `${m}분`;
-  if (m === 0) return `${h}시간`;
-  return `${h}시간 ${m}분`;
-}
+type SortKey = "date" | "attendance_type" | "status";
+type SortDirection = "asc" | "desc";
+type RecordView = "monthly" | "annual";
+type MonthlyEntry = {
+  date: string;
+  record: AttendanceRecord | null;
+  dayoffs: DayoffRecord[];
+};
 
-function calcAverageTime(
-  records: { check_in_at: string | null; check_out_at: string | null }[],
-  field: "check_in_at" | "check_out_at",
-) {
-  const valid = records.filter((r) => r[field]);
-  if (valid.length === 0) return null;
-
-  const totalMinutes = valid.reduce((sum, r) => {
-    const t = dayjs(r[field]!).tz("Asia/Seoul");
-    return sum + t.hour() * 60 + t.minute();
-  }, 0);
-
-  const avg = Math.round(totalMinutes / valid.length);
-  const h = Math.floor(avg / 60);
-  const m = avg % 60;
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-}
-
-function calcExtremeTime(
-  records: { check_in_at: string | null; check_out_at: string | null }[],
-  field: "check_in_at" | "check_out_at",
-  mode: "min" | "max",
-) {
-  const valid = records
-    .filter((r) => r[field])
-    .map((r) => dayjs(r[field]!).tz("Asia/Seoul"));
-  if (valid.length === 0) return null;
-
-  const selected = valid.reduce((target, current) => {
-    const currentMinutes = current.hour() * 60 + current.minute();
-    const targetMinutes = target.hour() * 60 + target.minute();
-    return mode === "min"
-      ? currentMinutes < targetMinutes
-        ? current
-        : target
-      : currentMinutes > targetMinutes
-        ? current
-        : target;
-  });
-
-  return selected.format("HH:mm");
-}
-
-function formatRecordTime(value: string | null) {
+function formatRecordTime(value: string | null, format = "HH:mm") {
   if (!value) return "-";
-  return dayjs(value).tz("Asia/Seoul").format("HH:mm");
+  return dayjs(value).tz("Asia/Seoul").format(format);
 }
 
 function formatWorkTime(minutes: number) {
@@ -81,6 +54,20 @@ function formatWorkTime(minutes: number) {
   const m = minutes % 60;
   if (h === 0) return `${m}분`;
   return m > 0 ? `${h}시간 ${m}분` : `${h}시간`;
+}
+
+function formatCount(value: number) {
+  return Number.isInteger(value)
+    ? String(value)
+    : value.toFixed(2).replace(/0$/, "");
+}
+
+function getLeaveDayAmount(dayoff: DayoffRecord) {
+  if (!dayoff.leave_type || dayoff.leave_type.category === "지각/조퇴") {
+    return 0;
+  }
+  if (dayoff.leave_type.category === "반반차") return 0.25;
+  return dayoff.leave_type.duration_type === "full" ? 1 : 0.5;
 }
 
 type StatusLabel = { text: string; className: string };
@@ -113,488 +100,754 @@ const TYPE_BADGE_STYLES: Record<string, string> = {
   외근: "bg-blue-50 text-blue-700",
 };
 
+const DAYOFF_STATUS_LABELS: Record<string, string> = {
+  approved: "승인",
+  pending: "대기",
+  rejected: "반려",
+  draft: "임시",
+};
+
 export default function ProfileAttendanceTab({
   memberId,
-  hireDate,
 }: ProfileAttendanceTabProps) {
   const now = dayjs().tz("Asia/Seoul");
   const [year, setYear] = useState(now.year());
   const [month, setMonth] = useState(now.month() + 1);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [recordView, setRecordView] = useState<RecordView>("monthly");
+  const [sort, setSort] = useState<{
+    key: SortKey;
+    direction: SortDirection;
+  }>({ key: "date", direction: "desc" });
 
-  const { data, isLoading } = useAttendanceMonthly(memberId, year, month);
-
-  const hireDateDayjs = hireDate ? dayjs(hireDate) : null;
-  const yearsOfService = hireDateDayjs
-    ? dayjs().diff(hireDateDayjs, "year")
-    : null;
-  const threeYearDate = hireDateDayjs ? hireDateDayjs.add(3, "year") : null;
-  const fiveYearDate = hireDateDayjs ? hireDateDayjs.add(5, "year") : null;
+  const { data, isLoading: isAttendanceLoading } = useAttendanceMonthly(
+    memberId,
+    year,
+    month,
+  );
+  const { data: yearlyDayoffs, isLoading: isDayoffsLoading } = useDayoffsYearly(
+    memberId,
+    year,
+  );
+  const { data: leaveBalances, isLoading: isLeaveBalancesLoading } =
+    useLeaveBalances(memberId, year);
 
   const currentYear = now.year();
   const years = Array.from({ length: currentYear - 2022 }, (_, i) => 2023 + i);
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
-
-  const avgCheckIn = useMemo(() => {
-    if (!data?.records) return null;
-    return calcAverageTime(data.records, "check_in_at");
-  }, [data?.records]);
-
-  const avgCheckOut = useMemo(() => {
-    if (!data?.records) return null;
-    return calcAverageTime(data.records, "check_out_at");
-  }, [data?.records]);
+  const dayoffs = useMemo(
+    () =>
+      (yearlyDayoffs ?? []).filter(
+        (dayoff) => dayjs(dayoff.leave_date).month() + 1 === month,
+      ),
+    [yearlyDayoffs, month],
+  );
+  const dummyYearDayoffs = useMemo(() => buildDummyLeaveRecords(year), [year]);
+  const displayedYearDayoffs = useMemo(
+    () => [...(yearlyDayoffs ?? []), ...dummyYearDayoffs],
+    [yearlyDayoffs, dummyYearDayoffs],
+  );
+  const calendarDayoffs = useMemo(
+    () =>
+      displayedYearDayoffs.filter(
+        (dayoff) => dayjs(dayoff.leave_date).month() + 1 === month,
+      ),
+    [displayedYearDayoffs, month],
+  );
 
   const monthlyRecords = useMemo(() => {
     return [...(data?.records ?? [])].sort((a, b) =>
-      dayjs(b.date).diff(dayjs(a.date)),
+      b.date.localeCompare(a.date),
     );
   }, [data?.records]);
+  const overtimeRecords = monthlyRecords.filter(
+    (record) => record.overtime_minutes > 0,
+  );
+  const overtimeCount = overtimeRecords.length;
+  const leaveDays = (dayoffs ?? [])
+    .filter((dayoff) => dayoff.approval_status === "approved")
+    .reduce((total, dayoff) => total + getLeaveDayAmount(dayoff), 0);
+  const monthStart = dayjs(`${year}-${String(month).padStart(2, "0")}-01`);
+  const weekdayCount = Array.from(
+    { length: monthStart.daysInMonth() },
+    (_, index) => monthStart.date(index + 1).day(),
+  ).filter((day) => day !== 0 && day !== 6).length;
+  const targetWorkDays = Math.max(0, weekdayCount - leaveDays);
+  const annualLeaveSummary = useMemo(() => {
+    const balances = (leaveBalances ?? []).filter(
+      (balance) => balance.type === "annual" || balance.type === "monthly",
+    );
+    const total = balances.reduce(
+      (sum, balance) => sum + balance.granted + balance.adjusted,
+      0,
+    );
+    const used = balances.reduce((sum, balance) => sum + balance.used, 0);
+    return { total, used, remaining: total - used };
+  }, [leaveBalances]);
+  const monthlyEntries = useMemo(() => {
+    const entries = new Map<string, MonthlyEntry>();
 
-  const earliestCheckIn = useMemo(() => {
-    if (!data?.records) return null;
-    return calcExtremeTime(data.records, "check_in_at", "min");
-  }, [data?.records]);
+    for (const record of data?.records ?? []) {
+      entries.set(record.date, { date: record.date, record, dayoffs: [] });
+    }
+    for (const dayoff of dayoffs ?? []) {
+      if (getLeaveDayAmount(dayoff) === 0) continue;
+      const entry = entries.get(dayoff.leave_date) ?? {
+        date: dayoff.leave_date,
+        record: null,
+        dayoffs: [],
+      };
+      entry.dayoffs.push(dayoff);
+      entries.set(dayoff.leave_date, entry);
+    }
 
-  const latestCheckOut = useMemo(() => {
-    if (!data?.records) return null;
-    return calcExtremeTime(data.records, "check_out_at", "max");
-  }, [data?.records]);
+    const direction = sort.direction === "asc" ? 1 : -1;
+    return [...entries.values()].sort((a, b) => {
+      const comparison =
+        sort.key === "date"
+          ? a.date.localeCompare(b.date)
+          : sort.key === "attendance_type"
+            ? (a.record?.attendance_type ?? "휴가").localeCompare(
+                b.record?.attendance_type ?? "휴가",
+                "ko",
+              )
+            : (
+                STATUS_LABELS[a.record?.status ?? ""]?.text ??
+                DAYOFF_STATUS_LABELS[a.dayoffs[0]?.approval_status ?? ""] ??
+                ""
+              ).localeCompare(
+                STATUS_LABELS[b.record?.status ?? ""]?.text ??
+                  DAYOFF_STATUS_LABELS[b.dayoffs[0]?.approval_status ?? ""] ??
+                  "",
+                "ko",
+              );
 
-  const recentIssues = useMemo(() => {
-    if (!data?.records) return [];
-
-    return data.records
-      .flatMap((record) => {
-        const dateLabel = dayjs(record.date).format("M월 D일");
-        const items: { key: string; title: string; description: string }[] = [];
-
-        if (record.status === "late") {
-          items.push({
-            key: `${record.id}-late`,
-            title: "최근 지각",
-            description: `${dateLabel} ${formatRecordTime(record.check_in_at)} 출근`,
-          });
-        }
-
-        if (record.status === "early_leave") {
-          items.push({
-            key: `${record.id}-early-leave`,
-            title: "최근 조퇴",
-            description: `${dateLabel} ${formatRecordTime(record.check_out_at)} 퇴근`,
-          });
-        }
-
-        if (record.modification_status) {
-          items.push({
-            key: `${record.id}-modify`,
-            title: "수정 요청",
-            description: `${dateLabel} ${record.modification_status}`,
-          });
-        }
-
-        return items;
-      })
-      .slice(0, 5);
-  }, [data?.records]);
+      return comparison * direction || b.date.localeCompare(a.date);
+    });
+  }, [data?.records, dayoffs, sort]);
+  const selectedRecord = monthlyRecords.find(
+    (record) => record.date === selectedDate,
+  );
+  const selectedLeaveDetails = displayedYearDayoffs.filter(
+    (dayoff) => dayoff.leave_date === selectedDate,
+  );
 
   const summary = data?.summary;
   const issueCount =
     (summary?.late_count ?? 0) + (summary?.early_leave_count ?? 0);
   const monthLabel = `${year}년 ${month}월`;
   const issueLabel = issueCount > 0 ? `${issueCount}건 확인 필요` : "이상 없음";
+  const handleSort = (key: SortKey) => {
+    setSort((current) => ({
+      key,
+      direction:
+        current.key === key
+          ? current.direction === "asc"
+            ? "desc"
+            : "asc"
+          : key === "date"
+            ? "desc"
+            : "asc",
+    }));
+  };
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 rounded-xl bg-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-            Attendance
-          </p>
-          <h2 className="mt-0.5 text-lg font-semibold text-slate-950">
-            근태/통계
-          </h2>
-          <p className="mt-0.5 text-xs leading-5 text-slate-500">
-            월별 출퇴근 흐름과 근속 기준일을 한눈에 확인합니다.
-          </p>
-        </div>
-        <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0">
-          <select
-            value={year.toString()}
-            onChange={(e) => setYear(parseInt(e.target.value))}
-            aria-label="연도 선택"
-            className="h-9 w-full appearance-none rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-slate-700 outline-none transition-colors hover:bg-slate-100 focus:border-slate-300 focus:bg-white sm:w-24"
-          >
-            {years.map((y) => (
-              <option key={y} value={y.toString()}>
-                {y}년
-              </option>
-            ))}
-          </select>
-          <select
-            value={month.toString()}
-            onChange={(e) => setMonth(parseInt(e.target.value))}
-            aria-label="월 선택"
-            className="h-9 w-full appearance-none rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-slate-700 outline-none transition-colors hover:bg-slate-100 focus:border-slate-300 focus:bg-white sm:w-20"
-          >
-            {months.map((m) => (
-              <option key={m} value={m.toString()}>
-                {m}월
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {isLoading ? (
+      {isAttendanceLoading || isDayoffsLoading || isLeaveBalancesLoading ? (
         <div className="rounded-xl bg-white py-10 text-center text-sm text-slate-400">
           로딩 중...
         </div>
       ) : (
         <>
-          <div className="grid gap-5 lg:grid-cols-2 xl:gap-6">
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35 }}
-              className="overflow-hidden rounded-xl bg-white"
-            >
-              <div className="px-4 py-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-base font-semibold text-slate-900">
-                      {monthLabel} 근태 요약
-                    </p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      근무 시간, 지각/조퇴를 요약합니다.
-                    </p>
-                  </div>
-                  <span
-                    className={`inline-flex w-fit rounded-full px-2.5 py-1 text-xs font-semibold ${
-                      issueCount > 0
-                        ? "bg-amber-50 text-amber-700"
-                        : "bg-emerald-50 text-emerald-700"
-                    }`}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35 }}
+            className="grid gap-6 lg:grid-cols-3 lg:gap-10 xl:gap-14"
+          >
+            <section>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h3 className="text-sm font-semibold text-slate-900">캘린더</h3>
+                <div className="flex shrink-0 gap-2">
+                  <Select
+                    value={year.toString()}
+                    onValueChange={(value) => {
+                      setYear(parseInt(value));
+                      setSelectedDate(null);
+                    }}
                   >
-                    {issueLabel}
-                  </span>
+                    <SelectTrigger
+                      aria-label="연도 선택"
+                      className="h-8 w-24 text-xs"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {years.map((item) => (
+                        <SelectItem key={item} value={item.toString()}>
+                          {item}년
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={month.toString()}
+                    onValueChange={(value) => {
+                      setMonth(parseInt(value));
+                      setSelectedDate(null);
+                    }}
+                  >
+                    <SelectTrigger
+                      aria-label="월 선택"
+                      className="h-8 w-20 text-xs"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {months.map((item) => (
+                        <SelectItem key={item} value={item.toString()}>
+                          {item}월
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
+              <AttendanceCalendar
+                year={year}
+                month={month}
+                selectedDate={selectedDate}
+                onDateSelect={setSelectedDate}
+                records={monthlyRecords}
+                dayoffs={calendarDayoffs}
+              />
+            </section>
 
-              <div className="grid gap-px bg-slate-100 sm:grid-cols-2">
-                <SummaryCard
-                  label="출근일수"
-                  value={`${summary?.total_work_days ?? 0}일`}
-                  icon={<CalendarDays className="h-4 w-4" />}
-                />
-                <SummaryCard
-                  label="총 근무"
-                  value={formatMinutesToHM(summary?.total_work_minutes ?? 0)}
-                  icon={<Clock3 className="h-4 w-4" />}
-                />
-                <SummaryCard
-                  label="시간외근무"
-                  value={formatMinutesToHM(
-                    summary?.total_overtime_minutes ?? 0,
-                  )}
-                  icon={<TimerReset className="h-4 w-4" />}
-                />
-                <SummaryCard
-                  label="지각/조퇴"
-                  value={`${issueCount}회`}
-                  icon={<AlertCircle className="h-4 w-4" />}
-                />
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: 0.05 }}
-              className="rounded-xl bg-white p-4"
-            >
-              <div className="mb-2">
-                <h3 className="text-base font-semibold text-slate-900">
-                  근속 정보
+            <section>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h3 className="text-sm font-semibold text-slate-900">
+                  {monthLabel} 근태 요약
                 </h3>
-                <p className="text-xs text-slate-500">입사일 기준 마일스톤</p>
-              </div>
-
-              <div className="space-y-1.5">
-                <MilestoneRow
-                  label="입사일"
-                  value={
-                    hireDateDayjs ? hireDateDayjs.format("YYYY-MM-DD") : "-"
-                  }
-                />
-                <MilestoneRow
-                  label="근속년수"
-                  value={yearsOfService !== null ? `${yearsOfService}년` : "-"}
-                />
-                <MilestoneRow
-                  label="3년차"
-                  value={
-                    threeYearDate ? threeYearDate.format("YYYY-MM-DD") : "-"
-                  }
-                  achieved={!!threeYearDate && dayjs().isAfter(threeYearDate)}
-                />
-                <MilestoneRow
-                  label="5년차"
-                  value={fiveYearDate ? fiveYearDate.format("YYYY-MM-DD") : "-"}
-                  achieved={!!fiveYearDate && dayjs().isAfter(fiveYearDate)}
-                />
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: 0.1 }}
-              className="overflow-hidden rounded-xl bg-white"
-            >
-              <div className="flex items-center justify-between gap-3 px-4 py-3">
-                <div>
-                  <h3 className="text-base font-semibold text-slate-900">
-                    월간 기록
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    최근 날짜순으로 출근, 퇴근, 근태 상태를 확인합니다.
-                  </p>
-                </div>
-                <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
-                  {monthlyRecords.length}건
+                <span
+                  className={`text-xs font-medium ${
+                    issueCount > 0 ? "text-amber-700" : "text-emerald-700"
+                  }`}
+                >
+                  {issueLabel}
                 </span>
               </div>
+              <div>
+                <StatRow
+                  label="출근일수"
+                  value={
+                    <>
+                      <span className="font-semibold">
+                        {summary?.total_work_days ?? 0}일
+                      </span>
+                      <span className="text-slate-400">
+                        {" "}
+                        / {targetWorkDays}일
+                      </span>
+                    </>
+                  }
+                  muted
+                />
+                <StatRow label="휴가" value={`${formatCount(leaveDays)}일`} />
+                <StatRow
+                  label="시간외근무"
+                  value={`${overtimeCount}회`}
+                  action={
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          aria-label="시간외근무 상세보기"
+                          title="시간외근무 상세보기"
+                          className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+                        >
+                          <Ellipsis className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent align="end" className="w-80 p-0">
+                        <div className="border-b border-slate-100 px-4 py-3">
+                          <p className="text-sm font-semibold text-slate-900">
+                            {monthLabel} 시간외근무
+                          </p>
+                          <p className="mt-0.5 text-xs text-slate-400">
+                            {overtimeCount}건
+                          </p>
+                        </div>
+                        {overtimeRecords.length > 0 ? (
+                          <div className="max-h-72 overflow-y-auto">
+                            {overtimeRecords.map((record) => (
+                              <div
+                                key={record.id}
+                                className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 last:border-b-0"
+                              >
+                                <div>
+                                  <p className="text-sm font-medium text-slate-800">
+                                    {dayjs(record.date).format("M월 D일 (ddd)")}
+                                  </p>
+                                  <p className="mt-0.5 text-xs tabular-nums text-slate-400">
+                                    {formatRecordTime(record.check_in_at)} -{" "}
+                                    {formatRecordTime(record.check_out_at)}
+                                  </p>
+                                </div>
+                                <span className="shrink-0 text-sm font-medium text-slate-700">
+                                  {formatWorkTime(record.overtime_minutes)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="px-4 py-6 text-center text-sm text-slate-400">
+                            시간외근무 내역이 없습니다.
+                          </div>
+                        )}
+                      </PopoverContent>
+                    </Popover>
+                  }
+                />
+                <StatRow label="지각/조퇴" value={`${issueCount}회`} />
+              </div>
+            </section>
 
-              {monthlyRecords.length > 0 ? (
-                <div className="divide-y divide-slate-100">
-                  {monthlyRecords.slice(0, 8).map((record) => (
-                    <MonthlyRecordRow key={record.id} record={record} />
-                  ))}
+            <section>
+              <h3 className="mb-3 text-sm font-semibold text-slate-900">
+                연차 요약
+              </h3>
+              <div>
+                <StatRow
+                  label="총 연차"
+                  value={`${formatCount(annualLeaveSummary.total)}일`}
+                />
+                <StatRow
+                  label="사용일수"
+                  value={`${formatCount(annualLeaveSummary.used)}일`}
+                />
+                <StatRow
+                  label="남은 연차"
+                  value={`${formatCount(annualLeaveSummary.remaining)}일`}
+                />
+                <div className="grid grid-cols-[120px_1fr] items-start border-b border-slate-100 py-3 text-xs text-slate-500 transition-colors hover:bg-slate-50">
+                  <span>총 연차 부여 기준</span>
+                  <p className="leading-5">
+                    1년 미만: 1개월 개근 시 1일(최대 11일) · 1년 이상 3년 미만:
+                    15일(출근율 80% 이상) · 3년 이상: 최초 1년 초과 근속 2년마다
+                    1일 추가(최대 25일)
+                  </p>
                 </div>
-              ) : (
-                <div className="px-4 py-8 text-center text-sm text-slate-500">
-                  이번 달 출퇴근 기록이 없습니다.
-                </div>
+              </div>
+            </section>
+          </motion.div>
+
+          <motion.section
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: 0.03 }}
+          >
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h3 className="text-sm font-semibold text-slate-900">
+                근태 상세
+              </h3>
+              {selectedDate && (
+                <span className="text-xs text-slate-400">
+                  {dayjs(selectedDate).format("YYYY년 M월 D일 (ddd)")}
+                </span>
               )}
-            </motion.div>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: 0.15 }}
-              className="rounded-xl bg-white p-4"
-            >
-              <div className="mb-2 flex items-center justify-between gap-3">
-                <div>
-                  <h3 className="text-base font-semibold text-slate-900">
-                    평균 출퇴근 시간
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    출퇴근 기록이 있는 날짜 기준
-                  </p>
-                </div>
+            {!selectedDate ? (
+              <div className="border-b border-slate-100 py-6 text-center text-sm text-slate-400">
+                캘린더 또는 월간 기록에서 날짜를 선택하세요.
               </div>
-
-              <div className="grid gap-2 sm:grid-cols-2">
-                <TimePanel
-                  label="평균 출근"
-                  value={avgCheckIn || "-"}
-                  description="출근 기록 평균"
-                />
-                <TimePanel
-                  label="평균 퇴근"
-                  value={avgCheckOut || "-"}
-                  description="퇴근 기록 평균"
-                />
-                <TimePanel
-                  label="가장 빠른 출근"
-                  value={earliestCheckIn || "-"}
-                  description="이번 달 최저 출근 시각"
-                />
-                <TimePanel
-                  label="가장 늦은 퇴근"
-                  value={latestCheckOut || "-"}
-                  description="이번 달 최고 퇴근 시각"
-                />
+            ) : !selectedRecord && selectedLeaveDetails.length === 0 ? (
+              <div className="border-b border-slate-100 py-6 text-center text-sm text-slate-400">
+                선택한 날짜의 근태 내역이 없습니다.
               </div>
-
-              <div className="mt-4 pt-4">
-                <div className="mb-2">
-                  <h4 className="text-base font-semibold text-slate-900">
-                    최근 특이사항
-                  </h4>
-                  <p className="text-xs text-slate-500">
-                    지각, 조퇴, 수정 요청이 있는 날짜
-                  </p>
-                </div>
-
-                {recentIssues.length > 0 ? (
-                  <div className="grid gap-2">
-                    {recentIssues.map((issue) => (
-                      <RecentIssueRow
-                        key={issue.key}
-                        title={issue.title}
-                        description={issue.description}
-                      />
-                    ))}
+            ) : (
+              <div className="grid gap-8 md:grid-cols-2">
+                {selectedRecord && (
+                  <div>
+                    <h4 className="mb-2 text-xs font-semibold text-slate-700">
+                      출근
+                    </h4>
+                    <DetailRow
+                      label="출근 일자"
+                      value={dayjs(selectedRecord.date).format(
+                        "YYYY년 M월 D일 (ddd)",
+                      )}
+                    />
+                    <DetailRow
+                      label="출근 시간"
+                      value={formatRecordTime(
+                        selectedRecord.check_in_at,
+                        "HH:mm:ss",
+                      )}
+                    />
+                    <DetailRow
+                      label="퇴근 시간"
+                      value={formatRecordTime(
+                        selectedRecord.check_out_at,
+                        "HH:mm:ss",
+                      )}
+                    />
+                    <DetailRow
+                      label="근무 시간"
+                      value={formatWorkTime(selectedRecord.work_minutes)}
+                    />
+                    <DetailRow
+                      label="시간외근무"
+                      value={formatWorkTime(selectedRecord.overtime_minutes)}
+                    />
+                    <DetailRow
+                      label="상태"
+                      value={
+                        STATUS_LABELS[selectedRecord.status]?.text ??
+                        selectedRecord.status
+                      }
+                    />
                   </div>
-                ) : (
-                  <div className="rounded-lg bg-slate-50 px-3 py-3 text-sm text-slate-500">
-                    최근 특이사항이 없습니다.
+                )}
+
+                {selectedLeaveDetails.length > 0 && (
+                  <div>
+                    <h4 className="mb-2 text-xs font-semibold text-slate-700">
+                      휴가
+                    </h4>
+                    {selectedLeaveDetails.map((leave) => (
+                      <div key={leave.id} className="mb-3 last:mb-0">
+                        <DetailRow
+                          label="유형"
+                          value={leave.leave_type?.name ?? "휴가"}
+                        />
+                        <DetailRow
+                          label="승인 상태"
+                          value={
+                            DAYOFF_STATUS_LABELS[leave.approval_status ?? ""] ??
+                            leave.approval_status ??
+                            "-"
+                          }
+                        />
+                        <DetailRow
+                          label="승인자"
+                          value={leave.approver?.full_name ?? "-"}
+                        />
+                        <DetailRow label="사유" value={leave.reason ?? "-"} />
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
-            </motion.div>
-          </div>
+            )}
+          </motion.section>
+
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: 0.05 }}
+          >
+            <section className="min-w-0">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <RecordViewSegment
+                  value={recordView}
+                  onChange={setRecordView}
+                />
+                {recordView === "monthly" && (
+                  <span className="text-xs text-slate-400">
+                    {monthlyEntries.length}건
+                  </span>
+                )}
+              </div>
+
+              {recordView === "annual" ? (
+                <LeaveYearGrid
+                  dayoffs={displayedYearDayoffs}
+                  onRecordSelect={(date) => {
+                    setSelectedDate(date);
+                    setMonth(dayjs(date).month() + 1);
+                  }}
+                />
+              ) : monthlyEntries.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[980px] text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-100 text-xs font-medium text-slate-400">
+                        <SortableHeader
+                          label="날짜"
+                          sortKey="date"
+                          activeKey={sort.key}
+                          direction={sort.direction}
+                          onSort={handleSort}
+                        />
+                        <th scope="col" className="px-3 py-2 font-medium">
+                          출근
+                        </th>
+                        <th scope="col" className="px-3 py-2 font-medium">
+                          퇴근
+                        </th>
+                        <th scope="col" className="px-3 py-2 font-medium">
+                          근무시간
+                        </th>
+                        <SortableHeader
+                          label="근태유형"
+                          sortKey="attendance_type"
+                          activeKey={sort.key}
+                          direction={sort.direction}
+                          onSort={handleSort}
+                        />
+                        <th scope="col" className="px-3 py-2 font-medium">
+                          휴가
+                        </th>
+                        <th scope="col" className="px-3 py-2 font-medium">
+                          시간외근무
+                        </th>
+                        <SortableHeader
+                          label="상태"
+                          sortKey="status"
+                          activeKey={sort.key}
+                          direction={sort.direction}
+                          onSort={handleSort}
+                        />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {monthlyEntries.map((entry) => {
+                        const record = entry.record;
+                        const dayoffStatus =
+                          entry.dayoffs[0]?.approval_status ?? "";
+                        const statusInfo = record
+                          ? (STATUS_LABELS[record.status] ??
+                            DEFAULT_STATUS_LABEL)
+                          : {
+                              text:
+                                DAYOFF_STATUS_LABELS[dayoffStatus] ??
+                                dayoffStatus ??
+                                "-",
+                              className:
+                                dayoffStatus === "approved"
+                                  ? "bg-emerald-50 text-emerald-700 ring-emerald-100"
+                                  : dayoffStatus === "rejected"
+                                    ? "bg-rose-50 text-rose-700 ring-rose-100"
+                                    : "bg-slate-100 text-slate-600 ring-slate-200",
+                            };
+                        const attendanceType =
+                          record?.attendance_type ?? "휴가";
+                        const typeClass =
+                          TYPE_BADGE_STYLES[attendanceType] ||
+                          TYPE_BADGE_STYLES["근무"];
+
+                        return (
+                          <tr
+                            key={entry.date}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`${dayjs(entry.date).format("M월 D일")} 근태 상세보기`}
+                            onClick={() => setSelectedDate(entry.date)}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                setSelectedDate(entry.date);
+                              }
+                            }}
+                            className={`cursor-pointer border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-none ${
+                              selectedDate === entry.date ? "bg-slate-50" : ""
+                            }`}
+                          >
+                            <td className="whitespace-nowrap px-3 py-3 font-medium text-slate-800">
+                              {dayjs(entry.date).format("M월 D일 (ddd)")}
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-3 tabular-nums text-slate-600">
+                              {formatRecordTime(record?.check_in_at ?? null)}
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-3 tabular-nums text-slate-600">
+                              {formatRecordTime(record?.check_out_at ?? null)}
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-3 text-slate-600">
+                              {formatWorkTime(record?.work_minutes ?? 0)}
+                            </td>
+                            <td className="px-3 py-3">
+                              <span
+                                className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${typeClass}`}
+                              >
+                                {attendanceType}
+                              </span>
+                            </td>
+                            <td className="px-3 py-3">
+                              {entry.dayoffs.length > 0 ? (
+                                <div className="flex flex-wrap gap-1">
+                                  {entry.dayoffs.map((dayoff) => (
+                                    <span
+                                      key={dayoff.id}
+                                      title={dayoff.reason ?? undefined}
+                                      className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700"
+                                    >
+                                      {dayoff.leave_type?.name ?? "휴가"} ·{" "}
+                                      {DAYOFF_STATUS_LABELS[
+                                        dayoff.approval_status
+                                      ] ?? dayoff.approval_status}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : (
+                                <span className="text-slate-400">-</span>
+                              )}
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-3 text-slate-600">
+                              {formatWorkTime(record?.overtime_minutes ?? 0)}
+                            </td>
+                            <td className="px-3 py-3">
+                              <div className="flex items-center gap-1.5">
+                                <span
+                                  className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${statusInfo.className}`}
+                                >
+                                  {statusInfo.text}
+                                </span>
+                                {record?.modification_status && (
+                                  <span className="text-xs text-amber-700">
+                                    수정 요청
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="border-b border-slate-100 py-8 text-center text-sm text-slate-500">
+                  이번 달 출퇴근 기록이 없습니다.
+                </div>
+              )}
+            </section>
+          </motion.div>
         </>
       )}
     </div>
   );
 }
 
-function SummaryCard({
-  label,
+function DetailRow({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <div className="grid grid-cols-[110px_1fr] items-center border-b border-slate-100 py-2.5">
+      <span className="text-xs text-slate-500">{label}</span>
+      <span className="text-sm text-slate-800">{value}</span>
+    </div>
+  );
+}
+
+function RecordViewSegment({
   value,
-  icon,
+  onChange,
 }: {
-  label: string;
-  value: string;
-  icon: ReactNode;
+  value: RecordView;
+  onChange: (value: RecordView) => void;
 }) {
   return (
-    <div className="bg-white px-4 py-3">
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <span className="text-xs font-semibold text-slate-500">{label}</span>
-        <span className="text-slate-400">{icon}</span>
-      </div>
-      <p className="text-xl font-semibold tracking-tight text-slate-950">
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function TimePanel({
-  label,
-  value,
-  description,
-}: {
-  label: string;
-  value: string;
-  description: string;
-}) {
-  return (
-    <div className="rounded-lg bg-slate-50 px-3 py-3 text-slate-700">
-      <p className="text-xs font-medium">{label}</p>
-      <p className="mt-0.5 text-lg font-semibold tabular-nums">{value}</p>
-      <p className="mt-0.5 text-xs text-slate-500">{description}</p>
-    </div>
-  );
-}
-
-function RecentIssueRow({
-  title,
-  description,
-}: {
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="rounded-lg bg-slate-50 px-3 py-2.5">
-      <p className="text-xs font-medium text-slate-500">{title}</p>
-      <p className="mt-0.5 text-sm font-semibold text-slate-900">
-        {description}
-      </p>
-    </div>
-  );
-}
-
-function MilestoneRow({
-  label,
-  value,
-  achieved = false,
-}: {
-  label: string;
-  value: string;
-  achieved?: boolean;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
-      <span className="text-xs font-medium text-slate-500">{label}</span>
-      <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-900">
-        {value}
-        {achieved && (
-          <span className="rounded-full bg-slate-200 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
-            달성
-          </span>
-        )}
-      </span>
-    </div>
-  );
-}
-
-function MonthlyRecordRow({
-  record,
-}: {
-  record: {
-    date: string;
-    check_in_at: string | null;
-    check_out_at: string | null;
-    attendance_type: string;
-    status: string;
-    overtime_minutes: number;
-    work_minutes: number;
-    modification_status: string | null;
-  };
-}) {
-  const date = dayjs(record.date);
-  const statusInfo = STATUS_LABELS[record.status] ?? DEFAULT_STATUS_LABEL;
-  const typeClass =
-    TYPE_BADGE_STYLES[record.attendance_type] || TYPE_BADGE_STYLES["근무"];
-
-  return (
-    <div className="grid gap-3 px-4 py-3 sm:grid-cols-[110px_minmax(0,1fr)_160px] sm:items-center">
-      <div>
-        <p className="text-sm font-semibold text-slate-900">
-          {date.format("M월 D일")}
-        </p>
-        <p className="text-xs text-slate-500">{date.format("dddd")}</p>
-      </div>
-
-      <div className="grid grid-cols-3 gap-2 text-sm">
-        <TimeValue label="출근" value={formatRecordTime(record.check_in_at)} />
-        <TimeValue label="퇴근" value={formatRecordTime(record.check_out_at)} />
-        <TimeValue label="근무" value={formatWorkTime(record.work_minutes)} />
-      </div>
-
-      <div className="flex flex-wrap items-center gap-1.5 sm:justify-end">
-        <span
-          className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${typeClass}`}
+    <div
+      role="tablist"
+      aria-label="근태 기록 보기"
+      className="inline-flex rounded-lg bg-slate-100 p-1"
+    >
+      {(
+        [
+          ["monthly", "월간 기록"],
+          ["annual", "연차내역"],
+        ] as const
+      ).map(([view, label]) => (
+        <button
+          key={view}
+          type="button"
+          role="tab"
+          aria-selected={value === view}
+          onClick={() => onChange(view)}
+          className={`h-7 rounded-md px-2.5 text-xs font-medium transition-colors ${
+            value === view
+              ? "bg-white text-slate-900 shadow-sm"
+              : "text-slate-500 hover:text-slate-700"
+          }`}
         >
-          {record.attendance_type}
-        </span>
-        <span
-          className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ${statusInfo.className}`}
-        >
-          {statusInfo.text}
-        </span>
-        {record.modification_status && (
-          <span className="inline-flex rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">
-            수정 요청
-          </span>
-        )}
-      </div>
+          {label}
+        </button>
+      ))}
     </div>
   );
 }
 
-function TimeValue({ label, value }: { label: string; value: string }) {
+function SortableHeader({
+  label,
+  sortKey,
+  activeKey,
+  direction,
+  onSort,
+}: {
+  label: string;
+  sortKey: SortKey;
+  activeKey: SortKey;
+  direction: SortDirection;
+  onSort: (key: SortKey) => void;
+}) {
+  const isActive = sortKey === activeKey;
+  const SortIcon = !isActive
+    ? ArrowUpDown
+    : direction === "asc"
+      ? ArrowUp
+      : ArrowDown;
+
   return (
-    <div className="min-w-0">
-      <p className="text-[11px] font-medium text-slate-400">{label}</p>
-      <p className="mt-0.5 truncate font-semibold tabular-nums text-slate-800">
-        {value}
-      </p>
+    <th
+      scope="col"
+      aria-sort={
+        isActive ? (direction === "asc" ? "ascending" : "descending") : "none"
+      }
+      className="px-3 py-2 font-medium"
+    >
+      <div className="flex items-center gap-1">
+        <span>{label}</span>
+        <button
+          type="button"
+          onClick={() => onSort(sortKey)}
+          aria-label={`${label} 정렬`}
+          title={`${label} 정렬`}
+          className={`rounded p-0.5 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 ${
+            isActive ? "text-slate-700" : "text-slate-400"
+          }`}
+        >
+          <SortIcon className="h-3.5 w-3.5" aria-hidden="true" />
+        </button>
+      </div>
+    </th>
+  );
+}
+
+function StatRow({
+  label,
+  value,
+  action,
+  muted = false,
+}: {
+  label: string;
+  value: ReactNode;
+  action?: ReactNode;
+  muted?: boolean;
+}) {
+  return (
+    <div className="grid grid-cols-[120px_1fr] items-center border-b border-slate-100 py-3 transition-colors hover:bg-slate-50">
+      <span className="text-xs text-slate-500">{label}</span>
+      <div className="flex items-center gap-1">
+        <span
+          className={`text-sm tabular-nums ${
+            muted
+              ? "font-normal text-slate-900"
+              : "font-semibold text-slate-900"
+          }`}
+        >
+          {value}
+        </span>
+        {action}
+      </div>
     </div>
   );
 }

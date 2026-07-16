@@ -3,7 +3,6 @@
 import { useMemo } from "react";
 import dayjs from "dayjs";
 import "dayjs/locale/ko";
-import type { DayoffRecord } from "@/hooks/use-dayoffs";
 
 dayjs.locale("ko");
 
@@ -14,6 +13,12 @@ interface AttendanceRecord {
   status: string;
   check_in_status: string | null;
   check_out_status: string | null;
+}
+
+interface CalendarDayoff {
+  id: string;
+  leave_date: string;
+  leave_type: { name: string } | null;
 }
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
@@ -32,7 +37,7 @@ interface AttendanceCalendarProps {
   selectedDate: string | null;
   onDateSelect: (date: string) => void;
   records: AttendanceRecord[];
-  dayoffs?: DayoffRecord[];
+  dayoffs?: CalendarDayoff[];
 }
 
 export default function AttendanceCalendar({
@@ -51,7 +56,7 @@ export default function AttendanceCalendar({
     return map;
   }, [records]);
   const dayoffsMap = useMemo(() => {
-    const map: Record<string, DayoffRecord[]> = {};
+    const map: Record<string, CalendarDayoff[]> = {};
     dayoffs.forEach((r) => {
       map[r.leave_date] = [...(map[r.leave_date] || []), r];
     });
@@ -126,7 +131,9 @@ export default function AttendanceCalendar({
               const isToday = dateStr === today;
               const isSelected = dateStr === selectedDate;
               const record = recordMap[dateStr];
-              const dayoffCount = dayoffsMap[dateStr]?.length || 0;
+              const dateDayoffs = dayoffsMap[dateStr] ?? [];
+              const dayoffCount = dateDayoffs.length;
+              const dayoffLabel = dateDayoffs[0]?.leave_type?.name;
               const dotColor = record
                 ? TYPE_COLORS[record.attendance_type] || DEFAULT_TYPE_COLOR
                 : null;
@@ -163,6 +170,11 @@ export default function AttendanceCalendar({
                   >
                     {dayNum}
                   </span>
+                  {dayoffLabel && (
+                    <span className="mt-0.5 max-w-full truncate px-1 text-[9px] text-emerald-700">
+                      {dayoffLabel}
+                    </span>
+                  )}
                   {(dotColor || dayoffCount > 0) && (
                     <span className="absolute bottom-2 flex items-center gap-0.5">
                       {dotColor && (

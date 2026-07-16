@@ -11,9 +11,7 @@ import { useDayoffs, type DayoffRecord } from "@/hooks/use-dayoffs";
 import { useLeaveBalances } from "@/hooks/use-leave-balances";
 import { useMyModifyRequests } from "@/hooks/use-attendance-modify";
 import { useMemberIdLookup } from "@/hooks/use-points-data";
-import {
-  useAttendanceMonthly,
-} from "@/hooks/use-attendance-monthly";
+import { useAttendanceMonthly } from "@/hooks/use-attendance-monthly";
 import AttendanceMobileView from "@/components/attendance/AttendanceMobileView";
 import AttendanceDesktopView from "@/components/attendance/AttendanceDesktopView";
 import DayoffsManager from "@/components/dayoffs/DayoffsManager";
@@ -140,13 +138,6 @@ export default function AttendancePage() {
         transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
         className="space-y-5 p-4 md:p-6"
       >
-        <div>
-          <h1 className="text-xl font-semibold text-[#111111]">근태 관리</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            출퇴근 기록과 휴가/연차 신청 내역을 한 곳에서 확인합니다.
-          </p>
-        </div>
-
         <div className="md:hidden">
           <AttendanceMobileView
             year={year}
@@ -174,7 +165,7 @@ export default function AttendancePage() {
             leaveBalances={leaveBalances || []}
             summary={summary}
             isLoading={isLoading}
-            onViewLeaveDetails={() => router.push("/profile?tab=leave")}
+            onViewLeaveDetails={() => router.push("/leave")}
             onManageDayoffs={handleManageDayoffs}
           />
         </div>
@@ -190,7 +181,6 @@ export default function AttendancePage() {
           onDateSelect={setSelectedDate}
         />
       </motion.div>
-
     </>
   );
 }

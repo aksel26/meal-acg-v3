@@ -5,6 +5,7 @@ import { queryKeys } from "@/lib/query-keys";
 
 export interface DayoffRecord {
   id: string;
+  approval_status: string;
   author_id: string;
   target_id: string;
   leave_date: string;

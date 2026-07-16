@@ -65,7 +65,7 @@ const PAGE_HEADERS: Record<string, { title: string; description: string }> = {
     description: "월별 근태 기록과 근속 통계를 확인합니다.",
   },
   "/overtime": {
-    title: "시간외·주말근무",
+    title: "시간외 근무",
     description: "승인 후에도 출퇴근/식대/정산에는 자동 반영되지 않습니다.",
   },
   "/meal": {
@@ -552,7 +552,7 @@ function ApprovalItem({
     ? "근태 수정 요청"
     : workApplication
       ? workApplication.application_type === "overtime"
-        ? "연장근무 신청"
+        ? "시간외 근무 신청"
         : "주말근무 신청"
       : leaveType?.name || "휴가 요청";
 

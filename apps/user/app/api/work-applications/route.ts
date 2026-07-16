@@ -274,8 +274,7 @@ export async function POST(request: NextRequest) {
     const today = dayjs().tz("Asia/Seoul").format("YYYY-MM-DD");
     const finalWorkDate = applicationType === "overtime" ? today : workDate;
     const finalStartTime = applicationType === "overtime" ? "17:00" : startTime;
-    const finalProjectName =
-      applicationType === "overtime" ? "연장근무" : projectName;
+    const finalProjectName = projectName;
 
     if (
       !finalWorkDate ||
@@ -289,7 +288,7 @@ export async function POST(request: NextRequest) {
         {
           error:
             applicationType === "overtime"
-              ? "예상시간, 장소, 사유를 모두 입력해주세요."
+              ? "예상시간, 프로젝트/업무명, 장소, 사유를 모두 입력해주세요."
               : "근무일, 시작시간, 종료시간, 프로젝트/업무명, 사유를 모두 입력해주세요.",
         },
         { status: 400 },

@@ -502,37 +502,37 @@ export default function PermissionPoliciesPage() {
           </DialogHeader>
           <div className="max-h-[60vh] overflow-auto rounded-lg">
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-xs text-slate-500">
-                <tr>
-                  <th className="px-4 py-3 font-medium">시각</th>
-                  <th className="px-4 py-3 font-medium">작업자</th>
-                  <th className="px-4 py-3 font-medium">대상</th>
-                  <th className="px-4 py-3 font-medium">작업</th>
+              <thead>
+                <tr className="border-b border-slate-100 text-xs font-medium text-slate-400">
+                  <th className="px-3 py-2 font-medium">시각</th>
+                  <th className="px-3 py-2 font-medium">작업자</th>
+                  <th className="px-3 py-2 font-medium">대상</th>
+                  <th className="px-3 py-2 font-medium">작업</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody>
                 {data.auditLogs.length === 0 ? (
                   <tr>
                     <td
                       colSpan={4}
-                      className="px-4 py-8 text-center text-slate-500"
+                      className="px-3 py-10 text-center text-sm text-slate-500"
                     >
                       권한 변경 이력이 없습니다.
                     </td>
                   </tr>
                 ) : (
                   data.auditLogs.map((log) => (
-                    <tr key={log.id}>
-                      <td className="px-4 py-3 text-slate-600">
+                    <tr key={log.id} className="border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50">
+                      <td className="px-3 py-3 tabular-nums text-slate-600">
                         {new Date(log.created_at).toLocaleString("ko-KR")}
                       </td>
-                      <td className="px-4 py-3 text-slate-900">
+                      <td className="px-3 py-3 font-medium text-slate-800">
                         {log.actor_name || "-"}
                       </td>
-                      <td className="px-4 py-3 text-slate-900">
+                      <td className="px-3 py-3 font-medium text-slate-800">
                         {log.target_label || "-"}
                       </td>
-                      <td className="px-4 py-3 text-slate-600">{log.action}</td>
+                      <td className="px-3 py-3 text-slate-600">{log.action}</td>
                     </tr>
                   ))
                 )}

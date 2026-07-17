@@ -516,26 +516,26 @@ export default function ImportPage() {
                   <div className="max-h-[500px] overflow-auto">
                     <Table>
                       <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-[100px]">날짜</TableHead>
-                          <TableHead className="w-[60px]">근태</TableHead>
-                          <TableHead>조식</TableHead>
-                          <TableHead>중식</TableHead>
-                          <TableHead>석식</TableHead>
+                        <TableRow className="border-b border-slate-100">
+                          <TableHead className="w-[100px] h-auto px-3 py-2 text-xs font-medium text-slate-400">날짜</TableHead>
+                          <TableHead className="w-[60px] h-auto px-3 py-2 text-xs font-medium text-slate-400">근태</TableHead>
+                          <TableHead className="h-auto px-3 py-2 text-xs font-medium text-slate-400">조식</TableHead>
+                          <TableHead className="h-auto px-3 py-2 text-xs font-medium text-slate-400">중식</TableHead>
+                          <TableHead className="h-auto px-3 py-2 text-xs font-medium text-slate-400">석식</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {selectedFile.records
                           .slice(0, 50)
                           .map((record, idx) => (
-                            <TableRow key={idx}>
-                              <TableCell className="font-medium text-xs">
+                            <TableRow key={idx} className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50">
+                              <TableCell className="px-3 py-3 font-medium text-xs text-slate-800">
                                 {record.date}
                               </TableCell>
-                              <TableCell className="text-xs">
+                              <TableCell className="px-3 py-3 text-xs text-slate-600">
                                 {record.attendance || "-"}
                               </TableCell>
-                              <TableCell className="text-xs">
+                              <TableCell className="px-3 py-3 text-xs text-slate-600">
                                 {record.breakfast_store ? (
                                   <span>
                                     {record.breakfast_store}
@@ -551,7 +551,7 @@ export default function ImportPage() {
                                   "-"
                                 )}
                               </TableCell>
-                              <TableCell className="text-xs">
+                              <TableCell className="px-3 py-3 text-xs text-slate-600">
                                 {record.lunch_store ? (
                                   <span>
                                     {record.lunch_store}
@@ -566,7 +566,7 @@ export default function ImportPage() {
                                   "-"
                                 )}
                               </TableCell>
-                              <TableCell className="text-xs">
+                              <TableCell className="px-3 py-3 text-xs text-slate-600">
                                 {record.dinner_store ? (
                                   <span>
                                     {record.dinner_store}
@@ -632,34 +632,34 @@ export default function ImportPage() {
           <div className="border rounded-md overflow-hidden max-h-[300px] overflow-y-auto">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead className="sticky top-0 bg-white z-10">
+                <TableRow className="border-b border-slate-100">
+                  <TableHead className="sticky top-0 bg-white z-10 h-auto px-3 py-2 text-xs font-medium text-slate-400">
                     파일명
                   </TableHead>
-                  <TableHead className="sticky top-0 bg-white z-10 text-right">
+                  <TableHead className="sticky top-0 bg-white z-10 h-auto px-3 py-2 text-right text-xs font-medium text-slate-400">
                     추가
                   </TableHead>
-                  <TableHead className="sticky top-0 bg-white z-10 text-right">
+                  <TableHead className="sticky top-0 bg-white z-10 h-auto px-3 py-2 text-right text-xs font-medium text-slate-400">
                     업데이트
                   </TableHead>
-                  <TableHead className="sticky top-0 bg-white z-10 text-right">
+                  <TableHead className="sticky top-0 bg-white z-10 h-auto px-3 py-2 text-right text-xs font-medium text-slate-400">
                     건너뜀
                   </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {importResults.map((r) => (
-                  <TableRow key={r.fileName}>
-                    <TableCell className="text-xs truncate max-w-[160px]">
+                  <TableRow key={r.fileName} className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50">
+                    <TableCell className="px-3 py-3 text-xs truncate max-w-[160px] font-medium text-slate-800">
                       {r.fileName}
                     </TableCell>
-                    <TableCell className="text-right text-xs">
+                    <TableCell className="px-3 py-3 text-right text-xs tabular-nums text-slate-600">
                       {r.inserted}
                     </TableCell>
-                    <TableCell className="text-right text-xs">
+                    <TableCell className="px-3 py-3 text-right text-xs tabular-nums text-slate-600">
                       {r.updated}
                     </TableCell>
-                    <TableCell className="text-right text-xs">
+                    <TableCell className="px-3 py-3 text-right text-xs tabular-nums text-slate-600">
                       {r.skipped}
                     </TableCell>
                   </TableRow>

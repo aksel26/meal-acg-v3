@@ -305,18 +305,18 @@ export function AdminLibraryClient({
           <h2 className="text-base font-semibold text-[#1d1d1f]">도서 목록</h2>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[980px] text-sm">
-            <thead className="bg-[#f5f5f7] text-left text-xs font-medium text-[#6e6e73]">
-              <tr>
-                <th className="px-5 py-3">도서</th>
-                <th className="px-5 py-3">대여 가능여부</th>
-                <th className="px-5 py-3">대여중 인원</th>
-                <th className="px-5 py-3">대여 기간</th>
-                <th className="px-5 py-3">메모</th>
-                <th className="px-5 py-3 text-right">관리</th>
+          <table className="w-full min-w-[980px] text-left text-sm">
+            <thead className="text-left text-xs font-medium text-slate-400">
+              <tr className="border-b border-slate-100">
+                <th className="px-5 py-2 font-medium">도서</th>
+                <th className="px-5 py-2 font-medium">대여 가능여부</th>
+                <th className="px-5 py-2 font-medium">대여중 인원</th>
+                <th className="px-5 py-2 font-medium">대여 기간</th>
+                <th className="px-5 py-2 font-medium">메모</th>
+                <th className="px-5 py-2 text-right font-medium">관리</th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody>
               {bookRows.map((book) => {
                 const availability = getBookAvailability(book, data.rentals);
                 const activeRental = data.rentals.find(
@@ -327,25 +327,25 @@ export function AdminLibraryClient({
                 );
                 const requester = getJoinedItem(activeRental?.requester);
                 return (
-                  <tr key={book.id}>
-                    <td className="px-5 py-4">
-                      <div className="font-medium text-[#1d1d1f]">
+                  <tr key={book.id} className="border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50">
+                    <td className="px-5 py-3">
+                      <div className="font-medium text-slate-800">
                         {book.title}
                       </div>
-                      <div className="text-xs text-[#86868b]">
+                      <div className="text-xs text-slate-400">
                         {book.author || "저자 미입력"}
                       </div>
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-3">
                       <StatusBadge label={BOOK_AVAILABILITY_LABEL[availability]} />
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-3">
                       {requester ? (
                         <div>
-                          <div className="font-medium text-[#1d1d1f]">
+                          <div className="font-medium text-slate-800">
                             {requester.full_name || "-"}
                           </div>
-                          <div className="text-xs text-[#86868b]">
+                          <div className="text-xs text-slate-400">
                             {getTeamName(requester.team) || "-"} ·{" "}
                             {activeRental
                               ? BOOK_RENTAL_STATUS_LABEL[activeRental.status]
@@ -353,18 +353,18 @@ export function AdminLibraryClient({
                           </div>
                         </div>
                       ) : (
-                        <span className="text-[#86868b]">-</span>
+                        <span className="text-slate-400">-</span>
                       )}
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-3 text-slate-600">
                       {book.rental_period_days_override
                         ? `${book.rental_period_days_override}일`
                         : `기본 ${data.settings.default_rental_period_days}일`}
                     </td>
-                    <td className="max-w-[240px] px-5 py-4 text-[#6e6e73]">
+                    <td className="max-w-[240px] px-5 py-3 text-slate-600">
                       {book.memo || "-"}
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-3">
                       <div className="flex justify-end gap-2">
                         <Button
                           variant="outline"
@@ -388,7 +388,7 @@ export function AdminLibraryClient({
               })}
               {!bookRows.length && (
                 <tr>
-                  <td colSpan={6} className="px-5 py-10 text-center text-sm text-[#86868b]">
+                  <td colSpan={6} className="px-5 py-10 text-center text-sm text-slate-500">
                     등록된 도서가 없습니다.
                   </td>
                 </tr>
@@ -403,19 +403,19 @@ export function AdminLibraryClient({
           <h2 className="text-base font-semibold text-[#1d1d1f]">대여 신청 현황</h2>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1120px] text-sm">
-            <thead className="bg-[#f5f5f7] text-left text-xs font-medium text-[#6e6e73]">
-              <tr>
-                <th className="px-5 py-3">도서</th>
-                <th className="px-5 py-3">신청자</th>
-                <th className="px-5 py-3">상태</th>
-                <th className="px-5 py-3">신청/승인일</th>
-                <th className="px-5 py-3">대여/반납일</th>
-                <th className="px-5 py-3">잔여/초과</th>
-                <th className="px-5 py-3 text-right">처리</th>
+          <table className="w-full min-w-[1120px] text-left text-sm">
+            <thead className="text-left text-xs font-medium text-slate-400">
+              <tr className="border-b border-slate-100">
+                <th className="px-5 py-2 font-medium">도서</th>
+                <th className="px-5 py-2 font-medium">신청자</th>
+                <th className="px-5 py-2 font-medium">상태</th>
+                <th className="px-5 py-2 font-medium">신청/승인일</th>
+                <th className="px-5 py-2 font-medium">대여/반납일</th>
+                <th className="px-5 py-2 font-medium">잔여/초과</th>
+                <th className="px-5 py-2 text-right font-medium">처리</th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody>
               {rentalRows.map((rental) => {
                 const book = getJoinedItem(rental.book);
                 const requester = getJoinedItem(rental.requester);
@@ -425,63 +425,63 @@ export function AdminLibraryClient({
                   rental.returned_at,
                 );
                 return (
-                  <tr key={rental.id}>
-                    <td className="px-5 py-4">
-                      <div className="font-medium text-[#1d1d1f]">
+                  <tr key={rental.id} className="border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50">
+                    <td className="px-5 py-3">
+                      <div className="font-medium text-slate-800">
                         {book?.title || "-"}
                       </div>
-                      <div className="text-xs text-[#86868b]">
+                      <div className="text-xs text-slate-400">
                         {book?.author || "저자 미입력"}
                       </div>
                     </td>
-                    <td className="px-5 py-4">
-                      <div className="font-medium text-[#1d1d1f]">
+                    <td className="px-5 py-3">
+                      <div className="font-medium text-slate-800">
                         {requester?.full_name || "-"}
                       </div>
-                      <div className="text-xs text-[#86868b]">
+                      <div className="text-xs text-slate-400">
                         {getTeamName(requester?.team) || "-"}
                       </div>
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-3">
                       <StatusBadge
                         label={BOOK_RENTAL_STATUS_LABEL[rental.status]}
                         status={rental.status}
                       />
                       {rental.reject_reason && (
-                        <div className="mt-1 max-w-[220px] text-xs text-[#86868b]">
+                        <div className="mt-1 max-w-[220px] text-xs text-slate-400">
                           {rental.reject_reason}
                         </div>
                       )}
                     </td>
-                    <td className="px-5 py-4 text-[#6e6e73]">
+                    <td className="px-5 py-3 text-slate-600">
                       <DateLine label="신청" value={rental.requested_at} />
                       <DateLine label="승인" value={rental.approved_at} />
                       {processor && (
                         <div className="text-xs">처리자 {processor.full_name}</div>
                       )}
                     </td>
-                    <td className="px-5 py-4 text-[#6e6e73]">
+                    <td className="px-5 py-3 text-slate-600">
                       <DateLine label="대여" value={rental.rented_at} />
                       <DateLine label="반납" value={rental.returned_at} />
                       <DateLine label="반납요청" value={rental.return_requested_at} />
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-3">
                       {dayState.remainingDays !== null && (
-                        <span className="font-medium text-[#64748b]">
+                        <span className="font-medium text-slate-600">
                           {dayState.remainingDays}일 남음
                         </span>
                       )}
                       {dayState.overdueDays !== null && (
-                        <span className="font-medium text-[#64748b]">
+                        <span className="font-medium text-slate-600">
                           {dayState.overdueDays}일 초과
                         </span>
                       )}
                       {dayState.remainingDays === null &&
                         dayState.overdueDays === null && (
-                          <span className="text-[#86868b]">-</span>
+                          <span className="text-slate-400">-</span>
                         )}
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-3">
                       <div className="flex justify-end gap-2">
                         {rental.status === "pending" && (
                           <>
@@ -521,7 +521,7 @@ export function AdminLibraryClient({
               })}
               {!rentalRows.length && (
                 <tr>
-                  <td colSpan={7} className="px-5 py-10 text-center text-sm text-[#86868b]">
+                  <td colSpan={7} className="px-5 py-10 text-center text-sm text-slate-500">
                     대여 신청 내역이 없습니다.
                   </td>
                 </tr>

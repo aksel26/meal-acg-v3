@@ -190,21 +190,21 @@ export function QuestionSetManager() {
       <div className="rounded-xl bg-white">
         <Table>
           <TableHeader>
-            <TableRow className="border-b bg-slate-50 hover:bg-slate-50">
-              <TableHead className="text-xs text-slate-500">SET명</TableHead>
-              <TableHead className="w-32 text-xs text-slate-500">
+            <TableRow className="border-b border-slate-100">
+              <TableHead className="h-auto px-3 py-2 text-xs font-medium text-slate-400">SET명</TableHead>
+              <TableHead className="h-auto w-32 px-3 py-2 text-xs font-medium text-slate-400">
                 상태
               </TableHead>
-              <TableHead className="w-28 text-xs text-slate-500">
+              <TableHead className="h-auto w-28 px-3 py-2 text-xs font-medium text-slate-400">
                 문항
               </TableHead>
-              <TableHead className="w-44 text-xs text-slate-500">
+              <TableHead className="h-auto w-44 px-3 py-2 text-xs font-medium text-slate-400">
                 등록일
               </TableHead>
-              <TableHead className="w-44 text-xs text-slate-500">
+              <TableHead className="h-auto w-44 px-3 py-2 text-xs font-medium text-slate-400">
                 수정일
               </TableHead>
-              <TableHead className="w-36 text-right text-xs text-slate-500">
+              <TableHead className="h-auto w-36 px-3 py-2 text-right text-xs font-medium text-slate-400">
                 관리
               </TableHead>
             </TableRow>
@@ -214,7 +214,7 @@ export function QuestionSetManager() {
               <TableRow>
                 <TableCell
                   colSpan={6}
-                  className="py-12 text-center text-sm text-slate-400"
+                  className="px-3 py-10 text-center text-sm text-slate-500"
                 >
                   <Loader2 className="mx-auto h-5 w-5 animate-spin" />
                 </TableCell>
@@ -223,7 +223,7 @@ export function QuestionSetManager() {
               <TableRow>
                 <TableCell
                   colSpan={6}
-                  className="py-12 text-center text-sm text-slate-400"
+                  className="px-3 py-10 text-center text-sm text-slate-500"
                 >
                   등록된 문항 SET이 없습니다.
                 </TableCell>
@@ -232,12 +232,12 @@ export function QuestionSetManager() {
               questionSets.map((questionSet) => (
                 <TableRow
                   key={questionSet.id}
-                  className="cursor-pointer border-b last:border-0"
+                  className="cursor-pointer border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50"
                   onClick={() =>
                     router.push(`/evaluations/question-sets/${questionSet.id}`)
                   }
                 >
-                  <TableCell className="py-3">
+                  <TableCell className="px-3 py-3">
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
@@ -275,11 +275,11 @@ export function QuestionSetManager() {
                           )}
                         />
                       </button>
-                      <span className="font-medium text-slate-900">
+                      <span className="font-medium text-slate-800">
                         {questionSet.name}
                       </span>
                       {questionSet.is_default && (
-                        <Badge className="border-0 bg-slate-100 text-slate-700">
+                        <Badge className="rounded-full border-0 bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
                           기본
                         </Badge>
                       )}
@@ -290,7 +290,7 @@ export function QuestionSetManager() {
                       </div>
                     )}
                   </TableCell>
-                  <TableCell className="py-3">
+                  <TableCell className="px-3 py-3">
                     <button
                       type="button"
                       disabled={updateMutation.isPending}
@@ -308,7 +308,7 @@ export function QuestionSetManager() {
                     >
                       <Badge
                         className={cn(
-                          "cursor-pointer border-0 text-[11px]",
+                          "cursor-pointer rounded-full border-0 px-2 py-0.5 text-xs font-medium",
                           questionSet.is_active
                             ? "bg-slate-100 text-slate-700 hover:bg-slate-200"
                             : "bg-slate-100 text-slate-500 hover:bg-slate-200",
@@ -318,16 +318,16 @@ export function QuestionSetManager() {
                       </Badge>
                     </button>
                   </TableCell>
-                  <TableCell className="py-3 text-sm text-slate-500">
+                  <TableCell className="px-3 py-3 text-sm text-slate-500">
                     {logicalQuestionCount(questionSet.items)}개
                   </TableCell>
-                  <TableCell className="py-3 text-sm text-slate-500">
+                  <TableCell className="px-3 py-3 text-sm text-slate-500">
                     {dayjs(questionSet.created_at).format("YYYY-MM-DD HH:mm")}
                   </TableCell>
-                  <TableCell className="py-3 text-sm text-slate-500">
+                  <TableCell className="px-3 py-3 text-sm text-slate-500">
                     {dayjs(questionSet.updated_at).format("YYYY-MM-DD HH:mm")}
                   </TableCell>
-                  <TableCell className="py-3">
+                  <TableCell className="px-3 py-3">
                     <div className="flex flex-nowrap items-center justify-end gap-2">
                       <Button
                         type="button"

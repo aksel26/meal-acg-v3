@@ -282,23 +282,23 @@ export default function NotificationsPage() {
       {/* Subscription Table */}
       <div className="overflow-x-auto rounded-xl bg-white">
         <table className="w-full text-sm whitespace-nowrap">
-          <thead className="border-b border-slate-100 bg-slate-50 text-left text-xs font-medium text-slate-500">
-            <tr>
-              <th className="w-12 px-3 py-2.5 text-center">No</th>
-              <th className="px-3 py-2.5">이름</th>
-              <th className="px-3 py-2.5">팀</th>
-              <th className="px-3 py-2.5">상태</th>
-              <th className="px-3 py-2.5">기기</th>
-              <th className="px-3 py-2.5">구독일</th>
-              <th className="px-3 py-2.5 text-center">관리</th>
+          <thead>
+            <tr className="border-b border-slate-100 text-xs font-medium text-slate-400">
+              <th className="w-12 px-3 py-2 text-center font-medium">No</th>
+              <th className="px-3 py-2 font-medium">이름</th>
+              <th className="px-3 py-2 font-medium">팀</th>
+              <th className="px-3 py-2 font-medium">상태</th>
+              <th className="px-3 py-2 font-medium">기기</th>
+              <th className="px-3 py-2 font-medium">구독일</th>
+              <th className="px-3 py-2 text-center font-medium">관리</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody>
             {isLoading ? (
               <tr>
                 <td
                   colSpan={7}
-                  className="py-10 text-center text-sm text-slate-400"
+                  className="px-3 py-10 text-center text-sm text-slate-500"
                 >
                   로딩 중...
                 </td>
@@ -307,31 +307,31 @@ export default function NotificationsPage() {
               <tr>
                 <td
                   colSpan={7}
-                  className="py-12 text-center text-sm text-slate-400"
+                  className="px-3 py-10 text-center text-sm text-slate-500"
                 >
                   멤버가 없습니다.
                 </td>
               </tr>
             ) : (
               members.map((member, idx) => (
-                <tr key={member.id} className="hover:bg-slate-50">
-                  <td className="px-3 py-1.5 text-center align-middle text-xs tabular-nums text-slate-400">
+                <tr key={member.id} className="border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50">
+                  <td className="px-3 py-3 text-center align-middle text-xs tabular-nums text-slate-400">
                     {idx + 1}
                   </td>
-                  <td className="px-3 py-1.5 align-middle font-medium text-slate-800">
+                  <td className="px-3 py-3 align-middle font-medium text-slate-800">
                     {member.full_name}
                   </td>
-                  <td className="px-3 py-1.5 align-middle text-slate-600">
+                  <td className="px-3 py-3 align-middle text-slate-600">
                     {member.team_name || "-"}
                   </td>
-                  <td className="px-3 py-1.5 align-middle">
+                  <td className="px-3 py-3 align-middle">
                     {member.subscribed ? (
                       <span className="font-medium text-slate-800">구독</span>
                     ) : (
                       <span className="text-slate-400">미구독</span>
                     )}
                   </td>
-                  <td className="px-3 py-1.5 align-middle text-slate-600">
+                  <td className="px-3 py-3 align-middle text-slate-600">
                     {member.deviceCount > 0 ? (
                       <span className="text-xs tabular-nums">
                         PC {member.devices.filter((d) => d === "pc").length}
@@ -343,10 +343,10 @@ export default function NotificationsPage() {
                       <span className="text-xs text-slate-300">-</span>
                     )}
                   </td>
-                  <td className="px-3 py-1.5 align-middle text-xs tabular-nums text-slate-500">
+                  <td className="px-3 py-3 align-middle text-xs tabular-nums text-slate-500">
                     {formatDate(member.lastUpdated)}
                   </td>
-                  <td className="px-3 py-1.5 text-center align-middle">
+                  <td className="px-3 py-3 text-center align-middle">
                     <div className="flex items-center justify-center gap-1">
                       <button
                         onClick={() => handleSendToMember(member)}

@@ -133,26 +133,26 @@ export function FinanceCrudPage<T extends { id: string }>({
           <div className="py-20 text-center text-sm text-slate-400">데이터가 없습니다.</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full whitespace-nowrap text-sm">
-              <thead className="border-b border-slate-100 bg-slate-50 text-left text-xs font-medium text-slate-500">
-                <tr>
+            <table className="w-full whitespace-nowrap text-left text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 text-xs font-medium text-slate-400">
                   {columns.map((column) => (
-                    <th key={column.key} className="px-4 py-2.5">{column.label}</th>
+                    <th key={column.key} className="px-3 py-2 font-medium">{column.label}</th>
                   ))}
-                  <th className="w-36 px-4 py-2.5 text-right">관리</th>
+                  <th className="w-36 px-3 py-2 text-right font-medium">관리</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody>
                 {filteredItems.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50/60">
+                  <tr key={item.id} className="border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50">
                     {columns.map((column) => (
-                      <td key={column.key} className="px-4 py-3 text-slate-700">
+                      <td key={column.key} className="px-3 py-3 text-slate-600">
                         {column.render
                           ? column.render(item)
                           : String((item as Record<string, unknown>)[column.key] ?? "-")}
                       </td>
                     ))}
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-3 py-3 text-right">
                       <div className="flex justify-end gap-1.5">
                         <Button size="sm" variant="outline" onClick={() => openEdit(item)}>
                           수정

@@ -72,25 +72,25 @@ export function LeaveCalculatorPanel({ year }: { year: number }) {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[980px] text-sm">
-            <thead className="border-b border-slate-100 bg-slate-50 text-left text-xs font-medium text-slate-500">
+          <table className="w-full min-w-[980px] text-left text-sm">
+            <thead className="border-b border-slate-100 text-left text-xs font-medium text-slate-400">
               <tr>
-                <th className="px-4 py-2.5">이름</th>
-                <th className="px-3 py-2.5">팀</th>
-                <th className="px-3 py-2.5">직급</th>
-                <th className="px-3 py-2.5">입사일</th>
-                <th className="px-3 py-2.5">근무년차</th>
-                <th className="px-3 py-2.5">계산 결과</th>
-                <th className="px-3 py-2.5">현재 적용</th>
-                <th className="px-4 py-2.5">계산 방식</th>
+                <th className="px-3 py-2 font-medium">이름</th>
+                <th className="px-3 py-2 font-medium">팀</th>
+                <th className="px-3 py-2 font-medium">직급</th>
+                <th className="px-3 py-2 font-medium">입사일</th>
+                <th className="px-3 py-2 font-medium">근무년차</th>
+                <th className="px-3 py-2 font-medium">계산 결과</th>
+                <th className="px-3 py-2 font-medium">현재 적용</th>
+                <th className="px-3 py-2 font-medium">계산 방식</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody>
               {isLoading ? (
                 <tr>
                   <td
                     colSpan={8}
-                    className="py-12 text-center text-sm text-slate-400"
+                    className="px-3 py-10 text-center text-sm text-slate-500"
                   >
                     계산 데이터를 불러오는 중...
                   </td>
@@ -99,7 +99,7 @@ export function LeaveCalculatorPanel({ year }: { year: number }) {
                 <tr>
                   <td
                     colSpan={8}
-                    className="py-12 text-center text-sm text-slate-500"
+                    className="px-3 py-10 text-center text-sm text-slate-500"
                   >
                     계산 데이터를 불러오지 못했습니다.
                   </td>
@@ -108,7 +108,7 @@ export function LeaveCalculatorPanel({ year }: { year: number }) {
                 <tr>
                   <td
                     colSpan={8}
-                    className="py-12 text-center text-sm text-slate-400"
+                    className="px-3 py-10 text-center text-sm text-slate-500"
                   >
                     계산할 인원이 없습니다.
                   </td>
@@ -127,17 +127,17 @@ export function LeaveCalculatorPanel({ year }: { year: number }) {
                   return (
                     <tr
                       key={member.memberId}
-                      className="align-top hover:bg-slate-50/70"
+                      className="border-b border-slate-100 align-top transition-colors last:border-b-0 hover:bg-slate-50"
                     >
-                      <td className="px-4 py-3">
-                        <div className="font-medium text-slate-900">
+                      <td className="px-3 py-3">
+                        <div className="font-medium text-slate-800">
                           {member.fullName}
                         </div>
                       </td>
-                      <td className="px-3 py-3 text-xs text-slate-500">
+                      <td className="px-3 py-3 text-xs text-slate-600">
                         {member.teamName || "-"}
                       </td>
-                      <td className="px-3 py-3 text-xs text-slate-500">
+                      <td className="px-3 py-3 text-xs text-slate-600">
                         {member.positionName || "-"}
                       </td>
                       <td className="px-3 py-3 text-xs text-slate-600">
@@ -156,7 +156,7 @@ export function LeaveCalculatorPanel({ year }: { year: number }) {
                               <span
                                 key={item.type}
                                 className={cn(
-                                  "block text-xs font-semibold text-slate-900",
+                                  "block text-xs font-semibold text-slate-800",
                                   item.type === "monthly" &&
                                     "underline decoration-slate-300 decoration-1 underline-offset-4",
                                 )}
@@ -179,7 +179,7 @@ export function LeaveCalculatorPanel({ year }: { year: number }) {
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-3">
                         <div className="max-w-[320px] space-y-1 text-xs text-slate-500">
                           {basisItems.map((item) => (
                             <p key={item.type}>

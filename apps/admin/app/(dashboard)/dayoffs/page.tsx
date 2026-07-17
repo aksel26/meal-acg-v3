@@ -510,26 +510,26 @@ export default function DayoffsPage() {
         {/* Table View */}
         {viewMode === "table" && (
           <div className="overflow-x-auto rounded-xl bg-white">
-            <table className="w-full text-sm whitespace-nowrap">
-              <thead className="border-b border-slate-100 bg-slate-50 text-left text-xs font-medium text-slate-500">
-                <tr>
-                  <th className="w-10 px-4 py-2.5">#</th>
-                  <th className="px-3 py-2.5">날짜</th>
-                  <th className="px-3 py-2.5">기안일</th>
-                  <th className="px-3 py-2.5">대상자</th>
-                  <th className="px-3 py-2.5">구분</th>
-                  <th className="px-3 py-2.5">사유</th>
-                  <th className="px-3 py-2.5">작성자</th>
-                  <th className="px-3 py-2.5">승인</th>
-                  <th className="w-28 px-4 py-2.5">관리</th>
+            <table className="w-full text-left text-sm whitespace-nowrap">
+              <thead>
+                <tr className="border-b border-slate-100 text-xs font-medium text-slate-400">
+                  <th className="w-10 px-3 py-2 font-medium">#</th>
+                  <th className="px-3 py-2 font-medium">날짜</th>
+                  <th className="px-3 py-2 font-medium">기안일</th>
+                  <th className="px-3 py-2 font-medium">대상자</th>
+                  <th className="px-3 py-2 font-medium">구분</th>
+                  <th className="px-3 py-2 font-medium">사유</th>
+                  <th className="px-3 py-2 font-medium">작성자</th>
+                  <th className="px-3 py-2 font-medium">승인</th>
+                  <th className="w-28 px-3 py-2 font-medium">관리</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody>
                 {isLoading ? (
                   <tr>
                     <td
                       colSpan={9}
-                      className="py-10 text-center text-sm text-slate-400"
+                      className="px-3 py-10 text-center text-sm text-slate-500"
                     >
                       로딩 중...
                     </td>
@@ -547,11 +547,14 @@ export default function DayoffsPage() {
                       "토",
                     ][date.day()];
                     return (
-                      <tr key={record.id} className="hover:bg-slate-50">
-                        <td className="px-3 py-1.5 text-slate-400">
+                      <tr
+                        key={record.id}
+                        className="border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50"
+                      >
+                        <td className="px-3 py-3 tabular-nums text-slate-400">
                           {index + 1}
                         </td>
-                        <td className="px-3 py-1.5 text-slate-600">
+                        <td className="px-3 py-3 text-slate-600">
                           {date.format("MM-DD")}
                           <span
                             className={cn(
@@ -566,12 +569,12 @@ export default function DayoffsPage() {
                             ({dayOfWeek})
                           </span>
                         </td>
-                        <td className="px-3 py-1.5 text-slate-500">
+                        <td className="px-3 py-3 text-slate-500">
                           {record.created_at
                             ? dayjs(record.created_at).format("MM-DD")
                             : "-"}
                         </td>
-                        <td className="px-3 py-1.5 font-medium text-slate-800">
+                        <td className="px-3 py-3 font-medium text-slate-800">
                           <Link
                             href={`/dayoffs/${record.target_id}`}
                             className="text-slate-800 hover:text-slate-900 hover:underline"
@@ -579,19 +582,19 @@ export default function DayoffsPage() {
                             {record.target?.full_name}
                           </Link>
                         </td>
-                        <td className="px-3 py-1.5">
+                        <td className="px-3 py-3">
                           {getLeaveTypeBadge(record)}
                         </td>
-                        <td className="px-3 py-1.5 text-slate-600 max-w-[200px] truncate">
+                        <td className="px-3 py-3 text-slate-600 max-w-[200px] truncate">
                           <span>{record.reason || "-"}</span>
                         </td>
-                        <td className="px-3 py-1.5 text-slate-400">
+                        <td className="px-3 py-3 text-slate-400">
                           {record.author?.full_name}
                         </td>
-                        <td className="px-3 py-1.5">
+                        <td className="px-3 py-3">
                           {getApprovalBadge(record)}
                         </td>
-                        <td className="px-3 py-1.5">
+                        <td className="px-3 py-3">
                           <div className="flex items-center gap-2">
                             <button
                               className="font-medium text-slate-500 transition-colors hover:text-slate-900"

@@ -98,24 +98,25 @@ function PositionsPanel() {
       </div>
 
       <div className="overflow-hidden rounded-xl border bg-white">
-        <table className="w-full text-sm">
-          <thead className="border-b bg-slate-50 text-left text-xs font-medium text-slate-500">
-            <tr>
-              <th className="px-4 py-3">순서</th>
-              <th className="px-4 py-3 text-center">직급명</th>
-              <th className="px-4 py-3 text-right">관리</th>
+        <div className="overflow-x-auto">
+        <table className="w-full text-left text-sm">
+          <thead>
+            <tr className="border-b border-slate-100 text-xs font-medium text-slate-400">
+              <th className="px-3 py-2 font-medium">순서</th>
+              <th className="px-3 py-2 text-center font-medium">직급명</th>
+              <th className="px-3 py-2 text-right font-medium">관리</th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={3} className="px-4 py-6 text-center text-slate-400">
+                <td colSpan={3} className="px-3 py-10 text-center text-sm text-slate-500">
                   불러오는 중...
                 </td>
               </tr>
             ) : positions.length === 0 ? (
               <tr>
-                <td colSpan={3} className="px-4 py-6 text-center text-slate-400">
+                <td colSpan={3} className="px-3 py-10 text-center text-sm text-slate-500">
                   등록된 직급이 없습니다.
                 </td>
               </tr>
@@ -123,13 +124,13 @@ function PositionsPanel() {
               positions.map((position) => (
                 <tr
                   key={position.id}
-                  className="border-b last:border-b-0 hover:bg-slate-50/50"
+                  className="border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50"
                 >
-                  <td className="px-4 py-3 text-slate-500">
+                  <td className="px-3 py-3 text-slate-500">
                     {position.sort_order}
                   </td>
-                  <td className="px-4 py-3 text-center font-medium">{position.name}</td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3 text-center font-medium text-slate-800">{position.name}</td>
+                  <td className="px-3 py-3">
                     <div className="flex items-center justify-end gap-2">
                       <button
                         type="button"
@@ -152,6 +153,7 @@ function PositionsPanel() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Add/Edit Dialog */}
@@ -275,24 +277,25 @@ function TitlesPanel() {
       </div>
 
       <div className="overflow-hidden rounded-xl border bg-white">
-        <table className="w-full text-sm">
-          <thead className="border-b bg-slate-50 text-left text-xs font-medium text-slate-500">
-            <tr>
-              <th className="px-4 py-3">순서</th>
-              <th className="px-4 py-3 text-center">직책명</th>
-              <th className="px-4 py-3 text-right">관리</th>
+        <div className="overflow-x-auto">
+        <table className="w-full text-left text-sm">
+          <thead>
+            <tr className="border-b border-slate-100 text-xs font-medium text-slate-400">
+              <th className="px-3 py-2 font-medium">순서</th>
+              <th className="px-3 py-2 text-center font-medium">직책명</th>
+              <th className="px-3 py-2 text-right font-medium">관리</th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={3} className="px-4 py-6 text-center text-slate-400">
+                <td colSpan={3} className="px-3 py-10 text-center text-sm text-slate-500">
                   불러오는 중...
                 </td>
               </tr>
             ) : titles.length === 0 ? (
               <tr>
-                <td colSpan={3} className="px-4 py-6 text-center text-slate-400">
+                <td colSpan={3} className="px-3 py-10 text-center text-sm text-slate-500">
                   등록된 직책이 없습니다.
                 </td>
               </tr>
@@ -300,13 +303,13 @@ function TitlesPanel() {
               titles.map((title) => (
                 <tr
                   key={title.id}
-                  className="border-b last:border-b-0 hover:bg-slate-50/50"
+                  className="border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50"
                 >
-                  <td className="px-4 py-3 text-slate-500">
+                  <td className="px-3 py-3 text-slate-500">
                     {title.sort_order}
                   </td>
-                  <td className="px-4 py-3 text-center font-medium">{title.name}</td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3 text-center font-medium text-slate-800">{title.name}</td>
+                  <td className="px-3 py-3">
                     <div className="flex items-center justify-end gap-2">
                       <button
                         type="button"
@@ -329,6 +332,7 @@ function TitlesPanel() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Add/Edit Dialog */}

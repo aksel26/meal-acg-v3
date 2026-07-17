@@ -97,24 +97,26 @@ function ReportTable({
       {rows.length === 0 ? (
         <div className="py-16 text-center text-sm text-slate-400">데이터가 없습니다.</div>
       ) : (
-        <table className="w-full whitespace-nowrap text-sm">
-          <thead className="bg-slate-50 text-left text-xs font-medium text-slate-500">
-            <tr>
-              {headers.map((header) => (
-                <th key={header} className="px-4 py-2.5">{header}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {rows.map((row, index) => (
-              <tr key={`${row[0]}-${index}`}>
-                {row.map((cell, cellIndex) => (
-                  <td key={`${cell}-${cellIndex}`} className="px-4 py-3 text-slate-700">{cell}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full whitespace-nowrap text-left text-sm">
+            <thead>
+              <tr className="border-b border-slate-100 text-xs font-medium text-slate-400">
+                {headers.map((header) => (
+                  <th key={header} className="px-3 py-2 font-medium">{header}</th>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rows.map((row, index) => (
+                <tr key={`${row[0]}-${index}`} className="border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50">
+                  {row.map((cell, cellIndex) => (
+                    <td key={`${cell}-${cellIndex}`} className="px-3 py-3 text-slate-600">{cell}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

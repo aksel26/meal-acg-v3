@@ -176,80 +176,80 @@ export default function PointsOverviewPage() {
             <table className="w-full caption-bottom text-sm">
               <TableHeader className="sticky top-0 z-10">
                 {/* 첫 번째 행: 그룹 헤더 */}
-                <TableRow className="bg-slate-50 [&>th]:bg-slate-50 [&>th]:h-9 [&>th]:px-2 [&>th]:py-0">
+                <TableRow className="[&>th]:bg-white [&>th]:h-9 [&>th]:px-2 [&>th]:py-0">
                   <TableHead
                     rowSpan={2}
-                    className="w-12 text-center text-xs font-semibold text-slate-500"
+                    className="w-12 text-center text-xs font-medium text-slate-400"
                   >
                     No
                   </TableHead>
                   <TableHead
                     rowSpan={2}
-                    className="text-center text-xs font-semibold text-slate-500"
+                    className="text-center text-xs font-medium text-slate-400"
                   >
                     구분
                   </TableHead>
                   <TableHead
                     rowSpan={2}
-                    className="text-center text-xs font-semibold text-slate-500"
+                    className="text-center text-xs font-medium text-slate-400"
                   >
                     이름
                   </TableHead>
                   <TableHead
                     colSpan={2}
-                    className="text-center text-xs font-semibold text-slate-500"
+                    className="text-center text-xs font-medium text-slate-400"
                   >
                     사용 가능액
                   </TableHead>
                   <TableHead
                     colSpan={2}
-                    className="text-center text-xs font-semibold text-slate-500"
+                    className="text-center text-xs font-medium text-slate-400"
                   >
                     잔여액
                   </TableHead>
                   <TableHead
                     colSpan={2}
-                    className="text-center text-xs font-semibold text-slate-500"
+                    className="text-center text-xs font-medium text-slate-400"
                   >
                     사용 금액
                   </TableHead>
                   <TableHead
                     colSpan={months.length}
-                    className="text-center text-xs font-semibold text-slate-500"
+                    className="text-center text-xs font-medium text-slate-400"
                   >
                     활동비 월별
                   </TableHead>
                   <TableHead
                     colSpan={months.length}
-                    className="text-center text-xs font-semibold text-slate-600"
+                    className="text-center text-xs font-medium text-slate-400"
                   >
                     복지포인트 월별
                   </TableHead>
                 </TableRow>
                 {/* 두 번째 행: 세부 열 */}
-                <TableRow className="bg-slate-50/80 [&>th]:bg-slate-50/80 [&>th]:h-8 [&>th]:px-2 [&>th]:py-0">
-                  <TableHead className="text-center text-[11px] font-medium text-slate-500">
+                <TableRow className="border-b border-slate-100 [&>th]:bg-white [&>th]:h-8 [&>th]:px-2 [&>th]:py-0">
+                  <TableHead className="text-center text-[11px] font-medium text-slate-400">
                     활동비
                   </TableHead>
-                  <TableHead className="text-center text-[11px] font-medium text-slate-600">
+                  <TableHead className="text-center text-[11px] font-medium text-slate-400">
                     복지
                   </TableHead>
-                  <TableHead className="text-center text-[11px] font-medium text-slate-500">
+                  <TableHead className="text-center text-[11px] font-medium text-slate-400">
                     활동비
                   </TableHead>
-                  <TableHead className="text-center text-[11px] font-medium text-slate-600">
+                  <TableHead className="text-center text-[11px] font-medium text-slate-400">
                     복지
                   </TableHead>
-                  <TableHead className="text-center text-[11px] font-medium text-slate-500">
+                  <TableHead className="text-center text-[11px] font-medium text-slate-400">
                     활동비
                   </TableHead>
-                  <TableHead className="text-center text-[11px] font-medium text-slate-600">
+                  <TableHead className="text-center text-[11px] font-medium text-slate-400">
                     복지
                   </TableHead>
                   {months.map((mo) => (
                     <TableHead
                       key={`activity-${mo}`}
-                      className="text-center text-[11px] font-medium text-slate-500"
+                      className="text-center text-[11px] font-medium text-slate-400"
                     >
                       {mo}월
                     </TableHead>
@@ -257,7 +257,7 @@ export default function PointsOverviewPage() {
                   {months.map((mo) => (
                     <TableHead
                       key={`welfare-${mo}`}
-                      className="text-center text-[11px] font-medium text-slate-600"
+                      className="text-center text-[11px] font-medium text-slate-400"
                     >
                       {mo}월
                     </TableHead>
@@ -268,7 +268,7 @@ export default function PointsOverviewPage() {
                 {members.map((row, index) => (
                   <TableRow
                     key={row.member_id}
-                    className="transition-colors hover:bg-slate-50/50 [&>td]:px-2 [&>td]:py-1.5"
+                    className="border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50 [&>td]:px-2 [&>td]:py-1.5"
                   >
                     <TableCell className="text-center text-xs text-slate-400">
                       {index + 1}

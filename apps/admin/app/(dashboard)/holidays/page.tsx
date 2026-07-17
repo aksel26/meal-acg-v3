@@ -210,12 +210,12 @@ export default function HolidaysPage() {
         </CardHeader>
         <CardContent>
           <Table>
-            <TableHeader className="sticky top-0 z-10 bg-slate-50">
-              <TableRow>
-                <TableHead className="w-10 h-auto py-1 text-xs">#</TableHead>
-                <TableHead className="h-auto py-1 text-xs">날짜</TableHead>
-                <TableHead className="h-auto py-1 text-xs">공휴일명</TableHead>
-                <TableHead className="w-20 h-auto py-1 text-xs">관리</TableHead>
+            <TableHeader className="sticky top-0 z-10 bg-white">
+              <TableRow className="border-b border-slate-100">
+                <TableHead className="w-10 h-auto px-3 py-2 text-xs font-medium text-slate-400">#</TableHead>
+                <TableHead className="h-auto px-3 py-2 text-xs font-medium text-slate-400">날짜</TableHead>
+                <TableHead className="h-auto px-3 py-2 text-xs font-medium text-slate-400">공휴일명</TableHead>
+                <TableHead className="w-20 h-auto px-3 py-2 text-xs font-medium text-slate-400">관리</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -235,9 +235,9 @@ export default function HolidaysPage() {
                   ];
 
                   return (
-                    <TableRow key={holiday.holiday_date}>
-                      <TableCell className="py-0.5 text-slate-500">{index + 1}</TableCell>
-                      <TableCell className="py-0.5">
+                    <TableRow key={holiday.holiday_date} className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50">
+                      <TableCell className="px-3 py-3 text-slate-500">{index + 1}</TableCell>
+                      <TableCell className="px-3 py-3 font-medium text-slate-800">
                         {date.format("YYYY-MM-DD")}
                         <span className={`ml-0.5 ${
                           date.day() === 0
@@ -247,10 +247,10 @@ export default function HolidaysPage() {
                             : "text-slate-500"
                         }`}>({dayOfWeek})</span>
                       </TableCell>
-                      <TableCell className="py-0.5 font-medium">
+                      <TableCell className="px-3 py-3 font-medium text-slate-800">
                         {holiday.description}
                       </TableCell>
-                      <TableCell className="py-0.5">
+                      <TableCell className="px-3 py-3">
                         <div className="flex gap-0.5">
                           <button
                             className="inline-flex items-center justify-center h-6 w-6 rounded hover:bg-slate-100 transition-colors text-slate-500 hover:text-slate-700"
@@ -272,7 +272,7 @@ export default function HolidaysPage() {
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="py-12">
+                  <TableCell colSpan={4} className="px-3 py-10 text-center text-sm text-slate-500">
                     <div className="flex flex-col items-center gap-2 text-slate-400">
                       <CalendarOff className="h-8 w-8" />
                       <p className="text-sm">등록된 공휴일이 없습니다.</p>

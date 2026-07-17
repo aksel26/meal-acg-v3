@@ -365,10 +365,10 @@ export function ImportPointsDialog({
             )}
 
             <div className="flex-1 min-h-0 overflow-auto rounded-md">
-              <table className="w-full text-[12px]">
-                <thead className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50">
-                  <tr>
-                    <th className="w-[36px] px-2 py-1.5 text-center">
+              <table className="w-full text-left text-[12px]">
+                <thead className="sticky top-0 z-10 border-b border-slate-100 bg-white">
+                  <tr className="text-[11px] font-medium text-slate-400">
+                    <th className="w-[36px] px-2 py-1.5 text-center font-medium">
                       <Checkbox
                         checked={
                           stats.valid > 0 &&
@@ -377,36 +377,36 @@ export function ImportPointsDialog({
                         onCheckedChange={toggleAll}
                       />
                     </th>
-                    <th className="w-[36px] px-1 py-1.5 text-center text-[11px] font-semibold text-slate-400">
+                    <th className="w-[36px] px-1 py-1.5 text-center font-medium">
                       No.
                     </th>
-                    <th className="px-2 py-1.5 text-left text-[11px] font-semibold text-slate-500">
+                    <th className="px-2 py-1.5 text-left font-medium">
                       이름
                     </th>
-                    <th className="px-2 py-1.5 text-center text-[11px] font-semibold text-slate-500">
+                    <th className="px-2 py-1.5 text-center font-medium">
                       날짜
                     </th>
-                    <th className="px-2 py-1.5 text-center text-[11px] font-semibold text-slate-500">
+                    <th className="px-2 py-1.5 text-center font-medium">
                       유형
                     </th>
-                    <th className="px-2 py-1.5 text-left text-[11px] font-semibold text-slate-500">
+                    <th className="px-2 py-1.5 text-left font-medium">
                       사용처
                     </th>
-                    <th className="px-2 py-1.5 text-right text-[11px] font-semibold text-slate-500">
+                    <th className="px-2 py-1.5 text-right font-medium">
                       금액
                     </th>
-                    <th className="px-2 py-1.5 text-left text-[11px] font-semibold text-slate-500">
+                    <th className="px-2 py-1.5 text-left font-medium">
                       비고
                     </th>
-                    <th className="px-2 py-1.5 text-center text-[11px] font-semibold text-slate-500">
+                    <th className="px-2 py-1.5 text-center font-medium">
                       P&C확인
                     </th>
-                    <th className="w-[60px] px-2 py-1.5 text-center text-[11px] font-semibold text-slate-500">
+                    <th className="w-[60px] px-2 py-1.5 text-center font-medium">
                       상태
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody>
                   {parsedRows.slice(0, 200).map((row, index) => {
                     const status = getRowStatus(row);
                     const isSelected = selectedIndices.has(index);
@@ -414,14 +414,14 @@ export function ImportPointsDialog({
                       <tr
                         key={index}
                         className={cn(
-                          "transition-colors",
+                          "border-b border-slate-100 transition-colors last:border-b-0",
                           status === "error"
                             ? "bg-slate-50/50"
                             : status === "no-member"
                               ? "bg-slate-50/50"
                               : isSelected
-                                ? "bg-slate-100/30"
-                                : "hover:bg-slate-50/60"
+                                ? "bg-slate-50"
+                                : "hover:bg-slate-50"
                         )}
                       >
                         <td className="px-2 py-1 text-center">
@@ -434,17 +434,17 @@ export function ImportPointsDialog({
                         <td className="px-1 py-1 text-center tabular-nums text-slate-400">
                           {row.rowIndex}
                         </td>
-                        <td className="px-2 py-1 font-medium text-slate-900">
+                        <td className="px-2 py-1 font-medium text-slate-800">
                           {row.name || "-"}
                         </td>
-                        <td className="px-2 py-1 text-center tabular-nums text-slate-500">
+                        <td className="px-2 py-1 text-center tabular-nums text-slate-600">
                           {row.usedAt || "-"}
                         </td>
                         <td className="px-2 py-1 text-center">
                           <Badge
                             variant="outline"
                             className={cn(
-                              "text-[10px] px-1 py-0",
+                              "rounded-full text-[10px] px-1.5 py-0 font-medium",
                               typeBadgeStyle(row.type)
                             )}
                           >
@@ -454,7 +454,7 @@ export function ImportPointsDialog({
                         <td className="max-w-[180px] truncate px-2 py-1 text-slate-600">
                           {row.description || "-"}
                         </td>
-                        <td className="px-2 py-1 text-right tabular-nums font-medium text-slate-900">
+                        <td className="px-2 py-1 text-right tabular-nums font-medium text-slate-800">
                           {row.amount > 0
                             ? row.amount.toLocaleString() + "원"
                             : "-"}

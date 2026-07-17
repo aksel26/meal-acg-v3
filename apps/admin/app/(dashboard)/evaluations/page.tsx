@@ -213,15 +213,15 @@ export default function EvaluationsPage() {
         <div className="rounded-xl bg-white">
           <Table>
             <TableHeader>
-              <TableRow className="border-b bg-slate-50 hover:bg-slate-50">
-                <TableHead className="w-16 text-xs text-slate-500">순번</TableHead>
-                <TableHead className="text-xs text-slate-500">회차명</TableHead>
-                <TableHead className="w-56 text-xs text-slate-500">기간</TableHead>
-                <TableHead className="w-56 text-xs text-slate-500">적용 SET</TableHead>
-                <TableHead className="w-24 text-xs text-slate-500">배포</TableHead>
-                <TableHead className="w-20 text-xs text-slate-500">버전</TableHead>
-                <TableHead className="w-44 text-xs text-slate-500">수정일</TableHead>
-                <TableHead className="w-28 text-right text-xs text-slate-500">
+              <TableRow className="border-b border-slate-100 hover:bg-transparent">
+                <TableHead className="h-auto w-16 px-3 py-2 text-xs font-medium text-slate-400">순번</TableHead>
+                <TableHead className="h-auto px-3 py-2 text-xs font-medium text-slate-400">회차명</TableHead>
+                <TableHead className="h-auto w-56 px-3 py-2 text-xs font-medium text-slate-400">기간</TableHead>
+                <TableHead className="h-auto w-56 px-3 py-2 text-xs font-medium text-slate-400">적용 SET</TableHead>
+                <TableHead className="h-auto w-24 px-3 py-2 text-xs font-medium text-slate-400">배포</TableHead>
+                <TableHead className="h-auto w-20 px-3 py-2 text-xs font-medium text-slate-400">버전</TableHead>
+                <TableHead className="h-auto w-44 px-3 py-2 text-xs font-medium text-slate-400">수정일</TableHead>
+                <TableHead className="h-auto w-28 px-3 py-2 text-right text-xs font-medium text-slate-400">
                   관리
                 </TableHead>
               </TableRow>
@@ -229,13 +229,13 @@ export default function EvaluationsPage() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="py-12 text-center text-sm text-slate-400">
+                  <TableCell colSpan={8} className="px-3 py-10 text-center text-sm text-slate-500">
                     <Loader2 className="mx-auto h-5 w-5 animate-spin" />
                   </TableCell>
                 </TableRow>
               ) : rounds.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="py-12 text-center text-sm text-slate-400">
+                  <TableCell colSpan={8} className="px-3 py-10 text-center text-sm text-slate-500">
                     등록된 회차가 없습니다. 우측 상단의 &quot;신규 회차&quot;로 생성하세요.
                   </TableCell>
                 </TableRow>
@@ -243,24 +243,24 @@ export default function EvaluationsPage() {
                 rounds.map((round, index) => (
                   <TableRow
                     key={round.id}
-                    className="cursor-pointer border-b last:border-0"
+                    className="cursor-pointer border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50"
                     onClick={() => router.push(`/evaluations/${round.id}`)}
                   >
-                    <TableCell className="py-3 text-sm text-slate-500">
+                    <TableCell className="px-3 py-3 text-sm tabular-nums text-slate-500">
                       {rounds.length - index}
                     </TableCell>
-                    <TableCell className="py-3">
-                      <div className="font-medium text-slate-900">{round.name}</div>
+                    <TableCell className="px-3 py-3">
+                      <div className="font-medium text-slate-800">{round.name}</div>
                       {round.description && (
                         <div className="mt-0.5 line-clamp-1 text-xs text-slate-400">
                           {round.description}
                         </div>
                       )}
                     </TableCell>
-                    <TableCell className="py-3 text-sm text-slate-600">
+                    <TableCell className="px-3 py-3 text-sm tabular-nums text-slate-600">
                       {round.start_date} ~ {round.end_date}
                     </TableCell>
-                    <TableCell className="py-3">
+                    <TableCell className="px-3 py-3">
                       {round.question_set ? (
                         <div className="space-y-1">
                           <div className="flex items-center gap-1.5">
@@ -285,7 +285,7 @@ export default function EvaluationsPage() {
                         <span className="text-sm text-slate-400">미적용</span>
                       )}
                     </TableCell>
-                    <TableCell className="py-3">
+                    <TableCell className="px-3 py-3">
                       <Badge
                         className={cn(
                           "border-0 text-[11px]",
@@ -297,13 +297,13 @@ export default function EvaluationsPage() {
                         {round.is_deployed ? "배포 ON" : "배포 OFF"}
                       </Badge>
                     </TableCell>
-                    <TableCell className="py-3 text-sm text-slate-500">
+                    <TableCell className="px-3 py-3 text-sm tabular-nums text-slate-500">
                       v{round.config_version}
                     </TableCell>
-                    <TableCell className="py-3 text-sm text-slate-500">
+                    <TableCell className="px-3 py-3 text-sm tabular-nums text-slate-500">
                       {dayjs(round.updated_at).format("YYYY-MM-DD HH:mm")}
                     </TableCell>
-                    <TableCell className="py-3">
+                    <TableCell className="px-3 py-3">
                       <div className="flex flex-nowrap items-center justify-end gap-1.5">
                         <Button
                           type="button"

@@ -868,10 +868,10 @@ function ReviewPageContent() {
           </div>
         ) : (
           <div className="h-full overflow-auto">
-            <table className="w-full text-[13px]">
-              <thead className="sticky top-0 z-10 bg-slate-50">
-                <tr>
-                  <th className="w-[36px] whitespace-nowrap px-2 py-2 text-center">
+            <table className="w-full text-left text-sm">
+              <thead className="sticky top-0 z-10 bg-white">
+                <tr className="border-b border-slate-100 text-xs font-medium text-slate-400">
+                  <th className="w-[36px] whitespace-nowrap px-3 py-2 text-center font-medium">
                     <Checkbox
                       checked={
                         records.length > 0 &&
@@ -892,37 +892,37 @@ function ReviewPageContent() {
                       }}
                     />
                   </th>
-                  <th className="w-[44px] whitespace-nowrap px-2 py-2 text-center text-xs font-semibold text-slate-400">
+                  <th className="w-[44px] whitespace-nowrap px-3 py-2 text-center font-medium">
                     No.
                   </th>
-                  <th className="w-[88px] whitespace-nowrap px-3 py-2 text-center text-xs font-semibold text-slate-500">
+                  <th className="w-[88px] whitespace-nowrap px-3 py-2 text-center font-medium">
                     사용날짜
                   </th>
-                  <th className="w-[88px] whitespace-nowrap px-3 py-2 text-center text-xs font-semibold text-slate-500">
+                  <th className="w-[88px] whitespace-nowrap px-3 py-2 text-center font-medium">
                     입력날짜
                   </th>
-                  <th className="w-[72px] whitespace-nowrap px-3 py-2 text-left text-xs font-semibold text-slate-500">
+                  <th className="w-[72px] whitespace-nowrap px-3 py-2 text-left font-medium">
                     이름
                   </th>
-                  <th className="w-[80px] whitespace-nowrap px-3 py-2 text-center text-xs font-semibold text-slate-500">
+                  <th className="w-[80px] whitespace-nowrap px-3 py-2 text-center font-medium">
                     유형
                   </th>
-                  <th className="min-w-[120px] whitespace-nowrap px-3 py-2 text-left text-xs font-semibold text-slate-500">
+                  <th className="min-w-[120px] whitespace-nowrap px-3 py-2 text-left font-medium">
                     사용처
                   </th>
-                  <th className="w-[88px] whitespace-nowrap px-3 py-2 text-right text-xs font-semibold text-slate-500">
+                  <th className="w-[88px] whitespace-nowrap px-3 py-2 text-right font-medium">
                     금액
                   </th>
-                  <th className="w-[150px] whitespace-nowrap px-3 py-2 text-center text-xs font-semibold text-slate-500">
+                  <th className="w-[150px] whitespace-nowrap px-3 py-2 text-center font-medium">
                     P&C팀 확인
                   </th>
-                  <th className="min-w-[80px] whitespace-nowrap px-3 py-2 text-left text-xs font-semibold text-slate-500">
+                  <th className="min-w-[80px] whitespace-nowrap px-3 py-2 text-left font-medium">
                     비고
                   </th>
-                  <th className="min-w-[100px] whitespace-nowrap px-3 py-2 text-left text-xs font-semibold text-slate-500">
+                  <th className="min-w-[100px] whitespace-nowrap px-3 py-2 text-left font-medium">
                     지연 사유
                   </th>
-                  <th className="w-[88px] whitespace-nowrap px-3 py-2 text-center text-xs font-semibold text-slate-500">
+                  <th className="w-[88px] whitespace-nowrap px-3 py-2 text-center font-medium">
                     액션
                   </th>
                 </tr>
@@ -932,11 +932,11 @@ function ReviewPageContent() {
                   <tr
                     key={record.id}
                     className={cn(
-                      "transition-colors hover:bg-slate-50/60",
-                      selectedIds.has(record.id) && "bg-slate-50/40",
+                      "border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50",
+                      selectedIds.has(record.id) && "bg-slate-50",
                     )}
                   >
-                    <td className="px-2 py-1 text-center">
+                    <td className="px-3 py-3 text-center">
                       <Checkbox
                         checked={selectedIds.has(record.id)}
                         onCheckedChange={(checked) => {
@@ -949,36 +949,36 @@ function ReviewPageContent() {
                         }}
                       />
                     </td>
-                    <td className="whitespace-nowrap px-2 py-1 text-center tabular-nums text-slate-400">
+                    <td className="whitespace-nowrap px-3 py-3 text-center tabular-nums text-slate-400">
                       {record.no}
                     </td>
-                    <td className="whitespace-nowrap px-3 py-1 text-center tabular-nums text-slate-500">
+                    <td className="whitespace-nowrap px-3 py-3 text-center tabular-nums text-slate-600">
                       {formatDate(record.used_at)}
                     </td>
-                    <td className="whitespace-nowrap px-3 py-1 text-center tabular-nums text-slate-400">
+                    <td className="whitespace-nowrap px-3 py-3 text-center tabular-nums text-slate-400">
                       {formatDate(record.created_at)}
                     </td>
-                    <td className="whitespace-nowrap px-3 py-1 font-medium text-slate-900">
+                    <td className="whitespace-nowrap px-3 py-3 font-medium text-slate-800">
                       {record.members?.full_name || "-"}
                     </td>
-                    <td className="px-3 py-1 text-center">
+                    <td className="px-3 py-3 text-center">
                       <Badge
                         variant="outline"
                         className={cn(
-                          "text-[11px] px-1.5 py-0",
+                          "rounded-full px-2 py-0.5 text-xs font-medium",
                           typeBadgeStyle(record.type),
                         )}
                       >
                         {record.type}
                       </Badge>
                     </td>
-                    <td className="max-w-[240px] truncate px-3 py-1 text-slate-600">
+                    <td className="max-w-[240px] truncate px-3 py-3 text-slate-600">
                       {record.description || "-"}
                     </td>
-                    <td className="whitespace-nowrap px-3 py-1 text-right tabular-nums font-medium text-slate-900">
+                    <td className="whitespace-nowrap px-3 py-3 text-right tabular-nums font-medium text-slate-800">
                       {formatCurrency(record.amount)}
                     </td>
-                    <td className="px-3 py-1 text-center">
+                    <td className="px-3 py-3 text-center">
                       <ReviewStepIndicator
                         record={record}
                         onAdvance={() => handleAdvanceReview(record)}
@@ -990,7 +990,7 @@ function ReviewPageContent() {
                         }
                       />
                     </td>
-                    <td className="max-w-[180px] truncate px-3 py-1 text-slate-400">
+                    <td className="max-w-[180px] truncate px-3 py-3 text-slate-400">
                       <span className="inline-flex items-center justify-between gap-1 w-full">
                         {record.companions?.length
                           ? record.companions.map((id: string) => memberMap.get(id) || id).join(", ")
@@ -1011,10 +1011,10 @@ function ReviewPageContent() {
                         ) : null}
                       </span>
                     </td>
-                    <td className="max-w-[180px] truncate px-3 py-1 text-slate-400">
+                    <td className="max-w-[180px] truncate px-3 py-3 text-slate-400">
                       {record.delay_reason || "-"}
                     </td>
-                    <td className="px-3 py-1 text-center">
+                    <td className="px-3 py-3 text-center">
                       <div className="flex items-center justify-center gap-0">
                         <button
                           onClick={() => handleAuditOpen(record.id)}

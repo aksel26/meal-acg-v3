@@ -1423,28 +1423,31 @@ export default function EvaluationDetailPage() {
               />
             ) : (
               <div className="overflow-hidden rounded-lg">
-                <table className="w-full text-sm">
-                  <thead className="bg-slate-50 text-left text-xs text-slate-500">
-                    <tr>
-                      <th className="px-4 py-3">일시</th>
-                      <th className="px-4 py-3">작업</th>
-                      <th className="px-4 py-3">대상</th>
-                      <th className="px-4 py-3">작업자</th>
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-100 text-xs font-medium text-slate-400">
+                      <th className="px-3 py-2 font-medium">일시</th>
+                      <th className="px-3 py-2 font-medium">작업</th>
+                      <th className="px-3 py-2 font-medium">대상</th>
+                      <th className="px-3 py-2 font-medium">작업자</th>
                     </tr>
                   </thead>
                   <tbody>
                     {auditLogs.map((log) => (
-                      <tr key={log.id} className="border-t">
-                        <td className="px-4 py-3 text-slate-500">
+                      <tr
+                        key={log.id}
+                        className="border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50"
+                      >
+                        <td className="px-3 py-3 tabular-nums text-slate-500">
                           {new Date(log.created_at).toLocaleString("ko-KR")}
                         </td>
-                        <td className="px-4 py-3 font-medium">
+                        <td className="px-3 py-3 font-medium text-slate-800">
                           {actionLabel(log.action)}
                         </td>
-                        <td className="px-4 py-3 text-slate-500">
+                        <td className="px-3 py-3 text-slate-500">
                           {targetLabel(log.target_table)}
                         </td>
-                        <td className="px-4 py-3 text-slate-500">
+                        <td className="px-3 py-3 text-slate-500">
                           {log.actor?.full_name || log.actor_name || "-"}
                         </td>
                       </tr>

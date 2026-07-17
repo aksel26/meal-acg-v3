@@ -166,20 +166,20 @@ export default function WorkApplicationsAdminPage() {
             <EmptyState />
           ) : (
             <div className="hidden overflow-x-auto lg:block">
-              <table className="w-full whitespace-nowrap text-sm">
-                <thead className="border-b border-slate-100 bg-slate-50 text-left text-xs font-medium text-slate-500">
-                  <tr>
-                    <th className="px-4 py-2.5">상태</th>
-                    <th className="px-4 py-2.5">신청자</th>
-                    <th className="px-4 py-2.5">팀</th>
-                    <th className="px-4 py-2.5">유형</th>
-                    <th className="px-4 py-2.5">근무일</th>
-                    <th className="px-4 py-2.5">프로젝트/업무</th>
-                    <th className="px-4 py-2.5">사유</th>
-                    <th className="w-44 px-4 py-2.5 text-right">관리</th>
+              <table className="w-full whitespace-nowrap text-left text-sm">
+                <thead>
+                  <tr className="border-b border-slate-100 text-xs font-medium text-slate-400">
+                    <th className="px-3 py-2 font-medium">상태</th>
+                    <th className="px-3 py-2 font-medium">신청자</th>
+                    <th className="px-3 py-2 font-medium">팀</th>
+                    <th className="px-3 py-2 font-medium">유형</th>
+                    <th className="px-3 py-2 font-medium">근무일</th>
+                    <th className="px-3 py-2 font-medium">프로젝트/업무</th>
+                    <th className="px-3 py-2 font-medium">사유</th>
+                    <th className="w-44 px-3 py-2 text-right font-medium">관리</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody>
                   {applications.map((item) => (
                     <ApplicationRow
                       key={item.id}
@@ -265,7 +265,7 @@ function EmptyState() {
 
 function StatusBadge({ status }: { status: string }) {
   return (
-    <span className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${STATUS_CLASS[status]}`}>
+    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_CLASS[status]}`}>
       {STATUS_LABEL[status]}
     </span>
   );
@@ -285,23 +285,23 @@ function ApplicationRow({
   onReopen: () => void;
 }) {
   return (
-    <tr className="hover:bg-slate-50">
-      <td className="px-4 py-3"><StatusBadge status={item.status} /></td>
-      <td className="px-4 py-3">
-        <p className="font-medium text-slate-900">{item.requester?.full_name || "-"}</p>
+    <tr className="border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50">
+      <td className="px-3 py-3"><StatusBadge status={item.status} /></td>
+      <td className="px-3 py-3">
+        <p className="font-medium text-slate-800">{item.requester?.full_name || "-"}</p>
       </td>
-      <td className="px-4 py-3 text-slate-500">{item.requester?.team?.name || "소속 없음"}</td>
-      <td className="px-4 py-3 text-slate-700">{TYPE_LABEL[item.application_type]}</td>
-      <td className="px-4 py-3 text-slate-600">
+      <td className="px-3 py-3 text-slate-600">{item.requester?.team?.name || "소속 없음"}</td>
+      <td className="px-3 py-3 text-slate-600">{TYPE_LABEL[item.application_type]}</td>
+      <td className="px-3 py-3 text-slate-600">
         {dayjs(item.work_date).format("YYYY.MM.DD")} {item.start_time.slice(0, 5)}-{item.end_time.slice(0, 5)}
       </td>
-      <td className="max-w-[180px] px-4 py-3 text-slate-700">
+      <td className="max-w-[180px] px-3 py-3 text-slate-600">
         <p className="truncate">{item.project_name}</p>
       </td>
-      <td className="max-w-[220px] px-4 py-3 text-slate-500">
+      <td className="max-w-[220px] px-3 py-3 text-slate-500">
         <p className="truncate">{item.reject_reason || item.reason}</p>
       </td>
-      <td className="px-4 py-3">
+      <td className="px-3 py-3">
         <ActionButtons
           status={item.status}
           isPending={isPending}

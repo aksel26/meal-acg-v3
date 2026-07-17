@@ -57,22 +57,22 @@ const CATEGORY_FILTERS: { key: Category; label: string; description: string }[] 
 const STATUS_BADGE: Record<string, { label: string; className: string; dotClassName: string }> = {
   pending: {
     label: "대기",
-    className: "border-slate-200 bg-slate-50 text-slate-700",
+    className: "bg-slate-50 text-slate-700",
     dotClassName: "bg-slate-500",
   },
   approved: {
     label: "승인",
-    className: "border-slate-200 bg-slate-50 text-slate-700",
+    className: "bg-slate-50 text-slate-700",
     dotClassName: "bg-slate-500",
   },
   rejected: {
     label: "반려",
-    className: "border-slate-200 bg-slate-50 text-slate-700",
+    className: "bg-slate-50 text-slate-700",
     dotClassName: "bg-slate-500",
   },
   pre_approved: {
     label: "가승인",
-    className: "border-slate-200 bg-slate-50 text-slate-700",
+    className: "bg-slate-50 text-slate-700",
     dotClassName: "bg-slate-500",
   },
 };
@@ -392,22 +392,22 @@ function ApprovalsTable({
   return (
     <>
       <div className="hidden overflow-x-auto lg:block">
-        <table className="w-full whitespace-nowrap text-sm">
-          <thead className="border-b border-slate-100 bg-slate-50 text-left text-xs font-medium text-slate-500">
-            <tr>
-              <th className="px-4 py-2.5">상태</th>
-              <th className="px-4 py-2.5">요청자</th>
-              <th className="px-4 py-2.5">유형</th>
-              <th className="px-4 py-2.5">날짜</th>
-              <th className="px-4 py-2.5">시간</th>
-              <th className="px-4 py-2.5">사유</th>
-              <th className="px-4 py-2.5">승인자</th>
-              <th className="px-4 py-2.5">신청일</th>
-              <th className="px-4 py-2.5">처리일</th>
-              <th className="w-32 px-4 py-2.5 text-right">관리</th>
+        <table className="w-full whitespace-nowrap text-left text-sm">
+          <thead>
+            <tr className="border-b border-slate-100 text-xs font-medium text-slate-400">
+              <th className="px-3 py-2 font-medium">상태</th>
+              <th className="px-3 py-2 font-medium">요청자</th>
+              <th className="px-3 py-2 font-medium">유형</th>
+              <th className="px-3 py-2 font-medium">날짜</th>
+              <th className="px-3 py-2 font-medium">시간</th>
+              <th className="px-3 py-2 font-medium">사유</th>
+              <th className="px-3 py-2 font-medium">승인자</th>
+              <th className="px-3 py-2 font-medium">신청일</th>
+              <th className="px-3 py-2 font-medium">처리일</th>
+              <th className="w-32 px-3 py-2 text-right font-medium">관리</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody>
             {approvals.map((approval) => {
               const rowActions = getApprovalRowActions(approval, activeTab, showActions, cancelActionLabel);
 
@@ -492,35 +492,35 @@ function ApprovalRow({
   const workTimeLabel = getApprovalWorkTimeLabel(approval);
 
   return (
-    <tr className="hover:bg-slate-50">
-      <td className="px-4 py-3">
+    <tr className="border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50">
+      <td className="px-3 py-3">
         <StatusBadge status={approval.status} />
       </td>
-      <td className="px-4 py-3 font-medium text-slate-900">
+      <td className="px-3 py-3 font-medium text-slate-800">
         {approval.requester?.full_name || "알 수 없음"}
       </td>
-      <td className="px-4 py-3">
+      <td className="px-3 py-3">
         <span className="text-slate-700">{getApprovalTypeLabel(approval)}</span>
       </td>
-      <td className="px-4 py-3 text-slate-700">
+      <td className="px-3 py-3 tabular-nums text-slate-700">
         {getApprovalDateLabel(approval)}
       </td>
-      <td className="px-4 py-3 text-slate-500">
+      <td className="px-3 py-3 tabular-nums text-slate-500">
         {workTimeLabel || "-"}
       </td>
-      <td className="max-w-[240px] px-4 py-3 text-slate-600">
+      <td className="max-w-[240px] px-3 py-3 text-slate-600">
         <p className="truncate">{approval.reject_reason || relatedData?.reason || "-"}</p>
       </td>
-      <td className="px-4 py-3 text-slate-500">
+      <td className="px-3 py-3 text-slate-500">
         {approval.approver?.full_name || "-"}
       </td>
-      <td className="px-4 py-3 text-slate-500">
+      <td className="px-3 py-3 tabular-nums text-slate-500">
         {dayjs(approval.requested_at).format("MM/DD HH:mm")}
       </td>
-      <td className="px-4 py-3 text-slate-500">
+      <td className="px-3 py-3 tabular-nums text-slate-500">
         {approval.resolved_at ? dayjs(approval.resolved_at).format("MM/DD HH:mm") : "-"}
       </td>
-      <td className="px-4 py-3">
+      <td className="px-3 py-3">
         <ApprovalActions
           showActions={showActions}
           cancelActionLabel={cancelActionLabel}
@@ -602,20 +602,20 @@ function EarlyLeaveTable({
   return (
     <>
       <div className="hidden overflow-x-auto lg:block">
-        <table className="w-full whitespace-nowrap text-sm">
-          <thead className="border-b border-slate-100 bg-slate-50 text-left text-xs font-medium text-slate-500">
-            <tr>
-              <th className="px-4 py-2.5">상태</th>
-              <th className="px-4 py-2.5">요청자</th>
-              <th className="px-4 py-2.5">근무일</th>
-              <th className="px-4 py-2.5">출퇴근</th>
-              <th className="px-4 py-2.5">사유</th>
-              <th className="px-4 py-2.5">승인 이력</th>
-              <th className="px-4 py-2.5">신청</th>
-              <th className="w-56 px-4 py-2.5 text-right">관리</th>
+        <table className="w-full whitespace-nowrap text-left text-sm">
+          <thead>
+            <tr className="border-b border-slate-100 text-xs font-medium text-slate-400">
+              <th className="px-3 py-2 font-medium">상태</th>
+              <th className="px-3 py-2 font-medium">요청자</th>
+              <th className="px-3 py-2 font-medium">근무일</th>
+              <th className="px-3 py-2 font-medium">출퇴근</th>
+              <th className="px-3 py-2 font-medium">사유</th>
+              <th className="px-3 py-2 font-medium">승인 이력</th>
+              <th className="px-3 py-2 font-medium">신청</th>
+              <th className="w-56 px-3 py-2 text-right font-medium">관리</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody>
             {requests.map((request) => (
               <EarlyLeaveRow
                 key={request.id}
@@ -658,27 +658,27 @@ function EarlyLeaveRow({
   const record = request.attendance_record;
 
   return (
-    <tr className="hover:bg-slate-50">
-      <td className="px-4 py-3">
+    <tr className="border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50">
+      <td className="px-3 py-3">
         <StatusBadge status={request.approval_status} />
       </td>
-      <td className="px-4 py-3 font-medium text-slate-900">
+      <td className="px-3 py-3 font-medium text-slate-800">
         {request.requester?.full_name || "알 수 없음"}
       </td>
-      <td className="px-4 py-3 text-slate-700">{record?.date ? formatDate(record.date) : "-"}</td>
-      <td className="px-4 py-3 text-slate-500">
+      <td className="px-3 py-3 tabular-nums text-slate-700">{record?.date ? formatDate(record.date) : "-"}</td>
+      <td className="px-3 py-3 tabular-nums text-slate-500">
         {formatTime(record?.check_in_at || null)} 출근 → {formatTime(record?.check_out_at || null)} 퇴근
       </td>
-      <td className="max-w-[260px] px-4 py-3 text-slate-600">
+      <td className="max-w-[260px] px-3 py-3 text-slate-600">
         <p className="truncate">{request.reject_reason || request.reason || "-"}</p>
       </td>
-      <td className="px-4 py-3 text-slate-500">
+      <td className="px-3 py-3 text-slate-500">
         <ApprovalHistory request={request} />
       </td>
-      <td className="px-4 py-3 text-slate-500">
+      <td className="px-3 py-3 tabular-nums text-slate-500">
         {dayjs(request.created_at).format("MM/DD HH:mm")}
       </td>
-      <td className="px-4 py-3">
+      <td className="px-3 py-3">
         <EarlyLeaveActions request={request} onAction={onAction} onReject={onReject} isPending={isPending} />
       </td>
     </tr>
@@ -725,7 +725,7 @@ function StatusBadge({ status }: { status: string }) {
   const badge = STATUS_BADGE[status] ?? STATUS_BADGE.pending!;
 
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium ${badge.className}`}>
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}>
       <span className={`h-1.5 w-1.5 rounded-full ${badge.dotClassName}`} />
       {badge.label}
     </span>

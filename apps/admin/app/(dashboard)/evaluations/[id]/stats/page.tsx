@@ -360,36 +360,39 @@ export default function EvaluationRoundStatsPage() {
             <div className="max-h-[300px] overflow-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-slate-50 hover:bg-slate-50">
-                    <TableHead className="text-xs text-slate-500">평가자</TableHead>
-                    <TableHead className="text-xs text-slate-500">구분</TableHead>
-                    <TableHead className="text-xs text-slate-500">대상자</TableHead>
-                    <TableHead className="text-xs text-slate-500">대상자 소속</TableHead>
+                  <TableRow className="border-b border-slate-100 hover:bg-transparent">
+                    <TableHead className="h-auto px-3 py-2 text-xs font-medium text-slate-400">평가자</TableHead>
+                    <TableHead className="h-auto px-3 py-2 text-xs font-medium text-slate-400">구분</TableHead>
+                    <TableHead className="h-auto px-3 py-2 text-xs font-medium text-slate-400">대상자</TableHead>
+                    <TableHead className="h-auto px-3 py-2 text-xs font-medium text-slate-400">대상자 소속</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {data.unsubmittedAssignments.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="py-8 text-center text-sm text-slate-400">
+                      <TableCell colSpan={4} className="px-3 py-10 text-center text-sm text-slate-500">
                         모든 배정이 제출되었습니다.
                       </TableCell>
                     </TableRow>
                   ) : (
                     data.unsubmittedAssignments.map((item) => (
-                      <TableRow key={item.assignmentId}>
-                        <TableCell className="py-3 font-medium text-slate-900">
+                      <TableRow
+                        key={item.assignmentId}
+                        className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50"
+                      >
+                        <TableCell className="px-3 py-3 font-medium text-slate-900">
                           {item.evaluatorName}
                           <div className="mt-0.5 text-xs font-normal text-slate-400">
                             {item.evaluatorTeamName}
                           </div>
                         </TableCell>
-                        <TableCell className="py-3">
+                        <TableCell className="px-3 py-3">
                           <EvaluatorBadge type={item.evaluatorType} />
                         </TableCell>
-                        <TableCell className="py-3 text-slate-700">
+                        <TableCell className="px-3 py-3 text-slate-700">
                           {item.subjectName}
                         </TableCell>
-                        <TableCell className="py-3 text-sm text-slate-500">
+                        <TableCell className="px-3 py-3 text-sm text-slate-500">
                           {item.subjectTeamName} · {item.subjectPositionName}
                         </TableCell>
                       </TableRow>
@@ -652,33 +655,36 @@ function AverageTable({
         </div>
         <Table>
           <TableHeader>
-            <TableRow className="bg-slate-50 hover:bg-slate-50">
-              <TableHead className="text-xs text-slate-500">구분</TableHead>
-              <TableHead className="w-24 text-right text-xs text-slate-500">답변</TableHead>
-              <TableHead className="w-28 text-right text-xs text-slate-500">평균</TableHead>
-              <TableHead className="w-28 text-right text-xs text-slate-500">가중 평균</TableHead>
+            <TableRow className="border-b border-slate-100 hover:bg-transparent">
+              <TableHead className="h-auto px-3 py-2 text-xs font-medium text-slate-400">구분</TableHead>
+              <TableHead className="w-24 text-right h-auto px-3 py-2 text-xs font-medium text-slate-400">답변</TableHead>
+              <TableHead className="w-28 text-right h-auto px-3 py-2 text-xs font-medium text-slate-400">평균</TableHead>
+              <TableHead className="w-28 text-right h-auto px-3 py-2 text-xs font-medium text-slate-400">가중 평균</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="py-8 text-center text-sm text-slate-400">
+                <TableCell colSpan={4} className="px-3 py-10 text-center text-sm text-slate-500">
                   {emptyLabel}
                 </TableCell>
               </TableRow>
             ) : (
               items.map((item) => (
-                <TableRow key={item.key}>
-                  <TableCell className="py-3 font-medium text-slate-900">
+                <TableRow
+                  key={item.key}
+                  className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50"
+                >
+                  <TableCell className="px-3 py-3 font-medium text-slate-900">
                     {item.label}
                   </TableCell>
-                  <TableCell className="py-3 text-right text-sm text-slate-500">
+                  <TableCell className="px-3 py-3 text-right text-sm text-slate-500">
                     {item.count}
                   </TableCell>
-                  <TableCell className="py-3 text-right font-semibold text-slate-900">
+                  <TableCell className="px-3 py-3 text-right font-semibold text-slate-900">
                     {formatScore(item.averageScore)}
                   </TableCell>
-                  <TableCell className="py-3 text-right text-sm text-slate-500">
+                  <TableCell className="px-3 py-3 text-right text-sm text-slate-500">
                     {formatScore(item.averageWeightedScore)}
                   </TableCell>
                 </TableRow>
@@ -701,39 +707,42 @@ function QuestionAverageTable({ items }: { items: QuestionAverage[] }) {
         <div className="overflow-auto">
           <Table>
             <TableHeader>
-              <TableRow className="bg-slate-50 hover:bg-slate-50">
-                <TableHead className="min-w-[360px] text-xs text-slate-500">문항</TableHead>
-                <TableHead className="w-24 text-xs text-slate-500">문항 구분</TableHead>
-                <TableHead className="w-24 text-right text-xs text-slate-500">답변</TableHead>
-                <TableHead className="w-28 text-right text-xs text-slate-500">평균</TableHead>
-                <TableHead className="w-28 text-right text-xs text-slate-500">가중 평균</TableHead>
+              <TableRow className="border-b border-slate-100 hover:bg-transparent">
+                <TableHead className="min-w-[360px] h-auto px-3 py-2 text-xs font-medium text-slate-400">문항</TableHead>
+                <TableHead className="w-24 h-auto px-3 py-2 text-xs font-medium text-slate-400">문항 구분</TableHead>
+                <TableHead className="w-24 text-right h-auto px-3 py-2 text-xs font-medium text-slate-400">답변</TableHead>
+                <TableHead className="w-28 text-right h-auto px-3 py-2 text-xs font-medium text-slate-400">평균</TableHead>
+                <TableHead className="w-28 text-right h-auto px-3 py-2 text-xs font-medium text-slate-400">가중 평균</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {items.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="py-8 text-center text-sm text-slate-400">
+                  <TableCell colSpan={5} className="px-3 py-10 text-center text-sm text-slate-500">
                     척도 문항 답변이 없습니다.
                   </TableCell>
                 </TableRow>
               ) : (
                 items.map((item) => (
-                  <TableRow key={item.key}>
-                    <TableCell className="py-3">
+                  <TableRow
+                  key={item.key}
+                  className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50"
+                >
+                    <TableCell className="px-3 py-3">
                       <div className="line-clamp-2 text-sm font-medium text-slate-900">
                         {item.label}
                       </div>
                     </TableCell>
-                    <TableCell className="py-3">
+                    <TableCell className="px-3 py-3">
                       <QuestionCategoryBadge category={item.questionCategory} />
                     </TableCell>
-                    <TableCell className="py-3 text-right text-sm text-slate-500">
+                    <TableCell className="px-3 py-3 text-right text-sm text-slate-500">
                       {item.count}
                     </TableCell>
-                    <TableCell className="py-3 text-right font-semibold text-slate-900">
+                    <TableCell className="px-3 py-3 text-right font-semibold text-slate-900">
                       {formatScore(item.averageScore)}
                     </TableCell>
-                    <TableCell className="py-3 text-right text-sm text-slate-500">
+                    <TableCell className="px-3 py-3 text-right text-sm text-slate-500">
                       {formatScore(item.averageWeightedScore)}
                     </TableCell>
                   </TableRow>
@@ -765,39 +774,42 @@ function PersonalResultsTable({
         <div className="overflow-auto">
           <Table>
             <TableHeader>
-              <TableRow className="bg-slate-50 hover:bg-slate-50">
-                <TableHead className="w-52 text-xs text-slate-500">대상자</TableHead>
-                <TableHead className="w-44 text-xs text-slate-500">소속/직급</TableHead>
-                <TableHead className="w-32 text-xs text-slate-500">평가 수</TableHead>
-                <TableHead className="w-24 text-right text-xs text-slate-500">평균</TableHead>
-                <TableHead className="min-w-[420px] text-xs text-slate-500">문항별 점수</TableHead>
-                <TableHead className="w-24 text-right text-xs text-slate-500">리포트</TableHead>
+              <TableRow className="border-b border-slate-100 hover:bg-transparent">
+                <TableHead className="w-52 h-auto px-3 py-2 text-xs font-medium text-slate-400">대상자</TableHead>
+                <TableHead className="w-44 h-auto px-3 py-2 text-xs font-medium text-slate-400">소속/직급</TableHead>
+                <TableHead className="w-32 h-auto px-3 py-2 text-xs font-medium text-slate-400">평가 수</TableHead>
+                <TableHead className="w-24 text-right h-auto px-3 py-2 text-xs font-medium text-slate-400">평균</TableHead>
+                <TableHead className="min-w-[420px] h-auto px-3 py-2 text-xs font-medium text-slate-400">문항별 점수</TableHead>
+                <TableHead className="w-24 text-right h-auto px-3 py-2 text-xs font-medium text-slate-400">리포트</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {items.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-8 text-center text-sm text-slate-400">
+                  <TableCell colSpan={6} className="px-3 py-10 text-center text-sm text-slate-500">
                     제출된 개인 점수가 없습니다.
                   </TableCell>
                 </TableRow>
               ) : (
                 items.map((item) => (
-                  <TableRow key={item.subjectId}>
-                    <TableCell className="py-3 font-medium text-slate-900">
+                  <TableRow
+                    key={item.subjectId}
+                    className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50"
+                  >
+                    <TableCell className="px-3 py-3 font-medium text-slate-900">
                       {item.subjectName}
                     </TableCell>
-                    <TableCell className="py-3 text-sm text-slate-500">
+                    <TableCell className="px-3 py-3 text-sm text-slate-500">
                       {item.teamName}
                       <div className="mt-0.5 text-xs text-slate-400">{item.positionName}</div>
                     </TableCell>
-                    <TableCell className="py-3">
+                    <TableCell className="px-3 py-3">
                       <div className="flex flex-wrap gap-1">
                         <Badge variant="outline">상사 {item.evaluatorCounts.상사}</Badge>
                         <Badge variant="outline">동료 {item.evaluatorCounts.동료}</Badge>
                       </div>
                     </TableCell>
-                    <TableCell className="py-3 text-right">
+                    <TableCell className="px-3 py-3 text-right">
                       <div className="font-semibold text-slate-900">
                         {formatScore(item.averageScore)}
                       </div>
@@ -805,7 +817,7 @@ function PersonalResultsTable({
                         가중 {formatScore(item.averageWeightedScore)}
                       </div>
                     </TableCell>
-                    <TableCell className="py-3">
+                    <TableCell className="px-3 py-3">
                       <div className="flex max-w-[720px] flex-wrap gap-1.5">
                         {item.questionScores.map((question) => (
                           <span
@@ -821,7 +833,7 @@ function PersonalResultsTable({
                         ))}
                       </div>
                     </TableCell>
-                    <TableCell className="py-3 text-right">
+                    <TableCell className="px-3 py-3 text-right">
                       <Button
                         asChild
                         variant="outline"

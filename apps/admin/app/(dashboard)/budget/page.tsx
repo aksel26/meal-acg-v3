@@ -678,34 +678,34 @@ export default function BudgetPage() {
           <div className="h-full overflow-auto">
             <table className="w-full caption-bottom text-sm">
               <TableHeader className="sticky top-0 z-10">
-                <TableRow className="bg-slate-50 [&>th]:bg-slate-50 [&>th]:h-9 [&>th]:px-3 [&>th]:py-0">
-                  <TableHead className="w-14 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <TableRow className="border-b border-slate-100 bg-white [&>th]:bg-white">
+                  <TableHead className="h-auto w-14 px-3 py-2 text-center text-xs font-medium text-slate-400">
                     No
                   </TableHead>
-                  <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <TableHead className="h-auto px-3 py-2 text-center text-xs font-medium text-slate-400">
                     직급
                   </TableHead>
-                  <TableHead className="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <TableHead className="h-auto px-3 py-2 text-left text-xs font-medium text-slate-400">
                     이름
                   </TableHead>
-                  <TableHead className="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <TableHead className="h-auto px-3 py-2 text-left text-xs font-medium text-slate-400">
                     팀
                   </TableHead>
-                  <TableHead className="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <TableHead className="h-auto px-3 py-2 text-left text-xs font-medium text-slate-400">
                     활동비 기준
                   </TableHead>
-                  <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <TableHead className="h-auto px-3 py-2 text-right text-xs font-medium text-slate-400">
                     활동비
                   </TableHead>
-                  <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <TableHead className="h-auto px-3 py-2 text-right text-xs font-medium text-slate-400">
                     복지포인트
                   </TableHead>
-                  <TableHead className="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <TableHead className="h-auto px-3 py-2 text-left text-xs font-medium text-slate-400">
                     비고
                   </TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody className="divide-y divide-slate-100/60">
+              <TableBody>
                 {memberRows.map((row, index) => {
                   const preview = activityPreview.find(
                     (p) => p.id === row.member_id,
@@ -713,9 +713,9 @@ export default function BudgetPage() {
                   return (
                     <TableRow
                       key={row.member_id}
-                      className="transition-colors hover:bg-slate-50/50 [&>td]:px-3 [&>td]:py-1.5"
+                      className="border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50 [&>td]:px-3 [&>td]:py-3"
                     >
-                      <TableCell className="text-center text-sm text-slate-400">
+                      <TableCell className="text-center text-sm tabular-nums text-slate-400">
                         {index + 1}
                       </TableCell>
                       <TableCell className="text-center">
@@ -729,7 +729,7 @@ export default function BudgetPage() {
                           {row.member_role}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-sm font-medium text-slate-900">
+                      <TableCell className="text-sm font-medium text-slate-800">
                         {row.member_name}
                       </TableCell>
                       <TableCell className="text-sm text-slate-600">
@@ -1005,7 +1005,7 @@ export default function BudgetPage() {
                 ) : (
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="bg-slate-50 text-xs text-slate-500">
+                      <tr className="border-b border-slate-100 text-xs font-medium text-slate-400">
                         <th className="px-3 py-2 text-left font-medium">
                           이름
                         </th>

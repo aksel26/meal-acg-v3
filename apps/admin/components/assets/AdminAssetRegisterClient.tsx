@@ -249,56 +249,56 @@ function AssetTable({
             <col className="w-[12%]" />
             <col className="w-[12%]" />
           </colgroup>
-          <thead className="bg-[#fafafa]">
-            <tr className="text-[11px] font-medium uppercase tracking-widest text-slate-400">
-              <th className="px-0 py-2.5">이미지</th>
-              <th className="px-0 py-2.5">물품명</th>
-              <th className="px-0 py-2.5">카테고리</th>
-              <th className="px-0 py-2.5">상태</th>
-              <th className="px-0 py-2.5">실사용자</th>
-              <th className="px-0 py-2.5">관리 담당자</th>
-              <th className="px-0 py-2.5">구매일</th>
-              <th className="px-0 py-2.5">구매금액</th>
-              <th className="px-0 py-2.5">위치</th>
-              <th className="px-0 py-2.5">등록자</th>
+          <thead>
+            <tr className="border-b border-slate-100 text-xs font-medium text-slate-400">
+              <th className="px-0 py-2 font-medium">이미지</th>
+              <th className="px-0 py-2 font-medium">물품명</th>
+              <th className="px-0 py-2 font-medium">카테고리</th>
+              <th className="px-0 py-2 font-medium">상태</th>
+              <th className="px-0 py-2 font-medium">실사용자</th>
+              <th className="px-0 py-2 font-medium">관리 담당자</th>
+              <th className="px-0 py-2 font-medium">구매일</th>
+              <th className="px-0 py-2 font-medium">구매금액</th>
+              <th className="px-0 py-2 font-medium">위치</th>
+              <th className="px-0 py-2 font-medium">등록자</th>
             </tr>
           </thead>
           <tbody>
             {assets.map((asset) => (
-              <tr key={asset.id} className="transition-colors hover:bg-[#fafafa]">
+              <tr key={asset.id} className="border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50">
                 <td className="px-0 py-3">
                   <AssetThumbnail asset={asset} onPreview={onPreview} />
                 </td>
                 <td className="px-0 py-3">
-                  <p className="truncate text-sm font-medium text-[#111111]">
+                  <p className="truncate text-sm font-medium text-slate-800">
                     {asset.name}
                   </p>
                   <p className="truncate text-xs text-slate-400">
                     {asset.asset_number || asset.serial_number || "-"}
                   </p>
                 </td>
-                <td className="px-0 py-3 text-xs text-slate-500">
+                <td className="px-0 py-3 text-xs text-slate-600">
                   {asset.category}
                 </td>
                 <td className="px-0 py-3">
                   <AssetStatusBadge status={asset.status} />
                 </td>
-                <td className="px-0 py-3 text-xs text-slate-500">
+                <td className="px-0 py-3 text-xs text-slate-600">
                   {asset.user_name}
                 </td>
-                <td className="px-0 py-3 text-xs text-slate-500">
+                <td className="px-0 py-3 text-xs text-slate-600">
                   {asset.manager_name}
                 </td>
-                <td className="px-0 py-3 text-xs text-slate-500">
+                <td className="px-0 py-3 text-xs text-slate-600">
                   {asset.purchase_date}
                 </td>
-                <td className="px-0 py-3 text-xs text-slate-500">
+                <td className="px-0 py-3 text-xs text-slate-600">
                   {asset.purchase_amount.toLocaleString("ko-KR")}원
                 </td>
-                <td className="px-0 py-3 text-xs text-slate-500">
+                <td className="px-0 py-3 text-xs text-slate-600">
                   {asset.location || "-"}
                 </td>
-                <td className="px-0 py-3 text-xs text-slate-500">
+                <td className="px-0 py-3 text-xs text-slate-600">
                   <p>{asset.created_by_name}</p>
                   <p className="text-slate-400">{formatDate(asset.created_at)}</p>
                 </td>

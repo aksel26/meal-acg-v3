@@ -842,13 +842,13 @@ export default function MemberStatusView({
         ) : (
           <div className="h-full overflow-auto">
             <table className="w-full caption-bottom text-sm">
-              <TableHeader className="sticky top-0 z-10">
-                <TableRow className="bg-slate-50 [&>th]:h-9 [&>th]:px-3 [&>th]:py-0">
-                  <TableHead className="pl-6 text-center text-xs font-semibold uppercase tracking-wider text-slate-500 w-24">
+              <TableHeader className="sticky top-0 z-10 bg-white">
+                <TableRow className="border-b border-slate-100 [&>th]:h-auto [&>th]:px-3 [&>th]:py-2 [&>th]:text-xs [&>th]:font-medium [&>th]:text-slate-400">
+                  <TableHead className="pl-6 text-center w-24">
                     이름
                   </TableHead>
                   <TableHead
-                    className="cursor-pointer select-none text-left text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-800"
+                    className="cursor-pointer select-none text-left hover:text-slate-600"
                     onClick={() => handleSort("team_name")}
                   >
                     <span className="inline-flex items-center gap-1">
@@ -864,7 +864,7 @@ export default function MemberStatusView({
                     </span>
                   </TableHead>
                   <TableHead
-                    className="cursor-pointer select-none text-left text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-800"
+                    className="cursor-pointer select-none text-left hover:text-slate-600"
                     onClick={() => handleSort("member_role")}
                   >
                     <span className="inline-flex items-center gap-1">
@@ -879,23 +879,23 @@ export default function MemberStatusView({
                       />
                     </span>
                   </TableHead>
-                  <TableHead className="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <TableHead className="text-left">
                     직책
                   </TableHead>
-                  <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <TableHead className="text-center">
                     아이디
                   </TableHead>
-                  <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <TableHead className="text-center">
                     생년월일
                   </TableHead>
-                  <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <TableHead className="text-center">
                     휴대폰번호
                   </TableHead>
-                  <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500 w-16">
+                  <TableHead className="text-center w-16">
                     권한
                   </TableHead>
                   <TableHead
-                    className="cursor-pointer select-none text-center text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-800"
+                    className="cursor-pointer select-none text-center hover:text-slate-600"
                     onClick={() => handleSort("current_status")}
                   >
                     <span className="inline-flex items-center gap-1">
@@ -910,15 +910,15 @@ export default function MemberStatusView({
                       />
                     </span>
                   </TableHead>
-                  <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <TableHead className="text-center">
                     가입일
                   </TableHead>
-                  <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500 w-16">
+                  <TableHead className="text-center w-16">
                     관리
                   </TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody className="divide-y divide-slate-100/60">
+              <TableBody>
                 {sortedMembers.map((row) => {
                   const displayStatus = row.current_status || "정상";
                   const colorClass =
@@ -931,7 +931,7 @@ export default function MemberStatusView({
                   return (
                     <TableRow
                       key={`${row.member_id}-${row.status_id || "normal"}`}
-                      className="transition-colors hover:bg-slate-50/50 [&>td]:px-3 [&>td]:py-1.5"
+                      className="border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50 [&>td]:px-3 [&>td]:py-3"
                     >
                       <TableCell className="pl-6 text-sm font-medium w-24 text-center">
                         {row.member_id ? (
@@ -999,7 +999,7 @@ export default function MemberStatusView({
                       <TableCell className="text-center">
                         <Badge
                           className={cn(
-                            "cursor-pointer border-0 px-2 py-0.5 text-[11px] transition-all hover:ring-2 hover:ring-offset-1",
+                            "cursor-pointer rounded-full border-0 px-2 py-0.5 text-xs font-medium transition-all hover:ring-2 hover:ring-offset-1",
                             colorClass,
                             row.current_status
                               ? "hover:ring-slate-300"

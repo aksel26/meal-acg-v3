@@ -390,24 +390,24 @@ export function AdminVehicleManagementClient({
               <col className="w-[120px]" />
               <col className="w-[90px]" />
             </colgroup>
-            <thead className="border-y border-slate-100 text-xs text-slate-500">
+            <thead className="border-y border-slate-100 text-xs font-medium text-slate-400">
               <tr>
-                <th className="px-2 py-2">차량종류</th>
-                <th className="px-2 py-2">차량이름(인승)</th>
-                <th className="px-2 py-2">차량번호</th>
-                <th className="px-2 py-2">하이패스</th>
-                <th className="px-2 py-2">상태</th>
-                <th className="px-2 py-2">총 주행거리</th>
-                <th className="w-px whitespace-nowrap px-1 py-2 text-right">
+                <th className="px-2 py-2 font-medium">차량종류</th>
+                <th className="px-2 py-2 font-medium">차량이름(인승)</th>
+                <th className="px-2 py-2 font-medium">차량번호</th>
+                <th className="px-2 py-2 font-medium">하이패스</th>
+                <th className="px-2 py-2 font-medium">상태</th>
+                <th className="px-2 py-2 font-medium">총 주행거리</th>
+                <th className="w-px whitespace-nowrap px-1 py-2 text-right font-medium">
                   관리
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody>
               {vehicleRows.map((vehicle) => (
-                <tr key={vehicle.id}>
-                  <td className="px-2 py-2.5">{vehicle.vehicle_type}</td>
-                  <td className="px-2 py-2.5 font-medium text-slate-950">
+                <tr key={vehicle.id} className="border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50">
+                  <td className="px-2 py-2.5 text-slate-600">{vehicle.vehicle_type}</td>
+                  <td className="px-2 py-2.5 font-medium text-slate-800">
                     {formatVehicleName(vehicle)}
                   </td>
                   <td className="px-2 py-2.5 text-slate-600">
@@ -584,7 +584,7 @@ function VehicleApplicationTable({
           <col className="w-[100px]" />
           <col className="w-[52px]" />
         </colgroup>
-        <thead className="border-y border-slate-100 text-xs text-slate-500">
+        <thead className="border-y border-slate-100 text-xs font-medium text-slate-400">
           <tr>
             {[
               "",
@@ -624,13 +624,13 @@ function VehicleApplicationTable({
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100">
+        <tbody>
           {applications.map((application) => {
             const isHipassExpanded = expandedHipassRows.has(application.id);
 
             return (
               <Fragment key={application.id}>
-                <tr>
+                <tr className="border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50">
                   <td className="px-1 py-2.5">
                     {application.has_hipass && (
                       <Button
@@ -655,7 +655,7 @@ function VehicleApplicationTable({
                   </td>
                   <td className="px-2 py-2.5">{application.request_date}</td>
                   <td className="px-2 py-2.5">{application.department}</td>
-                  <td className="px-2 py-2.5 font-medium text-slate-950">
+                  <td className="px-2 py-2.5 font-medium text-slate-800">
                     {application.applicant_name}
                   </td>
                   <td className="truncate px-2 py-2.5">{application.purpose}</td>
@@ -756,7 +756,7 @@ function HipassNestedTable({
             <col className="w-[90px]" />
             <col className="w-[160px]" />
           </colgroup>
-          <thead className="border-y border-slate-100 text-xs text-slate-500">
+          <thead className="border-y border-slate-100 text-xs font-medium text-slate-400">
             <tr>
               {[
                 "구분",
@@ -769,19 +769,19 @@ function HipassNestedTable({
                 "잔액",
                 "비고",
               ].map((label) => (
-                <th key={label} className="px-2 py-2">
+                <th key={label} className="px-2 py-2 font-medium">
                   {label}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
-            <tr>
+          <tbody>
+            <tr className="border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50">
               <td className="px-2 py-2.5">통행료</td>
               <td className="px-2 py-2.5">
                 {dayjs(application.start_at).format("YYYY-MM-DD")}
               </td>
-              <td className="px-2 py-2.5 font-medium text-slate-950">
+              <td className="px-2 py-2.5 font-medium text-slate-800">
                 {application.applicant_name}
               </td>
               <td className="truncate px-2 py-2.5">
@@ -1411,7 +1411,7 @@ function StatusPill({
   return (
     <Badge
       variant="secondary"
-      className={`px-2 py-1 text-xs font-medium ${getVehicleStatusPillClass(
+      className={`rounded-full px-2 py-0.5 text-xs font-medium ${getVehicleStatusPillClass(
         status,
       )}`}
     >

@@ -70,16 +70,16 @@ export function SettlementTable({ personnel, isLoading, isLocked: _isLocked = fa
   }
 
   return (
-    <div className="overflow-hidden bg-white">
-      <table className="w-full text-sm">
+    <div className="overflow-x-auto bg-white">
+      <table className="w-full text-left text-sm">
         <thead>
-          <tr className="border-b bg-slate-200 text-left text-slate-600 [&>th:first-child]:rounded-tl-md [&>th:last-child]:rounded-tr-md">
-            <th className="w-8 px-4 py-3 font-medium"></th>
-            <th className="px-4 py-3 font-medium">이름</th>
-            <th className="px-4 py-3 font-medium">역할</th>
-            <th className="px-4 py-3 font-medium">급여유형</th>
-            <th className="px-4 py-3 font-medium text-right">근무일수</th>
-            <th className="px-4 py-3 font-medium text-right">산정금액</th>
+          <tr className="border-b border-slate-100 text-xs font-medium text-slate-400">
+            <th className="w-8 px-3 py-2 font-medium"></th>
+            <th className="px-3 py-2 font-medium">이름</th>
+            <th className="px-3 py-2 font-medium">역할</th>
+            <th className="px-3 py-2 font-medium">급여유형</th>
+            <th className="px-3 py-2 font-medium text-right">근무일수</th>
+            <th className="px-3 py-2 font-medium text-right">산정금액</th>
           </tr>
         </thead>
         <tbody>
@@ -91,16 +91,16 @@ export function SettlementTable({ personnel, isLoading, isLocked: _isLocked = fa
             return (
               <Fragment key={p.id}>
                 <tr
-                  className={`border-b transition-colors duration-150 ${
+                  className={`border-b border-slate-100 last:border-b-0 transition-colors ${
                     isRp
-                      ? "cursor-pointer hover:bg-slate-50 active:bg-slate-100"
+                      ? "cursor-pointer hover:bg-slate-50"
                       : ""
                   }`}
                   onClick={() => {
                     if (isRp) setExpandedId(isExpanded ? null : p.id);
                   }}
                 >
-                  <td className="px-4 py-3 text-slate-400">
+                  <td className="px-3 py-3 text-slate-400">
                     {isRp ? (
                       <span
                         className={`inline-block transition-transform duration-200 ${
@@ -111,23 +111,23 @@ export function SettlementTable({ personnel, isLoading, isLocked: _isLocked = fa
                       </span>
                     ) : null}
                   </td>
-                  <td className="px-4 py-3 font-medium text-slate-900">{p.name}</td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3 font-medium text-slate-800">{p.name}</td>
+                  <td className="px-3 py-3">
                     {roleInfo && (
                       <span
-                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${roleInfo.className}`}
+                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${roleInfo.className}`}
                       >
                         {roleInfo.label}
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">
+                  <td className="px-3 py-3 text-slate-600">
                     {PAY_TYPE_LABELS[p.pay_type] ?? "-"}
                   </td>
-                  <td className="px-4 py-3 text-right text-slate-600">
+                  <td className="px-3 py-3 text-right tabular-nums text-slate-600">
                     {isRp && p.work_days != null ? `${p.work_days}일` : "-"}
                   </td>
-                  <td className="px-4 py-3 text-right font-semibold text-slate-900">
+                  <td className="px-3 py-3 text-right font-medium tabular-nums text-slate-800">
                     {formatCurrency(p.amount)}
                   </td>
                 </tr>

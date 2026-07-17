@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import { toast } from "@repo/ui/src/sonner";
+import { Checkbox } from "@repo/ui/src/checkbox";
 import { FileCheck, Pencil, Trash2 } from "lucide-react";
 import ContractApprovalDialog from "@/components/job-postings/ContractApprovalDialog";
 import { ROOMS, getRoomById } from "@/lib/room-constants";
@@ -13,15 +14,15 @@ import dayjs from "dayjs";
 import { Popover, PopoverTrigger, PopoverContent } from "@repo/ui/src/popover";
 
 const contractOptions = [
-  { value: null, label: "계약 전", className: "bg-slate-100 text-slate-400" },
-  { value: "signed" as const, label: "서명완료", className: "bg-yellow-100 text-yellow-700" },
-  { value: "confirmed" as const, label: "확인완료", className: "bg-green-100 text-green-700" },
+  { value: null, label: "계약 전", className: "bg-slate-100 text-slate-600" },
+  { value: "signed" as const, label: "서명완료", className: "bg-yellow-50 text-yellow-700" },
+  { value: "confirmed" as const, label: "확인완료", className: "bg-green-50 text-green-700" },
 ];
 
 const attendanceOptions = [
-  { value: null, label: "미출석", className: "bg-slate-100 text-slate-400" },
-  { value: "checked_in" as const, label: "출석(확인대기)", className: "bg-amber-100 text-amber-700" },
-  { value: "confirmed" as const, label: "출석확인완료", className: "bg-green-100 text-green-700" },
+  { value: null, label: "미출석", className: "bg-slate-100 text-slate-600" },
+  { value: "checked_in" as const, label: "출석(확인대기)", className: "bg-amber-50 text-amber-700" },
+  { value: "confirmed" as const, label: "출석확인완료", className: "bg-green-50 text-green-700" },
 ];
 
 const genderLabel: Record<string, string> = {
@@ -116,7 +117,7 @@ function RoomDropdown({
             <span className="text-slate-400">-</span>
           ) : (
             currentRooms.map((roomId) => (
-              <span key={roomId} className="inline-block rounded-sm bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700">
+              <span key={roomId} className="inline-flex rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">
                 {getRoomById(roomId)?.name ?? roomId}
               </span>
             ))
@@ -169,11 +170,11 @@ function AttendancePopover({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button className="inline-flex items-center gap-1 rounded-sm px-2.5 py-0.5 text-xs font-medium transition-colors hover:ring-2 hover:ring-slate-200 cursor-pointer">
-          <span className={`inline-block rounded-sm px-2.5 py-0.5 ${current.className}`}>
+          <span className={`inline-flex rounded-full px-2 py-0.5 ${current.className}`}>
             {current.label}
           </span>
           {currentStatus === "confirmed" && confirmedBy && (
-            <span className="text-[11px] text-slate-400">{confirmedBy}</span>
+            <span className="text-xs text-slate-400">{confirmedBy}</span>
           )}
         </button>
       </PopoverTrigger>
@@ -222,14 +223,14 @@ function ContractPopover({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button className="inline-flex items-center gap-1 rounded-sm px-2.5 py-0.5 text-xs font-medium transition-colors hover:ring-2 hover:ring-slate-200 cursor-pointer">
-          <span className={`inline-block rounded-sm px-2.5 py-0.5 ${current.className}`}>
+          <span className={`inline-flex rounded-full px-2 py-0.5 ${current.className}`}>
             {current.label}
           </span>
           {currentStatus === "confirmed" && confirmedBy && (
-            <span className="text-[11px] text-slate-400">{confirmedBy}</span>
+            <span className="text-xs text-slate-400">{confirmedBy}</span>
           )}
           {currentStatus === "confirmed" && confirmedAt && (
-            <span className="text-[11px] text-slate-400">{dayjs(confirmedAt).format("MM.DD")}</span>
+            <span className="text-xs text-slate-400">{dayjs(confirmedAt).format("MM.DD")}</span>
           )}
         </button>
       </PopoverTrigger>
@@ -359,26 +360,26 @@ export default function AssignedWorkersTable({
   return (
     <>
     <div className="overflow-x-auto rounded-sm">
-      <table className="w-full text-sm">
+      <table className="w-full text-left text-sm">
         <thead>
-          <tr className="border-b bg-white text-left whitespace-nowrap">
+          <tr className="border-b border-slate-100 text-xs font-medium text-slate-400 whitespace-nowrap">
             {onToggle && (
-              <th className="px-4 py-2 text-center" />
+              <th className="px-3 py-2 text-center" />
             )}
             <th className="px-2 py-2 font-medium text-center w-8">No.</th>
-            <th className="px-4 py-2 font-medium">이름</th>
-            <th className="px-4 py-2 font-medium">휴대전화번호</th>
-            <th className="px-4 py-2 font-medium min-w-[160px]">이메일</th>
-            <th className="px-4 py-2 font-medium text-center">성별</th>
-            <th className="px-4 py-2 font-medium">경력</th>
-            <th className="px-4 py-2 font-medium text-center">근무시간</th>
-            <th className="px-4 py-2 font-medium">특이사항</th>
-            <th className="px-4 py-2 font-medium text-center">회의실</th>
-            <th className="px-4 py-2 font-medium text-center">출석</th>
-            <th className="px-4 py-2 font-medium text-center">계약</th>
-            <th className="px-4 py-2 font-medium">등록일</th>
-            <th className="px-4 py-2 font-medium text-center w-10">수정</th>
-            <th className="px-4 py-2 font-medium text-center w-10">삭제</th>
+            <th className="px-3 py-2 font-medium">이름</th>
+            <th className="px-3 py-2 font-medium">휴대전화번호</th>
+            <th className="px-3 py-2 font-medium min-w-[160px]">이메일</th>
+            <th className="px-3 py-2 font-medium text-center">성별</th>
+            <th className="px-3 py-2 font-medium">경력</th>
+            <th className="px-3 py-2 font-medium text-center">근무시간</th>
+            <th className="px-3 py-2 font-medium">특이사항</th>
+            <th className="px-3 py-2 font-medium text-center">회의실</th>
+            <th className="px-3 py-2 font-medium text-center">출석</th>
+            <th className="px-3 py-2 font-medium text-center">계약</th>
+            <th className="px-3 py-2 font-medium">등록일</th>
+            <th className="px-3 py-2 font-medium text-center w-10">수정</th>
+            <th className="px-3 py-2 font-medium text-center w-10">삭제</th>
           </tr>
         </thead>
         <tbody>
@@ -393,43 +394,41 @@ export default function AssignedWorkersTable({
               created_at?: string;
             };
             return (
-              <tr key={a.id} className={`border-b last:border-0 hover:bg-slate-50/50 whitespace-nowrap ${selectedIds.has(a.id) ? "bg-blue-50/40" : "bg-white"}`}>
+              <tr key={a.id} className={`border-b border-slate-100 last:border-b-0 transition-colors hover:bg-slate-50 whitespace-nowrap ${selectedIds.has(a.id) ? "bg-slate-50" : "bg-white"}`}>
                 {onToggle && (
-                  <td className="px-4 py-2 text-center">
-                    <input
-                      type="checkbox"
+                  <td className="px-3 py-3 text-center">
+                    <Checkbox
                       checked={selectedIds.has(a.id)}
-                      onChange={() => onToggle(a.id)}
-                      className="h-4 w-4 rounded border-slate-300 accent-blue-600"
+                      onCheckedChange={() => onToggle(a.id)}
                     />
                   </td>
                 )}
-                <td className="px-2 py-2 text-center text-slate-400">{idx + 1}</td>
-                <td className="px-4 py-2 font-medium">{worker?.name || "-"}</td>
-                <td className="px-4 py-2 text-slate-500">{worker?.phone || "-"}</td>
-                <td className="px-4 py-2 text-slate-500 min-w-[160px]">{worker?.email || "-"}</td>
-                <td className="px-4 py-2 text-center text-slate-500">
+                <td className="px-2 py-3 text-center tabular-nums text-slate-400">{idx + 1}</td>
+                <td className="px-3 py-3 font-medium text-slate-800">{worker?.name || "-"}</td>
+                <td className="px-3 py-3 tabular-nums text-slate-600">{worker?.phone || "-"}</td>
+                <td className="px-3 py-3 text-slate-600 min-w-[160px]">{worker?.email || "-"}</td>
+                <td className="px-3 py-3 text-center text-slate-600">
                   {worker?.gender ? genderLabel[worker.gender] || "-" : "-"}
                 </td>
-                <td className="px-4 py-2 text-slate-500">{worker?.experience || "-"}</td>
-                <td className="px-4 py-2 text-center text-slate-500">
+                <td className="px-3 py-3 text-slate-600">{worker?.experience || "-"}</td>
+                <td className="px-3 py-3 text-center tabular-nums text-slate-600">
                   {worker?.work_start && worker?.work_end
                     ? `${worker.work_start.slice(0, 5)} ~ ${worker.work_end.slice(0, 5)}`
                     : "-"}
                 </td>
-                <td className="px-4 py-2 whitespace-normal">
+                <td className="px-3 py-3 whitespace-normal">
                   {worker?.id ? (
                     <NoteInput workerId={worker.id} initialValue={worker.note || ""} />
                   ) : "-"}
                 </td>
-                <td className="px-4 py-2 text-center">
+                <td className="px-3 py-3 text-center">
                   <RoomDropdown
                     assignmentId={a.id}
                     currentRooms={[...new Set((a.room_slots ?? []).map((s) => s.room))]}
                     job={job}
                   />
                 </td>
-                <td className="px-4 py-2 text-center">
+                <td className="px-3 py-3 text-center">
                   <AttendancePopover
                     assignmentId={a.id}
                     currentStatus={a.attendance_status ?? null}
@@ -439,7 +438,7 @@ export default function AssignedWorkersTable({
                     }}
                   />
                 </td>
-                <td className="px-4 py-2 text-center">
+                <td className="px-3 py-3 text-center">
                   <div className="inline-flex items-center gap-1">
                     <ContractPopover
                       assignmentId={a.id}
@@ -461,10 +460,10 @@ export default function AssignedWorkersTable({
                     )}
                   </div>
                 </td>
-                <td className="px-4 py-2 text-xs text-slate-400">
+                <td className="px-3 py-3 tabular-nums text-slate-400">
                   {dayjs(a.assigned_at).format("YYYY.MM.DD")}
                 </td>
-                <td className="px-4 py-2 text-center">
+                <td className="px-3 py-3 text-center">
                   {onEditWorker && worker?.id && (
                     <button
                       onClick={() => onEditWorker(worker as Worker)}
@@ -474,7 +473,7 @@ export default function AssignedWorkersTable({
                     </button>
                   )}
                 </td>
-                <td className="px-4 py-2 text-center">
+                <td className="px-3 py-3 text-center">
                   <button
                     onClick={() => handleDelete(a.id, worker?.name || "")}
                     className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500"

@@ -40,19 +40,19 @@ export function PersonnelTable({ data, isLoading, onEdit }: Props) {
   }
 
   return (
-    <div className="overflow-hidden bg-white">
-      <table className="w-full text-sm">
+    <div className="overflow-x-auto bg-white">
+      <table className="w-full text-left text-sm">
         <thead>
-          <tr className="border-b bg-slate-50 text-left text-xs text-slate-500">
-            <th className="px-4 py-3 font-medium">이름</th>
-            <th className="px-4 py-3 font-medium">역할</th>
-            <th className="px-4 py-3 font-medium">연락처</th>
-            <th className="px-4 py-3 font-medium">급여유형</th>
-            <th className="px-4 py-3 font-medium text-right">단가/계약금</th>
-            <th className="px-4 py-3 font-medium">최근 참여 공고</th>
-            <th className="px-4 py-3 font-medium text-center">참여 수</th>
-            <th className="px-4 py-3 font-medium">상태</th>
-            <th className="px-4 py-3 font-medium"></th>
+          <tr className="border-b border-slate-100 text-xs font-medium text-slate-400">
+            <th className="px-3 py-2 font-medium">이름</th>
+            <th className="px-3 py-2 font-medium">역할</th>
+            <th className="px-3 py-2 font-medium">연락처</th>
+            <th className="px-3 py-2 font-medium">급여유형</th>
+            <th className="px-3 py-2 font-medium text-right">단가/계약금</th>
+            <th className="px-3 py-2 font-medium">최근 참여 공고</th>
+            <th className="px-3 py-2 font-medium text-center">참여 수</th>
+            <th className="px-3 py-2 font-medium">상태</th>
+            <th className="px-3 py-2 font-medium"></th>
           </tr>
         </thead>
         <tbody>
@@ -63,26 +63,26 @@ export function PersonnelTable({ data, isLoading, onEdit }: Props) {
             return (
               <tr
                 key={person.id}
-                className="border-b transition-colors duration-150 hover:bg-slate-50"
+                className="border-b border-slate-100 last:border-b-0 transition-colors hover:bg-slate-50"
               >
-                <td className="px-4 py-3 font-medium text-slate-900">{person.name}</td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-3 font-medium text-slate-800">{person.name}</td>
+                <td className="px-3 py-3">
                   {roleInfo && (
                     <span
-                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${roleInfo.className}`}
+                      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${roleInfo.className}`}
                     >
                       {roleInfo.label}
                     </span>
                   )}
                 </td>
-                <td className="px-4 py-3 text-slate-600">{person.phone ?? "-"}</td>
-                <td className="px-4 py-3 text-slate-600">
+                <td className="px-3 py-3 text-slate-600">{person.phone ?? "-"}</td>
+                <td className="px-3 py-3 text-slate-600">
                   {PAY_TYPE_LABELS[person.pay_type] ?? "-"}
                 </td>
-                <td className="px-4 py-3 text-right text-slate-600">
+                <td className="px-3 py-3 text-right tabular-nums text-slate-600">
                   {amount != null ? `${amount.toLocaleString("ko-KR")}원` : "-"}
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-3">
                   {person.assignments && person.assignments.length > 0 ? (
                     <Link
                       href={`/interview/job-postings/${person.assignments[0]!.job_posting_id}`}
@@ -94,7 +94,7 @@ export function PersonnelTable({ data, isLoading, onEdit }: Props) {
                     <span className="text-slate-400">-</span>
                   )}
                 </td>
-                <td className="px-4 py-3 text-center">
+                <td className="px-3 py-3 text-center">
                   {person.assignments && person.assignments.length > 0 ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -122,18 +122,18 @@ export function PersonnelTable({ data, isLoading, onEdit }: Props) {
                     <span className="text-slate-400">0</span>
                   )}
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-3">
                   {person.status === "active" ? (
-                    <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
+                    <span className="inline-flex rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
                       활동
                     </span>
                   ) : (
-                    <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
+                    <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
                       비활동
                     </span>
                   )}
                 </td>
-                <td className="px-4 py-3 text-right">
+                <td className="px-3 py-3 text-right">
                   <button
                     onClick={() => onEdit(person)}
                     className="rounded-md px-3 py-1 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-700"

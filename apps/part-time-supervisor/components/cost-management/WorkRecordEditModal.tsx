@@ -128,13 +128,13 @@ export function WorkRecordEditModal({ assignmentId, currentPayRate, currentPayTy
               ))}
             </div>
           ) : (
-            <div className="rounded-lg border overflow-hidden">
-              <table className="w-full text-sm">
+            <div className="rounded-lg border overflow-x-auto">
+              <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b bg-slate-50 text-left text-slate-500">
-                    <th className="px-3 py-2.5 font-medium">날짜</th>
-                    <th className="px-3 py-2.5 font-medium text-right">근무 시간</th>
-                    <th className="px-3 py-2.5 font-medium">비고</th>
+                  <tr className="border-b border-slate-100 text-xs font-medium text-slate-400">
+                    <th className="px-3 py-2 font-medium">날짜</th>
+                    <th className="px-3 py-2 font-medium text-right">근무 시간</th>
+                    <th className="px-3 py-2 font-medium">비고</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -144,17 +144,17 @@ export function WorkRecordEditModal({ assignmentId, currentPayRate, currentPayTy
                     return (
                       <tr
                         key={r.workDate}
-                        className={`border-b last:border-0 transition-colors ${
-                          isWeekend ? "bg-red-50/40" : "hover:bg-slate-50/50"
+                        className={`border-b border-slate-100 last:border-b-0 transition-colors ${
+                          isWeekend ? "bg-red-50/40" : "hover:bg-slate-50"
                         }`}
                       >
-                        <td className="px-3 py-2">
-                          <span className="text-slate-900 tabular-nums">{r.workDate.slice(5)}</span>
+                        <td className="px-3 py-3">
+                          <span className="font-medium text-slate-800 tabular-nums">{r.workDate.slice(5)}</span>
                           <span className={`ml-1.5 text-xs ${isWeekend ? "text-red-400" : "text-slate-400"}`}>
                             {weekday}
                           </span>
                         </td>
-                        <td className="px-3 py-2 text-right">
+                        <td className="px-3 py-3 text-right">
                           <Input
                             type="number"
                             value={r.workHours}
@@ -165,7 +165,7 @@ export function WorkRecordEditModal({ assignmentId, currentPayRate, currentPayTy
                             step={0.5}
                           />
                         </td>
-                        <td className="px-3 py-2">
+                        <td className="px-3 py-3">
                           <Input
                             type="text"
                             value={r.note}

@@ -6,9 +6,9 @@ import type { InterviewJobPostingWithCount } from "@/lib/interview-types";
 
 const statusLabel: Record<string, { text: string; className: string }> = {
   draft: { text: "임시", className: "bg-slate-100 text-slate-600" },
-  open: { text: "모집중", className: "bg-green-100 text-green-700" },
-  closed: { text: "마감", className: "bg-red-100 text-red-700" },
-  completed: { text: "완료", className: "bg-purple-100 text-purple-700" },
+  open: { text: "모집중", className: "bg-green-50 text-green-700" },
+  closed: { text: "마감", className: "bg-red-50 text-red-700" },
+  completed: { text: "완료", className: "bg-purple-50 text-purple-700" },
 };
 
 function CompositionBadges({
@@ -36,7 +36,7 @@ function CompositionBadges({
       {items.map((item) => (
         <span
           key={item.label}
-          className={`rounded px-1.5 py-0.5 text-xs font-medium ${item.className}`}
+          className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${item.className}`}
         >
           {item.label} {item.count}
         </span>
@@ -71,19 +71,19 @@ export function InterviewJobPostingTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-lg bg-white">
-      <table className="w-full text-sm">
+    <div className="overflow-x-auto rounded-lg bg-white">
+      <table className="w-full text-left text-sm">
         <thead>
-          <tr className="bg-slate-50 text-left text-xs text-slate-500">
-            <th className="px-4 py-3 font-medium">공고명</th>
-            <th className="px-4 py-3 font-medium">기간</th>
-            <th className="px-4 py-3 font-medium">플랫폼</th>
-            <th className="px-4 py-3 font-medium">고객사</th>
-            <th className="px-4 py-3 font-medium">구성</th>
-            <th className="px-4 py-3 font-medium">인원</th>
-            <th className="px-4 py-3 font-medium">상태</th>
-            <th className="px-4 py-3 font-medium">등록일</th>
-            <th className="w-16 px-4 py-3"></th>
+          <tr className="border-b border-slate-100 text-xs font-medium text-slate-400">
+            <th className="px-3 py-2 font-medium">공고명</th>
+            <th className="px-3 py-2 font-medium">기간</th>
+            <th className="px-3 py-2 font-medium">플랫폼</th>
+            <th className="px-3 py-2 font-medium">고객사</th>
+            <th className="px-3 py-2 font-medium">구성</th>
+            <th className="px-3 py-2 font-medium">인원</th>
+            <th className="px-3 py-2 font-medium">상태</th>
+            <th className="px-3 py-2 font-medium">등록일</th>
+            <th className="w-16 px-3 py-2 font-medium"></th>
           </tr>
         </thead>
         <tbody>
@@ -98,23 +98,23 @@ export function InterviewJobPostingTable({
                 onClick={() =>
                   router.push(`/interview/job-postings/${posting.id}`)
                 }
-                className="cursor-pointer hover:bg-slate-50"
+                className="cursor-pointer border-b border-slate-100 last:border-b-0 transition-colors hover:bg-slate-50"
               >
-                <td className="px-4 py-3 font-medium text-slate-900">
+                <td className="px-3 py-3 font-medium text-slate-800">
                   {posting.title}
                 </td>
-                <td className="px-4 py-3 text-slate-600">
+                <td className="px-3 py-3 tabular-nums text-slate-600">
                   {dayjs(posting.start_date).format("MM.DD")}
                   {posting.start_date !== posting.end_date &&
                     ` ~ ${dayjs(posting.end_date).format("MM.DD")}`}
                 </td>
-                <td className="px-4 py-3 text-slate-600">
+                <td className="px-3 py-3 text-slate-600">
                   {posting.platform || "-"}
                 </td>
-                <td className="px-4 py-3 text-slate-600">
+                <td className="px-3 py-3 text-slate-600">
                   {posting.client?.name || "-"}
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-3">
                   <CompositionBadges
                     ft={posting.ft_count}
                     rp={posting.rp_count}
@@ -122,25 +122,25 @@ export function InterviewJobPostingTable({
                     other={posting.other_count}
                   />
                 </td>
-                <td className="px-4 py-3 text-slate-600">
-                  <span className="font-medium text-slate-900">
+                <td className="px-3 py-3 tabular-nums text-slate-600">
+                  <span className="font-medium text-slate-800">
                     {posting.assignment_count}
                   </span>
                   <span className="text-slate-400">
                     /{posting.total_headcount}
                   </span>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-3">
                   <span
-                    className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${status.className}`}
+                    className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${status.className}`}
                   >
                     {status.text}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-slate-400">
+                <td className="px-3 py-3 tabular-nums text-slate-400">
                   {dayjs(posting.created_at).format("MM.DD")}
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-3">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();

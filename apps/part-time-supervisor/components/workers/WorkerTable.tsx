@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useDeleteWorker, useUpdateWorker } from "@/hooks/use-worker-mutations";
 import { useAssignments } from "@/hooks/use-assignments";
 import { toast } from "@repo/ui/src/sonner";
+import { Checkbox } from "@repo/ui/src/checkbox";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import type { Worker } from "@/lib/supabase/types";
 import {
@@ -151,46 +152,41 @@ export default function WorkerTable({
         </div>
       )}
       <div className="overflow-x-auto rounded-sm">
-        <table className="w-full table-fixed text-sm">
+        <table className="w-full table-fixed text-left text-sm">
           <thead>
-            <tr className="border-b bg-white text-left">
-              <th className="w-10 px-4 py-1.5">
-                <input
-                  type="checkbox"
-                  checked={allSelected}
-                  ref={(el) => { if (el) el.indeterminate = someSelected; }}
-                  onChange={toggleAll}
-                  className="size-4 rounded border-slate-300"
+            <tr className="border-b border-slate-100 text-xs font-medium text-slate-400">
+              <th className="w-10 px-3 py-2">
+                <Checkbox
+                  checked={someSelected ? "indeterminate" : allSelected}
+                  onCheckedChange={toggleAll}
                 />
               </th>
-              <th className="w-[85px] px-4 py-1.5 font-medium">이름</th>
-              <th className="w-[160px] px-4 py-1.5 font-medium">연락처</th>
-              <th className="px-4 py-1.5 font-medium">이메일</th>
-              <th className="w-[60px] px-4 py-1.5 font-medium text-center">경력</th>
-              <th className="w-[200px] px-4 py-1.5 font-medium">메모</th>
-              <th className="w-[80px] px-4 py-1.5 font-medium text-center">블랙리스트</th>
-              <th className="px-4 py-1.5 font-medium text-center">최근 배정일</th>
-              <th className="px-4 py-1.5 font-medium text-center">등록일</th>
-              <th className="px-4 py-1.5 font-medium text-center">관리</th>
+              <th className="w-[85px] px-3 py-2 font-medium">이름</th>
+              <th className="w-[160px] px-3 py-2 font-medium">연락처</th>
+              <th className="px-3 py-2 font-medium">이메일</th>
+              <th className="w-[60px] px-3 py-2 font-medium text-center">경력</th>
+              <th className="w-[200px] px-3 py-2 font-medium">메모</th>
+              <th className="w-[80px] px-3 py-2 font-medium text-center">블랙리스트</th>
+              <th className="px-3 py-2 font-medium text-center">최근 배정일</th>
+              <th className="px-3 py-2 font-medium text-center">등록일</th>
+              <th className="px-3 py-2 font-medium text-center">관리</th>
             </tr>
           </thead>
           <tbody>
             {data.map((worker) => {
               const assignCount = worker.assignments?.[0]?.count ?? 0;
               return (
-                <tr key={worker.id} className="border-b last:border-0 bg-white hover:bg-slate-50/50">
-                  <td className="w-10 px-4 py-1.5">
-                    <input
-                      type="checkbox"
+                <tr key={worker.id} className="border-b border-slate-100 last:border-b-0 bg-white transition-colors hover:bg-slate-50">
+                  <td className="w-10 px-3 py-3">
+                    <Checkbox
                       checked={selectedIds.has(worker.id)}
-                      onChange={() => toggleOne(worker.id)}
-                      className="size-4 rounded border-slate-300"
+                      onCheckedChange={() => toggleOne(worker.id)}
                     />
                   </td>
-                  <td className="px-4 py-1.5 font-medium">{worker.name}</td>
-                  <td className="px-4 py-1.5 text-slate-500">{worker.phone || "-"}</td>
-                  <td className="px-4 py-1.5 text-slate-500">{worker.email || "-"}</td>
-                  <td className="px-4 py-1.5 text-center">
+                  <td className="px-3 py-3 font-medium text-slate-800">{worker.name}</td>
+                  <td className="px-3 py-3 tabular-nums text-slate-600">{worker.phone || "-"}</td>
+                  <td className="px-3 py-3 text-slate-600">{worker.email || "-"}</td>
+                  <td className="px-3 py-3 text-center tabular-nums">
                     {assignCount > 0 ? (
                       <Popover>
                         <PopoverTrigger asChild>
@@ -204,7 +200,7 @@ export default function WorkerTable({
                       <span className="text-slate-400">0</span>
                     )}
                   </td>
-                  <td className="w-[200px] px-4 py-1.5">
+                  <td className="w-[200px] px-3 py-3">
                     {editingNoteId === worker.id ? (
                       <input
                         autoFocus
@@ -238,24 +234,24 @@ export default function WorkerTable({
                       </button>
                     )}
                   </td>
-                  <td className="px-4 py-1.5 text-center">
+                  <td className="px-3 py-3 text-center">
                     {worker.warning ? (
-                      <span className="inline-block rounded-sm bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700">
+                      <span className="inline-flex rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
                         주의
                       </span>
                     ) : (
                       <span className="text-slate-400">-</span>
                     )}
                   </td>
-                  <td className="px-4 py-1.5 text-center text-slate-500">
+                  <td className="px-3 py-3 text-center tabular-nums text-slate-600">
                     {worker.latest_assigned_at
                       ? worker.latest_assigned_at.slice(0, 10)
                       : <span className="text-slate-300">-</span>}
                   </td>
-                  <td className="px-4 py-1.5 text-center text-slate-500">
+                  <td className="px-3 py-3 text-center tabular-nums text-slate-600">
                     {worker.created_at.slice(0, 10)}
                   </td>
-                  <td className="px-4 py-1.5 text-center">
+                  <td className="px-3 py-3 text-center">
                     <div className="flex items-center justify-center gap-1">
                       <button
                         onClick={() => onView(worker.id)}

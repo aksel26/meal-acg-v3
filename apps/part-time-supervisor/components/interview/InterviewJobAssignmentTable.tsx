@@ -77,49 +77,49 @@ export function InterviewJobAssignmentTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-lg bg-white">
-      <table className="w-full text-sm">
+    <div className="overflow-x-auto rounded-lg bg-white">
+      <table className="w-full text-left text-sm">
         <thead>
-          <tr className="bg-slate-50 text-left text-xs text-slate-500">
-            <th className="px-4 py-3 font-medium">이름</th>
-            <th className="px-4 py-3 font-medium">역할</th>
-            <th className="px-4 py-3 font-medium">연락처</th>
-            <th className="px-4 py-3 font-medium">급여유형</th>
-            <th className="px-4 py-3 font-medium">급여</th>
-            <th className="px-4 py-3 font-medium">근무시간</th>
-            <th className="px-4 py-3 font-medium">메모</th>
-            <th className="w-16 px-4 py-3"></th>
+          <tr className="border-b border-slate-100 text-xs font-medium text-slate-400">
+            <th className="px-3 py-2 font-medium">이름</th>
+            <th className="px-3 py-2 font-medium">역할</th>
+            <th className="px-3 py-2 font-medium">연락처</th>
+            <th className="px-3 py-2 font-medium">급여유형</th>
+            <th className="px-3 py-2 font-medium">급여</th>
+            <th className="px-3 py-2 font-medium">근무시간</th>
+            <th className="px-3 py-2 font-medium">메모</th>
+            <th className="w-16 px-3 py-2 font-medium"></th>
           </tr>
         </thead>
         <tbody>
           {filtered.map((a) => {
             const role = roleLabel[(a.personnel?.role || "other") as PersonnelRole] || roleLabel.other;
             return (
-              <tr key={a.id} className="hover:bg-slate-50">
-                <td className="px-4 py-3 font-medium text-slate-900">
+              <tr key={a.id} className="border-b border-slate-100 last:border-b-0 transition-colors hover:bg-slate-50">
+                <td className="px-3 py-3 font-medium text-slate-800">
                   {a.personnel?.name || "-"}
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-3">
                   <span
-                    className={`rounded px-2 py-0.5 text-xs font-medium ${role.className}`}
+                    className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${role.className}`}
                   >
                     {role.text}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-slate-600">
+                <td className="px-3 py-3 text-slate-600">
                   {a.personnel?.phone || "-"}
                 </td>
-                <td className="px-4 py-3 text-slate-600">
+                <td className="px-3 py-3 text-slate-600">
                   {payTypeLabel[a.pay_type] || a.pay_type}
                 </td>
-                <td className="px-4 py-3 font-medium text-slate-900">
+                <td className="px-3 py-3 font-medium tabular-nums text-slate-800">
                   {a.pay_rate.toLocaleString()}원
                 </td>
-                <td className="px-4 py-3 text-slate-600">
+                <td className="px-3 py-3 tabular-nums text-slate-600">
                   {a.work_hours ? `${a.work_hours}시간` : "-"}
                 </td>
-                <td className="px-4 py-3 text-slate-500">{a.note || "-"}</td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-3 text-slate-600">{a.note || "-"}</td>
+                <td className="px-3 py-3">
                   <button
                     onClick={() => handleDelete(a.id)}
                     disabled={deletingId === a.id}

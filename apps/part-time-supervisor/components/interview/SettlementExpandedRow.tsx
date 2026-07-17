@@ -23,23 +23,23 @@ type Props = {
 export function SettlementExpandedRow({ details }: Props) {
   return (
     <div className="bg-slate-50 px-6 py-4">
-      <table className="w-full text-sm">
+      <table className="w-full text-left text-sm">
         <thead>
-          <tr className="border-b text-left text-slate-500">
-            <th className="pb-2 font-medium">날짜</th>
-            <th className="pb-2 font-medium">공고</th>
-            <th className="pb-2 font-medium">근무시간</th>
-            <th className="pb-2 font-medium">급여타입</th>
-            <th className="pb-2 font-medium text-right">단가</th>
-            <th className="pb-2 font-medium text-right">금액</th>
-            <th className="pb-2 font-medium">비고</th>
+          <tr className="border-b border-slate-100 text-xs font-medium text-slate-400">
+            <th className="px-3 py-2 font-medium">날짜</th>
+            <th className="px-3 py-2 font-medium">공고</th>
+            <th className="px-3 py-2 font-medium">근무시간</th>
+            <th className="px-3 py-2 font-medium">급여타입</th>
+            <th className="px-3 py-2 font-medium text-right">단가</th>
+            <th className="px-3 py-2 font-medium text-right">금액</th>
+            <th className="px-3 py-2 font-medium">비고</th>
           </tr>
         </thead>
         <tbody>
           {details.map((d) => (
-            <tr key={d.id} className="border-b last:border-0">
-              <td className="py-2.5 text-slate-900">{d.work_date}</td>
-              <td className="py-2.5">
+            <tr key={d.id} className="border-b border-slate-100 last:border-b-0 transition-colors hover:bg-slate-50">
+              <td className="px-3 py-3 font-medium tabular-nums text-slate-800">{d.work_date}</td>
+              <td className="px-3 py-3">
                 {d.job_posting_id && d.job_posting_title ? (
                   <Link
                     href={`/interview/job-postings/${d.job_posting_id}`}
@@ -51,10 +51,10 @@ export function SettlementExpandedRow({ details }: Props) {
                   <span className="text-slate-400">-</span>
                 )}
               </td>
-              <td className="py-2.5 text-slate-600">{d.work_hours}h</td>
-              <td className="py-2.5">
+              <td className="px-3 py-3 tabular-nums text-slate-600">{d.work_hours}h</td>
+              <td className="px-3 py-3">
                 <span
-                  className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${
+                  className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
                     d.pay_type === "hourly"
                       ? "bg-blue-50 text-blue-700"
                       : "bg-amber-50 text-amber-700"
@@ -66,13 +66,13 @@ export function SettlementExpandedRow({ details }: Props) {
                   <span className="ml-1 text-xs text-orange-500">커스텀</span>
                 )}
               </td>
-              <td className="py-2.5 text-right text-slate-900">
+              <td className="px-3 py-3 text-right tabular-nums text-slate-600">
                 {formatCurrency(d.pay_rate)}
               </td>
-              <td className="py-2.5 text-right font-medium text-slate-900">
+              <td className="px-3 py-3 text-right font-medium tabular-nums text-slate-800">
                 {formatCurrency(d.amount)}
               </td>
-              <td className="py-2.5 text-slate-500">{d.note ?? "-"}</td>
+              <td className="px-3 py-3 text-slate-600">{d.note ?? "-"}</td>
             </tr>
           ))}
         </tbody>

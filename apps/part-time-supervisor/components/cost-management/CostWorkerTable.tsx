@@ -36,16 +36,16 @@ export function CostWorkerTable({ workers, isLoading, isLocked = false }: Props)
 
   return (
     <>
-      <div className="overflow-hidden bg-white">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto bg-white">
+        <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b bg-slate-200 text-left text-slate-600 [&>th:first-child]:rounded-tl-md [&>th:last-child]:rounded-tr-md">
-              <th className="px-4 py-3 font-medium w-8"></th>
-              <th className="px-4 py-3 font-medium">지원자명</th>
-              <th className="px-4 py-3 font-medium text-right">참여 공고</th>
-              <th className="px-4 py-3 font-medium text-right">근무 일수</th>
-              <th className="px-4 py-3 font-medium text-right">총 근무 시간</th>
-              <th className="px-4 py-3 font-medium text-right">산정 금액</th>
+            <tr className="border-b border-slate-100 text-xs font-medium text-slate-400">
+              <th className="px-3 py-2 font-medium w-8"></th>
+              <th className="px-3 py-2 font-medium">지원자명</th>
+              <th className="px-3 py-2 font-medium text-right">참여 공고</th>
+              <th className="px-3 py-2 font-medium text-right">근무 일수</th>
+              <th className="px-3 py-2 font-medium text-right">총 근무 시간</th>
+              <th className="px-3 py-2 font-medium text-right">산정 금액</th>
             </tr>
           </thead>
           <tbody>
@@ -54,19 +54,19 @@ export function CostWorkerTable({ workers, isLoading, isLocked = false }: Props)
               return (
                 <Fragment key={w.workerId}>
                   <tr
-                    className="cursor-pointer border-b transition-colors duration-150 hover:bg-slate-50 active:bg-slate-100"
+                    className="cursor-pointer border-b border-slate-100 last:border-b-0 transition-colors hover:bg-slate-50"
                     onClick={() => setExpandedWorker(isExpanded ? null : w.workerId)}
                   >
-                    <td className="px-4 py-3 text-slate-400">
+                    <td className="px-3 py-3 text-slate-400">
                       <span className={`inline-block transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}>
                         <ChevronRight size={16} />
                       </span>
                     </td>
-                    <td className="px-4 py-3 font-medium text-slate-900">{w.workerName}</td>
-                    <td className="px-4 py-3 text-right text-slate-600">{w.postingCount}건</td>
-                    <td className="px-4 py-3 text-right text-slate-600">{w.totalWorkDays}일</td>
-                    <td className="px-4 py-3 text-right text-slate-600">{w.totalWorkHours}h</td>
-                    <td className="px-4 py-3 text-right font-semibold text-slate-900">
+                    <td className="px-3 py-3 font-medium text-slate-800">{w.workerName}</td>
+                    <td className="px-3 py-3 text-right tabular-nums text-slate-600">{w.postingCount}건</td>
+                    <td className="px-3 py-3 text-right tabular-nums text-slate-600">{w.totalWorkDays}일</td>
+                    <td className="px-3 py-3 text-right tabular-nums text-slate-600">{w.totalWorkHours}h</td>
+                    <td className="px-3 py-3 text-right font-medium tabular-nums text-slate-800">
                       {formatCurrency(w.totalAmount)}
                     </td>
                   </tr>

@@ -77,7 +77,7 @@ export function ExpenseReportListPage() {
       </div>
 
       {/* 테이블 */}
-      <div className="rounded-lg border bg-white overflow-hidden">
+      <div className="overflow-x-auto rounded-lg border bg-white">
         {isLoading ? (
           <div className="py-16 text-center text-sm text-slate-400">불러오는 중...</div>
         ) : reports.length === 0 ? (
@@ -85,47 +85,47 @@ export function ExpenseReportListPage() {
             {year}년 {month}월 지출결의서가 없습니다.
           </div>
         ) : (
-          <table className="w-full text-sm">
+          <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b bg-slate-50 text-left text-slate-500">
-                <th className="px-4 py-3 font-medium">제목</th>
-                <th className="px-4 py-3 font-medium">기간</th>
-                <th className="px-4 py-3 font-medium">상태</th>
-                <th className="px-4 py-3 font-medium text-right">총액</th>
-                <th className="px-4 py-3 font-medium text-center">작업</th>
+              <tr className="border-b border-slate-100 text-xs font-medium text-slate-400">
+                <th className="px-3 py-2 font-medium">제목</th>
+                <th className="px-3 py-2 font-medium">기간</th>
+                <th className="px-3 py-2 font-medium">상태</th>
+                <th className="px-3 py-2 font-medium text-right">총액</th>
+                <th className="px-3 py-2 font-medium text-center">작업</th>
               </tr>
             </thead>
             <tbody>
               {reports.map((report) => (
-                <tr key={report.id} className="border-b last:border-0 hover:bg-slate-50">
-                  <td className="px-4 py-3">
+                <tr key={report.id} className="border-b border-slate-100 last:border-b-0 transition-colors hover:bg-slate-50">
+                  <td className="px-3 py-3">
                     <Link
                       href={`/interview/expense-reports/${report.id}`}
-                      className="font-medium text-slate-900 hover:text-blue-600 hover:underline"
+                      className="font-medium text-slate-800 hover:text-blue-600 hover:underline"
                     >
                       {report.title}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-slate-500">
+                  <td className="px-3 py-3 text-slate-600">
                     {report.year && report.month
                       ? `${report.year}년 ${report.month}월`
                       : "-"}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3">
                     {report.status === "finalized" ? (
-                      <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
+                      <span className="inline-flex rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
                         확정
                       </span>
                     ) : (
-                      <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-700">
+                      <span className="inline-flex rounded-full bg-yellow-50 px-2 py-0.5 text-xs font-medium text-yellow-700">
                         초안
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-right font-medium tabular-nums text-slate-900">
+                  <td className="px-3 py-3 text-right font-medium tabular-nums text-slate-800">
                     {formatCurrency(report.grand_total)}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3">
                     <div className="flex items-center justify-center gap-1">
                       <Link
                         href={`/interview/expense-reports/${report.id}`}

@@ -53,7 +53,7 @@ export function DashboardSummary({ summary, dateLabel, isFuture }: Props) {
       display: String(summary.activeJobCount),
       icon: Briefcase,
       color: "text-[#111111]",
-      cardClassName: "bg-[#eef5fe]",
+      cardClassName: "bg-[#f9f9fa]",
       valueColor: "",
       suffix: "",
       progress: null as { completed: number; total: number } | null,
@@ -77,7 +77,7 @@ export function DashboardSummary({ summary, dateLabel, isFuture }: Props) {
       display: String(summary.attendanceCompleted),
       icon: UserCheck,
       color: "text-[#111111]",
-      cardClassName: "bg-[#eaf7ee]",
+      cardClassName: "bg-[#f9f9fa]",
       valueColor: "",
       suffix: ` / ${summary.totalAssigned}`,
       disabled: !!isFuture,
@@ -88,7 +88,7 @@ export function DashboardSummary({ summary, dateLabel, isFuture }: Props) {
       display: String(summary.contractCompleted),
       icon: FileCheck,
       color: "text-[#111111]",
-      cardClassName: "bg-[#eaf7ee]",
+      cardClassName: "bg-[#f9f9fa]",
       valueColor: "",
       suffix: ` / ${summary.totalAssigned}`,
       disabled: !!isFuture,
@@ -110,7 +110,7 @@ export function DashboardSummary({ summary, dateLabel, isFuture }: Props) {
   return (
     <div className="space-y-4">
       <h3 className="text-sm font-semibold text-slate-600">
-        <span className="mr-1.5 inline-block size-2 rounded-full bg-blue-500 align-middle" />
+        <span className="mr-1.5 inline-block size-2 rounded-full bg-slate-500 align-middle" />
         감독관 {dateLabel} 요약 현황
       </h3>
       <div className="grid grid-cols-2 gap-4 md:grid-cols-5">

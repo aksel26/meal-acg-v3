@@ -116,7 +116,7 @@ export function DashboardCalendar({
           className={cn(
             "flex h-auto w-full min-w-0 flex-col items-center rounded-xl p-1 leading-none font-normal transition-all duration-200",
             "justify-center",
-            "hover:bg-blue-50",
+            "hover:bg-slate-50",
             defaultClassNames.day,
             className
           )}
@@ -127,7 +127,7 @@ export function DashboardCalendar({
               className={cn(
                 "flex size-8 items-center justify-center rounded-full text-sm tabular-nums",
                 modifiers.selected && !modifiers.outside && "bg-slate-900 text-white",
-                !modifiers.selected && modifiers.today && "font-bold text-blue-600",
+                !modifiers.selected && modifiers.today && "font-bold text-slate-900",
                 modifiers.outside && "text-muted-foreground/40"
               )}
             >
@@ -136,10 +136,10 @@ export function DashboardCalendar({
             {!modifiers.outside && (hasSupervisor || hasInterview) && (
               <span className="flex flex-col items-center gap-0.5 mt-0.5">
                 {hasSupervisor && (
-                  <span className="block h-[3px] w-3 rounded-full bg-blue-500" />
+                  <span className="block h-[3px] w-3 rounded-full bg-slate-500" />
                 )}
                 {hasInterview && (
-                  <span className="block h-[3px] w-3 rounded-full bg-amber-500" />
+                  <span className="block h-[3px] w-3 rounded-full bg-slate-300" />
                 )}
               </span>
             )}

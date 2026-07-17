@@ -168,8 +168,8 @@ export default function DashboardPage() {
                   <span
                     className={`snow-pill absolute right-3 top-3 rounded-full px-2.5 py-1 text-[11px] ${
                       jp.type === "interview"
-                        ? "bg-[#f9f9fa] text-amber-700"
-                        : "bg-[#f9f9fa] text-blue-700"
+                        ? "bg-[#f9f9fa] text-slate-500"
+                        : "bg-[#f9f9fa] text-slate-700"
                     }`}
                   >
                     {jp.type === "interview" ? "면접교육" : "감독관"}
@@ -178,15 +178,15 @@ export default function DashboardPage() {
                     <div
                       className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${
                         jp.type === "interview"
-                          ? "bg-amber-100 text-amber-700"
-                          : "bg-blue-100 text-blue-700"
+                          ? "bg-slate-100 text-slate-500"
+                          : "bg-slate-200 text-slate-700"
                       }`}
                     >
                       <span
                         className={`inline-block size-2 rounded-full ${
                           jp.type === "interview"
-                            ? "bg-amber-500"
-                            : "bg-blue-500"
+                            ? "bg-slate-300"
+                            : "bg-slate-500"
                         }`}
                       />
                     </div>
@@ -253,7 +253,7 @@ export default function DashboardPage() {
             {data.interview && (
               <div className="space-y-3">
                 <h3 className="text-sm font-semibold text-slate-600">
-                  <span className="mr-1.5 inline-block size-2 rounded-full bg-amber-500 align-middle" />
+                  <span className="mr-1.5 inline-block size-2 rounded-full bg-slate-300 align-middle" />
                   면접교육 요약 현황
                 </h3>
                 <InterviewSummary interview={data.interview} />
@@ -314,19 +314,19 @@ export default function DashboardPage() {
                             ? `/interview/job-postings/${expandedJob.id}`
                             : `/supervisor/job-postings/${expandedJob.id}`
                         }
-                        className="group/link flex items-center gap-1 text-sm font-semibold text-slate-900 transition-colors hover:text-blue-600"
+                        className="group/link flex items-center gap-1 text-sm font-semibold text-slate-900 transition-colors hover:text-slate-600"
                       >
                         <span
                           className={`mr-1 inline-block size-1.5 rounded-full ${
                             expandedJob.type === "interview"
-                              ? "bg-amber-500"
-                              : "bg-blue-500"
+                              ? "bg-slate-300"
+                              : "bg-slate-500"
                           }`}
                         />
                         {expandedJob.title}
                         <ExternalLink
                           size={13}
-                          className="text-slate-400 transition-colors group-hover/link:text-blue-600"
+                          className="text-slate-400 transition-colors group-hover/link:text-slate-600"
                         />
                       </Link>
                       <span className="snow-pill rounded-full px-3 py-1 text-xs">
@@ -345,9 +345,9 @@ export default function DashboardPage() {
                         </div>
                       ) : (
                         <div className="snow-panel overflow-hidden rounded-xl">
-                          <table className="snow-table w-full text-sm">
+                          <table className="w-full text-sm">
                             <thead>
-                              <tr className="text-xs text-slate-500">
+                              <tr className="border-b border-slate-100 text-xs font-medium text-slate-400">
                                 <th className="px-3 py-2 text-left font-medium">
                                   이름
                                 </th>
@@ -365,16 +365,19 @@ export default function DashboardPage() {
                                 </th>
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-200/80">
+                            <tbody>
                               {expandedJob.workers.map((w) => (
-                                <tr key={w.id}>
-                                  <td className="px-3 py-2 text-slate-900">
+                                <tr
+                                  key={w.id}
+                                  className="border-b border-slate-100 bg-white transition-colors last:border-b-0 hover:bg-slate-50"
+                                >
+                                  <td className="px-3 py-3 font-medium text-slate-800">
                                     {w.name ?? "-"}
                                   </td>
-                                  <td className="px-3 py-2 text-slate-500">
+                                  <td className="px-3 py-3 text-slate-600">
                                     {w.phone ?? "-"}
                                   </td>
-                                  <td className="px-3 py-2 text-xs text-slate-500">
+                                  <td className="px-3 py-3 text-slate-600">
                                     {w.roomSlots && w.roomSlots.length > 0
                                       ? [
                                           ...new Set(
@@ -383,9 +386,9 @@ export default function DashboardPage() {
                                         ].join(", ")
                                       : "-"}
                                   </td>
-                                  <td className="px-3 py-2">
+                                  <td className="px-3 py-3">
                                     <span
-                                      className={`text-xs ${w.attendanceStatus ? "text-green-600" : "text-slate-400"}`}
+                                      className={`text-xs ${w.attendanceStatus ? "text-slate-700" : "text-slate-400"}`}
                                     >
                                       {w.attendanceStatus === "checked_in"
                                         ? "출석"
@@ -394,9 +397,9 @@ export default function DashboardPage() {
                                           : "미출석"}
                                     </span>
                                   </td>
-                                  <td className="px-3 py-2">
+                                  <td className="px-3 py-3">
                                     <span
-                                      className={`text-xs ${w.contractStatus ? "text-blue-600" : "text-slate-400"}`}
+                                      className={`text-xs ${w.contractStatus ? "text-slate-700" : "text-slate-400"}`}
                                     >
                                       {w.contractStatus === "signed"
                                         ? "서명"
@@ -419,9 +422,9 @@ export default function DashboardPage() {
                       </div>
                     ) : (
                       <div className="snow-panel overflow-hidden rounded-xl">
-                        <table className="snow-table w-full text-sm">
+                        <table className="w-full text-sm">
                           <thead>
-                            <tr className="text-xs text-slate-500">
+                            <tr className="border-b border-slate-100 text-xs font-medium text-slate-400">
                               <th className="px-3 py-2 text-left font-medium">
                                 이름
                               </th>
@@ -439,13 +442,16 @@ export default function DashboardPage() {
                               </th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-200/80">
+                          <tbody>
                             {expandedJob.assignments.map((a) => (
-                              <tr key={a.id}>
-                                <td className="px-3 py-2 text-slate-900">
+                              <tr
+                                key={a.id}
+                                className="border-b border-slate-100 bg-white transition-colors last:border-b-0 hover:bg-slate-50"
+                              >
+                                <td className="px-3 py-3 font-medium text-slate-800">
                                   {a.name}
                                 </td>
-                                <td className="px-3 py-2 text-xs text-slate-500">
+                                <td className="px-3 py-3 text-slate-600">
                                   {a.role === "rp"
                                     ? "RP"
                                     : a.role === "ft"
@@ -454,22 +460,22 @@ export default function DashboardPage() {
                                         ? "강사"
                                         : "기타"}
                                 </td>
-                                <td className="px-3 py-2 text-xs text-slate-500">
+                                <td className="px-3 py-3 text-slate-600">
                                   {a.payType === "daily" ? "일급" : "시급"}
                                 </td>
-                                <td className="px-3 py-2 text-right text-xs tabular-nums text-slate-900">
+                                <td className="px-3 py-3 text-right tabular-nums text-slate-800">
                                   ₩
                                   {new Intl.NumberFormat("ko-KR").format(
                                     a.payRate,
                                   )}
                                 </td>
-                                <td className="px-3 py-2">
+                                <td className="px-3 py-3">
                                   <span
                                     className={`text-xs ${
                                       a.status === "completed"
-                                        ? "text-green-600"
+                                        ? "text-slate-700"
                                         : a.status === "cancelled"
-                                          ? "text-red-500"
+                                          ? "text-slate-500"
                                           : "text-slate-400"
                                     }`}
                                   >

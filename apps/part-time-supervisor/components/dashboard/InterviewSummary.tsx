@@ -51,7 +51,7 @@ export function InterviewSummary({ interview }: Props) {
       icon: Briefcase,
       isCost: false,
       iconClassName: "text-[#111111]",
-      cardClassName: "bg-[#eef5fe]",
+      cardClassName: "bg-[#f9f9fa]",
     },
     {
       label: "총 배정 인원",
@@ -67,7 +67,7 @@ export function InterviewSummary({ interview }: Props) {
       icon: UserCheck,
       isCost: false,
       iconClassName: "text-[#111111]",
-      cardClassName: "bg-[#eaf7ee]",
+      cardClassName: "bg-[#f9f9fa]",
     },
     {
       label: "이번달 인건비",
@@ -102,11 +102,11 @@ export function InterviewSummary({ interview }: Props) {
                 {"isStatus" in card && card.isStatus ? (
                   <span className="text-lg font-extrabold tracking-[-0.02em]">
                     {card.statusValue === "finalized" ? (
-                      <span className="text-green-600">확정</span>
+                      <span className="text-slate-900">확정</span>
                     ) : card.statusValue === "draft" ? (
-                      <span className="text-amber-600">작성중</span>
+                      <span className="text-slate-600">작성중</span>
                     ) : (
-                      <span className="text-slate-500">미작성</span>
+                      <span className="text-slate-400">미작성</span>
                     )}
                   </span>
                 ) : card.isCost ? (

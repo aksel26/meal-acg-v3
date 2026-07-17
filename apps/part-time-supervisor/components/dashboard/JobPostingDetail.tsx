@@ -73,7 +73,7 @@ export function JobPostingDetail({ jobPosting }: Props) {
                   {count}
                 </span>
                 {alert > 0 && (
-                  <span className="rounded-full bg-red-500/10 px-1.5 py-0.5 text-[10px] font-medium text-red-400">
+                  <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
                     {alert}
                   </span>
                 )}

@@ -1,8 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
+import { Fragment, useMemo } from "react";
 import dayjs from "dayjs";
+import { Pause } from "lucide-react";
 import type { DayoffRecord } from "@/hooks/use-dayoffs";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui/src/tooltip";
 
 export type LeaveYearRecord = Pick<
   DayoffRecord,
@@ -113,7 +115,20 @@ export default function LeaveYearGrid({
                   monthData.records.map((record) => {
                     const content = (
                       <>
-                        <span>{dayjs(record.leave_date).format("D")}일</span>
+                        <span className="inline-flex items-center gap-0.5">
+                          {dayjs(record.leave_date).format("D")}일
+                          {record.approval_status === "pending" && (
+                            <span
+                              aria-label="승인 대기"
+                              className="inline-flex text-amber-500"
+                            >
+                              <Pause
+                                className="h-2.5 w-2.5"
+                                aria-hidden="true"
+                              />
+                            </span>
+                          )}
+                        </span>
                         <span>
                           {record.leave_type_id === 1 && record.late_hour
                             ? `지각-${record.late_hour}시${record.late_minute || "00"}분`
@@ -123,10 +138,8 @@ export default function LeaveYearGrid({
                     );
                     const className =
                       "flex w-full items-center justify-between gap-2 whitespace-nowrap rounded-md bg-white px-2 py-1.5 text-[11px] text-slate-600 transition-[background-color,font-weight] duration-150 hover:bg-slate-100 hover:font-medium";
-
-                    return onRecordSelect ? (
+                    const card = onRecordSelect ? (
                       <button
-                        key={record.id}
                         type="button"
                         onClick={() => onRecordSelect(record.leave_date)}
                         className={className}
@@ -134,9 +147,18 @@ export default function LeaveYearGrid({
                         {content}
                       </button>
                     ) : (
-                      <div key={record.id} className={className}>
-                        {content}
-                      </div>
+                      <div className={className}>{content}</div>
+                    );
+
+                    return record.approval_status === "pending" ? (
+                      <Tooltip key={record.id}>
+                        <TooltipTrigger asChild>{card}</TooltipTrigger>
+                        <TooltipContent side="top" sideOffset={4}>
+                          대기중
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <Fragment key={record.id}>{card}</Fragment>
                     );
                   })
                 ) : (

@@ -642,9 +642,6 @@ export default function ProfileAttendanceTab({
                           <th scope="col" className="px-3 py-2 font-medium">
                             휴가
                           </th>
-                          <th scope="col" className="px-3 py-2 font-medium">
-                            시간외근무
-                          </th>
                           <SortableHeader
                             label="상태"
                             sortKey="status"
@@ -652,6 +649,9 @@ export default function ProfileAttendanceTab({
                             direction={sort.direction}
                             onSort={handleSort}
                           />
+                          <th scope="col" className="px-3 py-2 font-medium">
+                            시간외근무
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -721,26 +721,19 @@ export default function ProfileAttendanceTab({
                               </td>
                               <td className="px-3 py-3">
                                 {entry.dayoffs.length > 0 ? (
-                                  <div className="flex flex-wrap gap-1">
+                                  <div className="flex flex-col gap-0.5 text-sm text-slate-600">
                                     {entry.dayoffs.map((dayoff) => (
                                       <span
                                         key={dayoff.id}
                                         title={dayoff.reason ?? undefined}
-                                        className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700"
                                       >
-                                        {dayoff.leave_type?.name ?? "휴가"} ·{" "}
-                                        {DAYOFF_STATUS_LABELS[
-                                          dayoff.approval_status
-                                        ] ?? dayoff.approval_status}
+                                        {dayoff.leave_type?.name ?? "휴가"}
                                       </span>
                                     ))}
                                   </div>
                                 ) : (
                                   <span className="text-slate-400">-</span>
                                 )}
-                              </td>
-                              <td className="whitespace-nowrap px-3 py-3 text-slate-600">
-                                {formatWorkTime(record?.overtime_minutes ?? 0)}
                               </td>
                               <td className="px-3 py-3">
                                 <div className="flex items-center gap-1.5">
@@ -755,6 +748,9 @@ export default function ProfileAttendanceTab({
                                     </span>
                                   )}
                                 </div>
+                              </td>
+                              <td className="whitespace-nowrap px-3 py-3 text-slate-600">
+                                {formatWorkTime(record?.overtime_minutes ?? 0)}
                               </td>
                             </tr>
                           );

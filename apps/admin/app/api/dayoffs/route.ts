@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
         approver:members!dayoffs_approver_id_fkey(id, full_name),
         last_editor:members!dayoffs_last_editor_id_fkey(id, full_name),
         leave_type:leave_types!dayoffs_leave_type_id_fkey(id, name, category, duration_type)
-      `
+      `,
       )
       .eq("is_deleted", false)
       .order("leave_date", { ascending: true });
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
       console.error("Error fetching dayoffs:", error);
       return NextResponse.json(
         { error: "Failed to fetch dayoffs" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
     }
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -89,7 +89,32 @@ export async function POST(request: NextRequest) {
     if (!targetId || !startDate || !leaveTypeId) {
       return NextResponse.json(
         { error: "targetId, startDate, and leaveTypeId are required" },
-        { status: 400 }
+        { status: 400 },
+      );
+    }
+
+    const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+    if (
+      !datePattern.test(startDate) ||
+      (endDate && !datePattern.test(endDate)) ||
+      (endDate && endDate < startDate)
+    ) {
+      return NextResponse.json(
+        { error: "유효한 날짜 범위를 입력해주세요." },
+        { status: 400 },
+      );
+    }
+
+    const { data: leaveType, error: leaveTypeError } = await supabase
+      .from("leave_types")
+      .select("id")
+      .eq("id", leaveTypeId)
+      .single();
+
+    if (leaveTypeError || !leaveType) {
+      return NextResponse.json(
+        { error: "유효한 근태 유형을 선택해주세요." },
+        { status: 400 },
       );
     }
 
@@ -101,9 +126,7 @@ export async function POST(request: NextRequest) {
       .gte("holiday_date", startDate)
       .lte("holiday_date", end);
 
-    const holidaySet = new Set(
-      (holidays || []).map((h) => h.holiday_date)
-    );
+    const holidaySet = new Set((holidays || []).map((h) => h.holiday_date));
 
     // 시작일~종료일 범위에서 영업일만 추출
     const dates: string[] = [];
@@ -124,38 +147,63 @@ export async function POST(request: NextRequest) {
     if (dates.length === 0) {
       return NextResponse.json(
         { error: "선택한 기간에 영업일이 없습니다." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // 각 영업일에 대해 개별 행 INSERT
-    const rows = dates.map((date) => ({
-      author_id: session.userId,
-      target_id: targetId,
-      leave_date: date,
-      leave_type_id: leaveTypeId,
-      late_hour: leaveTypeId === 1 ? lateHour || null : null,
-      late_minute: leaveTypeId === 1 ? lateMinute || null : null,
-      approver_id: approverId || null,
-      approved_at: approverId ? new Date().toISOString() : null,
-      cc_member_ids: ccMemberIds || [],
-      reason: reason || null,
-    }));
+    const { data: automaticApproverId, error: approverError } = approverId
+      ? { data: approverId, error: null }
+      : await supabase.rpc("get_approver_for_member", {
+          p_member_id: targetId,
+        });
 
-    const { data, error } = await supabase
-      .from("dayoffs")
-      .insert(rows)
-      .select();
+    if (approverError || !automaticApproverId) {
+      return NextResponse.json(
+        { error: "승인자를 찾을 수 없습니다." },
+        { status: 400 },
+      );
+    }
+
+    const { data, error } = await supabase.rpc("create_leave_request_atomic", {
+      p_request_id: crypto.randomUUID(),
+      p_author_id: session.userId,
+      p_target_id: targetId,
+      p_approver_id: automaticApproverId,
+      p_dates: dates,
+      p_leave_type_id: leaveTypeId,
+      p_late_hour: lateHour || null,
+      p_late_minute: lateMinute || null,
+      p_cc_member_ids: ccMemberIds || [],
+      p_reason: reason || null,
+      p_initial_status: approverId ? "approved" : "pending",
+    });
 
     if (error) {
-      console.error("Error creating dayoffs:", error);
+      console.error("Atomic admin dayoff creation failed:", error);
       return NextResponse.json(
-        { error: "Failed to create dayoffs" },
-        { status: 500 }
+        {
+          error: error.message.includes("DUPLICATE_DATE")
+            ? "해당 날짜에 이미 신청했거나 승인된 휴가가 있습니다."
+            : "Failed to create dayoffs",
+        },
+        { status: error.message.includes("DUPLICATE_DATE") ? 409 : 500 },
       );
     }
 
-    return NextResponse.json(data, { status: 201 });
+    return NextResponse.json(
+      (data || []).map(
+        (row: {
+          dayoff_id: string;
+          leave_date: string;
+          approval_status: string;
+        }) => ({
+          id: row.dayoff_id,
+          leave_date: row.leave_date,
+          approval_status: row.approval_status,
+        }),
+      ),
+      { status: 201 },
+    );
   } catch (error) {
     console.error("Dayoffs API error:", error);
     if (error instanceof Error && error.message === "Unauthorized") {
@@ -163,7 +211,7 @@ export async function POST(request: NextRequest) {
     }
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -204,7 +204,6 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const newStatus = action === "approve" ? "approved" : "rejected";
     const normalizedRejectReason =
       typeof rejectReason === "string" ? rejectReason.trim() : "";
 
@@ -222,29 +221,33 @@ export async function PUT(request: NextRequest) {
 
     const now = new Date().toISOString();
 
-    // 관련 dayoff 상태 업데이트
+    // 휴가와 결재 요청은 DB 트랜잭션에서 함께 갱신한다.
     if (approvalData.related_table === "dayoffs" && approvalData.related_id) {
-      const dayoffUpdate: Record<string, unknown> = {
-        approval_status: newStatus,
-      };
+      const { data: resolved, error: resolveError } = await supabase
+        .rpc("resolve_leave_approval_atomic", {
+          p_approval_id: approvalData.id,
+          p_actor_id: memberId,
+          p_action: action,
+          p_require_assigned_approver: true,
+          p_reject_reason: normalizedRejectReason || null,
+        })
+        .single();
 
-      if (action === "approve") {
-        dayoffUpdate.approver_id = memberId;
-        dayoffUpdate.approved_at = now;
-      }
-
-      const { error: dayoffUpdateError } = await supabase
-        .from("dayoffs")
-        .update(dayoffUpdate)
-        .eq("id", approvalData.related_id);
-
-      if (dayoffUpdateError) {
-        console.error("Error updating dayoff approval:", dayoffUpdateError);
+      if (resolveError) {
+        console.error("Atomic leave approval failed:", resolveError);
         return NextResponse.json(
-          { error: "휴가 결재 상태 반영 실패" },
-          { status: 500 },
+          {
+            error: resolveError.message.includes("FORBIDDEN")
+              ? "승인 권한이 없습니다."
+              : resolveError.message.includes("ALREADY_RESOLVED")
+                ? "이미 처리된 요청입니다."
+                : "휴가 결재 상태 반영 실패",
+          },
+          { status: resolveError.message.includes("FORBIDDEN") ? 403 : 409 },
         );
       }
+
+      return NextResponse.json(resolved);
     }
 
     if (
@@ -349,7 +352,7 @@ export async function PUT(request: NextRequest) {
     const { data: updated, error: updateError } = await supabase
       .from("approval_requests")
       .update({
-        status: newStatus,
+        status: action === "approve" ? "approved" : "rejected",
         reject_reason:
           action === "reject" ? normalizedRejectReason || null : null,
         resolved_at: now,

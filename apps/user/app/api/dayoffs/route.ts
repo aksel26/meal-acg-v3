@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     if (!sessionUser) {
       return NextResponse.json(
         { error: "로그인이 필요합니다." },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     if (!supabase) {
       return NextResponse.json(
         { error: "Supabase client initialization failed" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
         target:members!dayoffs_target_id_fkey(id, full_name),
         approver:members!dayoffs_approver_id_fkey(id, full_name),
         leave_type:leave_types!dayoffs_leave_type_id_fkey(id, name, category, duration_type)
-      `
+      `,
       )
       .eq("is_deleted", false)
       .order("leave_date", { ascending: true });
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
       console.error("Error fetching dayoffs:", error);
       return NextResponse.json(
         { error: "Failed to fetch dayoffs" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
     console.error("Dayoffs API error:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
     if (!sessionUser) {
       return NextResponse.json(
         { error: "로그인이 필요합니다." },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     if (!supabase) {
       return NextResponse.json(
         { error: "Supabase client initialization failed" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -104,7 +104,6 @@ export async function POST(request: NextRequest) {
       leaveTypeId,
       lateHour,
       lateMinute,
-      approverId,
       ccMemberIds,
       reason,
     } = body;
@@ -116,7 +115,31 @@ export async function POST(request: NextRequest) {
     if (!startDate || !leaveTypeId) {
       return NextResponse.json(
         { error: "startDate, leaveTypeId are required" },
-        { status: 400 }
+        { status: 400 },
+      );
+    }
+
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(startDate) ||
+      (endDate && !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) ||
+      (endDate && endDate < startDate)
+    ) {
+      return NextResponse.json(
+        { error: "유효한 날짜 범위를 입력해주세요." },
+        { status: 400 },
+      );
+    }
+
+    const { data: leaveType, error: leaveTypeError } = await supabase
+      .from("leave_types")
+      .select("id")
+      .eq("id", leaveTypeId)
+      .single();
+
+    if (leaveTypeError || !leaveType) {
+      return NextResponse.json(
+        { error: "유효한 근태 유형을 선택해주세요." },
+        { status: 400 },
       );
     }
 
@@ -130,12 +153,10 @@ export async function POST(request: NextRequest) {
           "holiday_date",
           new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
             .toISOString()
-            .split("T")[0]!
+            .split("T")[0]!,
         );
 
-      const holidaySet = new Set(
-        (holidays || []).map((h) => h.holiday_date)
-      );
+      const holidaySet = new Set((holidays || []).map((h) => h.holiday_date));
 
       // 오늘부터 3영업일 계산
       let businessDays = 0;
@@ -156,7 +177,7 @@ export async function POST(request: NextRequest) {
             error: `영업일 기준 3일 이후부터 등록 가능합니다. (최소: ${minDate})`,
             minDate,
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -169,9 +190,7 @@ export async function POST(request: NextRequest) {
       .gte("holiday_date", startDate)
       .lte("holiday_date", end);
 
-    const holidaySet = new Set(
-      (holidays || []).map((h) => h.holiday_date)
-    );
+    const holidaySet = new Set((holidays || []).map((h) => h.holiday_date));
 
     // 영업일만 추출
     const dates: string[] = [];
@@ -190,42 +209,61 @@ export async function POST(request: NextRequest) {
     if (dates.length === 0) {
       return NextResponse.json(
         { error: "선택한 기간에 영업일이 없습니다." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    const rows = dates.map((date) => ({
-      author_id: authorId,
-      target_id: targetId,
-      leave_date: date,
-      leave_type_id: leaveTypeId,
-      late_hour: leaveTypeId === 1 ? lateHour || null : null,
-      late_minute: leaveTypeId === 1 ? lateMinute || null : null,
-      approver_id: approverId || null,
-      approved_at: approverId ? new Date().toISOString() : null,
-      cc_member_ids: ccMemberIds || [],
-      reason: reason || null,
-    }));
+    const { data: approverId, error: approverError } = await supabase.rpc(
+      "get_approver_for_member",
+      { p_member_id: targetId },
+    );
 
-    const { data, error } = await supabase
-      .from("dayoffs")
-      .insert(rows)
-      .select();
+    if (approverError || !approverId) {
+      return NextResponse.json(
+        { error: "승인자를 찾을 수 없습니다." },
+        { status: 400 },
+      );
+    }
+
+    const { data, error } = await supabase.rpc("create_leave_request_atomic", {
+      p_request_id: crypto.randomUUID(),
+      p_author_id: authorId,
+      p_target_id: targetId,
+      p_approver_id: approverId,
+      p_dates: dates,
+      p_leave_type_id: leaveTypeId,
+      p_late_hour: lateHour || null,
+      p_late_minute: lateMinute || null,
+      p_cc_member_ids: ccMemberIds || [],
+      p_reason: reason || null,
+      p_initial_status: "pending",
+    });
 
     if (error) {
-      console.error("Error creating dayoffs:", error);
+      console.error("Atomic dayoff creation failed:", error);
       return NextResponse.json(
-        { error: "Failed to create dayoffs" },
-        { status: 500 }
+        {
+          error: error.message.includes("DUPLICATE_DATE")
+            ? "해당 날짜에 이미 신청했거나 승인된 휴가가 있습니다."
+            : "Failed to create dayoffs",
+        },
+        { status: error.message.includes("DUPLICATE_DATE") ? 409 : 500 },
       );
     }
 
-    return NextResponse.json(data, { status: 201 });
+    return NextResponse.json(
+      (data || []).map((row) => ({
+        id: row.dayoff_id,
+        leave_date: row.leave_date,
+        approval_status: row.approval_status,
+      })),
+      { status: 201 },
+    );
   } catch (error) {
     console.error("Dayoffs API error:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

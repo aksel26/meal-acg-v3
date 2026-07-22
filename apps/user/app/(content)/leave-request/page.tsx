@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Send, Users, Loader2 } from "lucide-react";
+import { ChevronLeft, Send, Loader2 } from "lucide-react";
 import { Button } from "@repo/ui/src/button";
 import { Label } from "@repo/ui/src/label";
 import { DatePicker } from "@repo/ui/src/date-picker";
@@ -25,6 +25,13 @@ interface LeaveType {
   duration_type: string;
 }
 
+interface ApproverOption {
+  id: string;
+  full_name: string;
+  member_role: string | null;
+  team_name: string | null;
+}
+
 export default function LeaveRequestPage() {
   const router = useRouter();
   const { memberId } = useUserStore();
@@ -35,8 +42,9 @@ export default function LeaveRequestPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [reason, setReason] = useState("");
-  const [approverName, setApproverName] = useState<string | null>(null);
-  const [loadingApprover, setLoadingApprover] = useState(false);
+  const [approvers, setApprovers] = useState<ApproverOption[]>([]);
+  const [approverId, setApproverId] = useState("");
+  const [loadingApprovers, setLoadingApprovers] = useState(false);
 
   // 근태 유형 로드
   useEffect(() => {
@@ -53,23 +61,42 @@ export default function LeaveRequestPage() {
       .catch(() => {});
   }, []);
 
-  // 승인자 미리보기
+  // 승인자 선택 목록 및 조직 기준 기본 승인자 로드
   useEffect(() => {
     if (!memberId) return;
-    setLoadingApprover(true);
-    fetch(`/api/users?memberId=${memberId}&includeApprover=true`)
-      .then((res) => res.json())
+    const controller = new AbortController();
+    setLoadingApprovers(true);
+    fetch("/api/leave-requests", { signal: controller.signal })
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || "승인자 목록 조회 실패");
+        }
+        return data;
+      })
       .then((data) => {
-        if (data.approver_name) {
-          setApproverName(data.approver_name);
+        const options = Array.isArray(data.approvers) ? data.approvers : [];
+        setApprovers(options);
+        setApproverId((current) =>
+          options.some((option: ApproverOption) => option.id === current)
+            ? current
+            : data.default_approver_id || "",
+        );
+      })
+      .catch((error) => {
+        if (error instanceof Error && error.name !== "AbortError") {
+          toast.error(error.message);
+          setApprovers([]);
+          setApproverId("");
         }
       })
-      .catch(() => {})
-      .finally(() => setLoadingApprover(false));
+      .finally(() => setLoadingApprovers(false));
+
+    return () => controller.abort();
   }, [memberId]);
 
   const handleSubmit = () => {
-    if (!memberId || !leaveTypeId || !startDate) {
+    if (!memberId || !leaveTypeId || !startDate || !approverId) {
       toast.error("필수 항목을 입력해주세요.");
       return;
     }
@@ -80,6 +107,7 @@ export default function LeaveRequestPage() {
         startDate,
         endDate: endDate || undefined,
         leaveTypeId: parseInt(leaveTypeId),
+        approverId,
         reason: reason || undefined,
       },
       {
@@ -150,25 +178,50 @@ export default function LeaveRequestPage() {
           />
         </div>
 
-        {/* 승인자 정보 */}
-        <div className="rounded-xl bg-blue-50 p-3">
-          <div className="flex items-center gap-2 text-sm">
-            <Users className="h-4 w-4 text-blue-500" />
-            <span className="font-medium text-blue-700">승인자</span>
-          </div>
-          <p className="mt-1 text-sm text-blue-600">
-            {loadingApprover
-              ? "확인 중..."
-              : approverName
-                ? approverName
-                : "조직 구조에 따라 자동 결정됩니다."}
-          </p>
+        {/* 승인자 */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium text-slate-700">승인자 *</Label>
+          <Select
+            value={approverId}
+            onValueChange={setApproverId}
+            disabled={loadingApprovers || approvers.length === 0}
+          >
+            <SelectTrigger>
+              <SelectValue
+                placeholder={
+                  loadingApprovers
+                    ? "승인자 목록을 불러오는 중..."
+                    : "승인자를 선택하세요"
+                }
+              />
+            </SelectTrigger>
+            <SelectContent>
+              {approvers.map((approver) => (
+                <SelectItem key={approver.id} value={approver.id}>
+                  {approver.full_name}
+                  {approver.member_role ? ` · ${approver.member_role}` : ""}
+                  {approver.team_name ? ` · ${approver.team_name}` : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {!loadingApprovers && approvers.length === 0 && (
+            <p className="text-xs text-red-500">
+              선택할 수 있는 승인자가 없습니다. 조직 정보를 확인해주세요.
+            </p>
+          )}
         </div>
 
         {/* 제출 */}
         <Button
           onClick={handleSubmit}
-          disabled={createRequest.isPending || !leaveTypeId || !startDate}
+          disabled={
+            createRequest.isPending ||
+            loadingApprovers ||
+            !leaveTypeId ||
+            !startDate ||
+            !approverId
+          }
           className="w-full gap-2"
         >
           {createRequest.isPending ? (

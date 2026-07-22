@@ -122,15 +122,20 @@ export function useCreateLeaveRequest() {
       startDate: string;
       endDate?: string;
       leaveTypeId: number;
+      approverId: string;
       lateHour?: string;
       lateMinute?: string;
       ccMemberIds?: string[];
       reason?: string;
+      requestId?: string;
     }) => {
       const res = await fetch("/api/leave-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          requestId: data.requestId ?? crypto.randomUUID(),
+        }),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -141,6 +146,9 @@ export function useCreateLeaveRequest() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.myRequests.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.dayoffs.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.leaveBalances.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meals.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.mealStats.all });
     },
   });
 }
@@ -171,6 +179,9 @@ export function useApproveRequest() {
       queryClient.invalidateQueries({ queryKey: queryKeys.approvals.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.dayoffs.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.attendance.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.leaveBalances.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meals.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.mealStats.all });
       queryClient.invalidateQueries({
         queryKey: queryKeys.attendance.modifyRequests.all,
       });
@@ -211,6 +222,9 @@ export function useRejectRequest() {
       queryClient.invalidateQueries({ queryKey: queryKeys.approvals.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.dayoffs.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.attendance.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.leaveBalances.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meals.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.mealStats.all });
       queryClient.invalidateQueries({
         queryKey: queryKeys.attendance.modifyRequests.all,
       });

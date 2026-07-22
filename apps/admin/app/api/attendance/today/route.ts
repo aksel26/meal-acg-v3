@@ -56,7 +56,8 @@ export async function GET() {
       .from("dayoffs")
       .select("target_id")
       .eq("leave_date", today)
-      .eq("is_deleted", false);
+      .eq("is_deleted", false)
+      .eq("approval_status", "approved");
 
     if (dayoffsError) {
       console.error("Error fetching dayoffs:", dayoffsError);

@@ -89,7 +89,7 @@ async function getExternalAttendance(
       .eq("target_id", memberId)
       .gte("leave_date", startDate)
       .lte("leave_date", endDate)
-      .or("approval_status.is.null,approval_status.neq.rejected"),
+      .eq("approval_status", "approved"),
     supabase
       .from("attendance_records")
       .select("date, attendance_type")

@@ -127,6 +127,34 @@ export async function PUT(
       return NextResponse.json(resolvedApproval);
     }
 
+    if (request_data.related_table === "dayoffs" && request_data.related_id) {
+      const { data: resolvedApproval, error: resolveError } = await supabase
+        .rpc("resolve_leave_approval_atomic", {
+          p_approval_id: request_data.id,
+          p_actor_id: session.userId,
+          p_action: action,
+          p_require_assigned_approver: false,
+          p_reject_reason: normalizedRejectReason || null,
+        })
+        .single();
+
+      if (resolveError) {
+        console.error("Admin atomic leave approval error:", resolveError);
+        return NextResponse.json(
+          {
+            error: resolveError.message.includes("ALREADY_RESOLVED")
+              ? "이미 처리된 요청입니다."
+              : resolveError.message.includes("NOT_RESOLVED")
+                ? "처리 완료된 요청만 취소할 수 있습니다."
+                : "휴가 결재 상태 반영 실패",
+          },
+          { status: 409 },
+        );
+      }
+
+      return NextResponse.json(resolvedApproval);
+    }
+
     const newStatus =
       action === "approve"
         ? "approved"
@@ -153,26 +181,6 @@ export async function PUT(
         { error: "Failed to update approval" },
         { status: 500 },
       );
-    }
-
-    // 관련 dayoff의 approval_status도 업데이트
-    if (request_data.related_table === "dayoffs" && request_data.related_id) {
-      const dayoffUpdate: Record<string, unknown> = {
-        approval_status: newStatus,
-      };
-
-      if (action === "approve") {
-        dayoffUpdate.approver_id = session.userId;
-        dayoffUpdate.approved_at = new Date().toISOString();
-      } else if (action === "cancel") {
-        dayoffUpdate.approver_id = null;
-        dayoffUpdate.approved_at = null;
-      }
-
-      await supabase
-        .from("dayoffs")
-        .update(dayoffUpdate)
-        .eq("id", request_data.related_id);
     }
 
     return NextResponse.json(updated);

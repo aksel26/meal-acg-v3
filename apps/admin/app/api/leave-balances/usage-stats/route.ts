@@ -11,7 +11,10 @@ export async function GET(request: NextRequest) {
     const year = request.nextUrl.searchParams.get("year");
 
     if (!year) {
-      return NextResponse.json({ error: "year 파라미터가 필요합니다." }, { status: 400 });
+      return NextResponse.json(
+        { error: "year 파라미터가 필요합니다." },
+        { status: 400 },
+      );
     }
 
     const yearNum = parseInt(year);
@@ -29,6 +32,8 @@ export async function GET(request: NextRequest) {
     const { data: dayoffs } = await supabase
       .from("dayoffs")
       .select("target_id, leave_type_id")
+      .eq("is_deleted", false)
+      .eq("approval_status", "approved")
       .gte("leave_date", startDate)
       .lte("leave_date", endDate);
 
@@ -71,6 +76,9 @@ export async function GET(request: NextRequest) {
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

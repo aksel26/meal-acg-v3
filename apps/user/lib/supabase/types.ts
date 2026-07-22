@@ -204,7 +204,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "members"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       work_applications: {
@@ -273,7 +273,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "members"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       budget_allocations: {
@@ -333,6 +333,8 @@ export type Database = {
       }
       dayoffs: {
         Row: {
+          request_id: string | null
+          request_fingerprint: string | null
           approval_status: string
           approved_at: string | null
           approver_id: string | null
@@ -352,6 +354,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          request_id?: string | null
+          request_fingerprint?: string | null
           approval_status?: string
           approved_at?: string | null
           approver_id?: string | null
@@ -371,6 +375,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          request_id?: string | null
+          request_fingerprint?: string | null
           approval_status?: string
           approved_at?: string | null
           approver_id?: string | null
@@ -1302,7 +1308,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "members"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       lunch_group_settings: {
@@ -2289,6 +2295,50 @@ export type Database = {
       }
     }
     Functions: {
+      create_leave_request_atomic: {
+        Args: {
+          p_request_id: string
+          p_author_id: string
+          p_target_id: string
+          p_approver_id: string
+          p_dates: string[]
+          p_leave_type_id: number
+          p_late_hour?: string | null
+          p_late_minute?: string | null
+          p_cc_member_ids?: string[]
+          p_reason?: string | null
+          p_initial_status?: string
+        }
+        Returns: {
+          dayoff_id: string
+          approval_id: string
+          leave_date: string
+          approval_status: string
+        }[]
+      }
+      delete_dayoff_atomic: {
+        Args: { p_dayoff_id: string; p_actor_id: string; p_is_admin: boolean }
+        Returns: undefined
+      }
+      resolve_leave_approval_atomic: {
+        Args: {
+          p_approval_id: string
+          p_actor_id: string
+          p_action: string
+          p_require_assigned_approver?: boolean
+          p_reject_reason?: string | null
+        }
+        Returns: Database["public"]["Tables"]["approval_requests"]["Row"][]
+      }
+      update_dayoff_atomic: {
+        Args: {
+          p_dayoff_id: string
+          p_editor_id: string
+          p_is_admin: boolean
+          p_changes: Json
+        }
+        Returns: Database["public"]["Tables"]["dayoffs"]["Row"][]
+      }
       record_attendance_check_in: {
         Args: { p_member_id: string }
         Returns: Database["public"]["Tables"]["attendance_records"]["Row"][]

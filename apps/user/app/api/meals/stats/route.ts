@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
         .eq("target_id", userId)
         .gte("leave_date", startDate)
         .lte("leave_date", endDate)
-        .or("approval_status.is.null,approval_status.neq.rejected"),
+        .eq("approval_status", "approved"),
       supabase
         .from("attendance_records")
         .select("date, attendance_type")

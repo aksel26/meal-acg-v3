@@ -82,13 +82,16 @@ export async function GET(request: NextRequest) {
         `,
         )
         .eq("is_deleted", false)
+        .eq("approval_status", "approved")
         .eq("target_id", session.id)
         .gte("leave_date", startDate)
         .lte("leave_date", endDate)
         .order("leave_date", { ascending: true }),
       supervisor
         .from("job_postings")
-        .select("id, title, start_date, end_date, status, supervisor_id, created_by")
+        .select(
+          "id, title, start_date, end_date, status, supervisor_id, created_by",
+        )
         .lte("start_date", endDate)
         .gte("end_date", startDate)
         .or(`supervisor_id.eq.${session.id},created_by.eq.${session.id}`),

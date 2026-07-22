@@ -86,7 +86,7 @@ const PAGE_HEADERS: Record<string, { title: string; description: string }> = {
   },
   "/leave-request": {
     title: "휴가 신청",
-    description: "승인자에게 자동으로 요청이 전달됩니다.",
+    description: "승인자를 선택해 휴가 결재를 요청합니다.",
   },
   "/monthly": {
     title: "음료 취합",

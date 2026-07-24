@@ -52,6 +52,7 @@ export function ProjectDetailClient({
   linkedRequests,
   checklistItems,
   attachments,
+  memberLeaves,
   canEdit,
   canDelete,
 }: {
@@ -59,6 +60,7 @@ export function ProjectDetailClient({
   linkedRequests: LinkedRequestSummary[];
   checklistItems: ProjectChecklistItem[];
   attachments: ProjectAttachment[];
+  memberLeaves: Record<string, string>;
   canEdit: boolean;
   canDelete: boolean;
 }) {
@@ -141,7 +143,11 @@ export function ProjectDetailClient({
         onDelete={() => setDeleteOpen(true)}
       />
 
-      <MetaStrip project={project} checklistItems={checklistItems} />
+      <MetaStrip
+        project={project}
+        checklistItems={checklistItems}
+        memberLeaves={memberLeaves}
+      />
 
       <div className="grid gap-4 md:grid-cols-5">
         <div className="md:col-span-3">
@@ -304,9 +310,11 @@ function Dot() {
 function MetaStrip({
   project,
   checklistItems,
+  memberLeaves,
 }: {
   project: ProjectRecord;
   checklistItems: ProjectChecklistItem[];
+  memberLeaves: Record<string, string>;
 }) {
   const dDay = computeDDay(project.due_date);
   const total = checklistItems.length;
@@ -373,14 +381,22 @@ function MetaStrip({
   if (project.manager_names.length > 0) {
     peopleFields.push(
       <MetaField key="managers" label="담당자">
-        {namesToList(project.manager_names)}
+        {memberNamesToList(
+          project.manager_ids,
+          project.manager_names,
+          memberLeaves,
+        )}
       </MetaField>,
     );
   }
   if (project.stakeholder_names.length > 0) {
     peopleFields.push(
       <MetaField key="stakeholders" label="관련자">
-        {namesToList(project.stakeholder_names)}
+        {memberNamesToList(
+          project.stakeholder_ids,
+          project.stakeholder_names,
+          memberLeaves,
+        )}
       </MetaField>,
     );
   }
@@ -459,6 +475,36 @@ function namesToList(names: string[]) {
   if (filtered.length === 0) return "-";
   if (filtered.length <= 3) return filtered.join(", ");
   return `${filtered.slice(0, 3).join(", ")} 외 ${filtered.length - 3}명`;
+}
+
+function memberNamesToList(
+  ids: string[],
+  names: string[],
+  memberLeaves: Record<string, string>,
+) {
+  const members = names
+    .map((name, index) => ({ id: ids[index], name }))
+    .filter((member) => member.name);
+  if (members.length === 0) return "-";
+
+  const visibleMembers = members.slice(0, 3);
+
+  return (
+    <>
+      {visibleMembers.map((member, index) => (
+        <span key={member.id || `${member.name}-${index}`}>
+          {index > 0 && ", "}
+          {member.name}
+          {member.id && memberLeaves[member.id] && (
+            <span className="ml-1 rounded-full bg-amber-50 px-1.5 py-0.5 text-[11px] font-medium text-amber-700">
+              오늘 {memberLeaves[member.id]}
+            </span>
+          )}
+        </span>
+      ))}
+      {members.length > 3 && ` 외 ${members.length - 3}명`}
+    </>
+  );
 }
 
 function DescriptionCard({ description }: { description: string | null }) {

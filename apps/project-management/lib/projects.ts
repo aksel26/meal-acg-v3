@@ -1,5 +1,8 @@
 import type { SessionUser } from "@/lib/auth";
-import { createServiceClient } from "@/lib/supabase/server";
+import {
+  createPublicServiceClient,
+  createServiceClient,
+} from "@/lib/supabase/server";
 import type { RequestPriority, RequestStatus } from "@/lib/requests";
 
 export const PROJECT_STATUSES = ["계획", "진행", "대기", "완료"] as const;
@@ -86,6 +89,7 @@ export type ProjectDetail = {
   linkedRequests: LinkedRequestSummary[];
   checklistItems: ProjectChecklistItem[];
   attachments: ProjectAttachment[];
+  memberLeaves: Record<string, string>;
 };
 
 export function isProjectStatus(value: unknown): value is ProjectStatus {
@@ -175,10 +179,49 @@ export async function getProjectDetailForUser(
   if (!project || !canManageProject(user, project)) return null;
 
   const supabase = createServiceClient();
+  const memberIds = [
+    ...new Set([...project.manager_ids, ...project.stakeholder_ids]),
+  ];
+  const memberLeavesPromise =
+    memberIds.length === 0
+      ? Promise.resolve({} as Record<string, string>)
+      : createPublicServiceClient()
+          .from("dayoffs")
+          .select(
+            "target_id, leave_type:leave_types!dayoffs_leave_type_id_fkey(name)",
+          )
+          .in("target_id", memberIds)
+          .eq(
+            "leave_date",
+            new Intl.DateTimeFormat("sv-SE", {
+              timeZone: "Asia/Seoul",
+            }).format(new Date()),
+          )
+          .eq("is_deleted", false)
+          .eq("approval_status", "approved")
+          .then(({ data, error }) => {
+            if (error) {
+              console.warn(
+                "프로젝트 관계자 휴가 조회에 실패했습니다.",
+                error.message,
+              );
+              return {};
+            }
+
+            return Object.fromEntries(
+              (
+                (data ?? []) as unknown as {
+                  target_id: string;
+                  leave_type: { name: string };
+                }[]
+              ).map((row) => [row.target_id, row.leave_type.name]),
+            );
+          });
   const [
     { data: linkedRows, error: linkedError },
     { data: checklistItems, error: checklistError },
     attachmentRows,
+    memberLeaves,
   ] = await Promise.all([
     supabase
       .from("project_requests")
@@ -208,6 +251,7 @@ export async function getProjectDetailForUser(
         }
         return (data ?? []) as ProjectAttachment[];
       }),
+    memberLeavesPromise,
   ]);
 
   if (linkedError) throw linkedError;
@@ -234,6 +278,7 @@ export async function getProjectDetailForUser(
     linkedRequests,
     checklistItems: (checklistItems ?? []) as ProjectChecklistItem[],
     attachments: attachmentRows,
+    memberLeaves,
   };
 }
 

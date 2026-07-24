@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
+import { APPROVED_LEAVE_STATUSES } from "utils/leave-status";
 
 interface MealLog {
   user_id: string;
@@ -116,6 +117,24 @@ export async function GET(request: NextRequest) {
       userLogs.set(log.entry_date, log);
     });
 
+    // 4b. 확정 휴가(가승인·최종승인)일은 식대차단 트리거로 meal_logs가 없으므로
+    // attendance 문자열 판정과 별개로 dayoffs에서 직접 조회해 미입력자 집계에서 제외한다.
+    const { data: confirmedDayoffs, error: dayoffsError } = await supabase
+      .from("dayoffs")
+      .select("leave_date")
+      .eq("target_id", userId)
+      .eq("is_deleted", false)
+      .in("approval_status", [...APPROVED_LEAVE_STATUSES])
+      .gte("leave_date", startDate)
+      .lte("leave_date", endDate);
+
+    if (dayoffsError) {
+      console.error("Error fetching dayoffs:", dayoffsError);
+      return NextResponse.json({ error: "Failed to fetch dayoffs" }, { status: 500 });
+    }
+
+    const confirmedLeaveDates = new Set((confirmedDayoffs || []).map((d: { leave_date: string }) => d.leave_date));
+
     // 5. Check for missing entries
     const missingDates: MissingDate[] = [];
 
@@ -130,9 +149,11 @@ export async function GET(request: NextRequest) {
       const isLeave = attendance.includes("연차") || attendance.includes("휴무") || attendance.includes("휴가");
       const isHalfDay = attendance.includes("반차");
       const isRemote = attendance.includes("재택");
+      // dayoffs 기준 확정 휴가(가승인·최종승인) — attendance 문자열이 비어 있어도 제외
+      const isConfirmedDayoff = confirmedLeaveDates.has(weekday);
 
-      // 개별식사, 연차/휴무/휴가, 반차, 재택인 경우 누락 조건에서 제외
-      if (isIndividualMeal || isLeave || isHalfDay || isRemote) {
+      // 개별식사, 연차/휴무/휴가, 반차, 재택, 확정 휴가인 경우 누락 조건에서 제외
+      if (isIndividualMeal || isLeave || isHalfDay || isRemote || isConfirmedDayoff) {
         continue;
       }
 

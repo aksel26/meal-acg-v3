@@ -59,7 +59,9 @@ export async function GET(request: NextRequest) {
           `
           *,
           target:members!dayoffs_target_id_fkey(id, full_name),
-          leave_type:leave_types!dayoffs_leave_type_id_fkey(id, name, category)
+          leave_type:leave_types!dayoffs_leave_type_id_fkey(id, name, category),
+          first_approver:members!dayoffs_first_approver_id_fkey(id, full_name),
+          final_approver:members!dayoffs_final_approver_id_fkey(id, full_name)
         `
         )
         .in("id", dayoffIds);

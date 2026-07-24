@@ -2,6 +2,39 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
 import { getSessionUser } from "@/lib/auth";
 
+// resolve_leave_approval_atomic 예외명 → 사용자 메시지/HTTP status 매핑
+// (supabase/migrations/20260724130001_leave_two_step_approval_rpc.sql 기준)
+function mapLeaveApprovalError(message: string): {
+  message: string;
+  status: number;
+} {
+  if (message.includes("LEAVE_SAME_APPROVER_FORBIDDEN")) {
+    return {
+      message: "1차 가승인자와 동일한 사람은 최종승인할 수 없습니다.",
+      status: 403,
+    };
+  }
+  if (message.includes("FORBIDDEN")) {
+    return { message: "승인 권한이 없습니다.", status: 403 };
+  }
+  if (message.includes("LEAVE_INVALID_TRANSITION")) {
+    return {
+      message: "이미 처리되었거나 처리할 수 없는 상태의 요청입니다.",
+      status: 409,
+    };
+  }
+  if (message.includes("NOT_RESOLVED")) {
+    return {
+      message: "처리 완료된 요청만 취소할 수 있습니다.",
+      status: 409,
+    };
+  }
+  if (message.includes("NOT_FOUND")) {
+    return { message: "요청을 찾을 수 없습니다.", status: 404 };
+  }
+  return { message: "휴가 결재 상태 반영 실패", status: 500 };
+}
+
 // GET /api/approvals - 내가 승인할 요청 목록 (세션 본인 기준)
 export async function GET(request: NextRequest) {
   try {
@@ -75,7 +108,9 @@ export async function GET(request: NextRequest) {
                 `
           *,
           target:members!dayoffs_target_id_fkey(id, full_name),
-          leave_type:leave_types!dayoffs_leave_type_id_fkey(id, name, category)
+          leave_type:leave_types!dayoffs_leave_type_id_fkey(id, name, category),
+          first_approver:members!dayoffs_first_approver_id_fkey(id, full_name),
+          final_approver:members!dayoffs_final_approver_id_fkey(id, full_name)
         `,
               )
               .in("id", dayoffIds)
@@ -222,12 +257,15 @@ export async function PUT(request: NextRequest) {
     const now = new Date().toISOString();
 
     // 휴가와 결재 요청은 DB 트랜잭션에서 함께 갱신한다.
+    // user 앱은 1차 가승인만 담당한다: action="approve" → RPC p_action="pre_approve".
     if (approvalData.related_table === "dayoffs" && approvalData.related_id) {
+      const rpcAction = action === "approve" ? "pre_approve" : "reject";
+
       const { data: resolved, error: resolveError } = await supabase
         .rpc("resolve_leave_approval_atomic", {
           p_approval_id: approvalData.id,
           p_actor_id: memberId,
-          p_action: action,
+          p_action: rpcAction,
           p_require_assigned_approver: true,
           p_reject_reason: normalizedRejectReason || null,
         })
@@ -235,16 +273,8 @@ export async function PUT(request: NextRequest) {
 
       if (resolveError) {
         console.error("Atomic leave approval failed:", resolveError);
-        return NextResponse.json(
-          {
-            error: resolveError.message.includes("FORBIDDEN")
-              ? "승인 권한이 없습니다."
-              : resolveError.message.includes("ALREADY_RESOLVED")
-                ? "이미 처리된 요청입니다."
-                : "휴가 결재 상태 반영 실패",
-          },
-          { status: resolveError.message.includes("FORBIDDEN") ? 403 : 409 },
-        );
+        const { message, status } = mapLeaveApprovalError(resolveError.message);
+        return NextResponse.json({ error: message }, { status });
       }
 
       return NextResponse.json(resolved);

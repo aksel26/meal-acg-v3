@@ -7,6 +7,10 @@ export interface DayoffApprovalData {
   reason: string | null;
   target?: { id: string; full_name: string } | null;
   leave_type?: { id: number; name: string; category: string } | null;
+  first_approver?: { id: string; full_name: string } | null;
+  final_approver?: { id: string; full_name: string } | null;
+  first_approved_at?: string | null;
+  final_approved_at?: string | null;
 }
 
 export interface AttendanceModifyApprovalData {

@@ -77,10 +77,13 @@ export default function ApprovalsPage() {
 
   const handleApprove = (approvalId: string) => {
     if (!memberId) return;
+    const target = inboxItems?.find((item) => item.id === approvalId);
+    const isDayoff = target?.related_table === "dayoffs";
     approveMutation.mutate(
       { approvalId, memberId },
       {
-        onSuccess: () => toast.success("승인되었습니다."),
+        onSuccess: () =>
+          toast.success(isDayoff ? "가승인되었습니다." : "승인되었습니다."),
         onError: (err: Error) => toast.error(err.message),
       },
     );

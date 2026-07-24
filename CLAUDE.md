@@ -65,7 +65,7 @@ packages/
 - **Styling:** Tailwind CSS 4, Motion (animations), Radix UI
 - **State:** Zustand (client), TanStack React Query (server)
 - **Backend:**
-  - user app: Supabase, Google APIs (Sheets, Calendar), Gemini AI (receipt scanning)
+  - user app: Supabase, Google APIs (Sheets, Calendar)
   - admin app: Supabase (SSR client + RLS, service client for admin ops)
 - **Build:** Turborepo, pnpm
 
@@ -177,7 +177,7 @@ Uses CSS-first config (`@import "tailwindcss"` + `@import "@repo/tailwind-config
 Each app's `.env.local` contains required keys:
 
 - Admin: `apps/admin/.env.local` — Supabase, Google Calendar API, Slack bot token, VAPID keys
-- User: `apps/user/.env.local` — Supabase, Google Sheets credentials, Gemini API, VAPID public key
+- User: `apps/user/.env.local` — Supabase, Google Sheets credentials, VAPID public key
 
 ## Attendance Types
 
@@ -214,7 +214,7 @@ Separate from the `meal_logs.attendance` enum above. Check-in/out timestamps liv
 API routes follow REST conventions in `app/api/` for each app:
 
 - **Admin**: auth, members, member-statuses, meal-logs, stats, export/import (Excel), budget-allocations, budget-summary, usage-records, points-overview, organizations/divisions/teams/positions/titles, notifications, settings, holidays, monthly, lunch-groups, settlement, slack. **HR domains:** attendance, early-leave-requests, dayoffs, leave-types/leave-balances/leave-calculator, vehicles/vehicle-applications, lockers, finance, evaluations, approvals, work-applications, permission-policies, admin-audit-logs
-- **User**: auth, users, meals, points (welfare/activity/dashboard/lookup), restaurants, scan-receipt (Gemini AI), notifications, settings, monthly, lunch-group, holidays, google-sheets, calendar. **HR domains:** attendance, leave-requests/leave-balances/leave-types, dayoffs, vehicles/vehicle-applications, lockers, assets, evaluations, approvals, requests/my-requests, projects/project-stats, room-reservations, work-applications, profile
+- **User**: auth, users, meals, points (welfare/activity/dashboard/lookup), restaurants, notifications, settings, monthly, lunch-group, holidays, google-sheets, calendar. **HR domains:** attendance, leave-requests/leave-balances/leave-types, dayoffs, vehicles/vehicle-applications, lockers, assets, evaluations, approvals, requests/my-requests, projects/project-stats, room-reservations, work-applications, profile
 
 ### Database Migrations
 Migrations live in `supabase/migrations/` with naming convention `YYYYMMDD[HHMMSS]_description.sql` (latest as of `20260528`). Major recent domains: attendance check-in/out, work-applications, leave/dayoff, finance, asset/locker/vehicle management, admin RBAC + audit-logs.
@@ -283,9 +283,6 @@ Both apps set `ignoreBuildErrors: true` (TS) and `ignoreDuringBuilds: true` (ESL
 
 ### Testing
 No test framework configured. No unit/integration tests exist.
-
-### PWA (User App)
-User app is a PWA via `@ducanh2912/next-pwa`. Service worker auto-generated on build.
 
 ### Push Notifications
 Both apps implement Web Push using VAPID keys. Utilities in `lib/web-push.ts` (admin) and `lib/push-notifications.ts` (user).

@@ -41,6 +41,7 @@ import {
   CarFront,
   BookOpen,
   ShieldCheck,
+  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import { Button } from "@repo/ui/src/button";
@@ -55,23 +56,16 @@ import {
   DialogTitle,
 } from "@repo/ui/src/dialog";
 import { toast } from "@repo/ui/src/sonner";
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@repo/ui/src/tooltip";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@repo/ui/src/tooltip";
 import { useAuth } from "@/hooks/useAuth";
-import {
-  getAdminRoleLabel,
-  type AdminPermission,
-} from "@/lib/rbac";
+import { getAdminRoleLabel, type AdminPermission } from "@/lib/rbac";
 import Image from "next/image";
 import dayjs from "dayjs";
 
 interface NavItem {
   name: string;
   href: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: LucideIcon;
   permission?: AdminPermission;
   external?: boolean;
   isLabel?: boolean;
@@ -79,7 +73,7 @@ interface NavItem {
 
 interface NavGroup {
   name: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: LucideIcon;
   items: NavItem[];
 }
 
@@ -100,53 +94,188 @@ const navigation: NavigationItem[] = [
     icon: Coins,
     items: [
       { name: "식대 관리", href: "", icon: Coffee, isLabel: true },
-      { name: "사용현황 (인원별)", href: "/meal-status", icon: Users, permission: "meal:read" },
-      { name: "식대 입력", href: "/calendar", icon: Calendar, permission: "meal:write" },
-      { name: "식대 기본금 설정", href: "/settings", icon: Settings, permission: "settings:write" },
-      { name: "엑셀 가져오기", href: "/import", icon: Upload, permission: "meal:import" },
-      { name: "엑셀 내보내기", href: "/export", icon: Download, permission: "meal:export" },
+      {
+        name: "사용현황 (인원별)",
+        href: "/meal-status",
+        icon: Users,
+        permission: "meal:read",
+      },
+      {
+        name: "식대 입력",
+        href: "/calendar",
+        icon: Calendar,
+        permission: "meal:write",
+      },
+      {
+        name: "식대 기본금 설정",
+        href: "/settings",
+        icon: Settings,
+        permission: "settings:write",
+      },
+      {
+        name: "엑셀 가져오기",
+        href: "/import",
+        icon: Upload,
+        permission: "meal:import",
+      },
+      {
+        name: "엑셀 내보내기",
+        href: "/export",
+        icon: Download,
+        permission: "meal:export",
+      },
       { name: "포인트 관리", href: "", icon: PiggyBank, isLabel: true },
-      { name: "예산 할당", href: "/budget", icon: PiggyBank, permission: "points:write" },
-      { name: "사용내역 검토", href: "/review", icon: ClipboardCheck, permission: "points:review" },
-      { name: "사용 내역 조회", href: "/points-overview", icon: BarChart3, permission: "points:read" },
+      {
+        name: "예산 할당",
+        href: "/budget",
+        icon: PiggyBank,
+        permission: "points:write",
+      },
+      {
+        name: "사용내역 검토",
+        href: "/review",
+        icon: ClipboardCheck,
+        permission: "points:review",
+      },
+      {
+        name: "사용 내역 조회",
+        href: "/points-overview",
+        icon: BarChart3,
+        permission: "points:read",
+      },
       { name: "기타", href: "", icon: Cog, isLabel: true },
-      { name: "개인 사물함 관리", href: "/lockers", icon: DoorClosed, permission: "meal:read" },
-      { name: "물품관리대장", href: "/assets", icon: PackageSearch, permission: "meal:read" },
-      { name: "사내 차량관리", href: "/vehicles", icon: CarFront, permission: "meal:read" },
-      { name: "도서 관리", href: "/library", icon: BookOpen, permission: "library:read" },
+      {
+        name: "개인 사물함 관리",
+        href: "/lockers",
+        icon: DoorClosed,
+        permission: "meal:read",
+      },
+      {
+        name: "물품관리대장",
+        href: "/assets",
+        icon: PackageSearch,
+        permission: "meal:read",
+      },
+      {
+        name: "사내 차량관리",
+        href: "/vehicles",
+        icon: CarFront,
+        permission: "meal:read",
+      },
+      {
+        name: "도서 관리",
+        href: "/library",
+        icon: BookOpen,
+        permission: "library:read",
+      },
     ],
   },
   {
     name: "조직 관리",
     icon: Users,
     items: [
-      { name: "조직 구성", href: "/organization", icon: Building2, permission: "organization:read" },
-      { name: "직급/직책 관리", href: "/job-titles", icon: Grid3X3, permission: "organization:write" },
-      { name: "다면평가", href: "/evaluations", icon: ClipboardPenLine, permission: "evaluation:read" },
-      { name: "점심조 관리", href: "/lunch-groups", icon: Shuffle, permission: "organization:write" },
-      { name: "Monthly 음료", href: "/monthly", icon: Coffee, permission: "meal:write" },
+      {
+        name: "조직 구성",
+        href: "/organization",
+        icon: Building2,
+        permission: "organization:read",
+      },
+      {
+        name: "직급/직책 관리",
+        href: "/job-titles",
+        icon: Grid3X3,
+        permission: "organization:write",
+      },
+      {
+        name: "다면평가",
+        href: "/evaluations",
+        icon: ClipboardPenLine,
+        permission: "evaluation:read",
+      },
+      {
+        name: "점심조 관리",
+        href: "/lunch-groups",
+        icon: Shuffle,
+        permission: "organization:write",
+      },
+      {
+        name: "Monthly 음료",
+        href: "/monthly",
+        icon: Coffee,
+        permission: "meal:write",
+      },
     ],
   },
   {
     name: "근태 관리",
     icon: CalendarClock,
     items: [
-      { name: "출퇴근 관리", href: "/attendance", icon: UserCheck, permission: "attendance:read" },
-      { name: "근무 신청 관리", href: "/work-applications", icon: CalendarClock, permission: "attendance:read" },
-      { name: "연차 관리", href: "/dayoffs", icon: CalendarDays, permission: "leave:read" },
-      { name: "승인 관리", href: "/approvals", icon: ClipboardList, permission: "leave:approve" },
+      {
+        name: "출퇴근 관리",
+        href: "/attendance",
+        icon: UserCheck,
+        permission: "attendance:read",
+      },
+      {
+        name: "근무 신청 관리",
+        href: "/work-applications",
+        icon: CalendarClock,
+        permission: "attendance:read",
+      },
+      {
+        name: "연차 관리",
+        href: "/dayoffs",
+        icon: CalendarDays,
+        permission: "leave:read",
+      },
+      {
+        name: "승인 관리",
+        href: "/approvals",
+        icon: ClipboardList,
+        permission: "leave:approve",
+      },
     ],
   },
   {
     name: "경영관리",
     icon: PiggyBank,
     items: [
-      { name: "고객사 관리", href: "/finance/clients", icon: Building2, permission: "finance:read" },
-      { name: "프로젝트/계약 관리", href: "/finance/projects", icon: ClipboardList, permission: "finance:read" },
-      { name: "견적서 관리", href: "/finance/quotes", icon: ClipboardCheck, permission: "finance:read" },
-      { name: "매출 관리", href: "/finance/revenue", icon: Coins, permission: "finance:read" },
-      { name: "비용 정산", href: "/finance/expenses", icon: ReceiptText, permission: "finance:read" },
-      { name: "정산 리포트", href: "/finance/reports", icon: BarChart3, permission: "finance:report" },
+      {
+        name: "고객사 관리",
+        href: "/finance/clients",
+        icon: Building2,
+        permission: "finance:read",
+      },
+      {
+        name: "프로젝트/계약 관리",
+        href: "/finance/projects",
+        icon: ClipboardList,
+        permission: "finance:read",
+      },
+      {
+        name: "견적서 관리",
+        href: "/finance/quotes",
+        icon: ClipboardCheck,
+        permission: "finance:read",
+      },
+      {
+        name: "매출 관리",
+        href: "/finance/revenue",
+        icon: Coins,
+        permission: "finance:read",
+      },
+      {
+        name: "비용 정산",
+        href: "/finance/expenses",
+        icon: ReceiptText,
+        permission: "finance:read",
+      },
+      {
+        name: "정산 리포트",
+        href: "/finance/reports",
+        icon: BarChart3,
+        permission: "finance:report",
+      },
     ],
   },
   {
@@ -174,10 +303,30 @@ const navigation: NavigationItem[] = [
     name: "설정",
     icon: Cog,
     items: [
-      { name: "권한 관리", href: "/permission-policies", icon: KeyRound, permission: "rbac:manage" },
-      { name: "감사 로그", href: "/admin-audit-logs", icon: ShieldCheck, permission: "audit:read" },
-      { name: "공휴일 관리", href: "/holidays", icon: CalendarDays, permission: "settings:write" },
-      { name: "휴가 유형 관리", href: "/leave-types", icon: CalendarClock, permission: "settings:write" },
+      {
+        name: "권한 관리",
+        href: "/permission-policies",
+        icon: KeyRound,
+        permission: "rbac:manage",
+      },
+      {
+        name: "감사 로그",
+        href: "/admin-audit-logs",
+        icon: ShieldCheck,
+        permission: "audit:read",
+      },
+      {
+        name: "공휴일 관리",
+        href: "/holidays",
+        icon: CalendarDays,
+        permission: "settings:write",
+      },
+      {
+        name: "휴가 유형 관리",
+        href: "/leave-types",
+        icon: CalendarClock,
+        permission: "settings:write",
+      },
     ],
   },
 ];
@@ -220,24 +369,27 @@ function NavItemComponent({
   collapsed: boolean;
 }) {
   const linkClassName = cn(
-    "admin-pressable group flex items-center rounded-lg border border-transparent text-[13px] leading-tight",
-    collapsed ? "justify-center px-0 py-2.5" : "gap-2.5 px-3 py-2.5",
+    "admin-pressable group flex items-center transition-colors",
+    collapsed
+      ? "h-10 w-10 justify-center rounded-lg"
+      : "h-8 gap-2 rounded-md px-2 text-sm",
     isActive
-      ? "bg-[#f5f5f7] font-semibold text-[#1d1d1f]"
-      : "font-normal text-[#7a7a7a] hover:bg-[#f5f5f7] hover:text-[#1d1d1f]",
+      ? "bg-[#111111] font-medium text-white"
+      : "text-slate-500 hover:bg-[#f9f9fa] hover:text-[#111111]",
   );
 
   const linkContent = (
     <>
       <item.icon
         className={cn(
-          "flex-shrink-0 transition-all",
-          collapsed ? "h-[18px] w-[18px]" : "h-[14px] w-[14px]",
+          "flex-shrink-0",
+          collapsed ? "h-[18px] w-[18px]" : "h-4 w-4",
         )}
+        strokeWidth={1.25}
       />
       {!collapsed && (
         <>
-          <span className={cn("text-[13px]", item.external && "flex-1")}>
+          <span className={cn("truncate", item.external && "flex-1")}>
             {item.name}
           </span>
           {item.external && (
@@ -281,38 +433,61 @@ function NavGroupComponent({
   group,
   pathname,
   collapsed,
+  onExpand,
 }: {
   group: NavGroup;
   pathname: string;
   collapsed: boolean;
+  onExpand: () => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const isActive = group.items.some(
+    (item) =>
+      !item.isLabel &&
+      (pathname === item.href ||
+        (item.href !== "/" && pathname.startsWith(item.href))),
+  );
+  const open = isOpen || isActive;
 
   const parentButton = (
     <button
       type="button"
-      onClick={() => setIsOpen(!isOpen)}
+      onClick={() => {
+        if (collapsed) {
+          setIsOpen(true);
+          onExpand();
+          return;
+        }
+        if (!isActive) setIsOpen(!isOpen);
+      }}
       className={cn(
-        "admin-pressable flex w-full items-center rounded-lg border border-transparent text-[13px] leading-tight",
-        collapsed ? "justify-center px-0 py-2.5" : "gap-2.5 px-3 py-2.5",
-        "font-normal text-[#7a7a7a] hover:bg-[#f5f5f7] hover:text-[#1d1d1f]",
+        "admin-pressable group flex items-center transition-colors",
+        collapsed
+          ? "h-10 w-10 justify-center rounded-lg"
+          : "h-8 w-full gap-2 rounded-md p-2",
+        collapsed && isActive
+          ? "bg-[#111111] text-white"
+          : "text-slate-500 hover:bg-[#f9f9fa] hover:text-[#111111]",
       )}
     >
       <group.icon
         className={cn(
-          "flex-shrink-0 transition-all",
-          collapsed ? "h-[18px] w-[18px]" : "h-[14px] w-[14px]",
+          "flex-shrink-0",
+          collapsed ? "h-[18px] w-[18px]" : "h-4 w-4",
         )}
+        strokeWidth={1.25}
       />
       {!collapsed && (
         <>
-          <span className="flex-1 text-left text-[13px]">{group.name}</span>
+          <span className="flex-1 text-left text-sm font-medium text-slate-700">
+            {group.name}
+          </span>
           <ChevronDown
             className={cn(
-              "h-[14px] w-[14px] transition-transform duration-200",
-              isOpen ? "rotate-180" : "",
-              "text-[#cccccc]",
+              "h-3.5 w-3.5 text-slate-300 transition-transform duration-200 group-hover:text-slate-400",
+              open ? "" : "-rotate-90",
             )}
+            strokeWidth={1.25}
           />
         </>
       )}
@@ -334,20 +509,18 @@ function NavGroupComponent({
 
       <div
         className={cn(
-          "overflow-hidden transition-all duration-200",
-          collapsed ? "space-y-1 pl-0" : "relative ml-4 space-y-1 pl-4",
-          isOpen ? "max-h-[720px] opacity-100" : "max-h-0 opacity-0",
-          !collapsed &&
-            "before:absolute before:top-2 before:bottom-2 before:left-1 before:w-px before:bg-[#eeeeee]",
+          "mx-3.5 min-w-0 translate-x-px overflow-hidden border-l border-slate-200 px-2.5 transition-all duration-200",
+          !collapsed && open
+            ? "max-h-[720px] space-y-1 py-0.5 opacity-100"
+            : "max-h-0 opacity-0",
         )}
       >
         {group.items.map((item) => {
           if (item.isLabel) {
-            if (collapsed) return null;
             return (
               <div
                 key={item.name}
-                className="relative px-3 pt-2.5 pb-1 text-[13px] font-semibold uppercase tracking-wider text-[#cccccc] before:absolute before:left-[-12px] before:top-[18px] before:h-px before:w-3 before:bg-[#eeeeee]"
+                className="px-2 pt-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-300"
               >
                 {item.name}
               </div>
@@ -362,32 +535,15 @@ function NavGroupComponent({
               key={item.name}
               href={item.href}
               className={cn(
-                "admin-pressable flex items-center rounded-lg border border-transparent text-[13px] leading-tight",
-                collapsed
-                  ? "justify-center px-0 py-2.5"
-                  : "relative px-3 py-2 before:absolute before:left-[-12px] before:top-1/2 before:h-px before:w-3 before:bg-[#eeeeee]",
+                "admin-pressable flex h-7 min-w-0 -translate-x-px items-center overflow-hidden rounded-md px-2 text-sm transition-colors",
                 isActive
-                  ? "bg-[#f5f5f7] font-semibold text-[#1d1d1f]"
-                  : "font-normal text-[#7a7a7a] hover:bg-[#f5f5f7] hover:text-[#1d1d1f]",
+                  ? "bg-[#111111] font-medium text-white"
+                  : "text-slate-500 hover:bg-[#f9f9fa] hover:text-[#111111]",
               )}
             >
-              {collapsed && (
-                <item.icon className="h-[18px] w-[18px] flex-shrink-0 transition-all" />
-              )}
-              {!collapsed && <span className="text-[13px]">{item.name}</span>}
+              <span className="truncate">{item.name}</span>
             </Link>
           );
-
-          if (collapsed) {
-            return (
-              <Tooltip key={item.name}>
-                <TooltipTrigger asChild>{childLink}</TooltipTrigger>
-                <TooltipContent side="right" sideOffset={8}>
-                  {item.name}
-                </TooltipContent>
-              </Tooltip>
-            );
-          }
 
           return <span key={item.name}>{childLink}</span>;
         })}
@@ -470,84 +626,79 @@ export default function Sidebar() {
   return (
     <aside
       className={cn(
-        "admin-sidebar z-20 flex flex-col justify-between py-5 transition-all duration-300",
-        collapsed ? "w-16" : "w-56",
+        "relative z-20 flex h-screen shrink-0 flex-col border-r border-[#f3f3f3] bg-white py-5 text-slate-900 transition-[width] duration-200",
+        collapsed ? "w-16" : "w-60",
       )}
     >
-      {/* Top section */}
-      <div className="flex flex-col gap-4">
-        {/* Logo Area + Toggle */}
-        <div className="relative flex flex-col items-center px-2">
-          <Link
-            href="/"
-            className={cn(
-              "flex flex-col items-center gap-1.5 py-1",
-              collapsed && "gap-0",
-            )}
-          >
-            <Image
-              src="/acg_ci_gray.png"
-              alt="ACG Logo"
-              width={100}
-              height={40}
-              className={cn(
-                "w-auto transition-all duration-300",
-                collapsed ? "h-5" : "h-6",
-              )}
-            />
-            {!collapsed && (
-              <h1 className="text-[13px] font-medium tracking-[-0.01em] text-[#1d1d1f]">
-                비용 관리 Admin
-              </h1>
-            )}
-          </Link>
-          <button
-            type="button"
-            onClick={() => setCollapsed(!collapsed)}
-            className={cn(
-              "admin-pressable flex items-center justify-center rounded-lg border border-transparent p-1.5 text-[#7a7a7a] hover:bg-[#f5f5f7] hover:text-[#1d1d1f]",
-              collapsed ? "mt-2" : "absolute right-0 top-0",
-            )}
-          >
-            {collapsed ? (
-              <PanelLeftOpen className="h-[18px] w-[18px]" />
-            ) : (
-              <PanelLeftClose className="h-[14px] w-[14px]" />
-            )}
-          </button>
-        </div>
-
-        {/* Navigation */}
-        <nav className={cn("flex flex-col gap-1", collapsed ? "px-2" : "")}>
-          {visibleNavigation.map((item) => {
-            if (isNavGroup(item)) {
-              return (
-                <NavGroupComponent
-                  key={item.name}
-                  group={item}
-                  pathname={pathname}
-                  collapsed={collapsed}
-                />
-              );
-            }
-            const isActive =
-              pathname === item.href ||
-              (item.href !== "/" && pathname.startsWith(item.href));
-            return (
-              <NavItemComponent
-                key={item.name}
-                item={item}
-                isActive={isActive}
-                collapsed={collapsed}
-              />
-            );
-          })}
-        </nav>
+      <div
+        className={cn(
+          "mb-5 flex items-center",
+          collapsed ? "justify-center" : "px-5",
+        )}
+      >
+        <Link href="/" className="flex min-w-0 items-center gap-2">
+          <Image
+            src="/acg_ci_gray.png"
+            alt="ACG"
+            width={48}
+            height={48}
+            className="h-10 w-10 shrink-0 object-contain"
+            priority
+          />
+          {!collapsed && (
+            <p className="truncate text-sm text-[#111111]">비용 관리 Admin</p>
+          )}
+        </Link>
       </div>
 
+      <button
+        type="button"
+        onClick={() => setCollapsed(!collapsed)}
+        aria-label={collapsed ? "사이드바 펼치기" : "사이드바 접기"}
+        className="absolute -right-3 top-8 z-10 flex h-6 w-6 items-center justify-center rounded-full border border-[#e5e7eb] bg-white text-slate-400 shadow-sm transition-colors hover:bg-[#f9f9fa] hover:text-slate-700"
+      >
+        {collapsed ? (
+          <PanelLeftOpen className="h-3.5 w-3.5" strokeWidth={1.25} />
+        ) : (
+          <PanelLeftClose className="h-3.5 w-3.5" strokeWidth={1.25} />
+        )}
+      </button>
+
+      <nav
+        className={cn(
+          "flex flex-1 flex-col gap-1 overflow-y-auto",
+          collapsed ? "items-center px-2" : "px-2",
+        )}
+      >
+        {visibleNavigation.map((item) => {
+          if (isNavGroup(item)) {
+            return (
+              <NavGroupComponent
+                key={item.name}
+                group={item}
+                pathname={pathname}
+                collapsed={collapsed}
+                onExpand={() => setCollapsed(false)}
+              />
+            );
+          }
+          const isActive =
+            pathname === item.href ||
+            (item.href !== "/" && pathname.startsWith(item.href));
+          return (
+            <NavItemComponent
+              key={item.name}
+              item={item}
+              isActive={isActive}
+              collapsed={collapsed}
+            />
+          );
+        })}
+      </nav>
+
       {/* User Profile Bottom */}
-      <div className={cn("flex flex-col gap-4", collapsed ? "px-2" : "")}>
-        <div className="h-px w-full bg-black/8" />
+      <div className={cn("space-y-2 pt-2", collapsed ? "px-2" : "px-3")}>
+        <div className="h-px w-full bg-[#f3f3f3]" />
 
         {collapsed ? (
           <Tooltip>
@@ -555,9 +706,9 @@ export default function Sidebar() {
               <button
                 type="button"
                 onClick={() => setIsPasswordDialogOpen(true)}
-                className="admin-pressable flex w-full cursor-pointer items-center justify-center rounded-lg border border-transparent p-2 hover:bg-[#f5f5f7]"
+                className="admin-pressable flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg hover:bg-[#f9f9fa]"
               >
-                <span className="text-[13px] font-bold text-[#1d1d1f]">
+                <span className="text-sm font-bold text-[#111111]">
                   {user?.fullName?.charAt(0) || "A"}
                 </span>
               </button>
@@ -570,13 +721,13 @@ export default function Sidebar() {
           <button
             type="button"
             onClick={() => setIsPasswordDialogOpen(true)}
-            className="admin-pressable flex w-full cursor-pointer items-center justify-between rounded-lg border border-transparent px-3 py-2.5 hover:bg-[#f5f5f7]"
+            className="admin-pressable flex w-full cursor-pointer items-center justify-between rounded-xl bg-[#f9f9fa] px-4 py-3 hover:bg-[#f0f0f1]"
           >
             <div className="flex flex-col items-start leading-tight">
-              <p className="text-[13px] font-semibold text-[#1d1d1f]">
+              <p className="text-sm font-semibold text-[#111111]">
                 {user?.fullName || "Admin"}
               </p>
-              <p className="text-[13px] text-[#7a7a7a]">
+              <p className="mt-0.5 text-[11px] text-slate-400">
                 {user?.adminRole
                   ? getAdminRoleLabel(user.adminRole)
                   : user?.role === "admin"
@@ -585,7 +736,7 @@ export default function Sidebar() {
               </p>
             </div>
             {user?.hireDate && (
-              <span className="rounded-full border border-black/8 bg-[#f8fafc] px-2 py-0.5 text-[13px] font-semibold text-[#7a7a7a]">
+              <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-500 shadow-sm">
                 D+{dayjs().diff(dayjs(user.hireDate), "day")}
               </span>
             )}
@@ -597,9 +748,9 @@ export default function Sidebar() {
             <TooltipTrigger asChild>
               <button
                 onClick={logout}
-                className="admin-pressable flex w-full items-center justify-center rounded-lg border border-black/8 py-2.5 text-[13px] font-medium text-[#7a7a7a] hover:bg-[#f5f5f7] hover:text-[#1d1d1f]"
+                className="admin-pressable flex h-10 w-10 items-center justify-center rounded-lg text-slate-400 hover:bg-[#f9f9fa] hover:text-slate-600"
               >
-                <LogOut className="h-[14px] w-[14px]" />
+                <LogOut className="h-4 w-4" strokeWidth={1.25} />
               </button>
             </TooltipTrigger>
             <TooltipContent side="right" sideOffset={8}>
@@ -609,9 +760,9 @@ export default function Sidebar() {
         ) : (
           <button
             onClick={logout}
-            className="admin-pressable flex w-full items-center justify-start gap-2 rounded-lg border border-black/8 px-3 py-2.5 text-[13px] font-medium text-[#7a7a7a] hover:bg-[#f5f5f7] hover:text-[#1d1d1f]"
+            className="admin-pressable flex w-full items-center justify-start gap-2 rounded-lg px-3 py-2.5 text-sm text-slate-400 hover:bg-[#f9f9fa] hover:text-slate-600"
           >
-            <LogOut className="h-[14px] w-[14px]" />
+            <LogOut className="h-4 w-4" strokeWidth={1.25} />
             <span>로그아웃</span>
           </button>
         )}

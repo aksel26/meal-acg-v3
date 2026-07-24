@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { useUserStore } from "@/stores/userStore";
 import { useAttendance, useCheckIn, useCheckOut } from "@/hooks/use-attendance";
 import { useMemberIdLookup } from "@/hooks/use-points-data";
+import { useProfile } from "@/hooks/use-profile";
 import { useState, useEffect } from "react";
 import AttendanceConfirmDialog from "./AttendanceConfirmDialog";
 import dayjs from "dayjs";
@@ -33,6 +34,7 @@ export default function GreetingSection({ userName }: GreetingSectionProps) {
 
   const todayStr = dayjs().tz("Asia/Seoul").format("YYYY-MM-DD");
   const { data: attendance, isLoading } = useAttendance(memberId, todayStr);
+  const { data: profile } = useProfile(memberId);
   const checkInMutation = useCheckIn();
   const checkOutMutation = useCheckOut();
 
@@ -126,6 +128,7 @@ export default function GreetingSection({ userName }: GreetingSectionProps) {
         onConfirm={handleCheckOut}
         isPending={checkOutMutation.isPending}
         checkInAt={attendance?.check_in_at}
+        birthDate={profile?.birth_date}
       />
     </>
   );

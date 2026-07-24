@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from("attendance_records")
       .select(
-        `*, member:members!attendance_records_member_id_fkey(id, full_name, position:positions!members_position_id_fkey(name))`
+        `*, member:members!attendance_records_member_id_fkey(id, full_name, birth_date, position:positions!members_position_id_fkey(name))`,
       )
       .order("date", { ascending: true })
       .order("member_id", { ascending: true });
@@ -27,7 +27,9 @@ export async function GET(request: NextRequest) {
       // 전체 멤버 + 해당 날짜 출퇴근 기록 병합
       const { data: members, error: membersError } = await supabase
         .from("member_current_status")
-        .select("member_id, full_name, position_name, title_name, current_status")
+        .select(
+          "member_id, full_name, birth_date, position_name, title_name, current_status",
+        )
         .is("current_status", null);
 
       if (membersError) {
@@ -72,6 +74,7 @@ export async function GET(request: NextRequest) {
           member: {
             id: m.member_id,
             full_name: m.full_name,
+            birth_date: m.birth_date,
             position: { name: m.position_name || "-" },
             title: { name: m.title_name || null },
           },

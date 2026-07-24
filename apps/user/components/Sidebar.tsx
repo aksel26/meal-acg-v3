@@ -35,6 +35,7 @@ import { useAttendance, useCheckIn, useCheckOut } from "@/hooks/use-attendance";
 import { getAttendanceStatusInfos } from "@/lib/attendance-status";
 import AttendanceConfirmDialog from "./dashboard/AttendanceConfirmDialog";
 import { useMemberIdLookup } from "@/hooks/use-points-data";
+import { useProfile } from "@/hooks/use-profile";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
@@ -227,6 +228,7 @@ export function AttendanceSection({
 }) {
   const todayStr = dayjs().tz("Asia/Seoul").format("YYYY-MM-DD");
   const { data: attendance, isLoading } = useAttendance(memberId, todayStr);
+  const { data: profile } = useProfile(memberId);
   const checkInMutation = useCheckIn();
   const checkOutMutation = useCheckOut();
 
@@ -434,6 +436,7 @@ export function AttendanceSection({
         onConfirm={handleCheckOut}
         isPending={checkOutMutation.isPending}
         checkInAt={attendance?.check_in_at}
+        birthDate={profile?.birth_date}
       />
     </>
   );

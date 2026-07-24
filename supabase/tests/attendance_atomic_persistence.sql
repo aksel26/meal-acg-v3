@@ -28,11 +28,16 @@ DECLARE
   v_expected_error boolean;
   v_request_count integer;
   v_stale_check_in timestamptz;
+  v_today date := (clock_timestamp() AT TIME ZONE 'Asia/Seoul')::date;
 BEGIN
   SELECT id INTO v_member_id FROM members ORDER BY id LIMIT 1;
   IF v_member_id IS NULL THEN
     RAISE EXCEPTION 'attendance test requires one seeded member';
   END IF;
+
+  UPDATE members
+  SET birth_date = (v_today - interval '1 day')::date
+  WHERE id = v_member_id;
 
   DELETE FROM attendance_records
   WHERE member_id = v_member_id
@@ -154,6 +159,43 @@ BEGIN
   END;
   IF NOT v_expected_error THEN
     RAISE EXCEPTION 'checkout accepted an attendance record older than 18 hours';
+  END IF;
+
+  DELETE FROM attendance_records WHERE member_id = v_member_id;
+  UPDATE members
+  SET birth_date = to_date('2000-' || to_char(v_today, 'MM-DD'), 'YYYY-MM-DD')
+  WHERE id = v_member_id;
+
+  INSERT INTO attendance_records (
+    member_id,
+    date,
+    check_in_at,
+    check_in_status,
+    status
+  )
+  VALUES (
+    v_member_id,
+    v_today,
+    clock_timestamp() - interval '7 hours 1 minute',
+    'normal',
+    'normal'
+  );
+
+  SELECT *
+  INTO v_checked_out
+  FROM record_attendance_check_out(v_member_id, NULL);
+
+  IF v_checked_out.check_out_status <> 'normal'
+    OR v_checked_out.approved_at IS NULL THEN
+    RAISE EXCEPTION 'birthday checkout after seven hours was not treated as normal';
+  END IF;
+
+  SELECT count(*)
+  INTO v_request_count
+  FROM early_leave_requests
+  WHERE attendance_record_id = v_checked_out.id;
+  IF v_request_count <> 0 THEN
+    RAISE EXCEPTION 'birthday checkout created an early-leave request';
   END IF;
 END;
 $$;

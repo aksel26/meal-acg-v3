@@ -26,6 +26,7 @@ interface AttendanceConfirmDialogProps {
   onConfirm: (earlyLeaveReason?: string) => void;
   isPending: boolean;
   checkInAt?: string | null;
+  birthDate?: string | null;
 }
 
 export default function AttendanceConfirmDialog({
@@ -35,6 +36,7 @@ export default function AttendanceConfirmDialog({
   onConfirm,
   isPending,
   checkInAt,
+  birthDate,
 }: AttendanceConfirmDialogProps) {
   const [now, setNow] = useState(() => dayjs().tz("Asia/Seoul"));
   const [reason, setReason] = useState("");
@@ -64,7 +66,15 @@ export default function AttendanceConfirmDialog({
   const isLate = checkInStatus === "late";
 
   // 퇴근 모드: 조기퇴근 판단
-  const expectedOut = checkInAt ? dayjs(checkInAt).add(9, "hour") : null;
+  const isBirthday =
+    !isCheckIn &&
+    !!checkInAt &&
+    !!birthDate &&
+    dayjs(checkInAt).tz("Asia/Seoul").format("MM-DD") ===
+      dayjs(birthDate).format("MM-DD");
+  const expectedOut = checkInAt
+    ? dayjs(checkInAt).add(isBirthday ? 7 : 9, "hour")
+    : null;
   const isEarlyLeave =
     !isCheckIn && expectedOut ? now.isBefore(expectedOut) : false;
   const remainingMinutes =
@@ -117,7 +127,9 @@ export default function AttendanceConfirmDialog({
               ? "현재 시각 기준으로 출근을 기록합니다."
               : isEarlyLeave
                 ? "정규 퇴근시간 전 퇴근은 승인 요청으로 등록됩니다."
-                : "오늘의 퇴근 시간을 기록합니다."}
+                : isBirthday
+                  ? "생일 혜택으로 정규 퇴근보다 2시간 일찍 퇴근할 수 있습니다."
+                  : "오늘의 퇴근 시간을 기록합니다."}
           </p>
         </DialogHeader>
 

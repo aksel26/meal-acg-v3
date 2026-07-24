@@ -25,6 +25,7 @@ export interface AttendanceRecord {
   member: {
     id: string;
     full_name: string;
+    birth_date: string | null;
     position: { name: string } | null;
     title?: { name: string | null } | null;
   };

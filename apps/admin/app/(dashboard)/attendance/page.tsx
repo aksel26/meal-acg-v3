@@ -381,6 +381,9 @@ function InlineRow({
   const [reference, setReference] = useState(record.reference ?? "");
 
   const date = dayjs(record.date);
+  const hasBirthdayEarlyCheckout =
+    !!record.member.birth_date &&
+    dayjs(record.member.birth_date).format("MM-DD") === date.format("MM-DD");
 
   const toIso = (time: string) => {
     if (!time) return null;
@@ -508,7 +511,17 @@ function InlineRow({
       </td>
       {/* 이름 */}
       <td className="px-3 py-3 align-middle font-medium text-slate-800">
-        {record.member.full_name}
+        <div className="flex items-center gap-1.5">
+          <span>{record.member.full_name}</span>
+          {hasBirthdayEarlyCheckout && (
+            <span
+              className="rounded-full bg-pink-50 px-1.5 py-0.5 text-[10px] font-semibold text-pink-600"
+              title="정상 퇴근 기준이 2시간 단축됩니다."
+            >
+              생일 조기퇴근
+            </span>
+          )}
+        </div>
       </td>
       {/* 수정자 */}
       <td className={cellClass}>{record.modifier?.full_name ?? "-"}</td>

@@ -38,31 +38,17 @@ export function normalizeDayoffAttendance(
     duration_type?: string | null;
   } | null,
 ): string | null {
-  const name = leaveType?.name || "";
   const category = leaveType?.category || "";
   const durationType = leaveType?.duration_type || "";
-  const text = `${name} ${category}`;
 
-  if (durationType === "morning" || name.includes("오전")) {
+  if (category === "지각/조퇴") return null;
+  if (durationType === "morning") {
     return "오전 반차/휴무";
   }
-  if (durationType === "afternoon" || name.includes("오후")) {
+  if (durationType === "afternoon") {
     return "오후 반차/휴무";
   }
-  if (text.includes("반차")) return "오전 반차/휴무";
-  if (
-    text.includes("연차") ||
-    text.includes("휴가") ||
-    text.includes("휴무") ||
-    text.includes("대체") ||
-    text.includes("경조") ||
-    text.includes("특별") ||
-    text.includes("훈련")
-  ) {
-    return "연차/휴무";
-  }
-
-  return null;
+  return durationType === "full" ? "연차/휴무" : null;
 }
 
 export function normalizeAttendanceRecordType(

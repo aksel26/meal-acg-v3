@@ -51,10 +51,12 @@ export async function GET() {
       );
     }
 
-    // 오늘 연차/휴가 수
+    // 오늘 승인된 종일 휴가/반차
     const { data: dayoffs, error: dayoffsError } = await supabase
       .from("dayoffs")
-      .select("target_id")
+      .select(
+        "target_id, leave_type:leave_types!dayoffs_leave_type_id_fkey(category, duration_type, include_in_stats)",
+      )
       .eq("leave_date", today)
       .eq("is_deleted", false)
       .eq("approval_status", "approved");
@@ -63,8 +65,33 @@ export async function GET() {
       console.error("Error fetching dayoffs:", dayoffsError);
     }
 
-    const onLeave = (dayoffs ?? []).length;
-    const onLeaveIds = new Set((dayoffs ?? []).map((d) => d.target_id));
+    type LeaveType = {
+      category: string;
+      duration_type: string;
+      include_in_stats: boolean;
+    };
+    const fullDayLeaveIds = new Set<string>();
+    const halfDayLeaveIds = new Set<string>();
+    for (const row of dayoffs ?? []) {
+      const relation = (
+        row as unknown as {
+          leave_type: LeaveType | LeaveType[] | null;
+        }
+      ).leave_type;
+      const leaveType = Array.isArray(relation) ? relation[0] : relation;
+      if (
+        !memberMap.has(row.target_id) ||
+        !leaveType?.include_in_stats ||
+        leaveType.category === "지각/조퇴"
+      ) {
+        continue;
+      }
+      if (leaveType.duration_type === "full") {
+        fullDayLeaveIds.add(row.target_id);
+      } else {
+        halfDayLeaveIds.add(row.target_id);
+      }
+    }
 
     const checkedInIds = new Set(
       (records ?? [])
@@ -86,7 +113,6 @@ export async function GET() {
     const checkedIn = checkedInIds.size;
     const earlyCheckIn = earlyCheckInIds.size;
     const late = lateIds.size;
-    const notCheckedIn = Math.max(0, total - checkedIn - onLeave);
 
     const lateMembers = Array.from(lateIds)
       .filter((id) => memberMap.has(id))
@@ -94,19 +120,33 @@ export async function GET() {
 
     const notCheckedInMembers = members
       .filter(
-        (m) => !checkedInIds.has(m.member_id) && !onLeaveIds.has(m.member_id),
+        (m) =>
+          !checkedInIds.has(m.member_id) &&
+          !fullDayLeaveIds.has(m.member_id) &&
+          !halfDayLeaveIds.has(m.member_id),
       )
       .map((m) => ({ id: m.member_id, name: m.full_name }));
+    const leaveMembers = Array.from(fullDayLeaveIds).map((id) => ({
+      id,
+      name: memberMap.get(id)!,
+    }));
+    const halfDayLeaveMembers = Array.from(halfDayLeaveIds).map((id) => ({
+      id,
+      name: memberMap.get(id)!,
+    }));
 
     return NextResponse.json({
       total,
       checkedIn,
       earlyCheckIn,
-      notCheckedIn,
+      notCheckedIn: notCheckedInMembers.length,
       late,
-      onLeave,
+      onLeave: fullDayLeaveIds.size,
+      halfDayLeave: halfDayLeaveIds.size,
       lateMembers,
       notCheckedInMembers,
+      leaveMembers,
+      halfDayLeaveMembers,
     });
   } catch (error) {
     console.error("Attendance today API error:", error);

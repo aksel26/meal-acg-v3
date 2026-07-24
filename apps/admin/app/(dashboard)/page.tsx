@@ -311,10 +311,14 @@ export default function DashboardPage() {
     queryFn: async () => {
       const res = await fetch(
         `/api/stats/summary?year=${calendarYear}&month=${calendarMonth}`,
+        { cache: "no-store" },
       );
       if (!res.ok) throw new Error("Failed to fetch stats");
       return res.json();
     },
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 
   const { data: statusMembers } = useActiveStatusMembers();

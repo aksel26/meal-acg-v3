@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { saveMeal, MealData } from "@/lib/supabase/meals";
+import {
+  APPROVED_LEAVE_MEAL_FORBIDDEN,
+  saveMeal,
+  MealData,
+} from "@/lib/supabase/meals";
 import { createServiceClient } from "@/lib/supabase/client";
 import { getSessionUser } from "@/lib/auth";
+import { parseNonNegativeInteger } from "@/lib/input-validation";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
@@ -29,7 +34,10 @@ export async function POST(request: NextRequest) {
     // 로그인 세션에서 본인 신원을 강제한다 (요청 body의 userId/userName은 신뢰하지 않음)
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
-      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+      return NextResponse.json(
+        { error: "로그인이 필요합니다." },
+        { status: 401 },
+      );
     }
 
     const body = await request.json();
@@ -41,7 +49,7 @@ export async function POST(request: NextRequest) {
           error: "필수 파라미터가 누락되었습니다.",
           required: ["date"],
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -53,21 +61,37 @@ export async function POST(request: NextRequest) {
     if (!targetDateKST.isValid()) {
       return NextResponse.json(
         { error: "올바르지 않은 날짜 형식입니다." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     console.log(`=== Meal Submit API ===`);
     console.log(`User: ${userIdentifier}, Date: ${date}`);
 
+    const breakfastAmount = parseNonNegativeInteger(breakfast?.amount);
+    const enteredLunchAmount = parseNonNegativeInteger(lunch?.amount);
+    const dinnerAmount = parseNonNegativeInteger(dinner?.amount);
+    if (
+      breakfastAmount === null ||
+      enteredLunchAmount === null ||
+      dinnerAmount === null
+    ) {
+      return NextResponse.json(
+        { error: "식대 금액은 0 이상의 정수여야 합니다." },
+        { status: 400 },
+      );
+    }
+
     // 개별식사인 경우 기본 금액 조회
     const isIndividualMeal = lunch?.attendance === "근무(개별식사 / 식사안함)";
-    let lunchAmount = parseInt(lunch?.amount) || 0;
+    let lunchAmount = enteredLunchAmount;
 
     if (isIndividualMeal) {
       const dailyAllowance = await getDailyAllowance();
       lunchAmount = dailyAllowance;
-      console.log(`Individual meal detected, applying daily allowance: ${dailyAllowance}원`);
+      console.log(
+        `Individual meal detected, applying daily allowance: ${dailyAllowance}원`,
+      );
     }
 
     // 식사 데이터 준비
@@ -75,7 +99,7 @@ export async function POST(request: NextRequest) {
       date: targetDateKST.toDate(),
       breakfast: {
         store: breakfast?.store || "",
-        amount: parseInt(breakfast?.amount) || 0,
+        amount: breakfastAmount,
         payer: breakfast?.payer || "",
       },
       lunch: {
@@ -86,7 +110,7 @@ export async function POST(request: NextRequest) {
       },
       dinner: {
         store: dinner?.store || "",
-        amount: parseInt(dinner?.amount) || 0,
+        amount: dinnerAmount,
         payer: dinner?.payer || "",
       },
     };
@@ -95,16 +119,24 @@ export async function POST(request: NextRequest) {
     const result = await saveMeal(userIdentifier, mealData);
 
     if (!result.success) {
+      if (result.error === APPROVED_LEAVE_MEAL_FORBIDDEN) {
+        return NextResponse.json(
+          { error: "승인된 휴가일에는 식사 기록을 저장할 수 없습니다." },
+          { status: 409 },
+        );
+      }
       return NextResponse.json(
         {
           error: "Failed to save meal data",
           details: result.error,
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
-    console.log(`Successfully saved meal data for ${userIdentifier} on ${date}`);
+    console.log(
+      `Successfully saved meal data for ${userIdentifier} on ${date}`,
+    );
 
     return NextResponse.json({
       success: true,
@@ -122,7 +154,7 @@ export async function POST(request: NextRequest) {
         error: "Failed to submit meal data",
         details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

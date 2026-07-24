@@ -23,10 +23,15 @@ export function useLeaveBalances(year: number) {
   return useQuery<LeaveBalance[]>({
     queryKey: queryKeys.leaveBalances.byYear(year),
     queryFn: async () => {
-      const res = await fetch(`/api/leave-balances?year=${year}`);
+      const res = await fetch(`/api/leave-balances?year=${year}`, {
+        cache: "no-store",
+      });
       if (!res.ok) throw new Error("Failed to fetch leave balances");
       return res.json();
     },
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 }
 

@@ -63,11 +63,15 @@ export function useDayoffs(year: number, month: number) {
   return useQuery<DayoffRecord[]>({
     queryKey: queryKeys.dayoffs.byMonth(year, month),
     queryFn: async () => {
-      const res = await fetch(`/api/dayoffs?year=${year}&month=${month}`);
+      const res = await fetch(`/api/dayoffs?year=${year}&month=${month}`, {
+        cache: "no-store",
+      });
       if (!res.ok) throw new Error("Failed to fetch dayoffs");
       return res.json();
     },
-    staleTime: 30 * 1000,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -75,12 +79,16 @@ export function useDayoffsByTarget(targetId: string, year: number) {
   return useQuery<DayoffRecord[]>({
     queryKey: [...queryKeys.dayoffs.byTarget(targetId), year],
     queryFn: async () => {
-      const res = await fetch(`/api/dayoffs?target_id=${targetId}&year=${year}`);
+      const res = await fetch(`/api/dayoffs?target_id=${targetId}&year=${year}`, {
+        cache: "no-store",
+      });
       if (!res.ok) throw new Error("Failed to fetch dayoffs");
       return res.json();
     },
     enabled: !!targetId,
-    staleTime: 30 * 1000,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -88,11 +96,14 @@ export function useDayoffDetail(id: string | null) {
   return useQuery<DayoffRecord>({
     queryKey: queryKeys.dayoffs.detail(id || ""),
     queryFn: async () => {
-      const res = await fetch(`/api/dayoffs/${id}`);
+      const res = await fetch(`/api/dayoffs/${id}`, { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to fetch dayoff");
       return res.json();
     },
     enabled: !!id,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -100,10 +111,15 @@ export function useDayoffStats(year: number, month: number) {
   return useQuery<DayoffStats[]>({
     queryKey: queryKeys.dayoffs.stats(year, month),
     queryFn: async () => {
-      const res = await fetch(`/api/dayoffs/stats?year=${year}&month=${month}`);
+      const res = await fetch(
+        `/api/dayoffs/stats?year=${year}&month=${month}`,
+        { cache: "no-store" },
+      );
       if (!res.ok) throw new Error("Failed to fetch dayoff stats");
       return res.json();
     },
-    staleTime: 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 }

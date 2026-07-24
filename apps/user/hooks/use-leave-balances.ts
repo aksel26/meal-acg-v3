@@ -22,11 +22,15 @@ export function useLeaveBalances(memberId: string | null, year: number) {
         memberId: memberId!,
         year: String(year),
       });
-      const res = await fetch(`/api/leave-balances?${params}`);
+      const res = await fetch(`/api/leave-balances?${params}`, {
+        cache: "no-store",
+      });
       if (!res.ok) throw new Error("연차 잔액 조회 실패");
       return res.json();
     },
     enabled: !!memberId,
-    staleTime: 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 }

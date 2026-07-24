@@ -233,6 +233,12 @@ export default function AttendancePage() {
                 {summary.onLeave}
               </strong>
             </span>
+            <span className="flex h-full items-center gap-1.5 px-3">
+              반차{" "}
+              <strong className="inline-flex h-full items-center text-xl font-semibold leading-none text-slate-950">
+                {summary.halfDayLeave}
+              </strong>
+            </span>
             {summary.lateMembers.length > 0 && (
               <span className="flex h-full items-center px-3 text-sm font-medium text-slate-500">
                 지각: {summary.lateMembers.map((m) => m.name).join(", ")}

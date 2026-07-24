@@ -41,10 +41,15 @@ export function useApprovals(status?: string) {
       ? queryKeys.approvals.byStatus(status)
       : queryKeys.approvals.all,
     queryFn: async () => {
-      const res = await fetch(`/api/approvals?${params.toString()}`);
+      const res = await fetch(`/api/approvals?${params.toString()}`, {
+        cache: "no-store",
+      });
       if (!res.ok) throw new Error("Failed to fetch approvals");
       return res.json();
     },
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -66,6 +71,9 @@ export function useApproveRequest() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.approvals.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.dayoffs.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.attendance.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       toast.success("승인되었습니다.");
     },
     onError: (error: Error) => {
@@ -92,6 +100,9 @@ export function useCancelApprovalRequest() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.approvals.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.dayoffs.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.attendance.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       toast.success("처리가 취소되었습니다.");
     },
     onError: (error: Error) => {
@@ -124,6 +135,9 @@ export function useRejectRequest() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.approvals.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.dayoffs.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.attendance.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       toast.success("반려되었습니다.");
     },
     onError: (error: Error) => {

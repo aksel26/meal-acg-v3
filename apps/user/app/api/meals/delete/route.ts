@@ -37,7 +37,7 @@ export async function DELETE(request: NextRequest) {
 
     const body: DeleteMealRequest = await request.json();
     const { date, mealType } = body;
-    const userName = sessionUser.fullName;
+    const userId = sessionUser.id;
 
     if (!date) {
       return NextResponse.json(
@@ -74,11 +74,11 @@ export async function DELETE(request: NextRequest) {
     }
 
     console.log(
-      `Processing meal deletion for ${userName} on ${targetDateKST.format("YYYY-MM-DD")} (${mealType || "all"}) (KST)`,
+      `Processing meal deletion for ${userId} on ${targetDateKST.format("YYYY-MM-DD")} (${mealType || "all"}) (KST)`,
     );
 
     // Supabase에서 삭제
-    const result = await deleteMeal(userName, date, mealType);
+    const result = await deleteMeal(userId, date, mealType);
 
     if (!result.success) {
       return NextResponse.json(
@@ -97,7 +97,7 @@ export async function DELETE(request: NextRequest) {
         ? `${MEAL_TYPE_LABELS[mealType]} 기록이 성공적으로 삭제되었습니다.`
         : "식사 기록이 성공적으로 삭제되었습니다.",
       data: {
-        userName,
+        userName: sessionUser.fullName,
         date: targetDateKST.format("YYYY-MM-DD"),
         mealType: mealType || null,
       },

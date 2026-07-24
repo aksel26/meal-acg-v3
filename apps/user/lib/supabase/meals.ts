@@ -31,6 +31,7 @@ export interface MealLogRow {
 }
 
 export type MealType = "breakfast" | "lunch" | "dinner";
+export const APPROVED_LEAVE_MEAL_FORBIDDEN = "APPROVED_LEAVE_MEAL_FORBIDDEN";
 
 function hasMealSlot(row: MealLogRow, mealType: MealType) {
   if (mealType === "breakfast") {
@@ -63,11 +64,11 @@ function hasAnyMealData(row: MealLogRow) {
 
 /**
  * 식대 데이터 저장/수정
- * @param userIdOrName - user_id(UUID) 또는 userName(full_name)
+ * @param userId - 세션에서 확인한 member UUID
  * @param mealData - 식사 데이터
  */
 export async function saveMeal(
-  userIdOrName: string,
+  userId: string,
   mealData: MealData,
 ): Promise<{ success: boolean; error?: string; data?: MealLogRow }> {
   try {
@@ -77,36 +78,6 @@ export async function saveMeal(
     }
 
     const entryDate = dayjs(mealData.date).format("YYYY-MM-DD");
-
-    // UUID 형식인지 확인 (user_id로 전달된 경우)
-    const isUUID =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-        userIdOrName,
-      );
-
-    let userId: string;
-
-    if (isUUID) {
-      // user_id가 직접 전달된 경우
-      userId = userIdOrName;
-    } else {
-      // userName(full_name)으로 전달된 경우 - member 조회
-      const { data: members, error: memberError } = await supabase
-        .from("members")
-        .select("id")
-        .eq("full_name", userIdOrName)
-        .limit(1);
-
-      const member = members?.[0];
-      if (memberError || !member) {
-        console.error("Member not found:", userIdOrName, memberError);
-        return {
-          success: false,
-          error: "사용자를 찾을 수 없습니다. 다시 로그인해주세요.",
-        };
-      }
-      userId = member.id;
-    }
 
     // Upsert meal log (total_amount는 DB에서 자동 계산됨)
     const { data, error } = await supabase
@@ -133,7 +104,12 @@ export async function saveMeal(
 
     if (error) {
       console.error("Failed to save meal:", error);
-      return { success: false, error: error.message };
+      return {
+        success: false,
+        error: error.message.includes(APPROVED_LEAVE_MEAL_FORBIDDEN)
+          ? APPROVED_LEAVE_MEAL_FORBIDDEN
+          : error.message,
+      };
     }
 
     console.log(`Meal saved: - ${entryDate}`);
@@ -151,7 +127,7 @@ export async function saveMeal(
  * 식대 데이터 삭제
  */
 export async function deleteMeal(
-  userName: string,
+  userId: string,
   date: string,
   mealType?: MealType,
 ): Promise<{ success: boolean; error?: string }> {
@@ -163,22 +139,10 @@ export async function deleteMeal(
 
     const entryDate = dayjs(date).format("YYYY-MM-DD");
 
-    // Find user (use limit(1) instead of single() to handle duplicates)
-    const { data: members, error: memberError } = await supabase
-      .from("members")
-      .select("id")
-      .eq("full_name", userName)
-      .limit(1);
-
-    const member = members?.[0];
-    if (memberError || !member) {
-      return { success: true }; // Nothing to delete
-    }
-
     const baseQuery = supabase
       .from("meal_logs")
       .select("*")
-      .eq("user_id", member.id)
+      .eq("user_id", userId)
       .eq("entry_date", entryDate)
       .limit(1);
 
@@ -198,7 +162,7 @@ export async function deleteMeal(
       const { error } = await supabase
         .from("meal_logs")
         .delete()
-        .eq("user_id", member.id)
+        .eq("user_id", userId)
         .eq("entry_date", entryDate);
 
       if (error) {
@@ -236,7 +200,7 @@ export async function deleteMeal(
       const { error } = await supabase
         .from("meal_logs")
         .delete()
-        .eq("user_id", member.id)
+        .eq("user_id", userId)
         .eq("entry_date", entryDate);
 
       if (error) {
@@ -251,7 +215,7 @@ export async function deleteMeal(
     const { error } = await supabase
       .from("meal_logs")
       .update(updateData)
-      .eq("user_id", member.id)
+      .eq("user_id", userId)
       .eq("entry_date", entryDate);
 
     if (error) {
@@ -274,13 +238,13 @@ export async function deleteMeal(
  * 월별 식대 데이터 조회
  */
 export async function getMealsByMonth(
-  userName: string,
+  userId: string,
   year: number,
   month: number,
 ): Promise<{ success: boolean; error?: string; data?: MealLogRow[] }> {
   try {
     console.log(
-      `getMealsByMonth called: userName=${userName}, year=${year}, month=${month}`,
+      `getMealsByMonth called: userId=${userId}, year=${year}, month=${month}`,
     );
 
     const supabase = createServiceClient();
@@ -291,29 +255,6 @@ export async function getMealsByMonth(
       return { success: false, error: "Supabase not configured" };
     }
 
-    // Find user (use limit(1) instead of single() to handle duplicates)
-    const { data: members, error: memberError } = await supabase
-      .from("members")
-      .select("id")
-      .eq("full_name", userName)
-      .limit(1);
-
-    if (memberError) {
-      console.log(
-        `Member lookup failed for "${userName}":`,
-        memberError.message,
-      );
-      return { success: true, data: [] };
-    }
-
-    const member = members?.[0];
-    if (!member) {
-      console.log(`No member found for "${userName}"`);
-      return { success: true, data: [] };
-    }
-
-    console.log(`Found member: ${member.id}`);
-
     // Calculate date range for the month
     const startDate = dayjs(`${year}-${month}-01`).format("YYYY-MM-DD");
     const endDate = dayjs(`${year}-${month}-01`)
@@ -321,14 +262,14 @@ export async function getMealsByMonth(
       .format("YYYY-MM-DD");
 
     console.log(
-      `Querying meal_logs: user_id=${member.id}, ${startDate} ~ ${endDate}`,
+      `Querying meal_logs: user_id=${userId}, ${startDate} ~ ${endDate}`,
     );
 
     // Get meal logs
     const { data, error } = await supabase
       .from("meal_logs")
       .select("*")
-      .eq("user_id", member.id)
+      .eq("user_id", userId)
       .gte("entry_date", startDate)
       .lte("entry_date", endDate)
       .order("entry_date", { ascending: true });
@@ -353,7 +294,7 @@ export async function getMealsByMonth(
  * 특정 날짜의 식대 데이터 조회
  */
 export async function getMealByDate(
-  userName: string,
+  userId: string,
   date: string,
 ): Promise<{ success: boolean; error?: string; data?: MealLogRow | null }> {
   try {
@@ -364,23 +305,11 @@ export async function getMealByDate(
 
     const entryDate = dayjs(date).format("YYYY-MM-DD");
 
-    // Find user (use limit(1) instead of single() to handle duplicates)
-    const { data: members, error: memberError } = await supabase
-      .from("members")
-      .select("id")
-      .eq("full_name", userName)
-      .limit(1);
-
-    const member = members?.[0];
-    if (memberError || !member) {
-      return { success: true, data: null };
-    }
-
     // Get meal log (use limit(1) instead of single())
     const { data: mealLogs, error } = await supabase
       .from("meal_logs")
       .select("*")
-      .eq("user_id", member.id)
+      .eq("user_id", userId)
       .eq("entry_date", entryDate)
       .limit(1);
 

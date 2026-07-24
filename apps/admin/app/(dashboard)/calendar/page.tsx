@@ -286,11 +286,15 @@ function CalendarPageContent() {
       if (!selectedUserId) return [];
       const response = await fetch(
         `/api/meal-logs?userId=${selectedUserId}&year=${currentDate.year()}&month=${currentDate.month() + 1}`,
+        { cache: "no-store" },
       );
       if (!response.ok) throw new Error("Failed to fetch meal logs");
       return response.json();
     },
     enabled: !!selectedUserId,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 
   // Create/Update meal log mutation
@@ -936,6 +940,8 @@ function CalendarPageContent() {
                   </Label>
                   <Input
                     type="number"
+                    min="0"
+                    step="1"
                     value={bulkAmount || ""}
                     onChange={(e) =>
                       setBulkAmount(parseInt(e.target.value) || 0)
@@ -1189,6 +1195,8 @@ function CalendarPageContent() {
                   />
                   <Input
                     type="number"
+                    min="0"
+                    step="1"
                     value={formData.breakfastAmount || ""}
                     onChange={(e) =>
                       setFormData({
@@ -1236,6 +1244,8 @@ function CalendarPageContent() {
                   />
                   <Input
                     type="number"
+                    min="0"
+                    step="1"
                     value={formData.lunchAmount || ""}
                     onChange={(e) =>
                       setFormData({
@@ -1280,6 +1290,8 @@ function CalendarPageContent() {
                   />
                   <Input
                     type="number"
+                    min="0"
+                    step="1"
                     value={formData.dinnerAmount || ""}
                     onChange={(e) =>
                       setFormData({

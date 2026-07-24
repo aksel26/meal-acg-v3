@@ -249,10 +249,14 @@ function UsersPageContent() {
     queryFn: async () => {
       const response = await fetch(
         `/api/stats/monthly?year=${selectedYear}&month=${selectedMonth}`,
+        { cache: "no-store" },
       );
       if (!response.ok) throw new Error("Failed to fetch stats");
       return response.json();
     },
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 
   // 스크롤 위치 복원 (데이터 로딩 완료 후)

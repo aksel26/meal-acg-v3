@@ -68,9 +68,11 @@ export default function MealEntryCard({
     return mealData.find((meal) => meal.date === dateStr);
   }, [selectedDate, mealData]);
 
+  const isApprovedLeave = currentMeal?.attendance_source === "dayoff";
   const isIndividualLunch = !!currentMeal?.attendance?.includes("개별식사");
 
   const handleSlotClick = (type: MealType) => {
+    if (isApprovedLeave) return;
     if (currentMeal && hasMealSlotRecord(currentMeal, type)) {
       openDrawerForEdit(type, currentMeal, selectedDate);
     } else {
@@ -94,25 +96,29 @@ export default function MealEntryCard({
           const hasRecord = hasMealSlotRecord(currentMeal, slot.type);
           const showIndividual =
             slot.type === "lunch" &&
+            !isApprovedLeave &&
             isIndividualLunch &&
             (!currentMeal?.attendance_source ||
               currentMeal.attendance_source === "meal");
           const hasAmountOrStore =
-            !!(record?.amount && record.amount > 0) || !!record?.store;
+            !isApprovedLeave &&
+            (!!(record?.amount && record.amount > 0) || !!record?.store);
 
-          const storeLabel = hasAmountOrStore
-            ? record?.store || "식사 기록"
-            : hasRecord && slot.type === "lunch"
-              ? getLunchAttendanceLabel(currentMeal?.attendance)
-              : showIndividual
-                ? "개별식사"
-                : "기록 없음";
+          const storeLabel = isApprovedLeave
+            ? "휴가"
+            : hasAmountOrStore
+              ? record?.store || "식사 기록"
+              : hasRecord && slot.type === "lunch"
+                ? getLunchAttendanceLabel(currentMeal?.attendance)
+                : showIndividual
+                  ? "개별식사"
+                  : "기록 없음";
 
           return (
             <button
               key={slot.type}
               type="button"
-              disabled={!selectedDate}
+              disabled={!selectedDate || isApprovedLeave}
               onClick={() => handleSlotClick(slot.type)}
               className="flex min-h-[78px] cursor-pointer flex-col rounded-xl border border-dashed border-slate-200 p-2.5 text-left transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:cursor-default disabled:opacity-50"
             >

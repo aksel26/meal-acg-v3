@@ -40,8 +40,11 @@ export interface AttendanceTodaySummary {
   notCheckedIn: number;
   late: number;
   onLeave: number;
+  halfDayLeave: number;
   lateMembers: { id: string; name: string }[];
   notCheckedInMembers: { id: string; name: string }[];
+  leaveMembers: { id: string; name: string }[];
+  halfDayLeaveMembers: { id: string; name: string }[];
 }
 
 export function useAttendanceByMonth(year: number, month: number) {

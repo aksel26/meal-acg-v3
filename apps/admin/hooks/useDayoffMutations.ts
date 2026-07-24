@@ -76,6 +76,9 @@ export function useUpdateDayoff() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.dayoffs.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.attendance.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       toast.success("근태가 수정되었습니다.");
     },
     onError: (error: Error) => {
@@ -98,6 +101,9 @@ export function useDeleteDayoff() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.dayoffs.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.attendance.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       toast.success("근태가 삭제되었습니다.");
     },
     onError: (error: Error) => {
@@ -126,8 +132,11 @@ export function useApproveDayoff() {
       queryClient.invalidateQueries({ queryKey: queryKeys.dayoffs.all });
       // dayoff와 approval_requests는 서버에서 양방향 연동되므로 함께 무효화한다.
       queryClient.invalidateQueries({ queryKey: queryKeys.approvals.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.attendance.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       toast.success(
-        action === "approve" ? "승인되었습니다." : "승인이 취소되었습니다."
+        action === "approve" ? "승인되었습니다." : "승인이 취소되었습니다.",
       );
     },
     onError: (error: Error) => {

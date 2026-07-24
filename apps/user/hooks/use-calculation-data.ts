@@ -28,7 +28,7 @@ interface MealStatsResponse {
 async function fetchMealStats(
   userId: string,
   month: number,
-  year?: number
+  year?: number,
 ): Promise<MealStatsData> {
   if (!userId) {
     throw new Error("User ID is required");
@@ -36,7 +36,8 @@ async function fetchMealStats(
 
   const yearParam = year || new Date().getFullYear();
   const response = await fetch(
-    `/api/meals/stats?month=${month}&year=${yearParam}&user_id=${encodeURIComponent(userId)}`
+    `/api/meals/stats?month=${month}&year=${yearParam}&user_id=${encodeURIComponent(userId)}`,
+    { cache: "no-store" },
   );
 
   if (!response.ok) {
@@ -54,13 +55,15 @@ async function fetchMealStats(
 export function useCalculationData(
   userId: string,
   month: number,
-  year?: number
+  year?: number,
 ) {
   return useQuery({
     queryKey: queryKeys.mealStats.byUserAndMonth(userId, month, year),
     queryFn: () => fetchMealStats(userId, month, year),
     enabled: !!userId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
     gcTime: 10 * 60 * 1000,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 }

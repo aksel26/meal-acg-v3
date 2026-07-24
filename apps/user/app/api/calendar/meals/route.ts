@@ -48,24 +48,6 @@ function withEmptyMealFields(row: Partial<MealCalendarRow>): MealCalendarRow {
   } as MealCalendarRow;
 }
 
-async function getMemberIdByName(name: string) {
-  const supabase = createServiceClient();
-  if (!supabase) return null;
-
-  const { data: members, error } = await supabase
-    .from("members")
-    .select("id")
-    .eq("full_name", name)
-    .limit(1);
-
-  if (error) {
-    console.error("Calendar meals member lookup error:", error);
-    return null;
-  }
-
-  return members?.[0]?.id ?? null;
-}
-
 async function getExternalAttendance(
   memberId: string | null,
   startDate: string,
@@ -147,7 +129,7 @@ export async function GET(request: NextRequest) {
         { status: 401 },
       );
     }
-    const name = sessionUser.fullName;
+    const memberId = sessionUser.id;
 
     const { searchParams } = new URL(request.url);
     const date = searchParams.get("date"); // YYYY-MM-DD format
@@ -155,7 +137,9 @@ export async function GET(request: NextRequest) {
     const year = searchParams.get("year"); // YYYY format for year
 
     console.log(`=== Calendar Meals API ===`);
-    console.log(`Name: ${name}, Date: ${date}, Month: ${month}, Year: ${year}`);
+    console.log(
+      `Member: ${memberId}, Date: ${date}, Month: ${month}, Year: ${year}`,
+    );
 
     if (!date && !month) {
       console.error("Missing date or month parameter");
@@ -167,7 +151,7 @@ export async function GET(request: NextRequest) {
 
     // 특정 날짜 조회
     if (date) {
-      const result = await getMealByDate(name, date);
+      const result = await getMealByDate(memberId, date);
 
       if (!result.success) {
         return NextResponse.json(
@@ -201,7 +185,6 @@ export async function GET(request: NextRequest) {
             },
           ]
         : [];
-      const memberId = await getMemberIdByName(name);
       const externalAttendance = await getExternalAttendance(
         memberId,
         date,
@@ -222,7 +205,11 @@ export async function GET(request: NextRequest) {
       const targetYear = year ? parseInt(year) : new Date().getFullYear();
       const targetMonth = parseInt(month);
 
-      const result = await getMealsByMonth(name, targetYear, targetMonth);
+      const result = await getMealsByMonth(
+        memberId,
+        targetYear,
+        targetMonth,
+      );
 
       if (!result.success) {
         return NextResponse.json(
@@ -257,7 +244,6 @@ export async function GET(request: NextRequest) {
         },
         total: row.total_amount,
       }));
-      const memberId = await getMemberIdByName(name);
       const externalAttendance = await getExternalAttendance(
         memberId,
         startDate,

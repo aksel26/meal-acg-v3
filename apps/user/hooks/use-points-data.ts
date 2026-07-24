@@ -94,14 +94,18 @@ async function fetchPointsMe(memberId: string): Promise<PointsMeResponse> {
 
 async function fetchPointsWelfare(
   memberId: string,
-  period: string
+  period: string,
 ): Promise<PointsDataResponse> {
   const params = new URLSearchParams({ member_id: memberId, period });
-  const response = await fetch(`/api/points/welfare?${params}`);
+  const response = await fetch(`/api/points/welfare?${params}`, {
+    cache: "no-store",
+  });
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error || "복지포인트 데이터를 가져오는데 실패했습니다.");
+    throw new Error(
+      data.error || "복지포인트 데이터를 가져오는데 실패했습니다.",
+    );
   }
 
   return data;
@@ -109,10 +113,12 @@ async function fetchPointsWelfare(
 
 async function fetchPointsActivity(
   memberId: string,
-  period: string
+  period: string,
 ): Promise<PointsDataResponse> {
   const params = new URLSearchParams({ member_id: memberId, period });
-  const response = await fetch(`/api/points/activity?${params}`);
+  const response = await fetch(`/api/points/activity?${params}`, {
+    cache: "no-store",
+  });
   const data = await response.json();
 
   if (!response.ok) {
@@ -125,13 +131,15 @@ async function fetchPointsActivity(
 async function fetchPointsDashboard(
   memberId: string,
   period: string,
-  type?: string
+  type?: string,
 ): Promise<BudgetSummary[]> {
   const params = new URLSearchParams({ member_id: memberId, period });
   if (type) {
     params.set("type", type);
   }
-  const response = await fetch(`/api/points/dashboard?${params}`);
+  const response = await fetch(`/api/points/dashboard?${params}`, {
+    cache: "no-store",
+  });
   const data = await response.json();
 
   if (!response.ok) {
@@ -168,7 +176,7 @@ async function fetchMemberLookup(userName: string): Promise<MemberLookup> {
 async function fetchAllocationRecords(
   memberId: string,
   allocationId: string,
-  yearMonth?: string
+  yearMonth?: string,
 ): Promise<UsageRecord[]> {
   const params = new URLSearchParams({
     member_id: memberId,
@@ -177,7 +185,9 @@ async function fetchAllocationRecords(
   if (yearMonth) {
     params.set("year_month", yearMonth);
   }
-  const response = await fetch(`/api/points/activity/records?${params}`);
+  const response = await fetch(`/api/points/activity/records?${params}`, {
+    cache: "no-store",
+  });
   const data = await response.json();
 
   if (!response.ok) {
@@ -212,8 +222,10 @@ export function usePointsWelfare(memberId: string | null, period: string) {
     queryKey: queryKeys.points.welfare.byPeriod(memberId!, period),
     queryFn: () => fetchPointsWelfare(memberId!, period),
     enabled: !!memberId && !!period,
-    staleTime: 2 * 60 * 1000, // 2분
+    staleTime: 0,
     gcTime: 5 * 60 * 1000, // 5분
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
     retry: 2,
   });
 }
@@ -227,8 +239,10 @@ export function usePointsActivity(memberId: string | null, period: string) {
     queryKey: queryKeys.points.activity.byPeriod(memberId!, period),
     queryFn: () => fetchPointsActivity(memberId!, period),
     enabled: !!memberId && !!period,
-    staleTime: 2 * 60 * 1000, // 2분
+    staleTime: 0,
     gcTime: 5 * 60 * 1000, // 5분
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
     retry: 2,
   });
 }
@@ -240,14 +254,16 @@ export function usePointsActivity(memberId: string | null, period: string) {
 export function usePointsDashboard(
   memberId: string | null,
   period: string,
-  type?: string
+  type?: string,
 ) {
   return useQuery({
     queryKey: queryKeys.points.dashboard.byPeriod(period, type),
     queryFn: () => fetchPointsDashboard(memberId!, period, type),
     enabled: !!memberId && !!period,
-    staleTime: 5 * 60 * 1000, // 5분
+    staleTime: 0,
     gcTime: 10 * 60 * 1000, // 10분
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
     retry: 2,
   });
 }
@@ -288,19 +304,20 @@ export function useMemberIdLookup(userName: string | null) {
 export function useAllocationRecords(
   memberId: string | null,
   allocationId: string | null,
-  yearMonth?: string
+  yearMonth?: string,
 ) {
   return useQuery({
     queryKey: queryKeys.points.allocationRecords.byAllocation(
       memberId!,
       allocationId!,
-      yearMonth
+      yearMonth,
     ),
-    queryFn: () =>
-      fetchAllocationRecords(memberId!, allocationId!, yearMonth),
+    queryFn: () => fetchAllocationRecords(memberId!, allocationId!, yearMonth),
     enabled: !!memberId && !!allocationId,
-    staleTime: 2 * 60 * 1000, // 2분
+    staleTime: 0,
     gcTime: 5 * 60 * 1000, // 5분
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
     retry: 2,
   });
 }

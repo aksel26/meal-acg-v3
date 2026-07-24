@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
 import { getSessionUser } from "@/lib/auth";
+import {
+  isPositiveIntegerAmount,
+  isValidUsageDate,
+} from "@/lib/input-validation";
 
 // "YYYY-MM" → "YYYY-H1" or "YYYY-H2" 변환
 function toHalfYearPeriod(monthlyPeriod: string): string {
@@ -129,7 +133,6 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const {
-      allocation_id,
       amount,
       description,
       used_at,
@@ -142,11 +145,15 @@ export async function POST(request: NextRequest) {
     const member_id = sessionUser.id;
 
     // 필수 필드 검증
-    if (!allocation_id || !amount || !description || !used_at) {
+    if (
+      !isPositiveIntegerAmount(amount) ||
+      typeof description !== "string" ||
+      !description.trim() ||
+      !isValidUsageDate(used_at)
+    ) {
       return NextResponse.json(
         {
-          error:
-            "필수 필드가 누락되었습니다. (allocation_id, amount, description, used_at)",
+          error: "금액, 설명, 사용일을 올바르게 입력해주세요.",
         },
         { status: 400 }
       );
@@ -230,6 +237,17 @@ export async function PUT(request: NextRequest) {
     if (!id) {
       return NextResponse.json(
         { error: "id는 필수입니다." },
+        { status: 400 }
+      );
+    }
+    if (
+      (amount !== undefined && !isPositiveIntegerAmount(amount)) ||
+      (description !== undefined &&
+        (typeof description !== "string" || !description.trim())) ||
+      (used_at !== undefined && !isValidUsageDate(used_at))
+    ) {
+      return NextResponse.json(
+        { error: "금액, 설명, 사용일을 올바르게 입력해주세요." },
         { status: 400 }
       );
     }

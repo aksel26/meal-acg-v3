@@ -78,11 +78,16 @@ export default function PointsOverviewPage() {
   const { data, isLoading } = useQuery<{ members: MemberPointsData[] }>({
     queryKey: queryKeys.pointsOverview.byPeriod(period),
     queryFn: async () => {
-      const res = await fetch(`/api/points-overview?period=${period}`);
+      const res = await fetch(`/api/points-overview?period=${period}`, {
+        cache: "no-store",
+      });
       if (!res.ok) throw new Error("Failed to fetch points overview");
       return res.json();
     },
     enabled: !!period,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 
   const members = data?.members || [];

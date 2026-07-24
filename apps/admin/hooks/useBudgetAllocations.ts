@@ -28,11 +28,15 @@ export function useBudgetSummary(period: string, type?: string) {
     queryFn: async () => {
       const params = new URLSearchParams({ period });
       if (type) params.set("type", type);
-      const res = await fetch(`/api/budget-summary?${params}`);
+      const res = await fetch(`/api/budget-summary?${params}`, {
+        cache: "no-store",
+      });
       if (!res.ok) throw new Error("Failed to fetch");
       return res.json();
     },
     enabled: !!period,
-    staleTime: 2 * 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 }

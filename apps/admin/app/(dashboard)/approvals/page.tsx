@@ -31,6 +31,7 @@ import {
   useApproveRequest,
   useCancelApprovalRequest,
   useRejectRequest,
+  useRevertApprovalRequest,
   type ApprovalRequest,
 } from "@/hooks/useApprovals";
 import {
@@ -99,6 +100,7 @@ export default function ApprovalsPage() {
 
   const { data: approvals, isLoading } = useApprovals();
   const approveMutation = useApproveRequest();
+  const revertApprovalMutation = useRevertApprovalRequest();
   const cancelApprovalMutation = useCancelApprovalRequest();
   const rejectMutation = useRejectRequest();
 
@@ -106,9 +108,13 @@ export default function ApprovalsPage() {
   const earlyLeaveMutation = useUpdateEarlyLeaveStatus();
 
   const filteredApprovals = useMemo(() => {
-    return (approvals || []).filter((approval) =>
-      statusFilters.includes(approval.status as ApprovalStatusFilter),
-    );
+    return (approvals || []).filter((approval) => {
+      // 가승인(dayoffs 전용 중간 상태)은 대기 필터에 함께 묶는다 (early_leave와 동일 패턴)
+      if (approval.status === "pre_approved") {
+        return statusFilters.includes("pending");
+      }
+      return statusFilters.includes(approval.status as ApprovalStatusFilter);
+    });
   }, [approvals, statusFilters]);
 
   const filteredEarlyLeave = useMemo(() => {
@@ -209,10 +215,17 @@ export default function ApprovalsPage() {
                 activeTab="all"
                 showActions={false}
                 cancelActionLabel={null}
-                onApprove={(id) => approveMutation.mutate({ id })}
+                onPreApprove={(id) => approveMutation.mutate({ id, action: "pre_approve" })}
+                onApprove={(id) => approveMutation.mutate({ id, action: "approve" })}
+                onRevert={(id) => revertApprovalMutation.mutate({ id })}
                 onCancel={(id) => cancelApprovalMutation.mutate({ id })}
                 onReject={(id) => openRejectDialog(id, "leave")}
-                isPending={approveMutation.isPending || rejectMutation.isPending || cancelApprovalMutation.isPending}
+                isPending={
+                  approveMutation.isPending ||
+                  revertApprovalMutation.isPending ||
+                  rejectMutation.isPending ||
+                  cancelApprovalMutation.isPending
+                }
               />
             )}
             {showEarlyLeave && filteredEarlyLeave.length > 0 && (
@@ -375,7 +388,9 @@ function ApprovalsTable({
   activeTab,
   showActions,
   cancelActionLabel,
+  onPreApprove,
   onApprove,
+  onRevert,
   onCancel,
   onReject,
   isPending,
@@ -384,7 +399,9 @@ function ApprovalsTable({
   activeTab: TabStatus;
   showActions: boolean;
   cancelActionLabel: string | null;
+  onPreApprove: (id: string) => void;
   onApprove: (id: string) => void;
+  onRevert: (id: string) => void;
   onCancel: (id: string) => void;
   onReject: (id: string) => void;
   isPending: boolean;
@@ -417,7 +434,9 @@ function ApprovalsTable({
                   approval={approval}
                   showActions={rowActions.showActions}
                   cancelActionLabel={rowActions.cancelActionLabel}
+                  onPreApprove={onPreApprove}
                   onApprove={onApprove}
+                  onRevert={onRevert}
                   onCancel={onCancel}
                   onReject={onReject}
                   isPending={isPending}
@@ -438,7 +457,9 @@ function ApprovalsTable({
               approval={approval}
               showActions={rowActions.showActions}
               cancelActionLabel={rowActions.cancelActionLabel}
+              onPreApprove={onPreApprove}
               onApprove={onApprove}
+              onRevert={onRevert}
               onCancel={onCancel}
               onReject={onReject}
               isPending={isPending}
@@ -475,7 +496,9 @@ function ApprovalRow({
   approval,
   showActions,
   cancelActionLabel,
+  onPreApprove,
   onApprove,
+  onRevert,
   onCancel,
   onReject,
   isPending,
@@ -483,13 +506,16 @@ function ApprovalRow({
   approval: ApprovalRequest;
   showActions: boolean;
   cancelActionLabel: string | null;
+  onPreApprove: (id: string) => void;
   onApprove: (id: string) => void;
+  onRevert: (id: string) => void;
   onCancel: (id: string) => void;
   onReject: (id: string) => void;
   isPending: boolean;
 }) {
   const relatedData = approval.related_data;
   const workTimeLabel = getApprovalWorkTimeLabel(approval);
+  const isDayoff = approval.related_table === "dayoffs";
 
   return (
     <tr className="border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50">
@@ -512,7 +538,7 @@ function ApprovalRow({
         <p className="truncate">{approval.reject_reason || relatedData?.reason || "-"}</p>
       </td>
       <td className="px-3 py-3 text-slate-500">
-        {approval.approver?.full_name || "-"}
+        {isDayoff ? dayoffApprovalHistoryText(approval) : approval.approver?.full_name || "-"}
       </td>
       <td className="px-3 py-3 tabular-nums text-slate-500">
         {dayjs(approval.requested_at).format("MM/DD HH:mm")}
@@ -521,14 +547,26 @@ function ApprovalRow({
         {approval.resolved_at ? dayjs(approval.resolved_at).format("MM/DD HH:mm") : "-"}
       </td>
       <td className="px-3 py-3">
-        <ApprovalActions
-          showActions={showActions}
-          cancelActionLabel={cancelActionLabel}
-          isPending={isPending}
-          onApprove={() => onApprove(approval.id)}
-          onCancel={() => onCancel(approval.id)}
-          onReject={() => onReject(approval.id)}
-        />
+        {isDayoff ? (
+          <DayoffActions
+            approval={approval}
+            onPreApprove={onPreApprove}
+            onApprove={onApprove}
+            onRevert={onRevert}
+            onCancel={onCancel}
+            onReject={onReject}
+            isPending={isPending}
+          />
+        ) : (
+          <ApprovalActions
+            showActions={showActions}
+            cancelActionLabel={cancelActionLabel}
+            isPending={isPending}
+            onApprove={() => onApprove(approval.id)}
+            onCancel={() => onCancel(approval.id)}
+            onReject={() => onReject(approval.id)}
+          />
+        )}
       </td>
     </tr>
   );
@@ -538,7 +576,9 @@ function ApprovalMobileCard({
   approval,
   showActions,
   cancelActionLabel,
+  onPreApprove,
   onApprove,
+  onRevert,
   onCancel,
   onReject,
   isPending,
@@ -546,13 +586,16 @@ function ApprovalMobileCard({
   approval: ApprovalRequest;
   showActions: boolean;
   cancelActionLabel: string | null;
+  onPreApprove: (id: string) => void;
   onApprove: (id: string) => void;
+  onRevert: (id: string) => void;
   onCancel: (id: string) => void;
   onReject: (id: string) => void;
   isPending: boolean;
 }) {
   const relatedData = approval.related_data;
   const workTimeLabel = getApprovalWorkTimeLabel(approval);
+  const isDayoff = approval.related_table === "dayoffs";
 
   return (
     <div className="space-y-3 p-4">
@@ -569,21 +612,33 @@ function ApprovalMobileCard({
       <dl className="grid grid-cols-2 gap-2 text-xs">
         <InfoItem label="날짜" value={getApprovalDateLabel(approval)} />
         <InfoItem label="시간" value={workTimeLabel || "-"} />
-        <InfoItem label="승인자" value={approval.approver?.full_name || "-"} />
+        <InfoItem label="승인자" value={isDayoff ? dayoffApprovalHistoryText(approval) : approval.approver?.full_name || "-"} />
         <InfoItem label="신청일" value={dayjs(approval.requested_at).format("MM/DD HH:mm")} />
         <InfoItem label="처리일" value={approval.resolved_at ? dayjs(approval.resolved_at).format("MM/DD HH:mm") : "-"} />
       </dl>
       <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
         {approval.reject_reason || relatedData?.reason || "사유 없음"}
       </p>
-      <ApprovalActions
-        showActions={showActions}
-        cancelActionLabel={cancelActionLabel}
-        isPending={isPending}
-        onApprove={() => onApprove(approval.id)}
-        onCancel={() => onCancel(approval.id)}
-        onReject={() => onReject(approval.id)}
-      />
+      {isDayoff ? (
+        <DayoffActions
+          approval={approval}
+          onPreApprove={onPreApprove}
+          onApprove={onApprove}
+          onRevert={onRevert}
+          onCancel={onCancel}
+          onReject={onReject}
+          isPending={isPending}
+        />
+      ) : (
+        <ApprovalActions
+          showActions={showActions}
+          cancelActionLabel={cancelActionLabel}
+          isPending={isPending}
+          onApprove={() => onApprove(approval.id)}
+          onCancel={() => onCancel(approval.id)}
+          onReject={() => onReject(approval.id)}
+        />
+      )}
     </div>
   );
 }
@@ -846,6 +901,66 @@ function EarlyLeaveActions({
   );
 }
 
+function DayoffActions({
+  approval,
+  onPreApprove,
+  onApprove,
+  onRevert,
+  onCancel,
+  onReject,
+  isPending,
+}: {
+  approval: ApprovalRequest;
+  onPreApprove: (id: string) => void;
+  onApprove: (id: string) => void;
+  onRevert: (id: string) => void;
+  onCancel: (id: string) => void;
+  onReject: (id: string) => void;
+  isPending: boolean;
+}) {
+  return (
+    <div className="flex flex-wrap justify-end gap-1.5">
+      {approval.status === "pending" && (
+        <>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 gap-1 text-slate-800 hover:bg-slate-100"
+            onClick={() => onPreApprove(approval.id)}
+            disabled={isPending}
+          >
+            <ArrowRight className="h-3.5 w-3.5" />
+            가승인
+          </Button>
+          <RejectButton onClick={() => onReject(approval.id)} disabled={isPending} />
+        </>
+      )}
+      {approval.status === "pre_approved" && (
+        <>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 gap-1 border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-800"
+            onClick={() => onApprove(approval.id)}
+            disabled={isPending}
+          >
+            <Check className="h-3.5 w-3.5" />
+            최종승인
+          </Button>
+          <RevertButton label="가승인 취소" onClick={() => onRevert(approval.id)} disabled={isPending} />
+          <RejectButton onClick={() => onReject(approval.id)} disabled={isPending} />
+        </>
+      )}
+      {approval.status === "approved" && (
+        <RevertButton label="승인 취소" onClick={() => onCancel(approval.id)} disabled={isPending} />
+      )}
+      {approval.status === "rejected" && (
+        <RevertButton label="반려 취소" onClick={() => onCancel(approval.id)} disabled={isPending} />
+      )}
+    </div>
+  );
+}
+
 function RejectButton({ onClick, disabled }: { onClick: () => void; disabled: boolean }) {
   return (
     <Button
@@ -902,6 +1017,20 @@ function approvalHistoryText(request: EarlyLeaveRequest) {
   const history = [];
   if (request.first_approver) history.push(`가승인 ${request.first_approver.full_name}`);
   if (request.final_approver) history.push(`최종승인 ${request.final_approver.full_name}`);
+  return history.length > 0 ? history.join(" / ") : "-";
+}
+
+function dayoffApprovalHistoryText(approval: ApprovalRequest) {
+  const data = approval.related_data;
+  const history: string[] = [];
+  if (data?.first_approver) {
+    const at = data.first_approved_at ? ` · ${dayjs(data.first_approved_at).format("MM/DD HH:mm")}` : "";
+    history.push(`가승인 ${data.first_approver.full_name}${at}`);
+  }
+  if (data?.final_approver) {
+    const at = data.final_approved_at ? ` · ${dayjs(data.final_approved_at).format("MM/DD HH:mm")}` : "";
+    history.push(`최종승인 ${data.final_approver.full_name}${at}`);
+  }
   return history.length > 0 ? history.join(" / ") : "-";
 }
 

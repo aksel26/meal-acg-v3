@@ -37,6 +37,11 @@ const STATUS_BADGE: Record<
     className: "bg-amber-50 text-amber-600",
     icon: Clock,
   },
+  pre_approved: {
+    label: "가승인",
+    className: "bg-blue-50 text-blue-600",
+    icon: Check,
+  },
   approved: {
     label: "승인",
     className: "bg-emerald-50 text-emerald-600",
@@ -282,6 +287,23 @@ function isAttendanceModifyData(
   return !!data && "requested_type" in data;
 }
 
+function dayoffApprovalHistoryText(dayoff: DayoffApprovalData) {
+  const history: string[] = [];
+  if (dayoff.first_approver) {
+    const at = dayoff.first_approved_at
+      ? ` · ${dayjs(dayoff.first_approved_at).format("MM/DD HH:mm")}`
+      : "";
+    history.push(`가승인 ${dayoff.first_approver.full_name}${at}`);
+  }
+  if (dayoff.final_approver) {
+    const at = dayoff.final_approved_at
+      ? ` · ${dayjs(dayoff.final_approved_at).format("MM/DD HH:mm")}`
+      : "";
+    history.push(`최종승인 ${dayoff.final_approver.full_name}${at}`);
+  }
+  return history.join(" / ");
+}
+
 function isWorkApplicationData(
   data: ApprovalRequest["related_data"],
 ): data is WorkApplicationApprovalData {
@@ -385,6 +407,11 @@ function ApprovalCard({
               </p>
             </div>
           )}
+          {dayoff && (dayoff.first_approver || dayoff.final_approver) && (
+            <p className="text-xs text-slate-400">
+              {dayoffApprovalHistoryText(dayoff)}
+            </p>
+          )}
           {item.reject_reason && (
             <p className="text-xs text-red-500">
               반려 사유: {item.reject_reason}
@@ -401,7 +428,7 @@ function ApprovalCard({
               onClick={() => onApprove(item.id)}
             >
               <Check className="h-3.5 w-3.5" />
-              승인
+              {dayoff ? "가승인" : "승인"}
             </Button>
             <Button
               size="sm"

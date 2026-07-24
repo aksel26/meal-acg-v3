@@ -103,6 +103,7 @@ const TYPE_BADGE_STYLES: Record<string, string> = {
 
 const DAYOFF_STATUS_LABELS: Record<string, string> = {
   approved: "승인",
+  pre_approved: "가승인",
   pending: "대기",
   rejected: "반려",
   draft: "임시",
@@ -671,9 +672,11 @@ export default function ProfileAttendanceTab({
                                 className:
                                   dayoffStatus === "approved"
                                     ? "bg-emerald-50 text-emerald-700 ring-emerald-100"
-                                    : dayoffStatus === "rejected"
-                                      ? "bg-rose-50 text-rose-700 ring-rose-100"
-                                      : "bg-slate-100 text-slate-600 ring-slate-200",
+                                    : dayoffStatus === "pre_approved"
+                                      ? "bg-blue-50 text-blue-700 ring-blue-100"
+                                      : dayoffStatus === "rejected"
+                                        ? "bg-rose-50 text-rose-700 ring-rose-100"
+                                        : "bg-slate-100 text-slate-600 ring-slate-200",
                               };
                           const attendanceType =
                             record?.attendance_type ?? "휴가";

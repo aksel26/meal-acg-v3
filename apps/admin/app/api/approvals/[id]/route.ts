@@ -80,6 +80,12 @@ export async function PUT(
       );
     }
 
+    if (request_data.related_table === "work_applications") {
+      await requireAdminPermission("attendance:write");
+    } else {
+      await requireAdminPermission("leave:approve");
+    }
+
     // pre_approve/revert는 2단계 승인(휴가)에만 존재하는 전이
     if (
       (action === "pre_approve" || action === "revert") &&
@@ -89,12 +95,6 @@ export async function PUT(
         { error: "가승인/가승인 취소는 휴가 요청에서만 가능합니다." },
         { status: 400 },
       );
-    }
-
-    if (request_data.related_table === "work_applications") {
-      await requireAdminPermission("attendance:write");
-    } else {
-      await requireAdminPermission("leave:approve");
     }
 
     if (

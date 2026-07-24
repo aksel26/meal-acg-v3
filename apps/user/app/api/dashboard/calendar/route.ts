@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/client";
 import { createWorkClient } from "@/lib/supabase/client-work";
+import { APPROVED_LEAVE_STATUSES } from "utils/leave-status";
 
 function getMonthRange(year: string, month: string) {
   const paddedMonth = month.padStart(2, "0");
@@ -82,7 +83,7 @@ export async function GET(request: NextRequest) {
         `,
         )
         .eq("is_deleted", false)
-        .eq("approval_status", "approved")
+        .in("approval_status", [...APPROVED_LEAVE_STATUSES])
         .eq("target_id", session.id)
         .gte("leave_date", startDate)
         .lte("leave_date", endDate)

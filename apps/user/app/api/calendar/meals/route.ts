@@ -8,6 +8,7 @@ import {
   normalizeAttendanceRecordType,
   normalizeDayoffAttendance,
 } from "@/lib/meal-attendance";
+import { APPROVED_LEAVE_STATUSES } from "utils/leave-status";
 
 type MealCalendarRow = {
   date: string;
@@ -71,7 +72,7 @@ async function getExternalAttendance(
       .eq("target_id", memberId)
       .gte("leave_date", startDate)
       .lte("leave_date", endDate)
-      .eq("approval_status", "approved"),
+      .in("approval_status", [...APPROVED_LEAVE_STATUSES]),
     supabase
       .from("attendance_records")
       .select("date, attendance_type")

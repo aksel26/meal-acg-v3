@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/src/select";
+import { isApprovedLeaveStatus } from "utils/leave-status";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -165,7 +166,7 @@ export default function ProfileAttendanceTab({
   );
   const overtimeCount = overtimeRecords.length;
   const leaveDays = (dayoffs ?? [])
-    .filter((dayoff) => dayoff.approval_status === "approved")
+    .filter((dayoff) => isApprovedLeaveStatus(dayoff.approval_status))
     .reduce((total, dayoff) => total + getLeaveDayAmount(dayoff), 0);
   const monthStart = dayjs(`${year}-${String(month).padStart(2, "0")}-01`);
   const weekdayCount = Array.from(

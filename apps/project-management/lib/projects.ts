@@ -4,6 +4,7 @@ import {
   createServiceClient,
 } from "@/lib/supabase/server";
 import type { RequestPriority, RequestStatus } from "@/lib/requests";
+import { APPROVED_LEAVE_STATUSES } from "utils/leave-status";
 
 export const PROJECT_STATUSES = ["계획", "진행", "대기", "완료"] as const;
 
@@ -198,7 +199,7 @@ export async function getProjectDetailForUser(
             }).format(new Date()),
           )
           .eq("is_deleted", false)
-          .eq("approval_status", "approved")
+          .in("approval_status", [...APPROVED_LEAVE_STATUSES])
           .then(({ data, error }) => {
             if (error) {
               console.warn(

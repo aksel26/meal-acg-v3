@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { getAuthErrorStatus, requireAdminPermission } from "@/lib/auth";
 import { hasEffectiveAdminPermission } from "@/lib/rbac-server";
 import { createServiceClient } from "@/lib/supabase/server";
+import { isApprovedLeaveStatus } from "utils/leave-status";
 
 type PermissionResult<T> = {
   data: T[] | null;
@@ -52,7 +53,7 @@ function leaveDeductionAmount(row: { leave_type?: unknown }) {
 
 function isApprovedLeave(row: LeaveOverviewRow) {
   if (row.approval_status) {
-    return row.approval_status === "approved";
+    return isApprovedLeaveStatus(row.approval_status);
   }
 
   return Boolean(row.approver_id || row.approved_at);
@@ -60,8 +61,7 @@ function isApprovedLeave(row: LeaveOverviewRow) {
 
 function isPendingLeave(row: LeaveOverviewRow) {
   if (row.approval_status) {
-    return row.approval_status === "pending" ||
-      row.approval_status === "pre_approved";
+    return row.approval_status === "pending";
   }
 
   return !row.approver_id && !row.approved_at;

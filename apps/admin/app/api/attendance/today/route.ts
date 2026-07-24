@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/auth";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+import { APPROVED_LEAVE_STATUSES } from "utils/leave-status";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -59,7 +60,7 @@ export async function GET() {
       )
       .eq("leave_date", today)
       .eq("is_deleted", false)
-      .eq("approval_status", "approved");
+      .in("approval_status", [...APPROVED_LEAVE_STATUSES]);
 
     if (dayoffsError) {
       console.error("Error fetching dayoffs:", dayoffsError);

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
+import { APPROVED_LEAVE_STATUSES } from "utils/leave-status";
 
 // GET /api/leave-balances/usage-stats?year=2026
 // Returns: { leaveTypes: [{id, name, sort_order}], stats: [{member_id, full_name, position_name, hire_date, counts: {[type_id]: count}}] }
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
       .from("dayoffs")
       .select("target_id, leave_type_id")
       .eq("is_deleted", false)
-      .eq("approval_status", "approved")
+      .in("approval_status", [...APPROVED_LEAVE_STATUSES])
       .gte("leave_date", startDate)
       .lte("leave_date", endDate);
 

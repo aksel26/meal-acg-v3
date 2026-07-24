@@ -338,6 +338,10 @@ export type Database = {
           approval_status: string
           approved_at: string | null
           approver_id: string | null
+          first_approver_id: string | null
+          first_approved_at: string | null
+          final_approver_id: string | null
+          final_approved_at: string | null
           author_id: string
           cc_member_ids: string[] | null
           created_at: string
@@ -359,6 +363,10 @@ export type Database = {
           approval_status?: string
           approved_at?: string | null
           approver_id?: string | null
+          first_approver_id?: string | null
+          first_approved_at?: string | null
+          final_approver_id?: string | null
+          final_approved_at?: string | null
           author_id: string
           cc_member_ids?: string[] | null
           created_at?: string
@@ -380,6 +388,10 @@ export type Database = {
           approval_status?: string
           approved_at?: string | null
           approver_id?: string | null
+          first_approver_id?: string | null
+          first_approved_at?: string | null
+          final_approver_id?: string | null
+          final_approved_at?: string | null
           author_id?: string
           cc_member_ids?: string[] | null
           created_at?: string
@@ -416,6 +428,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "user_monthly_stats"
             referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "dayoffs_first_approver_id_fkey"
+            columns: ["first_approver_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dayoffs_final_approver_id_fkey"
+            columns: ["final_approver_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "dayoffs_author_id_fkey"

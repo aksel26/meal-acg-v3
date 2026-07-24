@@ -65,7 +65,6 @@ const hours = Array.from(
   { length: END_HOUR - START_HOUR },
   (_, i) => START_HOUR + i
 );
-const slots = Array.from({ length: SLOT_COUNT }, (_, i) => i);
 
 export function TimelineGrid({
   reservations,
@@ -232,23 +231,26 @@ export function TimelineGrid({
   return (
     <div
       ref={gridRef}
-      className="select-none overflow-x-auto rounded-lg border bg-white"
+      className="select-none overflow-x-auto rounded-lg bg-white"
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
       <div style={{ minWidth: 900 }}>
         {/* Time header row */}
-        <div className="flex border-b bg-slate-50" style={{ height: HEADER_HEIGHT }}>
+        <div
+          className="flex border-b border-slate-100 bg-slate-50"
+          style={{ height: HEADER_HEIGHT }}
+        >
           <div
-            className="shrink-0 border-r"
+            className="shrink-0 border-r border-slate-50"
             style={{ width: ROOM_LABEL_WIDTH }}
           />
           <div className="relative flex-1">
             {hours.map((h, i) => (
               <div
                 key={h}
-                className="absolute top-0 flex h-full items-center border-l border-slate-200 text-xs text-slate-500"
+                className="absolute top-0 flex h-full items-center border-l border-slate-50 text-xs text-slate-500"
                 style={{ left: `${((i * 2) / SLOT_COUNT) * 100}%` }}
               >
                 <span className="pl-1">
@@ -279,12 +281,12 @@ export function TimelineGrid({
           return (
             <div
               key={room.id}
-              className="flex border-b"
+              className="flex border-b border-slate-50 last:border-b-0"
               style={{ minHeight: ROW_HEIGHT }}
             >
               {/* Room label */}
               <div
-                className="flex shrink-0 flex-col justify-center border-r px-2"
+                className="flex shrink-0 flex-col justify-center border-r border-slate-50 px-2"
                 style={{ width: ROOM_LABEL_WIDTH }}
               >
                 <div className="text-sm font-medium">{room.name}</div>
@@ -297,11 +299,11 @@ export function TimelineGrid({
                 onMouseDown={(e) => handleMouseDown(e, room.id)}
               >
                 {/* Grid lines */}
-                {slots.map((i) => (
+                {hours.map((_, i) => (
                   <div
                     key={i}
-                    className={`absolute top-0 bottom-0 ${i % 2 === 0 ? "border-l border-slate-200" : "border-l border-slate-100"}`}
-                    style={{ left: `${(i / SLOT_COUNT) * 100}%` }}
+                    className="absolute top-0 bottom-0 border-l border-slate-50"
+                    style={{ left: `${((i * 2) / SLOT_COUNT) * 100}%` }}
                   />
                 ))}
 
@@ -325,7 +327,7 @@ export function TimelineGrid({
                 {moveGhost && (() => {
                   const ghostStyle = moveGhost.type === "supervisor"
                     ? "border-blue-400 bg-blue-100/40"
-                    : "border-indigo-400 bg-indigo-100/40";
+                    : "border-blue-400 bg-blue-100/40";
                   return (
                     <div
                       className={`absolute top-1 bottom-1 rounded border-2 border-dashed ${ghostStyle}`}

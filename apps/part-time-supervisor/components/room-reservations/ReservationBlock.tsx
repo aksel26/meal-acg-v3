@@ -14,15 +14,15 @@ type Props = {
 
 const TYPE_STYLES = {
   supervisor: {
-    bg: "bg-blue-100",
-    border: "border-l-blue-500",
+    bg: "bg-blue-50",
+    indicator: "bg-blue-500",
     text: "text-blue-800",
     label: "감독관",
   },
   interview: {
-    bg: "bg-indigo-100",
-    border: "border-l-indigo-500",
-    text: "text-indigo-800",
+    bg: "bg-blue-50",
+    indicator: "bg-blue-500",
+    text: "text-blue-800",
     label: "면접교육",
   },
 } as const;
@@ -41,7 +41,7 @@ export function ReservationBlock({
   return (
     <div
       data-reservation={reservation.id}
-      className={`group absolute top-1 bottom-1 flex items-center overflow-hidden rounded border-l-[3px] px-2 text-xs transition-shadow ${style.bg} ${style.border} ${style.text} ${isDragging ? "opacity-50 shadow-lg" : "cursor-grab hover:shadow-md"}`}
+      className={`group absolute top-1 bottom-1 flex items-center gap-1.5 overflow-hidden rounded-lg px-2 text-xs transition-shadow ${style.bg} ${style.text} ${isDragging ? "opacity-50 shadow-lg" : "cursor-grab"}`}
       style={{ left, width }}
       onMouseDown={(e) => {
         e.stopPropagation();
@@ -63,6 +63,8 @@ export function ReservationBlock({
           onResizeStart("left");
         }}
       />
+
+      <span className={`h-3.5 w-1.5 shrink-0 rounded-sm ${style.indicator}`} />
 
       <span className="truncate font-medium">
         {style.label}

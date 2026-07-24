@@ -352,11 +352,15 @@ function ApprovalBell() {
     },
   }[tab];
 
-  const handleApprove = (id: string) => {
+  const handleApprove = (item: ApprovalRequest) => {
     if (!memberId) return;
+    const isDayoff = item.related_table === "dayoffs";
     approveMutation.mutate(
-      { approvalId: id, memberId },
-      { onSuccess: () => toast.success("승인되었습니다.") },
+      { approvalId: item.id, memberId },
+      {
+        onSuccess: () =>
+          toast.success(isDayoff ? "가승인되었습니다." : "승인되었습니다."),
+      },
     );
   };
 
@@ -537,7 +541,7 @@ function ApprovalItem({
 }: {
   item: ApprovalRequest;
   viewMode: "inbox" | "sent" | "cc";
-  onApprove: (id: string) => void;
+  onApprove: (item: ApprovalRequest) => void;
   onReject: (item: ApprovalRequest) => void;
 }) {
   const dayoff = isDayoffData(item.related_data) ? item.related_data : null;
@@ -627,9 +631,9 @@ function ApprovalItem({
           <Button
             size="sm"
             className="h-8 rounded-lg bg-emerald-600 px-3 text-xs text-white hover:bg-emerald-700"
-            onClick={() => onApprove(item.id)}
+            onClick={() => onApprove(item)}
           >
-            승인
+            {item.related_table === "dayoffs" ? "가승인" : "승인"}
           </Button>
           <Button
             size="sm"

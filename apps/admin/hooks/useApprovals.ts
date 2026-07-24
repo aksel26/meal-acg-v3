@@ -80,13 +80,17 @@ export function useApproveRequest() {
       }
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.approvals.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.dayoffs.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.attendance.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-      toast.success("승인되었습니다.");
+      toast.success(
+        variables?.action === "pre_approve"
+          ? "가승인되었습니다."
+          : "승인되었습니다.",
+      );
     },
     onError: (error: Error) => {
       toast.error(error.message);

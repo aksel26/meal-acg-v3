@@ -317,11 +317,11 @@ git commit -m "feat(leave): 가승인을 확정 휴가로 간주 — 연차·식
 - [ ] **Step 1: 기존 테스트 패턴 확인**
 
 Run: `ls supabase/tests/ && head -40 supabase/tests/leave_request_workflow*.sql`
-Expected: pgTAP `plan()`/`ok()`/`is()` 사용 패턴, 시드/셋업 방식 확인
+Expected: 트랜잭션 안에서 `DO` 블록과 `RAISE EXCEPTION`을 사용하는 기존 회귀 테스트 패턴 확인
 
 - [ ] **Step 2: 테스트 작성 — 핵심 시나리오**
 
-기존 테스트의 셋업 헬퍼를 재사용해 아래를 검증하는 pgTAP 파일 작성:
+기존 테스트의 셋업 방식을 재사용해 아래를 검증하는 SQL 파일 작성:
 
 ```sql
 -- 1. pre_approve: pending→pre_approved, first_approver_id 세팅
@@ -334,11 +334,11 @@ Expected: pgTAP `plan()`/`ok()`/`is()` 사용 패턴, 시드/셋업 방식 확�
 -- 8. 잘못된 전이(pending→approve) → LEAVE_INVALID_TRANSITION
 ```
 
-각 케이스는 `SELECT throws_ok(...)` / `SELECT is((SELECT used FROM leave_balances ...), N)` 형태로 실제 assert 포함.
+각 케이스는 조건 불일치 시 `RAISE EXCEPTION`하도록 실제 assert 포함.
 
 - [ ] **Step 3: 테스트 실행**
 
-Run: `supabase test db` (또는 `psql "$LOCAL_DB_URL" -f supabase/tests/leave_two_step_approval.sql`)
+Run: `pnpm test:db`
 Expected: 모든 assert PASS
 
 - [ ] **Step 4: 커밋**
@@ -545,8 +545,8 @@ git commit -m "feat(leave): 승인 UI 2단계 (가승인/최종승인 버튼·�
 
 - [ ] **Step 1: 전체 재적용 + 테스트**
 
-Run: `supabase db reset && supabase test db`
-Expected: 마이그레이션·pgTAP 모두 PASS
+Run: `supabase db reset && pnpm test:db`
+Expected: 마이그레이션·SQL 회귀 테스트 모두 PASS
 
 - [ ] **Step 2: 타입·린트 전체**
 

@@ -1031,7 +1031,7 @@ function dayoffApprovalHistoryText(approval: ApprovalRequest) {
     const at = data.final_approved_at ? ` · ${dayjs(data.final_approved_at).format("MM/DD HH:mm")}` : "";
     history.push(`최종승인 ${data.final_approver.full_name}${at}`);
   }
-  return history.length > 0 ? history.join(" / ") : "-";
+  return history.length > 0 ? history.join(" / ") : approval.approver?.full_name || "-";
 }
 
 function getApprovalTypeLabel(approval: ApprovalRequest) {

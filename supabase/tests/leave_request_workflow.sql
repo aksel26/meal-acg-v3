@@ -47,6 +47,7 @@ DO $$
 DECLARE
   v_member_id uuid;
   v_approver_id uuid;
+  v_final_approver_id uuid;
   v_request_id uuid := gen_random_uuid();
   v_dayoff_id uuid;
   v_approval_id uuid;
@@ -64,8 +65,15 @@ BEGIN
   WHERE id <> v_member_id
   ORDER BY id
   LIMIT 1;
-  IF v_member_id IS NULL OR v_approver_id IS NULL THEN
-    RAISE EXCEPTION 'leave workflow test requires two seeded members';
+  SELECT id INTO v_final_approver_id
+  FROM members
+  WHERE id NOT IN (v_member_id, v_approver_id)
+  ORDER BY id
+  LIMIT 1;
+  IF v_member_id IS NULL
+    OR v_approver_id IS NULL
+    OR v_final_approver_id IS NULL THEN
+    RAISE EXCEPTION 'leave workflow test requires three seeded members';
   END IF;
 
   DELETE FROM approval_requests
@@ -121,7 +129,7 @@ BEGIN
 
   v_expected_error := false;
   BEGIN
-    PERFORM resolve_leave_approval_atomic(v_approval_id, v_member_id, 'approve', true, NULL);
+    PERFORM resolve_leave_approval_atomic(v_approval_id, v_member_id, 'pre_approve', true, NULL);
   EXCEPTION WHEN insufficient_privilege THEN
     v_expected_error := SQLERRM = 'LEAVE_APPROVAL_FORBIDDEN';
   END;
@@ -129,7 +137,8 @@ BEGIN
     RAISE EXCEPTION 'non-assigned approver was not rejected';
   END IF;
 
-  PERFORM resolve_leave_approval_atomic(v_approval_id, v_approver_id, 'approve', true, NULL);
+  PERFORM resolve_leave_approval_atomic(v_approval_id, v_approver_id, 'pre_approve', true, NULL);
+  PERFORM resolve_leave_approval_atomic(v_approval_id, v_final_approver_id, 'approve', true, NULL);
   IF (SELECT approval_status FROM dayoffs WHERE id = v_dayoff_id) <> 'approved'
     OR (SELECT status FROM approval_requests WHERE id = v_approval_id) <> 'approved' THEN
     RAISE EXCEPTION 'approval states diverged';
@@ -155,15 +164,15 @@ BEGIN
 
   v_expected_error := false;
   BEGIN
-    PERFORM resolve_leave_approval_atomic(v_approval_id, v_approver_id, 'approve', true, NULL);
+    PERFORM resolve_leave_approval_atomic(v_approval_id, v_final_approver_id, 'approve', true, NULL);
   EXCEPTION WHEN invalid_parameter_value THEN
-    v_expected_error := SQLERRM = 'LEAVE_APPROVAL_ALREADY_RESOLVED';
+    v_expected_error := SQLERRM = 'LEAVE_INVALID_TRANSITION';
   END;
   IF NOT v_expected_error THEN
     RAISE EXCEPTION 'duplicate approval was not rejected';
   END IF;
 
-  PERFORM resolve_leave_approval_atomic(v_approval_id, v_approver_id, 'cancel', true, NULL);
+  PERFORM resolve_leave_approval_atomic(v_approval_id, v_final_approver_id, 'cancel', true, NULL);
   SELECT used INTO v_used FROM leave_balances
   WHERE member_id = v_member_id AND year = 2099 AND type = 'annual';
   IF v_used <> 0 THEN
@@ -238,11 +247,15 @@ BEGIN
     RAISE EXCEPTION 'non-admin changed official leave to attendance type';
   END IF;
 
-  PERFORM resolve_leave_approval_atomic(v_approval_id, v_approver_id, 'approve', true, NULL);
+  PERFORM resolve_leave_approval_atomic(v_approval_id, v_approver_id, 'pre_approve', true, NULL);
+  PERFORM resolve_leave_approval_atomic(v_approval_id, v_final_approver_id, 'approve', true, NULL);
   PERFORM update_dayoff_atomic(
     v_dayoff_id, v_member_id, false,
     jsonb_build_object('leaveTypeId', 3, 'editReason', '유형 정정')
   );
+  IF (SELECT approver_id FROM approval_requests WHERE id = v_approval_id) <> v_approver_id THEN
+    RAISE EXCEPTION 'approved edit changed the assigned first approver';
+  END IF;
   SELECT used INTO v_used FROM leave_balances
   WHERE member_id = v_member_id AND year = 2099 AND type = 'annual';
   IF v_used <> 0.5 THEN
@@ -267,7 +280,7 @@ BEGIN
   v_expected_error := false;
   BEGIN
     PERFORM resolve_leave_approval_atomic(
-      v_missing_balance_approval_id, v_approver_id, 'approve', true, NULL
+      v_missing_balance_approval_id, v_approver_id, 'pre_approve', true, NULL
     );
   EXCEPTION WHEN raise_exception THEN
     v_expected_error := SQLERRM = 'LEAVE_BALANCE_NOT_FOUND';

@@ -5,7 +5,8 @@ BEGIN;
 DO $$
 DECLARE
   v_member_id uuid;
-  v_approver_id uuid;
+  v_first_approver_id uuid;
+  v_final_approver_id uuid;
   v_full_date date;
   v_half_date date;
   v_dayoff_id uuid;
@@ -25,14 +26,21 @@ DECLARE
   v_expected_error boolean;
 BEGIN
   SELECT id INTO v_member_id FROM members ORDER BY id LIMIT 1;
-  SELECT id INTO v_approver_id
+  SELECT id INTO v_first_approver_id
   FROM members
   WHERE id <> v_member_id
   ORDER BY id
   LIMIT 1;
+  SELECT id INTO v_final_approver_id
+  FROM members
+  WHERE id NOT IN (v_member_id, v_first_approver_id)
+  ORDER BY id
+  LIMIT 1;
 
-  IF v_member_id IS NULL OR v_approver_id IS NULL THEN
-    RAISE EXCEPTION 'leave meal impact test requires two seeded members';
+  IF v_member_id IS NULL
+    OR v_first_approver_id IS NULL
+    OR v_final_approver_id IS NULL THEN
+    RAISE EXCEPTION 'leave meal impact test requires three seeded members';
   END IF;
 
   SELECT candidate::date INTO v_full_date
@@ -137,7 +145,7 @@ BEGIN
     gen_random_uuid(),
     v_member_id,
     v_member_id,
-    v_approver_id,
+    v_first_approver_id,
     ARRAY[v_full_date],
     5,
     NULL,
@@ -163,7 +171,14 @@ BEGIN
 
   PERFORM resolve_leave_approval_atomic(
     v_approval_id,
-    v_approver_id,
+    v_first_approver_id,
+    'pre_approve',
+    true,
+    NULL
+  );
+  PERFORM resolve_leave_approval_atomic(
+    v_approval_id,
+    v_final_approver_id,
     'approve',
     true,
     NULL
@@ -211,14 +226,14 @@ BEGIN
 
   PERFORM resolve_leave_approval_atomic(
     v_approval_id,
-    v_approver_id,
+    v_final_approver_id,
     'cancel',
     true,
     NULL
   );
   PERFORM resolve_leave_approval_atomic(
     v_approval_id,
-    v_approver_id,
+    v_first_approver_id,
     'reject',
     true,
     '회귀 테스트 정리'
@@ -250,7 +265,7 @@ BEGIN
     gen_random_uuid(),
     v_member_id,
     v_member_id,
-    v_approver_id,
+    v_first_approver_id,
     ARRAY[v_half_date],
     3,
     NULL,
@@ -262,7 +277,14 @@ BEGIN
 
   PERFORM resolve_leave_approval_atomic(
     v_approval_id,
-    v_approver_id,
+    v_first_approver_id,
+    'pre_approve',
+    true,
+    NULL
+  );
+  PERFORM resolve_leave_approval_atomic(
+    v_approval_id,
+    v_final_approver_id,
     'approve',
     true,
     NULL

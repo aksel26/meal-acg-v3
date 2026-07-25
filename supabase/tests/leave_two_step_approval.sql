@@ -18,6 +18,16 @@ DECLARE
   v_approval_status text;
   v_expected_error boolean;
 BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM dayoffs
+    WHERE approval_status = 'approved'
+      AND approver_id IS NOT NULL
+      AND final_approver_id IS NULL
+  ) THEN
+    RAISE EXCEPTION '기존 승인 휴가의 최종 승인자 이력이 백필되지 않음';
+  END IF;
+
   SELECT id INTO v_member_id FROM members ORDER BY id LIMIT 1;
   SELECT id INTO v_first_approver_id
   FROM members WHERE id <> v_member_id ORDER BY id LIMIT 1;

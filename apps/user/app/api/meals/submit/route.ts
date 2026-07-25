@@ -94,6 +94,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (
+      parseNonNegativeInteger(breakfastAmount + lunchAmount + dinnerAmount) ===
+      null
+    ) {
+      return NextResponse.json(
+        { error: "식대 합계가 저장 가능한 범위를 초과했습니다." },
+        { status: 400 },
+      );
+    }
+
     // 식사 데이터 준비
     const mealData: MealData = {
       date: targetDateKST.toDate(),

@@ -1,13 +1,14 @@
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const POSTGRES_INTEGER_MAX = 2_147_483_647;
 
 export function parseNonNegativeInteger(value: unknown): number | null {
   if (value === undefined || value === null || value === "") return 0;
   const amount = typeof value === "number" ? value : Number(value);
-  return Number.isInteger(amount) && amount >= 0 ? amount : null;
+  return Number.isInteger(amount) && amount >= 0 && amount <= POSTGRES_INTEGER_MAX ? amount : null;
 }
 
 export function isPositiveIntegerAmount(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value > 0;
+  return typeof value === "number" && Number.isInteger(value) && value > 0 && value <= POSTGRES_INTEGER_MAX;
 }
 
 export function isValidUsageDate(value: unknown): value is string {

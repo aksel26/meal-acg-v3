@@ -21,6 +21,13 @@ export function formatDateString(year: number, month: number, day: number): stri
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
+export function getMonthDateRange(year: number, month: number) {
+  return {
+    startDate: formatDateString(year, month, 1),
+    endDate: formatDateString(year, month, new Date(Date.UTC(year, month, 0)).getUTCDate()),
+  };
+}
+
 export function parseDateString(dateString: string): { year: number; month: number; day: number } {
   const parts = dateString.split("-").map(Number);
   const [year = 0, month = 0, day = 0] = parts;

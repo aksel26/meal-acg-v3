@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
 import { getSessionUser } from "@/lib/auth";
+import { getMonthDateRange } from "@/lib/date-utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -34,8 +35,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
-    const endDate = new Date(year, month, 0).toISOString().slice(0, 10);
+    const { startDate, endDate } = getMonthDateRange(year, month);
     const [statsResult, countResult] = await Promise.all([
       supabase.rpc("get_user_monthly_stats", {
         p_year: year,

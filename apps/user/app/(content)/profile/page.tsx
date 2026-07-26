@@ -31,10 +31,12 @@ export default function ProfilePage() {
   }
 
   return (
-    <ProfileBasicTab
-      profile={profile}
-      memberId={currentMemberId}
-      hireDate={hireDate}
-    />
+    <div className="px-4 sm:px-6 lg:px-8">
+      <ProfileBasicTab
+        profile={profile}
+        memberId={currentMemberId}
+        hireDate={hireDate}
+      />
+    </div>
   );
 }

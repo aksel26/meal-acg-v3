@@ -180,13 +180,23 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error("Atomic admin dayoff creation failed:", error);
+      const isDuplicate = error.message.includes("DUPLICATE_DATE");
+      const isMissingBalance = error.message.includes(
+        "LEAVE_BALANCE_NOT_FOUND",
+      );
+      const leaveYears = [
+        ...new Set(dates.map((date) => date.slice(0, 4))),
+      ].join(", ");
+
       return NextResponse.json(
         {
-          error: error.message.includes("DUPLICATE_DATE")
+          error: isDuplicate
             ? "해당 날짜에 이미 신청했거나 승인된 휴가가 있습니다."
-            : "Failed to create dayoffs",
+            : isMissingBalance
+              ? `${leaveYears}년 연차가 부여되지 않았습니다. 연차 현황에서 먼저 연차를 부여해주세요.`
+              : "Failed to create dayoffs",
         },
-        { status: error.message.includes("DUPLICATE_DATE") ? 409 : 500 },
+        { status: isDuplicate || isMissingBalance ? 409 : 500 },
       );
     }
 

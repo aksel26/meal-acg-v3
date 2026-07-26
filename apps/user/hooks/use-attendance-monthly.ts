@@ -16,6 +16,7 @@ export interface AttendanceRecord {
   is_weekend: boolean;
   work_minutes: number;
   modification_status: string | null;
+  early_leave_reason: string | null;
 }
 
 export interface AttendanceSummary {

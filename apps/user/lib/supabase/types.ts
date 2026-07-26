@@ -207,6 +207,66 @@ export type Database = {
           },
         ]
       }
+      early_leave_requests: {
+        Row: {
+          id: string
+          attendance_record_id: string
+          requester_id: string
+          reason: string
+          approval_status: string
+          first_approver_id: string | null
+          first_approved_at: string | null
+          final_approver_id: string | null
+          final_approved_at: string | null
+          reject_reason: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          attendance_record_id: string
+          requester_id: string
+          reason: string
+          approval_status?: string
+          first_approver_id?: string | null
+          first_approved_at?: string | null
+          final_approver_id?: string | null
+          final_approved_at?: string | null
+          reject_reason?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          attendance_record_id?: string
+          requester_id?: string
+          reason?: string
+          approval_status?: string
+          first_approver_id?: string | null
+          first_approved_at?: string | null
+          final_approver_id?: string | null
+          final_approved_at?: string | null
+          reject_reason?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "early_leave_requests_attendance_record_id_fkey"
+            columns: ["attendance_record_id"]
+            isOneToOne: true
+            referencedRelation: "attendance_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "early_leave_requests_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       work_applications: {
         Row: {
           id: string

@@ -318,25 +318,74 @@ export default function OvertimePage() {
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
-            {items.map((item) => (
-              <ApplicationRow
-                key={item.id}
-                item={item}
-                showRequester={tab === "managed"}
-                showActions={
-                  tab === "managed" &&
-                  item.status === "pending" &&
-                  item.my_approval_status === "pending"
-                }
-                isPending={processMutation.isPending}
-                onApprove={() => handleApprove(item.id)}
-                onReject={() => {
-                  setRejectingId(item.id);
-                  setRejectReason("");
-                }}
-              />
-            ))}
+          <div className="overflow-x-auto border-t border-slate-100">
+            <table className="w-full min-w-[1280px] text-left text-sm">
+              <thead>
+                <tr className="bg-slate-50 text-xs font-medium text-slate-500">
+                  <th scope="col" className="px-3 py-2 font-medium">
+                    일자
+                  </th>
+                  <th scope="col" className="px-2 py-2 font-medium">
+                    유형
+                  </th>
+                  <th scope="col" className="px-2 py-2 font-medium">
+                    업무명
+                  </th>
+                  <th scope="col" className="px-2 py-2 font-medium">
+                    시간
+                  </th>
+                  <th scope="col" className="px-2 py-2 font-medium">
+                    장소
+                  </th>
+                  <th scope="col" className="px-2 py-2 font-medium">
+                    사유
+                  </th>
+                  {tab === "managed" && (
+                    <th scope="col" className="px-2 py-2 font-medium">
+                      신청자
+                    </th>
+                  )}
+                  <th scope="col" className="px-2 py-2 font-medium">
+                    승인자
+                  </th>
+                  <th scope="col" className="px-2 py-2 font-medium">
+                    신청일시
+                  </th>
+                  <th scope="col" className="px-2 py-2 font-medium">
+                    상태
+                  </th>
+                  {tab === "managed" && (
+                    <th
+                      scope="col"
+                      className="px-3 py-2 text-right font-medium"
+                    >
+                      처리
+                    </th>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item) => (
+                  <ApplicationTableRow
+                    key={item.id}
+                    item={item}
+                    showRequester={tab === "managed"}
+                    showActionColumn={tab === "managed"}
+                    showActions={
+                      tab === "managed" &&
+                      item.status === "pending" &&
+                      item.my_approval_status === "pending"
+                    }
+                    isPending={processMutation.isPending}
+                    onApprove={() => handleApprove(item.id)}
+                    onReject={() => {
+                      setRejectingId(item.id);
+                      setRejectReason("");
+                    }}
+                  />
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </section>
@@ -595,9 +644,10 @@ function TabButton({
   );
 }
 
-function ApplicationRow({
+function ApplicationTableRow({
   item,
   showRequester,
+  showActionColumn,
   showActions,
   isPending,
   onApprove,
@@ -605,74 +655,85 @@ function ApplicationRow({
 }: {
   item: WorkApplication;
   showRequester: boolean;
+  showActionColumn: boolean;
   showActions: boolean;
   isPending: boolean;
   onApprove: () => void;
   onReject: () => void;
 }) {
   return (
-    <div className="grid gap-3 p-4 lg:grid-cols-[1fr_auto] lg:items-center">
-      <div className="relative min-w-0">
-        <div className="flex items-start justify-between gap-3">
-          <span className="min-w-0 text-sm font-semibold text-slate-900">
-            {item.project_name}
-          </span>
-          <div className="flex shrink-0 flex-col items-end gap-1">
-            <div className="flex flex-wrap justify-end gap-1.5">
-              <span
-                className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${STATUS_CLASS[item.status]}`}
-              >
-                {STATUS_LABEL[item.status]}
-              </span>
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
-                {TYPE_LABEL[item.application_type]}
-              </span>
-            </div>
-          </div>
-        </div>
-        <p className="mt-2 text-sm text-slate-600">
-          {dayjs(item.work_date).format("YYYY.MM.DD")}{" "}
-          {item.start_time.slice(0, 5)}-{item.end_time.slice(0, 5)}
-          {showRequester && item.requester
-            ? ` · ${item.requester.full_name}`
-            : ""}
-          {item.requester?.team?.name ? ` · ${item.requester.team.name}` : ""}
-        </p>
-        <p className="mt-1 line-clamp-2 text-sm text-slate-500">
-          {item.reason}
-        </p>
-        {item.location ? (
-          <p className="mt-1 text-xs text-slate-400">장소: {item.location}</p>
-        ) : null}
+    <tr className="border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50">
+      <td className="whitespace-nowrap px-3 py-2.5 text-slate-700">
+        {dayjs(item.work_date).format("YYYY.MM.DD")}
+      </td>
+      <td className="whitespace-nowrap px-2 py-2.5">
+        <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+          {TYPE_LABEL[item.application_type]}
+        </span>
+      </td>
+      <td className="max-w-52 truncate px-2 py-2.5 font-medium text-slate-900">
+        {item.project_name}
+      </td>
+      <td className="whitespace-nowrap px-2 py-2.5 tabular-nums text-slate-600">
+        {item.start_time.slice(0, 5)} - {item.end_time.slice(0, 5)}
+      </td>
+      <td className="max-w-40 truncate px-2 py-2.5 text-slate-600">
+        {item.location || "-"}
+      </td>
+      <td className="max-w-64 px-2 py-2.5 text-slate-600">
+        <p className="line-clamp-2">{item.reason}</p>
         {item.reject_reason && (
-          <p className="mt-1 text-xs text-red-600">
+          <p className="mt-0.5 line-clamp-2 text-xs text-red-600">
             반려: {item.reject_reason}
           </p>
         )}
-        <span className="absolute bottom-0 right-0 text-xs text-slate-400">
-          신청 {dayjs(item.created_at).format("MM/DD HH:mm")}
-        </span>
-      </div>
-
-      {showActions ? (
-        <div className="flex justify-end gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={onReject}
-            disabled={isPending}
-          >
-            <X className="mr-1 h-4 w-4" />
-            반려
-          </Button>
-          <Button size="sm" onClick={onApprove} disabled={isPending}>
-            <Check className="mr-1 h-4 w-4" />
-            승인
-          </Button>
-        </div>
-      ) : (
-        <div />
+      </td>
+      {showRequester && (
+        <td className="whitespace-nowrap px-2 py-2.5 text-slate-600">
+          <div>{item.requester?.full_name ?? "-"}</div>
+          {item.requester?.team?.name && (
+            <div className="text-xs text-slate-400">
+              {item.requester.team.name}
+            </div>
+          )}
+        </td>
       )}
-    </div>
+      <td className="whitespace-nowrap px-2 py-2.5 text-slate-600">
+        {item.approver?.full_name ?? "-"}
+      </td>
+      <td className="whitespace-nowrap px-2 py-2.5 tabular-nums text-slate-500">
+        {dayjs(item.created_at).format("YY.MM.DD HH:mm")}
+      </td>
+      <td className="whitespace-nowrap px-2 py-2.5">
+        <span
+          className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${STATUS_CLASS[item.status]}`}
+        >
+          {STATUS_LABEL[item.status]}
+        </span>
+      </td>
+      {showActionColumn && (
+        <td className="whitespace-nowrap px-3 py-2.5">
+          {showActions ? (
+            <div className="flex justify-end gap-1.5">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onReject}
+                disabled={isPending}
+              >
+                <X className="mr-1 h-4 w-4" />
+                반려
+              </Button>
+              <Button size="sm" onClick={onApprove} disabled={isPending}>
+                <Check className="mr-1 h-4 w-4" />
+                승인
+              </Button>
+            </div>
+          ) : (
+            <span className="block text-right text-slate-300">-</span>
+          )}
+        </td>
+      )}
+    </tr>
   );
 }

@@ -16,14 +16,25 @@ export interface DayoffRecord {
   reason: string | null;
   edit_reason?: string | null;
   approver_id: string | null;
+  requested_approver_id?: string | null;
   approved_at: string | null;
   last_editor_id: string | null;
   is_deleted: boolean;
   created_at: string;
   updated_at: string;
+  first_approved_at?: string | null;
+  final_approved_at?: string | null;
   author: { id: string; full_name: string } | null;
   target: { id: string; full_name: string } | null;
   approver: { id: string; full_name: string } | null;
+  approval_request?: {
+    status: string;
+    requested_at: string;
+    resolved_at: string | null;
+    reject_reason: string | null;
+    approver: { id: string; full_name: string } | null;
+    resolver: { id: string; full_name: string } | null;
+  } | null;
   leave_type: {
     id: number;
     name: string;

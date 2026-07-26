@@ -58,7 +58,7 @@ function getRpcErrorResponse(message: string) {
   );
 }
 
-// GET /api/leave-requests - 같은 조직의 선택 가능한 승인자 목록
+// GET /api/leave-requests - 같은 조직의 선택 가능한 승인자/참조자 목록
 export async function GET() {
   try {
     const sessionUser = await getSessionUser();
@@ -114,18 +114,28 @@ export async function GET() {
       );
     }
 
-    const approvers =
-      (members as ApproverCandidate[] | null | undefined)
-        ?.filter((candidate) => isEligibleApprover(candidate, sessionUser.id))
-        .map((candidate) => ({
-          id: candidate.id,
-          full_name: candidate.full_name,
-          member_role: candidate.member_role,
-          team_name: candidate.team?.name ?? null,
-        })) ?? [];
+    const candidates =
+      (members as ApproverCandidate[] | null | undefined) ?? [];
+    const memberOptions = candidates
+      .filter((candidate) => candidate.id !== sessionUser.id)
+      .map((candidate) => ({
+        id: candidate.id,
+        full_name: candidate.full_name,
+        member_role: candidate.member_role,
+        team_name: candidate.team?.name ?? null,
+      }));
+    const approvers = candidates
+      .filter((candidate) => isEligibleApprover(candidate, sessionUser.id))
+      .map((candidate) => ({
+        id: candidate.id,
+        full_name: candidate.full_name,
+        member_role: candidate.member_role,
+        team_name: candidate.team?.name ?? null,
+      }));
 
     return NextResponse.json({
       approvers,
+      members: memberOptions,
       default_approver_id: approvers.some(
         (approver) => approver.id === defaultApproverId,
       )
@@ -257,6 +267,31 @@ export async function POST(request: NextRequest) {
         { error: "신청자의 조직 정보를 확인할 수 없습니다." },
         { status: 400 },
       );
+    }
+
+    const uniqueCcMemberIds = [...new Set(ccMemberIds)];
+    if (
+      uniqueCcMemberIds.length !== ccMemberIds.length ||
+      uniqueCcMemberIds.includes(memberId)
+    ) {
+      return NextResponse.json(
+        { error: "유효하지 않은 참조자입니다." },
+        { status: 400 },
+      );
+    }
+    if (uniqueCcMemberIds.length > 0) {
+      const { data: ccMembers, error: ccMembersError } = await supabase
+        .from("members")
+        .select("id")
+        .eq("organization_id", requester.organization_id)
+        .in("id", uniqueCcMemberIds);
+
+      if (ccMembersError || ccMembers?.length !== uniqueCcMemberIds.length) {
+        return NextResponse.json(
+          { error: "같은 조직의 구성원만 참조자로 지정할 수 있습니다." },
+          { status: 400 },
+        );
+      }
     }
 
     const { data: selectedApprover, error: approverError } = await supabase

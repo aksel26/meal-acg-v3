@@ -4,6 +4,7 @@ import * as React from "react";
 import { cn } from "../lib/utils";
 import { canBeChoseong, getChoseong } from "es-hangul";
 import { Search, X, Check, ChevronDown } from "lucide-react";
+import { Popover, PopoverAnchor, PopoverContent } from "./popover";
 
 // 초성 검색 매칭 확인
 function matchesChosung(text: string, query: string): boolean {
@@ -17,13 +18,9 @@ function matchesChosung(text: string, query: string): boolean {
   if (lowerText.includes(lowerQuery)) return true;
 
   const textChoseong = getChoseong(text).toLowerCase();
-  const queryChoseong = getChoseong(trimmedQuery).toLowerCase();
-  const isChoseongOnly = [...trimmedQuery].every((char) =>
-    canBeChoseong(char),
-  );
+  const isChoseongOnly = [...trimmedQuery].every((char) => canBeChoseong(char));
 
   if (isChoseongOnly) return textChoseong.includes(lowerQuery);
-  if (queryChoseong) return textChoseong.includes(queryChoseong);
 
   return false;
 }
@@ -41,6 +38,7 @@ export interface SearchableDropdownProps<T> {
   emptyText?: string;
   allowClear?: boolean;
   disabled?: boolean;
+  portal?: boolean;
   className?: string;
 }
 
@@ -57,6 +55,7 @@ function SearchableDropdown<T>({
   emptyText = "결과가 없습니다",
   allowClear = false,
   disabled = false,
+  portal = false,
   className,
 }: SearchableDropdownProps<T>) {
   const [isOpen, setIsOpen] = React.useState(false);
@@ -66,6 +65,7 @@ function SearchableDropdown<T>({
   const containerRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
   const listRef = React.useRef<HTMLDivElement>(null);
+  const menuRef = React.useRef<HTMLDivElement>(null);
 
   // Find selected item
   const selectedItem = React.useMemo(() => {
@@ -105,7 +105,8 @@ function SearchableDropdown<T>({
     const handleClickOutside = (event: MouseEvent) => {
       if (
         containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
+        !containerRef.current.contains(event.target as Node) &&
+        !menuRef.current?.contains(event.target as Node)
       ) {
         setIsOpen(false);
         setQuery("");
@@ -118,7 +119,7 @@ function SearchableDropdown<T>({
   }, []);
 
   const handleOpen = () => {
-    if (disabled) return;
+    if (disabled || isOpen) return;
     setIsOpen(true);
     setQuery("");
     setHighlightedIndex(-1);
@@ -193,94 +194,142 @@ function SearchableDropdown<T>({
     </div>
   );
 
-  return (
-    <div ref={containerRef} className={cn("relative", className)}>
-      {/* Trigger */}
-      <div
-        onClick={handleOpen}
-        onKeyDown={handleKeyDown}
-        tabIndex={disabled ? -1 : 0}
-        role="combobox"
-        aria-expanded={isOpen}
-        aria-haspopup="listbox"
-        className={cn(
-          "flex items-center w-full h-10 px-3 rounded-lg bg-white cursor-pointer transition-colors shadow-none border border-slate-200",
-          disabled
-            ? "bg-slate-100 cursor-not-allowed opacity-60"
-            : "",
-          isOpen && "ring-1 ring-blue-100"
-        )}
-      >
-        <Search className="w-4 h-4 text-slate-400 mr-2 flex-shrink-0" />
-        {isOpen ? (
-          <input
-            ref={inputRef}
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={searchPlaceholder}
-            className="flex-1 outline-none text-sm bg-transparent"
-            autoComplete="off"
-          />
-        ) : (
-          <span
-            className={cn(
-              "flex-1 text-sm truncate",
-              selectedItem ? "text-slate-900" : "text-slate-400",
-            )}
-          >
-            {selectedItem ? getItemLabel(selectedItem) : placeholder}
-          </span>
-        )}
-        {allowClear && selectedItem && !isOpen ? (
-          <button
-            onClick={handleClear}
-            className="p-1  hover:bg-slate-100 rounded"
-            aria-label="Clear selection"
-          >
-            <X className="w-3.5 h-3.5 text-slate-400" />
-          </button>
-        ) : (
-          <ChevronDown
-            className={cn(
-              "w-4 h-4 text-slate-400 transition-transform",
-              isOpen && "rotate-180",
-            )}
-          />
-        )}
-      </div>
-
-      {/* Dropdown List */}
-      {isOpen && (
-        <div
-          className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-none max-h-60 overflow-y-auto"
-          role="listbox"
-        >
-          {filteredItems.length === 0 ? (
-            <div className="px-3 py-4 text-sm text-slate-500 text-center">
-              {emptyText}
+  const dropdownItems = (
+    <>
+      {filteredItems.length === 0 ? (
+        <div className="px-3 py-4 text-center text-sm text-slate-500">
+          {emptyText}
+        </div>
+      ) : (
+        <div ref={listRef}>
+          {filteredItems.map((item, index) => (
+            <div
+              key={getItemKey(item)}
+              onClick={() => handleSelect(item)}
+              onMouseEnter={() => setHighlightedIndex(index)}
+              role="option"
+              aria-selected={value === getItemKey(item)}
+            >
+              {renderItem
+                ? renderItem(item, highlightedIndex === index)
+                : defaultRenderItem(item, highlightedIndex === index)}
             </div>
-          ) : (
-            <div ref={listRef}>
-              {filteredItems.map((item, index) => (
-                <div
-                  key={getItemKey(item)}
-                  onClick={() => handleSelect(item)}
-                  onMouseEnter={() => setHighlightedIndex(index)}
-                  role="option"
-                  aria-selected={value === getItemKey(item)}
-                >
-                  {renderItem
-                    ? renderItem(item, highlightedIndex === index)
-                    : defaultRenderItem(item, highlightedIndex === index)}
-                </div>
-              ))}
-            </div>
-          )}
+          ))}
         </div>
       )}
+    </>
+  );
+
+  const dropdownList = !isOpen ? null : portal ? (
+    <PopoverContent
+      ref={menuRef}
+      align="start"
+      collisionPadding={8}
+      onOpenAutoFocus={(event) => event.preventDefault()}
+      onCloseAutoFocus={(event) => event.preventDefault()}
+      onFocusOutside={(event) => event.preventDefault()}
+      onInteractOutside={(event) => {
+        if (containerRef.current?.contains(event.target as Node)) {
+          event.preventDefault();
+        }
+      }}
+      onWheel={(event) => event.stopPropagation()}
+      className="z-[100] max-h-60 overflow-y-auto rounded-lg p-0"
+      style={{
+        width: containerRef.current?.offsetWidth,
+        pointerEvents: "auto",
+      }}
+      role="listbox"
+    >
+      {dropdownItems}
+    </PopoverContent>
+  ) : (
+    <div
+      ref={menuRef}
+      className="absolute z-[100] mt-1 max-h-60 w-full overflow-y-auto rounded-lg border bg-white shadow-md"
+      role="listbox"
+    >
+      {dropdownItems}
     </div>
+  );
+
+  const trigger = (
+    <div
+      onClick={handleOpen}
+      onKeyDown={handleKeyDown}
+      tabIndex={disabled ? -1 : 0}
+      role="combobox"
+      aria-expanded={isOpen}
+      aria-haspopup="listbox"
+      className={cn(
+        "flex h-10 w-full cursor-pointer items-center rounded-lg border border-slate-200 bg-white px-3 shadow-none transition-colors",
+        disabled ? "cursor-not-allowed bg-slate-100 opacity-60" : "",
+        isOpen && "ring-1 ring-blue-100",
+      )}
+    >
+      <Search className="mr-2 h-4 w-4 flex-shrink-0 text-slate-400" />
+      {isOpen ? (
+        <input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={searchPlaceholder}
+          className="flex-1 bg-transparent text-sm outline-none"
+          autoComplete="off"
+        />
+      ) : (
+        <span
+          className={cn(
+            "flex-1 truncate text-sm",
+            selectedItem ? "text-slate-900" : "text-slate-400",
+          )}
+        >
+          {selectedItem ? getItemLabel(selectedItem) : placeholder}
+        </span>
+      )}
+      {allowClear && selectedItem && !isOpen ? (
+        <button
+          type="button"
+          onClick={handleClear}
+          className="rounded p-1 hover:bg-slate-100"
+          aria-label="Clear selection"
+        >
+          <X className="h-3.5 w-3.5 text-slate-400" />
+        </button>
+      ) : (
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 text-slate-400 transition-transform",
+            isOpen && "rotate-180",
+          )}
+        />
+      )}
+    </div>
+  );
+
+  const dropdown = (
+    <div ref={containerRef} className={cn("relative", className)}>
+      {portal ? <PopoverAnchor asChild>{trigger}</PopoverAnchor> : trigger}
+      {dropdownList}
+    </div>
+  );
+
+  if (!portal) return dropdown;
+
+  return (
+    <Popover
+      open={isOpen}
+      onOpenChange={(open) => {
+        setIsOpen(open);
+        if (!open) {
+          setQuery("");
+          setHighlightedIndex(-1);
+        }
+      }}
+    >
+      {dropdown}
+    </Popover>
   );
 }
 

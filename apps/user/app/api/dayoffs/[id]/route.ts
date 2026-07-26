@@ -2,7 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/client";
 
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const APPROVER_ROLES = new Set(["대표", "본부장", "팀장", "파트장"]);
+const APPROVER_AUTHORITIES = new Set(["관리자", "팀장", "팀장/본부장"]);
+
 function rpcErrorResponse(message: string) {
+  if (message.includes("LEAVE_BALANCE_NOT_FOUND")) {
+    return NextResponse.json(
+      { error: "연차 잔액 정보를 확인할 수 없습니다." },
+      { status: 400 },
+    );
+  }
   if (message.includes("FORBIDDEN")) {
     return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
   }
@@ -21,6 +32,12 @@ function rpcErrorResponse(message: string) {
   if (message.includes("EDIT_REASON_REQUIRED")) {
     return NextResponse.json(
       { error: "승인된 근태 수정 시 수정 사유가 필요합니다." },
+      { status: 400 },
+    );
+  }
+  if (message.includes("LEAVE_INVALID_APPROVER")) {
+    return NextResponse.json(
+      { error: "선택한 승인자를 지정할 수 없습니다." },
       { status: 400 },
     );
   }
@@ -84,31 +101,32 @@ export async function GET(
       );
     }
 
-    let canRead =
+    const { data: assignedApproval } = await supabase
+      .from("approval_requests")
+      .select("id, approver_id")
+      .eq("related_table", "dayoffs")
+      .eq("related_id", id)
+      .limit(1)
+      .maybeSingle();
+
+    const canRead =
       data.author_id === sessionUser.id ||
       data.target_id === sessionUser.id ||
       data.approver_id === sessionUser.id ||
       data.cc_member_ids?.includes(sessionUser.id) ||
+      assignedApproval?.approver_id === sessionUser.id ||
       sessionUser.role === "admin" ||
       sessionUser.role === "team_lead";
-
-    if (!canRead) {
-      const { data: assignedApproval } = await supabase
-        .from("approval_requests")
-        .select("id")
-        .eq("related_table", "dayoffs")
-        .eq("related_id", id)
-        .eq("approver_id", sessionUser.id)
-        .limit(1)
-        .maybeSingle();
-      canRead = Boolean(assignedApproval);
-    }
 
     if (!canRead) {
       return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
     }
 
-    return NextResponse.json(data);
+    return NextResponse.json({
+      ...data,
+      requested_approver_id:
+        assignedApproval?.approver_id ?? data.approver_id ?? null,
+    });
   } catch (error) {
     console.error("Dayoffs detail API error:", error);
     return NextResponse.json(
@@ -147,6 +165,7 @@ export async function PUT(
       "leaveTypeId",
       "lateHour",
       "lateMinute",
+      "approverId",
       "ccMemberIds",
       "reason",
       "editReason",
@@ -166,6 +185,43 @@ export async function PUT(
         { error: "사유는 2,000자 이내여야 합니다." },
         { status: 400 },
       );
+    }
+    if (
+      "approverId" in changes &&
+      (typeof changes.approverId !== "string" ||
+        !UUID_PATTERN.test(changes.approverId))
+    ) {
+      return NextResponse.json(
+        { error: "유효하지 않은 승인자입니다." },
+        { status: 400 },
+      );
+    }
+    if (typeof changes.approverId === "string") {
+      const [{ data: requester }, { data: approver }] = await Promise.all([
+        supabase
+          .from("members")
+          .select("organization_id")
+          .eq("id", sessionUser.id)
+          .single(),
+        supabase
+          .from("members")
+          .select("id, organization_id, member_role, user_authority")
+          .eq("id", changes.approverId)
+          .single(),
+      ]);
+      if (
+        !requester?.organization_id ||
+        !approver ||
+        approver.id === sessionUser.id ||
+        approver.organization_id !== requester.organization_id ||
+        (!APPROVER_ROLES.has(approver.member_role ?? "") &&
+          !APPROVER_AUTHORITIES.has(approver.user_authority ?? ""))
+      ) {
+        return NextResponse.json(
+          { error: "선택한 승인자를 지정할 수 없습니다." },
+          { status: 400 },
+        );
+      }
     }
 
     const { data, error } = await supabase

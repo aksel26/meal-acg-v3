@@ -12,7 +12,7 @@ export function MyCalendarPanel({ rightTopSlot }: MyCalendarPanelProps) {
 
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-[#f3f3f3] bg-white p-4">
+      <div className="rounded-xl bg-white p-4">
         <div className="h-64 animate-pulse rounded-lg bg-[#f9f9fa]" />
       </div>
     );

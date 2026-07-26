@@ -8,7 +8,7 @@ export function RecentActivityWidget() {
   const { data, isLoading } = useRecentActivity();
 
   return (
-    <section className="rounded-xl border border-[#f3f3f3] bg-white px-4 py-4">
+    <section className="rounded-xl bg-white px-4 py-4">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-sm font-semibold text-[#111111]">최근 활동</h2>

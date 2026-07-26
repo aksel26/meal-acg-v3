@@ -17,7 +17,7 @@ export function ProjectSummaryCards() {
         {[0, 1, 2].map((i) => (
           <div
             key={i}
-            className="h-32 animate-pulse rounded-xl border border-[#f3f3f3] bg-white"
+            className="h-32 animate-pulse rounded-xl bg-white"
           />
         ))}
       </div>
@@ -90,7 +90,7 @@ function ProjectCard({
     return (
       <Link
         href={href}
-        className="block rounded-xl border border-[#f3f3f3] bg-white px-4 py-4 transition hover:border-slate-300 hover:bg-slate-50"
+        className="block rounded-xl bg-white px-4 py-4 transition hover:bg-slate-50"
       >
         {content}
       </Link>
@@ -98,7 +98,7 @@ function ProjectCard({
   }
 
   return (
-    <div className="rounded-xl border border-[#f3f3f3] bg-white px-4 py-4">
+    <div className="rounded-xl bg-white px-4 py-4">
       {content}
     </div>
   );
@@ -112,7 +112,7 @@ function CompletionCard({
   thisYear: number;
 }) {
   return (
-    <div className="rounded-xl border border-[#f3f3f3] bg-white px-4 py-4">
+    <div className="rounded-xl bg-white px-4 py-4">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-sm font-medium text-[#111111]">처리완료한 요청</p>

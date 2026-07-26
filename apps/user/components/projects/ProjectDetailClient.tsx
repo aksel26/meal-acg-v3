@@ -41,7 +41,7 @@ import { EditProjectDialog } from "@/components/projects/EditProjectDialog";
 
 const PROJECT_STATUSES: ProjectStatus[] = ["계획", "진행", "대기", "완료"];
 
-const cardClass = "rounded-xl border border-[#f3f3f3] bg-white";
+const cardClass = "rounded-xl bg-white";
 const inputClass =
   "w-full rounded-md border border-[#e5e7eb] bg-white px-3 py-2.5 text-sm leading-6 text-slate-700 outline-none transition-colors focus:border-[#111111]";
 const primaryBtnClass =
@@ -866,7 +866,7 @@ function ProjectFeedItemRow({
   return (
     <li className="relative">
       <span className="absolute -left-[21px] top-2 size-2 rounded-full bg-slate-300 ring-4 ring-white" />
-      <div className="group rounded-lg border border-[#f3f3f3] bg-white px-4 py-3 transition-colors hover:border-slate-200 hover:bg-[#fafafa]">
+      <div className="group rounded-lg bg-white px-4 py-3 transition-colors hover:bg-[#fafafa]">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-xs text-slate-400">
@@ -891,7 +891,7 @@ function ProjectFeedItemRow({
                 {item.attachments.map((attachment) => (
                   <li
                     key={attachment.id}
-                    className="flex items-center gap-2 rounded-md border border-[#f3f3f3] bg-[#fafafa] px-2.5 py-2"
+                    className="flex items-center gap-2 rounded-md bg-[#fafafa] px-2.5 py-2"
                   >
                     <Paperclip
                       size={13}
@@ -1465,7 +1465,7 @@ function AttachmentsPanel({
             {attachments.map((item) => (
               <li
                 key={item.id}
-                className="group flex items-center gap-3 rounded-lg border border-[#f3f3f3] px-3 py-2.5 transition-colors hover:border-slate-200 hover:bg-[#fafafa]"
+                className="group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-[#fafafa]"
               >
                 <Paperclip
                   size={14}
@@ -1578,7 +1578,7 @@ function LinkedRequestsPanel({
             {requests.map((request) => (
               <li
                 key={request.id}
-                className="group flex items-start gap-2 rounded-lg border border-[#f3f3f3] p-3 transition-colors hover:border-slate-200 hover:bg-[#fafafa]"
+                className="group flex items-start gap-2 rounded-lg p-3 transition-colors hover:bg-[#fafafa]"
               >
                 <Link
                   className="min-w-0 flex-1 space-y-1.5"
@@ -1760,7 +1760,7 @@ function LinkRequestModal({
               {filtered.map((request) => (
                 <li
                   key={request.id}
-                  className="flex items-start gap-2 rounded-lg border border-[#f3f3f3] p-3 transition-colors hover:border-slate-200 hover:bg-[#fafafa]"
+                  className="flex items-start gap-2 rounded-lg p-3 transition-colors hover:bg-[#fafafa]"
                 >
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex items-center gap-1.5">

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "motion/react";
 import { Button } from "@repo/ui/src/button";
-import { ShieldCheck, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 
 type HrProfile = {
   registered: boolean;
@@ -18,11 +18,9 @@ type HrProfile = {
 
 function Row({ label, value }: { label: string; value: string | null }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl bg-white p-3">
-      <div className="min-w-0 flex-1">
-        <p className="text-[11px] text-slate-400">{label}</p>
-        <p className="text-sm font-medium text-slate-800">{value || "-"}</p>
-      </div>
+    <div className="grid grid-cols-[100px_minmax(0,1fr)] items-center border-b border-slate-100 py-3">
+      <span className="text-xs text-slate-500">{label}</span>
+      <span className="text-sm font-medium text-slate-800">{value || "-"}</span>
     </div>
   );
 }
@@ -44,12 +42,16 @@ export default function ProfileHrCard() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
     >
-      <div className="rounded-2xl bg-slate-50 p-5">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-slate-500" />
-            <h3 className="text-sm font-semibold text-slate-800">내 인사정보</h3>
-          </div>
+      <div className="grid grid-cols-[100px_minmax(0,1fr)_auto] items-center border-b border-slate-100 py-3">
+        <span className="text-xs text-slate-500">인사정보</span>
+        <span className="text-sm text-slate-500">
+          {isLoading
+            ? "불러오는 중..."
+            : data?.registered
+              ? "본인만 조회 가능"
+              : "등록된 정보 없음"}
+        </span>
+        <div>
           {data?.registered && (
             <Button
               variant="outline"
@@ -66,41 +68,39 @@ export default function ProfileHrCard() {
             </Button>
           )}
         </div>
+      </div>
 
-        {isLoading ? (
-          <p className="text-sm text-slate-400">불러오는 중...</p>
-        ) : !data?.registered ? (
-          <p className="text-sm text-slate-400">등록된 인사정보가 없습니다.</p>
-        ) : (
-          <div className="space-y-3">
-            <Row label="주민등록번호" value={data.residentId} />
-            <Row
-              label="계좌"
-              value={
-                data.account
-                  ? `${data.account.bank} ${data.account.number}`
+      {!isLoading && data?.registered && (
+        <>
+          <Row label="주민등록번호" value={data.residentId} />
+          <Row
+            label="계좌"
+            value={
+              data.account
+                ? `${data.account.bank} ${data.account.number}`
+                : "-"
+            }
+          />
+          <Row
+            label="연봉"
+            value={
+              reveal
+                ? data.annualSalary != null
+                  ? `${data.annualSalary.toLocaleString("ko-KR")}원`
                   : "-"
-              }
-            />
-            <Row
-              label="연봉"
-              value={
-                reveal
-                  ? data.annualSalary != null
-                    ? `${data.annualSalary.toLocaleString("ko-KR")}원`
-                    : "-"
-                  : data.salaryMasked
-                    ? "•••"
-                    : "-"
-              }
-            />
-          </div>
-        )}
+                : data.salaryMasked
+                  ? "•••"
+                  : "-"
+            }
+          />
+        </>
+      )}
 
+      {data?.registered && (
         <p className="mt-3 text-[11px] text-slate-400">
           본인만 조회할 수 있으며, 전체 보기 시 열람 기록이 남습니다.
         </p>
-      </div>
+      )}
     </motion.div>
   );
 }

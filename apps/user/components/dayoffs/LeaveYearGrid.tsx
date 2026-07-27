@@ -71,7 +71,7 @@ export default function LeaveYearGrid({
 }: {
   dayoffs: LeaveYearRecord[];
   dummyYear?: number;
-  onRecordSelect?: (date: string) => void;
+  onRecordSelect?: (record: LeaveYearRecord) => void;
 }) {
   const records = useMemo<LeaveYearRecord[]>(
     () => [...dayoffs, ...(dummyYear ? buildDummyLeaveRecords(dummyYear) : [])],
@@ -141,7 +141,8 @@ export default function LeaveYearGrid({
                     const card = onRecordSelect ? (
                       <button
                         type="button"
-                        onClick={() => onRecordSelect(record.leave_date)}
+                        onClick={() => onRecordSelect(record)}
+                        aria-label={`${record.leave_date} ${record.leave_type?.name ?? "휴가"} 상세보기`}
                         className={className}
                       >
                         {content}

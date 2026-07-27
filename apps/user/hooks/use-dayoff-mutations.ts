@@ -79,6 +79,11 @@ export function useUpdateDayoff() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.dayoffs.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.approvals.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.myRequests.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.leaveBalances.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meals.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.mealStats.all });
       toast.success("근태가 수정되었습니다.");
     },
     onError: (error: Error) => {

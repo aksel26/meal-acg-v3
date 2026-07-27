@@ -51,7 +51,7 @@ export function CalendarPanel({
   };
 
   return (
-    <div className="rounded-xl border border-[#f3f3f3] bg-white p-4">
+    <div className="rounded-xl bg-white p-4">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-base font-semibold text-[#111111]">
           {month.format("YYYY년 M월")}

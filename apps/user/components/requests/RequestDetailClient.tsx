@@ -29,7 +29,7 @@ import { RequestForm } from "@/components/requests/RequestForm";
 
 const statuses: RequestStatus[] = ["접수", "진행", "대기", "완료", "거절"];
 
-const panelClass = "rounded-xl border border-[#f3f3f3] bg-white";
+const panelClass = "rounded-xl bg-white";
 const inputClass =
   "w-full rounded-md border border-[#e5e7eb] bg-white px-3 py-2.5 text-sm leading-6 text-slate-700 outline-none transition-colors focus:border-[#111111]";
 const primaryBtnClass =
@@ -392,7 +392,7 @@ export function RequestDetailClient({
                 completionMemos.map((memo) => (
                   <div
                     key={memo.id}
-                    className="rounded-lg border border-[#f3f3f3] bg-[#fafafa] px-3 py-3"
+                    className="rounded-lg bg-[#fafafa] px-3 py-3"
                   >
                     <div className="flex flex-col gap-1 text-xs text-slate-500 md:flex-row md:items-center md:justify-between">
                       <div className="flex items-center gap-2">

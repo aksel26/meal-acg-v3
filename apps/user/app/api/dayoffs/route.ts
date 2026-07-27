@@ -68,7 +68,47 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(data);
+    const dayoffIds = (data ?? []).map((dayoff) => dayoff.id);
+    const { data: approvalRequests, error: approvalError } =
+      dayoffIds.length > 0
+        ? await supabase
+            .from("approval_requests")
+            .select(
+              `
+              related_id,
+              status,
+              requested_at,
+              resolved_at,
+              reject_reason,
+              approver:members!approval_requests_approver_id_fkey(id, full_name),
+              resolver:members!approval_requests_resolved_by_fkey(id, full_name)
+            `,
+            )
+            .eq("related_table", "dayoffs")
+            .in("related_id", dayoffIds)
+        : { data: [], error: null };
+
+    if (approvalError) {
+      console.error("Error fetching dayoff approvals:", approvalError);
+      return NextResponse.json(
+        { error: "Failed to fetch dayoff approvals" },
+        { status: 500 },
+      );
+    }
+
+    const approvalByDayoffId = new Map(
+      (approvalRequests ?? []).map((approval) => [
+        approval.related_id,
+        approval,
+      ]),
+    );
+
+    return NextResponse.json(
+      (data ?? []).map((dayoff) => ({
+        ...dayoff,
+        approval_request: approvalByDayoffId.get(dayoff.id) ?? null,
+      })),
+    );
   } catch (error) {
     console.error("Dayoffs API error:", error);
     return NextResponse.json(

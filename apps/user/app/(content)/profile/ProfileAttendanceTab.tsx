@@ -8,9 +8,8 @@ import "dayjs/locale/ko";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import AttendanceCalendar from "@/components/attendance/AttendanceCalendar";
-import LeaveYearGrid, {
-  buildDummyLeaveRecords,
-} from "@/components/dayoffs/LeaveYearGrid";
+import { LeaveRequestDialog } from "@/components/dayoffs/LeaveRequestDialog";
+import LeaveYearGrid from "@/components/dayoffs/LeaveYearGrid";
 import {
   useAttendanceMonthly,
   type AttendanceRecord,
@@ -49,6 +48,10 @@ function formatRecordTime(value: string | null, format = "HH:mm") {
   return dayjs(value).tz("Asia/Seoul").format(format);
 }
 
+function formatAuditDateTime(value: string | null | undefined) {
+  return value ? dayjs(value).tz("Asia/Seoul").format("YY.MM.DD HH:mm") : "-";
+}
+
 function formatWorkTime(minutes: number) {
   if (minutes <= 0) return "-";
   const h = Math.floor(minutes / 60);
@@ -71,34 +74,13 @@ function getLeaveDayAmount(dayoff: DayoffRecord) {
   return dayoff.leave_type.duration_type === "full" ? 1 : 0.5;
 }
 
-type StatusLabel = { text: string; className: string };
+const DEFAULT_STATUS_LABEL = "정상";
 
-const DEFAULT_STATUS_LABEL: StatusLabel = {
-  text: "정상",
-  className: "bg-emerald-50 text-emerald-700 ring-emerald-100",
-};
-
-const STATUS_LABELS: Record<string, StatusLabel> = {
-  early_check_in: {
-    text: "조기출근",
-    className: "bg-blue-50 text-blue-700 ring-blue-100",
-  },
+const STATUS_LABELS: Record<string, string> = {
+  early_check_in: "조기출근",
   normal: DEFAULT_STATUS_LABEL,
-  late: {
-    text: "지각",
-    className: "bg-rose-50 text-rose-700 ring-rose-100",
-  },
-  early_leave: {
-    text: "조퇴",
-    className: "bg-amber-50 text-amber-700 ring-amber-100",
-  },
-};
-
-const TYPE_BADGE_STYLES: Record<string, string> = {
-  근무: "bg-slate-100 text-slate-700",
-  휴가: "bg-emerald-50 text-emerald-700",
-  재택: "bg-amber-50 text-amber-700",
-  외근: "bg-blue-50 text-blue-700",
+  late: "지각",
+  early_leave: "조퇴",
 };
 
 const DAYOFF_STATUS_LABELS: Record<string, string> = {
@@ -117,6 +99,8 @@ export default function ProfileAttendanceTab({
   const [month, setMonth] = useState(now.month() + 1);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [recordView, setRecordView] = useState<RecordView>("calendar");
+  const [selectedLeaveRequest, setSelectedLeaveRequest] =
+    useState<DayoffRecord | null>(null);
   const [sort, setSort] = useState<{
     key: SortKey;
     direction: SortDirection;
@@ -144,10 +128,9 @@ export default function ProfileAttendanceTab({
       ),
     [yearlyDayoffs, month],
   );
-  const dummyYearDayoffs = useMemo(() => buildDummyLeaveRecords(year), [year]);
   const displayedYearDayoffs = useMemo(
-    () => [...(yearlyDayoffs ?? []), ...dummyYearDayoffs],
-    [yearlyDayoffs, dummyYearDayoffs],
+    () => yearlyDayoffs ?? [],
+    [yearlyDayoffs],
   );
   const calendarDayoffs = useMemo(
     () =>
@@ -166,9 +149,31 @@ export default function ProfileAttendanceTab({
     (record) => record.overtime_minutes > 0,
   );
   const overtimeCount = overtimeRecords.length;
-  const leaveDays = (dayoffs ?? [])
-    .filter((dayoff) => isApprovedLeaveStatus(dayoff.approval_status))
+  const approvedDayoffs = (dayoffs ?? []).filter((dayoff) =>
+    isApprovedLeaveStatus(dayoff.approval_status),
+  );
+  const leaveDays = approvedDayoffs
     .reduce((total, dayoff) => total + getLeaveDayAmount(dayoff), 0);
+  const leaveTooltipItems = approvedDayoffs
+    .filter((dayoff) => getLeaveDayAmount(dayoff) > 0)
+    .map((dayoff) => ({
+      date: dayjs(dayoff.leave_date).format("M월 D일 (ddd)"),
+      type: dayoff.leave_type?.name ?? "휴가",
+    }));
+  const issueTooltipItems = monthlyRecords.flatMap((record) => {
+    if (!record.check_in_at) return [];
+    const date = dayjs(record.date).format("M월 D일 (ddd)");
+    return [
+      (record.check_in_status ?? record.status) === "late"
+        ? { date, type: "지각" }
+        : null,
+      (record.check_out_status ?? record.status) === "early_leave"
+        ? { date, type: "조퇴" }
+        : null,
+    ].filter(
+      (item): item is { date: string; type: string } => item !== null,
+    );
+  });
   const monthStart = dayjs(`${year}-${String(month).padStart(2, "0")}-01`);
   const weekdayCount = Array.from(
     { length: monthStart.daysInMonth() },
@@ -214,11 +219,11 @@ export default function ProfileAttendanceTab({
                 "ko",
               )
             : (
-                STATUS_LABELS[a.record?.status ?? ""]?.text ??
+                STATUS_LABELS[a.record?.status ?? ""] ??
                 DAYOFF_STATUS_LABELS[a.dayoffs[0]?.approval_status ?? ""] ??
                 ""
               ).localeCompare(
-                STATUS_LABELS[b.record?.status ?? ""]?.text ??
+                STATUS_LABELS[b.record?.status ?? ""] ??
                   DAYOFF_STATUS_LABELS[b.dayoffs[0]?.approval_status ?? ""] ??
                   "",
                 "ko",
@@ -392,7 +397,17 @@ export default function ProfileAttendanceTab({
                     }
                     muted
                   />
-                  <StatRow label="휴가" value={`${formatCount(leaveDays)}일`} />
+                  <StatRow
+                    label="휴가"
+                    value={`${formatCount(leaveDays)}일`}
+                    action={
+                      <SummaryDetailPopover
+                        title={`${monthLabel} 휴가`}
+                        count={leaveTooltipItems.length}
+                        items={leaveTooltipItems}
+                      />
+                    }
+                  />
                   <StatRow
                     label="시간외근무"
                     value={`${overtimeCount}회`}
@@ -450,7 +465,17 @@ export default function ProfileAttendanceTab({
                       </Popover>
                     }
                   />
-                  <StatRow label="지각/조퇴" value={`${issueCount}회`} />
+                  <StatRow
+                    label="지각/조퇴"
+                    value={`${issueCount}회`}
+                    action={
+                      <SummaryDetailPopover
+                        title={`${monthLabel} 지각/조퇴`}
+                        count={issueCount}
+                        items={issueTooltipItems}
+                      />
+                    }
+                  />
                 </div>
               </section>
             )}
@@ -521,10 +546,18 @@ export default function ProfileAttendanceTab({
                           <DetailRow
                             label="상태"
                             value={
-                              STATUS_LABELS[selectedRecord.status]?.text ??
+                              STATUS_LABELS[selectedRecord.status] ??
                               selectedRecord.status
                             }
                           />
+                          {(selectedRecord.check_out_status === "early_leave" ||
+                            selectedRecord.status === "early_leave") &&
+                            selectedRecord.early_leave_reason && (
+                              <DetailRow
+                                label="조기퇴근 사유"
+                                value={selectedRecord.early_leave_reason}
+                              />
+                            )}
                         </div>
                         <div>
                           <DetailRow
@@ -583,10 +616,35 @@ export default function ProfileAttendanceTab({
                                   "-"
                                 }
                               />
-                              <DetailRow
-                                label="승인자"
-                                value={leave.approver?.full_name ?? "-"}
-                              />
+                              {leave.approval_status === "rejected" ? (
+                                <>
+                                  <DetailRow
+                                    label="반려자"
+                                    value={
+                                      leave.approval_request?.resolver
+                                        ?.full_name ?? "-"
+                                    }
+                                  />
+                                  <DetailRow
+                                    label="반려 사유"
+                                    value={
+                                      leave.approval_request?.reject_reason ??
+                                      "-"
+                                    }
+                                  />
+                                  <DetailRow
+                                    label="반려 일시"
+                                    value={formatAuditDateTime(
+                                      leave.approval_request?.resolved_at,
+                                    )}
+                                  />
+                                </>
+                              ) : (
+                                <DetailRow
+                                  label="승인자"
+                                  value={leave.approver?.full_name ?? "-"}
+                                />
+                              )}
                             </div>
                           </div>
                         ))}
@@ -608,14 +666,15 @@ export default function ProfileAttendanceTab({
                 {recordView === "annual" ? (
                   <LeaveYearGrid
                     dayoffs={displayedYearDayoffs}
-                    onRecordSelect={(date) => {
-                      setSelectedDate(date);
-                      setMonth(dayjs(date).month() + 1);
+                    onRecordSelect={(record) => {
+                      setSelectedDate(record.leave_date);
+                      setMonth(dayjs(record.leave_date).month() + 1);
+                      setSelectedLeaveRequest(record as DayoffRecord);
                     }}
                   />
                 ) : monthlyEntries.length > 0 ? (
                   <div className="overflow-x-auto">
-                    <table className="w-full min-w-[980px] text-left text-sm">
+                    <table className="w-full min-w-[1650px] text-left text-sm">
                       <thead>
                         <tr className="border-b border-slate-100 text-xs font-medium text-slate-400">
                           <SortableHeader
@@ -625,13 +684,16 @@ export default function ProfileAttendanceTab({
                             direction={sort.direction}
                             onSort={handleSort}
                           />
-                          <th scope="col" className="px-3 py-2 font-medium">
+                          <th scope="col" className="px-2 py-1.5 font-medium">
                             출근
                           </th>
-                          <th scope="col" className="px-3 py-2 font-medium">
+                          <th scope="col" className="px-2 py-1.5 font-medium">
                             퇴근
                           </th>
-                          <th scope="col" className="px-3 py-2 font-medium">
+                          <th scope="col" className="px-2 py-1.5 font-medium">
+                            조기퇴근 사유
+                          </th>
+                          <th scope="col" className="px-2 py-1.5 font-medium">
                             근무시간
                           </th>
                           <SortableHeader
@@ -641,7 +703,7 @@ export default function ProfileAttendanceTab({
                             direction={sort.direction}
                             onSort={handleSort}
                           />
-                          <th scope="col" className="px-3 py-2 font-medium">
+                          <th scope="col" className="px-2 py-1.5 font-medium">
                             휴가
                           </th>
                           <SortableHeader
@@ -651,7 +713,25 @@ export default function ProfileAttendanceTab({
                             direction={sort.direction}
                             onSort={handleSort}
                           />
-                          <th scope="col" className="px-3 py-2 font-medium">
+                          <th scope="col" className="px-2 py-1.5 font-medium">
+                            휴가 요청일시
+                          </th>
+                          <th scope="col" className="px-2 py-1.5 font-medium">
+                            수정일시
+                          </th>
+                          <th scope="col" className="px-2 py-1.5 font-medium">
+                            승인/반려자
+                          </th>
+                          <th scope="col" className="px-2 py-1.5 font-medium">
+                            승인/반려일시
+                          </th>
+                          <th scope="col" className="px-2 py-1.5 font-medium">
+                            반려 사유
+                          </th>
+                          <th scope="col" className="px-2 py-1.5 font-medium">
+                            수정 사유
+                          </th>
+                          <th scope="col" className="px-2 py-1.5 font-medium">
                             시간외근무
                           </th>
                         </tr>
@@ -659,30 +739,38 @@ export default function ProfileAttendanceTab({
                       <tbody>
                         {monthlyEntries.map((entry) => {
                           const record = entry.record;
-                          const dayoffStatus =
-                            entry.dayoffs[0]?.approval_status ?? "";
-                          const statusInfo = record
+                          const dayoff = entry.dayoffs[0];
+                          const dayoffStatus = dayoff?.approval_status ?? "";
+                          const approval = dayoff?.approval_request;
+                          const isRejected = dayoffStatus === "rejected";
+                          const isApproved = [
+                            "pre_approved",
+                            "approved",
+                          ].includes(dayoffStatus);
+                          const decisionActor = isRejected
+                            ? approval?.resolver?.full_name
+                            : isApproved
+                              ? (approval?.resolver?.full_name ??
+                                approval?.approver?.full_name ??
+                                dayoff?.approver?.full_name)
+                              : null;
+                          const decisionAt = isRejected
+                            ? approval?.resolved_at
+                            : dayoffStatus === "approved"
+                              ? (approval?.resolved_at ??
+                                dayoff?.final_approved_at ??
+                                dayoff?.approved_at)
+                              : dayoffStatus === "pre_approved"
+                                ? dayoff?.first_approved_at
+                                : null;
+                          const statusText = record
                             ? (STATUS_LABELS[record.status] ??
                               DEFAULT_STATUS_LABEL)
-                            : {
-                                text:
-                                  DAYOFF_STATUS_LABELS[dayoffStatus] ??
-                                  dayoffStatus ??
-                                  "-",
-                                className:
-                                  dayoffStatus === "approved"
-                                    ? "bg-emerald-50 text-emerald-700 ring-emerald-100"
-                                    : dayoffStatus === "pre_approved"
-                                      ? "bg-blue-50 text-blue-700 ring-blue-100"
-                                      : dayoffStatus === "rejected"
-                                        ? "bg-rose-50 text-rose-700 ring-rose-100"
-                                        : "bg-slate-100 text-slate-600 ring-slate-200",
-                              };
+                            : (DAYOFF_STATUS_LABELS[dayoffStatus] ??
+                              dayoffStatus ??
+                              "-");
                           const attendanceType =
                             record?.attendance_type ?? "휴가";
-                          const typeClass =
-                            TYPE_BADGE_STYLES[attendanceType] ||
-                            TYPE_BADGE_STYLES["근무"];
 
                           return (
                             <tr
@@ -704,26 +792,32 @@ export default function ProfileAttendanceTab({
                                 selectedDate === entry.date ? "bg-slate-50" : ""
                               }`}
                             >
-                              <td className="whitespace-nowrap px-3 py-3 font-medium text-slate-800">
-                                {dayjs(entry.date).format("M월 D일 (ddd)")}
-                              </td>
-                              <td className="whitespace-nowrap px-3 py-3 tabular-nums text-slate-600">
-                                {formatRecordTime(record?.check_in_at ?? null)}
-                              </td>
-                              <td className="whitespace-nowrap px-3 py-3 tabular-nums text-slate-600">
-                                {formatRecordTime(record?.check_out_at ?? null)}
-                              </td>
-                              <td className="whitespace-nowrap px-3 py-3 text-slate-600">
-                                {formatWorkTime(record?.work_minutes ?? 0)}
-                              </td>
-                              <td className="px-3 py-3">
-                                <span
-                                  className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${typeClass}`}
-                                >
-                                  {attendanceType}
+                              <td className="whitespace-nowrap px-2 py-2 font-medium text-slate-800">
+                                <span className="inline-flex items-center gap-1.5">
+                                  {dayjs(entry.date).format("M월 D일 (ddd)")}
+                                  {entry.date === now.format("YYYY-MM-DD") && (
+                                    <span className="rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-600">
+                                      오늘
+                                    </span>
+                                  )}
                                 </span>
                               </td>
-                              <td className="px-3 py-3">
+                              <td className="whitespace-nowrap px-2 py-2 tabular-nums text-slate-600">
+                                {formatRecordTime(record?.check_in_at ?? null)}
+                              </td>
+                              <td className="whitespace-nowrap px-2 py-2 tabular-nums text-slate-600">
+                                {formatRecordTime(record?.check_out_at ?? null)}
+                              </td>
+                              <td className="max-w-40 whitespace-pre-wrap px-2 py-2 text-slate-600">
+                                {record?.early_leave_reason ?? "-"}
+                              </td>
+                              <td className="whitespace-nowrap px-2 py-2 text-slate-600">
+                                {formatWorkTime(record?.work_minutes ?? 0)}
+                              </td>
+                              <td className="px-2 py-2 text-slate-600">
+                                {attendanceType}
+                              </td>
+                              <td className="px-2 py-2">
                                 {entry.dayoffs.length > 0 ? (
                                   <div className="flex flex-col gap-0.5 text-sm text-slate-600">
                                     {entry.dayoffs.map((dayoff) => (
@@ -739,13 +833,9 @@ export default function ProfileAttendanceTab({
                                   <span className="text-slate-400">-</span>
                                 )}
                               </td>
-                              <td className="px-3 py-3">
+                              <td className="px-2 py-2 text-slate-600">
                                 <div className="flex items-center gap-1.5">
-                                  <span
-                                    className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${statusInfo.className}`}
-                                  >
-                                    {statusInfo.text}
-                                  </span>
+                                  <span>{statusText}</span>
                                   {record?.modification_status && (
                                     <span className="text-xs text-amber-700">
                                       수정 요청
@@ -753,7 +843,34 @@ export default function ProfileAttendanceTab({
                                   )}
                                 </div>
                               </td>
-                              <td className="whitespace-nowrap px-3 py-3 text-slate-600">
+                              <td className="whitespace-nowrap px-2 py-2 tabular-nums text-slate-600">
+                                {dayoff
+                                  ? formatAuditDateTime(
+                                      approval?.requested_at ??
+                                        dayoff.created_at,
+                                    )
+                                  : "-"}
+                              </td>
+                              <td className="whitespace-nowrap px-2 py-2 tabular-nums text-slate-600">
+                                {dayoff?.last_editor_id
+                                  ? formatAuditDateTime(dayoff.updated_at)
+                                  : "-"}
+                              </td>
+                              <td className="whitespace-nowrap px-2 py-2 text-slate-600">
+                                {decisionActor ?? "-"}
+                              </td>
+                              <td className="whitespace-nowrap px-2 py-2 tabular-nums text-slate-600">
+                                {formatAuditDateTime(decisionAt)}
+                              </td>
+                              <td className="max-w-40 whitespace-pre-wrap px-2 py-2 text-slate-600">
+                                {isRejected
+                                  ? (approval?.reject_reason ?? "-")
+                                  : "-"}
+                              </td>
+                              <td className="max-w-40 whitespace-pre-wrap px-2 py-2 text-slate-600">
+                                {dayoff?.edit_reason ?? "-"}
+                              </td>
+                              <td className="whitespace-nowrap px-2 py-2 text-slate-600">
                                 {formatWorkTime(record?.overtime_minutes ?? 0)}
                               </td>
                             </tr>
@@ -772,6 +889,14 @@ export default function ProfileAttendanceTab({
           )}
         </>
       )}
+      <LeaveRequestDialog
+        open={!!selectedLeaveRequest}
+        onOpenChange={(open) => {
+          if (!open) setSelectedLeaveRequest(null);
+        }}
+        editingRecord={selectedLeaveRequest}
+        memberId={memberId}
+      />
     </div>
   );
 }
@@ -850,7 +975,7 @@ function SortableHeader({
       aria-sort={
         isActive ? (direction === "asc" ? "ascending" : "descending") : "none"
       }
-      className="px-3 py-2 font-medium"
+      className="px-2 py-1.5 font-medium"
     >
       <div className="flex items-center gap-1">
         <span>{label}</span>
@@ -897,5 +1022,57 @@ function StatRow({
         {action}
       </div>
     </div>
+  );
+}
+
+function SummaryDetailPopover({
+  title,
+  count,
+  items,
+}: {
+  title: string;
+  count: number;
+  items: { date: string; type: string }[];
+}) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-label={`${title} 상세보기`}
+          title={`${title} 상세보기`}
+          className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+        >
+          <Ellipsis className="h-4 w-4" aria-hidden="true" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-64 p-0">
+        <div className="border-b border-slate-100 px-4 py-3">
+          <p className="text-sm font-semibold text-slate-900">{title}</p>
+          <p className="mt-0.5 text-xs text-slate-400">{count}건</p>
+        </div>
+        {items.length > 0 ? (
+          <div className="max-h-72 overflow-y-auto">
+            {items.map((item, index) => (
+              <div
+                key={`${item.date}-${item.type}-${index}`}
+                className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 last:border-b-0"
+              >
+                <span className="w-28 text-sm font-medium text-slate-800">
+                  {item.date}
+                </span>
+                <span className="w-20 text-right text-sm text-slate-600">
+                  {item.type}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="px-4 py-6 text-center text-sm text-slate-400">
+            내역이 없습니다.
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
   );
 }

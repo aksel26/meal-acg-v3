@@ -1,20 +1,22 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { Input } from "@repo/ui/src/input";
 import { Button } from "@repo/ui/src/button";
 import { Label } from "@repo/ui/src/label";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@repo/ui/src/dialog";
+import {
   Eye,
   EyeOff,
-  Building2,
-  Briefcase,
-  Mail,
-  Phone,
   KeyRound,
-  Calendar,
-  CreditCard,
   Copy,
   Pencil,
   Check,
@@ -47,6 +49,7 @@ export default function ProfileBasicTab({ profile, memberId, hireDate }: Profile
   const [showCurrentPw, setShowCurrentPw] = useState(false);
   const [showNewPw, setShowNewPw] = useState(false);
   const [passwordError, setPasswordError] = useState("");
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
 
   useEffect(() => {
     if (profile) {
@@ -115,6 +118,7 @@ export default function ProfileBasicTab({ profile, memberId, hireDate }: Profile
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
+      setPasswordDialogOpen(false);
     } catch {
       // error handled by mutation
     }
@@ -133,7 +137,7 @@ export default function ProfileBasicTab({ profile, memberId, hireDate }: Profile
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
     >
-      <div className="rounded-2xl bg-slate-50 p-5">
+      <section>
         <div className="mb-5">
           <h2 className="text-xl font-bold text-slate-900">{profile.full_name}</h2>
           <p className="mt-1 text-sm text-slate-500">
@@ -142,38 +146,31 @@ export default function ProfileBasicTab({ profile, memberId, hireDate }: Profile
           </p>
         </div>
 
-        <div className="space-y-3">
-          <div className="flex items-center gap-3 rounded-xl bg-white p-3">
-            <Building2 className="h-4 w-4 shrink-0 text-slate-400" />
-            <div>
-              <p className="text-[11px] text-slate-400">소속</p>
-              <p className="text-sm font-medium text-slate-800">
-                {profile.division_name || "-"} / {profile.team_name || "-"}
-              </p>
-            </div>
+        <div>
+          <div className="grid grid-cols-[100px_minmax(0,1fr)] items-center border-b border-slate-100 py-3">
+            <span className="text-xs text-slate-500">소속</span>
+            <span className="text-sm font-medium text-slate-800">
+              {profile.division_name || "-"} / {profile.team_name || "-"}
+            </span>
           </div>
 
-          <div className="flex items-center gap-3 rounded-xl bg-white p-3">
-            <Calendar className="h-4 w-4 shrink-0 text-slate-400" />
-            <div>
-              <p className="text-[11px] text-slate-400">재직 상태</p>
-              <p className="text-sm font-medium text-slate-800">
-                {statusLabel(profile.current_status)}
-                {daysFromHire !== null && (
-                  <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
-                    D+{daysFromHire}
-                  </span>
-                )}
-              </p>
-            </div>
+          <div className="grid grid-cols-[100px_minmax(0,1fr)] items-center border-b border-slate-100 py-3">
+            <span className="text-xs text-slate-500">재직 상태</span>
+            <span className="text-sm font-medium text-slate-800">
+              {statusLabel(profile.current_status)}
+              {daysFromHire !== null && (
+                <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
+                  D+{daysFromHire}
+                </span>
+              )}
+            </span>
           </div>
 
-          <div className="flex items-center gap-3 rounded-xl bg-white p-3">
-            <Mail className="h-4 w-4 shrink-0 text-slate-400" />
+          <div className="grid grid-cols-[100px_minmax(0,1fr)_auto] items-center border-b border-slate-100 py-3">
+            <span className="text-xs text-slate-500">이메일</span>
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] text-slate-400">이메일</p>
               {editingField === "email" ? (
-                <div className="mt-0.5 flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5">
                   <input
                     type="email"
                     value={editValue}
@@ -193,12 +190,11 @@ export default function ProfileBasicTab({ profile, memberId, hireDate }: Profile
             )}
           </div>
 
-          <div className="flex items-center gap-3 rounded-xl bg-white p-3">
-            <Phone className="h-4 w-4 shrink-0 text-slate-400" />
+          <div className="grid grid-cols-[100px_minmax(0,1fr)_auto] items-center border-b border-slate-100 py-3">
+            <span className="text-xs text-slate-500">연락처</span>
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] text-slate-400">연락처</p>
               {editingField === "phone" ? (
-                <div className="mt-0.5 flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5">
                   <input
                     type="tel"
                     value={editValue}
@@ -218,12 +214,11 @@ export default function ProfileBasicTab({ profile, memberId, hireDate }: Profile
             )}
           </div>
 
-          <div className="flex items-center gap-3 rounded-xl bg-white p-3">
-            <CreditCard className="h-4 w-4 shrink-0 text-slate-400" />
+          <div className="grid grid-cols-[100px_minmax(0,1fr)_auto] items-center border-b border-slate-100 py-3">
+            <span className="text-xs text-slate-500">여권번호</span>
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] text-slate-400">여권번호</p>
               {editingField === "passport" ? (
-                <div className="mt-0.5 flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5">
                   <input
                     type="text"
                     value={editValue}
@@ -250,31 +245,59 @@ export default function ProfileBasicTab({ profile, memberId, hireDate }: Profile
             </div>
           </div>
 
-          <div className="flex items-center gap-3 rounded-xl bg-white p-3">
-            <Briefcase className="h-4 w-4 shrink-0 text-slate-400" />
+          <div className="grid grid-cols-[100px_minmax(0,1fr)] items-center border-b border-slate-100 py-3">
+            <span className="text-xs text-slate-500">아이디</span>
+            <span className="text-sm font-medium text-slate-800">
+              {profile.login_id || "-"}
+            </span>
+          </div>
+          <div className="grid grid-cols-[100px_minmax(0,1fr)] items-center border-b border-slate-100 py-3">
+            <span className="text-xs text-slate-500">비밀번호</span>
             <div>
-              <p className="text-[11px] text-slate-400">아이디</p>
-              <p className="text-sm font-medium text-slate-800">{profile.login_id || "-"}</p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setPasswordDialogOpen(true)}
+              >
+                변경하기
+              </Button>
             </div>
           </div>
+          <ProfileHrCard />
         </div>
-      </div>
+      </section>
     </motion.div>
   );
 
-  const editForms = (
-    <div className="space-y-6">
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+  return (
+    <>
+      {profileCard}
+      <Dialog
+        open={passwordDialogOpen}
+        onOpenChange={(open) => {
+          setPasswordDialogOpen(open);
+          if (!open) {
+            setCurrentPassword("");
+            setNewPassword("");
+            setConfirmPassword("");
+            setPasswordError("");
+            setShowCurrentPw(false);
+            setShowNewPw(false);
+          }
+        }}
       >
-        <div className="rounded-2xl bg-slate-50 p-5">
-          <div className="mb-4 flex items-center gap-2">
-            <KeyRound className="h-4 w-4 text-slate-500" />
-            <h3 className="text-sm font-semibold text-slate-800">비밀번호 변경</h3>
-          </div>
-          <div className="space-y-3">
+        <DialogContent className="max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="h-4 w-4 text-slate-500" />
+              비밀번호 변경
+            </DialogTitle>
+            <DialogDescription>
+              현재 비밀번호를 확인한 후 새 비밀번호를 설정합니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
             <div className="space-y-1.5">
               <Label htmlFor="currentPw" className="text-xs text-slate-500">현재 비밀번호</Label>
               <div className="relative">
@@ -298,26 +321,25 @@ export default function ProfileBasicTab({ profile, memberId, hireDate }: Profile
               <Input id="confirmPw" type={showNewPw ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" />
             </div>
             {passwordError && <p className="text-xs text-red-500">{passwordError}</p>}
-            <Button onClick={handleChangePassword} disabled={passwordMutation.isPending} variant="outline" className="w-full">
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setPasswordDialogOpen(false)}
+            >
+              취소
+            </Button>
+            <Button
+              type="button"
+              onClick={handleChangePassword}
+              disabled={passwordMutation.isPending}
+            >
               {passwordMutation.isPending ? "변경 중..." : "비밀번호 변경"}
             </Button>
-          </div>
-        </div>
-      </motion.div>
-      <ProfileHrCard />
-    </div>
-  );
-
-  return (
-    <React.Fragment>
-      <div className="md:hidden space-y-6">
-        {profileCard}
-        {editForms}
-      </div>
-      <div className="max-md:hidden grid grid-cols-2 gap-6">
-        <div>{profileCard}</div>
-        <div>{editForms}</div>
-      </div>
-    </React.Fragment>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

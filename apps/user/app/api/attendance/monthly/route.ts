@@ -65,17 +65,33 @@ export async function GET(request: NextRequest) {
 
     const recordIds = (records || []).map((r) => r.id);
     let modificationMap: Record<string, string> = {};
+    let earlyLeaveReasonMap: Record<string, string> = {};
 
     if (recordIds.length > 0) {
-      const { data: modifications } = await supabase
-        .from("attendance_modification_requests")
-        .select("attendance_record_id, approval_status")
-        .in("attendance_record_id", recordIds)
-        .neq("approval_status", "반려");
+      const [{ data: modifications }, { data: earlyLeaveRequests }] =
+        await Promise.all([
+          supabase
+            .from("attendance_modification_requests")
+            .select("attendance_record_id, approval_status")
+            .in("attendance_record_id", recordIds)
+            .neq("approval_status", "반려"),
+          supabase
+            .from("early_leave_requests")
+            .select("attendance_record_id, reason")
+            .in("attendance_record_id", recordIds),
+        ]);
 
       if (modifications) {
         modificationMap = Object.fromEntries(
           modifications.map((m) => [m.attendance_record_id, m.approval_status]),
+        );
+      }
+      if (earlyLeaveRequests) {
+        earlyLeaveReasonMap = Object.fromEntries(
+          earlyLeaveRequests.map((request) => [
+            request.attendance_record_id,
+            request.reason,
+          ]),
         );
       }
     }
@@ -103,6 +119,7 @@ export async function GET(request: NextRequest) {
         is_weekend: r.is_weekend ?? false,
         work_minutes: workMinutes,
         modification_status: modificationMap[r.id] ?? null,
+        early_leave_reason: earlyLeaveReasonMap[r.id] ?? null,
       };
     });
 

@@ -5,6 +5,7 @@ import Link from "next/link";
 import React from "react";
 import { useHeaderVisibility } from "@/hooks/useHeaderVisibility";
 import { SearchLauncher } from "@/components/search/SearchLauncher";
+import { LeaveRequestDialog } from "@/components/dayoffs/LeaveRequestDialog";
 import { motion } from "motion/react";
 import {
   Menu,
@@ -283,18 +284,38 @@ const Header = () => {
 };
 
 const headerShortcuts = [
-  { href: "/leave-request", label: "휴가 신청", icon: CalendarPlus },
   { href: "/meal", label: "식대 입력", icon: UtensilsCrossed },
   { href: "/points", label: "복지포인트", icon: Wallet },
   { href: "/monthly", label: "Monthly 음료", icon: Coffee },
 ];
 
 function HeaderShortcuts() {
+  const [leaveDialogOpen, setLeaveDialogOpen] = React.useState(false);
+
   return (
-    <nav aria-label="빠른 메뉴" className="flex gap-1">
-      {headerShortcuts.map(({ href, label, icon: Icon }, index) => (
-        <React.Fragment key={href}>
-          <Tooltip>
+    <>
+      <nav aria-label="빠른 메뉴" className="flex gap-1">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={() => setLeaveDialogOpen(true)}
+              aria-label="휴가 신청"
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/20 active:bg-slate-200"
+            >
+              <CalendarPlus size={19} strokeWidth={1.5} />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" sideOffset={8}>
+            휴가 신청
+          </TooltipContent>
+        </Tooltip>
+        <div
+          aria-hidden="true"
+          className="mx-1 h-6 w-px self-center bg-slate-200"
+        />
+        {headerShortcuts.map(({ href, label, icon: Icon }) => (
+          <Tooltip key={href}>
             <TooltipTrigger asChild>
               <Link
                 href={href}
@@ -308,15 +329,13 @@ function HeaderShortcuts() {
               {label}
             </TooltipContent>
           </Tooltip>
-          {index === 0 && (
-            <div
-              aria-hidden="true"
-              className="mx-1 h-6 w-px self-center bg-slate-200"
-            />
-          )}
-        </React.Fragment>
-      ))}
-    </nav>
+        ))}
+      </nav>
+      <LeaveRequestDialog
+        open={leaveDialogOpen}
+        onOpenChange={setLeaveDialogOpen}
+      />
+    </>
   );
 }
 

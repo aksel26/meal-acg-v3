@@ -26,7 +26,7 @@ export function DayRequestList({ selectedDate, requests }: DayRequestListProps) 
   const undatedCount = requests.filter((r) => !r.due_date).length;
 
   return (
-    <div className="flex h-full flex-col rounded-xl border border-[#f3f3f3] bg-white">
+    <div className="flex h-full flex-col rounded-xl bg-white">
       <div className="border-b border-[#f3f3f3] px-4 py-3">
         <p className="text-[11px] font-medium uppercase tracking-widest text-slate-400">
           마감 일정

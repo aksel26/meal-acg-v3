@@ -12,6 +12,10 @@ DECLARE
   v_remaining integer;
   v_expected_error boolean;
 BEGIN
+  INSERT INTO members (login_id, password, full_name)
+  SELECT 'benefit-test-' || gen_random_uuid(), 'test-only', 'Benefit Test'
+  FROM generate_series(1, greatest(0, 1 - (SELECT count(*) FROM members)));
+
   SELECT id INTO v_member_id FROM members ORDER BY id LIMIT 1;
   IF v_member_id IS NULL THEN
     RAISE EXCEPTION 'benefit value test requires a seeded member';

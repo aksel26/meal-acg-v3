@@ -25,6 +25,10 @@ DECLARE
   v_leave_used numeric;
   v_expected_error boolean;
 BEGIN
+  INSERT INTO members (login_id, password, full_name)
+  SELECT 'leave-meal-test-' || gen_random_uuid(), 'test-only', 'Leave Meal Test'
+  FROM generate_series(1, greatest(0, 3 - (SELECT count(*) FROM members)));
+
   SELECT id INTO v_member_id FROM members ORDER BY id LIMIT 1;
   SELECT id INTO v_first_approver_id
   FROM members

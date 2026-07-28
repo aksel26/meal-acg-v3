@@ -28,11 +28,14 @@ DECLARE
   v_expected_error boolean;
   v_request_count integer;
   v_stale_check_in timestamptz;
+  v_birthday_check_in timestamptz;
   v_today date := (clock_timestamp() AT TIME ZONE 'Asia/Seoul')::date;
 BEGIN
   SELECT id INTO v_member_id FROM members ORDER BY id LIMIT 1;
   IF v_member_id IS NULL THEN
-    RAISE EXCEPTION 'attendance test requires one seeded member';
+    INSERT INTO members (login_id, password, full_name)
+    VALUES ('attendance-atomic-test', 'test-only', 'Attendance Test')
+    RETURNING id INTO v_member_id;
   END IF;
 
   UPDATE members
@@ -162,8 +165,12 @@ BEGIN
   END IF;
 
   DELETE FROM attendance_records WHERE member_id = v_member_id;
+  v_birthday_check_in := clock_timestamp() - interval '7 hours 1 minute';
   UPDATE members
-  SET birth_date = to_date('2000-' || to_char(v_today, 'MM-DD'), 'YYYY-MM-DD')
+  SET birth_date = to_date(
+    '2000-' || to_char(v_birthday_check_in AT TIME ZONE 'Asia/Seoul', 'MM-DD'),
+    'YYYY-MM-DD'
+  )
   WHERE id = v_member_id;
 
   INSERT INTO attendance_records (
@@ -175,8 +182,8 @@ BEGIN
   )
   VALUES (
     v_member_id,
-    v_today,
-    clock_timestamp() - interval '7 hours 1 minute',
+    (v_birthday_check_in AT TIME ZONE 'Asia/Seoul')::date,
+    v_birthday_check_in,
     'normal',
     'normal'
   );

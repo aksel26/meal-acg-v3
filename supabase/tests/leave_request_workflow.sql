@@ -59,6 +59,10 @@ DECLARE
   v_missing_balance_approval_id uuid;
   v_weekend_date date;
 BEGIN
+  INSERT INTO members (login_id, password, full_name)
+  SELECT 'leave-workflow-test-' || gen_random_uuid(), 'test-only', 'Leave Workflow Test'
+  FROM generate_series(1, greatest(0, 3 - (SELECT count(*) FROM members)));
+
   SELECT id INTO v_member_id FROM members ORDER BY id LIMIT 1;
   SELECT id INTO v_approver_id
   FROM members
@@ -149,18 +153,7 @@ BEGIN
     RAISE EXCEPTION 'approved leave did not deduct exactly once: %', v_used;
   END IF;
 
-  v_expected_error := false;
-  BEGIN
-    PERFORM update_dayoff_atomic(
-      v_dayoff_id, v_approver_id, true,
-      jsonb_build_object('approverId', v_member_id)
-    );
-  EXCEPTION WHEN invalid_parameter_value THEN
-    v_expected_error := SQLERRM = 'LEAVE_APPROVER_CHANGE_FORBIDDEN';
-  END;
-  IF NOT v_expected_error THEN
-    RAISE EXCEPTION 'approved leave approver was changed';
-  END IF;
+  -- 20260726093110 permits resolved-leave reassignment; its dedicated regression owns it.
 
   v_expected_error := false;
   BEGIN
@@ -183,19 +176,6 @@ BEGIN
   IF (SELECT approval_status FROM dayoffs WHERE id = v_dayoff_id) <> 'rejected'
     OR (SELECT status FROM approval_requests WHERE id = v_approval_id) <> 'rejected' THEN
     RAISE EXCEPTION 'rejection states diverged';
-  END IF;
-
-  v_expected_error := false;
-  BEGIN
-    PERFORM update_dayoff_atomic(
-      v_dayoff_id, v_approver_id, true,
-      jsonb_build_object('approverId', v_member_id)
-    );
-  EXCEPTION WHEN invalid_parameter_value THEN
-    v_expected_error := SQLERRM = 'LEAVE_APPROVER_CHANGE_FORBIDDEN';
-  END;
-  IF NOT v_expected_error THEN
-    RAISE EXCEPTION 'rejected leave approver was changed';
   END IF;
 
   SELECT dayoff_id, approval_id INTO v_dayoff_id, v_approval_id

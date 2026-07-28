@@ -11,6 +11,10 @@ DECLARE
   v_second_rental_id uuid;
   v_expected_error boolean;
 BEGIN
+  INSERT INTO public.members (login_id, password, full_name)
+  SELECT 'library-test-' || gen_random_uuid(), 'test-only', 'Library Test'
+  FROM generate_series(1, greatest(0, 2 - (SELECT count(*) FROM public.members)));
+
   SELECT id
   INTO v_first_member_id
   FROM public.members

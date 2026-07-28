@@ -11,6 +11,10 @@ DECLARE
   v_approval_id uuid;
   v_used numeric;
 BEGIN
+  INSERT INTO members (login_id, password, full_name)
+  SELECT 'leave-reassignment-test-' || gen_random_uuid(), 'test-only', 'Leave Reassignment Test'
+  FROM generate_series(1, greatest(0, 3 - (SELECT count(*) FROM members)));
+
   SELECT id INTO v_member_id FROM members ORDER BY id LIMIT 1;
   SELECT id INTO v_old_approver_id
   FROM members WHERE id <> v_member_id ORDER BY id LIMIT 1;

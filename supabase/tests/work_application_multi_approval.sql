@@ -13,6 +13,10 @@ DECLARE
   v_approval_two uuid;
   v_status text;
 BEGIN
+  INSERT INTO members (login_id, password, full_name)
+  SELECT 'work-application-test-' || gen_random_uuid(), 'test-only', 'Work Application Test'
+  FROM generate_series(1, greatest(0, 3 - (SELECT count(*) FROM members)));
+
   SELECT id INTO v_requester FROM members ORDER BY id LIMIT 1;
   SELECT id INTO v_approver_one FROM members WHERE id <> v_requester ORDER BY id LIMIT 1;
   SELECT id INTO v_approver_two

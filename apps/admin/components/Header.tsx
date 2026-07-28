@@ -186,7 +186,7 @@ export default function Header() {
 
       {/* Left - Page Title & Search */}
       <div className="flex flex-1 flex-col gap-1 md:px-2">
-        <h2 className="text-[21px] font-semibold leading-tight tracking-[-0.02em] text-[#1d1d1f] md:block">
+        <h2 className="text-lg font-semibold leading-tight tracking-[-0.02em] text-[#1d1d1f] md:block">
           {pageInfo.title}
         </h2>
         <p className="text-sm leading-5 tracking-[-0.01em] text-[#7a7a7a]">

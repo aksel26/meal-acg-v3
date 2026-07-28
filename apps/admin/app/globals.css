@@ -9,17 +9,17 @@
 :root {
   /* === Apple Design System: White-tone === */
   /* Surface */
-  --admin-canvas: #ffffff;          /* Pure white surface */
-  --admin-parchment: #f5f5f7;       /* Off-white canvas */
-  --admin-pearl: #fafafc;           /* Near-white button fill */
-  --admin-tile-dark: #272729;       /* Reserved for dark tile variants */
+  --admin-canvas: #ffffff; /* Pure white surface */
+  --admin-parchment: #f5f5f7; /* Off-white canvas */
+  --admin-pearl: #fafafc; /* Near-white button fill */
+  --admin-tile-dark: #272729; /* Reserved for dark tile variants */
   --admin-tile-dark-2: #2a2a2c;
   --admin-black: #000000;
 
   /* Ink / Text */
-  --admin-ink: #1d1d1f;             /* Near-black headline & body */
-  --admin-ink-muted-80: #333333;    /* Body on pearl */
-  --admin-ink-muted-48: #7a7a7a;    /* Disabled / fine-print */
+  --admin-ink: #1d1d1f; /* Near-black headline & body */
+  --admin-ink-muted-80: #333333; /* Body on pearl */
+  --admin-ink-muted-48: #7a7a7a; /* Disabled / fine-print */
   --admin-muted: #7a7a7a;
   --admin-muted-dark: #cccccc;
 
@@ -63,6 +63,11 @@
   --sidebar-width: 280px;
   --sidebar-width-collapsed: 80px;
   --header-height: 52px;
+  --admin-table-body-font-size: 0.875rem;
+  --admin-table-body-line-height: 1.25rem;
+  --admin-table-header-font-size: 0.75rem;
+  --admin-table-header-line-height: 1rem;
+  --admin-table-header-color: #94a3b8;
   --font-pretendard:
     "Pretendard Variable", Pretendard, system-ui, -apple-system,
     BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -103,8 +108,7 @@ body {
   min-height: 100vh;
   background: transparent;
   color: var(--admin-ink);
-  font-family:
-    var(--font-pretendard);
+  font-family: var(--font-pretendard);
   font-size: 13px;
   font-weight: 400;
   line-height: 1.58;
@@ -244,7 +248,7 @@ body:has(.question-set-editor-sheet) [data-slot="sheet-overlay"] {
   transform: none !important;
 }
 
-/* Tables: unify border color to the soft card-border gray */
+/* Tables: /attendance typography and shared border color */
 table,
 thead,
 tbody,
@@ -253,6 +257,21 @@ tr,
 th,
 td {
   border-color: var(--admin-card-border);
+}
+
+.admin-app table,
+.admin-app table tbody td,
+.admin-app table tfoot td {
+  font-size: var(--admin-table-body-font-size);
+  line-height: var(--admin-table-body-line-height);
+}
+
+.admin-app table thead,
+.admin-app table thead th {
+  color: var(--admin-table-header-color);
+  font-size: var(--admin-table-header-font-size);
+  font-weight: 500;
+  line-height: var(--admin-table-header-line-height);
 }
 
 /* /evaluations page: remove table borders AND the wrapper border around tables */
@@ -512,7 +531,8 @@ td {
   body {
     @apply bg-background text-foreground;
   }
-  button:not(:disabled), [role="button"]:not(:disabled) {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
     cursor: pointer;
   }
   html {

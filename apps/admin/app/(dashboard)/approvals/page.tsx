@@ -1,14 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import {
-  ArrowRight,
   ChevronDown,
-  Check,
   FileText,
   Filter,
-  Undo2,
-  X,
 } from "lucide-react";
 import dayjs from "dayjs";
 import { Button } from "@repo/ui/src/button";
@@ -83,6 +79,9 @@ const TYPE_LABEL: Record<string, string> = {
   overtime: "초과근무",
   weekend: "주말근무",
 };
+
+const MANAGEMENT_ACTION_GRID_CLASS =
+  "grid w-full grid-cols-1 gap-1 sm:grid-cols-3 lg:min-w-[246px]";
 
 export default function ApprovalsPage() {
   const [categoryFilters, setCategoryFilters] = useState<Category[]>([
@@ -409,19 +408,22 @@ function ApprovalsTable({
   return (
     <>
       <div className="hidden overflow-x-auto lg:block">
-        <table className="w-full whitespace-nowrap text-left text-sm">
+        <table className="w-full whitespace-nowrap text-left">
           <thead>
-            <tr className="border-b border-slate-100 text-xs font-medium text-slate-400">
-              <th className="px-3 py-2 font-medium">상태</th>
-              <th className="px-3 py-2 font-medium">요청자</th>
-              <th className="px-3 py-2 font-medium">유형</th>
-              <th className="px-3 py-2 font-medium">날짜</th>
-              <th className="px-3 py-2 font-medium">시간</th>
-              <th className="px-3 py-2 font-medium">사유</th>
-              <th className="px-3 py-2 font-medium">승인자</th>
-              <th className="px-3 py-2 font-medium">신청일</th>
-              <th className="px-3 py-2 font-medium">처리일</th>
-              <th className="w-32 px-3 py-2 text-right font-medium">관리</th>
+            <tr className="border-b border-slate-100">
+              <th className="px-2 py-1.5 font-medium">요청자</th>
+              <th className="px-2 py-1.5 font-medium">유형</th>
+              <th className="px-2 py-1.5 font-medium">날짜</th>
+              <th className="px-2 py-1.5 font-medium">시간</th>
+              <th className="px-2 py-1.5 font-medium">승인 사유</th>
+              <th className="px-2 py-1.5 font-medium">반려 사유</th>
+              <th className="px-2 py-1.5 font-medium">가승인자</th>
+              <th className="px-2 py-1.5 font-medium">최종승인자</th>
+              <th className="px-2 py-1.5 font-medium">신청일</th>
+              <th className="px-2 py-1.5 font-medium">처리일</th>
+              <th className="w-[270px] min-w-[270px] px-2 py-1.5 text-right font-medium">
+                관리
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -516,37 +518,41 @@ function ApprovalRow({
   const relatedData = approval.related_data;
   const workTimeLabel = getApprovalWorkTimeLabel(approval);
   const isDayoff = approval.related_table === "dayoffs";
+  const stageApprovers = getApprovalStageApprovers(approval);
 
   return (
     <tr className="border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50">
-      <td className="px-3 py-3">
-        <StatusBadge status={approval.status} />
-      </td>
-      <td className="px-3 py-3 font-medium text-slate-800">
+      <td className="px-2 py-2 font-medium text-slate-800">
         {approval.requester?.full_name || "알 수 없음"}
       </td>
-      <td className="px-3 py-3">
+      <td className="px-2 py-2">
         <span className="text-slate-700">{getApprovalTypeLabel(approval)}</span>
       </td>
-      <td className="px-3 py-3 tabular-nums text-slate-700">
+      <td className="px-2 py-2 tabular-nums text-slate-700">
         {getApprovalDateLabel(approval)}
       </td>
-      <td className="px-3 py-3 tabular-nums text-slate-500">
+      <td className="px-2 py-2 tabular-nums text-slate-500">
         {workTimeLabel || "-"}
       </td>
-      <td className="max-w-[240px] px-3 py-3 text-slate-600">
-        <p className="truncate">{approval.reject_reason || relatedData?.reason || "-"}</p>
+      <td className="max-w-[180px] px-2 py-2 text-slate-600">
+        <p className="truncate">{relatedData?.reason || "-"}</p>
       </td>
-      <td className="px-3 py-3 text-slate-500">
-        {isDayoff ? dayoffApprovalHistoryText(approval) : approval.approver?.full_name || "-"}
+      <td className="max-w-[180px] px-2 py-2 text-slate-500">
+        <p className="truncate">{approval.reject_reason || "-"}</p>
       </td>
-      <td className="px-3 py-3 tabular-nums text-slate-500">
+      <td className="px-2 py-2 text-slate-500">
+        {stageApprovers.first}
+      </td>
+      <td className="px-2 py-2 text-slate-500">
+        {stageApprovers.final}
+      </td>
+      <td className="px-2 py-2 tabular-nums text-slate-500">
         {dayjs(approval.requested_at).format("MM/DD HH:mm")}
       </td>
-      <td className="px-3 py-3 tabular-nums text-slate-500">
+      <td className="px-2 py-2 tabular-nums text-slate-500">
         {approval.resolved_at ? dayjs(approval.resolved_at).format("MM/DD HH:mm") : "-"}
       </td>
-      <td className="px-3 py-3">
+      <td className="w-[270px] min-w-[270px] px-2 py-1">
         {isDayoff ? (
           <DayoffActions
             approval={approval}
@@ -596,6 +602,7 @@ function ApprovalMobileCard({
   const relatedData = approval.related_data;
   const workTimeLabel = getApprovalWorkTimeLabel(approval);
   const isDayoff = approval.related_table === "dayoffs";
+  const stageApprovers = getApprovalStageApprovers(approval);
 
   return (
     <div className="space-y-3 p-4">
@@ -612,13 +619,15 @@ function ApprovalMobileCard({
       <dl className="grid grid-cols-2 gap-2 text-xs">
         <InfoItem label="날짜" value={getApprovalDateLabel(approval)} />
         <InfoItem label="시간" value={workTimeLabel || "-"} />
-        <InfoItem label="승인자" value={isDayoff ? dayoffApprovalHistoryText(approval) : approval.approver?.full_name || "-"} />
+        <InfoItem label="가승인자" value={stageApprovers.first} />
+        <InfoItem label="최종승인자" value={stageApprovers.final} />
         <InfoItem label="신청일" value={dayjs(approval.requested_at).format("MM/DD HH:mm")} />
         <InfoItem label="처리일" value={approval.resolved_at ? dayjs(approval.resolved_at).format("MM/DD HH:mm") : "-"} />
       </dl>
-      <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
-        {approval.reject_reason || relatedData?.reason || "사유 없음"}
-      </p>
+      <dl className="grid grid-cols-2 gap-2 text-xs">
+        <InfoItem label="승인 사유" value={relatedData?.reason || "-"} />
+        <InfoItem label="반려 사유" value={approval.reject_reason || "-"} />
+      </dl>
       {isDayoff ? (
         <DayoffActions
           approval={approval}
@@ -657,17 +666,20 @@ function EarlyLeaveTable({
   return (
     <>
       <div className="hidden overflow-x-auto lg:block">
-        <table className="w-full whitespace-nowrap text-left text-sm">
+        <table className="w-full whitespace-nowrap text-left">
           <thead>
-            <tr className="border-b border-slate-100 text-xs font-medium text-slate-400">
-              <th className="px-3 py-2 font-medium">상태</th>
-              <th className="px-3 py-2 font-medium">요청자</th>
-              <th className="px-3 py-2 font-medium">근무일</th>
-              <th className="px-3 py-2 font-medium">출퇴근</th>
-              <th className="px-3 py-2 font-medium">사유</th>
-              <th className="px-3 py-2 font-medium">승인 이력</th>
-              <th className="px-3 py-2 font-medium">신청</th>
-              <th className="w-56 px-3 py-2 text-right font-medium">관리</th>
+            <tr className="border-b border-slate-100">
+              <th className="px-2 py-1.5 font-medium">요청자</th>
+              <th className="px-2 py-1.5 font-medium">근무일</th>
+              <th className="px-2 py-1.5 font-medium">출퇴근</th>
+              <th className="px-2 py-1.5 font-medium">승인 사유</th>
+              <th className="px-2 py-1.5 font-medium">반려 사유</th>
+              <th className="px-2 py-1.5 font-medium">가승인자</th>
+              <th className="px-2 py-1.5 font-medium">최종승인자</th>
+              <th className="px-2 py-1.5 font-medium">신청</th>
+              <th className="w-[270px] min-w-[270px] px-2 py-1.5 text-right font-medium">
+                관리
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -714,26 +726,29 @@ function EarlyLeaveRow({
 
   return (
     <tr className="border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50">
-      <td className="px-3 py-3">
-        <StatusBadge status={request.approval_status} />
-      </td>
-      <td className="px-3 py-3 font-medium text-slate-800">
+      <td className="px-2 py-2 font-medium text-slate-800">
         {request.requester?.full_name || "알 수 없음"}
       </td>
-      <td className="px-3 py-3 tabular-nums text-slate-700">{record?.date ? formatDate(record.date) : "-"}</td>
-      <td className="px-3 py-3 tabular-nums text-slate-500">
+      <td className="px-2 py-2 tabular-nums text-slate-700">{record?.date ? formatDate(record.date) : "-"}</td>
+      <td className="px-2 py-2 tabular-nums text-slate-500">
         {formatTime(record?.check_in_at || null)} 출근 → {formatTime(record?.check_out_at || null)} 퇴근
       </td>
-      <td className="max-w-[260px] px-3 py-3 text-slate-600">
-        <p className="truncate">{request.reject_reason || request.reason || "-"}</p>
+      <td className="max-w-[180px] px-2 py-2 text-slate-600">
+        <p className="truncate">{request.reason || "-"}</p>
       </td>
-      <td className="px-3 py-3 text-slate-500">
-        <ApprovalHistory request={request} />
+      <td className="max-w-[180px] px-2 py-2 text-slate-500">
+        <p className="truncate">{request.reject_reason || "-"}</p>
       </td>
-      <td className="px-3 py-3 tabular-nums text-slate-500">
+      <td className="px-2 py-2 text-slate-500">
+        {request.first_approver?.full_name || "-"}
+      </td>
+      <td className="px-2 py-2 text-slate-500">
+        {request.final_approver?.full_name || "-"}
+      </td>
+      <td className="px-2 py-2 tabular-nums text-slate-500">
         {dayjs(request.created_at).format("MM/DD HH:mm")}
       </td>
-      <td className="px-3 py-3">
+      <td className="w-[270px] min-w-[270px] px-2 py-1">
         <EarlyLeaveActions request={request} onAction={onAction} onReject={onReject} isPending={isPending} />
       </td>
     </tr>
@@ -766,11 +781,13 @@ function EarlyLeaveMobileCard({
         <InfoItem label="출근" value={formatTime(record?.check_in_at || null)} />
         <InfoItem label="퇴근" value={formatTime(record?.check_out_at || null)} />
         <InfoItem label="신청" value={dayjs(request.created_at).format("MM/DD HH:mm")} />
-        <InfoItem label="이력" value={approvalHistoryText(request)} />
+        <InfoItem label="가승인자" value={request.first_approver?.full_name || "-"} />
+        <InfoItem label="최종승인자" value={request.final_approver?.full_name || "-"} />
       </dl>
-      <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
-        {request.reject_reason || request.reason || "사유 없음"}
-      </p>
+      <dl className="grid grid-cols-2 gap-2 text-xs">
+        <InfoItem label="승인 사유" value={request.reason || "-"} />
+        <InfoItem label="반려 사유" value={request.reject_reason || "-"} />
+      </dl>
       <EarlyLeaveActions request={request} onAction={onAction} onReject={onReject} isPending={isPending} />
     </div>
   );
@@ -803,46 +820,52 @@ function ApprovalActions({
   isPending: boolean;
 }) {
   if (cancelActionLabel) {
+    const isRejected = cancelActionLabel.startsWith("반려");
+
     return (
-      <div className="flex justify-end">
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-8 gap-1 border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-800"
-          onClick={onCancel}
+      <div className={MANAGEMENT_ACTION_GRID_CLASS}>
+        <ActionCheckbox
+          label={isRejected ? "반려" : "승인"}
+          checked
+          className={isRejected ? "sm:col-start-3" : undefined}
+          onCheckedChange={(checked) => {
+            if (!checked) onCancel();
+          }}
           disabled={isPending}
-        >
-          <Undo2 className="h-3.5 w-3.5" />
-          {cancelActionLabel}
-        </Button>
+        />
       </div>
     );
   }
 
-  if (!showActions) return <div className="text-right text-xs text-slate-400">처리 완료</div>;
+  if (!showActions) {
+    return (
+      <div className={MANAGEMENT_ACTION_GRID_CLASS}>
+        <span className="text-right text-xs text-slate-400 sm:col-span-3">
+          처리 완료
+        </span>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex justify-end gap-1.5">
-      <Button
-        size="sm"
-        variant="outline"
-        className="h-8 gap-1 border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-800"
-        onClick={onApprove}
+    <div className={MANAGEMENT_ACTION_GRID_CLASS}>
+      <ActionCheckbox
+        label="승인"
+        checked={false}
+        onCheckedChange={(checked) => {
+          if (checked) onApprove();
+        }}
         disabled={isPending}
-      >
-        <Check className="h-3.5 w-3.5" />
-        승인
-      </Button>
-      <Button
-        size="sm"
-        variant="outline"
-        className="h-8 gap-1 border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-700"
-        onClick={onReject}
+      />
+      <ActionCheckbox
+        label="반려"
+        checked={false}
+        className="sm:col-start-3"
+        onCheckedChange={(checked) => {
+          if (checked) onReject();
+        }}
         disabled={isPending}
-      >
-        <X className="h-3.5 w-3.5" />
-        반려
-      </Button>
+      />
     </div>
   );
 }
@@ -858,45 +881,42 @@ function EarlyLeaveActions({
   onReject: (id: string) => void;
   isPending: boolean;
 }) {
+  const isPreApproved =
+    request.approval_status === "pre_approved" ||
+    request.approval_status === "approved";
+  const isApproved = request.approval_status === "approved";
+  const isRejected = request.approval_status === "rejected";
+
   return (
-    <div className="flex flex-wrap justify-end gap-1.5">
-      {request.approval_status === "pending" && (
-        <>
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-8 gap-1 text-slate-800 hover:bg-slate-100"
-            onClick={() => onAction(request.id, "pre_approve")}
-            disabled={isPending}
-          >
-            <ArrowRight className="h-3.5 w-3.5" />
-            가승인
-          </Button>
-          <RejectButton onClick={() => onReject(request.id)} disabled={isPending} />
-        </>
-      )}
-      {request.approval_status === "pre_approved" && (
-        <>
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-8 gap-1 border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-800"
-            onClick={() => onAction(request.id, "approve")}
-            disabled={isPending}
-          >
-            <Check className="h-3.5 w-3.5" />
-            최종승인
-          </Button>
-          <RevertButton label="가승인 취소" onClick={() => onAction(request.id, "revert")} disabled={isPending} />
-          <RejectButton onClick={() => onReject(request.id)} disabled={isPending} />
-        </>
-      )}
-      {request.approval_status === "approved" && (
-        <RevertButton label="승인 취소" onClick={() => onAction(request.id, "revert")} disabled={isPending} />
-      )}
-      {request.approval_status === "rejected" && (
-        <RevertButton label="반려 취소" onClick={() => onAction(request.id, "revert")} disabled={isPending} />
-      )}
+    <div className={MANAGEMENT_ACTION_GRID_CLASS}>
+      <ActionCheckbox
+        label="가승인"
+        checked={isPreApproved}
+        onCheckedChange={(checked) =>
+          onAction(request.id, checked ? "pre_approve" : "revert")
+        }
+        disabled={isPending || isApproved || isRejected}
+      />
+      <ActionCheckbox
+        label="최종승인"
+        checked={isApproved}
+        onCheckedChange={(checked) =>
+          onAction(request.id, checked ? "approve" : "revert")
+        }
+        disabled={
+          isPending ||
+          request.approval_status === "pending" ||
+          isRejected
+        }
+      />
+      <ActionCheckbox
+        label="반려"
+        checked={isRejected}
+        onCheckedChange={(checked) =>
+          checked ? onReject(request.id) : onAction(request.id, "revert")
+        }
+        disabled={isPending || isApproved}
+      />
     </div>
   );
 }
@@ -918,90 +938,81 @@ function DayoffActions({
   onReject: (id: string) => void;
   isPending: boolean;
 }) {
+  const isPreApproved =
+    approval.status === "pre_approved" || approval.status === "approved";
+  const isApproved = approval.status === "approved";
+  const isRejected = approval.status === "rejected";
+
   return (
-    <div className="flex flex-wrap justify-end gap-1.5">
-      {approval.status === "pending" && (
-        <>
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-8 gap-1 text-slate-800 hover:bg-slate-100"
-            onClick={() => onPreApprove(approval.id)}
-            disabled={isPending}
-          >
-            <ArrowRight className="h-3.5 w-3.5" />
-            가승인
-          </Button>
-          <RejectButton onClick={() => onReject(approval.id)} disabled={isPending} />
-        </>
-      )}
-      {approval.status === "pre_approved" && (
-        <>
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-8 gap-1 border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-800"
-            onClick={() => onApprove(approval.id)}
-            disabled={isPending}
-          >
-            <Check className="h-3.5 w-3.5" />
-            최종승인
-          </Button>
-          <RevertButton label="가승인 취소" onClick={() => onRevert(approval.id)} disabled={isPending} />
-          <RejectButton onClick={() => onReject(approval.id)} disabled={isPending} />
-        </>
-      )}
-      {approval.status === "approved" && (
-        <RevertButton label="승인 취소" onClick={() => onCancel(approval.id)} disabled={isPending} />
-      )}
-      {approval.status === "rejected" && (
-        <RevertButton label="반려 취소" onClick={() => onCancel(approval.id)} disabled={isPending} />
-      )}
+    <div className={MANAGEMENT_ACTION_GRID_CLASS}>
+      <ActionCheckbox
+        label="가승인"
+        checked={isPreApproved}
+        onCheckedChange={(checked) =>
+          checked ? onPreApprove(approval.id) : onRevert(approval.id)
+        }
+        disabled={isPending || isApproved || isRejected}
+      />
+      <ActionCheckbox
+        label="최종승인"
+        checked={isApproved}
+        onCheckedChange={(checked) =>
+          checked ? onApprove(approval.id) : onCancel(approval.id)
+        }
+        disabled={
+          isPending ||
+          approval.status === "pending" ||
+          isRejected
+        }
+      />
+      <ActionCheckbox
+        label="반려"
+        checked={isRejected}
+        onCheckedChange={(checked) =>
+          checked ? onReject(approval.id) : onCancel(approval.id)
+        }
+        disabled={isPending || isApproved}
+      />
     </div>
   );
 }
 
-function RejectButton({ onClick, disabled }: { onClick: () => void; disabled: boolean }) {
-  return (
-    <Button
-      size="sm"
-      variant="outline"
-      className="h-8 gap-1 border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-700"
-      onClick={onClick}
-      disabled={disabled}
-    >
-      <X className="h-3.5 w-3.5" />
-      반려
-    </Button>
-  );
-}
-
-function RevertButton({
+function ActionCheckbox({
   label,
-  onClick,
+  checked,
+  onCheckedChange,
   disabled,
+  className,
 }: {
   label: string;
-  onClick: () => void;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
   disabled: boolean;
+  className?: string;
 }) {
-  return (
-    <Button
-      size="sm"
-      variant="outline"
-      className="h-8 gap-1 text-slate-500 hover:bg-slate-50"
-      onClick={onClick}
-      disabled={disabled}
-    >
-      <Undo2 className="h-3.5 w-3.5" />
-      {label}
-    </Button>
-  );
-}
+  const id = useId();
 
-function ApprovalHistory({ request }: { request: EarlyLeaveRequest }) {
-  const text = approvalHistoryText(request);
-  return <span>{text}</span>;
+  return (
+    <label
+      htmlFor={id}
+      className={`flex h-8 min-w-0 items-center gap-1.5 rounded-md px-1.5 text-[11px] font-medium text-slate-600 transition-colors duration-150 ${
+        disabled
+          ? "cursor-not-allowed opacity-50"
+          : "cursor-pointer hover:bg-slate-50 hover:text-slate-900"
+      } ${className ?? ""}`}
+    >
+      <Checkbox
+        id={id}
+        checked={checked}
+        onCheckedChange={(nextChecked) =>
+          onCheckedChange(nextChecked === true)
+        }
+        disabled={disabled}
+        className="size-3.5 border-slate-300 data-[state=checked]:border-slate-800 data-[state=checked]:bg-slate-800 data-[state=checked]:text-white focus-visible:border-slate-400 focus-visible:ring-slate-400/20"
+      />
+      <span className="truncate">{label}</span>
+    </label>
+  );
 }
 
 function InfoItem({ label, value }: { label: string; value: string }) {
@@ -1013,25 +1024,26 @@ function InfoItem({ label, value }: { label: string; value: string }) {
   );
 }
 
-function approvalHistoryText(request: EarlyLeaveRequest) {
-  const history = [];
-  if (request.first_approver) history.push(`가승인 ${request.first_approver.full_name}`);
-  if (request.final_approver) history.push(`최종승인 ${request.final_approver.full_name}`);
-  return history.length > 0 ? history.join(" / ") : "-";
-}
+function getApprovalStageApprovers(approval: ApprovalRequest) {
+  if (approval.related_table === "dayoffs") {
+    return {
+      first: approval.related_data?.first_approver?.full_name || "-",
+      final:
+        approval.related_data?.final_approver?.full_name ||
+        (approval.status === "approved"
+          ? approval.resolver?.full_name || approval.approver?.full_name
+          : null) ||
+        "-",
+    };
+  }
 
-function dayoffApprovalHistoryText(approval: ApprovalRequest) {
-  const data = approval.related_data;
-  const history: string[] = [];
-  if (data?.first_approver) {
-    const at = data.first_approved_at ? ` · ${dayjs(data.first_approved_at).format("MM/DD HH:mm")}` : "";
-    history.push(`가승인 ${data.first_approver.full_name}${at}`);
-  }
-  if (data?.final_approver) {
-    const at = data.final_approved_at ? ` · ${dayjs(data.final_approved_at).format("MM/DD HH:mm")}` : "";
-    history.push(`최종승인 ${data.final_approver.full_name}${at}`);
-  }
-  return history.length > 0 ? history.join(" / ") : approval.approver?.full_name || "-";
+  return {
+    first: "-",
+    final:
+      approval.status === "approved"
+        ? approval.resolver?.full_name || approval.approver?.full_name || "-"
+        : "-",
+  };
 }
 
 function getApprovalTypeLabel(approval: ApprovalRequest) {

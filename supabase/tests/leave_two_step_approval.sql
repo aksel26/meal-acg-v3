@@ -31,7 +31,7 @@ BEGIN
   ON CONFLICT (member_id, year, type)
   DO UPDATE SET granted = 20, used = 0;
 
-  -- ============ dayoff1: pre_approve → approve 정상 흐름 (시나리오 1,2,3,4,5,9a,9b) ============
+  -- ============ dayoff1: 동일 승인자의 pre_approve → approve 정상 흐름 (시나리오 1,2,3,4,5,9a,9b) ============
   SELECT dayoff_id, approval_id
   INTO v_dayoff1_id, v_approval1_id
   FROM create_leave_request_atomic(
@@ -67,36 +67,17 @@ BEGIN
   END IF;
   RAISE NOTICE 'PASS 4: pre_approve 시점에 연차 used +1 차감';
 
-  -- 시나리오 3: 동일인 금지 — first_approver 가 최종 approve 시도 시 LEAVE_SAME_APPROVER_FORBIDDEN
-  v_expected_error := false;
-  BEGIN
-    PERFORM resolve_leave_approval_atomic(v_approval1_id, v_first_approver_id, 'approve', true, NULL);
-  EXCEPTION WHEN insufficient_privilege THEN
-    v_expected_error := SQLERRM = 'LEAVE_SAME_APPROVER_FORBIDDEN';
-  END;
-  IF NOT v_expected_error THEN
-    RAISE EXCEPTION '시나리오 3 실패: 동일인 최종승인이 차단되지 않음';
-  END IF;
-  -- 차단된 시도가 상태/잔액을 변경하지 않았는지 확인
-  SELECT approval_status INTO v_dayoff_status FROM dayoffs WHERE id = v_dayoff1_id;
-  SELECT used INTO v_used FROM leave_balances
-  WHERE member_id = v_member_id AND year = 2099 AND type = 'annual';
-  IF v_dayoff_status <> 'pre_approved' OR v_used <> 1 THEN
-    RAISE EXCEPTION '시나리오 3 실패: 차단된 시도가 상태/잔액을 변경함 (status=%, used=%)', v_dayoff_status, v_used;
-  END IF;
-  RAISE NOTICE 'PASS 3: 동일인 최종승인 차단 (LEAVE_SAME_APPROVER_FORBIDDEN)';
-
-  -- 시나리오 2: approve(다른 actor) 시 pre_approved → approved, final_approver_id 세팅
-  PERFORM resolve_leave_approval_atomic(v_approval1_id, v_final_approver_id, 'approve', true, NULL);
+  -- 시나리오 2,3: 가승인자가 동일 요청을 최종승인할 수 있다.
+  PERFORM resolve_leave_approval_atomic(v_approval1_id, v_first_approver_id, 'approve', true, NULL);
   SELECT approval_status INTO v_dayoff_status FROM dayoffs WHERE id = v_dayoff1_id;
   IF v_dayoff_status <> 'approved' THEN
-    RAISE EXCEPTION '시나리오 2 실패: approve 후 상태가 approved 가 아님 (%)', v_dayoff_status;
+    RAISE EXCEPTION '시나리오 2/3 실패: 동일인 approve 후 상태가 approved 가 아님 (%)', v_dayoff_status;
   END IF;
-  IF (SELECT final_approver_id FROM dayoffs WHERE id = v_dayoff1_id) <> v_final_approver_id
+  IF (SELECT final_approver_id FROM dayoffs WHERE id = v_dayoff1_id) <> v_first_approver_id
      OR (SELECT final_approved_at FROM dayoffs WHERE id = v_dayoff1_id) IS NULL THEN
-    RAISE EXCEPTION '시나리오 2 실패: final_approver_id/final_approved_at 미설정';
+    RAISE EXCEPTION '시나리오 2/3 실패: 동일 최종승인자 이력 미설정';
   END IF;
-  RAISE NOTICE 'PASS 2: approve(다른 actor) 시 pre_approved -> approved, final_approver_id 세팅';
+  RAISE NOTICE 'PASS 2/3: 동일 승인자의 pre_approved -> approved 허용 및 이력 저장';
 
   -- 시나리오 9b: approve 후 dayoffs.approval_status == approval_requests.status
   SELECT status INTO v_approval_status FROM approval_requests WHERE id = v_approval1_id;

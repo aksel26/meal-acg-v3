@@ -291,6 +291,12 @@ const navigation: NavigationItem[] = [
     external: true,
   },
   {
+    name: "채용 관리",
+    href: "/api/auth/sso/careers",
+    icon: UserCheck,
+    external: true,
+  },
+  {
     name: "프로젝트 관리",
     href:
       process.env.NEXT_PUBLIC_PROJECT_MANAGEMENT_APP_URL ||

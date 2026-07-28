@@ -1,0 +1,306 @@
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css");
+
+@import "tailwindcss";
+@import "@repo/tailwind-config";
+
+@source "../../../packages/ui/src";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.145 0 0);
+  --destructive-foreground: #ffffff;
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --radius: 0.375rem;
+  --careers-canvas: #ffffff;
+  --careers-surface: #ffffff;
+  --careers-soft-surface: #fafafc;
+  --careers-text: #1d1d1f;
+  --careers-muted-text: #7a7a7a;
+  --careers-hairline: rgba(0, 0, 0, 0.08);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+html {
+  font-size: 87.5%;
+  text-rendering: optimizeLegibility;
+  -webkit-text-size-adjust: 100%;
+  font-kerning: normal;
+}
+
+body {
+  min-height: 100vh;
+  background: transparent;
+  color: var(--careers-text);
+  font-family:
+    "Pretendard Variable",
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.58;
+  letter-spacing: -0.005em;
+  word-break: keep-all;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-wrap: pretty;
+  overflow-wrap: break-word;
+  font-synthesis: none;
+}
+
+:where(button, input, textarea, select) {
+  font: inherit;
+  letter-spacing: inherit;
+}
+
+:where(p, li, dd, blockquote) {
+  line-height: 1.65;
+}
+
+:where(h1, h2, h3, h4, h5, h6) {
+  line-height: 1.28;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+  word-break: keep-all;
+}
+
+:where(table, button, input, textarea, select, [role="button"], [role="tab"]) {
+  text-wrap: auto;
+}
+
+::selection {
+  background: #1d1d1f;
+  color: #ffffff;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f5f5f7;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: #d2d2d7;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #b8b8bd;
+}
+
+.careers-shell {
+  background: #ffffff;
+}
+
+.careers-sidebar {
+  color: var(--careers-text);
+}
+
+.careers-main {
+  background: #ffffff;
+}
+
+.careers-topbar {
+  min-height: 52px;
+  background: #ffffff;
+}
+
+.careers-page {
+  width: 100%;
+}
+
+.careers-panel {
+  border: 0;
+  border-radius: 0.5rem;
+  background: var(--careers-surface);
+  box-shadow: none;
+}
+
+.careers-interactive {
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.careers-interactive:active {
+  transform: scale(0.96);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+}
+
+.careers-page input:not([type="file"]):focus-visible,
+.careers-page textarea:focus-visible,
+.careers-page select:focus-visible,
+[data-slot="dialog-content"] input:not([type="file"]):focus-visible,
+[data-slot="dialog-content"] textarea:focus-visible,
+[data-slot="dialog-content"] select:focus-visible,
+[data-slot="alert-dialog-content"] input:not([type="file"]):focus-visible,
+[data-slot="alert-dialog-content"] textarea:focus-visible,
+[data-slot="alert-dialog-content"] select:focus-visible {
+  outline-color: var(--careers-text);
+  outline-width: 2px;
+  outline-offset: 2px;
+}
+
+[data-slot="dialog-content"],
+[data-slot="alert-dialog-content"] {
+  border: 0 !important;
+  border-radius: 0.625rem;
+  box-shadow: none !important;
+}
+
+.careers-page input:not([type="file"]),
+[data-slot="dialog-content"] input:not([type="file"]),
+[data-slot="alert-dialog-content"] input:not([type="file"]),
+[data-slot="select-trigger"],
+[data-slot="textarea"] {
+  border-color: var(--input);
+  border-radius: calc(var(--radius) * 0.8);
+  background: #ffffff;
+}
+
+[data-slot="button"] {
+  border-radius: 0.5rem;
+  transition-property:
+    color, background-color, border-color, opacity, transform;
+}
+
+[data-slot="select-trigger"],
+[data-slot="tabs-trigger"],
+[data-slot="calendar"] button {
+  transition-property:
+    color, background-color, border-color, opacity, transform;
+}
+
+[data-slot="dialog-close"] {
+  top: 0.5rem;
+  right: 0.5rem;
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-slot="dialog-header"] {
+  padding-right: 2rem;
+}
+
+[data-slot="dialog-content"] [data-slot="dialog-footer"] {
+  position: sticky;
+  bottom: -1px;
+  z-index: 10;
+  padding-block: 0.75rem 0.25rem;
+  background: #ffffff;
+}
+
+[data-slot="calendar"] {
+  --cell-size: 40px;
+}
+
+[data-slot="calendar"] button:active {
+  transform: none;
+}
+
+.rounded-xl {
+  border-radius: 0.5rem;
+}
+
+.rounded-2xl,
+.rounded-3xl {
+  border-radius: 0.625rem;
+}
+
+.careers-panel thead th {
+  height: 2.75rem;
+  color: var(--careers-muted-text);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.careers-panel tbody td {
+  padding-block: 0.8rem;
+}
+
+.careers-panel tr {
+  border-color: var(--careers-hairline);
+}
+
+.careers-panel tbody tr {
+  transition: background-color 160ms ease;
+}
+
+.careers-panel tbody tr:hover {
+  background: var(--careers-soft-surface);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  .careers-interactive:active {
+    transform: none;
+  }
+}

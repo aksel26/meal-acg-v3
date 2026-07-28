@@ -19,7 +19,10 @@
     "start:part-time-supervisor": "turbo run start --filter=part-time-supervisor",
     "build:project-management": "turbo run build --filter=project-management",
     "dev:project-management": "turbo run dev --filter=project-management",
-    "start:project-management": "turbo run start --filter=project-management"
+    "start:project-management": "turbo run start --filter=project-management",
+    "build:careers": "turbo run build --filter=careers",
+    "dev:careers": "turbo run dev --filter=careers",
+    "start:careers": "turbo run start --filter=careers"
   },
   "devDependencies": {
     "prettier": "^3.6.0",

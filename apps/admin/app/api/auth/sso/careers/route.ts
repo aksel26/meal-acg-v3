@@ -69,7 +69,6 @@ export async function GET(request: Request) {
     code_hash: createHash("sha256").update(code).digest("hex"),
     admin_member_id: admin.userId,
     source_app: "admin",
-    expires_at: new Date(Date.now() + 60_000).toISOString(),
   });
   if (error) {
     console.error("Admin to careers SSO handoff failed:", error);

@@ -1,6 +1,6 @@
 # Meal ACG v3
 
-기업 내부 복지/운영 포털 모노레포입니다. 식대, 복지포인트, 근태, 휴가, 자산, 차량, 점심조, 프로젝트/요청 관리, 아르바이트 감독 업무를 앱별로 나누어 운영합니다.
+기업 내부 복지/운영 포털 모노레포입니다. 식대, 복지포인트, 근태, 휴가, 자산, 차량, 점심조, 프로젝트/요청 관리, 아르바이트 감독, 채용 관리 업무를 앱별로 나누어 운영합니다.
 
 최종 검토: 2026-05-28
 
@@ -12,6 +12,7 @@
 | Admin                | `apps/admin`                | 3001 | 관리자용 백오피스. 조직, 권한, 정산, 검토, 알림, 감사 로그, 각종 운영 마스터를 관리합니다. |
 | Part-time Supervisor | `apps/part-time-supervisor` | 3002 | 단기 근무자 모집, 배정, 출근, 계약, 비용 정산을 관리합니다.                                |
 | Project Management   | `apps/project-management`   | 3013 | 프로젝트와 요청 큐를 별도 업무 앱으로 관리합니다.                                          |
+| Careers              | `apps/careers`              | 3014 | 채용 공고, 지원자 전형, 일정, 파일과 감사 이력을 관리합니다.                               |
 
 ## 기술 스택
 
@@ -48,6 +49,7 @@ pnpm dev:user                    # User: http://localhost:3000
 pnpm dev:admin                   # Admin: http://localhost:3001
 pnpm dev:part-time-supervisor    # Supervisor: http://localhost:3002
 pnpm dev:project-management      # Project Management: http://localhost:3013
+pnpm dev:careers                 # Careers: http://localhost:3014
 ```
 
 ### 빌드/실행
@@ -58,11 +60,13 @@ pnpm build:user
 pnpm build:admin
 pnpm build:part-time-supervisor
 pnpm build:project-management
+pnpm build:careers
 
 pnpm start:user
 pnpm start:admin
 pnpm start:part-time-supervisor
 pnpm start:project-management
+pnpm start:careers
 ```
 
 ### 품질 확인
@@ -79,9 +83,10 @@ pnpm format
 pnpm --filter admin check-types
 pnpm --filter user build
 pnpm --filter project-management lint
+pnpm --filter careers check-types
 ```
 
-> 각 Next 앱의 `next.config.ts`는 빌드 중 TypeScript/ESLint 오류를 무시하도록 설정되어 있습니다. 배포 전에는 `check-types`와 `lint`를 별도로 실행해야 합니다.
+> 일부 기존 Next 앱은 빌드 중 TypeScript/ESLint 오류를 무시하도록 설정되어 있습니다. 배포 전에는 `check-types`와 `lint`를 별도로 실행해야 합니다.
 
 ## 프로젝트 구조
 
@@ -91,7 +96,8 @@ meal-acg-v3/
 │   ├── user/                    # 임직원 포털
 │   ├── admin/                   # 관리자 백오피스
 │   ├── part-time-supervisor/    # 단기 근무 감독/계약/출근 앱
-│   └── project-management/      # 프로젝트/요청 관리 앱
+│   ├── project-management/      # 프로젝트/요청 관리 앱
+│   └── careers/                 # 채용 운영 앱
 ├── packages/
 │   ├── ui/                      # 공유 UI 컴포넌트
 │   ├── utils/                   # 공유 유틸리티
@@ -141,6 +147,13 @@ meal-acg-v3/
 - 요청 큐, 담당자 배정, 진행 상태 관리
 - User/Admin/Supervisor 앱과의 이동 링크
 
+### Careers
+
+- 채용 공고와 공고별 전형 단계 관리
+- 지원자 목록, 파이프라인, 최종 결과와 별도 관리
+- 일정, 메시지 기록, 비공개 지원자 파일과 감사 이력 관리
+- Admin 앱의 1회용 코드 SSO로만 로그인
+
 ## 환경 변수
 
 실제 비밀값은 커밋하지 않습니다. 로컬에서는 각 앱의 `.env.local` 또는 루트 `.env.local`에 설정합니다.
@@ -181,6 +194,7 @@ VAPID_SUBJECT=
 NEXT_PUBLIC_SUPERVISOR_APP_URL=
 NEXT_PUBLIC_PROJECT_MANAGEMENT_APP_URL=
 NEXT_PUBLIC_REQUEST_MANAGEMENT_APP_URL=
+CAREERS_APP_URL=
 NEXT_DIST_DIR=
 ```
 
@@ -216,6 +230,21 @@ SUPABASE_SERVICE_ROLE_KEY=
 NEXT_DIST_DIR=
 ```
 
+### Careers
+
+```bash
+ADMIN_APP_URL=
+CAREERS_SESSION_SECRET=
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+NEXT_DIST_DIR=
+```
+
+`CAREERS_APP_URL`은 Admin 앱이 1회용 SSO 코드를 전달할 Careers 앱 주소입니다. 로컬 기본값은 `http://localhost:3014`입니다.
+`ADMIN_APP_URL`은 Careers 앱이 미인증 사용자를 Admin SSO 진입점으로 돌려보낼 때 사용하는 주소입니다.
+`CAREERS_SESSION_SECRET`은 Careers 세션 쿠키 서명 전용의 긴 랜덤 문자열을 사용합니다.
+
 ## 인증과 권한
 
 - User 앱은 사용자 세션 쿠키와 Supabase 기반 데이터 접근을 함께 사용합니다.
@@ -223,6 +252,7 @@ NEXT_DIST_DIR=
 - Admin 세션 쿠키는 HMAC 서명으로 위변조를 검증합니다.
 - 관리자 권한은 `admin_role`, `user_authority`, 권한 정책 테이블과 서버 API의 `requireAdminPermission(...)` 가드로 관리합니다.
 - Supervisor와 Project Management 앱은 Admin 앱으로 로그인 흐름을 위임하는 구간이 있습니다.
+- Careers 앱은 Admin 앱에서 발급한 60초 1회용 SSO 코드를 소비하고, 보호 요청마다 현재 Admin 자격을 다시 확인합니다.
 
 ## Supabase 작업
 

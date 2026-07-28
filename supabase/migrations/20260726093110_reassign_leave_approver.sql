@@ -146,8 +146,3 @@ BEGIN
   RETURN NEXT v_result;
 END;
 $$;
-
-REVOKE ALL ON FUNCTION update_dayoff_atomic(uuid, uuid, boolean, jsonb)
-  FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION update_dayoff_atomic(uuid, uuid, boolean, jsonb)
-  TO service_role;

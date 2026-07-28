@@ -16,6 +16,18 @@ type WriteAdminAuditLogInput = {
   metadata?: Record<string, unknown>;
 };
 
+export function getAdminAuditRequestContext(request?: NextRequest) {
+  const forwardedFor = request?.headers.get("x-forwarded-for");
+  return {
+    requestPath: request?.nextUrl.pathname || null,
+    ipAddress:
+      forwardedFor?.split(",")[0]?.trim() ||
+      request?.headers.get("x-real-ip") ||
+      null,
+    userAgent: request?.headers.get("user-agent") || null,
+  };
+}
+
 export async function writeAdminAuditLog({
   session,
   request,
@@ -28,10 +40,8 @@ export async function writeAdminAuditLog({
   metadata = {},
 }: WriteAdminAuditLogInput) {
   const supabase = createServiceClient();
-  const forwardedFor = request?.headers.get("x-forwarded-for");
-  const ipAddress =
-    forwardedFor?.split(",")[0]?.trim() || request?.headers.get("x-real-ip");
-  const userAgent = request?.headers.get("user-agent");
+  const { requestPath, ipAddress, userAgent } =
+    getAdminAuditRequestContext(request);
 
   const { error } = await supabase.from("admin_audit_logs").insert({
     actor_id: session.userId,
@@ -43,9 +53,9 @@ export async function writeAdminAuditLog({
     risk_level: riskLevel,
     reason: reason || null,
     metadata,
-    request_path: request?.nextUrl.pathname || null,
-    ip_address: ipAddress || null,
-    user_agent: userAgent || null,
+    request_path: requestPath,
+    ip_address: ipAddress,
+    user_agent: userAgent,
   });
 
   if (error) {

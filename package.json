@@ -7,6 +7,7 @@
     "lint": "turbo run lint",
     "check-types": "turbo run check-types",
     "test:db": "bash scripts/test-supabase-sql.sh",
+    "test:company-operations": "bash scripts/test-company-operations-utils.sh",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "build:user": "turbo run build --filter=user",
     "dev:user": "turbo run dev --filter=user",

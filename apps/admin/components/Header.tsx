@@ -84,6 +84,10 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
     title: "개인 사물함 관리",
     subtitle: "사물함 위치, 배정 현황, 사용자 요청을 처리합니다.",
   },
+  "/library": {
+    title: "도서 관리",
+    subtitle: "도서 대여 현황과 신청 내역을 관리합니다.",
+  },
   "/vehicles": {
     title: "사내 차량관리",
     subtitle: "차량 등록 현황과 신청 내역을 관리합니다.",

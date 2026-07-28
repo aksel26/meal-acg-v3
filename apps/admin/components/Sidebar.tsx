@@ -41,6 +41,11 @@ import {
   CarFront,
   BookOpen,
   ShieldCheck,
+  UserMinus,
+  Armchair,
+  CircleParking,
+  CreditCard,
+  Files,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
@@ -168,6 +173,24 @@ const navigation: NavigationItem[] = [
         icon: BookOpen,
         permission: "library:read",
       },
+      {
+        name: "좌석 관리",
+        href: "/seating",
+        icon: Armchair,
+        permission: "seating:read",
+      },
+      {
+        name: "주차 관리",
+        href: "/parking",
+        icon: CircleParking,
+        permission: "parking:read",
+      },
+      {
+        name: "전사 자료실",
+        href: "/company-documents",
+        icon: Files,
+        permission: "company_documents:read",
+      },
     ],
   },
   {
@@ -203,6 +226,12 @@ const navigation: NavigationItem[] = [
         href: "/monthly",
         icon: Coffee,
         permission: "meal:write",
+      },
+      {
+        name: "오프보딩",
+        href: "/offboarding",
+        icon: UserMinus,
+        permission: "offboarding:read",
       },
     ],
   },
@@ -240,6 +269,12 @@ const navigation: NavigationItem[] = [
     name: "경영관리",
     icon: PiggyBank,
     items: [
+      {
+        name: "기업카드",
+        href: "/corporate-cards",
+        icon: CreditCard,
+        permission: "corporate_card:read",
+      },
       {
         name: "고객사 관리",
         href: "/finance/clients",

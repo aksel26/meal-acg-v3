@@ -122,6 +122,22 @@ body {
   letter-spacing: inherit;
 }
 
+[data-operations-variant="admin"] [data-operations-section] {
+  border-color: var(--admin-card-border);
+  border-radius: var(--radius);
+  box-shadow: none;
+}
+
+[data-operations-variant="admin"] .operation-input,
+[data-operations-variant="admin"] .operation-button,
+[data-operations-variant="admin"] .rounded-xl {
+  border-radius: var(--radius);
+}
+
+[data-operations-variant="admin"] .operation-button {
+  height: 40px;
+}
+
 :where(p, li, dd, blockquote) {
   line-height: 1.65;
 }

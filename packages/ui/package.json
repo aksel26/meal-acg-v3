@@ -9,6 +9,7 @@
   ],
   "exports": {
     "./styles.css": "./dist/index.css",
+    "./src/operations": "./src/operations.tsx",
     "./*": "./dist/*.js",
     "./icons": "./src/icons.ts"
   },

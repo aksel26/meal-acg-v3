@@ -129,6 +129,26 @@ const PAGE_HEADERS: Record<string, { title: string; description: string }> = {
     title: "도서관",
     description: "도서 대여 현황을 확인하고 신청합니다.",
   },
+  "/offboarding": {
+    title: "오프보딩",
+    description: "퇴사 관련 요청과 체크리스트 진행 상태를 확인합니다.",
+  },
+  "/seating": {
+    title: "좌석",
+    description: "사무실 좌석 현황을 확인하고 원하는 좌석을 신청합니다.",
+  },
+  "/parking": {
+    title: "주차",
+    description: "개인 차량의 주차 등록을 신청하고 처리 상태를 확인합니다.",
+  },
+  "/corporate-cards": {
+    title: "기업카드",
+    description: "배정된 기업카드의 사용 내역과 영수증을 등록합니다.",
+  },
+  "/company-documents": {
+    title: "전사 자료실",
+    description: "게시된 사내 자료를 내려받거나 새 자료를 제출합니다.",
+  },
   "/evaluations": {
     title: "다면평가",
     description: "활성화된 회차를 확인하고 배정된 평가를 작성합니다.",

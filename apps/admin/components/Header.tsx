@@ -133,6 +133,26 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
     title: "승인 관리",
     subtitle: "대기 건을 우선 처리하고 완료/반려 이력을 확인합니다.",
   },
+  "/offboarding": {
+    title: "오프보딩 관리",
+    subtitle: "요청 승인부터 체크리스트 완료까지 관리합니다.",
+  },
+  "/seating": {
+    title: "좌석 관리",
+    subtitle: "좌석 기준정보와 신청·배정 상태를 관리합니다.",
+  },
+  "/parking": {
+    title: "주차 관리",
+    subtitle: "직원 차량 등록을 검토하고 승인·만료·보관 처리합니다.",
+  },
+  "/corporate-cards": {
+    title: "기업카드 관리",
+    subtitle: "카드 기준정보와 사용 내역을 관리합니다.",
+  },
+  "/company-documents": {
+    title: "전사 자료실 관리",
+    subtitle: "자료 제출을 검토하고 게시·교체·보관합니다.",
+  },
 };
 
 export default function Header() {

@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { toast } from "@repo/ui/src/sonner";
 import Image from "next/image";
-import { Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { ArrowRight, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Button } from "@repo/ui/src/button";
+import { Input } from "@repo/ui/src/input";
+import { Label } from "@repo/ui/src/label";
+import { toast } from "sonner";
 
 function LoginForm() {
   const router = useRouter();
@@ -49,179 +51,151 @@ function LoginForm() {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.28, ease: "easeOut" }}
-      className="w-full rounded-[18px] border border-black/8 bg-white p-10"
-    >
+    <div className="w-full rounded-[10px] bg-white px-8 py-9 sm:px-10">
       <div className="mb-8 text-center">
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.2, duration: 0.4 }}
-          className="flex justify-center mb-6"
-        >
+        <div className="mb-6 flex justify-center">
           <Image
             src="/acg_ci_gray.png"
-            alt="ACG Logo"
+            alt="ACG"
             width={100}
             height={40}
             quality={100}
           />
-        </motion.div>
-        <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+        </div>
+        <h1 className="text-[21px] font-semibold leading-tight tracking-[-0.02em] text-[#1d1d1f]">
           로그인
-        </h2>
-        <p className="mt-2 text-sm text-slate-500 font-medium">
+        </h1>
+        <p className="mt-2 text-sm font-normal tracking-[-0.01em] text-[#7a7a7a]">
           관리자 계정으로 접속해주세요
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Login ID Field */}
+      <form onSubmit={handleSubmit} className="space-y-5">
         <div className="space-y-2">
-          <label
-            htmlFor="loginId"
-            className="block text-sm font-semibold text-slate-700 ml-1"
-          >
+          <Label htmlFor="loginId" className="text-[#333333]">
             아이디
-          </label>
-          <motion.div whileFocus={{ scale: 1.01 }} className="relative">
-            <input
-              id="loginId"
-              type="text"
-              placeholder="아이디를 입력하세요"
-              value={loginId}
-              onChange={(e) => setLoginId(e.target.value)}
-              required
-              disabled={isLoading}
-              className="w-full rounded-full border border-black/8 bg-white px-5 py-3.5 text-[#1d1d1f] placeholder:text-[#7a7a7a] transition-all focus:border-[#1d1d1f] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-            />
-          </motion.div>
+          </Label>
+          <Input
+            id="loginId"
+            type="text"
+            autoComplete="username"
+            placeholder="아이디를 입력하세요"
+            value={loginId}
+            onChange={(e) => setLoginId(e.target.value)}
+            required
+            disabled={isLoading}
+            className="h-[44px] rounded-[6px] px-3.5 text-sm text-[#1d1d1f] placeholder:text-[#8e8e93]"
+          />
         </div>
 
-        {/* Password Field */}
         <div className="space-y-2">
-          <label
-            htmlFor="password"
-            className="block text-sm font-semibold text-slate-700 ml-1"
-          >
+          <Label htmlFor="password" className="text-[#333333]">
             비밀번호
-          </label>
-          <motion.div whileFocus={{ scale: 1.01 }} className="relative">
-            <input
+          </Label>
+          <div className="relative">
+            <Input
               id="password"
               type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
               placeholder="비밀번호를 입력하세요"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={isLoading}
-              className="w-full rounded-full border border-black/8 bg-white px-5 py-3.5 pr-12 text-[#1d1d1f] placeholder:text-[#7a7a7a] transition-all focus:border-[#1d1d1f] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              className="h-[44px] rounded-[6px] px-3.5 pr-12 text-sm text-[#1d1d1f] placeholder:text-[#8e8e93]"
             />
             <button
               type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-600 focus:outline-none"
+              aria-label={showPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
+              aria-pressed={showPassword}
+              onClick={() => setShowPassword((visible) => !visible)}
+              className="absolute right-0 top-1/2 flex size-[44px] -translate-y-1/2 items-center justify-center rounded-[6px] text-[#7a7a7a] transition-[color,scale] duration-150 ease-out hover:text-[#1d1d1f] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 active:scale-[0.96] motion-reduce:transform-none motion-reduce:transition-none"
             >
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.div
-                  key={showPassword ? "hide" : "show"}
-                  initial={{ opacity: 0, rotate: -90, scale: 0.5 }}
-                  animate={{ opacity: 1, rotate: 0, scale: 1 }}
-                  exit={{ opacity: 0, rotate: 90, scale: 0.5 }}
-                  transition={{ duration: 0.15 }}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5" />
-                  ) : (
-                    <Eye className="h-5 w-5" />
-                  )}
-                </motion.div>
-              </AnimatePresence>
+              {showPassword ? (
+                <EyeOff
+                  aria-hidden="true"
+                  strokeWidth={1.5}
+                  className="size-5"
+                />
+              ) : (
+                <Eye aria-hidden="true" strokeWidth={1.5} className="size-5" />
+              )}
             </button>
-          </motion.div>
+          </div>
         </div>
 
-        {/* Submit Button */}
-        <motion.button
+        <Button
           type="submit"
+          size="lg"
           disabled={isLoading}
-          whileHover={{ y: -1 }}
-          whileTap={{ y: 1 }}
-          className="group relative w-full overflow-hidden rounded-full bg-[#1d1d1f] px-5 py-4 text-sm font-normal text-white transition-all hover:bg-black disabled:cursor-not-allowed disabled:opacity-70"
+          aria-busy={isLoading}
+          className="h-[44px] w-full rounded-[6px] bg-[#1d1d1f] text-sm font-medium text-white transition-[background-color,box-shadow,scale] duration-150 ease-out hover:bg-black active:scale-[0.96] motion-reduce:transform-none motion-reduce:transition-none"
         >
-          <span className="relative z-10 flex items-center justify-center gap-2">
-            {isLoading ? (
-              <>
-                <Loader2 className="h-5 w-5 animate-spin" />
-                로그인 중...
-              </>
-            ) : (
-              <>
-                로그인
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </>
-            )}
-          </span>
-        </motion.button>
+          {isLoading ? (
+            <>
+              <Loader2
+                aria-hidden="true"
+                strokeWidth={2}
+                className="size-4 animate-spin motion-reduce:animate-none"
+              />
+              로그인 중...
+            </>
+          ) : (
+            <>
+              로그인
+              <ArrowRight
+                aria-hidden="true"
+                strokeWidth={2}
+                className="size-4"
+              />
+            </>
+          )}
+        </Button>
       </form>
 
-      <div className="mt-8 text-center">
-        <p className="text-xs text-slate-400">
-          문제가 있으신가요?{" "}
-          <a
-            href="#"
-            className="font-medium text-[#1d1d1f] underline-offset-2 transition-colors hover:underline"
-          >
-            관리자에게 문의하기
-          </a>
-        </p>
-      </div>
-    </motion.div>
+      <p className="mt-8 text-center text-xs text-[#7a7a7a]">
+        접속에 문제가 있으면 시스템 관리자에게 문의해주세요.
+      </p>
+    </div>
   );
 }
 
 function LoginFormSkeleton() {
   return (
-    <div className="w-full rounded-[18px] border border-black/8 bg-white p-10">
+    <div className="w-full rounded-[10px] bg-white px-8 py-9 sm:px-10">
       <div className="mb-8 text-center">
-        <div className="mx-auto h-10 w-24 animate-pulse rounded bg-slate-100" />
-        <div className="mx-auto mt-4 h-8 w-32 animate-pulse rounded bg-slate-100" />
-        <div className="mx-auto mt-2 h-4 w-48 animate-pulse rounded bg-slate-100" />
+        <div className="mx-auto h-10 w-24 animate-pulse rounded-md bg-slate-100 motion-reduce:animate-none" />
+        <div className="mx-auto mt-4 h-7 w-20 animate-pulse rounded-md bg-slate-100 motion-reduce:animate-none" />
+        <div className="mx-auto mt-2 h-4 w-44 animate-pulse rounded-md bg-slate-100 motion-reduce:animate-none" />
       </div>
-      <div className="space-y-6">
+      <div className="space-y-5">
         <div className="space-y-2">
-          <div className="h-4 w-12 animate-pulse rounded bg-slate-100" />
-          <div className="h-12 w-full animate-pulse rounded-full bg-slate-100" />
+          <div className="h-4 w-12 animate-pulse rounded-md bg-slate-100 motion-reduce:animate-none" />
+          <div className="h-[44px] w-full animate-pulse rounded-[6px] bg-slate-100 motion-reduce:animate-none" />
         </div>
         <div className="space-y-2">
-          <div className="h-4 w-16 animate-pulse rounded bg-slate-100" />
-          <div className="h-12 w-full animate-pulse rounded-full bg-slate-100" />
+          <div className="h-4 w-16 animate-pulse rounded-md bg-slate-100 motion-reduce:animate-none" />
+          <div className="h-[44px] w-full animate-pulse rounded-[6px] bg-slate-100 motion-reduce:animate-none" />
         </div>
-        <div className="h-12 w-full animate-pulse rounded-full bg-slate-100" />
+        <div className="h-[44px] w-full animate-pulse rounded-[6px] bg-slate-100 motion-reduce:animate-none" />
       </div>
-      <div className="mt-8 mx-auto h-4 w-32 animate-pulse rounded bg-slate-100" />
+      <div className="mx-auto mt-8 h-4 w-48 animate-pulse rounded-md bg-slate-100 motion-reduce:animate-none" />
     </div>
   );
 }
 
 export default function LoginPage() {
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden">
-      {/* Login Container */}
-      <div className="relative z-10 w-full max-w-[420px] px-4">
+    <main className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-[var(--admin-parchment)] px-4 py-8">
+      <div className="relative z-10 w-full max-w-[420px]">
         <Suspense fallback={<LoginFormSkeleton />}>
           <LoginForm />
         </Suspense>
 
-        <div className="mt-8 text-center">
-          <p className="text-xs text-slate-300 font-medium">
-            © 2026 Meal Management System. All rights reserved.
-          </p>
-        </div>
+        <p className="mt-8 text-center text-xs font-normal text-[#8e8e93]">
+          © 2026 Meal Management System. All rights reserved.
+        </p>
       </div>
-    </div>
+    </main>
   );
 }

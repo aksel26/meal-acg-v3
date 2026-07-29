@@ -5,15 +5,18 @@ import { toast } from "@repo/ui/src/sonner";
 import {
   OperationConfirmDialog,
   OperationEmpty,
+  OperationFormDialog,
   OperationLoading,
   OperationPagination,
   OperationReasonDialog,
+  OperationToolbar,
   OperationsPage,
   OperationsSection,
   OperationStatus,
   operationButtonClass,
   operationDangerButtonClass,
   operationInputClass,
+  operationRecordClass,
   operationSecondaryButtonClass,
   operationTextareaClass,
 } from "@repo/ui/src/operations";
@@ -56,6 +59,7 @@ export function AdminCompanyDocumentsClient() {
   const [description, setDescription] = useState("");
   const [note, setNote] = useState("");
   const [publish, setPublish] = useState(true);
+  const [formOpen, setFormOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [query, setQuery] = useState("");
@@ -171,6 +175,7 @@ export function AdminCompanyDocumentsClient() {
       toast.success(
         editingId ? "자료 정보를 수정했습니다." : "자료를 등록했습니다.",
       );
+      setFormOpen(false);
       reset();
       await load();
     } catch (error) {
@@ -209,11 +214,14 @@ export function AdminCompanyDocumentsClient() {
       title="전사 자료실 관리"
       description="자료 제출을 검토하고 게시·교체·보관합니다."
     >
-      <OperationsSection
-        key={editingId ?? "new-document"}
+      <OperationFormDialog
+        open={formOpen}
+        onOpenChange={(open) => {
+          setFormOpen(open);
+          if (!open) reset();
+        }}
         title={editingId ? "자료 정보 수정" : "자료 등록"}
-        collapsible
-        defaultOpen={Boolean(editingId)}
+        description="자료 정보와 게시할 파일을 입력해주세요."
       >
         <form onSubmit={save} className="grid gap-3 md:grid-cols-3">
           <label className="text-sm text-slate-600">
@@ -292,25 +300,38 @@ export function AdminCompanyDocumentsClient() {
               등록 즉시 게시
             </label>
           )}
-          <div className="flex gap-2 md:col-span-3">
+          <div className="flex justify-end gap-2 md:col-span-3">
+            <button
+              type="button"
+              onClick={() => setFormOpen(false)}
+              className={operationSecondaryButtonClass}
+            >
+              취소
+            </button>
             <button disabled={busy} className={operationButtonClass}>
               저장
             </button>
-            {editingId && (
-              <button
-                type="button"
-                onClick={reset}
-                className={operationSecondaryButtonClass}
-              >
-                새 자료
-              </button>
-            )}
           </div>
         </form>
-      </OperationsSection>
+      </OperationFormDialog>
 
-      <OperationsSection title="자료 필터">
-        <div className="grid gap-3 md:grid-cols-3">
+      <OperationsSection title="전체 자료">
+        <OperationToolbar
+          action={
+            documents.length > 0 ? (
+              <button
+                type="button"
+                className={operationButtonClass}
+                onClick={() => {
+                  reset();
+                  setFormOpen(true);
+                }}
+              >
+                자료 등록
+              </button>
+            ) : undefined
+          }
+        >
           <select
             aria-label="자료 상태 필터"
             value={statusFilter}
@@ -352,23 +373,32 @@ export function AdminCompanyDocumentsClient() {
               setPage(1);
             }}
             className={operationInputClass}
-            placeholder="예: 취업규칙…"
+            placeholder="제목 또는 설명 검색"
           />
-        </div>
-      </OperationsSection>
-
-      <OperationsSection title="전체 자료">
+        </OperationToolbar>
         {loading ? (
           <OperationLoading label="전사 자료를 불러오는 중" />
         ) : documents.length === 0 ? (
-          <OperationEmpty>조건에 맞는 자료가 없습니다.</OperationEmpty>
+          <OperationEmpty
+            action={
+              <button
+                type="button"
+                className={operationButtonClass}
+                onClick={() => {
+                  reset();
+                  setFormOpen(true);
+                }}
+              >
+                자료 등록
+              </button>
+            }
+          >
+            조건에 맞는 자료가 없습니다.
+          </OperationEmpty>
         ) : (
           <div className="space-y-2">
             {documents.map((item) => (
-              <div
-                key={item.id}
-                className="rounded-xl border border-slate-100 p-3"
-              >
+              <div key={item.id} className={operationRecordClass}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <p className="break-words font-semibold">{item.title}</p>
@@ -402,6 +432,7 @@ export function AdminCompanyDocumentsClient() {
                       setCategory(item.category);
                       setDescription(item.description ?? "");
                       setNote(item.note ?? "");
+                      setFormOpen(true);
                     }}
                   >
                     정보 수정

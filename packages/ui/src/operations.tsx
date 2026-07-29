@@ -22,6 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 
 export const operationInputClass =
   "operation-input h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition focus-visible:border-slate-400 focus-visible:ring-2 focus-visible:ring-slate-950/10";
@@ -32,6 +33,69 @@ export const operationSecondaryButtonClass =
   "operation-button inline-flex h-9 touch-manipulation items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950/20 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
 export const operationDangerButtonClass =
   "operation-button inline-flex h-9 touch-manipulation items-center justify-center rounded-lg border border-rose-200 bg-white px-3 text-sm font-medium text-rose-600 transition hover:bg-rose-50 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/25 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
+export const operationRecordClass = "rounded-xl bg-slate-50 p-3";
+
+// admin globals.css 가 .operation-button 높이를 40px 로 고정하므로
+// 아이콘 버튼에는 그 클래스를 붙이지 않는다(정사각형 유지).
+const operationIconButtonBase =
+  "inline-flex size-7 shrink-0 touch-manipulation items-center justify-center rounded-md bg-transparent p-0 leading-none transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-40";
+const operationIconButtonTones = {
+  default:
+    "text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-slate-950/20",
+  primary:
+    "text-slate-700 hover:bg-slate-100 hover:text-slate-950 focus-visible:ring-slate-950/20",
+  danger:
+    "text-rose-500 hover:bg-rose-50 hover:text-rose-600 focus-visible:ring-rose-500/25",
+} as const;
+
+export type OperationIconTone = keyof typeof operationIconButtonTones;
+
+export function operationIconButtonClass(tone: OperationIconTone = "default") {
+  return `${operationIconButtonBase} ${operationIconButtonTones[tone]}`;
+}
+
+/** 아이콘만 보여주는 관리 버튼. hover 시 label 을 툴팁으로 띄운다. */
+export function OperationIconButton({
+  label,
+  tone = "default",
+  disabled,
+  onClick,
+  children,
+}: {
+  label: string;
+  tone?: OperationIconTone;
+  disabled?: boolean;
+  onClick?: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          aria-label={label}
+          disabled={disabled}
+          onClick={onClick}
+          className={operationIconButtonClass(tone)}
+        >
+          {children}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+/** 다이얼로그 트리거에 툴팁을 씌운다. asChild 체인이라 트리거는 DOM 요소여야 한다. */
+function withTooltip(trigger: ReactNode, label?: string) {
+  if (!label) return trigger;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{trigger}</TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+}
 
 export type OperationPaginationMeta = {
   page: number;
@@ -93,12 +157,14 @@ export function OperationsSection({
       data-operations-section
       className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm"
     >
-      <div className="mb-4">
-        <h2 className="font-semibold text-slate-950">{title}</h2>
-        {description && (
-          <p className="mt-1 text-sm text-slate-500">{description}</p>
-        )}
-      </div>
+      {(title || description) && (
+        <div className="mb-4">
+          {title && <h2 className="font-semibold text-slate-950">{title}</h2>}
+          {description && (
+            <p className="mt-1 text-sm text-slate-500">{description}</p>
+          )}
+        </div>
+      )}
       {children}
     </section>
   );
@@ -159,11 +225,76 @@ export function OperationStatus({
   );
 }
 
-export function OperationEmpty({ children }: { children: ReactNode }) {
+export function OperationEmpty({
+  children,
+  action,
+}: {
+  children: ReactNode;
+  action?: ReactNode;
+}) {
   return (
-    <p className="rounded-xl bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
-      {children}
-    </p>
+    <div className="flex flex-col items-center rounded-xl bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
+      <p>{children}</p>
+      {action && <div className="mt-4">{action}</div>}
+    </div>
+  );
+}
+
+export function OperationToolbar({
+  children,
+  action,
+  layout = "grid",
+}: {
+  children?: ReactNode;
+  action?: ReactNode;
+  /** grid: 필터를 균등 분할. inline: 자연 폭으로 나열해 직접 정렬. */
+  layout?: "grid" | "inline";
+}) {
+  if (!children && !action) return null;
+
+  return (
+    <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center">
+      {children && (
+        <div
+          className={
+            layout === "inline"
+              ? "flex min-w-0 flex-1 flex-wrap items-center gap-2"
+              : "grid min-w-0 flex-1 gap-2 sm:grid-cols-2 lg:grid-cols-3"
+          }
+        >
+          {children}
+        </div>
+      )}
+      {action && (
+        <div className="flex shrink-0 justify-end md:ml-auto">{action}</div>
+      )}
+    </div>
+  );
+}
+
+export function OperationFormDialog({
+  open,
+  onOpenChange,
+  title,
+  description,
+  children,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description: string;
+  children: ReactNode;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
+        </DialogHeader>
+        {children}
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -233,16 +364,21 @@ export function OperationConfirmDialog({
   description,
   confirmLabel,
   onConfirm,
+  tooltip,
 }: {
   children: ReactNode;
   title: string;
   description: string;
   confirmLabel: string;
   onConfirm: () => void | Promise<void>;
+  tooltip?: string;
 }) {
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
+      {withTooltip(
+        <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>,
+        tooltip,
+      )}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
@@ -270,6 +406,7 @@ export function OperationReasonDialog({
   confirmLabel,
   required = true,
   onConfirm,
+  tooltip,
 }: {
   children: ReactNode;
   title: string;
@@ -278,6 +415,7 @@ export function OperationReasonDialog({
   confirmLabel: string;
   required?: boolean;
   onConfirm: (reason: string) => void | Promise<void>;
+  tooltip?: string;
 }) {
   const inputId = useId();
   const [open, setOpen] = useState(false);
@@ -292,7 +430,7 @@ export function OperationReasonDialog({
         if (!nextOpen) setReason("");
       }}
     >
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      {withTooltip(<DialogTrigger asChild>{children}</DialogTrigger>, tooltip)}
       <DialogContent>
         <form
           onSubmit={async (event) => {

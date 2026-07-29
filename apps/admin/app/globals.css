@@ -127,7 +127,7 @@ body {
 }
 
 [data-operations-variant="admin"] [data-operations-section] {
-  border-color: var(--admin-card-border);
+  border-width: 0;
   border-radius: var(--radius);
   box-shadow: none;
 }

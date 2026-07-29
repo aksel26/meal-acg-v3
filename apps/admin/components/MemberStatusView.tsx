@@ -46,7 +46,6 @@ import {
   Loader2,
   Pencil,
   Plus,
-  Settings,
   Trash2,
   Users,
 } from "lucide-react";
@@ -429,7 +428,9 @@ export default function MemberStatusView({
           role: data.role,
           admin_role: data.role === "admin" ? data.admin_role : null,
           user_authority: data.user_authority || null,
-          ...(data.position_id !== undefined ? { position_id: data.position_id } : {}),
+          ...(data.position_id !== undefined
+            ? { position_id: data.position_id }
+            : {}),
           title_id: data.title_id ?? null,
         }),
       });
@@ -843,10 +844,8 @@ export default function MemberStatusView({
           <div className="h-full overflow-auto">
             <table className="w-full caption-bottom text-sm">
               <TableHeader className="sticky top-0 z-10 bg-white">
-                <TableRow className="border-b border-slate-100 [&>th]:h-auto [&>th]:px-3 [&>th]:py-2 [&>th]:text-xs [&>th]:font-medium [&>th]:text-slate-400">
-                  <TableHead className="pl-6 text-center w-24">
-                    이름
-                  </TableHead>
+                <TableRow className="border-b border-slate-100 [&>th]:h-auto [&>th]:px-3 [&>th]:py-1.5 [&>th]:text-xs [&>th]:font-medium [&>th]:text-slate-400">
+                  <TableHead className="pl-6 text-center w-24">이름</TableHead>
                   <TableHead
                     className="cursor-pointer select-none text-left hover:text-slate-600"
                     onClick={() => handleSort("team_name")}
@@ -879,21 +878,11 @@ export default function MemberStatusView({
                       />
                     </span>
                   </TableHead>
-                  <TableHead className="text-left">
-                    직책
-                  </TableHead>
-                  <TableHead className="text-center">
-                    아이디
-                  </TableHead>
-                  <TableHead className="text-center">
-                    생년월일
-                  </TableHead>
-                  <TableHead className="text-center">
-                    휴대폰번호
-                  </TableHead>
-                  <TableHead className="text-center w-16">
-                    권한
-                  </TableHead>
+                  <TableHead className="text-left">직책</TableHead>
+                  <TableHead className="text-center">아이디</TableHead>
+                  <TableHead className="text-center">생년월일</TableHead>
+                  <TableHead className="text-center">휴대폰번호</TableHead>
+                  <TableHead className="text-center w-16">권한</TableHead>
                   <TableHead
                     className="cursor-pointer select-none text-center hover:text-slate-600"
                     onClick={() => handleSort("current_status")}
@@ -910,12 +899,8 @@ export default function MemberStatusView({
                       />
                     </span>
                   </TableHead>
-                  <TableHead className="text-center">
-                    가입일
-                  </TableHead>
-                  <TableHead className="text-center w-16">
-                    관리
-                  </TableHead>
+                  <TableHead className="text-center">가입일</TableHead>
+                  <TableHead className="text-center w-16">관리</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -931,7 +916,7 @@ export default function MemberStatusView({
                   return (
                     <TableRow
                       key={`${row.member_id}-${row.status_id || "normal"}`}
-                      className="border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50 [&>td]:px-3 [&>td]:py-3"
+                      className="border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50 [&>td]:px-3 [&>td]:py-2 [&>td]:text-[13px]"
                     >
                       <TableCell className="pl-6 text-sm font-medium w-24 text-center">
                         {row.member_id ? (
@@ -1020,7 +1005,7 @@ export default function MemberStatusView({
                           {row.member_id && (
                             <button
                               onClick={() => handleEditMemberOpen(row)}
-                              className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                              className="inline-flex h-6 w-6 items-center justify-center rounded text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
                               title="인원 정보 수정"
                             >
                               <Pencil className="h-3.5 w-3.5" />
@@ -1045,7 +1030,7 @@ export default function MemberStatusView({
                                 setActualMonths(member?.intern_months || 1);
                                 setIsDeleteOpen(true);
                               }}
-                              className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-600"
+                              className="inline-flex h-6 w-6 items-center justify-center rounded text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-600"
                               title="멤버 삭제"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -1079,7 +1064,9 @@ export default function MemberStatusView({
             <div className="py-5">
               {/* 기본 정보 */}
               <div className="mb-8 space-y-4 last:mb-0">
-                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">기본 정보</p>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  기본 정보
+                </p>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="addFullName">이름</Label>
@@ -1155,7 +1142,9 @@ export default function MemberStatusView({
 
               {/* 직급/직책 */}
               <div className="mb-8 space-y-4 last:mb-0">
-                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">직급 / 직책</p>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  직급 / 직책
+                </p>
                 <div className="flex gap-4">
                   <div className="space-y-2 flex-1">
                     <Label>직급</Label>
@@ -1164,7 +1153,8 @@ export default function MemberStatusView({
                       onValueChange={(val) => {
                         setAddFormValue("position_id", val);
                         const selected = positions?.find((p) => p.id === val);
-                        if (selected?.name !== "인턴") setAddFormValue("internMonths", "");
+                        if (selected?.name !== "인턴")
+                          setAddFormValue("internMonths", "");
                       }}
                     >
                       <SelectTrigger className="w-full">
@@ -1179,7 +1169,8 @@ export default function MemberStatusView({
                       </SelectContent>
                     </Select>
                   </div>
-                  {positions?.find((p) => p.id === watchedPositionId)?.name === "인턴" && (
+                  {positions?.find((p) => p.id === watchedPositionId)?.name ===
+                    "인턴" && (
                     <div className="space-y-2 w-32">
                       <Label htmlFor="addInternMonths">개월 수</Label>
                       <Input
@@ -1205,7 +1196,10 @@ export default function MemberStatusView({
                     <Select
                       value={watchedTitleId}
                       onValueChange={(val) =>
-                        setAddFormValue("title_id", val === "__none__" ? "" : val)
+                        setAddFormValue(
+                          "title_id",
+                          val === "__none__" ? "" : val,
+                        )
                       }
                     >
                       <SelectTrigger className="w-full">
@@ -1226,7 +1220,9 @@ export default function MemberStatusView({
 
               {/* 계정 정보 */}
               <div className="mb-8 space-y-4 last:mb-0">
-                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">계정 정보</p>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  계정 정보
+                </p>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="addLoginId">아이디</Label>
@@ -1297,7 +1293,9 @@ export default function MemberStatusView({
                     <Label>어드민 권한</Label>
                     <Select
                       value={watchAddForm("adminRole")}
-                      onValueChange={(value) => setAddFormValue("adminRole", value)}
+                      onValueChange={(value) =>
+                        setAddFormValue("adminRole", value)
+                      }
                     >
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="어드민 권한 선택" />
@@ -1397,7 +1395,9 @@ export default function MemberStatusView({
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs font-medium text-slate-500">특이사항</Label>
+              <Label className="text-xs font-medium text-slate-500">
+                특이사항
+              </Label>
               <Select value={formStatus} onValueChange={setFormStatus}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="특이사항 선택" />
@@ -1414,7 +1414,9 @@ export default function MemberStatusView({
 
             {formStatus === "퇴사" ? (
               <div className="space-y-2">
-                <Label className="text-xs font-medium text-slate-500">퇴사일</Label>
+                <Label className="text-xs font-medium text-slate-500">
+                  퇴사일
+                </Label>
                 <DatePicker
                   value={formStartDate}
                   onChange={(val) => {
@@ -1429,12 +1431,18 @@ export default function MemberStatusView({
             ) : (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label className="text-xs font-medium text-slate-500">기간</Label>
-                  <span className="text-[11px] text-slate-400">종료일 미입력 시 진행중</span>
+                  <Label className="text-xs font-medium text-slate-500">
+                    기간
+                  </Label>
+                  <span className="text-[11px] text-slate-400">
+                    종료일 미입력 시 진행중
+                  </span>
                 </div>
                 <div className="grid gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-end">
                   <div className="space-y-1.5">
-                    <span className="block text-[11px] font-medium text-slate-400">시작일</span>
+                    <span className="block text-[11px] font-medium text-slate-400">
+                      시작일
+                    </span>
                     <DatePicker
                       value={formStartDate}
                       onChange={(val) => setFormStartDate(val)}
@@ -1443,9 +1451,13 @@ export default function MemberStatusView({
                       modal
                     />
                   </div>
-                  <span className="hidden pb-2 text-sm text-slate-400 sm:block">~</span>
+                  <span className="hidden pb-2 text-sm text-slate-400 sm:block">
+                    ~
+                  </span>
                   <div className="space-y-1.5">
-                    <span className="block text-[11px] font-medium text-slate-400">종료일</span>
+                    <span className="block text-[11px] font-medium text-slate-400">
+                      종료일
+                    </span>
                     <DatePicker
                       value={formEndDate}
                       onChange={(val) => setFormEndDate(val)}
@@ -1639,7 +1651,10 @@ export default function MemberStatusView({
 
             {deletingItem?.memberRole === "인턴" && (
               <div className="space-y-1.5 rounded-md bg-slate-50 p-3">
-                <Label htmlFor="actual-months" className="text-sm font-medium text-slate-700">
+                <Label
+                  htmlFor="actual-months"
+                  className="text-sm font-medium text-slate-700"
+                >
                   실제 근무 개월
                 </Label>
                 <Input
@@ -1648,10 +1663,13 @@ export default function MemberStatusView({
                   min={1}
                   max={6}
                   value={actualMonths}
-                  onChange={(e) => setActualMonths(parseInt(e.target.value) || 1)}
+                  onChange={(e) =>
+                    setActualMonths(parseInt(e.target.value) || 1)
+                  }
                 />
                 <p className="text-xs text-slate-400">
-                  기존 등록: {deletingItem.internMonths}개월 → 실제: {actualMonths}개월로 재계산됩니다
+                  기존 등록: {deletingItem.internMonths}개월 → 실제:{" "}
+                  {actualMonths}개월로 재계산됩니다
                 </p>
               </div>
             )}
@@ -1665,10 +1683,14 @@ export default function MemberStatusView({
               variant="destructive"
               onClick={handleDeleteConfirm}
               disabled={
-                deleteStatus.isPending || deleteMemberMutation.isPending || isDeleting
+                deleteStatus.isPending ||
+                deleteMemberMutation.isPending ||
+                isDeleting
               }
             >
-              {deleteStatus.isPending || deleteMemberMutation.isPending || isDeleting ? (
+              {deleteStatus.isPending ||
+              deleteMemberMutation.isPending ||
+              isDeleting ? (
                 <>
                   <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
                   삭제 중...
@@ -1700,7 +1722,9 @@ export default function MemberStatusView({
             <div className="py-5">
               {/* 기본 정보 */}
               <div className="mb-8 space-y-4 last:mb-0">
-                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">기본 정보</p>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  기본 정보
+                </p>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="editFullName">이름</Label>
@@ -1779,7 +1803,9 @@ export default function MemberStatusView({
 
               {/* 직급/직책 */}
               <div className="mb-8 space-y-4 last:mb-0">
-                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">직급 / 직책</p>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  직급 / 직책
+                </p>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>직급</Label>
@@ -1873,7 +1899,9 @@ export default function MemberStatusView({
 
               {/* 계정 정보 */}
               <div className="mb-8 space-y-4 last:mb-0">
-                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">계정 정보</p>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  계정 정보
+                </p>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="editLoginId">아이디</Label>
@@ -2047,10 +2075,7 @@ export default function MemberStatusView({
                   const colorClass =
                     STATUS_COLORS[record.status] || STATUS_COLORS["정상"];
                   return (
-                    <div
-                      key={record.id}
-                      className="rounded-md bg-white p-3"
-                    >
+                    <div key={record.id} className="rounded-md bg-white p-3">
                       <div className="flex items-center justify-between">
                         <Badge
                           className={cn(

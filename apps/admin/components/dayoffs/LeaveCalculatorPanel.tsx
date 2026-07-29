@@ -129,27 +129,27 @@ export function LeaveCalculatorPanel({ year }: { year: number }) {
                       key={member.memberId}
                       className="border-b border-slate-100 align-top transition-colors last:border-b-0 hover:bg-slate-50"
                     >
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-2">
                         <div className="font-medium text-slate-800">
                           {member.fullName}
                         </div>
                       </td>
-                      <td className="px-3 py-3 text-xs text-slate-600">
+                      <td className="px-3 py-2 text-xs text-slate-600">
                         {member.teamName || "-"}
                       </td>
-                      <td className="px-3 py-3 text-xs text-slate-600">
+                      <td className="px-3 py-2 text-xs text-slate-600">
                         {member.positionName || "-"}
                       </td>
-                      <td className="px-3 py-3 text-xs text-slate-600">
+                      <td className="px-3 py-2 text-xs text-slate-600">
                         {formatDate(member.hireDate)}
                       </td>
-                      <td className="px-3 py-3 text-xs text-slate-600">
+                      <td className="px-3 py-2 text-xs text-slate-600">
                         {tenureText(
                           member.yearsEmployed,
                           member.monthsEmployed,
                         )}
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-2">
                         <div className="space-y-1">
                           {visibleResultItems.map((item) => {
                             return (
@@ -167,7 +167,7 @@ export function LeaveCalculatorPanel({ year }: { year: number }) {
                           })}
                         </div>
                       </td>
-                      <td className="px-3 py-3 text-xs font-medium text-slate-700">
+                      <td className="px-3 py-2 text-xs font-medium text-slate-700">
                         <div>{formatDays(member.totalApplied)}</div>
                         <div className="mt-1 text-[11px] font-normal text-slate-400">
                           잔여{" "}
@@ -179,7 +179,7 @@ export function LeaveCalculatorPanel({ year }: { year: number }) {
                           )}
                         </div>
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-2">
                         <div className="max-w-[320px] space-y-1 text-xs text-slate-500">
                           {basisItems.map((item) => (
                             <p key={item.type}>

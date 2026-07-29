@@ -38,7 +38,11 @@ export function AdminAssetRegisterClient({
 
   const assetUsers = useMemo(
     () =>
-      [...new Map(assets.map((asset) => [asset.user_id, asset.user_name])).entries()]
+      [
+        ...new Map(
+          assets.map((asset) => [asset.user_id, asset.user_name]),
+        ).entries(),
+      ]
         .map(([id, name]) => ({ id, name }))
         .sort((a, b) => a.name.localeCompare(b.name, "ko-KR")),
     [assets],
@@ -48,8 +52,10 @@ export function AdminAssetRegisterClient({
     const normalized = keyword.trim().toLowerCase();
     return assets.filter((asset) => {
       if (statusFilter !== "all" && asset.status !== statusFilter) return false;
-      if (categoryFilter !== "all" && asset.category !== categoryFilter) return false;
-      if (assetUserFilter !== "all" && asset.user_id !== assetUserFilter) return false;
+      if (categoryFilter !== "all" && asset.category !== categoryFilter)
+        return false;
+      if (assetUserFilter !== "all" && asset.user_id !== assetUserFilter)
+        return false;
       if (!normalized) return true;
       return [
         asset.name,
@@ -65,7 +71,11 @@ export function AdminAssetRegisterClient({
     });
   }, [assetUserFilter, assets, categoryFilter, keyword, statusFilter]);
 
-  const assetPagination = usePagination(filteredAssets.length, ASSET_PAGE_SIZE, assetPage);
+  const assetPagination = usePagination(
+    filteredAssets.length,
+    ASSET_PAGE_SIZE,
+    assetPage,
+  );
   const pagedAssets = filteredAssets.slice(
     assetPagination.startIndex,
     assetPagination.endIndex,
@@ -107,7 +117,10 @@ export function AdminAssetRegisterClient({
   return (
     <div className="space-y-5">
       <section className="grid gap-y-3 bg-white md:grid-cols-4 md:divide-x md:divide-[#eeeeee]">
-        <SummaryCard label="등록 물품" value={`${assets.length.toLocaleString("ko-KR")}건`} />
+        <SummaryCard
+          label="등록 물품"
+          value={`${assets.length.toLocaleString("ko-KR")}건`}
+        />
         <SummaryCard
           label="등록 구성원"
           value={`${summary.registeredMembers.toLocaleString("ko-KR")}명`}
@@ -265,11 +278,14 @@ function AssetTable({
           </thead>
           <tbody>
             {assets.map((asset) => (
-              <tr key={asset.id} className="border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50">
-                <td className="px-0 py-3">
+              <tr
+                key={asset.id}
+                className="border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50"
+              >
+                <td className="px-0 py-2">
                   <AssetThumbnail asset={asset} onPreview={onPreview} />
                 </td>
-                <td className="px-0 py-3">
+                <td className="px-0 py-2">
                   <p className="truncate text-sm font-medium text-slate-800">
                     {asset.name}
                   </p>
@@ -277,30 +293,32 @@ function AssetTable({
                     {asset.asset_number || asset.serial_number || "-"}
                   </p>
                 </td>
-                <td className="px-0 py-3 text-xs text-slate-600">
+                <td className="px-0 py-2 text-xs text-slate-600">
                   {asset.category}
                 </td>
-                <td className="px-0 py-3">
+                <td className="px-0 py-2">
                   <AssetStatusBadge status={asset.status} />
                 </td>
-                <td className="px-0 py-3 text-xs text-slate-600">
+                <td className="px-0 py-2 text-xs text-slate-600">
                   {asset.user_name}
                 </td>
-                <td className="px-0 py-3 text-xs text-slate-600">
+                <td className="px-0 py-2 text-xs text-slate-600">
                   {asset.manager_name}
                 </td>
-                <td className="px-0 py-3 text-xs text-slate-600">
+                <td className="px-0 py-2 text-xs text-slate-600">
                   {asset.purchase_date}
                 </td>
-                <td className="px-0 py-3 text-xs text-slate-600">
+                <td className="px-0 py-2 text-xs text-slate-600">
                   {asset.purchase_amount.toLocaleString("ko-KR")}원
                 </td>
-                <td className="px-0 py-3 text-xs text-slate-600">
+                <td className="px-0 py-2 text-xs text-slate-600">
                   {asset.location || "-"}
                 </td>
-                <td className="px-0 py-3 text-xs text-slate-600">
+                <td className="px-0 py-2 text-xs text-slate-600">
                   <p>{asset.created_by_name}</p>
-                  <p className="text-slate-400">{formatDate(asset.created_at)}</p>
+                  <p className="text-slate-400">
+                    {formatDate(asset.created_at)}
+                  </p>
                 </td>
               </tr>
             ))}
@@ -369,7 +387,9 @@ function AssetStatusBadge({ status }: { status: AssetStatus }) {
           : "bg-slate-100 text-slate-500";
 
   return (
-    <span className={`inline-flex rounded px-2 py-1 text-[11px] font-medium ${className}`}>
+    <span
+      className={`inline-flex rounded px-2 py-1 text-[11px] font-medium ${className}`}
+    >
       {status}
     </span>
   );
@@ -430,7 +450,11 @@ function Pagination({
   );
 }
 
-function usePagination(totalItems: number, pageSize: number, currentPage: number) {
+function usePagination(
+  totalItems: number,
+  pageSize: number,
+  currentPage: number,
+) {
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const page = Math.min(currentPage, totalPages);
   const startIndex = (page - 1) * pageSize;

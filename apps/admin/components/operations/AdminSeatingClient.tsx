@@ -5,15 +5,18 @@ import { toast } from "@repo/ui/src/sonner";
 import {
   OperationConfirmDialog,
   OperationEmpty,
+  OperationFormDialog,
   OperationLoading,
   OperationPagination,
   OperationReasonDialog,
+  OperationToolbar,
   OperationsPage,
   OperationsSection,
   OperationStatus,
   operationButtonClass,
   operationDangerButtonClass,
   operationInputClass,
+  operationRecordClass,
   operationSecondaryButtonClass,
 } from "@repo/ui/src/operations";
 import { adminOperationRequest, today } from "./client";
@@ -68,6 +71,7 @@ export function AdminSeatingClient() {
   const [columnLabel, setColumnLabel] = useState("");
   const [status, setStatus] = useState("available");
   const [note, setNote] = useState("");
+  const [formOpen, setFormOpen] = useState(false);
   const [selectedSeats, setSelectedSeats] = useState<Record<string, string>>(
     {},
   );
@@ -140,6 +144,7 @@ export function AdminSeatingClient() {
         }),
       });
       toast.success("좌석을 저장했습니다.");
+      setFormOpen(false);
       reset();
       await load();
     } catch (error) {
@@ -193,11 +198,14 @@ export function AdminSeatingClient() {
       title="좌석 관리"
       description="좌석 기준정보와 신청·배정 상태를 관리합니다."
     >
-      <OperationsSection
-        key={editingId ?? "new-seat"}
+      <OperationFormDialog
+        open={formOpen}
+        onOpenChange={(open) => {
+          setFormOpen(open);
+          if (!open) reset();
+        }}
         title={editingId ? "좌석 수정" : "좌석 추가"}
-        collapsible
-        defaultOpen={Boolean(editingId)}
+        description="좌석 코드와 위치 기준정보를 입력해주세요."
       >
         <form onSubmit={saveSeat} className="grid gap-3 md:grid-cols-4">
           {[
@@ -241,35 +249,61 @@ export function AdminSeatingClient() {
               className={`mt-1 ${operationInputClass}`}
             />
           </label>
-          <div className="flex gap-2 md:col-span-4">
+          <div className="flex justify-end gap-2 md:col-span-4">
+            <button
+              type="button"
+              onClick={() => setFormOpen(false)}
+              className={operationSecondaryButtonClass}
+            >
+              취소
+            </button>
             <button disabled={busy} className={operationButtonClass}>
               저장
             </button>
-            {editingId && (
-              <button
-                type="button"
-                onClick={reset}
-                className={operationSecondaryButtonClass}
-              >
-                새 좌석
-              </button>
-            )}
           </div>
         </form>
-      </OperationsSection>
+      </OperationFormDialog>
 
       <OperationsSection title="좌석 목록">
+        <OperationToolbar
+          action={
+            seats.length > 0 ? (
+              <button
+                type="button"
+                className={operationButtonClass}
+                onClick={() => {
+                  reset();
+                  setFormOpen(true);
+                }}
+              >
+                좌석 추가
+              </button>
+            ) : undefined
+          }
+        />
         {loading ? (
           <OperationLoading label="좌석 목록을 불러오는 중" />
         ) : seats.length === 0 ? (
-          <OperationEmpty>등록된 좌석이 없습니다.</OperationEmpty>
+          <OperationEmpty
+            action={
+              <button
+                type="button"
+                className={operationButtonClass}
+                onClick={() => {
+                  reset();
+                  setFormOpen(true);
+                }}
+              >
+                좌석 추가
+              </button>
+            }
+          >
+            등록된 좌석이 없습니다.
+          </OperationEmpty>
         ) : (
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             {seats.map((seat) => (
-              <div
-                key={seat.id}
-                className="rounded-xl border border-slate-100 p-3"
-              >
+              <div key={seat.id} className={operationRecordClass}>
                 <p className="font-semibold">
                   {seat.code} · {seat.name}
                 </p>
@@ -290,6 +324,7 @@ export function AdminSeatingClient() {
                       setColumnLabel(seat.column_label ?? "");
                       setStatus(seat.status);
                       setNote(seat.note ?? "");
+                      setFormOpen(true);
                     }}
                   >
                     수정
@@ -323,10 +358,7 @@ export function AdminSeatingClient() {
         ) : (
           <div className="space-y-2">
             {requests.map((item) => (
-              <div
-                key={item.id}
-                className="rounded-xl border border-slate-100 p-3"
-              >
+              <div key={item.id} className={operationRecordClass}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold">
@@ -419,7 +451,7 @@ export function AdminSeatingClient() {
               .map((item) => (
                 <div
                   key={item.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-100 p-3"
+                  className={`flex flex-wrap items-center justify-between gap-3 ${operationRecordClass}`}
                 >
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold">

@@ -283,7 +283,6 @@ export default function MemberStatusView({
     },
   });
 
-  const watchedMemberRole = watchAddForm("memberRole");
   const watchedRole = watchAddForm("role");
   const watchedPositionId = watchAddForm("position_id");
   const watchedTitleId = watchAddForm("title_id");
@@ -356,15 +355,6 @@ export default function MemberStatusView({
     });
   };
 
-  // Member note map (id → note)
-  const noteMap = useMemo(() => {
-    const map = new Map<string, string>();
-    allMembers?.forEach((m) => {
-      if (m.note) map.set(m.id, m.note);
-    });
-    return map;
-  }, [allMembers]);
-
   const memberById = useMemo(() => {
     const map = new Map<string, MemberOption>();
     allMembers?.forEach((member) => {
@@ -372,24 +362,6 @@ export default function MemberStatusView({
     });
     return map;
   }, [allMembers]);
-
-  const updateNoteMutation = useMutation({
-    mutationFn: async ({ id, note }: { id: string; note: string }) => {
-      const res = await fetch(`/api/members/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ note }),
-      });
-      if (!res.ok) throw new Error("Failed to update note");
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.members.all });
-    },
-    onError: () => {
-      toast.error("비고 저장에 실패했습니다.");
-    },
-  });
 
   const updateMemberMutation = useMutation({
     mutationFn: async (data: {
@@ -548,11 +520,6 @@ export default function MemberStatusView({
     setFormStartDate("");
     setFormEndDate("");
     setFormNote("");
-  };
-
-  const handleCreateOpen = () => {
-    resetForm();
-    setIsCreateOpen(true);
   };
 
   const handleCreateSubmit = () => {
@@ -1002,6 +969,20 @@ export default function MemberStatusView({
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-1">
+                          {row.member_id && (
+                            <button
+                              onClick={() =>
+                                handleHistoryOpen(
+                                  row.member_id!,
+                                  row.full_name || "",
+                                )
+                              }
+                              className="inline-flex h-6 w-6 items-center justify-center rounded text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                              title="상태 이력"
+                            >
+                              <History className="h-3.5 w-3.5" />
+                            </button>
+                          )}
                           {row.member_id && (
                             <button
                               onClick={() => handleEditMemberOpen(row)}

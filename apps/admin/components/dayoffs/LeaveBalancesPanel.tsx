@@ -65,18 +65,6 @@ export function LeaveBalancesPanel({ year }: { year: number }) {
     return map;
   }, [balances]);
 
-  // Filter leave types that have at least 1 usage
-  const activeLeaveTypes = useMemo(() => {
-    if (!usageData) return [];
-    const usedTypeIds = new Set<number>();
-    for (const s of usageData.stats) {
-      for (const [id, count] of Object.entries(s.counts)) {
-        if (count > 0) usedTypeIds.add(Number(id));
-      }
-    }
-    return usageData.leaveTypes.filter((t) => usedTypeIds.has(t.id));
-  }, [usageData]);
-
   // All leave types for full display
   const allLeaveTypes = usageData?.leaveTypes || [];
 
@@ -108,7 +96,7 @@ export function LeaveBalancesPanel({ year }: { year: number }) {
     );
   };
 
-  const colCount = 2 + allLeaveTypes.length + 1;
+  const colCount = 2 + allLeaveTypes.length + 2;
 
   return (
     <div className="space-y-6">
@@ -140,6 +128,9 @@ export function LeaveBalancesPanel({ year }: { year: number }) {
               ))}
               <th className="px-2 py-2 text-center font-medium text-slate-500 bg-slate-50 border-l border-slate-100">
                 합계
+              </th>
+              <th className="px-2 py-2 text-center font-medium border-l border-slate-100">
+                조정
               </th>
             </tr>
           </thead>
@@ -186,6 +177,26 @@ export function LeaveBalancesPanel({ year }: { year: number }) {
                     })}
                     <td className="px-2 py-2 text-center text-xs font-semibold text-slate-800 bg-slate-50 border-l border-slate-100">
                       {member.total}
+                    </td>
+                    <td className="px-2 py-2 text-center border-l border-slate-100">
+                      {memberBalances.length > 0 ? (
+                        <div className="flex items-center justify-center gap-1">
+                          {memberBalances.map((balance) => (
+                            <Button
+                              key={balance.id}
+                              variant="outline"
+                              size="sm"
+                              className="h-6 gap-1 px-2 text-[11px]"
+                              onClick={() => handleOpenAdjust(balance)}
+                            >
+                              <Settings2 className="size-3" />
+                              {TYPE_LABEL[balance.type] ?? balance.type}
+                            </Button>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-slate-300">-</span>
+                      )}
                     </td>
                   </tr>
                 );

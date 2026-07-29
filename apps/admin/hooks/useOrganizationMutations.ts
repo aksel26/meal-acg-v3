@@ -200,7 +200,12 @@ export function useUpdateMemberOrg() {
       const res = await fetch(`/api/members/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ team_id, division_id, member_role, intern_months }),
+        body: JSON.stringify({
+          team_id,
+          division_id,
+          member_role,
+          intern_months,
+        }),
       });
       if (!res.ok) {
         const error = await res.json();
@@ -212,6 +217,11 @@ export function useUpdateMemberOrg() {
       queryClient.invalidateQueries({ queryKey: queryKeys.organizations.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.members.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.memberStatuses.all });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.budgetAllocations.all,
+      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.budgetSummary.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pointsOverview.all });
       toast.success("멤버 정보가 수정되었습니다.");
     },
     onError: (error: Error) => {
@@ -231,26 +241,26 @@ export function useBatchAssignMembers() {
       memberIds: string[];
       team_id: string;
     }) => {
-      const results = await Promise.all(
-        memberIds.map(async (id) => {
-          const res = await fetch(`/api/members/${id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ team_id }),
-          });
-          if (!res.ok) {
-            const error = await res.json();
-            throw new Error(error.error || `Failed to assign member ${id}`);
-          }
-          return res.json();
-        })
-      );
-      return results;
+      const res = await fetch("/api/members/batch-team", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberIds, team_id }),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to assign members");
+      }
+      return res.json();
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.organizations.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.members.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.memberStatuses.all });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.budgetAllocations.all,
+      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.budgetSummary.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pointsOverview.all });
       toast.success(`${variables.memberIds.length}명이 팀에 배정되었습니다.`);
     },
     onError: (error: Error) => {

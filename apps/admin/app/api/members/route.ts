@@ -9,6 +9,10 @@ import {
   MEMBER_LIST_SELECT,
   assertNoSensitiveMemberFields,
 } from "@/lib/privacy";
+import {
+  InvalidMemberBudgetFieldsError,
+  normalizeMemberBudgetFields,
+} from "@/lib/member-budget-fields";
 
 // GET /api/members - List all members
 export async function GET(request: NextRequest) {
@@ -39,7 +43,10 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error("Error fetching members:", error);
-      return NextResponse.json({ error: "Failed to fetch members" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Failed to fetch members" },
+        { status: 500 },
+      );
     }
 
     // Flatten teams join → team_name, apply role overrides
@@ -47,7 +54,7 @@ export async function GET(request: NextRequest) {
       applyRoleOverride({
         ...rest,
         team_name: (teams as { name: string } | null)?.name ?? null,
-      })
+      }),
     );
     result.forEach(assertNoSensitiveMemberFields);
 
@@ -56,9 +63,15 @@ export async function GET(request: NextRequest) {
     console.error("Members API error:", error);
     const authStatus = getAuthErrorStatus(error);
     if (authStatus) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: authStatus });
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: authStatus },
+      );
     }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
 
@@ -89,7 +102,7 @@ export async function POST(request: NextRequest) {
     if (!loginId || !password || !fullName) {
       return NextResponse.json(
         { error: "loginId, password, and fullName are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -97,6 +110,28 @@ export async function POST(request: NextRequest) {
     if (role === "admin" || adminRole || userAuthority) {
       await requireAdminPermission("rbac:manage");
     }
+
+    let normalizedRole = memberRole || "팀원";
+    if (position_id) {
+      const { data: position, error: positionError } = await supabase
+        .from("positions")
+        .select("name")
+        .eq("id", position_id)
+        .single();
+
+      if (positionError) {
+        return NextResponse.json(
+          { error: "올바른 직급을 선택해주세요." },
+          { status: 400 },
+        );
+      }
+      if (position.name === "인턴") normalizedRole = "인턴";
+    }
+
+    const normalizedBudgetFields = normalizeMemberBudgetFields(
+      normalizedRole,
+      internMonths,
+    );
 
     // 관리자의 organization_id 조회하여 신규 멤버에 자동 할당
     const { data: adminMember } = await supabase
@@ -114,8 +149,8 @@ export async function POST(request: NextRequest) {
         admin_role: role === "admin" ? adminRole || DEFAULT_ADMIN_ROLE : null,
         user_authority: userAuthority || null,
         email: email || null,
-        member_role: memberRole || "팀원",
-        intern_months: memberRole === "인턴" && internMonths ? parseInt(internMonths, 10) : null,
+        member_role: normalizedBudgetFields.memberRole,
+        intern_months: normalizedBudgetFields.internMonths,
         organization_id: adminMember?.organization_id || null,
         ...(position_id ? { position_id } : {}),
         title_id: title_id || null,
@@ -129,28 +164,15 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error("Error creating member:", error);
       if (error.code === "23505") {
-        return NextResponse.json({ error: "Login ID already exists" }, { status: 409 });
+        return NextResponse.json(
+          { error: "Login ID already exists" },
+          { status: 409 },
+        );
       }
-      return NextResponse.json({ error: "Failed to create member" }, { status: 500 });
-    }
-
-    // 현재 반기에 대해 복지포인트 + 활동비 budget_allocations 자동 생성
-    const now = new Date();
-    const currentHalf = now.getMonth() < 6 ? "H1" : "H2";
-    const period = `${now.getFullYear()}-${currentHalf}`;
-
-    const { error: allocError } = await supabase
-      .from("budget_allocations")
-      .insert(
-        (["복지포인트", "활동비"] as const).map((type) => ({
-          member_id: data.id,
-          type,
-          period,
-          total_amount: 0,
-        }))
+      return NextResponse.json(
+        { error: "Failed to create member" },
+        { status: 500 },
       );
-    if (allocError) {
-      console.error("Error creating initial allocations:", allocError);
     }
 
     assertNoSensitiveMemberFields(data as Record<string, unknown>);
@@ -177,10 +199,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(data, { status: 201 });
   } catch (error) {
     console.error("Members API error:", error);
+    if (error instanceof InvalidMemberBudgetFieldsError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
     const authStatus = getAuthErrorStatus(error);
     if (authStatus) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: authStatus });
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: authStatus },
+      );
     }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

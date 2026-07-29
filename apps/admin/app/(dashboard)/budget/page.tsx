@@ -38,12 +38,19 @@ import {
   ListPlus,
 } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
-import { useBudgetSummary } from "@/hooks/useBudgetAllocations";
+import {
+  useBudgetSettings,
+  useBudgetSummary,
+} from "@/hooks/useBudgetAllocations";
 import { useActiveStatusMembers } from "@/hooks/useActiveStatusMembers";
 import {
   useUpdateAllocation,
-  useBulkUpsertAllocations,
+  useSaveBudgetSettings,
 } from "@/hooks/useBudgetMutations";
+import {
+  DEFAULT_ACTIVITY_RATES,
+  calculateActivityBudgets,
+} from "@/lib/budget-calculation";
 
 // ── Types ──
 
@@ -77,6 +84,7 @@ interface Member {
   member_role: string;
   team_name: string | null;
   team_id: string | null;
+  organization_id: string | null;
   division_id: string | null;
   note: string | null;
   intern_months: number | null;
@@ -110,7 +118,9 @@ export default function BudgetPage() {
   // Period & filter state
   const currentYear = new Date().getFullYear();
   const [periodYear, setPeriodYear] = useState(String(currentYear));
-  const [periodHalf, setPeriodHalf] = useState(new Date().getMonth() < 6 ? "H1" : "H2");
+  const [periodHalf, setPeriodHalf] = useState(
+    new Date().getMonth() < 6 ? "H1" : "H2",
+  );
   const period = periodYear && periodHalf ? `${periodYear}-${periodHalf}` : "";
   const [typeFilter, setTypeFilter] = useState("전체");
 
@@ -134,6 +144,7 @@ export default function BudgetPage() {
   // Queries
   const typeParam = typeFilter === "전체" ? undefined : typeFilter;
   const { data: summaryData, isLoading } = useBudgetSummary(period, typeParam);
+  const { data: budgetSettings } = useBudgetSettings(period);
 
   const { data: members } = useQuery<Member[]>({
     queryKey: queryKeys.members.all,
@@ -149,7 +160,7 @@ export default function BudgetPage() {
 
   // Mutations
   const updateAllocation = useUpdateAllocation();
-  const bulkUpsert = useBulkUpsertAllocations();
+  const saveBudgetSettings = useSaveBudgetSettings();
 
   // 특이사항 인원 ID Set
   const statusMemberIds = useMemo(() => {
@@ -182,9 +193,9 @@ export default function BudgetPage() {
   // Derived data
   const summaryItems: BudgetSummaryItem[] = useMemo(() => {
     if (!summaryData) return [];
-    const items = (Array.isArray(summaryData)
-      ? summaryData
-      : summaryData.data || []) as BudgetSummaryItem[];
+    const items = (
+      Array.isArray(summaryData) ? summaryData : summaryData.data || []
+    ) as BudgetSummaryItem[];
     return items.filter((item) => !resignedMemberIds.has(item.member_id));
   }, [summaryData, resignedMemberIds]);
 
@@ -224,149 +235,22 @@ export default function BudgetPage() {
     return budgetMembers.filter((m) => !statusMemberIds.has(m.id)).length;
   }, [budgetMembers, statusMemberIds]);
 
-  // Leaders for auto-calculate (인턴은 팀장 금액에 포함)
-  const leaderMembers = useMemo(() => {
-    return budgetMembers.filter(
-      (m) => m.member_role === "대표" || m.member_role === "팀장" || m.member_role === "본부장",
-    );
-  }, [budgetMembers]);
-
   // Activity preview calculation
-  const activityPreview = useMemo(() => {
-    if (!budgetMembers.length || !leaderMembers.length) return [];
-    const leaderRate = parseInt(calcLeaderRate) || 0;
-    const managerRate = parseInt(calcManagerRate) || 0;
-    const pncExtraRate = parseInt(calcPncExtraRate) || 0;
-
-    // team_id별 멤버 수 집계 (인턴 제외)
-    const teamCounts = new Map<string, number>();
-    budgetMembers.forEach((m) => {
-      if (m.team_id && m.member_role !== "인턴")
-        teamCounts.set(m.team_id, (teamCounts.get(m.team_id) || 0) + 1);
-    });
-
-    // team_id별 인턴 목록 집계
-    const teamInterns = new Map<string, Member[]>();
-    budgetMembers.forEach((m) => {
-      if (m.team_id && m.member_role === "인턴" && !statusMemberIds.has(m.id)) {
-        const list = teamInterns.get(m.team_id) || [];
-        list.push(m);
-        teamInterns.set(m.team_id, list);
-      }
-    });
-
-    // P&C팀 식별
-    const pncLeader = leaderMembers.find(
-      (l) =>
-        l.team_name?.includes("People & Culture") ||
-        l.team_name?.includes("P&C"),
-    );
-    const pncTeamId = pncLeader?.team_id;
-
-    // 고충상담비 대상: 전체 팀원(팀장 제외, 특이사항 제외, 팀 배정된 멤버만)은 전액,
-    // 인턴은 개월수 비례(50,000/6×개월)
-    const pncExtraStaffCount = pncTeamId
-      ? budgetMembers.filter(
-          (m) =>
-            m.member_role === "팀원" &&
-            m.team_id &&
-            !statusMemberIds.has(m.id),
-        ).length
-      : 0;
-    const pncExtraInterns = pncTeamId
-      ? budgetMembers.filter(
-          (m) =>
-            m.member_role === "인턴" &&
-            m.team_id &&
-            !statusMemberIds.has(m.id),
-        )
-      : [];
-    const pncExtraCount = pncExtraStaffCount + pncExtraInterns.length;
-
-    return leaderMembers.map((leader) => {
-      const memberCount = leader.team_id
-        ? teamCounts.get(leader.team_id) || 1
-        : 1;
-      const isPnC = !!(pncTeamId && leader.team_id === pncTeamId);
-      const interns = leader.team_id
-        ? teamInterns.get(leader.team_id) || []
-        : [];
-
-      // 인턴 활동비 합산
-      const internAmount = interns.reduce((sum, intern) => {
-        const months = intern.intern_months || 1;
-        return sum + Math.round((managerRate / 6) * months);
-      }, 0);
-
-      let amount: number;
-      let basis: string;
-      if (leader.member_role === "본부장") {
-        amount = memberCount * leaderRate;
-        basis = `${formatCurrency(leaderRate)}원 × ${memberCount}명`;
-      } else if (isPnC) {
-        const pncInternAmount = pncExtraInterns.reduce((sum, intern) => {
-          const months = intern.intern_months || 1;
-          return sum + Math.round((pncExtraRate / 6) * months);
-        }, 0);
-        amount =
-          memberCount * managerRate +
-          pncExtraStaffCount * pncExtraRate +
-          pncInternAmount;
-        const parts: string[] = [];
-        parts.push(`본인 ${formatCurrency(managerRate)}`);
-        if (memberCount > 1) {
-          parts.push(`${formatCurrency(managerRate)} × ${memberCount - 1}명`);
-        }
-        if (pncExtraStaffCount > 0) {
-          parts.push(
-            `${formatCurrency(pncExtraRate)} × ${pncExtraStaffCount}명 (팀원)`,
-          );
-        }
-        pncExtraInterns.forEach((intern) => {
-          const months = intern.intern_months || 1;
-          parts.push(
-            `인턴 ${intern.full_name} ${formatCurrency(pncExtraRate)}/6×${months}개월`,
-          );
-        });
-        basis = parts.join(" + ");
-      } else {
-        amount = memberCount * managerRate;
-        const parts: string[] = [];
-        parts.push(`본인 ${formatCurrency(managerRate)}`);
-        if (memberCount > 1) {
-          parts.push(`${formatCurrency(managerRate)} × ${memberCount - 1}명`);
-        }
-        basis = parts.join(" + ");
-      }
-
-      // 인턴 금액 합산
-      if (internAmount > 0) {
-        amount += internAmount;
-        const internParts = interns.map((intern) => {
-          const months = intern.intern_months || 1;
-          return `인턴 ${intern.full_name} ${formatCurrency(managerRate)}/6×${months}개월`;
-        });
-        basis += " + " + internParts.join(" + ");
-      }
-
-      return {
-        ...leader,
-        memberCount,
-        amount,
-        isPnC,
-        pncExtraCount,
-        basis,
-        internCount: interns.length,
-      };
-    });
-  }, [
-    budgetMembers,
-    leaderMembers,
-    calcLeaderRate,
-    calcManagerRate,
-    calcPncExtraRate,
-    statusMemberIds,
-  ]);
+  const activityPreview = useMemo(
+    () =>
+      calculateActivityBudgets(budgetMembers, statusMemberIds, {
+        leaderRate: parseInt(calcLeaderRate) || 0,
+        managerRate: parseInt(calcManagerRate) || 0,
+        pncExtraRate: parseInt(calcPncExtraRate) || 0,
+      }),
+    [
+      budgetMembers,
+      calcLeaderRate,
+      calcManagerRate,
+      calcPncExtraRate,
+      statusMemberIds,
+    ],
+  );
 
   const activityPreviewTotal = useMemo(
     () =>
@@ -444,7 +328,11 @@ export default function BudgetPage() {
   // ── Bulk Handlers ──
 
   const handleBulkOpen = () => {
-    setBulkAmount("");
+    setBulkAmount(
+      budgetSettings?.welfare_amount
+        ? String(budgetSettings.welfare_amount)
+        : "",
+    );
     setBulkDescription("");
     setIsBulkOpen(true);
   };
@@ -464,16 +352,12 @@ export default function BudgetPage() {
       return;
     }
 
-    const allocations = budgetMembers.map((m) => ({
-      member_id: m.id,
-      type: "복지포인트" as const,
-      period,
-      total_amount: statusMemberIds.has(m.id) ? 0 : amount,
-      description: bulkDescription || undefined,
-    }));
-
-    bulkUpsert.mutate(
-      { allocations },
+    saveBudgetSettings.mutate(
+      {
+        period,
+        welfare_amount: amount,
+        welfare_description: bulkDescription || undefined,
+      },
       {
         onSuccess: () => {
           setIsBulkOpen(false);
@@ -485,9 +369,19 @@ export default function BudgetPage() {
   // ── Auto Calculate Handlers ──
 
   const handleCalcOpen = () => {
-    setCalcLeaderRate("200000");
-    setCalcManagerRate("150000");
-    setCalcPncExtraRate("50000");
+    setCalcLeaderRate(
+      String(budgetSettings?.leader_rate ?? DEFAULT_ACTIVITY_RATES.leaderRate),
+    );
+    setCalcManagerRate(
+      String(
+        budgetSettings?.manager_rate ?? DEFAULT_ACTIVITY_RATES.managerRate,
+      ),
+    );
+    setCalcPncExtraRate(
+      String(
+        budgetSettings?.pnc_extra_rate ?? DEFAULT_ACTIVITY_RATES.pncExtraRate,
+      ),
+    );
     setIsCalcOpen(true);
   };
 
@@ -501,16 +395,21 @@ export default function BudgetPage() {
       return;
     }
 
-    const allocations = activityPreview.map((p) => ({
-      member_id: p.id,
-      type: "활동비",
-      period,
-      total_amount: statusMemberIds.has(p.id) ? 0 : p.amount,
-      description: statusMemberIds.has(p.id) ? undefined : p.basis,
-    }));
+    const rates = [calcLeaderRate, calcManagerRate, calcPncExtraRate].map(
+      (value) => Number(value),
+    );
+    if (rates.some((value) => !Number.isInteger(value) || value < 0)) {
+      toast.error("단가는 0 이상의 정수로 입력해주세요.");
+      return;
+    }
 
-    bulkUpsert.mutate(
-      { allocations },
+    saveBudgetSettings.mutate(
+      {
+        period,
+        leader_rate: rates[0],
+        manager_rate: rates[1],
+        pnc_extra_rate: rates[2],
+      },
       {
         onSuccess: () => {
           setIsCalcOpen(false);
@@ -707,9 +606,6 @@ export default function BudgetPage() {
               </TableHeader>
               <TableBody>
                 {memberRows.map((row, index) => {
-                  const preview = activityPreview.find(
-                    (p) => p.id === row.member_id,
-                  );
                   return (
                     <TableRow
                       key={row.member_id}
@@ -736,7 +632,7 @@ export default function BudgetPage() {
                         {row.team_name || "-"}
                       </TableCell>
                       <TableCell className="text-[11px] text-slate-500">
-                        {preview?.basis || "-"}
+                        {row.activity?.description || "-"}
                       </TableCell>
                       <TableCell className="text-right">
                         {row.activity ? (
@@ -892,8 +788,11 @@ export default function BudgetPage() {
             <Button variant="outline" onClick={() => setIsBulkOpen(false)}>
               취소
             </Button>
-            <Button onClick={handleBulkSave} disabled={bulkUpsert.isPending}>
-              {bulkUpsert.isPending ? (
+            <Button
+              onClick={handleBulkSave}
+              disabled={saveBudgetSettings.isPending}
+            >
+              {saveBudgetSettings.isPending ? (
                 <>
                   <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
                   할당 중...
@@ -1101,9 +1000,11 @@ export default function BudgetPage() {
             </Button>
             <Button
               onClick={handleCalcExecute}
-              disabled={bulkUpsert.isPending || activityPreview.length === 0}
+              disabled={
+                saveBudgetSettings.isPending || activityPreview.length === 0
+              }
             >
-              {bulkUpsert.isPending ? (
+              {saveBudgetSettings.isPending ? (
                 <>
                   <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
                   할당 중...

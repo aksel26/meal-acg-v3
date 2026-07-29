@@ -13,10 +13,35 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get("type");
     const memberId = searchParams.get("member_id");
 
+    if (searchParams.get("settings") === "true") {
+      if (!period) {
+        return NextResponse.json(
+          { error: "period is required" },
+          { status: 400 },
+        );
+      }
+
+      const { data, error } = await supabase
+        .from("budget_period_settings")
+        .select("*")
+        .eq("period", period)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching budget settings:", error);
+        return NextResponse.json(
+          { error: "Failed to fetch budget settings" },
+          { status: 500 },
+        );
+      }
+
+      return NextResponse.json(data);
+    }
+
     let query = supabase
       .from("budget_allocations")
       .select(
-        "*, members!budget_allocations_member_id_fkey(id, full_name, member_role, team_id)"
+        "*, members!budget_allocations_member_id_fkey(id, full_name, member_role, team_id)",
       );
 
     if (period) {
@@ -35,7 +60,7 @@ export async function GET(request: NextRequest) {
       console.error("Error fetching budget allocations:", error);
       return NextResponse.json(
         { error: "Failed to fetch budget allocations" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -47,7 +72,7 @@ export async function GET(request: NextRequest) {
     }
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -64,10 +89,15 @@ export async function POST(request: NextRequest) {
     if (!member_id || !type || !period || total_amount === undefined) {
       return NextResponse.json(
         {
-          error:
-            "member_id, type, period, and total_amount are required",
+          error: "member_id, type, period, and total_amount are required",
         },
-        { status: 400 }
+        { status: 400 },
+      );
+    }
+    if (!Number.isInteger(total_amount) || total_amount < 0) {
+      return NextResponse.json(
+        { error: "total_amount must be a non-negative integer" },
+        { status: 400 },
       );
     }
 
@@ -81,14 +111,7 @@ export async function POST(request: NextRequest) {
       console.error("Error checking member status:", statusError);
       return NextResponse.json(
         { error: "Failed to check member status" },
-        { status: 500 }
-      );
-    }
-
-    if (currentStatus?.current_status === "퇴사") {
-      return NextResponse.json(
-        { error: "퇴사자는 예산 할당 대상이 아닙니다." },
-        { status: 400 }
+        { status: 500 },
       );
     }
 
@@ -98,7 +121,8 @@ export async function POST(request: NextRequest) {
         member_id,
         type,
         period,
-        total_amount,
+        base_amount: total_amount,
+        total_amount: currentStatus ? 0 : total_amount,
         description: description || null,
       })
       .select()
@@ -108,7 +132,7 @@ export async function POST(request: NextRequest) {
       console.error("Error creating budget allocation:", error);
       return NextResponse.json(
         { error: "Failed to create budget allocation" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -120,145 +144,68 @@ export async function POST(request: NextRequest) {
     }
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
-// PUT /api/budget-allocations - Bulk upsert allocations
+// PUT /api/budget-allocations - Save period settings and recalculate atomically
 export async function PUT(request: NextRequest) {
   try {
     await requireAdmin();
     const supabase = createServiceClient();
-    const body = await request.json();
+    const {
+      period,
+      welfare_amount,
+      leader_rate,
+      manager_rate,
+      pnc_extra_rate,
+      welfare_description,
+    } = await request.json();
 
-    const { allocations } = body;
+    const amounts = [
+      welfare_amount,
+      leader_rate,
+      manager_rate,
+      pnc_extra_rate,
+    ].filter((value) => value !== undefined);
 
-    if (!Array.isArray(allocations) || allocations.length === 0) {
+    if (
+      typeof period !== "string" ||
+      !/^\d{4}-H[12]$/.test(period) ||
+      amounts.length === 0 ||
+      amounts.some(
+        (value) =>
+          !Number.isInteger(value) || typeof value !== "number" || value < 0,
+      )
+    ) {
       return NextResponse.json(
-        { error: "allocations array is required and must not be empty" },
-        { status: 400 }
+        { error: "올바른 반기와 0 이상의 정수 금액을 입력해주세요." },
+        { status: 400 },
       );
     }
 
-    const { data: resignedMembers, error: resignedError } = await supabase
-      .from("member_current_status")
-      .select("member_id")
-      .eq("current_status", "퇴사");
+    const { data, error } = await (supabase as any).rpc(
+      "save_budget_period_settings",
+      {
+        p_period: period,
+        p_welfare_amount: welfare_amount ?? null,
+        p_leader_rate: leader_rate ?? null,
+        p_manager_rate: manager_rate ?? null,
+        p_pnc_extra_rate: pnc_extra_rate ?? null,
+        p_welfare_description: welfare_description || null,
+      },
+    );
 
-    if (resignedError) {
-      console.error("Error fetching resigned members:", resignedError);
+    if (error) {
+      console.error("Error saving budget settings:", error);
       return NextResponse.json(
-        { error: "Failed to fetch resigned members" },
-        { status: 500 }
+        { error: "Failed to save budget settings" },
+        { status: 500 },
       );
     }
 
-    const resignedMemberIds = new Set(
-      (resignedMembers || [])
-        .map((member) => member.member_id)
-        .filter((id): id is string => Boolean(id))
-    );
-
-    // (member_id|type|period) 복합키
-    const allocationKey = (a: {
-      member_id: string;
-      type: string;
-      period: string;
-    }) => `${a.member_id}|${a.type}|${a.period}`;
-
-    // 유효 항목 필터 + 입력 내 중복 복합키 제거 (last-wins).
-    // budget_allocations에 unique 제약이 없어 중복 입력 시 중복 행이 생기는 것을 방지한다.
-    const validAllocations = [
-      ...new Map(
-        allocations
-          .filter(
-            ({ member_id, type, period, total_amount }) =>
-              member_id &&
-              type &&
-              period &&
-              total_amount !== undefined &&
-              !resignedMemberIds.has(member_id)
-          )
-          .map((a) => [allocationKey(a), a]),
-      ).values(),
-    ];
-
-    if (validAllocations.length === 0) {
-      return NextResponse.json([]);
-    }
-
-    const { data: existingRows, error: existingError } = await supabase
-      .from("budget_allocations")
-      .select("id, member_id, type, period")
-      .in("member_id", [...new Set(validAllocations.map((a) => a.member_id))])
-      .in("type", [...new Set(validAllocations.map((a) => a.type))])
-      .in("period", [...new Set(validAllocations.map((a) => a.period))]);
-
-    if (existingError) {
-      console.error("Error fetching existing allocations:", existingError);
-      return NextResponse.json(
-        { error: "Failed to fetch existing allocations" },
-        { status: 500 }
-      );
-    }
-
-    const existingIdByKey = new Map(
-      (existingRows || []).map((row) => [allocationKey(row), row.id])
-    );
-
-    const toInsert = validAllocations.filter(
-      (a) => !existingIdByKey.has(allocationKey(a))
-    );
-    const toUpdate = validAllocations.filter((a) =>
-      existingIdByKey.has(allocationKey(a))
-    );
-
-    const results = [];
-
-    if (toInsert.length > 0) {
-      const { data, error } = await supabase
-        .from("budget_allocations")
-        .insert(
-          toInsert.map(({ member_id, type, period, total_amount, description }) => ({
-            member_id,
-            type,
-            period,
-            total_amount,
-            description: description || null,
-          }))
-        )
-        .select();
-
-      if (error) {
-        console.error("Error inserting allocations:", error);
-      } else {
-        results.push(...(data || []));
-      }
-    }
-
-    const updated = await Promise.all(
-      toUpdate.map(async (a) => {
-        const { data, error } = await supabase
-          .from("budget_allocations")
-          .update({
-            total_amount: a.total_amount,
-            description: a.description || null,
-          })
-          .eq("id", existingIdByKey.get(allocationKey(a))!)
-          .select()
-          .single();
-
-        if (error) {
-          console.error("Error updating allocation:", error);
-          return null;
-        }
-        return data;
-      })
-    );
-    results.push(...updated.filter((row) => row !== null));
-
-    return NextResponse.json(results);
+    return NextResponse.json(data);
   } catch (error) {
     console.error("Budget allocations API error:", error);
     if (error instanceof Error && error.message === "Unauthorized") {
@@ -266,7 +213,7 @@ export async function PUT(request: NextRequest) {
     }
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

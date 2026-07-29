@@ -5,7 +5,7 @@ import { requireAdmin } from "@/lib/auth";
 // PUT /api/member-statuses/[id] - Update a member status
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     await requireAdmin();
@@ -33,12 +33,12 @@ export async function PUT(
       if (error.code === "23P01") {
         return NextResponse.json(
           { error: "해당 기간에 이미 등록된 상태가 있습니다." },
-          { status: 409 }
+          { status: 409 },
         );
       }
       return NextResponse.json(
         { error: "Failed to update member status" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -50,7 +50,7 @@ export async function PUT(
     }
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -58,7 +58,7 @@ export async function PUT(
 // DELETE /api/member-statuses/[id] - Delete a member status
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     await requireAdmin();
@@ -68,13 +68,15 @@ export async function DELETE(
     const { error } = await supabase
       .from("member_statuses")
       .delete()
-      .eq("id", id);
+      .eq("id", id)
+      .select("id")
+      .single();
 
     if (error) {
       console.error("Error deleting member status:", error);
       return NextResponse.json(
         { error: "Failed to delete member status" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -86,7 +88,7 @@ export async function DELETE(
     }
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       console.error("Error fetching member statuses:", error);
       return NextResponse.json(
         { error: "Failed to fetch member statuses" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     }
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -59,7 +59,7 @@ export async function DELETE(request: NextRequest) {
     if (!memberId) {
       return NextResponse.json(
         { error: "member_id는 필수입니다." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -73,14 +73,14 @@ export async function DELETE(request: NextRequest) {
       console.error("Error clearing member statuses:", error);
       return NextResponse.json(
         { error: "특이사항 삭제에 실패했습니다." },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     if (!data || data.length === 0) {
       return NextResponse.json(
         { error: "삭제할 특이사항이 없습니다." },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -92,7 +92,7 @@ export async function DELETE(request: NextRequest) {
     }
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -109,13 +109,19 @@ export async function POST(request: NextRequest) {
     if (!member_id || !status || !start_date) {
       return NextResponse.json(
         { error: "member_id, status, start_date는 필수입니다." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const { data, error } = await supabase
       .from("member_statuses")
-      .insert({ member_id, status, start_date, end_date: end_date || null, note: note || null })
+      .insert({
+        member_id,
+        status,
+        start_date,
+        end_date: end_date || null,
+        note: note || null,
+      })
       .select()
       .single();
 
@@ -124,12 +130,12 @@ export async function POST(request: NextRequest) {
       if (error.code === "23P01") {
         return NextResponse.json(
           { error: "해당 기간에 이미 등록된 상태가 있습니다." },
-          { status: 409 }
+          { status: 409 },
         );
       }
       return NextResponse.json(
         { error: "Failed to create member status" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -141,7 +147,7 @@ export async function POST(request: NextRequest) {
     }
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

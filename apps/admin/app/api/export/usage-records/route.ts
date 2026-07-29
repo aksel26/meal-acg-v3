@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { writeAdminAuditLog } from "@/lib/admin-audit";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getAuthErrorStatus, requireAdminPermission } from "@/lib/auth";
+import { applyRoleOverride } from "@/lib/constants";
 import ExcelJS from "exceljs";
 
 const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
 
 function halfYearToDateRange(
-  period: string
+  period: string,
 ): { start: string; end: string } | null {
   const match = period.match(/^(\d{4})-H([12])$/);
   if (!match) return null;
@@ -50,7 +51,6 @@ const headerFill: ExcelJS.Fill = {
   fgColor: { argb: HEADER_FILL },
 };
 
-
 /** 셀에 공통 헤더 스타일 적용 */
 function applyHeaderStyle(cell: ExcelJS.Cell) {
   cell.font = { name: FONT_NAME, size: 10, bold: true };
@@ -62,7 +62,12 @@ function applyHeaderStyle(cell: ExcelJS.Cell) {
 /** 셀에 공통 데이터 스타일 적용 */
 function applyDataStyle(
   cell: ExcelJS.Cell,
-  opts?: { numFmt?: string; align?: "left" | "center" | "right"; indent?: number; redFont?: boolean }
+  opts?: {
+    numFmt?: string;
+    align?: "left" | "center" | "right";
+    indent?: number;
+    redFont?: boolean;
+  },
 ) {
   cell.font = {
     name: FONT_NAME,
@@ -102,7 +107,9 @@ export async function GET(request: NextRequest) {
 
     if (period) {
       if (range) {
-        rawQuery = rawQuery.gte("used_at", range.start).lte("used_at", range.end);
+        rawQuery = rawQuery
+          .gte("used_at", range.start)
+          .lte("used_at", range.end);
       } else {
         rawQuery = rawQuery.like("used_at", `${period}%`);
       }
@@ -122,33 +129,19 @@ export async function GET(request: NextRequest) {
     }
 
     // ── 병렬 데이터 조회 ──
-    const [rawResult, budgetResult, membersResult, statusResult] =
-      await Promise.all([
-        rawQuery.order("used_at", { ascending: false }),
-        // 사용 가이드 + 통계용
-        isHalfYear
-          ? supabase.from("budget_summary").select("*").eq("period", period!)
-          : Promise.resolve({ data: null, error: null }),
-        // 멤버 (팀 정보 포함)
-        isHalfYear
-          ? supabase
-              .from("members")
-              .select("*, teams(name)")
-          : Promise.resolve({ data: null, error: null }),
-        // 특이사항 인원
-        isHalfYear
-          ? supabase
-              .from("member_current_status")
-              .select("member_id, current_status")
-              .not("current_status", "is", null)
-          : Promise.resolve({ data: null, error: null }),
-      ]);
+    const [rawResult, budgetResult] = await Promise.all([
+      rawQuery.order("used_at", { ascending: false }),
+      // 사용 가이드 + 통계용
+      isHalfYear
+        ? supabase.from("budget_summary").select("*").eq("period", period!)
+        : Promise.resolve({ data: null, error: null }),
+    ]);
 
     if (rawResult.error) {
       console.error("Error fetching usage records:", rawResult.error);
       return NextResponse.json(
         { error: "Failed to fetch usage records" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -177,21 +170,11 @@ export async function GET(request: NextRequest) {
     workbook.created = new Date();
 
     // ── 추가 시트 (반기 period일 때만) ──
-    if (isHalfYear && budgetResult.data && membersResult.data) {
+    if (isHalfYear && budgetResult.data) {
       const budgetData = budgetResult.data;
-      // members 쿼리에서 teams join을 flatten
-      const membersData = (membersResult.data as any[]).map(
-        ({ teams, ...rest }: any) => ({
-          ...rest,
-          team_name: (teams as { name: string } | null)?.name ?? null,
-        })
-      );
-      const statusMemberIds = new Set(
-        (statusResult.data || []).map((m: any) => m.member_id).filter(Boolean)
-      );
       const months = getHalfYearMonths(period!);
 
-      buildGuideSheet(workbook, budgetData, membersData, statusMemberIds);
+      buildGuideSheet(workbook, budgetData);
       buildStatsSheet(workbook, budgetData, months);
     }
 
@@ -213,11 +196,14 @@ export async function GET(request: NextRequest) {
     console.error("Usage records export API error:", error);
     const authStatus = getAuthErrorStatus(error);
     if (authStatus) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: authStatus });
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: authStatus },
+      );
     }
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -226,39 +212,38 @@ export async function GET(request: NextRequest) {
 // 시트 1: 사용 가이드
 // ═══════════════════════════════════════════════════════
 
-/** 금액을 "150,000" 형식으로 포맷 */
-function fmtCurrency(amount: number): string {
-  return amount.toLocaleString();
-}
-
-function buildGuideSheet(
-  workbook: ExcelJS.Workbook,
-  budgetData: any[],
-  membersData: any[],
-  statusMemberIds: Set<string>
-) {
+function buildGuideSheet(workbook: ExcelJS.Workbook, budgetData: any[]) {
   const ws = workbook.addWorksheet("사용 가이드");
 
   ws.columns = [
-    { width: 6 },  // A: No
-    { width: 8 },  // B: 직급
+    { width: 6 }, // A: No
+    { width: 8 }, // B: 직급
     { width: 10 }, // C: 이름
-    { width: 8 },  // D: 인원
+    { width: 8 }, // D: 인원
     { width: 50 }, // E: 활동비 기준
     { width: 14 }, // F: 활동비
     { width: 14 }, // G: 복지포인트
   ];
 
   // member_id별 budget 그룹화
-  const budgetMap = new Map<string, { activity: number; welfare: number }>();
+  const budgetMap = new Map<
+    string,
+    { activity: number; welfare: number; activityDescription: string | null }
+  >();
   for (const row of budgetData) {
     if (!row.member_id) continue;
     if (!budgetMap.has(row.member_id)) {
-      budgetMap.set(row.member_id, { activity: 0, welfare: 0 });
+      budgetMap.set(row.member_id, {
+        activity: 0,
+        welfare: 0,
+        activityDescription: null,
+      });
     }
     const entry = budgetMap.get(row.member_id)!;
-    if (row.type === "활동비") entry.activity = row.total_amount || 0;
-    else entry.welfare = row.total_amount || 0;
+    if (row.type === "활동비") {
+      entry.activity = row.total_amount || 0;
+      entry.activityDescription = row.description || null;
+    } else entry.welfare = row.total_amount || 0;
   }
 
   // budget_summary의 고유 멤버 정보 수집
@@ -268,9 +253,13 @@ function buildGuideSheet(
   >();
   for (const row of budgetData) {
     if (!row.member_id || memberInfoMap.has(row.member_id)) continue;
-    memberInfoMap.set(row.member_id, {
-      member_name: row.member_name || "",
+    const member = applyRoleOverride({
+      full_name: row.member_name || "",
       member_role: row.member_role || "",
+    });
+    memberInfoMap.set(row.member_id, {
+      member_name: member.full_name,
+      member_role: member.member_role,
       team_name: row.team_name || "",
     });
   }
@@ -282,133 +271,8 @@ function buildGuideSheet(
       const rb = ROLE_ORDER[b.member_role] ?? 99;
       if (ra !== rb) return ra - rb;
       return a.member_name.localeCompare(b.member_name, "ko");
-    }
+    },
   );
-
-  // ── 활동비 기준 계산 (budget page 로직 복제) ──
-  const LEADER_RATE = 200000;
-  const MANAGER_RATE = 150000;
-  const PNC_EXTRA_RATE = 50000;
-
-  // team_id별 멤버 수 (인턴 제외, 특이사항 제외 안 함 — budget page와 동일)
-  const teamCounts = new Map<string, number>();
-  for (const m of membersData) {
-    if (m.team_id && m.member_role !== "인턴") {
-      teamCounts.set(m.team_id, (teamCounts.get(m.team_id) || 0) + 1);
-    }
-  }
-
-  // team_id별 인턴 목록 (특이사항 제외)
-  const teamInterns = new Map<string, any[]>();
-  for (const m of membersData) {
-    if (m.team_id && m.member_role === "인턴" && !statusMemberIds.has(m.id)) {
-      const list = teamInterns.get(m.team_id) || [];
-      list.push(m);
-      teamInterns.set(m.team_id, list);
-    }
-  }
-
-  // P&C팀 식별
-  const pncMember = membersData.find(
-    (m: any) =>
-      (m.member_role === "대표" || m.member_role === "팀장" || m.member_role === "본부장") &&
-      (m.team_name?.includes("People & Culture") || m.team_name?.includes("P&C"))
-  );
-  const pncTeamId = pncMember?.team_id;
-
-  // 고충상담비 대상: 전체 팀원(팀장 제외, 특이사항 제외, 팀 배정된 멤버만)은 전액,
-  // 인턴은 개월수 비례(50,000/6×개월) — budget page와 동일
-  const pncExtraStaffCount = pncTeamId
-    ? membersData.filter(
-        (m: any) =>
-          m.member_role === "팀원" &&
-          m.team_id &&
-          !statusMemberIds.has(m.id)
-      ).length
-    : 0;
-  const pncExtraInterns = pncTeamId
-    ? membersData.filter(
-        (m: any) =>
-          m.member_role === "인턴" &&
-          m.team_id &&
-          !statusMemberIds.has(m.id),
-      )
-    : [];
-
-  // membersData → id 기반 lookup
-  const memberById = new Map<string, any>();
-  for (const m of membersData) {
-    memberById.set(m.id, m);
-  }
-
-  // team_name 기준 멤버 수 (budget_summary에서 고유 member_id 카운트)
-  const teamMemberCount = new Map<string, number>();
-  const seenForCount = new Set<string>();
-  for (const row of budgetData) {
-    if (!row.member_id || seenForCount.has(row.member_id)) continue;
-    seenForCount.add(row.member_id);
-    const teamName = row.team_name || "";
-    teamMemberCount.set(teamName, (teamMemberCount.get(teamName) || 0) + 1);
-  }
-
-  /** 활동비 기준 텍스트 생성 */
-  function getActivityBasis(memberId: string, info: { member_role: string; team_name: string }): string {
-    const member = memberById.get(memberId);
-    if (!member) return "-";
-
-    if (info.member_role !== "대표" && info.member_role !== "본부장" && info.member_role !== "팀장") return "-";
-
-    const memberCount = member.team_id ? (teamCounts.get(member.team_id) || 1) : 1;
-    const isPnC = !!(pncTeamId && member.team_id === pncTeamId);
-    const interns = member.team_id ? (teamInterns.get(member.team_id) || []) : [];
-
-    let basis: string;
-    if (info.member_role === "본부장") {
-      basis = `${fmtCurrency(LEADER_RATE)}원 × ${memberCount}명`;
-    } else if (isPnC) {
-      const parts: string[] = [];
-      parts.push(`본인 ${fmtCurrency(MANAGER_RATE)}원`);
-      if (memberCount > 1) {
-        parts.push(`${fmtCurrency(MANAGER_RATE)}원 × ${memberCount - 1}명`);
-      }
-      if (pncExtraStaffCount > 0) {
-        parts.push(
-          `${fmtCurrency(PNC_EXTRA_RATE)}원 × ${pncExtraStaffCount}명 (팀원)`,
-        );
-      }
-      for (const intern of pncExtraInterns) {
-        const months = intern.intern_months || 1;
-        parts.push(
-          `인턴 ${intern.full_name} ${fmtCurrency(PNC_EXTRA_RATE)}원/6×${months}개월`,
-        );
-      }
-      basis = parts.join(" + ");
-    } else {
-      const parts: string[] = [];
-      parts.push(`본인 ${fmtCurrency(MANAGER_RATE)}원`);
-      if (memberCount > 1) {
-        parts.push(`${fmtCurrency(MANAGER_RATE)}원 × ${memberCount - 1}명`);
-      }
-      basis = parts.join(" + ");
-    }
-
-    // 인턴 내역
-    if (interns.length > 0) {
-      const internAmount = interns.reduce((sum: number, intern: any) => {
-        const months = intern.intern_months || 1;
-        return sum + Math.round(MANAGER_RATE / 6 * months);
-      }, 0);
-      if (internAmount > 0) {
-        const internParts = interns.map((intern: any) => {
-          const months = intern.intern_months || 1;
-          return `인턴 ${intern.full_name} ${fmtCurrency(MANAGER_RATE)}원/6×${months}개월`;
-        });
-        basis += " + " + internParts.join(" + ");
-      }
-    }
-
-    return basis;
-  }
 
   // ── Row 1: Title ──
   ws.mergeCells("A1:G1");
@@ -425,7 +289,15 @@ function buildGuideSheet(
   ws.getRow(1).height = 28;
 
   // ── Row 2: Headers ──
-  const headers = ["No", "직급", "이름", "인원", "활동비 기준", "활동비", "복지포인트"];
+  const headers = [
+    "No",
+    "직급",
+    "이름",
+    "인원",
+    "활동비 기준",
+    "활동비",
+    "복지포인트",
+  ];
   const headerRow = ws.getRow(2);
   headerRow.values = headers;
   headerRow.height = 20;
@@ -436,18 +308,25 @@ function buildGuideSheet(
   // ── Row 3+: Data ──
   sortedMembers.forEach(([memberId, info], index) => {
     const row = ws.getRow(index + 3);
-    const budget = budgetMap.get(memberId) || { activity: 0, welfare: 0 };
+    const budget = budgetMap.get(memberId) || {
+      activity: 0,
+      welfare: 0,
+      activityDescription: null,
+    };
 
     // D열: 인원 — 본부장/팀장만 해당 팀 인원수, 팀원/인턴은 "-"
-    const isLeader = info.member_role === "대표" || info.member_role === "본부장" || info.member_role === "팀장";
-    const teamCount = isLeader ? (teamMemberCount.get(info.team_name || "") || "-") : "-";
+    const isLeader =
+      info.member_role === "본부장" || info.member_role === "팀장";
+    const teamCount = isLeader
+      ? budget.activityDescription?.match(/×\s*(\d+)명/)?.[1] || "-"
+      : "-";
 
     row.values = [
       index + 1,
       info.member_role,
       info.member_name,
       teamCount,
-      getActivityBasis(memberId, info),
+      budget.activityDescription || "-",
       budget.activity,
       budget.welfare,
     ];
@@ -471,14 +350,14 @@ function buildGuideSheet(
 function buildStatsSheet(
   workbook: ExcelJS.Workbook,
   budgetData: any[],
-  months: number[]
+  months: number[],
 ) {
   const ws = workbook.addWorksheet("통계");
 
   // 컬럼: A(No), B(구분), C(이름), D~E(사용가능액), F~G(잔여액), H~I(사용금액), J~O(활동비 월별), P~U(복지 월별)
   const colWidths = [
-    6,  // A: No
-    8,  // B: 구분
+    6, // A: No
+    8, // B: 구분
     10, // C: 이름
     14, // D: 사용가능액-활동비
     14, // E: 사용가능액-복지
@@ -542,12 +421,12 @@ function buildStatsSheet(
   row2.height = 20;
 
   // D~E, F~G, H~I 서브 헤더
-  row2.getCell(4).value = "활동비";  // D2
-  row2.getCell(5).value = "복지포인트";     // E2
-  row2.getCell(6).value = "활동비";  // F2
-  row2.getCell(7).value = "복지포인트";     // G2
-  row2.getCell(8).value = "활동비";  // H2
-  row2.getCell(9).value = "복지포인트";  // I2: SUMIFS 타입 매칭용
+  row2.getCell(4).value = "활동비"; // D2
+  row2.getCell(5).value = "복지포인트"; // E2
+  row2.getCell(6).value = "활동비"; // F2
+  row2.getCell(7).value = "복지포인트"; // G2
+  row2.getCell(8).value = "활동비"; // H2
+  row2.getCell(9).value = "복지포인트"; // I2: SUMIFS 타입 매칭용
 
   // J~O: 활동비 월별 (숫자 + numFmt)
   months.forEach((m, i) => {
@@ -666,13 +545,13 @@ function buildRawDataSheet(workbook: ExcelJS.Workbook, records: any[]) {
   const ws = workbook.addWorksheet("Raw data");
 
   ws.columns = [
-    { width: 6 },  // A: No
-    { width: 9 },  // B: 이름
-    { width: 6 },  // C: 연도
-    { width: 4 },  // D: 월
-    { width: 4 },  // E: 일
-    { width: 4 },  // F: 요일
-    { width: 9 },  // G: 활동비
+    { width: 6 }, // A: No
+    { width: 9 }, // B: 이름
+    { width: 6 }, // C: 연도
+    { width: 4 }, // D: 월
+    { width: 4 }, // E: 일
+    { width: 4 }, // F: 요일
+    { width: 9 }, // G: 활동비
     { width: 44 }, // H: 사유
     { width: 14 }, // I: 금액
     { width: 13 }, // J: P&C팀 확인

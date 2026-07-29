@@ -107,7 +107,8 @@ export const queryKeys = {
   // Budget Allocations
   budgetAllocations: {
     all: ["budgetAllocations"] as const,
-    byPeriod: (period: string) => ["budgetAllocations", "period", period] as const,
+    byPeriod: (period: string) =>
+      ["budgetAllocations", "period", period] as const,
     byPeriodAndType: (period: string, type: string) =>
       ["budgetAllocations", "period", period, "type", type] as const,
     detail: (id: string) => ["budgetAllocations", id] as const,
@@ -119,6 +120,11 @@ export const queryKeys = {
     byPeriod: (period: string) => ["budgetSummary", "period", period] as const,
     byPeriodAndType: (period: string, type: string) =>
       ["budgetSummary", "period", period, "type", type] as const,
+  },
+
+  budgetSettings: {
+    all: ["budgetSettings"] as const,
+    byPeriod: (period: string) => ["budgetSettings", "period", period] as const,
   },
 
   // Finance Management
@@ -149,6 +155,7 @@ export const queryKeys = {
 
   // Points Overview
   pointsOverview: {
+    all: ["pointsOverview"] as const,
     byPeriod: (period: string) => ["pointsOverview", period] as const,
   },
 
@@ -193,11 +200,12 @@ export const queryKeys = {
     personalReport: (roundId: string, subjectId: string) =>
       ["evaluations", "rounds", roundId, "reports", subjectId] as const,
     questionSets: ["evaluations", "questionSets"] as const,
-    validation: (id: string) => ["evaluations", "rounds", id, "validation"] as const,
+    validation: (id: string) =>
+      ["evaluations", "rounds", id, "validation"] as const,
     auditLogs: (roundId?: string) =>
       roundId
-        ? ["evaluations", "auditLogs", roundId] as const
-        : ["evaluations", "auditLogs"] as const,
+        ? (["evaluations", "auditLogs", roundId] as const)
+        : (["evaluations", "auditLogs"] as const),
   },
 
   // Leave Balances (연차 현황)
@@ -232,7 +240,8 @@ export const queryKeys = {
   attendance: {
     all: ["attendance"] as const,
     byDate: (date: string) => ["attendance", date] as const,
-    byMonth: (year: number, month: number) => ["attendance", "month", year, month] as const,
+    byMonth: (year: number, month: number) =>
+      ["attendance", "month", year, month] as const,
     today: ["attendance", "today"] as const,
   },
 
@@ -258,11 +267,12 @@ export const queryKeys = {
   usageRecords: {
     all: ["usageRecords"] as const,
     byPeriod: (period: string) => ["usageRecords", "period", period] as const,
-    byMember: (memberId: string) => ["usageRecords", "member", memberId] as const,
+    byMember: (memberId: string) =>
+      ["usageRecords", "member", memberId] as const,
     detail: (id: string) => ["usageRecords", id] as const,
     auditLogs: (recordId?: string) =>
       recordId
-        ? ["usageRecords", "auditLogs", recordId] as const
-        : ["usageRecords", "auditLogs"] as const,
+        ? (["usageRecords", "auditLogs", recordId] as const)
+        : (["usageRecords", "auditLogs"] as const),
   },
 };

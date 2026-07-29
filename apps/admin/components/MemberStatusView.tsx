@@ -187,12 +187,7 @@ export default function MemberStatusView({
     memberId?: string;
     name: string;
     status: string;
-    memberRole?: string;
-    internMonths?: number;
-    teamId?: string;
   } | null>(null);
-  const [actualMonths, setActualMonths] = useState<number>(1);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   // Build query filters
   const queryFilters = useMemo(
@@ -247,6 +242,7 @@ export default function MemberStatusView({
         queryKey: queryKeys.budgetAllocations.all,
       });
       queryClient.invalidateQueries({ queryKey: queryKeys.budgetSummary.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pointsOverview.all });
       queryClient.invalidateQueries({ queryKey: ["organizations", "tree"] });
       toast.success("멤버가 삭제되었습니다.");
     },
@@ -328,6 +324,7 @@ export default function MemberStatusView({
         queryKey: queryKeys.budgetAllocations.all,
       });
       queryClient.invalidateQueries({ queryKey: queryKeys.budgetSummary.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pointsOverview.all });
       queryClient.invalidateQueries({ queryKey: ["organizations", "tree"] });
       toast.success("인원이 추가되었습니다.");
       setIsAddMemberOpen(false);
@@ -343,6 +340,18 @@ export default function MemberStatusView({
   });
 
   const onSubmitAddMember = (data: UserFormData) => {
+    if (
+      data.memberRole === "인턴" &&
+      (!Number.isInteger(Number(data.internMonths)) ||
+        Number(data.internMonths) < 1 ||
+        Number(data.internMonths) > 6)
+    ) {
+      setAddFormError("internMonths", {
+        message: "인턴 기간은 1~6개월로 입력해주세요.",
+      });
+      return;
+    }
+
     createUserMutation.mutate({
       ...data,
       birthDate: data.birthDate || undefined,
@@ -416,6 +425,11 @@ export default function MemberStatusView({
       });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.budgetAllocations.all,
+      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.budgetSummary.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pointsOverview.all });
       toast.success("인원 정보가 수정되었습니다.");
       setIsEditMemberOpen(false);
       setEditingMember(null);
@@ -459,6 +473,15 @@ export default function MemberStatusView({
     ) {
       return;
     }
+    const internMonths = Number(editingMember.intern_months);
+    if (
+      editingMember.member_role === "인턴" &&
+      (!Number.isInteger(internMonths) || internMonths < 1 || internMonths > 6)
+    ) {
+      toast.error("인턴 기간은 1~6개월로 입력해주세요.");
+      return;
+    }
+
     updateMemberMutation.mutate({
       id: editingMember.id,
       login_id: editingMember.login_id.trim(),
@@ -562,6 +585,15 @@ export default function MemberStatusView({
         queryClient.invalidateQueries({
           queryKey: queryKeys.memberStatuses.all,
         });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.budgetAllocations.all,
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.budgetSummary.all,
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.pointsOverview.all,
+        });
         setIsEditOpen(false);
         setEditingId(null);
         resetForm();
@@ -609,58 +641,7 @@ export default function MemberStatusView({
       return;
     }
 
-    const role = deletingItem.memberRole;
-
-    // 팀장/본부장: 재계산 없이 기존 DELETE API 사용
-    if (role === "대표" || role === "팀장" || role === "본부장") {
-      deleteMemberMutation.mutate(deletingItem.memberId, { onSuccess });
-      return;
-    }
-
-    // 인턴/팀원: recalc-on-delete API 사용 (삭제 + 재계산 통합)
-    setIsDeleting(true);
-    try {
-      const currentMonth = new Date().getMonth() + 1;
-      const period = `${new Date().getFullYear()}-${currentMonth <= 6 ? "H1" : "H2"}`;
-
-      const res = await fetch("/api/budget-allocations/recalc-on-delete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          member_id: deletingItem.memberId,
-          period,
-          intern_actual_months: role === "인턴" ? actualMonths : undefined,
-        }),
-      });
-
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || "Failed to delete member");
-      }
-
-      // 성공 시 쿼리 무효화
-      queryClient.invalidateQueries({ queryKey: queryKeys.members.all });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.memberStatuses.all,
-      });
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-      queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.budgetAllocations.all,
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.budgetSummary.all,
-      });
-      queryClient.invalidateQueries({ queryKey: ["organizations", "tree"] });
-      toast.success("멤버가 삭제되었습니다.");
-      onSuccess();
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "멤버 삭제에 실패했습니다.",
-      );
-    } finally {
-      setIsDeleting(false);
-    }
+    deleteMemberMutation.mutate(deletingItem.memberId, { onSuccess });
   };
 
   // ── Status Cell Click Handler ──
@@ -995,20 +976,12 @@ export default function MemberStatusView({
                           {row.current_status === "퇴사" && (
                             <button
                               onClick={() => {
-                                const member = allMembers?.find(
-                                  (m) => m.id === row.member_id,
-                                );
                                 setDeletingItem({
                                   id: row.status_id!,
                                   memberId: row.member_id!,
                                   name: row.full_name || "",
                                   status: "퇴사",
-                                  memberRole: row.member_role || undefined,
-                                  internMonths:
-                                    member?.intern_months || undefined,
-                                  teamId: row.team_id || undefined,
                                 });
-                                setActualMonths(member?.intern_months || 1);
                                 setIsDeleteOpen(true);
                               }}
                               className="inline-flex h-6 w-6 items-center justify-center rounded text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-600"
@@ -1134,8 +1107,12 @@ export default function MemberStatusView({
                       onValueChange={(val) => {
                         setAddFormValue("position_id", val);
                         const selected = positions?.find((p) => p.id === val);
-                        if (selected?.name !== "인턴")
-                          setAddFormValue("internMonths", "");
+                        const isIntern = selected?.name === "인턴";
+                        setAddFormValue(
+                          "memberRole",
+                          isIntern ? "인턴" : "팀원",
+                        );
+                        if (!isIntern) setAddFormValue("internMonths", "");
                       }}
                     >
                       <SelectTrigger className="w-full">
@@ -1158,11 +1135,19 @@ export default function MemberStatusView({
                         id="addInternMonths"
                         type="number"
                         min={1}
-                        max={12}
-                        placeholder="1~12"
+                        max={6}
+                        placeholder="1~6"
                         {...register("internMonths", {
+                          required: {
+                            value: watchedPositionId
+                              ? positions?.find(
+                                  (p) => p.id === watchedPositionId,
+                                )?.name === "인턴"
+                              : false,
+                            message: "인턴 기간을 입력해주세요.",
+                          },
                           min: { value: 1, message: "1 이상" },
-                          max: { value: 12, message: "12 이하" },
+                          max: { value: 6, message: "6 이하" },
                         })}
                       />
                       {addFormErrors.internMonths && (
@@ -1629,31 +1614,6 @@ export default function MemberStatusView({
                 </p>
               </div>
             )}
-
-            {deletingItem?.memberRole === "인턴" && (
-              <div className="space-y-1.5 rounded-md bg-slate-50 p-3">
-                <Label
-                  htmlFor="actual-months"
-                  className="text-sm font-medium text-slate-700"
-                >
-                  실제 근무 개월
-                </Label>
-                <Input
-                  id="actual-months"
-                  type="number"
-                  min={1}
-                  max={6}
-                  value={actualMonths}
-                  onChange={(e) =>
-                    setActualMonths(parseInt(e.target.value) || 1)
-                  }
-                />
-                <p className="text-xs text-slate-400">
-                  기존 등록: {deletingItem.internMonths}개월 → 실제:{" "}
-                  {actualMonths}개월로 재계산됩니다
-                </p>
-              </div>
-            )}
           </div>
 
           <DialogFooter>
@@ -1664,14 +1624,10 @@ export default function MemberStatusView({
               variant="destructive"
               onClick={handleDeleteConfirm}
               disabled={
-                deleteStatus.isPending ||
-                deleteMemberMutation.isPending ||
-                isDeleting
+                deleteStatus.isPending || deleteMemberMutation.isPending
               }
             >
-              {deleteStatus.isPending ||
-              deleteMemberMutation.isPending ||
-              isDeleting ? (
+              {deleteStatus.isPending || deleteMemberMutation.isPending ? (
                 <>
                   <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
                   삭제 중...
@@ -1792,9 +1748,19 @@ export default function MemberStatusView({
                     <Label>직급</Label>
                     <Select
                       value={editingMember.position_id}
-                      onValueChange={(val) =>
-                        setEditingMember({ ...editingMember, position_id: val })
-                      }
+                      onValueChange={(val) => {
+                        const isIntern =
+                          positions?.find((position) => position.id === val)
+                            ?.name === "인턴";
+                        setEditingMember({
+                          ...editingMember,
+                          position_id: val,
+                          member_role: isIntern ? "인턴" : "팀원",
+                          intern_months: isIntern
+                            ? editingMember.intern_months
+                            : "",
+                        });
+                      }}
                     >
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="직급 선택" />

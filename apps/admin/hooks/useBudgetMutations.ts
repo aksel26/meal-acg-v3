@@ -29,7 +29,9 @@ export function useCreateAllocation() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.budgetAllocations.all });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.budgetAllocations.all,
+      });
       queryClient.invalidateQueries({ queryKey: queryKeys.budgetSummary.all });
       toast.success("예산이 할당되었습니다.");
     },
@@ -66,7 +68,9 @@ export function useUpdateAllocation() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.budgetAllocations.all });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.budgetAllocations.all,
+      });
       queryClient.invalidateQueries({ queryKey: queryKeys.budgetSummary.all });
       toast.success("예산이 수정되었습니다.");
     },
@@ -93,7 +97,9 @@ export function useDeleteAllocation() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.budgetAllocations.all });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.budgetAllocations.all,
+      });
       queryClient.invalidateQueries({ queryKey: queryKeys.budgetSummary.all });
       toast.success("예산 할당이 삭제되었습니다.");
     },
@@ -103,20 +109,19 @@ export function useDeleteAllocation() {
   });
 }
 
-// ── Bulk Upsert Allocations ──
+// ── Save Period Settings ──
 
-export function useBulkUpsertAllocations() {
+export function useSaveBudgetSettings() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (data: {
-      allocations: {
-        member_id: string;
-        type: string;
-        period: string;
-        total_amount: number;
-        description?: string;
-      }[];
+      period: string;
+      welfare_amount?: number;
+      leader_rate?: number;
+      manager_rate?: number;
+      pnc_extra_rate?: number;
+      welfare_description?: string;
     }) => {
       const res = await fetch("/api/budget-allocations", {
         method: "PUT",
@@ -125,51 +130,21 @@ export function useBulkUpsertAllocations() {
       });
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || "Failed to bulk upsert allocations");
-      }
-      return res.json();
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.budgetAllocations.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.budgetSummary.all });
-      const count = Array.isArray(data) ? data.length : 0;
-      toast.success(`${count}명에게 예산이 할당되었습니다.`);
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "일괄 할당에 실패했습니다.");
-    },
-  });
-}
-
-// ── Calculate Activity Budget ──
-
-export function useCalculateActivityBudget() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data: {
-      period: string;
-      base_amount: number;
-      per_member_amount: number;
-    }) => {
-      const res = await fetch("/api/budget-allocations/calculate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || "Failed to calculate activity budget");
+        throw new Error(error.error || "Failed to save budget settings");
       }
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.budgetAllocations.all });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.budgetAllocations.all,
+      });
       queryClient.invalidateQueries({ queryKey: queryKeys.budgetSummary.all });
-      toast.success("활동비가 자동 계산되었습니다.");
+      queryClient.invalidateQueries({ queryKey: queryKeys.budgetSettings.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pointsOverview.all });
+      toast.success("반기 예산 설정이 반영되었습니다.");
     },
     onError: (error: Error) => {
-      toast.error(error.message || "활동비 계산에 실패했습니다.");
+      toast.error(error.message || "반기 예산 설정에 실패했습니다.");
     },
   });
 }

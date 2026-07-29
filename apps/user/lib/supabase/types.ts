@@ -677,6 +677,7 @@ export type Database = {
       }
       budget_allocations: {
         Row: {
+          base_amount: number
           created_at: string | null
           description: string | null
           id: string
@@ -687,6 +688,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          base_amount?: number
           created_at?: string | null
           description?: string | null
           id?: string
@@ -697,6 +699,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          base_amount?: number
           created_at?: string | null
           description?: string | null
           id?: string
@@ -729,6 +732,33 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      budget_period_settings: {
+        Row: {
+          leader_rate: number
+          manager_rate: number
+          period: string
+          pnc_extra_rate: number
+          updated_at: string
+          welfare_amount: number
+        }
+        Insert: {
+          leader_rate?: number
+          manager_rate?: number
+          period: string
+          pnc_extra_rate?: number
+          updated_at?: string
+          welfare_amount?: number
+        }
+        Update: {
+          leader_rate?: number
+          manager_rate?: number
+          period?: string
+          pnc_extra_rate?: number
+          updated_at?: string
+          welfare_amount?: number
+        }
+        Relationships: []
       }
       company_documents: {
         Row: {
@@ -5070,7 +5100,7 @@ export type Database = {
           last_modified_at?: string | null
           last_modified_by?: string | null
           member_id: string
-          no: number
+          no?: number
           notes?: string | null
           receipt_url?: string | null
           review_status?: number
@@ -5485,6 +5515,7 @@ export type Database = {
       budget_summary: {
         Row: {
           allocation_id: string | null
+          base_amount: number | null
           description: string | null
           division_name: string | null
           member_id: string | null
@@ -5669,6 +5700,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      budget_period_for_date: { Args: { p_date: string }; Returns: string }
       calculate_activity_budget: {
         Args: {
           p_additional_count?: number
@@ -6014,6 +6046,30 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      save_budget_period_settings: {
+        Args: {
+          p_leader_rate?: number
+          p_manager_rate?: number
+          p_period: string
+          p_pnc_extra_rate?: number
+          p_welfare_amount?: number
+          p_welfare_description?: string
+        }
+        Returns: {
+          leader_rate: number
+          manager_rate: number
+          period: string
+          pnc_extra_rate: number
+          updated_at: string
+          welfare_amount: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "budget_period_settings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       set_work_application_approval_status: {
         Args: {
           p_application_id: string
@@ -6044,6 +6100,10 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      sync_budget_period: {
+        Args: { p_business_date?: string; p_period: string }
+        Returns: undefined
       }
       toggle_review_status: {
         Args: { p_reviewer_id: string; p_usage_record_id: string }

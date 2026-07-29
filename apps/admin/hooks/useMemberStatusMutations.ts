@@ -5,10 +5,15 @@ import { queryKeys } from "@/lib/query-keys";
 import { toast } from "@repo/ui/src/sonner";
 
 /** 특이사항 변경 시 관련 쿼리 일괄 무효화 (대시보드 총 인원, 통계 등) */
-function invalidateStatusRelated(queryClient: ReturnType<typeof useQueryClient>) {
+function invalidateStatusRelated(
+  queryClient: ReturnType<typeof useQueryClient>,
+) {
   queryClient.invalidateQueries({ queryKey: queryKeys.memberStatuses.all });
   queryClient.invalidateQueries({ queryKey: ["dashboard"] });
   queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
+  queryClient.invalidateQueries({ queryKey: queryKeys.budgetAllocations.all });
+  queryClient.invalidateQueries({ queryKey: queryKeys.budgetSummary.all });
+  queryClient.invalidateQueries({ queryKey: queryKeys.pointsOverview.all });
 }
 
 // ── Create Member Status ──

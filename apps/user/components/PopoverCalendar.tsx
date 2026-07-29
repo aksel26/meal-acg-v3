@@ -17,7 +17,10 @@ interface PopoverCalendarProps {
   className?: string;
   buttonClassName?: string;
   triggerProps?: React.ComponentProps<typeof Button>;
-  calendarProps?: React.ComponentProps<typeof Calendar>;
+  calendarProps?: Omit<
+    React.ComponentProps<typeof Calendar>,
+    "mode" | "selected" | "onSelect"
+  >;
   popoverProps?: {
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
@@ -81,12 +84,12 @@ export function PopoverCalendar({
           align={popoverProps?.align || "start"}
         >
           <Calendar
-            mode="single"
-            selected={date}
-            onSelect={handleDateSelect}
             captionLayout="dropdown"
             initialFocus
             {...calendarProps}
+            mode="single"
+            selected={date}
+            onSelect={handleDateSelect}
           />
         </PopoverContent>
       </Popover>

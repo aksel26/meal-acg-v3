@@ -21,6 +21,8 @@ For narrower checks, prefer Turbo filters such as `pnpm --filter admin check-typ
 
 Write TypeScript and React using the existing App Router patterns. Components use PascalCase, hooks use `useCamelCase`, and route folders follow Next.js conventions. Keep shared UI in `packages/ui`; avoid duplicating cross-app utilities outside `packages/utils`. Formatting is owned by Prettier, ESLint 9, shared repo configs, and `prettier-plugin-tailwindcss`.
 
+Admin forms use `@repo/ui/src/date-range-picker` for date selection. Use range mode for start/end periods and `mode="single"` for one-day values instead of native `input[type="date"]`.
+
 ## Testing Guidelines
 
 There is no dedicated unit or E2E test framework configured in this snapshot. Treat `build`, `check-types`, and targeted manual verification as the current quality gates. When adding tests, place them next to the feature or in a local `tests/` directory, use `*.test.ts` or `*.test.tsx`, and add the matching package script.

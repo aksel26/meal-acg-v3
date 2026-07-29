@@ -16,6 +16,7 @@ interface DatePickerProps {
   /** Called with YYYY-MM-DD string */
   onChange?: (value: string) => void;
   placeholder?: string;
+  ariaLabel?: string;
   className?: string;
   disabled?: boolean;
   modal?: boolean;
@@ -25,6 +26,7 @@ function DatePicker({
   value,
   onChange,
   placeholder = "날짜 선택",
+  ariaLabel,
   className,
   disabled,
   modal,
@@ -46,12 +48,14 @@ function DatePicker({
     <Popover open={open} onOpenChange={setOpen} modal={modal}>
       <PopoverTrigger asChild>
         <Button
+          type="button"
           variant="outline"
           disabled={disabled}
+          aria-label={ariaLabel}
           className={cn(
             "w-full justify-start text-left font-normal",
             !value && "text-muted-foreground",
-            className
+            className,
           )}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
@@ -60,45 +64,14 @@ function DatePicker({
             : placeholder}
         </Button>
       </PopoverTrigger>
-      <PopoverContent
-        className="w-auto p-0"
-        align="start"
-        onPointerDownOutside={(event) => {
-          const target = event.target as HTMLElement | null;
-          if (target?.closest("[data-slot='popover-content']")) {
-            event.preventDefault();
-            return;
-          }
-          setOpen(false);
-          if (target?.closest("[data-slot='dialog-content']")) {
-            event.preventDefault();
-          }
-        }}
-        onInteractOutside={(event) => {
-          const target = event.target as HTMLElement | null;
-          if (target?.closest("[data-slot='popover-content']")) {
-            event.preventDefault();
-            return;
-          }
-          setOpen(false);
-          if (target?.closest("[data-slot='dialog-content']")) {
-            event.preventDefault();
-          }
-        }}
-      >
-        <div
-          onPointerDown={(event) => event.stopPropagation()}
-          onMouseDown={(event) => event.stopPropagation()}
-          onClick={(event) => event.stopPropagation()}
-        >
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={handleSelect}
-            locale={ko}
-            defaultMonth={selectedDate}
-          />
-        </div>
+      <PopoverContent className="z-[60] w-auto p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={selectedDate}
+          onSelect={handleSelect}
+          locale={ko}
+          defaultMonth={selectedDate}
+        />
       </PopoverContent>
     </Popover>
   );

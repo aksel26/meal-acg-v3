@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/client";
 import {
-  assertOperationDateRange,
   operationDate,
   operationPage,
   operationPageData,
+  operationParkingTicket,
+  operationParkingUsageType,
   operationText,
 } from "utils/company-operations";
 
@@ -18,9 +19,12 @@ async function context() {
 }
 
 function parkingPayload(body: Record<string, unknown>) {
-  const startDate = operationDate(body.requestedStartDate, "시작일");
-  const endDate = operationDate(body.requestedEndDate, "종료일", false);
-  assertOperationDateRange(startDate, endDate);
+  const requestedDate = operationDate(
+    body.requestedDate ?? body.requestedStartDate,
+    "주차 일자",
+  );
+  const ticket = operationParkingTicket(body.ticketCode ?? "two_hours");
+  const usageType = operationParkingUsageType(body.usageType ?? "business");
   return {
     vehicle_plate: operationText(body.vehiclePlate, "차량번호", {
       required: true,
@@ -34,8 +38,10 @@ function parkingPayload(body: Record<string, unknown>) {
       required: true,
       max: 50,
     }),
-    requested_start_date: startDate,
-    requested_end_date: endDate,
+    requested_start_date: requestedDate,
+    requested_end_date: requestedDate,
+    ticket_code: ticket.code,
+    usage_type: usageType,
     note: operationText(body.note, "메모", { max: 2000 }) || null,
   };
 }

@@ -4,10 +4,13 @@ import { writeAdminAuditLog } from "@/lib/admin-audit";
 import { createServiceClient } from "@/lib/supabase/server";
 import {
   OperationInputError,
-  assertOperationDateRange,
   operationDate,
   operationPage,
   operationPageData,
+  operationParkingNoticeContent,
+  operationParkingExtraTickets,
+  operationParkingTicket,
+  operationParkingUsageType,
   operationSearch,
   operationText,
 } from "utils/company-operations";
@@ -15,9 +18,12 @@ import {
 const client = () => createServiceClient() as any;
 
 function parkingPayload(body: Record<string, unknown>) {
-  const startDate = operationDate(body.requestedStartDate, "시작일");
-  const endDate = operationDate(body.requestedEndDate, "종료일", false);
-  assertOperationDateRange(startDate, endDate);
+  const requestedDate = operationDate(
+    body.requestedDate ?? body.requestedStartDate,
+    "주차 일자",
+  );
+  const ticket = operationParkingTicket(body.ticketCode ?? "two_hours");
+  const usageType = operationParkingUsageType(body.usageType ?? "business");
   return {
     vehicle_plate: operationText(body.vehiclePlate, "차량번호", {
       required: true,
@@ -31,8 +37,11 @@ function parkingPayload(body: Record<string, unknown>) {
       required: true,
       max: 50,
     }),
-    requested_start_date: startDate,
-    requested_end_date: endDate,
+    requested_start_date: requestedDate,
+    requested_end_date: requestedDate,
+    ticket_code: ticket.code,
+    extra_ticket_codes: operationParkingExtraTickets(body.extraTicketCodes),
+    usage_type: usageType,
     note: operationText(body.note, "메모", { max: 2000 }) || null,
     admin_note:
       operationText(body.adminNote, "관리자 메모", { max: 2000 }) || null,
@@ -61,16 +70,23 @@ export async function GET(request: NextRequest) {
         `%${member}%`,
       );
     }
-    const [registrations, members] = await Promise.all([
+    const [registrations, members, notice] = await Promise.all([
       registrationsQuery.range(pagination.from, pagination.to),
       supabase.from("members").select("id, full_name").order("full_name"),
+      supabase
+        .from("parking_notice_settings")
+        .select("content, updated_at")
+        .eq("id", "default")
+        .single(),
     ]);
     if (registrations.error) throw registrations.error;
     if (members.error) throw members.error;
+    if (notice.error) throw notice.error;
     const registrationPage = operationPageData(registrations.data, pagination);
     return NextResponse.json({
       registrations: registrationPage.items,
       members: members.data ?? [],
+      notice: notice.data,
       pagination: registrationPage.pagination,
     });
   } catch (error) {
@@ -127,9 +143,32 @@ export async function PATCH(request: NextRequest) {
   try {
     const session = await requireAdminPermission("parking:write");
     const body = (await request.json()) as Record<string, unknown>;
-    const id = operationText(body.id, "등록", { required: true });
     const action = operationText(body.action, "작업", { required: true });
     const supabase = client();
+
+    if (action === "update_notice") {
+      const content = operationParkingNoticeContent(body.content);
+      const { data, error } = await supabase
+        .from("parking_notice_settings")
+        .upsert({
+          id: "default",
+          content,
+          updated_by: session.userId,
+        })
+        .select("content, updated_at")
+        .single();
+      if (error) throw error;
+      await writeAdminAuditLog({
+        session,
+        request,
+        action: "parking.update_notice",
+        targetType: "parking_notice",
+        targetId: "default",
+      });
+      return NextResponse.json(data);
+    }
+
+    const id = operationText(body.id, "등록", { required: true });
     let changes: Record<string, unknown>;
     let expectedStatuses: string[];
 

@@ -133,9 +133,9 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
     title: "승인 관리",
     subtitle: "대기 건을 우선 처리하고 완료/반려 이력을 확인합니다.",
   },
-  "/offboarding": {
-    title: "오프보딩 관리",
-    subtitle: "요청 승인부터 체크리스트 완료까지 관리합니다.",
+  "/boarding": {
+    title: "온/오프보딩 관리",
+    subtitle: "입사자와 퇴사자의 체크리스트 진행 상황을 관리합니다.",
   },
   "/seating": {
     title: "좌석 관리",

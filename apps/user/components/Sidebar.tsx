@@ -128,9 +128,9 @@ const menuGroups: MenuGroup[] = [
         href: "/library",
       },
       {
-        id: "offboarding",
-        label: "오프보딩",
-        href: "/offboarding",
+        id: "boarding",
+        label: "온/오프보딩",
+        href: "/boarding",
       },
       {
         id: "seating",
@@ -141,11 +141,6 @@ const menuGroups: MenuGroup[] = [
         id: "parking",
         label: "주차",
         href: "/parking",
-      },
-      {
-        id: "corporate-cards",
-        label: "기업카드",
-        href: "/corporate-cards",
       },
       {
         id: "company-documents",

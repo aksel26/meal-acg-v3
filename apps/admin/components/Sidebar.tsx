@@ -41,7 +41,7 @@ import {
   CarFront,
   BookOpen,
   ShieldCheck,
-  UserMinus,
+  UserPlus,
   Armchair,
   CircleParking,
   CreditCard,
@@ -71,7 +71,7 @@ interface NavItem {
   name: string;
   href: string;
   icon: LucideIcon;
-  permission?: AdminPermission;
+  permission?: AdminPermission | AdminPermission[];
   external?: boolean;
   isLabel?: boolean;
 }
@@ -228,10 +228,10 @@ const navigation: NavigationItem[] = [
         permission: "meal:write",
       },
       {
-        name: "오프보딩",
-        href: "/offboarding",
-        icon: UserMinus,
-        permission: "offboarding:read",
+        name: "온/오프보딩",
+        href: "/boarding",
+        icon: UserPlus,
+        permission: ["onboarding:read", "offboarding:read"],
       },
     ],
   },
@@ -376,7 +376,11 @@ function canShowItem(
   item: NavItem,
   permissions: readonly AdminPermission[] | null | undefined,
 ) {
-  return !item.permission || Boolean(permissions?.includes(item.permission));
+  if (!item.permission) return true;
+  const required = Array.isArray(item.permission)
+    ? item.permission
+    : [item.permission];
+  return required.some((permission) => permissions?.includes(permission));
 }
 
 function filterNavigation(
@@ -410,7 +414,7 @@ function NavItemComponent({
   collapsed: boolean;
 }) {
   const linkClassName = cn(
-    "admin-pressable group flex items-center transition-colors",
+    "admin-pressable group flex shrink-0 items-center transition-colors",
     collapsed
       ? "h-10 w-10 justify-center rounded-lg"
       : "h-8 gap-2 rounded-md px-2 text-sm",
@@ -481,25 +485,29 @@ function NavGroupComponent({
   collapsed: boolean;
   onExpand: () => void;
 }) {
-  const [isOpen, setIsOpen] = useState(false);
   const isActive = group.items.some(
     (item) =>
       !item.isLabel &&
       (pathname === item.href ||
         (item.href !== "/" && pathname.startsWith(item.href))),
   );
-  const open = isOpen || isActive;
+  const [open, setOpen] = useState(isActive);
+
+  // 이 그룹의 페이지로 이동하면 자동으로 펼친다. 이후 접는 건 사용자 선택.
+  useEffect(() => {
+    if (isActive) setOpen(true);
+  }, [isActive]);
 
   const parentButton = (
     <button
       type="button"
       onClick={() => {
         if (collapsed) {
-          setIsOpen(true);
+          setOpen(true);
           onExpand();
           return;
         }
-        if (!isActive) setIsOpen(!isOpen);
+        setOpen((current) => !current);
       }}
       className={cn(
         "admin-pressable group flex items-center transition-colors",
@@ -508,19 +516,31 @@ function NavGroupComponent({
           : "h-8 w-full gap-2 rounded-md p-2",
         collapsed && isActive
           ? "bg-[#111111] text-white"
-          : "text-slate-500 hover:bg-[#f9f9fa] hover:text-[#111111]",
+          : !collapsed && !open && isActive
+            ? "bg-[#fafafb] text-[#111111]"
+            : "text-slate-500 hover:bg-[#f9f9fa] hover:text-[#111111]",
       )}
     >
       <group.icon
         className={cn(
           "flex-shrink-0",
           collapsed ? "h-[18px] w-[18px]" : "h-4 w-4",
+          !collapsed && !open && isActive && "text-black",
         )}
-        strokeWidth={1.25}
+        // 얇은 선은 색만 바꿔서는 진해 보이지 않아 두께도 함께 올린다.
+        strokeWidth={!collapsed && !open && isActive ? 2 : 1.25}
       />
       {!collapsed && (
         <>
-          <span className="flex-1 text-left text-sm font-medium text-slate-700">
+          <span
+            className={cn(
+              "flex-1 text-left text-sm",
+              // 접힌 상태에서는 어느 그룹에 현재 페이지가 있는지 부모에서만 알 수 있다.
+              !open && isActive
+                ? "font-semibold text-[#111111]"
+                : "font-medium text-slate-700",
+            )}
+          >
             {group.name}
           </span>
           <ChevronDown
@@ -536,7 +556,7 @@ function NavGroupComponent({
   );
 
   return (
-    <div className="space-y-1">
+    <div className="shrink-0 space-y-1">
       {collapsed ? (
         <Tooltip>
           <TooltipTrigger asChild>{parentButton}</TooltipTrigger>
@@ -552,7 +572,7 @@ function NavGroupComponent({
         className={cn(
           "mx-3.5 min-w-0 translate-x-px overflow-hidden border-l border-slate-200 px-2.5 transition-all duration-200",
           !collapsed && open
-            ? "max-h-[720px] space-y-1 py-0.5 opacity-100"
+            ? "max-h-[720px] space-y-1.5 py-1 opacity-100"
             : "max-h-0 opacity-0",
         )}
       >
@@ -571,7 +591,7 @@ function NavGroupComponent({
           const isActive =
             pathname === item.href ||
             (item.href !== "/" && pathname.startsWith(item.href));
-          const childLink = (
+          return (
             <Link
               key={item.name}
               href={item.href}
@@ -585,8 +605,6 @@ function NavGroupComponent({
               <span className="truncate">{item.name}</span>
             </Link>
           );
-
-          return <span key={item.name}>{childLink}</span>;
         })}
       </div>
     </div>

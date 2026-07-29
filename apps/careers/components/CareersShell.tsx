@@ -49,6 +49,14 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
     title: "채용 공고",
     subtitle: "공고 기본 정보와 전형 프로세스를 관리합니다.",
   },
+  "/postings/new": {
+    title: "새 채용공고 등록",
+    subtitle: "채용 공고 정보와 자기소개서 문항을 등록합니다.",
+  },
+  "/postings/edit": {
+    title: "채용공고 수정",
+    subtitle: "채용 공고 정보와 자기소개서 문항을 수정합니다.",
+  },
   "/process-management": {
     title: "프로세스 관리",
     subtitle: "기본 프리셋과 공고별 전형 단계 및 상태를 관리합니다.",
@@ -259,11 +267,16 @@ function CareersSidebar({
 
 function CareersHeader() {
   const pathname = usePathname();
-  const normalizedPathname = pathname.startsWith("/postings/")
-    ? "/postings/detail"
-    : pathname.startsWith("/applicants/")
-      ? "/applicants/detail"
-      : pathname;
+  const normalizedPathname =
+    pathname === "/postings/new"
+      ? pathname
+      : pathname.startsWith("/postings/") && pathname.endsWith("/edit")
+        ? "/postings/edit"
+        : pathname.startsWith("/postings/")
+          ? "/postings/detail"
+          : pathname.startsWith("/applicants/")
+            ? "/applicants/detail"
+            : pathname;
   const pageInfo = pageTitles[normalizedPathname] ?? pageTitles["/"]!;
 
   return (

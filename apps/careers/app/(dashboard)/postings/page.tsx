@@ -37,7 +37,6 @@ import {
   PageHeader,
   PageLoading,
 } from "@/components/PageStates";
-import { PostingFormDialog } from "@/components/PostingFormDialog";
 import {
   careersApi,
   careersKeys,
@@ -65,8 +64,6 @@ export default function PostingsPage() {
   );
   const [field, setField] = useState("all");
   const [sort, setSort] = useState<PostingSort>("deadlineAsc");
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<JobPosting | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<JobPosting | null>(null);
   const query = usePostings({
     search: search || undefined,
@@ -107,8 +104,10 @@ export default function PostingsPage() {
         title="채용 공고"
         description="공고 기본 정보와 전형 프로세스를 관리합니다."
         action={
-          <Button onClick={() => setDialogOpen(true)}>
-            <Plus /> 새 공고
+          <Button asChild>
+            <Link href="/postings/new">
+              <Plus /> 새 공고
+            </Link>
           </Button>
         }
       />
@@ -199,7 +198,9 @@ export default function PostingsPage() {
           title="조건에 맞는 공고가 없습니다."
           description="검색 조건을 바꾸거나 새 공고를 등록해 주세요."
           action={
-            <Button onClick={() => setDialogOpen(true)}>새 공고 등록</Button>
+            <Button asChild>
+              <Link href="/postings/new">새 공고 등록</Link>
+            </Button>
           }
         />
       ) : (
@@ -377,9 +378,11 @@ export default function PostingsPage() {
                           variant="ghost"
                           size="icon"
                           aria-label={`${posting.title} 수정`}
-                          onClick={() => setEditTarget(posting)}
+                          asChild
                         >
-                          <Pencil className="size-4" />
+                          <Link href={`/postings/${posting.id}/edit`}>
+                            <Pencil className="size-4" />
+                          </Link>
                         </Button>
                         <Button
                           type="button"
@@ -415,19 +418,6 @@ export default function PostingsPage() {
         </>
       )}
 
-      <PostingFormDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        fieldSuggestions={fieldSuggestions}
-      />
-      {editTarget && (
-        <PostingFormDialog
-          open
-          onOpenChange={(open) => !open && setEditTarget(null)}
-          posting={editTarget}
-          fieldSuggestions={fieldSuggestions}
-        />
-      )}
       <AlertDialog
         open={Boolean(deleteTarget)}
         onOpenChange={(open) => !open && setDeleteTarget(null)}

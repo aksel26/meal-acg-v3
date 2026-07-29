@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,7 +28,6 @@ import { Button } from "@repo/ui/src/button";
 import { toast } from "@repo/ui/src/sonner";
 import { CareersStatusBadge } from "@/components/CareersStatusBadge";
 import { PageError, PageLoading } from "@/components/PageStates";
-import { PostingFormDialog } from "@/components/PostingFormDialog";
 import {
   careersApi,
   careersKeys,
@@ -46,17 +45,11 @@ function date(value: string | null | undefined) {
 export default function PostingDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const query = usePosting(params.id);
   const deleteMutation = useCareersMutation(careersApi.softDeletePosting, [
     careersKeys.all,
   ]);
-  const fieldSuggestions = useMemo(
-    () => (query.data?.field ? [query.data.field] : []),
-    [query.data?.field],
-  );
-
   async function remove() {
     try {
       await deleteMutation.mutateAsync(params.id);
@@ -125,8 +118,10 @@ export default function PostingDetailPage() {
                 <Users /> 지원자 보기
               </Link>
             </Button>
-            <Button variant="outline" onClick={() => setEditOpen(true)}>
-              <Pencil /> 공고 수정
+            <Button variant="outline" asChild>
+              <Link href={`/postings/${posting.id}/edit`}>
+                <Pencil /> 공고 수정
+              </Link>
             </Button>
             <Button
               variant="outline"
@@ -275,13 +270,6 @@ export default function PostingDetailPage() {
           )}
         </section>
       </div>
-
-      <PostingFormDialog
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        posting={posting}
-        fieldSuggestions={fieldSuggestions}
-      />
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>

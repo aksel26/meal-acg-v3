@@ -581,26 +581,6 @@ export default function EvaluationDetailPage() {
     onError: (error: Error) => toast.error(error.message),
   });
 
-  const saveSubjectsMutation = useMutation({
-    mutationFn: async () =>
-      requestJson<EvaluationSubject[]>(
-        `/api/evaluations/rounds/${roundId}/subjects`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            subjectIds: assignedSubjectIdsForSave,
-            excludedIds: [],
-          }),
-        },
-      ),
-    onSuccess: () => {
-      toast.success("대상자가 저장되었습니다.");
-      invalidateRound();
-    },
-    onError: (error: Error) => toast.error(error.message),
-  });
-
   const generateAssignmentsMutation = useMutation({
     mutationFn: async () => {
       await requestJson<EvaluationSubject[]>(
@@ -643,31 +623,6 @@ export default function EvaluationDetailPage() {
     onSuccess: (data) => {
       toast.success("문항 SET이 적용되었습니다.");
       setQuestions([...data].sort((a, b) => a.sort_order - b.sort_order));
-      invalidateRound();
-    },
-    onError: (error: Error) => toast.error(error.message),
-  });
-
-  const saveAssignmentsMutation = useMutation({
-    mutationFn: async () =>
-      requestJson<EvaluationAssignment[]>(
-        `/api/evaluations/rounds/${roundId}/assignments`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            assignments: assignments.map((assignment) => ({
-              subjectMemberId: assignment.subject_member_id,
-              evaluatorMemberId: assignment.evaluator_member_id,
-              source: normalizeAssignmentSource(assignment),
-              isExcluded: assignment.is_excluded,
-              excludedReason: assignment.excluded_reason || null,
-            })),
-          }),
-        },
-      ),
-    onSuccess: () => {
-      toast.success("평가자 배정이 저장되었습니다.");
       invalidateRound();
     },
     onError: (error: Error) => toast.error(error.message),

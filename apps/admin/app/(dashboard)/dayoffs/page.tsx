@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import "dayjs/locale/ko";
 import { cn } from "@repo/ui/lib/utils";
@@ -101,7 +100,6 @@ const defaultFormData: FormData = {
 };
 
 export default function DayoffsPage() {
-  const queryClient = useQueryClient();
   const currentYear = dayjs().year();
   const currentMonth = dayjs().month() + 1;
 
@@ -334,9 +332,6 @@ export default function DayoffsPage() {
 
   const years = Array.from({ length: 5 }, (_, i) => currentYear - 1 + i);
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
-  const selectedLeaveType = leaveTypes?.find(
-    (t) => t.id === formData.leaveTypeId,
-  );
 
   return (
     <Tabs

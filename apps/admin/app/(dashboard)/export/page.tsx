@@ -47,9 +47,6 @@ export default function ExportPage() {
     },
   });
 
-  // 반기 라벨
-  const halfLabel = selectedHalf === "H1" ? "상반기" : "하반기";
-
   const handleExport = () => {
     if (selectedMemberIds.length === 0) {
       toast.error("내보낼 멤버를 선택해주세요.");

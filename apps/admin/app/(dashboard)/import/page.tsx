@@ -96,21 +96,6 @@ export default function ImportPage() {
     },
   });
 
-  // 멤버 이름으로 멤버 찾기
-  const findMemberByName = useCallback(
-    (name: string): Member | null => {
-      if (members.length === 0) return null;
-      return (
-        members.find(
-          (m) =>
-            m.full_name === name ||
-            m.full_name.replace(/\s/g, "") === name.replace(/\s/g, ""),
-        ) || null
-      );
-    },
-    [members],
-  );
-
   // members 데이터가 로드되면 매칭되지 않은 파일들 재매칭
   useEffect(() => {
     if (members.length === 0) return;

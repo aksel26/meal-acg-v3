@@ -5,7 +5,6 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { listProjectsForUser, type ProjectSummary } from "@/lib/projects";
 import { listRequestsForUser, type RequestRecord } from "@/lib/requests";
 import {
-  Briefcase,
   Building2,
   CheckCircle2,
   FolderKanban,
@@ -486,27 +485,6 @@ function PendingSummaryCard({
         <CompletionStatItem label="마감 임박" value={urgentCount} />
       </div>
     </Link>
-  );
-}
-
-function TopCustomerCard({ stat }: { stat: ContactStat | null }) {
-  return (
-    <div className="rounded-xl border border-[#f3f3f3] bg-white px-4 py-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-sm text-slate-500">컨택이 가장 많은 고객사</p>
-          <p className="mt-2 truncate text-xl font-semibold text-[#111111]">
-            {stat?.name ?? "-"}
-          </p>
-          <p className="mt-1 text-xs text-slate-400">
-            {stat ? `${stat.count.toLocaleString("ko-KR")}건 · 올해` : "올해 데이터 없음"}
-          </p>
-        </div>
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg text-slate-500">
-          <Briefcase size={20} strokeWidth={1.5} />
-        </div>
-      </div>
-    </div>
   );
 }
 

@@ -30,7 +30,6 @@ export async function GET(request: NextRequest) {
     // 반기에 따른 월 범위 설정
     const startMonth = half === "H1" ? 1 : 7;
     const endMonth = half === "H1" ? 6 : 12;
-    const halfLabel = half === "H1" ? "상반기" : "하반기";
 
     // 시작일과 종료일 계산
     const startDate = `${year}-${String(startMonth).padStart(2, "0")}-01`;

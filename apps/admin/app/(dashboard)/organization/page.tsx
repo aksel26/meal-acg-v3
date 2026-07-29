@@ -493,7 +493,6 @@ function OrganizationEditor({ onBack }: { onBack: () => void }) {
   }, [divisions, directTeams]);
 
   // Stats
-  const totalDivisions = divisions.length;
   const totalTeams = allTeams.length;
   const totalMembers = useMemo(() => {
     let count = 0;

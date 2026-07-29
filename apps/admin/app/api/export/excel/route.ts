@@ -162,9 +162,6 @@ export async function GET(request: NextRequest) {
         const rowNum = index + 2;
         const totalAllowance = stat.total_allowance || 0;
         const balance = stat.balance || 0;
-        const effectiveDays = stat.daily_allowance
-          ? totalAllowance / stat.daily_allowance
-          : 0;
 
         const row = summarySheet.addRow({
           index: index + 1,

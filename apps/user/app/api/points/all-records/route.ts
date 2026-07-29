@@ -2,13 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
 import { getSessionUser } from "@/lib/auth";
 
-// "YYYY-MM" → "YYYY-H1" or "YYYY-H2" 변환
-function toHalfYearPeriod(monthlyPeriod: string): string {
-  const parts = monthlyPeriod.split("-");
-  const half = parseInt(parts[1] ?? "1", 10) <= 6 ? "H1" : "H2";
-  return `${parts[0]}-${half}`;
-}
-
 // "2026-H1" → { start: "2026-01-01", end: "2026-06-30" }
 // "2026-H2" → { start: "2026-07-01", end: "2026-12-31" }
 function halfYearToDateRange(period: string): { start: string; end: string } | null {

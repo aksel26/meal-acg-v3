@@ -7,7 +7,6 @@ import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "@repo/ui/src/button";
-import { Badge } from "@repo/ui/src/badge";
 import {
   Select,
   SelectContent,
@@ -17,22 +16,7 @@ import {
 } from "@repo/ui/src/select";
 import { cn } from "@repo/ui/lib/utils";
 import { queryKeys } from "@/lib/query-keys";
-import {
-  useDayoffsByTarget,
-  useLeaveTypes,
-  type DayoffRecord,
-} from "@/hooks/useDayoffs";
-
-const LEAVE_TYPE_COLORS: Record<string, string> = {
-  "지각/조퇴": "bg-slate-50 text-slate-700 border-slate-200",
-  반차: "bg-slate-50 text-slate-700 border-slate-200",
-  연차: "bg-slate-50 text-slate-700 border-slate-200",
-  대체휴무: "bg-slate-100 text-slate-800 border-slate-300",
-  경조휴무: "bg-slate-50 text-slate-700 border-slate-200",
-  특별휴무: "bg-slate-50 text-slate-700 border-slate-200",
-  훈련: "bg-slate-50 text-slate-700 border-slate-200",
-  휴무: "bg-slate-50 text-slate-700 border-slate-200",
-};
+import { useDayoffsByTarget, type DayoffRecord } from "@/hooks/useDayoffs";
 
 interface MemberDetail {
   id: string;
@@ -40,20 +24,6 @@ interface MemberDetail {
   hire_date: string | null;
   team: { name: string } | null;
   position: { name: string } | null;
-}
-
-function getLeaveTypeBadge(record: DayoffRecord) {
-  const category = record.leave_type?.category || "";
-  const colorClass = LEAVE_TYPE_COLORS[category] || "bg-slate-50 text-slate-700 border-slate-200";
-  let label = record.leave_type?.name || "";
-  if (record.leave_type_id === 1 && record.late_hour) {
-    label = `지각-${record.late_hour}시${record.late_minute || "00"}분`;
-  }
-  return (
-    <Badge variant="outline" className={`text-[11px] ${colorClass}`}>
-      {label}
-    </Badge>
-  );
 }
 
 export default function DayoffDetailPage() {
@@ -72,7 +42,6 @@ export default function DayoffDetailPage() {
   });
 
   const { data: dayoffs, isLoading } = useDayoffsByTarget(id, year);
-  const { data: leaveTypes } = useLeaveTypes();
 
   const hireDate = member?.hire_date ? dayjs(member.hire_date) : null;
   const yearsOfService = hireDate ? dayjs().diff(hireDate, "year") : null;

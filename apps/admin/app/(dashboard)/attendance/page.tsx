@@ -374,7 +374,6 @@ function InlineRow({
   index: number;
 }) {
   const updateMutation = useUpdateAttendance();
-  const [editing, setEditing] = useState(false);
   const [editingField, setEditingField] = useState<EditingField>(null);
   const [checkIn, setCheckIn] = useState(formatTime(record.check_in_at));
   const [checkOut, setCheckOut] = useState(formatTime(record.check_out_at));
@@ -382,9 +381,6 @@ function InlineRow({
     record.attendance_type || "출근",
   );
   const [status, setStatus] = useState(record.status || "pending");
-  const [note, setNote] = useState(record.note ?? "");
-  const [location, setLocation] = useState(record.location ?? "");
-  const [reference, setReference] = useState(record.reference ?? "");
 
   const date = dayjs(record.date);
   const hasBirthdayEarlyCheckout =
@@ -431,85 +427,11 @@ function InlineRow({
     }
   };
 
-  const handleSave = async () => {
-    if (record.id) {
-      updateMutation.mutate(
-        {
-          id: record.id,
-          check_in_at: toIso(checkIn),
-          check_out_at: toIso(checkOut),
-          attendance_type: attendanceType,
-          status,
-          note: note || null,
-          location: location || null,
-          reference: reference || null,
-        },
-        { onSuccess: () => setEditing(false) },
-      );
-    } else {
-      try {
-        const res = await fetch("/api/attendance", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            member_id: record.member_id,
-            date: record.date,
-            check_in_at: toIso(checkIn),
-            check_out_at: toIso(checkOut),
-            attendance_type: attendanceType,
-            status,
-            note: note || null,
-            location: location || null,
-            reference: reference || null,
-          }),
-        });
-        if (res.ok) {
-          setEditing(false);
-          window.location.reload();
-        }
-      } catch {
-        // error handled silently
-      }
-    }
-  };
-
-  const handleCancel = () => {
-    setEditing(false);
-    setEditingField(null);
-    setCheckIn(formatTime(record.check_in_at));
-    setCheckOut(formatTime(record.check_out_at));
-    setAttendanceType(record.attendance_type || "출근");
-    setStatus(record.status || "pending");
-    setNote(record.note ?? "");
-    setLocation(record.location ?? "");
-    setReference(record.reference ?? "");
-  };
-
-  const handleTimeKeyDown = (
-    e: React.KeyboardEvent<HTMLInputElement>,
-    field: "checkIn" | "checkOut",
-    value: string,
-  ) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      saveField(field, value);
-    }
-    if (e.key === "Escape") {
-      e.preventDefault();
-      setEditingField(null);
-      if (field === "checkIn") setCheckIn(formatTime(record.check_in_at));
-      if (field === "checkOut") setCheckOut(formatTime(record.check_out_at));
-    }
-  };
-
   const cellClass = "px-3 py-3 align-middle text-slate-600";
 
   return (
     <tr
-      className={cn(
-        "border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50",
-        editing && "bg-slate-100/30",
-      )}
+      className="border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50"
     >
       {/* No */}
       <td className="px-3 py-3 text-center align-middle text-xs tabular-nums text-slate-400">
@@ -537,10 +459,8 @@ function InlineRow({
           value={attendanceType}
           onValueChange={(val) => {
             setAttendanceType(val);
-            if (!editing) {
-              if (record.id) {
-                updateMutation.mutate({ id: record.id, attendance_type: val });
-              }
+            if (record.id) {
+              updateMutation.mutate({ id: record.id, attendance_type: val });
             }
           }}
         >
@@ -565,7 +485,7 @@ function InlineRow({
           value={status}
           onValueChange={(val) => {
             setStatus(val);
-            if (!editing && record.id) {
+            if (record.id) {
               updateMutation.mutate({ id: record.id, status: val });
             }
           }}
@@ -594,76 +514,52 @@ function InlineRow({
       </td>
       {/* 출근시간 - 인라인 편집 */}
       <td className={cn(cellClass, "relative")}>
-        {editing ? (
-          <Input
-            type="time"
-            step={1}
+        <button
+          className="text-xs text-slate-600 hover:text-slate-800 hover:underline underline-offset-2 decoration-dashed"
+          onClick={() => setEditingField("checkIn")}
+        >
+          {formatTime(record.check_in_at) || "-"}
+        </button>
+        {editingField === "checkIn" && (
+          <TimeEditDropdown
+            label="출근시간"
             value={checkIn}
-            onChange={(e) => setCheckIn(e.target.value)}
-            className="h-7 w-[110px] text-xs"
+            onChange={setCheckIn}
+            onSave={() => {
+              const original = formatTime(record.check_in_at);
+              if (checkIn !== original) saveField("checkIn", checkIn);
+              else setEditingField(null);
+            }}
+            onCancel={() => {
+              setCheckIn(formatTime(record.check_in_at));
+              setEditingField(null);
+            }}
           />
-        ) : (
-          <>
-            <button
-              className="text-xs text-slate-600 hover:text-slate-800 hover:underline underline-offset-2 decoration-dashed"
-              onClick={() => setEditingField("checkIn")}
-            >
-              {formatTime(record.check_in_at) || "-"}
-            </button>
-            {editingField === "checkIn" && (
-              <TimeEditDropdown
-                label="출근시간"
-                value={checkIn}
-                onChange={setCheckIn}
-                onSave={() => {
-                  const original = formatTime(record.check_in_at);
-                  if (checkIn !== original) saveField("checkIn", checkIn);
-                  else setEditingField(null);
-                }}
-                onCancel={() => {
-                  setCheckIn(formatTime(record.check_in_at));
-                  setEditingField(null);
-                }}
-              />
-            )}
-          </>
         )}
       </td>
       {/* 퇴근시간 - 인라인 편집 */}
       <td className={cn(cellClass, "relative")}>
-        {editing ? (
-          <Input
-            type="time"
-            step={1}
+        <button
+          className="text-xs text-slate-600 hover:text-slate-800 hover:underline underline-offset-2 decoration-dashed"
+          onClick={() => setEditingField("checkOut")}
+        >
+          {formatTime(record.check_out_at) || "-"}
+        </button>
+        {editingField === "checkOut" && (
+          <TimeEditDropdown
+            label="퇴근시간"
             value={checkOut}
-            onChange={(e) => setCheckOut(e.target.value)}
-            className="h-7 w-[110px] text-xs"
+            onChange={setCheckOut}
+            onSave={() => {
+              const original = formatTime(record.check_out_at);
+              if (checkOut !== original) saveField("checkOut", checkOut);
+              else setEditingField(null);
+            }}
+            onCancel={() => {
+              setCheckOut(formatTime(record.check_out_at));
+              setEditingField(null);
+            }}
           />
-        ) : (
-          <>
-            <button
-              className="text-xs text-slate-600 hover:text-slate-800 hover:underline underline-offset-2 decoration-dashed"
-              onClick={() => setEditingField("checkOut")}
-            >
-              {formatTime(record.check_out_at) || "-"}
-            </button>
-            {editingField === "checkOut" && (
-              <TimeEditDropdown
-                label="퇴근시간"
-                value={checkOut}
-                onChange={setCheckOut}
-                onSave={() => {
-                  const original = formatTime(record.check_out_at);
-                  if (checkOut !== original) saveField("checkOut", checkOut);
-                  else setEditingField(null);
-                }}
-                onCancel={() => {
-                  setCheckOut(formatTime(record.check_out_at));
-                  setEditingField(null);
-                }}
-              />
-            )}
-          </>
         )}
       </td>
       {/* 연장시간 */}
@@ -672,45 +568,15 @@ function InlineRow({
       </td>
       {/* 장소 */}
       <td className={cellClass}>
-        {editing ? (
-          <Input
-            type="text"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            className="h-7 w-[80px] text-xs"
-            placeholder="장소"
-          />
-        ) : (
-          <span className="text-xs">{record.location || "-"}</span>
-        )}
+        <span className="text-xs">{record.location || "-"}</span>
       </td>
       {/* 참조 */}
       <td className={cellClass}>
-        {editing ? (
-          <Input
-            type="text"
-            value={reference}
-            onChange={(e) => setReference(e.target.value)}
-            className="h-7 w-[80px] text-xs"
-            placeholder="참조"
-          />
-        ) : (
-          <span className="text-xs">{record.reference || "-"}</span>
-        )}
+        <span className="text-xs">{record.reference || "-"}</span>
       </td>
       {/* 내용 */}
       <td className={cellClass}>
-        {editing ? (
-          <Input
-            type="text"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            className="h-7 w-[100px] text-xs"
-            placeholder="내용"
-          />
-        ) : (
-          <span className="text-xs text-slate-400">{record.note || "-"}</span>
-        )}
+        <span className="text-xs text-slate-400">{record.note || "-"}</span>
       </td>
       {/* 승인자 */}
       <td className={cellClass}>{record.approver?.full_name ?? "-"}</td>

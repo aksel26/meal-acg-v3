@@ -24,6 +24,7 @@ type MemberRow = {
 
 type BalanceRow = {
   member_id: string;
+  year: number;
   type: string;
   granted: number | null;
   used: number | null;
@@ -63,27 +64,15 @@ function monthsAfter(dateValue: string, months: number) {
   return formatDate(date);
 }
 
-function yearsAfter(dateValue: string, years: number) {
-  const date = new Date(`${dateValue}T00:00:00`);
-  date.setFullYear(date.getFullYear() + years);
-  return date;
-}
-
-function calculateMonthlyLeaveForYear(hireDate: Date, year: number) {
-  const hireYear = hireDate.getFullYear();
-  const hireMonth = hireDate.getMonth() + 1;
-  const firstAnniversary = new Date(hireDate);
-  firstAnniversary.setFullYear(firstAnniversary.getFullYear() + 1);
-
-  if (hireYear === year) {
-    return Math.max(0, Math.min(11, 12 - hireMonth));
-  }
-
-  if (firstAnniversary.getFullYear() === year) {
-    return Math.max(0, Math.min(11, firstAnniversary.getMonth()));
-  }
-
-  return 0;
+function calculateProratedAnnualLeave(hireDate: Date, year: number) {
+  const hireDateUtc = Date.UTC(
+    hireDate.getFullYear(),
+    hireDate.getMonth(),
+    hireDate.getDate(),
+  );
+  const yearStartUtc = Date.UTC(year, 0, 1);
+  const employedDays = (yearStartUtc - hireDateUtc) / (24 * 60 * 60 * 1000);
+  return Math.round(((BASE_ANNUAL_LEAVE_DAYS * employedDays) / 365) * 10) / 10;
 }
 
 function completedYearsAt(hireDate: Date, targetDate: Date) {
@@ -135,6 +124,7 @@ function calculateMember(
   member: MemberRow,
   year: number,
   balancesByMember: Map<string, Map<string, number>>,
+  previousMonthlyRemainingByMember: Map<string, number>,
 ) {
   const position = first(member.position);
   const team = first(member.teams);
@@ -197,12 +187,12 @@ function calculateMember(
   }
 
   const hireDate = new Date(`${member.hire_date}T00:00:00`);
-  const yearStart = new Date(`${year}-01-01T00:00:00`);
   const today = new Date();
-  const firstAnniversary = yearsAfter(member.hire_date, 1);
-  const isLessThanOneYear = firstAnniversary > yearStart;
+  const hireYear = hireDate.getFullYear();
   const yearsEmployed = completedYearsAt(hireDate, today);
   const monthsEmployed = completedMonthsAt(hireDate, today);
+  const previousMonthlyRemaining =
+    previousMonthlyRemainingByMember.get(member.id) ?? 0;
   const conversionDate =
     member.intern_months && member.intern_months > 0
       ? monthsAfter(member.hire_date, member.intern_months)
@@ -231,20 +221,66 @@ function calculateMember(
       basis: "해당없음",
       status: "not_applicable",
     }));
-  } else if (isLessThanOneYear) {
-    const monthly = calculateMonthlyLeaveForYear(hireDate, year);
+  } else if (hireYear > year) {
+    notes.push("선택한 연도 이후 입사자입니다.");
+    pushItem(buildItem(balancesByMember, member.id, {
+      type: "monthly",
+      label: "월차",
+      calculated: 0,
+      basis: "입사 전 연도",
+      status: "not_applicable",
+    }));
+    pushItem(buildItem(balancesByMember, member.id, {
+      type: "annual",
+      label: "연차",
+      calculated: 0,
+      basis: "입사 전 연도",
+      status: "not_applicable",
+    }));
+    pushItem(buildItem(balancesByMember, member.id, {
+      type: "summer",
+      label: "하계휴가",
+      calculated: 0,
+      basis: "해당없음",
+      status: "not_applicable",
+    }));
+  } else if (hireYear === year) {
+    const monthly = Math.max(0, Math.min(11, 12 - (hireDate.getMonth() + 1)));
     pushItem(buildItem(balancesByMember, member.id, {
       type: "monthly",
       label: "월차",
       calculated: monthly,
-      basis: `1년 미만 입사자 월차 = 해당 연도 1년 도달 전 월 수`,
+      basis: "입사연도 월차 = 12 - 입사월",
       status: "calculated",
     }));
     pushItem(buildItem(balancesByMember, member.id, {
       type: "annual",
       label: "연차",
       calculated: 0,
-      basis: "1년 미만 입사자는 연차 대신 월차 기준 적용",
+      basis: "입사연도는 월차 기준 적용",
+      status: "not_applicable",
+    }));
+    pushItem(buildItem(balancesByMember, member.id, {
+      type: "summer",
+      label: "하계휴가",
+      calculated: 0,
+      basis: "해당없음",
+      status: "not_applicable",
+    }));
+  } else if (hireYear === year - 1) {
+    const proratedAnnual = calculateProratedAnnualLeave(hireDate, year);
+    pushItem(buildItem(balancesByMember, member.id, {
+      type: "annual",
+      label: "연차",
+      calculated: proratedAnnual + previousMonthlyRemaining,
+      basis: `비례연차 ${proratedAnnual}일 + 전년도 잔여 월차 ${previousMonthlyRemaining}일`,
+      status: "calculated",
+    }));
+    pushItem(buildItem(balancesByMember, member.id, {
+      type: "monthly",
+      label: "월차",
+      calculated: 0,
+      basis: "전년도 잔여 월차는 비례연차에 합산",
       status: "not_applicable",
     }));
     pushItem(buildItem(balancesByMember, member.id, {
@@ -255,15 +291,17 @@ function calculateMember(
       status: "not_applicable",
     }));
   } else {
-    const accrual = accrualRule === "+1_per_3yr" ? Math.floor(yearsEmployed / 3) : 0;
+    const calendarYears = year - hireYear;
+    const accrual =
+      accrualRule === "+1_per_3yr" ? Math.floor(calendarYears / 3) : 0;
     pushItem(buildItem(balancesByMember, member.id, {
       type: "annual",
       label: "연차",
-      calculated: BASE_ANNUAL_LEAVE_DAYS + accrual,
+      calculated: annualLeaveDays + accrual,
       basis:
         accrualRule === "+1_per_3yr"
-          ? `기본 ${BASE_ANNUAL_LEAVE_DAYS}일 + ${yearsEmployed}년차 / 3년 가산 ${accrual}일`
-          : `기본 연차 ${BASE_ANNUAL_LEAVE_DAYS}일`,
+          ? `기본 ${annualLeaveDays}일 + ${calendarYears}년 / 3년 가산 ${accrual}일`
+          : `기본 연차 ${annualLeaveDays}일`,
       status: "calculated",
     }));
     pushItem(buildItem(balancesByMember, member.id, {
@@ -282,18 +320,8 @@ function calculateMember(
     }));
   }
 
-  pushItem(buildItem(balancesByMember, member.id, {
-    type: "carryover",
-    label: "이월",
-    calculated: null,
-    basis: "이월 휴가 수와 만료일 데이터가 없어 자동 계산하지 않습니다.",
-    status: "unavailable",
-  }));
-
   if (conversionDate) {
     notes.push(`정규직 전환 기준일은 입사일 + 인턴 ${member.intern_months}개월로 추정됩니다.`);
-  } else {
-    notes.push("정규직 전환일 데이터가 없어 전환 후 이월 계산은 제외됩니다.");
   }
 
   const totalCalculated = items.reduce(
@@ -356,8 +384,8 @@ export async function GET(request: NextRequest) {
         .order("full_name"),
       supabase
         .from("leave_balances")
-        .select("member_id, type, granted, used, adjusted")
-        .eq("year", year),
+        .select("member_id, year, type, granted, used, adjusted")
+        .in("year", [year - 1, year]),
       supabase
         .from("member_current_status")
         .select("member_id, current_status"),
@@ -380,7 +408,21 @@ export async function GET(request: NextRequest) {
     );
 
     const balancesByMember = new Map<string, Map<string, number>>();
+    const previousMonthlyRemainingByMember = new Map<string, number>();
     for (const balance of (balancesResult.data ?? []) as BalanceRow[]) {
+      if (balance.year === year - 1 && balance.type === "monthly") {
+        previousMonthlyRemainingByMember.set(
+          balance.member_id,
+          Math.max(
+            0,
+            (balance.granted ?? 0) +
+              (balance.adjusted ?? 0) -
+              (balance.used ?? 0),
+          ),
+        );
+      }
+      if (balance.year !== year) continue;
+
       if (!balancesByMember.has(balance.member_id)) {
         balancesByMember.set(balance.member_id, new Map());
       }
@@ -399,7 +441,14 @@ export async function GET(request: NextRequest) {
 
     const members = ((membersResult.data ?? []) as MemberRow[])
       .filter((member) => !retiredIds.has(member.id))
-      .map((member) => calculateMember(member, year, balancesByMember));
+      .map((member) =>
+        calculateMember(
+          member,
+          year,
+          balancesByMember,
+          previousMonthlyRemainingByMember,
+        ),
+      );
 
     const summary = members.reduce(
       (acc, member) => {
@@ -425,13 +474,15 @@ export async function GET(request: NextRequest) {
       year,
       generatedAt: new Date().toISOString(),
       rules: {
-        monthly: "1년 미만 입사자: 해당 연도 1년 도달 전 월 수",
-        annual: "1년 이상 입사자: 기본 연차 15일 + 3년 단위 가산",
+        monthly: "입사연도: 12 - 입사월",
+        annual:
+          "입사 다음 해: 비례연차 + 전년도 잔여 월차, 이후: 직급 기본 연차 + 3년 단위 가산",
         summer: "해당없음 0일",
         deduction: "연차 1일, 반차 0.5일, 반반차 0.25일 차감",
         balance: "잔여 = 부여 + 조정 - 사용, 사용 차감은 연차 우선 후 월차",
         conversion: "정규직 전환일은 별도 저장값 없이 입사일 + 인턴 개월 수로만 참고 표시",
-        carryover: "이월 휴가는 현재 기준 데이터가 없어 자동 계산 제외",
+        carryover:
+          "입사연도 월차 잔여(부여 + 조정 - 사용)를 다음 해 비례연차에 합산",
       },
       summary,
       members,

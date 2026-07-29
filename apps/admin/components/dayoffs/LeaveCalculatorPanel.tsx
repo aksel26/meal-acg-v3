@@ -15,7 +15,7 @@ import { useLeaveCalculatorPreview } from "@/hooks/useLeaveCalculator";
 
 function formatDays(value: number | null) {
   if (value === null) return "-";
-  return Number.isInteger(value) ? `${value}일` : `${value.toFixed(1)}일`;
+  return `${Number.isInteger(value) ? value : value.toFixed(2).replace(/0$/, "")}일`;
 }
 
 function formatDate(value: string | null) {
@@ -214,11 +214,14 @@ export function LeaveCalculatorPanel({ year }: { year: number }) {
           <div className="grid gap-2 md:grid-cols-2">
             <RuleItem
               label="월차"
-              value={data?.rules.monthly ?? "1년 미만 입사자 월차"}
+              value={data?.rules.monthly ?? "입사연도: 12 - 입사월"}
             />
             <RuleItem
               label="연차"
-              value={data?.rules.annual ?? "기본 연차 15일"}
+              value={
+                data?.rules.annual ??
+                "입사 다음 해: 비례연차 + 전년도 잔여 월차"
+              }
             />
             <RuleItem
               label="하계휴가"
@@ -238,7 +241,10 @@ export function LeaveCalculatorPanel({ year }: { year: number }) {
             />
             <RuleItem
               label="이월"
-              value={data?.rules.carryover ?? "자동 계산 제외"}
+              value={
+                data?.rules.carryover ??
+                "입사연도 월차 잔여를 다음 해 비례연차에 합산"
+              }
             />
           </div>
         </DialogContent>

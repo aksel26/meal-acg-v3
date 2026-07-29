@@ -267,7 +267,7 @@ export async function PUT(request: NextRequest) {
           p_actor_id: memberId,
           p_action: rpcAction,
           p_require_assigned_approver: true,
-          p_reject_reason: normalizedRejectReason || null,
+          p_reject_reason: normalizedRejectReason || undefined,
         })
         .single();
 

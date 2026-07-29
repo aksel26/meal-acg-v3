@@ -47,7 +47,6 @@ export async function PATCH(
         p_actor_id: sessionUser.id,
         p_action: "approve",
         p_require_assigned_approver: true,
-        p_reject_reason: null,
       })
       .single();
 

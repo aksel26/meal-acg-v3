@@ -2,7 +2,7 @@
   "$schema": "https://turborepo.com/schema.json",
   "ui": "tui",
   "globalDependencies": [".env*"],
-  "globalPassThroughEnv": ["NODE_ENV"],
+  "globalPassThroughEnv": ["NODE_ENV", "CI", "NEXT_RUNTIME"],
   "tasks": {
     "build:styles": {
       "outputs": ["dist/**"],
@@ -47,7 +47,12 @@
         "CAREERS_APP_URL",
         "CAREERS_SESSION_SECRET",
         "VAPID_PRIVATE_KEY",
-        "VAPID_SUBJECT"
+        "VAPID_SUBJECT",
+        "SESSION_SECRET",
+        "ADMIN_SESSION_SECRET",
+        "SUPERVISOR_APP_URL",
+        "SUPERVISOR_SESSION_SECRET",
+        "SUPERVISOR_EDITOR_TEAM_ID"
       ]
     },
     "lint": {

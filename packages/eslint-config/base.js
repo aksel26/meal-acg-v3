@@ -22,6 +22,19 @@ export const config = [
     },
   },
   {
+    rules: {
+      // `_` prefix marks a binding that exists only to be excluded from a rest spread.
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
+    },
+  },
+  {
     plugins: {
       onlyWarn,
     },

@@ -1,19 +1,23 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { DateRangePicker } from "@repo/ui/src/date-range-picker";
 import { toast } from "@repo/ui/src/sonner";
 import {
   OperationConfirmDialog,
   OperationEmpty,
+  OperationFormDialog,
   OperationLoading,
   OperationPagination,
   OperationReasonDialog,
+  OperationToolbar,
   OperationsPage,
   OperationsSection,
   OperationStatus,
   operationButtonClass,
   operationDangerButtonClass,
   operationInputClass,
+  operationRecordClass,
   operationSecondaryButtonClass,
   operationTextareaClass,
 } from "@repo/ui/src/operations";
@@ -72,6 +76,7 @@ export function AdminCorporateCardsClient() {
   const [cardStatus, setCardStatus] = useState("active");
   const [monthlyLimit, setMonthlyLimit] = useState("");
   const [cardNote, setCardNote] = useState("");
+  const [cardFormOpen, setCardFormOpen] = useState(false);
   const [txEditingId, setTxEditingId] = useState<string | null>(null);
   const [txMemberId, setTxMemberId] = useState("");
   const [txCardId, setTxCardId] = useState("");
@@ -81,6 +86,7 @@ export function AdminCorporateCardsClient() {
   const [category, setCategory] = useState("");
   const [purpose, setPurpose] = useState("");
   const [txNote, setTxNote] = useState("");
+  const [txFormOpen, setTxFormOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -153,10 +159,12 @@ export function AdminCorporateCardsClient() {
       });
       toast.success("처리했습니다.");
       await load();
+      return true;
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "처리에 실패했습니다.",
       );
+      return false;
     } finally {
       setBusy(false);
     }
@@ -164,7 +172,7 @@ export function AdminCorporateCardsClient() {
 
   async function saveCard(event: React.FormEvent) {
     event.preventDefault();
-    await call(cardEditingId ? "PATCH" : "POST", {
+    const saved = await call(cardEditingId ? "PATCH" : "POST", {
       id: cardEditingId,
       action: cardEditingId ? "update_card" : "create_card",
       name: cardName,
@@ -176,12 +184,15 @@ export function AdminCorporateCardsClient() {
       monthlyLimit,
       note: cardNote,
     });
-    resetCard();
+    if (saved) {
+      setCardFormOpen(false);
+      resetCard();
+    }
   }
 
   async function saveTransaction(event: React.FormEvent) {
     event.preventDefault();
-    await call(txEditingId ? "PATCH" : "POST", {
+    const saved = await call(txEditingId ? "PATCH" : "POST", {
       id: txEditingId,
       action: txEditingId ? "update_transaction" : "create_transaction",
       memberId: txMemberId,
@@ -193,7 +204,10 @@ export function AdminCorporateCardsClient() {
       businessPurpose: purpose,
       note: txNote,
     });
-    resetTransaction();
+    if (saved) {
+      setTxFormOpen(false);
+      resetTransaction();
+    }
   }
 
   return (
@@ -202,11 +216,14 @@ export function AdminCorporateCardsClient() {
       title="기업카드 관리"
       description="민감정보 없이 카드 기준정보와 사용 내역을 관리합니다."
     >
-      <OperationsSection
-        key={cardEditingId ?? "new-card"}
+      <OperationFormDialog
+        open={cardFormOpen}
+        onOpenChange={(open) => {
+          setCardFormOpen(open);
+          if (!open) resetCard();
+        }}
         title={cardEditingId ? "카드 수정" : "카드 추가"}
-        collapsible
-        defaultOpen={Boolean(cardEditingId)}
+        description="카드 번호 전체를 제외한 관리 정보를 입력해주세요."
       >
         <form onSubmit={saveCard} className="grid gap-3 md:grid-cols-4">
           <label className="text-sm text-slate-600">
@@ -305,28 +322,57 @@ export function AdminCorporateCardsClient() {
               className={`mt-1 ${operationInputClass}`}
             />
           </label>
-          <div className="flex gap-2 md:col-span-4">
+          <div className="flex justify-end gap-2 md:col-span-4">
+            <button
+              type="button"
+              onClick={() => setCardFormOpen(false)}
+              className={operationSecondaryButtonClass}
+            >
+              취소
+            </button>
             <button disabled={busy} className={operationButtonClass}>
               저장
             </button>
-            {cardEditingId && (
-              <button
-                type="button"
-                onClick={resetCard}
-                className={operationSecondaryButtonClass}
-              >
-                새 카드
-              </button>
-            )}
           </div>
         </form>
-      </OperationsSection>
+      </OperationFormDialog>
 
       <OperationsSection title="카드 목록">
+        <OperationToolbar
+          action={
+            cards.length > 0 ? (
+              <button
+                type="button"
+                className={operationButtonClass}
+                onClick={() => {
+                  resetCard();
+                  setCardFormOpen(true);
+                }}
+              >
+                카드 추가
+              </button>
+            ) : undefined
+          }
+        />
         {loading ? (
           <OperationLoading label="기업카드 목록을 불러오는 중" />
         ) : cards.length === 0 ? (
-          <OperationEmpty>등록된 기업카드가 없습니다.</OperationEmpty>
+          <OperationEmpty
+            action={
+              <button
+                type="button"
+                className={operationButtonClass}
+                onClick={() => {
+                  resetCard();
+                  setCardFormOpen(true);
+                }}
+              >
+                카드 추가
+              </button>
+            }
+          >
+            등록된 기업카드가 없습니다.
+          </OperationEmpty>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {cards.map((card) => (
@@ -362,6 +408,7 @@ export function AdminCorporateCardsClient() {
                           : String(card.monthly_limit),
                       );
                       setCardNote(card.note ?? "");
+                      setCardFormOpen(true);
                     }}
                   >
                     수정
@@ -370,9 +417,13 @@ export function AdminCorporateCardsClient() {
                     title="기업카드를 삭제할까요?"
                     description="사용 내역이 연결된 카드는 삭제할 수 없습니다."
                     confirmLabel="카드 삭제"
-                    onConfirm={() =>
-                      call("DELETE", undefined, `?type=card&id=${card.id}`)
-                    }
+                    onConfirm={async () => {
+                      await call(
+                        "DELETE",
+                        undefined,
+                        `?type=card&id=${card.id}`,
+                      );
+                    }}
                   >
                     <button
                       type="button"
@@ -389,11 +440,14 @@ export function AdminCorporateCardsClient() {
         )}
       </OperationsSection>
 
-      <OperationsSection
-        key={txEditingId ?? "new-transaction"}
+      <OperationFormDialog
+        open={txFormOpen}
+        onOpenChange={(open) => {
+          setTxFormOpen(open);
+          if (!open) resetTransaction();
+        }}
         title={txEditingId ? "사용 내역 수정" : "사용 내역 추가"}
-        collapsible
-        defaultOpen={Boolean(txEditingId)}
+        description="사용자, 카드, 사용일과 비용 정보를 입력해주세요."
       >
         <form onSubmit={saveTransaction} className="grid gap-3 md:grid-cols-4">
           <label className="text-sm text-slate-600">
@@ -426,12 +480,14 @@ export function AdminCorporateCardsClient() {
           </label>
           <label className="text-sm text-slate-600">
             사용일
-            <input
-              type="date"
-              required
-              value={usageDate}
-              onChange={(event) => setUsageDate(event.target.value)}
-              className={`mt-1 ${operationInputClass}`}
+            <DateRangePicker
+              mode="single"
+              modal
+              startDate={usageDate}
+              ariaLabel="기업카드 사용일"
+              placeholder="사용일 선택"
+              className="mt-1"
+              onChange={({ startDate }) => setUsageDate(startDate)}
             />
           </label>
           <label className="text-sm text-slate-600">
@@ -480,38 +536,66 @@ export function AdminCorporateCardsClient() {
               className={`mt-1 ${operationTextareaClass}`}
             />
           </label>
-          <div className="flex gap-2 md:col-span-4">
+          <div className="flex justify-end gap-2 md:col-span-4">
             <button
-              disabled={busy || cards.length === 0}
+              type="button"
+              onClick={() => setTxFormOpen(false)}
+              className={operationSecondaryButtonClass}
+            >
+              취소
+            </button>
+            <button
+              disabled={busy || cards.length === 0 || !usageDate}
               className={operationButtonClass}
             >
               저장
             </button>
-            {txEditingId && (
-              <button
-                type="button"
-                onClick={resetTransaction}
-                className={operationSecondaryButtonClass}
-              >
-                새 내역
-              </button>
-            )}
           </div>
         </form>
-      </OperationsSection>
+      </OperationFormDialog>
 
       <OperationsSection title="사용 내역 검토">
+        <OperationToolbar
+          action={
+            transactions.length > 0 ? (
+              <button
+                type="button"
+                className={operationButtonClass}
+                disabled={cards.length === 0}
+                onClick={() => {
+                  resetTransaction();
+                  setTxFormOpen(true);
+                }}
+              >
+                사용 내역 추가
+              </button>
+            ) : undefined
+          }
+        />
         {loading ? (
           <OperationLoading label="기업카드 사용 내역을 불러오는 중" />
         ) : transactions.length === 0 ? (
-          <OperationEmpty>등록된 사용 내역이 없습니다.</OperationEmpty>
+          <OperationEmpty
+            action={
+              <button
+                type="button"
+                className={operationButtonClass}
+                disabled={cards.length === 0}
+                onClick={() => {
+                  resetTransaction();
+                  setTxFormOpen(true);
+                }}
+              >
+                사용 내역 추가
+              </button>
+            }
+          >
+            등록된 사용 내역이 없습니다.
+          </OperationEmpty>
         ) : (
           <div className="space-y-2">
             {transactions.map((item) => (
-              <div
-                key={item.id}
-                className="rounded-xl border border-slate-100 p-3"
-              >
+              <div key={item.id} className={operationRecordClass}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold">
@@ -549,6 +633,7 @@ export function AdminCorporateCardsClient() {
                           setCategory(item.category);
                           setPurpose(item.business_purpose);
                           setTxNote(item.note ?? "");
+                          setTxFormOpen(true);
                         }}
                       >
                         수정
@@ -570,13 +655,13 @@ export function AdminCorporateCardsClient() {
                         description="사용자에게 표시할 반려 사유를 입력해주세요."
                         label="반려 사유"
                         confirmLabel="반려"
-                        onConfirm={(reason) =>
-                          call("PATCH", {
+                        onConfirm={async (reason) => {
+                          await call("PATCH", {
                             id: item.id,
                             action: "reject_transaction",
                             reason,
-                          })
-                        }
+                          });
+                        }}
                       >
                         <button
                           type="button"
@@ -610,13 +695,13 @@ export function AdminCorporateCardsClient() {
                       title="사용 내역을 삭제할까요?"
                       description="삭제한 사용 내역은 복구할 수 없습니다."
                       confirmLabel="내역 삭제"
-                      onConfirm={() =>
-                        call(
+                      onConfirm={async () => {
+                        await call(
                           "DELETE",
                           undefined,
                           `?type=transaction&id=${item.id}`,
-                        )
-                      }
+                        );
+                      }}
                     >
                       <button
                         type="button"

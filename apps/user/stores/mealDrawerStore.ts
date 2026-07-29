@@ -99,7 +99,7 @@ const getNextStep = (
     }
   }
 
-  let nextIndex = currentIndex + 1;
+  const nextIndex = currentIndex + 1;
   const result = stepOrder[nextIndex];
   return result !== undefined ? result : null;
 };
@@ -118,7 +118,7 @@ const getPrevStep = (
     return "attendance";
   }
 
-  let prevIndex = currentIndex - 1;
+  const prevIndex = currentIndex - 1;
   const result = stepOrder[prevIndex];
   return result !== undefined ? result : null;
 };
@@ -142,7 +142,7 @@ export const useMealDrawerStore = create<MealDrawerState>((set, get) => ({
 
     // 기존 데이터가 있으면 모든 식사 타입의 데이터를 유지
     // (MealTypeStep에서 다른 타입을 선택할 수 있으므로 특정 타입을 초기화하지 않음)
-    let updatedFormData = { ...initialFormData };
+    const updatedFormData = { ...initialFormData };
     if (existingMealData) {
       if (existingMealData.breakfast) {
         updatedFormData.breakfast = {

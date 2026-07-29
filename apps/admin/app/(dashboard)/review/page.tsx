@@ -928,7 +928,7 @@ function ReviewPageContent() {
                 </tr>
               </thead>
               <tbody>
-                {records.map((record, index) => (
+                {records.map((record) => (
                   <tr
                     key={record.id}
                     className={cn(

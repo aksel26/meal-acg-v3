@@ -51,7 +51,7 @@ export default function Page() {
           Click the button below, and view the sample error on the Sentry{" "}
           <a
             target="_blank"
-            rel="noopener"
+            rel="noopener noreferrer"
             href="http://115.68.68.138:9300/organizations/acg/issues/?project=1"
           >
             Issues Page
@@ -59,7 +59,7 @@ export default function Page() {
           . For more details about setting up Sentry,{" "}
           <a
             target="_blank"
-            rel="noopener"
+            rel="noopener noreferrer"
             href="https://docs.sentry.io/platforms/javascript/guides/nextjs/"
           >
             read our docs

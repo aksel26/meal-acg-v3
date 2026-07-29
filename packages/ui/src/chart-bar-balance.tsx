@@ -1,7 +1,7 @@
 "use client";
 
 import { TrendingUp, TrendingDown } from "lucide-react";
-import { Bar, BarChart, XAxis, CartesianGrid, Cell } from "recharts";
+import { Bar, BarChart, XAxis, CartesianGrid } from "recharts";
 
 import { CardContent } from "./card";
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "./chart";

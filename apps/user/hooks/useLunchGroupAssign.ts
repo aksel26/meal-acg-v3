@@ -51,7 +51,7 @@ export function useLunchGroupAssign() {
 
   return useMutation({
     mutationFn: assignLunchGroup,
-    onSuccess: (data) => {
+    onSuccess: () => {
       // 성공시 관련 캐시 무효화
       queryClient.invalidateQueries({
         queryKey: queryKeys.lunchGroup.all,

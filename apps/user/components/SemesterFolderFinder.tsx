@@ -110,12 +110,12 @@ export default function SemesterFolderFinder({ onFolderFound }: Props) {
         <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
           <h3 className="font-semibold text-yellow-800 mb-2">폴더를 찾을 수 없습니다</h3>
           <p className="text-yellow-700 mb-3">
-            '{semesterInfo?.folderName}' 폴더가 존재하지 않거나 접근 권한이 없습니다.
+            &apos;{semesterInfo?.folderName}&apos; 폴더가 존재하지 않거나 접근 권한이 없습니다.
           </p>
           <div className="text-sm text-yellow-700">
             <p className="mb-2"><strong>해결 방법:</strong></p>
             <ul className="list-disc list-inside space-y-1">
-              <li>Google Drive에서 '{semesterInfo?.folderName}' 폴더를 생성하세요</li>
+              <li>Google Drive에서 &apos;{semesterInfo?.folderName}&apos; 폴더를 생성하세요</li>
               <li>기존 폴더가 있다면 서비스 계정과 공유하세요</li>
               <li>공유 드라이브에 폴더를 만들고 서비스 계정을 멤버로 추가하세요</li>
             </ul>

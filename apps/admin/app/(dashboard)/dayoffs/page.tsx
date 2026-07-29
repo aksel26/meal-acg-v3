@@ -44,7 +44,6 @@ import {
   useDayoffs,
   useLeaveTypes,
   type DayoffRecord,
-  type LeaveType,
 } from "@/hooks/useDayoffs";
 import {
   useCreateDayoff,

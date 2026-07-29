@@ -153,7 +153,7 @@ export default function ExcelFileFinder({ folder, fileName, onFileFound, onBack 
         <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
           <h3 className="font-semibold text-yellow-800 mb-2">파일을 찾을 수 없습니다</h3>
           <p className="text-yellow-700 mb-3">
-            '{fileName}' 이름과 일치하는 엑셀 파일이 '{folder.name}' 폴더에 없습니다.
+            &apos;{fileName}&apos; 이름과 일치하는 엑셀 파일이 &apos;{folder.name}&apos; 폴더에 없습니다.
           </p>
           <div className="text-sm text-yellow-700">
             <p className="mb-2"><strong>확인사항:</strong></p>

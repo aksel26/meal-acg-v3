@@ -153,7 +153,6 @@ function RoomDropdown({
 }
 
 function AttendancePopover({
-  assignmentId,
   currentStatus,
   confirmedBy,
   onChangeStatus,
@@ -204,7 +203,6 @@ function AttendancePopover({
 }
 
 function ContractPopover({
-  assignmentId,
   currentStatus,
   confirmedBy,
   confirmedAt,

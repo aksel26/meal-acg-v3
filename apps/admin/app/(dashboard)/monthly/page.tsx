@@ -34,7 +34,6 @@ import {
 import { SearchableDropdown } from "@repo/ui/src/searchable-dropdown";
 import { toast } from "@repo/ui/src/sonner";
 import {
-  ChevronLeft,
   Settings,
   Coffee,
   Plus,

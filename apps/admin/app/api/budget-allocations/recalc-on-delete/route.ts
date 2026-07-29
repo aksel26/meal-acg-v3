@@ -233,7 +233,7 @@ async function upsertBudgetAllocation(
       .from("budget_allocations")
       .insert({
         member_id: memberId,
-        type: "활동비" as "활동비",
+        type: "활동비" as const,
         period,
         total_amount: totalAmount,
       });

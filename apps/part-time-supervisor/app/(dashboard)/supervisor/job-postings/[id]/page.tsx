@@ -4,7 +4,7 @@ import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useJobPosting } from "@/hooks/use-job-postings";
 import { useAssignmentsByJobPosting } from "@/hooks/use-assignments";
-import { ArrowLeft, Download, MessageSquare, Pencil, QrCode, UserPlus, Users } from "lucide-react";
+import { ArrowLeft, Download, MessageSquare, QrCode, UserPlus, Users } from "lucide-react";
 import { generateContractListExcel, getContractFileName } from "@/lib/excel-export";
 import dayjs from "dayjs";
 import "dayjs/locale/ko";

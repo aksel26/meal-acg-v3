@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
-import { requireAdmin, getSession } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 
 // GET /api/settlement - Get settlement status for a month
 export async function GET(request: NextRequest) {

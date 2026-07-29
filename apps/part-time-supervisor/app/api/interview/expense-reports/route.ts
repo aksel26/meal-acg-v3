@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
 
     // year/month 기반 목록 조회
     if (year && month) {
-      let query = supabase
+      const query = supabase
         .from("interview_expense_reports")
         .select("*")
         .eq("year", Number(year))

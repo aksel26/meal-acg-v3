@@ -150,7 +150,7 @@ export default function SemesterFileReader() {
       {!userName && (
         <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
           <h3 className="font-semibold text-yellow-800 mb-2">이름 설정이 필요합니다</h3>
-          <p className="text-yellow-700 mb-3">로컬스토리지에 'name' 값이 설정되지 않았습니다.</p>
+          <p className="text-yellow-700 mb-3">로컬스토리지에 &apos;name&apos; 값이 설정되지 않았습니다.</p>
           <div className="flex gap-2">
             <input
               type="text"

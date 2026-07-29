@@ -177,7 +177,7 @@ export default function ImportPage() {
             matchedMember,
             status: "pending",
           });
-        } catch (error) {
+        } catch {
           toast.error(`${file.name}: 파일 읽기 실패`);
         }
       }

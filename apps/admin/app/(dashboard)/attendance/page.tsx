@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { ChevronLeft, ChevronRight, Save, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@repo/ui/src/button";
 import { Input } from "@repo/ui/src/input";
 import { DatePicker } from "@repo/ui/src/date-picker";

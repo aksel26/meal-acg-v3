@@ -57,7 +57,7 @@ export function useMealSubmit() {
 
   return useMutation({
     mutationFn: submitMealData,
-    onMutate: (variables) => {
+    onMutate: () => {
       // 로딩 토스트 표시
       const loadingToast = toast.loading(`식사 기록을 저장하는 중...`);
       

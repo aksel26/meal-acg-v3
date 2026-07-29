@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
-import type { MonthlyAllowancesJson, MonthlyAllowanceData } from "@/lib/supabase/types";
+import type { MonthlyAllowancesJson } from "@/lib/supabase/types";
 
 // GET /api/settings/monthly-allowances - Get monthly allowances from global_settings
 export async function GET(request: NextRequest) {

@@ -3,7 +3,6 @@ export const dynamic = "force-dynamic";
 
 import { createServiceClient } from "@/lib/supabase/client";
 import { NextResponse } from "next/server";
-import type { PopularRestaurant } from "@/types/restaurant";
 
 // GET: 전체 멤버의 누적 인기 음식점 조회
 export async function GET() {

@@ -18,7 +18,7 @@ import {
 import { Button } from "@repo/ui/src/button";
 import { ScrollArea } from "@repo/ui/src/scroll-area";
 import { AutoCompleteInput } from "@repo/ui/src/autocomplete-input";
-import { Check, Loader2, X } from "@repo/ui/icons";
+import { Loader2, X } from "@repo/ui/icons";
 import { motion } from "motion/react";
 import { useState, useMemo, useEffect } from "react";
 import dayjs from "dayjs";

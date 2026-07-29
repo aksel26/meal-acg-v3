@@ -35,8 +35,8 @@ export default function DateJobPostingNode({
 
   const badge = dayjs(date).format("M/D");
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const DayButtonWithDot = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return function DotDay(props: any) {
       const dateStr = dayjs(props.day.date).format("YYYY-MM-DD");
       const hasDot = jobPostingDates.has(dateStr);

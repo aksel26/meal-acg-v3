@@ -61,7 +61,7 @@ export function useDeleteContract() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, workerId }: { id: string; workerId: string }) => {
+    mutationFn: async ({ id }: { id: string; workerId: string }) => {
       const res = await fetch(`/api/contracts/${id}`, { method: "DELETE" });
       if (!res.ok) {
         const err = await res.json();

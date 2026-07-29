@@ -1,4 +1,3 @@
-/* eslint-disable react/prop-types */
 import * as React from "react";
 import { Calendar } from "@repo/ui/src/calendar";
 import dayjs from "dayjs";

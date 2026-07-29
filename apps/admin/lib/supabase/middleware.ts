@@ -6,7 +6,8 @@ export async function updateSession(request: NextRequest) {
     request,
   });
 
-  const supabase = createServerClient(
+  // 이 앱은 자체 `admin-session` 쿠키를 쓰므로 이 클라이언트는 실제로 사용되지 않는다.
+  const _supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {

@@ -8,7 +8,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { Button } from "./button";
 import {
   Command,
-  CommandDialog,
   CommandEmpty,
   CommandGroup,
   CommandInput,

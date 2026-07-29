@@ -46,7 +46,6 @@ import {
 import { toast } from "@repo/ui/src/sonner";
 import type {
   OrganizationTree,
-  OrgDivision,
   OrgTeam,
   OrgMember,
 } from "@/hooks/useOrganizationTree";

@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { DateRangePicker } from "@repo/ui/src/date-range-picker";
 import { toast } from "@repo/ui/src/sonner";
 import {
   OperationConfirmDialog,
@@ -12,10 +11,6 @@ import {
   OperationsSection,
   OperationStatus,
   operationButtonClass,
-  operationDangerButtonClass,
-  operationInputClass,
-  operationSecondaryButtonClass,
-  operationTextareaClass,
 } from "@repo/ui/src/operations";
 import { operationRequest } from "./client";
 
@@ -29,33 +24,24 @@ type ChecklistItem = {
   completed_at: string | null;
   sort_order: number;
 };
-type OffboardingRequest = {
+type OnboardingRequest = {
   id: string;
-  requested_final_working_date: string;
-  confirmed_final_working_date: string | null;
-  reason: string;
+  start_date: string;
   note: string | null;
-  status: string;
-  rejection_reason: string | null;
   admin_note: string | null;
+  status: string;
   created_at: string;
   checklist: ChecklistItem[];
 };
 
 const labels: Record<string, string> = {
-  pending: "검토 대기",
-  approved: "승인",
-  rejected: "반려",
+  in_progress: "진행 중",
   completed: "완료",
   cancelled: "취소",
 };
 
-export function UserOffboardingClient() {
-  const [requests, setRequests] = useState<OffboardingRequest[]>([]);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [date, setDate] = useState("");
-  const [reason, setReason] = useState("");
-  const [note, setNote] = useState("");
+export function UserOnboardingClient() {
+  const [requests, setRequests] = useState<OnboardingRequest[]>([]);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -64,9 +50,9 @@ export function UserOffboardingClient() {
   const load = useCallback(async () => {
     try {
       const data = await operationRequest<{
-        requests: OffboardingRequest[];
+        requests: OnboardingRequest[];
         pagination: { hasMore: boolean };
-      }>(`/api/offboarding?page=${page}`);
+      }>(`/api/onboarding?page=${page}`);
       setRequests(data.requests);
       setHasMore(data.pagination.hasMore);
     } finally {
@@ -78,46 +64,10 @@ export function UserOffboardingClient() {
     load().catch((error) => toast.error(error.message));
   }, [load]);
 
-  function reset() {
-    setEditingId(null);
-    setDate("");
-    setReason("");
-    setNote("");
-  }
-
-  async function submit(event: React.FormEvent) {
-    event.preventDefault();
-    setBusy(true);
-    try {
-      await operationRequest("/api/offboarding", {
-        method: editingId ? "PATCH" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: editingId,
-          action: editingId ? "update" : undefined,
-          requestedFinalWorkingDate: date,
-          reason,
-          note,
-        }),
-      });
-      toast.success(
-        editingId ? "요청을 수정했습니다." : "요청을 등록했습니다.",
-      );
-      reset();
-      await load();
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "요청에 실패했습니다.",
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function patch(payload: Record<string, unknown>, message: string) {
     setBusy(true);
     try {
-      await operationRequest("/api/offboarding", {
+      await operationRequest("/api/onboarding", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -133,86 +83,16 @@ export function UserOffboardingClient() {
     }
   }
 
-  async function cancel(id: string) {
-    setBusy(true);
-    try {
-      await operationRequest("/api/offboarding", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, action: "cancel" }),
-      });
-      toast.success("요청을 취소했습니다.");
-      await load();
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "취소에 실패했습니다.",
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
-
   return (
     <OperationsPage
-      title="오프보딩"
-      description="퇴사 요청을 등록하고, 승인된 오프보딩의 체크리스트를 직접 완료 처리합니다."
+      title="온보딩"
+      description="입사 후 진행할 항목을 확인하고 완료되면 직접 체크합니다."
     >
-      <OperationsSection title={editingId ? "요청 수정" : "오프보딩 요청"}>
-        <form onSubmit={submit} className="grid gap-3 md:grid-cols-2">
-          <div className="text-sm text-slate-600">
-            희망 최종 근무일
-            <DateRangePicker
-              mode="single"
-              startDate={date}
-              ariaLabel="희망 최종 근무일"
-              placeholder="희망일 선택"
-              className="mt-1"
-              onChange={({ startDate }) => setDate(startDate)}
-            />
-          </div>
-          <label className="text-sm text-slate-600">
-            사유
-            <input
-              name="reason"
-              required
-              value={reason}
-              onChange={(event) => setReason(event.target.value)}
-              className={`mt-1 ${operationInputClass}`}
-              maxLength={1000}
-            />
-          </label>
-          <label className="text-sm text-slate-600 md:col-span-2">
-            메모
-            <textarea
-              name="note"
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
-              className={`mt-1 ${operationTextareaClass}`}
-              maxLength={2000}
-            />
-          </label>
-          <div className="flex gap-2 md:col-span-2">
-            <button disabled={busy || !date} className={operationButtonClass}>
-              {editingId ? "수정 저장" : "요청 등록"}
-            </button>
-            {editingId && (
-              <button
-                type="button"
-                onClick={reset}
-                className={operationSecondaryButtonClass}
-              >
-                수정 취소
-              </button>
-            )}
-          </div>
-        </form>
-      </OperationsSection>
-
-      <OperationsSection title="나의 요청 이력">
+      <OperationsSection title="나의 온보딩">
         {loading ? (
-          <OperationLoading label="오프보딩 요청을 불러오는 중" />
+          <OperationLoading label="온보딩 정보를 불러오는 중" />
         ) : requests.length === 0 ? (
-          <OperationEmpty>등록된 요청이 없습니다.</OperationEmpty>
+          <OperationEmpty>진행 중인 온보딩이 없습니다.</OperationEmpty>
         ) : (
           <div className="space-y-3">
             {requests.map((item) => (
@@ -223,17 +103,17 @@ export function UserOffboardingClient() {
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <p className="font-semibold text-slate-950">
-                      희망 {item.requested_final_working_date}
-                      {item.confirmed_final_working_date &&
-                        ` · 확정 ${item.confirmed_final_working_date}`}
+                      시작일 {item.start_date}
                     </p>
-                    <p className="mt-1 text-sm text-slate-600">{item.reason}</p>
+                    {item.note && (
+                      <p className="mt-1 text-sm text-slate-600">{item.note}</p>
+                    )}
                   </div>
                   <OperationStatus value={item.status} labels={labels} />
                 </div>
-                {(item.rejection_reason || item.admin_note) && (
+                {item.admin_note && (
                   <p className="mt-3 rounded-lg bg-slate-50 p-3 text-sm text-slate-600">
-                    {item.rejection_reason || item.admin_note}
+                    {item.admin_note}
                   </p>
                 )}
                 {item.checklist.length > 0 && (
@@ -250,7 +130,7 @@ export function UserOffboardingClient() {
                               type="checkbox"
                               aria-label={check.title}
                               checked={check.is_completed}
-                              disabled={busy || item.status !== "approved"}
+                              disabled={busy || item.status !== "in_progress"}
                               onChange={(event) =>
                                 patch(
                                   {
@@ -282,16 +162,16 @@ export function UserOffboardingClient() {
                           </li>
                         ))}
                     </ul>
-                    {item.status === "approved" && (
+                    {item.status === "in_progress" && (
                       <div className="mt-4 flex flex-wrap items-center gap-2">
                         <OperationConfirmDialog
-                          title="오프보딩을 완료할까요?"
+                          title="온보딩을 완료할까요?"
                           description="완료 후에는 체크리스트를 수정할 수 없습니다."
-                          confirmLabel="오프보딩 완료"
+                          confirmLabel="온보딩 완료"
                           onConfirm={() =>
                             patch(
                               { id: item.id, action: "complete" },
-                              "오프보딩을 완료했습니다.",
+                              "온보딩을 완료했습니다.",
                             )
                           }
                         >
@@ -305,7 +185,7 @@ export function UserOffboardingClient() {
                             }
                             className={operationButtonClass}
                           >
-                            오프보딩 완료
+                            온보딩 완료
                           </button>
                         </OperationConfirmDialog>
                         {item.checklist.some(
@@ -318,36 +198,6 @@ export function UserOffboardingClient() {
                       </div>
                     )}
                   </>
-                )}
-                {item.status === "pending" && (
-                  <div className="mt-4 flex gap-2">
-                    <button
-                      type="button"
-                      className={operationSecondaryButtonClass}
-                      onClick={() => {
-                        setEditingId(item.id);
-                        setDate(item.requested_final_working_date);
-                        setReason(item.reason);
-                        setNote(item.note ?? "");
-                      }}
-                    >
-                      수정
-                    </button>
-                    <OperationConfirmDialog
-                      title="오프보딩 요청을 취소할까요?"
-                      description="취소한 요청은 관리자 처리 대상에서 제외됩니다."
-                      confirmLabel="요청 취소"
-                      onConfirm={() => cancel(item.id)}
-                    >
-                      <button
-                        type="button"
-                        disabled={busy}
-                        className={operationDangerButtonClass}
-                      >
-                        취소
-                      </button>
-                    </OperationConfirmDialog>
-                  </div>
                 )}
               </article>
             ))}

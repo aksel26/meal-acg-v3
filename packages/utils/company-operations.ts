@@ -22,6 +22,28 @@ export const COMPANY_DOCUMENT_CATEGORY_LABELS: Record<
 export const OPERATION_DEFAULT_PAGE_SIZE = 50;
 export const OPERATION_MAX_PAGE_SIZE = 100;
 
+export const PARKING_TICKET_OPTIONS = [
+  { code: "two_hours", label: "2시간", fee: 0 },
+  { code: "extra_30_minutes", label: "추가 30분", fee: 750 },
+  { code: "extra_1_hour", label: "추가 1시간", fee: 1_500 },
+  { code: "extra_2_hours", label: "추가 2시간", fee: 3_000 },
+  { code: "extra_3_hours", label: "추가 3시간", fee: 4_500 },
+  { code: "extra_4_hours", label: "추가 4시간", fee: 6_000 },
+  { code: "extra_5_hours", label: "추가 5시간", fee: 7_500 },
+  { code: "extra_6_hours", label: "추가 6시간", fee: 9_000 },
+  { code: "extra_7_hours", label: "추가 7시간", fee: 10_500 },
+  { code: "extra_8_hours", label: "추가 8시간", fee: 12_000 },
+  { code: "extra_12_hours", label: "추가 12시간", fee: 15_000 },
+  { code: "extra_24_hours", label: "추가 24시간", fee: 30_000 },
+] as const;
+export const PARKING_USAGE_TYPE_LABELS = {
+  business: "업무 관련",
+  personal: "개인 주차",
+} as const;
+
+export type ParkingTicketCode = (typeof PARKING_TICKET_OPTIONS)[number]["code"];
+export type ParkingUsageType = keyof typeof PARKING_USAGE_TYPE_LABELS;
+
 export class OperationInputError extends Error {}
 
 const DOCUMENT_TYPES = new Set([
@@ -54,6 +76,23 @@ const SENSITIVE_CARD_KEYS = new Set([
   "cvv",
   "magneticData",
   "magnetic_data",
+]);
+const PARKING_NOTICE_NODE_TYPES = new Set([
+  "doc",
+  "paragraph",
+  "heading",
+  "text",
+  "bulletList",
+  "orderedList",
+  "listItem",
+  "hardBreak",
+]);
+const PARKING_NOTICE_MARK_TYPES = new Set([
+  "bold",
+  "italic",
+  "strike",
+  "code",
+  "link",
 ]);
 
 export function operationText(
@@ -167,6 +206,137 @@ export function assertSafeCorporateCardPayload(body: Record<string, unknown>) {
     !/^\d{4}$/.test(operationText(body.lastFour, "카드 끝 4자리"))
   ) {
     throw new Error("카드 끝 4자리는 숫자 4자리여야 합니다.");
+  }
+}
+
+export function operationParkingTicket(value: unknown) {
+  const code = operationText(value, "주차 시간권", {
+    required: true,
+    max: 30,
+  });
+  const option = PARKING_TICKET_OPTIONS.find((item) => item.code === code);
+  if (!option) {
+    throw new OperationInputError("주차 시간권을 확인해주세요.");
+  }
+  return option;
+}
+
+export function operationParkingExtraTickets(value: unknown) {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value)) {
+    throw new OperationInputError("추가 주차 시간권을 확인해주세요.");
+  }
+  if (value.length > 20) {
+    throw new OperationInputError(
+      "추가 주차 시간권은 최대 20개까지 등록할 수 있습니다.",
+    );
+  }
+  return value.map((item) => operationParkingTicket(item).code);
+}
+
+export function parkingTicketFee(code: string): number {
+  return PARKING_TICKET_OPTIONS.find((item) => item.code === code)?.fee ?? 0;
+}
+
+export function parkingTotalFee(
+  ticketCode: string,
+  extraTicketCodes: readonly string[] = [],
+): number {
+  return extraTicketCodes.reduce(
+    (total, code) => total + parkingTicketFee(code),
+    parkingTicketFee(ticketCode),
+  );
+}
+
+export function operationParkingUsageType(value: unknown): ParkingUsageType {
+  const usageType = operationText(value, "주차 구분", {
+    required: true,
+    max: 20,
+  });
+  if (!(usageType in PARKING_USAGE_TYPE_LABELS)) {
+    throw new OperationInputError("주차 구분을 확인해주세요.");
+  }
+  return usageType as ParkingUsageType;
+}
+
+export function operationParkingNoticeContent(value: unknown) {
+  const serialized = JSON.stringify(value);
+  if (!serialized || serialized.length > 50_000) {
+    throw new OperationInputError("공지 내용은 50KB 이하로 입력해주세요.");
+  }
+  validateParkingNoticeNode(value);
+  if ((value as Record<string, unknown>).type !== "doc") {
+    throw new OperationInputError("공지 문서 형식이 올바르지 않습니다.");
+  }
+  return value;
+}
+
+function validateParkingNoticeNode(value: unknown, depth = 0): void {
+  if (
+    !value ||
+    typeof value !== "object" ||
+    Array.isArray(value) ||
+    depth > 12
+  ) {
+    throw new OperationInputError("공지 형식이 올바르지 않습니다.");
+  }
+  const node = value as Record<string, unknown>;
+  if (
+    typeof node.type !== "string" ||
+    !PARKING_NOTICE_NODE_TYPES.has(node.type)
+  ) {
+    throw new OperationInputError("지원하지 않는 공지 서식입니다.");
+  }
+  if (
+    node.text !== undefined &&
+    (typeof node.text !== "string" || node.text.length > 10_000)
+  ) {
+    throw new OperationInputError("공지 문장이 너무 깁니다.");
+  }
+  if (node.type === "heading") {
+    const level = (node.attrs as Record<string, unknown> | undefined)?.level;
+    if (![1, 2, 3].includes(Number(level))) {
+      throw new OperationInputError("지원하지 않는 제목 단계입니다.");
+    }
+  }
+  if (node.marks !== undefined) {
+    if (!Array.isArray(node.marks) || node.marks.length > 8) {
+      throw new OperationInputError("공지 서식이 너무 복잡합니다.");
+    }
+    for (const value of node.marks) {
+      if (!value || typeof value !== "object" || Array.isArray(value)) {
+        throw new OperationInputError("공지 서식이 올바르지 않습니다.");
+      }
+      const mark = value as Record<string, unknown>;
+      if (
+        typeof mark.type !== "string" ||
+        !PARKING_NOTICE_MARK_TYPES.has(mark.type)
+      ) {
+        throw new OperationInputError("지원하지 않는 공지 서식입니다.");
+      }
+      if (mark.type === "link") {
+        const href = (mark.attrs as Record<string, unknown> | undefined)?.href;
+        if (typeof href !== "string") {
+          throw new OperationInputError("공지 링크가 올바르지 않습니다.");
+        }
+        try {
+          const url = new URL(href);
+          if (!["http:", "https:"].includes(url.protocol)) throw new Error();
+        } catch {
+          throw new OperationInputError(
+            "공지 링크는 http 또는 https만 허용됩니다.",
+          );
+        }
+      }
+    }
+  }
+  if (node.content !== undefined) {
+    if (!Array.isArray(node.content) || node.content.length > 300) {
+      throw new OperationInputError("공지 내용이 너무 깁니다.");
+    }
+    node.content.forEach((child) =>
+      validateParkingNoticeNode(child, depth + 1),
+    );
   }
 }
 

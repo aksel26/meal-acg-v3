@@ -29,7 +29,7 @@ import {
   operationSecondaryButtonClass,
   operationTextareaClass,
 } from "@repo/ui/src/operations";
-import { Check, CheckCheck, Pencil, Undo2, X } from "lucide-react";
+import { CheckCheck, Pencil, Undo2 } from "lucide-react";
 import { adminOperationRequest } from "./client";
 
 type Member = {
@@ -52,35 +52,28 @@ type Preset = {
   description: string | null;
   sort_order: number;
 };
-type Offboarding = {
+type Onboarding = {
   id: string;
   member_id: string;
-  requested_final_working_date: string;
-  confirmed_final_working_date: string | null;
-  reason: string;
+  start_date: string;
   note: string | null;
   admin_note: string | null;
-  rejection_reason: string | null;
   status: string;
   member: Member;
   checklist: Checklist[];
 };
 const labels: Record<string, string> = {
-  pending: "대기",
-  approved: "진행",
-  rejected: "반려",
+  in_progress: "진행",
   completed: "완료",
   cancelled: "취소",
 };
 
-export function AdminOffboardingClient() {
-  const [requests, setRequests] = useState<Offboarding[]>([]);
+export function AdminOnboardingClient() {
+  const [requests, setRequests] = useState<Onboarding[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [memberId, setMemberId] = useState("");
-  const [requestedDate, setRequestedDate] = useState("");
-  const [confirmedDate, setConfirmedDate] = useState("");
-  const [reason, setReason] = useState("");
+  const [startDate, setStartDate] = useState("");
   const [note, setNote] = useState("");
   const [adminNote, setAdminNote] = useState("");
   const [presets, setPresets] = useState<Preset[]>([]);
@@ -109,12 +102,12 @@ export function AdminOffboardingClient() {
         if (dateFrom) params.set("dateFrom", dateFrom);
         if (dateTo) params.set("dateTo", dateTo);
         const data = await adminOperationRequest<{
-          requests: Offboarding[];
+          requests: Onboarding[];
           members: Member[];
           presets: Preset[];
           total: number;
           pagination: { hasMore: boolean };
-        }>(`/api/offboarding?${params}`, { signal });
+        }>(`/api/onboarding?${params}`, { signal });
         setRequests(data.requests);
         setMembers(data.members);
         setPresets(data.presets);
@@ -136,12 +129,10 @@ export function AdminOffboardingClient() {
   }, [load]);
 
   const selected = requests.find((item) => item.id === selectedId) ?? null;
-  function select(item: Offboarding) {
+  function select(item: Onboarding) {
     setSelectedId(item.id);
     setMemberId(item.member_id);
-    setRequestedDate(item.requested_final_working_date);
-    setConfirmedDate(item.confirmed_final_working_date ?? "");
-    setReason(item.reason);
+    setStartDate(item.start_date);
     setNote(item.note ?? "");
     setAdminNote(item.admin_note ?? "");
     setFormOpen(true);
@@ -150,9 +141,7 @@ export function AdminOffboardingClient() {
   function resetForm() {
     setSelectedId(null);
     setMemberId(members[0]?.id ?? "");
-    setRequestedDate("");
-    setConfirmedDate("");
-    setReason("");
+    setStartDate("");
     setNote("");
     setAdminNote("");
   }
@@ -160,7 +149,7 @@ export function AdminOffboardingClient() {
   async function mutate(body: Record<string, unknown>) {
     setBusy(true);
     try {
-      await adminOperationRequest("/api/offboarding", {
+      await adminOperationRequest("/api/onboarding", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -201,22 +190,20 @@ export function AdminOffboardingClient() {
     event.preventDefault();
     setBusy(true);
     try {
-      await adminOperationRequest("/api/offboarding", {
+      await adminOperationRequest("/api/onboarding", {
         method: selectedId ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: selectedId,
           action: selectedId ? "update" : undefined,
           memberId,
-          requestedFinalWorkingDate: requestedDate,
-          confirmedFinalWorkingDate: confirmedDate,
-          reason,
+          startDate,
           note,
           adminNote,
         }),
       });
       toast.success(
-        selectedId ? "요청을 수정했습니다." : "요청을 등록했습니다.",
+        selectedId ? "온보딩을 수정했습니다." : "대상자를 등록했습니다.",
       );
       setFormOpen(false);
       resetForm();
@@ -233,8 +220,8 @@ export function AdminOffboardingClient() {
   return (
     <OperationsPage
       variant="admin"
-      title="오프보딩 관리"
-      description="대상자 등록부터 체크리스트 완료까지 관리합니다."
+      title="온보딩 관리"
+      description="신규 입사자의 온보딩 진행 상황을 확인하고 체크리스트를 관리합니다."
     >
       <OperationFormDialog
         open={formOpen}
@@ -243,9 +230,9 @@ export function AdminOffboardingClient() {
           if (!open) resetForm();
         }}
         title={selectedId ? "대상자 수정" : "대상자 등록"}
-        description="직원과 최종 근무 일정을 입력해주세요."
+        description="직원과 온보딩 시작일을 입력해주세요."
       >
-        <form onSubmit={save} className="grid gap-3 md:grid-cols-3">
+        <form onSubmit={save} className="grid gap-3 md:grid-cols-2">
           <div className="text-sm text-slate-600">
             직원
             <Select
@@ -266,37 +253,15 @@ export function AdminOffboardingClient() {
             </Select>
           </div>
           <label className="text-sm text-slate-600">
-            희망 최종 근무일
+            온보딩 시작일
             <DateRangePicker
               mode="single"
               modal
-              startDate={requestedDate}
-              ariaLabel="희망 최종 근무일"
-              placeholder="희망일 선택"
+              startDate={startDate}
+              ariaLabel="온보딩 시작일"
+              placeholder="시작일 선택"
               className="mt-1"
-              onChange={({ startDate }) => setRequestedDate(startDate)}
-            />
-          </label>
-          <label className="text-sm text-slate-600">
-            확정 최종 근무일
-            <DateRangePicker
-              mode="single"
-              modal
-              clearable
-              startDate={confirmedDate}
-              ariaLabel="확정 최종 근무일"
-              placeholder="확정일 선택"
-              className="mt-1"
-              onChange={({ startDate }) => setConfirmedDate(startDate)}
-            />
-          </label>
-          <label className="text-sm text-slate-600 md:col-span-2">
-            사유
-            <input
-              required
-              value={reason}
-              onChange={(event) => setReason(event.target.value)}
-              className={`mt-1 ${operationInputClass}`}
+              onChange={({ startDate: next }) => setStartDate(next)}
             />
           </label>
           <label className="text-sm text-slate-600">
@@ -307,7 +272,7 @@ export function AdminOffboardingClient() {
               className={`mt-1 ${operationInputClass}`}
             />
           </label>
-          <label className="text-sm text-slate-600 md:col-span-3">
+          <label className="text-sm text-slate-600 md:col-span-2">
             메모
             <textarea
               value={note}
@@ -315,7 +280,7 @@ export function AdminOffboardingClient() {
               className={`mt-1 ${operationTextareaClass}`}
             />
           </label>
-          <div className="flex justify-end gap-2 md:col-span-3">
+          <div className="flex justify-end gap-2 md:col-span-2">
             <button
               type="button"
               className={operationSecondaryButtonClass}
@@ -324,7 +289,7 @@ export function AdminOffboardingClient() {
               취소
             </button>
             <button
-              disabled={busy || !memberId || !requestedDate}
+              disabled={busy || !memberId || !startDate}
               className={operationButtonClass}
             >
               저장
@@ -352,7 +317,7 @@ export function AdminOffboardingClient() {
               onChange={(event) => setCheckTitle(event.target.value)}
               className={`mt-1 ${operationInputClass}`}
               maxLength={200}
-              placeholder="예: 장비 반납"
+              placeholder="예: 보안 교육 이수"
             />
           </label>
           <label className="text-sm text-slate-600">
@@ -363,7 +328,7 @@ export function AdminOffboardingClient() {
               onChange={(event) => setCheckDescription(event.target.value)}
               className={`mt-1 ${operationTextareaClass}`}
               maxLength={2000}
-              placeholder="대상자가 무엇을 해야 하는지 적어주세요."
+              placeholder="입사자가 무엇을 해야 하는지 적어주세요."
             />
           </label>
           <div className="flex justify-end gap-2">
@@ -388,7 +353,7 @@ export function AdminOffboardingClient() {
         <div className="mt-5 space-y-2">
           {presets.length === 0 ? (
             <OperationEmpty>
-              등록된 단계가 없습니다. 추가한 단계는 이후 등록되는 대상자에게
+              등록된 단계가 없습니다. 추가한 단계는 이후 등록되는 입사자에게
               자동으로 적용됩니다.
             </OperationEmpty>
           ) : (
@@ -411,7 +376,7 @@ export function AdminOffboardingClient() {
                   </button>
                   <OperationConfirmDialog
                     title="이 단계를 삭제할까요?"
-                    description="이미 등록된 대상자의 체크 항목은 그대로 남습니다."
+                    description="이미 등록된 입사자의 체크 항목은 그대로 남습니다."
                     confirmLabel="단계 삭제"
                     onConfirm={() =>
                       mutate({ action: "delete_preset", presetId: preset.id })
@@ -477,10 +442,7 @@ export function AdminOffboardingClient() {
                 setPage(1);
               }}
             >
-              <SelectTrigger
-                aria-label="오프보딩 요청 상태 필터"
-                className="w-32"
-              >
+              <SelectTrigger aria-label="온보딩 상태 필터" className="w-32">
                 <SelectValue placeholder="전체 상태" />
               </SelectTrigger>
               <SelectContent>
@@ -510,11 +472,11 @@ export function AdminOffboardingClient() {
                 clearable
                 startDate={dateFrom}
                 endDate={dateTo}
-                ariaLabel="최종 근무일 기간 필터"
-                placeholder="최종 근무일 기간"
-                onChange={({ startDate, endDate }) => {
-                  setDateFrom(startDate);
-                  setDateTo(endDate);
+                ariaLabel="온보딩 시작일 기간 필터"
+                placeholder="시작일 기간"
+                onChange={({ startDate: from, endDate: to }) => {
+                  setDateFrom(from);
+                  setDateTo(to);
                   setPage(1);
                 }}
               />
@@ -522,7 +484,7 @@ export function AdminOffboardingClient() {
           </div>
         </OperationToolbar>
         {loading ? (
-          <OperationLoading label="오프보딩 요청을 불러오는 중" />
+          <OperationLoading label="온보딩 목록을 불러오는 중" />
         ) : requests.length === 0 ? (
           <OperationEmpty
             action={
@@ -538,18 +500,17 @@ export function AdminOffboardingClient() {
               </button>
             }
           >
-            조건에 맞는 요청이 없습니다.
+            조건에 맞는 온보딩이 없습니다.
           </OperationEmpty>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-left text-[13px]">
+            <table className="w-full min-w-[820px] text-left text-[13px]">
               <thead>
                 <tr className="border-b border-slate-200 text-xs text-slate-500">
                   <th className="px-3 py-1.5 font-medium">직원</th>
                   <th className="px-3 py-1.5 font-medium">팀</th>
-                  <th className="px-3 py-1.5 font-medium">희망 최종 근무일</th>
-                  <th className="px-3 py-1.5 font-medium">확정 최종 근무일</th>
-                  <th className="px-3 py-1.5 font-medium">사유</th>
+                  <th className="px-3 py-1.5 font-medium">시작일</th>
+                  <th className="px-3 py-1.5 font-medium">메모</th>
                   <th className="px-3 py-1.5 font-medium">체크리스트</th>
                   <th className="px-3 py-1.5 font-medium">상태</th>
                   <th className="px-3 py-1.5 font-medium">관리</th>
@@ -576,14 +537,11 @@ export function AdminOffboardingClient() {
                         {item.member?.team?.name ?? "-"}
                       </td>
                       <td className="whitespace-nowrap px-3 py-2 text-slate-700">
-                        {item.requested_final_working_date}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-2 text-slate-700">
-                        {item.confirmed_final_working_date ?? "-"}
+                        {item.start_date}
                       </td>
                       <td className="max-w-[220px] px-3 py-2 text-slate-600">
-                        <p className="truncate" title={item.reason}>
-                          {item.reason}
+                        <p className="truncate" title={item.note ?? ""}>
+                          {item.note || "-"}
                         </p>
                       </td>
                       <td className="whitespace-nowrap px-3 py-2 tabular-nums text-slate-700">
@@ -602,96 +560,48 @@ export function AdminOffboardingClient() {
                           >
                             <Pencil className="h-3.5 w-3.5" strokeWidth={1.5} />
                           </OperationIconButton>
-                          {item.status === "pending" && (
+                          {item.status === "in_progress" && (
                             <>
                               <OperationIconButton
-                                label="승인"
+                                label="온보딩 완료"
                                 tone="primary"
                                 disabled={busy}
                                 onClick={() =>
-                                  mutate({
-                                    id: item.id,
-                                    action: "approve",
-                                    confirmedFinalWorkingDate:
-                                      item.confirmed_final_working_date ||
-                                      item.requested_final_working_date,
-                                  })
+                                  mutate({ id: item.id, action: "complete" })
                                 }
                               >
-                                <Check
+                                <CheckCheck
                                   className="h-3.5 w-3.5"
                                   strokeWidth={1.5}
                                 />
                               </OperationIconButton>
                               <OperationReasonDialog
-                                title="오프보딩 요청을 반려할까요?"
-                                description="신청자에게 표시할 반려 사유를 입력해주세요."
-                                label="반려 사유"
-                                confirmLabel="반려"
-                                tooltip="반려"
-                                onConfirm={(rejectReason) =>
+                                title="온보딩을 취소할까요?"
+                                description="필요한 경우 취소 메모를 남길 수 있습니다."
+                                label="취소 메모"
+                                confirmLabel="온보딩 취소"
+                                tooltip="온보딩 취소"
+                                required={false}
+                                onConfirm={(reason) =>
                                   mutate({
                                     id: item.id,
-                                    action: "reject",
-                                    reason: rejectReason,
+                                    action: "cancel",
+                                    reason,
                                   })
                                 }
                               >
                                 <button
                                   type="button"
-                                  aria-label="반려"
+                                  aria-label="온보딩 취소"
                                   className={operationIconButtonClass("danger")}
                                 >
-                                  <X
+                                  <Undo2
                                     className="h-3.5 w-3.5"
                                     strokeWidth={1.5}
                                   />
                                 </button>
                               </OperationReasonDialog>
                             </>
-                          )}
-                          {item.status === "approved" && (
-                            <OperationIconButton
-                              label="오프보딩 완료"
-                              tone="primary"
-                              disabled={busy}
-                              onClick={() =>
-                                mutate({ id: item.id, action: "complete" })
-                              }
-                            >
-                              <CheckCheck
-                                className="h-3.5 w-3.5"
-                                strokeWidth={1.5}
-                              />
-                            </OperationIconButton>
-                          )}
-                          {["pending", "approved"].includes(item.status) && (
-                            <OperationReasonDialog
-                              title="오프보딩 요청을 취소할까요?"
-                              description="필요한 경우 취소 메모를 남길 수 있습니다."
-                              label="취소 메모"
-                              confirmLabel="요청 취소"
-                              tooltip="요청 취소"
-                              required={false}
-                              onConfirm={(reason) =>
-                                mutate({
-                                  id: item.id,
-                                  action: "cancel",
-                                  reason,
-                                })
-                              }
-                            >
-                              <button
-                                type="button"
-                                aria-label="요청 취소"
-                                className={operationIconButtonClass("danger")}
-                              >
-                                <Undo2
-                                  className="h-3.5 w-3.5"
-                                  strokeWidth={1.5}
-                                />
-                              </button>
-                            </OperationReasonDialog>
                           )}
                         </div>
                       </td>
@@ -708,7 +618,7 @@ export function AdminOffboardingClient() {
         <OperationsSection title={`${selected.member.full_name} 체크리스트`}>
           {selected.checklist.length === 0 ? (
             <OperationEmpty>
-              체크 항목이 없습니다. 프리셋을 먼저 등록한 뒤 요청을 만들면
+              체크 항목이 없습니다. 체크리스트를 먼저 등록한 뒤 대상자를 만들면
               자동으로 적용됩니다.
             </OperationEmpty>
           ) : (
@@ -729,8 +639,6 @@ export function AdminOffboardingClient() {
                             id: selected.id,
                             itemId: item.id,
                             action: "update_checklist",
-                            title: item.title,
-                            responsibleParty: item.responsible_party,
                             isCompleted: false,
                             completionNote: "",
                           })
@@ -750,8 +658,6 @@ export function AdminOffboardingClient() {
                             id: selected.id,
                             itemId: item.id,
                             action: "update_checklist",
-                            title: item.title,
-                            responsibleParty: item.responsible_party,
                             isCompleted: true,
                             completionNote,
                           })
@@ -802,6 +708,7 @@ export function AdminOffboardingClient() {
           )}
         </OperationsSection>
       )}
+
       <OperationPagination
         page={page}
         hasMore={hasMore}

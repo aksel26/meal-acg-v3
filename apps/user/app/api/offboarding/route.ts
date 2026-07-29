@@ -29,7 +29,7 @@ export async function GET(request: Request) {
         `
           *,
           checklist:offboarding_checklist_items(
-            id, title, responsible_party, is_completed,
+            id, title, description, responsible_party, is_completed,
             completion_note, completed_at, sort_order
           )
         `,
@@ -108,6 +108,58 @@ export async function PATCH(request: Request) {
     const body = (await request.json()) as Record<string, unknown>;
     const id = operationText(body.id, "요청", { required: true });
     const action = operationText(body.action, "작업", { required: true });
+
+    if (action === "check_item" || action === "complete") {
+      const { data: target, error: targetError } = await ctx.supabase
+        .from("offboarding_requests")
+        .select("id")
+        .eq("id", id)
+        .eq("member_id", ctx.session.id)
+        .eq("status", "approved")
+        .maybeSingle();
+      if (targetError) throw targetError;
+      if (!target) {
+        return NextResponse.json(
+          { error: "진행 중인 오프보딩만 처리할 수 있습니다." },
+          { status: 409 },
+        );
+      }
+
+      if (action === "complete") {
+        const { error } = await ctx.supabase.rpc(
+          "complete_offboarding_request",
+          { p_request_id: id },
+        );
+        if (error?.message?.includes("OFFBOARDING_CHECKLIST_INCOMPLETE")) {
+          throw new Error("완료되지 않은 체크 항목이 있습니다.");
+        }
+        if (error) throw error;
+        return NextResponse.json({ ok: true });
+      }
+
+      const itemId = operationText(body.itemId, "체크 항목", {
+        required: true,
+      });
+      const completed = Boolean(body.isCompleted);
+      const { data, error } = await ctx.supabase
+        .from("offboarding_checklist_items")
+        .update({
+          is_completed: completed,
+          completed_at: completed ? new Date().toISOString() : null,
+          completion_note: completed
+            ? operationText(body.completionNote, "완료 메모", { max: 2000 }) ||
+              null
+            : null,
+        })
+        .eq("id", itemId)
+        .eq("offboarding_request_id", id)
+        .select()
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) throw new Error("체크 항목을 찾을 수 없습니다.");
+      return NextResponse.json(data);
+    }
+
     const changes =
       action === "cancel"
         ? { status: "cancelled", processed_at: new Date().toISOString() }

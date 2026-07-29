@@ -50,6 +50,15 @@ importers:
       '@tanstack/react-query-devtools':
         specifier: ^5.84.1
         version: 5.84.1(@tanstack/react-query@5.84.1)(react@19.1.0)
+      '@tiptap/extension-link':
+        specifier: ^3.20.2
+        version: 3.20.2(@tiptap/core@3.20.2)(@tiptap/pm@3.20.2)
+      '@tiptap/react':
+        specifier: ^3.20.2
+        version: 3.20.2(@floating-ui/dom@1.7.3)(@tiptap/core@3.20.2)(@tiptap/pm@3.20.2)(@types/react-dom@19.1.1)(@types/react@19.1.0)(react-dom@19.1.0)(react@19.1.0)
+      '@tiptap/starter-kit':
+        specifier: ^3.20.2
+        version: 3.20.2
       '@types/dagre':
         specifier: ^0.7.54
         version: 0.7.54

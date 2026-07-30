@@ -8,6 +8,7 @@ trap 'rm -rf "$test_output"' EXIT
 cd "$repo_root"
 pnpm --filter user exec tsc \
   lib/leave-balance.test.ts \
+  lib/chat/answers.test.ts \
   --rootDir . \
   --outDir "$test_output" \
   --module commonjs \
@@ -17,3 +18,5 @@ pnpm --filter user exec tsc \
   --skipLibCheck
 NODE_PATH="$repo_root/apps/user/node_modules" \
   node "$test_output/lib/leave-balance.test.js"
+NODE_PATH="$repo_root/apps/user/node_modules" \
+  node "$test_output/lib/chat/answers.test.js"

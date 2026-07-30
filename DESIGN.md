@@ -3,14 +3,18 @@
 ## Source of truth
 
 - Status: Active
-- Last refreshed: 2026-07-28
-- Surfaces: `apps/admin`, `apps/careers`
+- Last refreshed: 2026-07-30
+- Surfaces: `apps/admin`, `apps/careers`, `apps/user` chatbot
 - Reference implementation:
   - `apps/admin/app/globals.css`
   - `apps/admin/app/(dashboard)/layout.tsx`
   - `apps/admin/components/Sidebar.tsx`
   - `apps/admin/components/Header.tsx`
   - `apps/admin/components/DashboardContentFrame.tsx`
+  - `apps/user/app/api/leave-balances/route.ts`
+  - `apps/user/app/(content)/acg-life/data.ts`
+  - `apps/user/components/Sidebar.tsx`
+  - `apps/user/components/BottomNavigation.tsx`
 - Rule: Careers follows the Admin product language. This document records the implemented system; it is not a separate visual concept.
 
 ## Brand
@@ -140,6 +144,87 @@
 - Light theme is intentionally locked to the current Admin reference.
 - Validate with Careers lint, typecheck, build, responsive source review, and a browser visual check when an attached browser is available.
 
+## User chatbot MVP
+
+### Goal and scope
+
+- Add a small employee-only assistant for two jobs: answer personal leave-balance questions and answer questions grounded in company regulations.
+- The assistant is read-only. It does not submit leave, change balances, approve requests, or answer from unverified model knowledge.
+- Legal and company-policy answers must be labeled separately because company policy may be more generous than the statutory minimum.
+
+### Entry and conversation
+
+- Add one chatbot launcher to the shared User content layout.
+- Desktop: fixed button at the bottom right opening the existing `@repo/ui` Sheet at 400px width.
+- Mobile: place the launcher above `BottomNavigation` and open the existing `@repo/ui` Drawer.
+- Start with three quick questions: `내 남은 연차`, `연차 부여 기준`, `반차/반반차 규정`.
+- Each answer shows a short result, an `기준일`, and one or more source chips: `내 휴가 데이터`, `ACG 사규`, or `근로기준법`.
+
+### Server flow
+
+```text
+question
+  -> POST /api/chat
+  -> authenticated session
+  -> personal data lookup and/or regulation context
+  -> model generates a grounded answer
+  -> answer + structured sources
+```
+
+- Personal leave questions reuse the same `leave_balances` fields and annual/monthly aggregation used by the User leave screen. The member ID always comes from `getSessionUser()`, never from request input.
+- The MVP regulation corpus is the small, curated `REGULATION_CATEGORIES` dataset. Send the complete published corpus with the question; do not add vector search while it remains small.
+- Keep the model call server-only and use native `fetch`; no AI framework dependency is required for the MVP.
+- Return one JSON response after generation. Streaming, persistent chat history, file ingestion, and conversation search are not MVP requirements.
+
+### Data processing and response contract
+
+- Move the regulation constants to one shared server/client module so the ACG Life screen and chatbot import the same data.
+- Move the existing leave-balance query and aggregation to one server helper used by both `/api/leave-balances` and `/api/chat`; the chat client never sends a member ID or balance value.
+- Personal balance questions are deterministic: the server filters `annual` and `monthly`, calculates `total = granted + adjusted`, `remaining = total - used`, and formats the answer without asking the model to calculate it.
+- Regulation questions pass only the question and the small complete regulation corpus to the model. The model returns answer wording and source IDs; the server maps those IDs to trusted source labels and dates.
+
+```json
+{
+  "answer": "2026년 연차는 총 15일이고 4.5일 사용해 10.5일 남았습니다.",
+  "sources": [
+    {
+      "type": "personal",
+      "label": "2026년 내 휴가 데이터",
+      "href": "/attendance-stats",
+      "asOf": "2026-07-30"
+    }
+  ]
+}
+```
+
+- The chat UI renders `answer` as the assistant bubble and `sources` as clickable chips below it. It never parses numbers back out of natural-language text.
+
+### Answer rules
+
+- Use retrieved values only. If data or a matching regulation is missing, say that it could not be confirmed and direct the user to HR or the source screen.
+- Do not send member ID, name, leave history, or reasons to the model. For personal leave, send only the selected year and aggregated granted, adjusted, used, and remaining values.
+- Limit input length, message count, and requests per user. Do not persist chat text by default; operational logs contain only request ID, latency, result type, and error code.
+- Legal answers cite the current official source and include a verification date. Individual cases such as attendance rate, leave of absence, or termination require HR confirmation.
+
+### Content prerequisite
+
+- The ACG Life annual-leave copy and User leave screen use the same statutory baseline: one additional day for every 2 years after the first year, up to 25 days.
+- Keep one shared regulation source for the ACG Life screen and chatbot so the two surfaces cannot drift.
+
+### Acceptance criteria
+
+- `내 휴가 얼마나 남았어?` returns the signed-in user's current-year total, used, adjusted, and remaining leave values and links to `/attendance-stats`.
+- `원래 법정 휴가 며칠이야?` returns the statutory baseline with a `근로기준법 제60조` source and does not present it as the user's actual balance.
+- A regulation answer always cites the matched regulation title and update date.
+- Questions outside the available data are declined briefly instead of being guessed.
+- Authentication, input limits, personal-data minimization, error state, keyboard focus, and mobile navigation overlap are covered by targeted checks.
+
+### Later, only when needed
+
+- When approved policy files in `company_documents` become too large to fit safely in the prompt, add publish-time text extraction and chunk retrieval for `policy` and `hr` documents.
+- Add embeddings only after keyword or full-corpus retrieval quality is measured as insufficient. Scanned-file OCR, autonomous actions, and long-term conversation memory remain separate features.
+
 ## Open questions
 
 - [ ] Decide whether Admin and Careers should later share one shell component. Owner: frontend. Impact: cross-app maintenance only; current product behavior is not blocked.
+- [ ] Select the production model/provider and confirm its data-retention contract. Owner: engineering/security. Impact: implementation and operating cost.

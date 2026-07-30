@@ -11,6 +11,7 @@ import AttendanceCalendar from "./AttendanceCalendar";
 import type { DayoffRecord } from "@/hooks/use-dayoffs";
 import type { LeaveBalance } from "@/hooks/use-leave-balances";
 import type { ModifyRequest } from "@/hooks/use-attendance-modify";
+import { summarizeLeaveBalances } from "@/lib/leave-balance";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -84,17 +85,10 @@ export default function AttendanceDesktopView({
     if (!selectedDate) return [];
     return dayoffs.filter((r) => r.leave_date === selectedDate);
   }, [dayoffs, selectedDate]);
-  const remainingLeaveDays = useMemo(() => {
-    return leaveBalances
-      .filter(
-        (balance) => balance.type === "annual" || balance.type === "monthly",
-      )
-      .reduce(
-        (sum, balance) =>
-          sum + balance.granted + balance.adjusted - balance.used,
-        0,
-      );
-  }, [leaveBalances]);
+  const remainingLeaveDays = useMemo(
+    () => summarizeLeaveBalances(leaveBalances).remaining,
+    [leaveBalances],
+  );
 
   return (
     <div className="grid gap-4 lg:grid-cols-[420px_minmax(0,1fr)] xl:grid-cols-[460px_minmax(0,1fr)]">

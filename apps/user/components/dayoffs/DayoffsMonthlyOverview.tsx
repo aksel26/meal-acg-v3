@@ -6,6 +6,7 @@ import { CalendarDays } from "lucide-react";
 import DayoffsFilter from "./DayoffsFilter";
 import type { DayoffRecord, LeaveType } from "./types";
 import type { LeaveBalance } from "@/hooks/use-leave-balances";
+import { summarizeLeaveBalances } from "@/lib/leave-balance";
 import {
   Tooltip,
   TooltipContent,
@@ -73,13 +74,8 @@ export default function DayoffsMonthlyOverview({
     hireDateDayjs && hireDateDayjs.isValid()
       ? Math.max(dayjs().diff(hireDateDayjs, "year") + 1, 1)
       : null;
-  const annualGranted = leaveBalances
-    .filter((balance) => balance.type === "annual" || balance.type === "monthly")
-    .reduce((sum, balance) => sum + balance.granted + balance.adjusted, 0);
-  const annualUsed = leaveBalances
-    .filter((balance) => balance.type === "annual" || balance.type === "monthly")
-    .reduce((sum, balance) => sum + balance.used, 0);
-  const annualRemaining = annualGranted - annualUsed;
+  const { total: annualGranted, remaining: annualRemaining } =
+    summarizeLeaveBalances(leaveBalances);
 
   const table = useMemo(() => {
     const leaveTypesById = new Map(leaveTypes.map((type) => [type.id, type]));

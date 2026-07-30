@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
 import { getSessionUser } from "@/lib/auth";
+import { fetchLeaveBalances } from "@/lib/leave-balance-query";
 
 // GET /api/leave-balances?year=2026 (본인 잔액만 조회)
 export async function GET(request: NextRequest) {
@@ -34,12 +35,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { data, error } = await supabase
-      .from("leave_balances")
-      .select("id, member_id, year, type, granted, used, adjusted, note")
-      .eq("member_id", memberId)
-      .eq("year", parseInt(year))
-      .order("type", { ascending: true });
+    const { data, error } = await fetchLeaveBalances(
+      supabase,
+      memberId,
+      parseInt(year),
+    );
 
     if (error) {
       console.error("Error fetching leave balances:", error);

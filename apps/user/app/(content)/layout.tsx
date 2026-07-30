@@ -4,6 +4,7 @@ import React from "react";
 import Header from "../components/Header";
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { Sidebar, MobileSidebar } from "@/components/Sidebar";
+import { ChatLauncher } from "@/components/chat/ChatLauncher";
 import { motion, AnimatePresence } from "motion/react";
 import { usePathname } from "next/navigation";
 
@@ -55,6 +56,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </div>
       </div>
+      <ChatLauncher />
     </>
   );
 };

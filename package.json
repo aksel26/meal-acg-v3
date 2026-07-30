@@ -9,6 +9,7 @@
     "test:db": "bash scripts/test-supabase-sql.sh",
     "test:budget": "bash scripts/test-budget-calculation.sh",
     "test:company-operations": "bash scripts/test-company-operations-utils.sh",
+    "test:expense-processing": "bash scripts/test-expense-processing-workbook.sh",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "build:user": "turbo run build --filter=user",
     "dev:user": "turbo run dev --filter=user",

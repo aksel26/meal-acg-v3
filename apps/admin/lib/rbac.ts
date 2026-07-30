@@ -22,6 +22,8 @@ export const ADMIN_PERMISSIONS = [
   "meal:write",
   "meal:import",
   "meal:export",
+  "expense_processing:read",
+  "expense_processing:write",
   "points:read",
   "points:write",
   "points:review",
@@ -109,6 +111,16 @@ export const ADMIN_PERMISSION_METADATA: AdminPermissionMetadata[] = [
   {
     permission: "meal:export",
     label: "식대 내보내기",
+    group: "복지포인트/식대",
+  },
+  {
+    permission: "expense_processing:read",
+    label: "비용처리 조회",
+    group: "복지포인트/식대",
+  },
+  {
+    permission: "expense_processing:write",
+    label: "비용처리 작성",
     group: "복지포인트/식대",
   },
   {
@@ -263,6 +275,8 @@ const ADMIN_MEMBER_PERMISSIONS: AdminPermission[] = [
   "meal:write",
   "meal:import",
   "meal:export",
+  "expense_processing:read",
+  "expense_processing:write",
   "points:read",
   "points:review",
   "organization:read",

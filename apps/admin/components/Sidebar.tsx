@@ -15,6 +15,7 @@ import {
   Coffee,
   Upload,
   Download,
+  FileSpreadsheet,
   Cog,
   Grid3X3,
   Coins,
@@ -98,6 +99,12 @@ const navigation: NavigationItem[] = [
     name: "비용 관리",
     icon: Coins,
     items: [
+      {
+        name: "비용처리",
+        href: "/expense-processing",
+        icon: FileSpreadsheet,
+        permission: "expense_processing:read",
+      },
       { name: "식대 관리", href: "", icon: Coffee, isLabel: true },
       {
         name: "사용현황 (인원별)",

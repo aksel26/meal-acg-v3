@@ -40,6 +40,10 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
     title: "식대 데이터 Import",
     subtitle: "Excel 파일에서 식대 데이터를 가져옵니다.",
   },
+  "/expense-processing": {
+    title: "비용처리",
+    subtitle: "외부 Excel 양식을 업로드하고 비용 상세내역을 작성합니다.",
+  },
   "/organization": {
     title: "조직 구성",
     subtitle: "조직원 현황을 확인하고 편집 모드에서 조직 구성을 관리합니다",

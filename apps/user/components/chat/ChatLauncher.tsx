@@ -32,7 +32,7 @@ function useIsDesktop() {
 }
 
 const launcherClass =
-  "fixed bottom-24 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-slate-900 text-white shadow-lg transition hover:bg-slate-700 md:bottom-6 md:right-6";
+  "fixed bottom-28 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-slate-900 text-white shadow-lg transition hover:bg-slate-700 md:bottom-6 md:right-6";
 
 export function ChatLauncher() {
   const isDesktop = useIsDesktop();

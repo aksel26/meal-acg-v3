@@ -1,11 +1,25 @@
+// 서버 전용 모듈. next/headers 를 쓰는 supabase/server 를 참조하므로
+// 클라이언트 컴포넌트에서 값을 import 하면 안 된다.
+// 상수·타입만 필요하면 `lib/request-constants.ts` 를 쓸 것.
 import { createServiceClient } from "@/lib/supabase/server";
 import type { SessionUser } from "@/lib/auth";
+import {
+  REQUEST_PRIORITIES,
+  REQUEST_STATUSES,
+  type RequestPriority,
+  type RequestStatus,
+} from "@/lib/request-constants";
 
-export const REQUEST_STATUSES = ["접수", "진행", "대기", "완료", "거절"] as const;
-export const REQUEST_PRIORITIES = ["P1", "P2", "P3"] as const;
-
-export type RequestStatus = (typeof REQUEST_STATUSES)[number];
-export type RequestPriority = (typeof REQUEST_PRIORITIES)[number];
+export {
+  REQUEST_PRIORITIES,
+  REQUEST_STATUSES,
+  isRequestPriority,
+  isRequestStatus,
+} from "@/lib/request-constants";
+export type {
+  RequestPriority,
+  RequestStatus,
+} from "@/lib/request-constants";
 
 export type RequestRecord = {
   id: string;
@@ -87,14 +101,6 @@ export type LinkedProjectSummary = {
   due_date: string | null;
   customer_names: string[];
 };
-
-export function isRequestStatus(value: unknown): value is RequestStatus {
-  return typeof value === "string" && REQUEST_STATUSES.includes(value as RequestStatus);
-}
-
-export function isRequestPriority(value: unknown): value is RequestPriority {
-  return typeof value === "string" && REQUEST_PRIORITIES.includes(value as RequestPriority);
-}
 
 export function canReadRequest(_user: SessionUser, _request: RequestRecord) {
   return true;

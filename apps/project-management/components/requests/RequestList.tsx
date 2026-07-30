@@ -5,11 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  REQUEST_PRIORITIES,
-  REQUEST_STATUSES,
-  type RequestRecord,
-} from "@/lib/requests";
+import { REQUEST_PRIORITIES, REQUEST_STATUSES } from "@/lib/request-constants";
+import type { RequestRecord } from "@/lib/requests";
 import { PriorityBadge, StatusBadge } from "@/components/requests/RequestBadge";
 
 type DueDateSort = "" | "due_asc" | "due_desc";

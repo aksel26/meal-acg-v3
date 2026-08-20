@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   DndContext,
@@ -61,6 +61,11 @@ import type {
   LunchGroupSettings,
   LunchGroupWithMembers,
 } from "@/lib/supabase/types";
+import {
+  calculateLunchGroupPlan,
+  DEFAULT_MAX_PER_GROUP,
+  DEFAULT_MIN_PER_GROUP,
+} from "@/lib/lunch-group-plan";
 import FixedScheduleSection from "./FixedScheduleSection";
 
 // 월요일 기준으로 주 시작일 계산
@@ -74,30 +79,6 @@ interface GroupState {
   groupNumber: number;
   memberIds: string[];
   maxSlots: number; // 해당 조의 최대 인원
-}
-
-function calculateLunchGroupPlan(totalMembers: number, maxPerGroup: number) {
-  if (totalMembers === 0 || maxPerGroup <= 0) {
-    return {
-      baseGroups: 0,
-      totalGroups: 0,
-      remainder: 0,
-      shouldDistributeSingleRemainder: false,
-    };
-  }
-
-  const baseGroups = Math.floor(totalMembers / maxPerGroup);
-  const remainder = totalMembers % maxPerGroup;
-  const shouldDistributeSingleRemainder = baseGroups > 0 && remainder === 1;
-  const totalGroups =
-    baseGroups + (remainder > 0 && !shouldDistributeSingleRemainder ? 1 : 0);
-
-  return {
-    baseGroups,
-    totalGroups,
-    remainder,
-    shouldDistributeSingleRemainder,
-  };
 }
 
 // 참여인원 목록용 드래그 가능한 멤버 (체크박스 선택 가능)
@@ -207,26 +188,64 @@ function DraggableMemberInGroup({
   );
 }
 
+// 조의 빈 자리 - 다른 조로 끌어다 놓으면 정원이 그 조로 넘어간다
+function DraggableEmptySlot({
+  groupNumber,
+  index,
+}: {
+  groupNumber: number;
+  index: number;
+}) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useDraggable({
+      id: `slot-${groupNumber}-${index}`,
+      data: { type: "slot", groupNumber },
+    });
+
+  const style = transform
+    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
+    : undefined;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      className={`px-3 py-2 border-2 border-dashed rounded-md text-xs text-center cursor-grab active:cursor-grabbing transition-all ${
+        isDragging
+          ? "opacity-50 border-[#135bec] bg-[#135bec]/10 text-[#135bec] z-50"
+          : "border-slate-200 text-slate-400 hover:border-[#135bec]/40 hover:text-[#135bec]/70"
+      }`}
+    >
+      빈 자리 · 끌어서 이동
+    </div>
+  );
+}
+
 // 드롭 가능한 조 영역
 function DroppableGroup({
   groupNumber,
   maxSlots,
   children,
   memberCount,
-  isRemainderGroup,
+  slotNotice,
+  isDraggingSlot,
 }: {
   groupNumber: number;
   maxSlots: number;
   children: React.ReactNode;
   memberCount: number;
-  isRemainderGroup: boolean;
+  slotNotice: string | null;
+  isDraggingSlot: boolean;
 }) {
   const { isOver, setNodeRef } = useDroppable({
     id: `group-${groupNumber}`,
     data: { groupNumber, maxSlots },
   });
 
-  const isFull = memberCount >= maxSlots;
+  // 빈 자리를 옮기는 중이면 정원이 찬 조도 받을 수 있다
+  const isFull = memberCount >= maxSlots && !isDraggingSlot;
 
   return (
     <div
@@ -246,9 +265,9 @@ function DroppableGroup({
             {groupNumber}
           </span>
           <span className="text-sm font-medium text-slate-600">조</span>
-          {isRemainderGroup && (
-            <span className="text-[10px] px-1.5 py-0.5 bg-[#135bec]/5 text-[#135bec] rounded font-medium">
-              추가
+          {slotNotice && (
+            <span className="text-[10px] px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded font-medium">
+              {slotNotice}
             </span>
           )}
         </div>
@@ -288,9 +307,12 @@ export default function LunchGroupsPage() {
     new Set(),
   );
   const [groups, setGroups] = useState<GroupState[]>([]);
-  const [maxPerGroup, setMaxPerGroup] = useState(4);
-  const [isTableCreated, setIsTableCreated] = useState(false);
+  const [maxInput, setMaxInput] = useState(String(DEFAULT_MAX_PER_GROUP));
+  const [minInput, setMinInput] = useState(String(DEFAULT_MIN_PER_GROUP));
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
+
+  const maxPerGroup = Number(maxInput) || DEFAULT_MAX_PER_GROUP;
+  const minPerGroup = Number(minInput) || DEFAULT_MIN_PER_GROUP;
 
   const weekStartDate = getWeekStartDate(currentWeek);
 
@@ -354,27 +376,25 @@ export default function LunchGroupsPage() {
   });
 
   // 설정 로드
-  useMemo(() => {
-    if (settings) {
-      setMaxPerGroup(settings.max_members_per_group);
-    }
+  useEffect(() => {
+    if (!settings) return;
+    setMaxInput(String(settings.max_members_per_group));
+    setMinInput(
+      String(settings.min_members_per_group ?? DEFAULT_MIN_PER_GROUP),
+    );
   }, [settings]);
 
   // 기존 배정 로드
-  useMemo(() => {
-    if (existingGroups && existingGroups.length > 0) {
-      const loadedGroups = existingGroups.map((g) => ({
+  useEffect(() => {
+    if (!existingGroups) return;
+    setGroups(
+      existingGroups.map((g) => ({
         groupNumber: g.group_number,
         memberIds: g.members.map((m) => m.user_id),
-        maxSlots: g.max_slots || maxPerGroup, // DB에 저장된 값 또는 기본값
-      }));
-      setGroups(loadedGroups);
-      setIsTableCreated(true);
-    } else {
-      setGroups([]);
-      setIsTableCreated(false);
-    }
-  }, [existingGroups, maxPerGroup]);
+        maxSlots: g.max_slots || DEFAULT_MAX_PER_GROUP, // DB에 저장된 값 또는 기본값
+      })),
+    );
+  }, [existingGroups]);
 
   // 저장 mutation
   const saveMutation = useMutation({
@@ -397,6 +417,51 @@ export default function LunchGroupsPage() {
     },
   });
 
+  // 배정 설정(조당 최대/최소 인원) 저장 mutation
+  const settingsMutation = useMutation({
+    mutationFn: async (values: { max: number; min: number }) => {
+      const response = await fetch("/api/lunch-groups/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          maxMembersPerGroup: values.max,
+          minMembersPerGroup: values.min,
+          totalGroups: settings?.total_groups ?? 0,
+        }),
+      });
+      if (!response.ok) {
+        const { error } = await response.json().catch(() => ({ error: null }));
+        throw new Error(error ?? "설정 저장에 실패했습니다.");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.lunchGroups.settings,
+      });
+      toast.success("배정 설정이 저장되었습니다.");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  // 입력칸을 벗어날 때 저장 (값이 바뀐 경우에만)
+  const handleSettingsBlur = useCallback(() => {
+    if (minPerGroup > maxPerGroup) {
+      toast.error("최소 인원은 최대 인원보다 클 수 없습니다.");
+      setMaxInput(String(settings?.max_members_per_group ?? DEFAULT_MAX_PER_GROUP));
+      setMinInput(String(settings?.min_members_per_group ?? DEFAULT_MIN_PER_GROUP));
+      return;
+    }
+    if (
+      settings &&
+      settings.max_members_per_group === maxPerGroup &&
+      settings.min_members_per_group === minPerGroup
+    ) {
+      return;
+    }
+    settingsMutation.mutate({ max: maxPerGroup, min: minPerGroup });
+  }, [maxPerGroup, minPerGroup, settings, settingsMutation]);
+
   // 리셋 mutation
   const resetMutation = useMutation({
     mutationFn: async () => {
@@ -409,7 +474,6 @@ export default function LunchGroupsPage() {
     },
     onSuccess: () => {
       setGroups([]);
-      setIsTableCreated(false);
       queryClient.invalidateQueries({
         queryKey: queryKeys.lunchGroups.byWeek(weekStartDate),
       });
@@ -440,61 +504,43 @@ export default function LunchGroupsPage() {
     return members.filter((m) => !excludedMemberIds.has(m.id));
   }, [members, excludedMemberIds]);
 
-  // 총 조 개수 및 나머지 계산
-  const {
-    baseGroups,
-    totalGroups,
-    remainder,
-    shouldDistributeSingleRemainder,
-  } = useMemo(
-    () => calculateLunchGroupPlan(availableMembers.length, maxPerGroup),
-    [availableMembers.length, maxPerGroup],
+  // 조당 최대/최소 인원에 맞춘 조 정원 계산
+  const plan = useMemo(
+    () =>
+      calculateLunchGroupPlan(
+        availableMembers.length,
+        maxPerGroup,
+        minPerGroup,
+      ),
+    [availableMembers.length, maxPerGroup, minPerGroup],
   );
 
-  // 조 테이블 생성 (나머지 1명은 기존 조에 흡수, 그 외 나머지는 추가 조로 생성)
+  // 아직 저장된 조가 없을 때 화면에 미리 띄우는 빈 조 (여기에 바로 드래그 가능)
+  const previewGroups = useMemo<GroupState[]>(
+    () =>
+      plan.slots.map((maxSlots, i) => ({
+        groupNumber: i + 1,
+        memberIds: [],
+        maxSlots,
+      })),
+    [plan],
+  );
+
+  // 저장된 조가 있으면 그것을, 없으면 빈 조 미리보기를 화면에 쓴다
+  const isTableCreated = groups.length > 0;
+  const displayGroups = isTableCreated ? groups : previewGroups;
+
+  // 빈 조 테이블을 그대로 확정 저장
   const handleCreateTable = useCallback(() => {
-    if (totalGroups === 0) {
+    if (previewGroups.length === 0) {
       toast.error("생성할 조가 없습니다.");
       return;
     }
-
-    const groupNumberWithSingleRemainder = shouldDistributeSingleRemainder
-      ? Math.floor(Math.random() * totalGroups) + 1
-      : null;
-
-    const newGroups: GroupState[] = Array.from(
-      { length: totalGroups },
-      (_, i) => ({
-        groupNumber: i + 1,
-        memberIds: [],
-        maxSlots:
-          groupNumberWithSingleRemainder === i + 1
-            ? maxPerGroup + 1
-            : remainder > 0 &&
-                !shouldDistributeSingleRemainder &&
-                i === totalGroups - 1
-              ? remainder
-              : maxPerGroup,
-      }),
+    autoSaveGroups(
+      previewGroups,
+      `${previewGroups.length}개 조 테이블이 생성되었습니다.`,
     );
-
-    setIsTableCreated(true);
-
-    const successMsg = shouldDistributeSingleRemainder
-      ? `${totalGroups}개 조 생성 (1개 조는 ${maxPerGroup + 1}명)`
-      : remainder > 0
-        ? `${baseGroups}개 기본 조 + 나머지 ${remainder}명 조 1개 생성 (총 ${totalGroups}개 조)`
-        : `${totalGroups}개 조 테이블이 생성되었습니다.`;
-
-    autoSaveGroups(newGroups, successMsg);
-  }, [
-    baseGroups,
-    totalGroups,
-    maxPerGroup,
-    remainder,
-    shouldDistributeSingleRemainder,
-    autoSaveGroups,
-  ]);
+  }, [previewGroups, autoSaveGroups]);
 
   // 이미 조에 배정된 멤버 ID 집합
   const assignedMemberIds = useMemo(() => {
@@ -633,16 +679,55 @@ export default function LunchGroupsPage() {
 
       if (!over) return;
 
-      const memberId = active.id as string;
       const overId = over.id as string;
+
+      // 빈 자리 이동: 출발 조의 정원 1칸을 도착 조로 넘긴다
+      const slotData = active.data.current;
+      if (slotData?.type === "slot") {
+        if (!overId.startsWith("group-")) return;
+
+        const sourceNumber = slotData.groupNumber as number;
+        const targetNumber = parseInt(overId.replace("group-", ""));
+        if (sourceNumber === targetNumber) return;
+
+        const sourceGroup = displayGroups.find(
+          (g) => g.groupNumber === sourceNumber,
+        );
+        if (!sourceGroup) return;
+
+        // 정원이 0인 조가 생기지 않도록 마지막 한 자리는 남긴다
+        if (sourceGroup.maxSlots <= 1) {
+          toast.error(
+            "조에는 최소 1자리가 필요합니다. 조 개수는 배정 설정에서 바꿔주세요.",
+          );
+          return;
+        }
+
+        const newGroups = displayGroups.map((g) =>
+          g.groupNumber === sourceNumber
+            ? { ...g, maxSlots: g.maxSlots - 1 }
+            : g.groupNumber === targetNumber
+              ? { ...g, maxSlots: g.maxSlots + 1 }
+              : g,
+        );
+        autoSaveGroups(
+          newGroups,
+          `${sourceNumber}조의 빈 자리를 ${targetNumber}조로 옮겼습니다.`,
+        );
+        return;
+      }
+
+      const memberId = active.id as string;
       const memberName =
         members.find((m) => m.id === memberId)?.full_name ?? "";
-      const wasAssigned = groups.some((g) => g.memberIds.includes(memberId));
+      const wasAssigned = displayGroups.some((g) =>
+        g.memberIds.includes(memberId),
+      );
 
       // 참여인원 목록으로 드롭 (조에서 제거)
       if (overId === "unassigned") {
         if (!wasAssigned) return;
-        const newGroups = groups.map((g) => ({
+        const newGroups = displayGroups.map((g) => ({
           ...g,
           memberIds: g.memberIds.filter((id) => id !== memberId),
         }));
@@ -653,7 +738,9 @@ export default function LunchGroupsPage() {
       // 조에 드롭
       if (overId.startsWith("group-")) {
         const groupNumber = parseInt(overId.replace("group-", ""));
-        const targetGroup = groups.find((g) => g.groupNumber === groupNumber);
+        const targetGroup = displayGroups.find(
+          (g) => g.groupNumber === groupNumber,
+        );
 
         if (!targetGroup) return;
 
@@ -666,8 +753,8 @@ export default function LunchGroupsPage() {
           return;
         }
 
-        // 다른 조에서 제거하고 새 조에 추가
-        const newGroups = groups.map((g) => {
+        // 다른 조에서 제거하고 새 조에 추가 (아직 저장 전이면 이 시점에 조가 생성된다)
+        const newGroups = displayGroups.map((g) => {
           if (g.groupNumber === groupNumber) {
             return {
               ...g,
@@ -688,7 +775,7 @@ export default function LunchGroupsPage() {
         );
       }
     },
-    [groups, members, autoSaveGroups],
+    [displayGroups, members, autoSaveGroups],
   );
 
   // 조에서 멤버 제거 (X 버튼)
@@ -709,7 +796,8 @@ export default function LunchGroupsPage() {
     [groups, members, autoSaveGroups],
   );
 
-  // 드래그 중인 멤버
+  // 드래그 중인 대상 (멤버 또는 조의 빈 자리)
+  const isDraggingSlot = activeDragId?.startsWith("slot-") ?? false;
   const activeMember = activeDragId
     ? members.find((m) => m.id === activeDragId)
     : null;
@@ -766,42 +854,94 @@ export default function LunchGroupsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-3">
                   <div>
                     <Label className="text-xs">조당 최대 인원</Label>
                     <Input
                       type="number"
-                      min={2}
+                      min={1}
                       max={10}
-                      value={maxPerGroup}
-                      onChange={(e) =>
-                        setMaxPerGroup(parseInt(e.target.value) || 4)
-                      }
+                      value={maxInput}
+                      onChange={(e) => setMaxInput(e.target.value)}
+                      onBlur={handleSettingsBlur}
                       className="mt-1"
                     />
                   </div>
                   <div>
-                    <Label className="text-xs">총 조 개수 (자동 계산)</Label>
+                    <Label className="text-xs">조당 최소 인원</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={10}
+                      value={minInput}
+                      onChange={(e) => setMinInput(e.target.value)}
+                      onBlur={handleSettingsBlur}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">총 조 개수 (자동)</Label>
                     <div className="mt-1 h-10 flex items-center px-3 bg-slate-100 rounded text-sm font-medium">
-                      {totalGroups}개
+                      {plan.totalGroups}개
                     </div>
                   </div>
                 </div>
                 <div className="text-xs text-slate-500">
-                  {availableMembers.length}명 ÷ {maxPerGroup}명 = {baseGroups}개
-                  조
-                  {shouldDistributeSingleRemainder
-                    ? ` + 나머지 1명은 랜덤 1개 조에 배정 (총 ${totalGroups}개 조)`
-                    : remainder > 0 &&
-                      ` + 나머지 ${remainder}명 조 1개 (총 ${totalGroups}개 조)`}
+                  {availableMembers.length}명을 조당 {minPerGroup}~{maxPerGroup}
+                  명으로 나누면 {plan.totalGroups}개 조
+                  {plan.slots.length > 0 && ` (${plan.slots.join(" · ")}명)`}
+                  {settingsMutation.isPending && " · 설정 저장 중..."}
                 </div>
-                <Button
-                  onClick={handleCreateTable}
-                  className="w-full bg-[#135bec]/5 text-[#135bec] hover:bg-[#135bec]/10"
-                  disabled={totalGroups === 0}
-                >
-                  <Table className="w-4 h-4 mr-2" />조 테이블 생성
-                </Button>
+                {plan.hasOverMax && (
+                  <div className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
+                    최소 {minPerGroup}명을 지키려면 조를 줄여야 해서 최대{" "}
+                    {maxPerGroup}명을 넘는 조가 생깁니다.
+                  </div>
+                )}
+                {plan.hasUnderMin && (
+                  <div className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
+                    참여 인원이 {minPerGroup}명보다 적어 최소 인원을 채울 수
+                    없습니다.
+                  </div>
+                )}
+                {assignedMemberIds.size > 0 ? (
+                  // 이미 배정된 인원이 있으면 되돌릴 수 없으므로 한 번 확인받는다
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        className="w-full bg-[#135bec]/5 text-[#135bec] hover:bg-[#135bec]/10"
+                        disabled={plan.totalGroups === 0}
+                      >
+                        <Table className="w-4 h-4 mr-2" />조 테이블 다시 생성
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>조 테이블 다시 생성</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          현재 설정({minPerGroup}~{maxPerGroup}명)으로 조를 새로
+                          만듭니다. 이미 배정된 {assignedMemberIds.size}명의
+                          배정이 모두 해제됩니다.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>취소</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleCreateTable}>
+                          다시 생성
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                ) : (
+                  <Button
+                    onClick={handleCreateTable}
+                    className="w-full bg-[#135bec]/5 text-[#135bec] hover:bg-[#135bec]/10"
+                    disabled={plan.totalGroups === 0}
+                  >
+                    <Table className="w-4 h-4 mr-2" />
+                    {isTableCreated ? "조 테이블 다시 생성" : "조 테이블 생성"}
+                  </Button>
+                )}
               </CardContent>
             </Card>
 
@@ -819,9 +959,7 @@ export default function LunchGroupsPage() {
                   </span>
                 </div>
                 <CardDescription>
-                  {isTableCreated
-                    ? "인원을 드래그하여 조에 배정하세요."
-                    : "먼저 조 테이블을 생성하세요."}
+                  인원을 오른쪽 조로 드래그하여 배정하세요.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -878,9 +1016,7 @@ export default function LunchGroupsPage() {
                 <DroppableUnassigned>
                   {unassignedMembers.length === 0 ? (
                     <div className="text-center py-8 text-slate-400 text-sm">
-                      {isTableCreated
-                        ? "모든 인원이 배정되었습니다."
-                        : "조 테이블을 먼저 생성하세요."}
+                      모든 인원이 배정되었습니다.
                     </div>
                   ) : (
                     unassignedMembers.map((member) => (
@@ -1006,26 +1142,33 @@ export default function LunchGroupsPage() {
                   </div>
                 </div>
                 <CardDescription>
-                  유저들이 뽑기를 하면 해당 조에 자동으로 배정됩니다.
+                  {isTableCreated
+                    ? "유저들이 뽑기를 하면 해당 조에 자동으로 배정됩니다."
+                    : "아직 저장 전인 미리보기입니다. 인원을 끌어다 놓으면 이 구성으로 저장됩니다."}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {!isTableCreated ? (
+                {displayGroups.length === 0 ? (
                   <div className="flex items-center justify-center h-64 text-slate-400">
                     <div className="text-center">
                       <Table className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                      <p>조 테이블 생성 버튼을 눌러 테이블을 만드세요</p>
+                      <p>참여 인원이 없어 만들 수 있는 조가 없습니다</p>
                     </div>
                   </div>
                 ) : (
                   <div className="grid grid-cols-3 gap-4">
-                    {groups.map((group) => {
+                    {displayGroups.map((group) => {
                       const assignedMembers = group.memberIds
                         .map((id) => members.find((m) => m.id === id))
                         .filter((m): m is Member => m !== undefined);
                       const emptySlots =
                         group.maxSlots - assignedMembers.length;
-                      const isRemainderGroup = group.maxSlots !== maxPerGroup;
+                      const slotNotice =
+                        group.maxSlots > maxPerGroup
+                          ? "최대 초과"
+                          : group.maxSlots < minPerGroup
+                            ? "최소 미달"
+                            : null;
 
                       return (
                         <DroppableGroup
@@ -1033,7 +1176,8 @@ export default function LunchGroupsPage() {
                           groupNumber={group.groupNumber}
                           maxSlots={group.maxSlots}
                           memberCount={assignedMembers.length}
-                          isRemainderGroup={isRemainderGroup}
+                          slotNotice={slotNotice}
+                          isDraggingSlot={isDraggingSlot}
                         >
                           {/* 멤버 슬롯 */}
                           <div className="space-y-2">
@@ -1049,14 +1193,13 @@ export default function LunchGroupsPage() {
                                 }
                               />
                             ))}
-                            {/* 빈 슬롯 */}
+                            {/* 빈 슬롯 - 다른 조로 끌어 옮길 수 있다 */}
                             {Array.from({ length: emptySlots }).map((_, i) => (
-                              <div
+                              <DraggableEmptySlot
                                 key={`empty-${i}`}
-                                className="px-3 py-2 border-2 border-dashed border-slate-200 rounded-md text-sm text-slate-400 text-center"
-                              >
-                                드래그하여 배정
-                              </div>
+                                groupNumber={group.groupNumber}
+                                index={i}
+                              />
                             ))}
                           </div>
                         </DroppableGroup>
@@ -1078,6 +1221,11 @@ export default function LunchGroupsPage() {
             <span className="text-sm font-medium text-[#135bec]">
               {activeMember.full_name}
             </span>
+          </div>
+        )}
+        {isDraggingSlot && (
+          <div className="px-3 py-2 rounded-md border-2 border-dashed border-[#135bec] bg-[#135bec]/10 text-xs text-center text-[#135bec] shadow-xl">
+            빈 자리
           </div>
         )}
       </DragOverlay>

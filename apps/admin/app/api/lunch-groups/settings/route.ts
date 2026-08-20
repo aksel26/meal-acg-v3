@@ -22,7 +22,22 @@ export async function GET() {
 // PUT: 설정 업데이트
 export async function PUT(request: Request) {
   const body = await request.json();
-  const { maxMembersPerGroup, totalGroups } = body;
+  const { maxMembersPerGroup, minMembersPerGroup, totalGroups } = body;
+
+  // 최소가 최대를 넘으면 잘못된 배정이 저장되므로 입력 단계에서 막는다
+  if (
+    typeof maxMembersPerGroup !== "number" ||
+    typeof minMembersPerGroup !== "number" ||
+    !Number.isInteger(maxMembersPerGroup) ||
+    !Number.isInteger(minMembersPerGroup) ||
+    minMembersPerGroup < 1 ||
+    maxMembersPerGroup < minMembersPerGroup
+  ) {
+    return NextResponse.json(
+      { error: "조당 인원은 1명 이상이어야 하고, 최대는 최소보다 작을 수 없습니다." },
+      { status: 400 },
+    );
+  }
 
   const supabase = await createClient();
 
@@ -39,6 +54,7 @@ export async function PUT(request: Request) {
       .from("lunch_group_settings")
       .insert({
         max_members_per_group: maxMembersPerGroup,
+        min_members_per_group: minMembersPerGroup,
         total_groups: totalGroups,
       })
       .select()
@@ -54,6 +70,7 @@ export async function PUT(request: Request) {
     .from("lunch_group_settings")
     .update({
       max_members_per_group: maxMembersPerGroup,
+      min_members_per_group: minMembersPerGroup,
       total_groups: totalGroups,
       updated_at: new Date().toISOString(),
     })

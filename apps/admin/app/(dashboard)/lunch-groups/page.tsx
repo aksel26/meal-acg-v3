@@ -439,28 +439,9 @@ export default function LunchGroupsPage() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.lunchGroups.settings,
       });
-      toast.success("배정 설정이 저장되었습니다.");
     },
     onError: (error: Error) => toast.error(error.message),
   });
-
-  // 입력칸을 벗어날 때 저장 (값이 바뀐 경우에만)
-  const handleSettingsBlur = useCallback(() => {
-    if (minPerGroup > maxPerGroup) {
-      toast.error("최소 인원은 최대 인원보다 클 수 없습니다.");
-      setMaxInput(String(settings?.max_members_per_group ?? DEFAULT_MAX_PER_GROUP));
-      setMinInput(String(settings?.min_members_per_group ?? DEFAULT_MIN_PER_GROUP));
-      return;
-    }
-    if (
-      settings &&
-      settings.max_members_per_group === maxPerGroup &&
-      settings.min_members_per_group === minPerGroup
-    ) {
-      return;
-    }
-    settingsMutation.mutate({ max: maxPerGroup, min: minPerGroup });
-  }, [maxPerGroup, minPerGroup, settings, settingsMutation]);
 
   // 리셋 mutation
   const resetMutation = useMutation({
@@ -530,17 +511,46 @@ export default function LunchGroupsPage() {
   const isTableCreated = groups.length > 0;
   const displayGroups = isTableCreated ? groups : previewGroups;
 
-  // 빈 조 테이블을 그대로 확정 저장
+  // 입력한 배정 설정이 아직 저장 전인지
+  const hasUnsavedSettings =
+    !!settings &&
+    (settings.max_members_per_group !== maxPerGroup ||
+      (settings.min_members_per_group ?? DEFAULT_MIN_PER_GROUP) !==
+        minPerGroup);
+
+  // 배정 설정을 저장하고 그 설정대로 조 테이블을 만든다
   const handleCreateTable = useCallback(() => {
+    if (minPerGroup > maxPerGroup) {
+      toast.error("최소 인원은 최대 인원보다 클 수 없습니다.");
+      return;
+    }
     if (previewGroups.length === 0) {
       toast.error("생성할 조가 없습니다.");
       return;
     }
-    autoSaveGroups(
-      previewGroups,
-      `${previewGroups.length}개 조 테이블이 생성되었습니다.`,
-    );
-  }, [previewGroups, autoSaveGroups]);
+
+    const createTable = () =>
+      autoSaveGroups(
+        previewGroups,
+        `${previewGroups.length}개 조 테이블이 생성되었습니다.`,
+      );
+
+    if (hasUnsavedSettings) {
+      settingsMutation.mutate(
+        { max: maxPerGroup, min: minPerGroup },
+        { onSuccess: createTable },
+      );
+      return;
+    }
+    createTable();
+  }, [
+    previewGroups,
+    autoSaveGroups,
+    maxPerGroup,
+    minPerGroup,
+    hasUnsavedSettings,
+    settingsMutation,
+  ]);
 
   // 이미 조에 배정된 멤버 ID 집합
   const assignedMemberIds = useMemo(() => {
@@ -863,7 +873,6 @@ export default function LunchGroupsPage() {
                       max={10}
                       value={maxInput}
                       onChange={(e) => setMaxInput(e.target.value)}
-                      onBlur={handleSettingsBlur}
                       className="mt-1"
                     />
                   </div>
@@ -875,7 +884,6 @@ export default function LunchGroupsPage() {
                       max={10}
                       value={minInput}
                       onChange={(e) => setMinInput(e.target.value)}
-                      onBlur={handleSettingsBlur}
                       className="mt-1"
                     />
                   </div>
@@ -890,8 +898,12 @@ export default function LunchGroupsPage() {
                   {availableMembers.length}명을 조당 {minPerGroup}~{maxPerGroup}
                   명으로 나누면 {plan.totalGroups}개 조
                   {plan.slots.length > 0 && ` (${plan.slots.join(" · ")}명)`}
-                  {settingsMutation.isPending && " · 설정 저장 중..."}
                 </div>
+                {hasUnsavedSettings && (
+                  <div className="text-xs text-[#135bec] bg-[#135bec]/5 border border-[#135bec]/20 rounded px-2 py-1.5">
+                    변경한 인원 설정은 조 테이블을 생성할 때 저장됩니다.
+                  </div>
+                )}
                 {plan.hasOverMax && (
                   <div className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
                     최소 {minPerGroup}명을 지키려면 조를 줄여야 해서 최대{" "}
@@ -910,7 +922,7 @@ export default function LunchGroupsPage() {
                     <AlertDialogTrigger asChild>
                       <Button
                         className="w-full bg-[#135bec]/5 text-[#135bec] hover:bg-[#135bec]/10"
-                        disabled={plan.totalGroups === 0}
+                        disabled={plan.totalGroups === 0 || settingsMutation.isPending}
                       >
                         <Table className="w-4 h-4 mr-2" />조 테이블 다시 생성
                       </Button>
@@ -936,7 +948,7 @@ export default function LunchGroupsPage() {
                   <Button
                     onClick={handleCreateTable}
                     className="w-full bg-[#135bec]/5 text-[#135bec] hover:bg-[#135bec]/10"
-                    disabled={plan.totalGroups === 0}
+                    disabled={plan.totalGroups === 0 || settingsMutation.isPending}
                   >
                     <Table className="w-4 h-4 mr-2" />
                     {isTableCreated ? "조 테이블 다시 생성" : "조 테이블 생성"}

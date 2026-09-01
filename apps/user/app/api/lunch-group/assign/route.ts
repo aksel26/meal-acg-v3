@@ -52,7 +52,23 @@ export async function POST(request: Request) {
 
     const weekStartDate = getWeekStartDate();
 
-    // 3. 현재 주차 점심조 조회 (멤버 정보 포함)
+    // 3. 관리자가 이번 주차에서 제외한 인원인지 확인
+    const { data: excluded, error: excludedError } = await supabase
+      .from("lunch_group_excluded_members")
+      .select("id")
+      .eq("member_id", member.id)
+      .eq("week_start_date", weekStartDate)
+      .maybeSingle();
+
+    if (excludedError) {
+      throw new Error(`제외 인원 조회 실패: ${excludedError.message}`);
+    }
+
+    if (excluded) {
+      throw new Error("이번 주 점심조 추첨에서 제외된 인원입니다.");
+    }
+
+    // 4. 현재 주차 점심조 조회 (멤버 정보 포함)
     const { data: lunchGroups, error: groupsError } = await supabase
       .from("lunch_groups")
       .select(`
@@ -75,7 +91,7 @@ export async function POST(request: Request) {
       throw new Error("이번 주 점심조가 아직 생성되지 않았습니다. 관리자에게 문의하세요.");
     }
 
-    // 4. 이미 배정되어 있는지 확인
+    // 5. 이미 배정되어 있는지 확인
     const allMembers = (lunchGroups as LunchGroupWithMembers[]).flatMap(
       (g) => g.lunch_group_members || []
     );
@@ -85,7 +101,7 @@ export async function POST(request: Request) {
       throw new Error("이미 점심조에 배정되어 있습니다.");
     }
 
-    // 5. 빈 자리가 있는 조 찾기
+    // 6. 빈 자리가 있는 조 찾기
     const availableGroups = (lunchGroups as LunchGroupWithMembers[]).filter((group) => {
       const memberCount = group.lunch_group_members?.length || 0;
       const maxSlots = group.max_slots || 4;
@@ -96,7 +112,7 @@ export async function POST(request: Request) {
       throw new Error("빈 자리가 없습니다.");
     }
 
-    // 6. 랜덤으로 조 선택
+    // 7. 랜덤으로 조 선택
     const randomIndex = Math.floor(Math.random() * availableGroups.length);
     const selectedGroup = availableGroups[randomIndex];
 
@@ -104,7 +120,7 @@ export async function POST(request: Request) {
       throw new Error("조 선택에 실패했습니다.");
     }
 
-    // 7. 멤버 배정
+    // 8. 멤버 배정
     const { error: insertError } = await supabase
       .from("lunch_group_members")
       .insert({

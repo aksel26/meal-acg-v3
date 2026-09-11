@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
+import {
+  collectUsageRecordAmounts,
+  parseUsageRecordPage,
+  USAGE_RECORD_PAGE_SIZE,
+} from "@/lib/usage-record-filters";
 
 // "2026-H1" → { start: "2026-01-01", end: "2026-06-30" }
 // "2026-H2" → { start: "2026-07-01", end: "2026-12-31" }
@@ -46,6 +51,11 @@ export async function GET(request: NextRequest) {
     const supabase = createServiceClient();
     const { searchParams } = new URL(request.url);
 
+    const page = parseUsageRecordPage(searchParams.get("page"));
+    if (page === null) {
+      return NextResponse.json({ error: "Invalid page" }, { status: 400 });
+    }
+    const amountOptionsOnly = searchParams.get("mode") === "amount-options";
     const period = searchParams.get("period");
     const type = searchParams.get("type");
     const types = parseStringList(searchParams.get("types"));
@@ -61,72 +71,6 @@ export async function GET(request: NextRequest) {
     const createdAtFrom = searchParams.get("created_at_from");
     const createdAtTo = searchParams.get("created_at_to");
     const amounts = parseAmountList(searchParams.get("amounts"));
-
-    let query = supabase
-      .from("usage_records")
-      .select(
-        "*, members!usage_records_member_id_fkey(id, full_name), first_reviewer:members!usage_records_first_reviewed_by_fkey(full_name), second_reviewer:members!usage_records_second_reviewed_by_fkey(full_name)",
-      );
-
-    if (period) {
-      const range = halfYearToDateRange(period);
-      if (range) {
-        query = query.gte("used_at", range.start).lte("used_at", range.end);
-      } else {
-        query = query.like("used_at", `${period}%`);
-      }
-    }
-    if (types.length > 0) {
-      query = query.in("type", types);
-    } else if (type) {
-      query = query.eq("type", type);
-    }
-    if (memberIds.length > 0) {
-      query = query.in("member_id", memberIds);
-    } else if (memberId) {
-      query = query.eq("member_id", memberId);
-    }
-    if (descriptionSearch) {
-      query = query.ilike("description", `%${descriptionSearch}%`);
-    }
-    if (notesSearch) {
-      query = query.ilike("notes", `%${notesSearch}%`);
-    }
-    if (usedAtFrom) {
-      query = query.gte("used_at", usedAtFrom);
-    }
-    if (usedAtTo) {
-      query = query.lte("used_at", usedAtTo);
-    }
-    if (createdAtFrom) {
-      query = query.gte("created_at", `${createdAtFrom}T00:00:00`);
-    }
-    if (createdAtTo) {
-      query = query.lt("created_at", `${addOneDay(createdAtTo)}T00:00:00`);
-    }
-    if (amounts.length > 0) {
-      query = query.in("amount", amounts);
-    }
-    if (reviewStatuses.length > 0) {
-      const statusValues = reviewStatuses.flatMap((status) =>
-        status === "in_progress" ? [1, 2] : [parseInt(status, 10)],
-      );
-      query = query.in(
-        "review_status",
-        Array.from(new Set(statusValues)).filter((status) =>
-          Number.isFinite(status),
-        ),
-      );
-    } else if (reviewStatus !== null && reviewStatus !== undefined) {
-      if (reviewStatus === "in_progress") {
-        query = query.in("review_status", [1, 2]);
-      } else {
-        query = query.eq("review_status", parseInt(reviewStatus, 10));
-      }
-    }
-    if (allocationId) {
-      query = query.eq("allocation_id", allocationId);
-    }
 
     // 퇴사자 기록 제외
     const { data: resignedMembers, error: resignedError } = await supabase
@@ -146,13 +90,102 @@ export async function GET(request: NextRequest) {
       .map((m) => m.member_id)
       .filter((id): id is string => Boolean(id));
 
-    if (resignedIds.length > 0) {
-      query = query.not("member_id", "in", `(${resignedIds.join(",")})`);
+    const buildQuery = () => {
+      let query = supabase
+        .from("usage_records")
+        .select(
+          amountOptionsOnly
+            ? "id, amount"
+            : "id, member_id, type, amount, description, used_at, companions, co_payers, notes, delay_reason, no, review_status, reviewed_at, first_reviewed_at, created_at, members!usage_records_member_id_fkey(full_name), first_reviewer:members!usage_records_first_reviewed_by_fkey(full_name), second_reviewer:members!usage_records_second_reviewed_by_fkey(full_name)",
+          amountOptionsOnly ? undefined : { count: "exact" },
+        );
+
+      if (period) {
+        const range = halfYearToDateRange(period);
+        if (range) {
+          query = query.gte("used_at", range.start).lte("used_at", range.end);
+        } else {
+          query = query.like("used_at", `${period}%`);
+        }
+      }
+      if (types.length > 0) {
+        query = query.in("type", types);
+      } else if (type) {
+        query = query.eq("type", type);
+      }
+      if (memberIds.length > 0) {
+        query = query.in("member_id", memberIds);
+      } else if (memberId) {
+        query = query.eq("member_id", memberId);
+      }
+      if (descriptionSearch) {
+        query = query.ilike("description", `%${descriptionSearch}%`);
+      }
+      if (notesSearch) {
+        query = query.ilike("notes", `%${notesSearch}%`);
+      }
+      if (usedAtFrom) {
+        query = query.gte("used_at", usedAtFrom);
+      }
+      if (usedAtTo) {
+        query = query.lte("used_at", usedAtTo);
+      }
+      if (createdAtFrom) {
+        query = query.gte("created_at", `${createdAtFrom}T00:00:00`);
+      }
+      if (createdAtTo) {
+        query = query.lt("created_at", `${addOneDay(createdAtTo)}T00:00:00`);
+      }
+      if (!amountOptionsOnly && amounts.length > 0) {
+        query = query.in("amount", amounts);
+      }
+      if (reviewStatuses.length > 0) {
+        const statusValues = reviewStatuses.flatMap((status) =>
+          status === "in_progress" ? [1, 2] : [parseInt(status, 10)],
+        );
+        query = query.in(
+          "review_status",
+          Array.from(new Set(statusValues)).filter((status) =>
+            Number.isFinite(status),
+          ),
+        );
+      } else if (reviewStatus !== null && reviewStatus !== undefined) {
+        if (reviewStatus === "in_progress") {
+          query = query.in("review_status", [1, 2]);
+        } else {
+          query = query.eq("review_status", parseInt(reviewStatus, 10));
+        }
+      }
+      if (allocationId) {
+        query = query.eq("allocation_id", allocationId);
+      }
+
+      if (resignedIds.length > 0) {
+        query = query.not("member_id", "in", `(${resignedIds.join(",")})`);
+      }
+
+      return query;
+    };
+
+    if (amountOptionsOnly) {
+      const amounts = await collectUsageRecordAmounts(async (afterId) => {
+        let query = buildQuery().order("id").limit(1000);
+        if (afterId) query = query.gt("id", afterId);
+        const { data, error } = await query;
+        if (error) throw error;
+        return (data || []) as unknown as { id: string; amount: number }[];
+      });
+      return NextResponse.json(amounts);
     }
 
-    const { data, error } = await query
+    const { data, error, count } = await buildQuery()
       .order("no", { ascending: false, nullsFirst: false })
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(
+        (page - 1) * USAGE_RECORD_PAGE_SIZE,
+        page * USAGE_RECORD_PAGE_SIZE - 1,
+      );
 
     if (error) {
       console.error("Error fetching usage records:", error);
@@ -162,7 +195,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(data);
+    return NextResponse.json({
+      data,
+      count,
+      page,
+      pageSize: USAGE_RECORD_PAGE_SIZE,
+    });
   } catch (error) {
     console.error("Usage records API error:", error);
     if (error instanceof Error && error.message === "Unauthorized") {

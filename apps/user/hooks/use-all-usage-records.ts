@@ -5,18 +5,11 @@ import { queryKeys } from "@/lib/query-keys";
 
 export interface AllRecordItem {
   id: string;
-  member_id: string;
   member_name: string;
-  team_name: string | null;
   type: string;
   amount: number;
   description: string;
   used_at: string;
-  is_reviewed: boolean;
-  review_status: number;
-  notes: string | null;
-  delay_reason: string | null;
-  created_at: string;
 }
 
 export interface AllRecordsResponse {
@@ -38,10 +31,9 @@ export interface AllRecordsFilters {
 
 // --- Fetch Function ---
 
-const AUTO_PAGE_SIZE = 100;
-
 async function fetchAllUsageRecordsPage(
   filters: AllRecordsFilters,
+  summary = false,
 ): Promise<AllRecordsResponse> {
   const params = new URLSearchParams({ member_id: filters.memberId });
   if (filters.period) params.set("period", filters.period);
@@ -51,6 +43,7 @@ async function fetchAllUsageRecordsPage(
   if (filters.reviewStatus) params.set("review_status", filters.reviewStatus);
   if (filters.limit) params.set("limit", filters.limit.toString());
   if (filters.offset) params.set("offset", filters.offset.toString());
+  if (summary) params.set("summary", "true");
 
   const response = await fetch(`/api/points/all-records?${params}`);
   const data = await response.json();
@@ -60,44 +53,6 @@ async function fetchAllUsageRecordsPage(
   }
 
   return data;
-}
-
-async function fetchAllUsageRecords(
-  filters: AllRecordsFilters,
-): Promise<AllRecordsResponse> {
-  if (filters.limit) {
-    return fetchAllUsageRecordsPage(filters);
-  }
-
-  const records: AllRecordItem[] = [];
-  let offset = filters.offset ?? 0;
-  let totalCount = 0;
-  let totalAmount = 0;
-  let hasMore = true;
-
-  while (hasMore) {
-    const page = await fetchAllUsageRecordsPage({
-      ...filters,
-      limit: AUTO_PAGE_SIZE,
-      offset,
-    });
-
-    records.push(...page.records);
-    totalCount = page.total_count;
-    totalAmount += page.records.reduce((sum, record) => sum + record.amount, 0);
-    hasMore = page.has_more;
-    if (page.records.length === 0) {
-      break;
-    }
-    offset += AUTO_PAGE_SIZE;
-  }
-
-  return {
-    records,
-    total_count: totalCount,
-    total_amount: totalAmount,
-    has_more: false,
-  };
 }
 
 // --- Hook ---
@@ -113,10 +68,23 @@ export function useAllUsageRecords(
 ) {
   return useQuery({
     queryKey: filters ? queryKeys.points.allRecords.filtered(filters) : [],
-    queryFn: () => fetchAllUsageRecords(filters!),
+    queryFn: () => fetchAllUsageRecordsPage(filters!),
     enabled: !!filters && enabled,
     staleTime: 2 * 60 * 1000, // 2분
     gcTime: 5 * 60 * 1000, // 5분
+    retry: 2,
+  });
+}
+
+export function useAllUsageRecordsSummary(
+  filters: Omit<AllRecordsFilters, "limit" | "offset"> | null,
+) {
+  return useQuery({
+    queryKey: [...queryKeys.points.allRecords.all, "summary", filters],
+    queryFn: () => fetchAllUsageRecordsPage(filters!, true),
+    enabled: !!filters,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
     retry: 2,
   });
 }

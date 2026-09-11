@@ -103,7 +103,7 @@ export default function StatusTab({
   month: number;
   selectedUserId: string;
 }) {
-  const { data: logs, isLoading } = useMealLogs(year, month);
+  const { data: logs, isLoading } = useMealLogs(year, month, selectedUserId);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const allEntries = useMemo(

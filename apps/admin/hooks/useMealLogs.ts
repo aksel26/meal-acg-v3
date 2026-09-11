@@ -25,11 +25,15 @@ export interface MealLogWithMember {
  * 특정 연/월의 전체 식대 사용 기록(meal_logs)을 조회합니다.
  * 각 row는 하루 단위로 아침/점심/저녁 사용처·금액·결제자를 포함합니다.
  */
-export function useMealLogs(year: number, month: number) {
+export function useMealLogs(year: number, month: number, userId?: string) {
   return useQuery<MealLogWithMember[]>({
-    queryKey: queryKeys.mealLogs.byMonth(year, month),
+    queryKey: userId
+      ? queryKeys.mealLogs.byUserAndMonth(userId, year, month)
+      : queryKeys.mealLogs.byMonth(year, month),
     queryFn: async () => {
-      const res = await fetch(`/api/meal-logs?year=${year}&month=${month}`);
+      const params = new URLSearchParams({ year: String(year), month: String(month) });
+      if (userId) params.set("userId", userId);
+      const res = await fetch(`/api/meal-logs?${params}`);
       if (!res.ok) throw new Error("Failed to fetch meal logs");
       return res.json();
     },

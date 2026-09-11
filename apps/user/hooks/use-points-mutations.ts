@@ -45,9 +45,16 @@ function getEndpointPath(type: PointsType): string {
   return type === "welfare" ? "/api/points/welfare" : "/api/points/activity";
 }
 
-function invalidatePointsQueries(queryClient: ReturnType<typeof useQueryClient>) {
+function invalidatePointsQueries(
+  queryClient: ReturnType<typeof useQueryClient>,
+  type: PointsType,
+) {
   queryClient.invalidateQueries({
     queryKey: queryKeys.points.all,
+    predicate: ({ queryKey }) =>
+      [type, "dashboard", "allocationRecords", "allRecords"].includes(
+        String(queryKey[1]),
+      ),
   });
 }
 
@@ -75,8 +82,8 @@ export function useAddUsageRecord() {
 
       return data;
     },
-    onSuccess: () => {
-      invalidatePointsQueries(queryClient);
+    onSuccess: (_data, { type }) => {
+      invalidatePointsQueries(queryClient, type);
     },
   });
 }
@@ -103,8 +110,8 @@ export function useUpdateUsageRecord() {
 
       return data;
     },
-    onSuccess: () => {
-      invalidatePointsQueries(queryClient);
+    onSuccess: (_data, { type }) => {
+      invalidatePointsQueries(queryClient, type);
     },
   });
 }
@@ -130,8 +137,8 @@ export function useDeleteUsageRecord() {
 
       return data;
     },
-    onSuccess: () => {
-      invalidatePointsQueries(queryClient);
+    onSuccess: (_data, { type }) => {
+      invalidatePointsQueries(queryClient, type);
     },
   });
 }

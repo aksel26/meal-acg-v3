@@ -81,8 +81,8 @@ export const queryKeys = {
     },
     dashboard: {
       all: ["points", "dashboard"] as const,
-      byPeriod: (period: string, type?: string) =>
-        ["points", "dashboard", period, type ?? "all"] as const,
+      byPeriod: (memberId: string, period: string, type?: string) =>
+        ["points", "dashboard", memberId, period, type ?? "all"] as const,
     },
     allocationRecords: {
       byAllocation: (

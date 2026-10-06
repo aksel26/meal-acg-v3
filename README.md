@@ -17,7 +17,7 @@ ACG 임직원 40여 명이 쓰는 사내 복지관리 서비스입니다.
 **User 앱** — 직원이 휴대폰에 설치해 쓰는 PWA
 
 <p align="center">
-  <img src="./assets/readme/showcase-user.png" width="100%" alt="User 앱 화면 네 장. 이번 달 식대 잔액을 보여 주는 홈, 캘린더에서 조식·중식·석식을 입력하는 식사 기록, 복지포인트 잔액과 사용 내역, Monthly 음료 선택">
+  <img src="./assets/readme/showcase-user.png" width="100%" alt="User 앱 화면 다섯 장. 이번 달 식대 잔액을 보여 주는 홈, 캘린더에서 조식·중식·석식을 입력하는 식사 기록, 복지포인트 잔액과 사용 내역, 점심조 뽑기, Monthly 음료 선택">
 </p>
 
 **Admin 앱** — 관리자가 PC에서 쓰는 대시보드

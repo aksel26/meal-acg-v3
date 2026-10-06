@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
+import { MEMBER_COLUMNS } from "@/lib/constants";
 
 // PUT /api/members/[id] - Update a member (organization info, role, etc.)
 export async function PUT(
@@ -55,7 +56,7 @@ export async function PUT(
       .from("members")
       .update(updateData)
       .eq("id", id)
-      .select()
+      .select(MEMBER_COLUMNS)
       .single();
 
     if (error) {

@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
-import { applyRoleOverride } from "@/lib/constants";
+import {
+  applyRoleOverride,
+  MEMBER_COLUMNS,
+  MEMBER_WITH_TEAM_COLUMNS,
+} from "@/lib/constants";
 
 // GET /api/members - List all members
 export async function GET(request: NextRequest) {
@@ -11,7 +15,9 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const excludeStatus = searchParams.get("exclude_status");
 
-    let query = supabase.from("members").select("*, teams(name)");
+    let query = supabase
+      .from("members")
+      .select(MEMBER_WITH_TEAM_COLUMNS);
 
     if (excludeStatus === "true") {
       const { data: statusMembers } = await supabase
@@ -39,7 +45,7 @@ export async function GET(request: NextRequest) {
     const result = (data || []).map(({ teams, ...rest }) =>
       applyRoleOverride({
         ...rest,
-        team_name: (teams as { name: string } | null)?.name ?? null,
+        team_name: (teams as unknown as { name: string } | null)?.name ?? null,
       })
     );
 
@@ -88,7 +94,7 @@ export async function POST(request: NextRequest) {
         intern_months: memberRole === "인턴" && internMonths ? parseInt(internMonths, 10) : null,
         organization_id: adminMember?.organization_id || null,
       })
-      .select()
+      .select(MEMBER_COLUMNS)
       .single();
 
     if (error) {

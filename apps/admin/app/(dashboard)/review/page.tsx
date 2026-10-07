@@ -64,8 +64,12 @@ import {
   Calendar as CalendarIcon,
 } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
+import { addCustomAmount, USAGE_RECORD_PAGE_SIZE } from "@/lib/usage-record-filters";
 import { useAuth } from "@/hooks/useAuth";
-import { useUsageRecords } from "@/hooks/useUsageRecords";
+import {
+  useUsageRecords,
+  useUsageRecordAmountOptions,
+} from "@/hooks/useUsageRecords";
 import {
   useAdvanceReview,
   useRevertReview,
@@ -81,7 +85,6 @@ import { useActiveStatusMembers } from "@/hooks/useActiveStatusMembers";
 interface UsageRecord {
   id: string;
   member_id: string;
-  allocation_id: string;
   type: string;
   amount: number;
   description: string | null;
@@ -90,20 +93,13 @@ interface UsageRecord {
   co_payers: string[] | null;
   notes: string | null;
   delay_reason: string | null;
-  receipt_url: string | null;
   no: number | null;
-  is_reviewed: boolean;
   review_status: number;
-  reviewed_by: string | null;
   reviewed_at: string | null;
-  first_reviewed_by: string | null;
   first_reviewed_at: string | null;
-  second_reviewed_by: string | null;
-  second_reviewed_at: string | null;
   created_at: string;
   members?: {
     full_name: string;
-    member_role: string;
   };
   first_reviewer?: {
     full_name: string;
@@ -719,6 +715,7 @@ function ReviewPageContent() {
   const [isCreatedAtPopoverOpen, setIsCreatedAtPopoverOpen] = useState(false);
   const [amountFilter, setAmountFilter] = useState<number[]>([]);
   const [amountDraft, setAmountDraft] = useState<number[]>([]);
+  const [customAmountDraft, setCustomAmountDraft] = useState("");
   const [isAmountPopoverOpen, setIsAmountPopoverOpen] = useState(false);
 
   // Dialog states
@@ -778,9 +775,32 @@ function ReviewPageContent() {
     [baseQueryFilters, amountFilter],
   );
 
+  const [pagination, setPagination] = useState({
+    filters: queryFilters,
+    page: 1,
+  });
+  const page = pagination.filters === queryFilters ? pagination.page : 1;
+  const setPage = (nextPage: number) =>
+    setPagination({ filters: queryFilters, page: nextPage });
+
   // Queries
-  const { data: recordsData, isLoading } = useUsageRecords(queryFilters);
-  const { data: amountOptionsData } = useUsageRecords(baseQueryFilters);
+  const {
+    data: recordsData,
+    isLoading,
+    isError,
+    refetch,
+  } = useUsageRecords<UsageRecord>(queryFilters, page);
+  const { data: amountOptions = [], isError: isAmountOptionsError } =
+    useUsageRecordAmountOptions(baseQueryFilters);
+  const totalPages = Math.max(
+    1,
+    Math.ceil((recordsData?.count ?? 0) / USAGE_RECORD_PAGE_SIZE),
+  );
+  useEffect(() => {
+    if (recordsData && page > totalPages) {
+      setPagination({ filters: queryFilters, page: totalPages });
+    }
+  }, [recordsData, page, totalPages, queryFilters]);
 
   const { data: members } = useQuery<Member[]>({
     queryKey: queryKeys.members.all,
@@ -808,29 +828,7 @@ function ReviewPageContent() {
   const deleteMany = useDeleteUsageRecords();
 
   // Derived data
-  const records: UsageRecord[] = useMemo(() => {
-    if (!recordsData) return [];
-    return Array.isArray(recordsData) ? recordsData : recordsData.data || [];
-  }, [recordsData]);
-
-  const amountOptionRecords: UsageRecord[] = useMemo(() => {
-    if (!amountOptionsData) return [];
-    return Array.isArray(amountOptionsData)
-      ? amountOptionsData
-      : amountOptionsData.data || [];
-  }, [amountOptionsData]);
-
-  const amountOptions = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          amountOptionRecords
-            .map((record) => record.amount)
-            .filter((amount) => Number.isFinite(amount)),
-        ),
-      ).sort((a, b) => b - a),
-    [amountOptionRecords],
-  );
+  const records = recordsData?.data ?? [];
 
   const { data: statusMembers } = useActiveStatusMembers();
 
@@ -903,6 +901,7 @@ function ReviewPageContent() {
     usedAtRange,
     createdAtRange,
     amountFilter,
+    page,
   ]);
 
   // ── Bulk Delete Handlers ──
@@ -952,7 +951,12 @@ function ReviewPageContent() {
   };
 
   const handleAmountApply = () => {
-    setAmountFilter(amountDraft);
+    const amounts = addCustomAmount(amountDraft, customAmountDraft);
+    if (!amounts) {
+      toast.error("0 이상의 정수 금액을 입력해주세요.");
+      return;
+    }
+    setAmountFilter(amounts);
     setIsAmountPopoverOpen(false);
   };
 
@@ -973,6 +977,7 @@ function ReviewPageContent() {
     setCreatedAtDraft({});
     setAmountFilter([]);
     setAmountDraft([]);
+    setCustomAmountDraft("");
   };
 
   // ── Review Handlers ──
@@ -1137,7 +1142,18 @@ function ReviewPageContent() {
 
       {/* Main Table */}
       <div className="min-h-0 flex-1 overflow-hidden rounded-xl bg-white">
-        {isLoading ? (
+        {isError ? (
+          <div className="py-16 text-center" role="alert">
+            <p>사용내역을 불러오지 못했습니다.</p>
+            <Button
+              variant="outline"
+              className="mt-3"
+              onClick={() => refetch()}
+            >
+              다시 시도
+            </Button>
+          </div>
+        ) : isLoading ? (
           <div>
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="flex items-center gap-4 px-6 py-3">
@@ -1230,7 +1246,10 @@ function ReviewPageContent() {
                       open={isAmountPopoverOpen}
                       onOpenChange={(open) => {
                         setIsAmountPopoverOpen(open);
-                        if (open) setAmountDraft(amountFilter);
+                        if (open) {
+                          setAmountDraft(amountFilter);
+                          setCustomAmountDraft("");
+                        }
                       }}
                     >
                       <PopoverTrigger asChild>
@@ -1258,23 +1277,26 @@ function ReviewPageContent() {
                             <span className="text-xs font-semibold text-slate-700">
                               금액
                             </span>
-                            {amountDraft.length > 0 && (
+                            {(amountDraft.length > 0 || customAmountDraft) && (
                               <button
                                 type="button"
                                 className="text-xs text-slate-400 hover:text-slate-600"
-                                onClick={() => setAmountDraft([])}
+                                onClick={() => {
+                                  setAmountDraft([]);
+                                  setCustomAmountDraft("");
+                                }}
                               >
                                 전체 해제
                               </button>
                             )}
                           </div>
                           <div className="max-h-64 space-y-1 overflow-auto">
-                            {amountOptions.length === 0 ? (
+                            {amountOptions.length === 0 && amountDraft.length === 0 ? (
                               <div className="py-6 text-center text-xs text-slate-400">
                                 등록된 금액이 없습니다
                               </div>
                             ) : (
-                              amountOptions.map((amount) => (
+                              [...new Set([...amountOptions, ...amountDraft])].sort((a, b) => b - a).map((amount) => (
                                 <label
                                   key={amount}
                                   className="flex cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-xs text-slate-600 hover:bg-slate-50"
@@ -1293,6 +1315,20 @@ function ReviewPageContent() {
                             )}
                           </div>
                           <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+                            <Input
+                              className="h-8 min-w-0 flex-1 px-2 text-xs"
+                              inputMode="numeric"
+                              aria-label="금액 직접 입력"
+                              placeholder="직접 입력"
+                              value={customAmountDraft}
+                              onChange={(event) => setCustomAmountDraft(event.target.value)}
+                              onKeyDown={(event) => {
+                                if (event.key === "Enter") {
+                                  event.preventDefault();
+                                  handleAmountApply();
+                                }
+                              }}
+                            />
                             <Button
                               variant="outline"
                               size="sm"
@@ -1480,6 +1516,38 @@ function ReviewPageContent() {
           </div>
         )}
       </div>
+
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-sm">
+        <span aria-live="polite">
+          {recordsData ? `전체 ${recordsData.count.toLocaleString()}건` : ""}
+        </span>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page <= 1 || isLoading}
+            onClick={() => setPage(page - 1)}
+          >
+            이전
+          </Button>
+          <span>
+            {page} / {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page >= totalPages || isLoading || isError}
+            onClick={() => setPage(page + 1)}
+          >
+            다음
+          </Button>
+        </div>
+      </div>
+      {isAmountOptionsError && (
+        <p className="text-sm text-destructive" role="alert">
+          금액 필터를 불러오지 못했습니다.
+        </p>
+      )}
 
       {/* ── Edit Dialog ── */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>

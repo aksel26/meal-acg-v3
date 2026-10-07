@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
+import { MEMBER_WITH_TEAM_COLUMNS } from "@/lib/constants";
 import ExcelJS from "exceljs";
 
 const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
@@ -206,7 +207,9 @@ export async function GET(request: NextRequest) {
           : Promise.resolve({ data: null, error: null }),
         // 멤버 (팀 정보 포함)
         isHalfYear
-          ? supabase.from("members").select("*, teams(name)")
+          ? supabase
+              .from("members")
+              .select(MEMBER_WITH_TEAM_COLUMNS)
           : Promise.resolve({ data: null, error: null }),
         // 특이사항 인원
         isHalfYear

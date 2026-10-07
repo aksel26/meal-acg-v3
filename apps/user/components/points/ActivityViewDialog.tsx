@@ -134,11 +134,11 @@ export function ActivityViewDialog({
     data: summaries,
     isLoading,
     error,
-  } = usePointsDashboard(memberId, selectedMonth, "활동비");
+  } = usePointsDashboard(memberId, selectedMonth, "활동비", !!open);
 
   // 펼쳐진 직원의 사용내역 조회
   const { data: usageRecords, isLoading: usageLoading } = useAllocationRecords(
-    memberId,
+    open ? memberId : null,
     expandedAllocId,
     selectedMonth,
   );

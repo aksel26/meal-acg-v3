@@ -23,6 +23,9 @@ interface MemberCurrentStatusClient {
   };
 }
 
+// bcrypt 해시로 저장된 값인지 (평문 → 해시 전환 전후 모두 같은 코드로 동작시키기 위한 구분)
+const BCRYPT_HASH = /^\$2[aby]\$/;
+
 const ACCOUNT_NOT_FOUND_ERROR = "계정이 없습니다.";
 const INVALID_CREDENTIALS_ERROR = "아이디 또는 비밀번호가 일치하지 않습니다.";
 
@@ -82,8 +85,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 비밀번호 확인 (평문 비교)
-    if (member.password !== password) {
+    // 비밀번호 확인. 해시로 저장된 값은 DB 함수로만 비교하고, 아직 평문인 값은 기존 방식 그대로 비교한다.
+    let passwordMatches: boolean;
+
+    if (BCRYPT_HASH.test(member.password)) {
+      const { data: authRows, error: authError } = await supabase.rpc(
+        "authenticate_user",
+        { p_login_id: login_id, p_password: password }
+      );
+
+      if (authError) {
+        console.error("Authentication error:", authError);
+        return NextResponse.json(
+          { success: false, error: "로그인 처리 중 오류가 발생했습니다." },
+          { status: 500 }
+        );
+      }
+
+      passwordMatches = (authRows?.length ?? 0) > 0;
+    } else {
+      passwordMatches = member.password === password;
+    }
+
+    if (!passwordMatches) {
       return NextResponse.json(
         { success: false, error: INVALID_CREDENTIALS_ERROR },
         { status: 401 }

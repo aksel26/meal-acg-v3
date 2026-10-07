@@ -8,6 +8,7 @@ import {
   SelectValue,
 } from "@repo/ui/src/select";
 import { NumberTicker } from "@repo/ui/src/number-ticker";
+import { Button } from "@repo/ui/src/button";
 import { ChevronRight, ListFilter, Loader2, Plus } from "@repo/ui/icons";
 import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/src/popover";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@repo/ui/src/tooltip";
@@ -34,6 +35,7 @@ import {
 } from "@/hooks/use-points-mutations";
 import {
   useAllUsageRecords,
+  useAllUsageRecordsSummary,
   type AllRecordItem,
 } from "@/hooks/use-all-usage-records";
 import { useUserStore } from "@/stores/userStore";
@@ -150,20 +152,30 @@ function AllUsageRecordsInline({
   records,
   totalCount,
   totalAmount,
+  summaryError,
   isLoading,
   error,
   selectedMonth,
   months,
   onMonthChange,
+  page,
+  hasMore,
+  isFetching,
+  onPageChange,
 }: {
   records: AllRecordItem[];
   totalCount: number;
-  totalAmount: number;
+  totalAmount?: number;
+  summaryError: boolean;
   isLoading: boolean;
   error: Error | null;
   selectedMonth: string;
   months: Array<{ value: string; label: string }>;
   onMonthChange: (value: string) => void;
+  page: number;
+  hasMore: boolean;
+  isFetching: boolean;
+  onPageChange: (page: number) => void;
 }) {
   const tickerItems = records.length > 0 ? [...records, ...records] : [];
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -235,7 +247,11 @@ function AllUsageRecordsInline({
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <span className="rounded-full bg-[var(--whisper-cream)] px-2.5 py-1 text-[11px] text-[var(--granite)]">
-            {totalAmount.toLocaleString()}원
+            {summaryError
+              ? "합계 조회 실패"
+              : totalAmount === undefined
+                ? "합계 집계 중"
+                : `${totalAmount.toLocaleString()}원`}
           </span>
           <span className="rounded-full bg-[var(--whisper-cream)] px-2.5 py-1 text-[11px] text-[var(--granite)]">
             총 {totalCount}건
@@ -330,6 +346,35 @@ function AllUsageRecordsInline({
           </motion.div>
         )}
       </div>
+      {(totalCount > 50 || page > 1) && (
+        <div
+          className="mt-3 flex shrink-0 items-center justify-end gap-2"
+          aria-label="전체인원 사용내역 페이지"
+        >
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page === 1 || isFetching}
+            onClick={() => onPageChange(page - 1)}
+          >
+            이전
+          </Button>
+          <span
+            className="text-xs tabular-nums text-[var(--slate-gray)]"
+            aria-live="polite"
+          >
+            {page}페이지
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!hasMore || isFetching}
+            onClick={() => onPageChange(page + 1)}
+          >
+            다음
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -341,6 +386,7 @@ export default function Points() {
   const [allRecordsMonth, setAllRecordsMonth] = useState<string>(
     dayjs().format("YYYY-MM"),
   );
+  const [allRecordsPage, setAllRecordsPage] = useState(1);
   const [editingPoint, setEditingPoint] = useState<WelfarePoint | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isNewPoint, setIsNewPoint] = useState(false);
@@ -452,16 +498,30 @@ export default function Points() {
   const {
     data: allUsageRecordsData,
     isLoading: isAllUsageRecordsLoading,
+    isFetching: isAllUsageRecordsFetching,
     error: allUsageRecordsError,
   } = useAllUsageRecords(
     currentMemberId
       ? {
           memberId: currentMemberId,
           period: allRecordsMonth,
+          limit: 50,
+          offset: (allRecordsPage - 1) * 50,
         }
       : null,
     !!currentMemberId,
   );
+  const { data: allUsageSummary, isError: isAllUsageSummaryError } =
+    useAllUsageRecordsSummary(
+      currentMemberId ? { memberId: currentMemberId, period: allRecordsMonth } : null,
+    );
+
+  useEffect(() => {
+    if (allUsageRecordsData) {
+      const lastPage = Math.max(1, Math.ceil(allUsageRecordsData.total_count / 50));
+      if (allRecordsPage > lastPage) setAllRecordsPage(lastPage);
+    }
+  }, [allUsageRecordsData, allRecordsPage]);
 
   // UsageRecord → WelfarePoint 변환 (EditPointDrawer 호환)
   const toEditablePoint = (record: UsageRecord): WelfarePoint => ({
@@ -701,12 +761,20 @@ export default function Points() {
           <AllUsageRecordsInline
             records={allUsageRecordsData?.records ?? []}
             totalCount={allUsageRecordsData?.total_count ?? 0}
-            totalAmount={allUsageRecordsData?.total_amount ?? 0}
+            totalAmount={allUsageSummary?.total_amount}
+            summaryError={isAllUsageSummaryError}
             isLoading={isAllUsageRecordsLoading}
             error={allUsageRecordsError}
             selectedMonth={allRecordsMonth}
             months={months}
-            onMonthChange={setAllRecordsMonth}
+            onMonthChange={(month) => {
+              setAllRecordsMonth(month);
+              setAllRecordsPage(1);
+            }}
+            page={allRecordsPage}
+            hasMore={allUsageRecordsData?.has_more ?? false}
+            isFetching={isAllUsageRecordsFetching}
+            onPageChange={setAllRecordsPage}
           />
         </div>
 

@@ -33,6 +33,15 @@ const nextConfig: NextConfig = {
 const withPWAConfig = withPWA({
   dest: "public",
   disable: process.env.NODE_ENV === "development",
+  publicExcludes: ["!noprecache/**/*", "!images/{Calendar,Coffee,lunch,Notice}.png"],
+  workboxOptions: {
+    exclude: [
+      /\/_next\/static\/.*(?<!\.p)\.woff2/,
+      /\.map$/,
+      /^manifest.*\.js$/,
+      /(?:^|\/)static\/media\/(Calendar|Coffee|lunch|Notice)\.[^.]+\.png$/,
+    ],
+  },
 });
 
 export default withPWAConfig(nextConfig);

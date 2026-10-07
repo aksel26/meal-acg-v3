@@ -50,3 +50,41 @@ export function buildUsageRecordSearchParams(filters: UsageRecordFilters) {
 
   return params;
 }
+
+export const USAGE_RECORD_PAGE_SIZE = 50;
+
+export function addCustomAmount(amounts: number[], input: string) {
+  const value = input.trim().replaceAll(",", "");
+  if (!value) return amounts;
+  const amount = Number(value);
+  if (!/^\d+$/.test(value) || !Number.isSafeInteger(amount)) return null;
+  return [...new Set([...amounts, amount])].sort((a, b) => a - b);
+}
+
+export function parseUsageRecordPage(value: string | null) {
+  if (value === null) return 1;
+  if (!/^\d+$/.test(value)) return null;
+  const page = Number(value);
+  return Number.isSafeInteger(page) &&
+    page > 0 &&
+    Number.isSafeInteger(page * USAGE_RECORD_PAGE_SIZE)
+    ? page
+    : null;
+}
+
+export async function collectUsageRecordAmounts(
+  fetchPage: (afterId?: string) => Promise<{ id: string; amount: number }[]>,
+) {
+  const amounts = new Set<number>();
+  let afterId: string | undefined;
+  // ponytail: 전체 금액 옵션은 O(n) 서버 조회. 데이터가 더 커지면 DB DISTINCT 집계로 전환한다.
+  while (true) {
+    const rows = await fetchPage(afterId);
+    if (rows.length === 0) break;
+    for (const row of rows) {
+      if (Number.isFinite(row.amount)) amounts.add(row.amount);
+    }
+    afterId = rows[rows.length - 1]!.id;
+  }
+  return [...amounts].sort((a, b) => b - a);
+}

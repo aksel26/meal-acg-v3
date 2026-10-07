@@ -9,6 +9,13 @@ export const STATUS_COLORS: Record<string, string> = {
   퇴사: "bg-slate-100 text-slate-400",
 };
 
+/** members 조회 컬럼. password는 어떤 응답에도 싣지 않는다 */
+export const MEMBER_COLUMNS =
+  "id, login_id, full_name, role, email, member_role, intern_months, note, organization_id, division_id, team_id, created_at, updated_at";
+/** 위 컬럼 + 팀 이름. supabase-js가 타입을 추론하려면 문자열 리터럴이어야 한다 */
+export const MEMBER_WITH_TEAM_COLUMNS =
+  "id, login_id, full_name, role, email, member_role, intern_months, note, organization_id, division_id, team_id, created_at, updated_at, teams(name)";
+
 /** 정산 제외 대상 상태 */
 export const SETTLEMENT_EXCLUDED_STATUSES = new Set([
   "육아휴직",

@@ -925,14 +925,27 @@ export type Database = {
       get_user_monthly_stats: {
         Args: { p_month: number; p_user_id?: string; p_year: number }
         Returns: {
-          actual_work_days: number
+          annual_leave_days: number
           balance: number
           daily_allowance: number
+          day_off_days: number
           full_name: string
+          half_day_deduction: number
+          half_day_off_count: number
+          holiday_count: number
+          holiday_deduction: number
+          individual_meal_deduction: number
+          individual_meals: number
           login_id: string
+          no_meal_deduction: number
+          original_allowance: number
+          public_holiday_count: number
+          remote_work_days: number
           total_allowance: number
+          total_deduction: number
           total_used: number
           user_id: string
+          weekend_work_days: number
           work_days: number
         }[]
       }

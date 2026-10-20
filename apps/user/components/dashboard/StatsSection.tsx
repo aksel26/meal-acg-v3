@@ -504,7 +504,7 @@ function CalculationResult({
             {(data.weekendWorkCount ?? 0) > 0 && (
               <div className="flex items-center justify-between text-sm lg:text-sm">
                 <span className="text-[var(--granite)]">
-                  주말근무 {data.weekendWorkCount}일
+                  주말·공휴일근무 {data.weekendWorkCount}일
                 </span>
                 <span className="font-medium text-[var(--ink-black)]">
                   +{formatCurrency(data.weekendWorkAddition || 0)}원

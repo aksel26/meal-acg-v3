@@ -1,43 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/client";
-import dayjs from "dayjs";
 
-interface MonthlyAllowanceData {
-  allowance: number;
-  workdays: number;
-}
-
-interface MonthlyAllowancesJson {
-  [year: string]: {
-    [month: string]: MonthlyAllowanceData;
-  };
-}
-
-const INDIVIDUAL_MEAL_ATTENDANCE = "근무(개별식사 / 식사안함)";
-
-// 식대 미지급 근태 유형 판별 함수
-function isNoMealAttendance(attendance: string | null): boolean {
-  if (!attendance) return false;
-  return (
-    attendance.includes("연차") ||
-    attendance.includes("반차") ||
-    attendance.includes("재택근무") ||
-    attendance.includes("휴무")
-  );
-}
-
-// 반차는 절반만 차감
-function isHalfDayOff(attendance: string | null): boolean {
-  if (!attendance) return false;
-  return attendance.includes("반차");
-}
-
-// 평일 여부 체크
-function isWeekday(entryDate: string): boolean {
-  const day = dayjs(entryDate).day();
-  return day !== 0 && day !== 6;
-}
-
+// 사용가능액·차감·주말/공휴일 근무 가산은 DB 뷰 user_monthly_stats가 계산한다.
+// 관리자 앱과 같은 RPC(get_user_monthly_stats)를 읽어 화면마다 숫자가 어긋나지 않게 한다.
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -60,116 +25,45 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const yearNum = parseInt(year);
-    const monthNum = parseInt(month);
+    const { data, error } = await supabase.rpc("get_user_monthly_stats", {
+      p_year: parseInt(year),
+      p_month: parseInt(month),
+      p_user_id: userId,
+    });
 
-    // global_settings에서 월별 지원금 및 일일 지원금 조회
-    const { data: settingsData } = await supabase
-      .from("global_settings")
-      .select("monthly_allowances, daily_allowance")
-      .eq("id", 1)
-      .single();
-
-    const monthlyAllowances = (settingsData?.monthly_allowances as unknown as MonthlyAllowancesJson) || {};
-    const yearData = monthlyAllowances[String(yearNum)] || {};
-    const monthData = yearData[String(monthNum)];
-    const allowanceAmount = monthData?.allowance ?? 0;
-    // 저장된 월별 데이터에서 일일 단가 계산 (allowance / workdays)
-    const savedDailyAllowance = monthData && monthData.workdays > 0
-      ? monthData.allowance / monthData.workdays
-      : null;
-    const dailyAllowance = savedDailyAllowance ?? settingsData?.daily_allowance ?? 10000;
-
-    // 해당 월 식대 총 사용액 계산
-    const startDate = dayjs(`${yearNum}-${monthNum}-01`).format("YYYY-MM-DD");
-    const endDate = dayjs(`${yearNum}-${monthNum}-01`)
-      .endOf("month")
-      .format("YYYY-MM-DD");
-
-    const { data: mealLogs, error: mealError } = await supabase
-      .from("meal_logs")
-      .select("lunch_amount, attendance, entry_date")
-      .eq("user_id", userId)
-      .gte("entry_date", startDate)
-      .lte("entry_date", endDate);
-
-    if (mealError) {
-      console.error("Meal logs query error:", mealError);
+    if (error) {
+      console.error("Meal stats RPC error:", error);
       return NextResponse.json(
         { success: false, error: "식대 데이터 조회 오류" },
         { status: 500 }
       );
     }
 
-    // 총 사용액 계산 (개별식사는 사용액에서 제외 - 사용가능액에서만 차감됨)
-    const totalUsed = mealLogs?.reduce((sum, log) => {
-      if (log.attendance === INDIVIDUAL_MEAL_ATTENDANCE) return sum;
-      return sum + (log.lunch_amount || 0);
-    }, 0) ?? 0;
-
-    const mealCount = mealLogs?.length ?? 0;
-
-    // 개별식사 수 계산 (평일만 — 주말은 base에 미포함이므로 차감 불필요)
-    const individualMealCount = mealLogs?.filter(
-      (log) => log.attendance === INDIVIDUAL_MEAL_ATTENDANCE && isWeekday(log.entry_date)
-    ).length ?? 0;
-
-    // 연차/재택/휴무 수 계산 (반차 제외, 평일만)
-    const noMealFullDayCount = mealLogs?.filter(
-      (log) => isNoMealAttendance(log.attendance) && !isHalfDayOff(log.attendance) && isWeekday(log.entry_date)
-    ).length ?? 0;
-
-    // 반차 수 계산 (평일만)
-    const halfDayOffCount = mealLogs?.filter(
-      (log) => isHalfDayOff(log.attendance) && isWeekday(log.entry_date)
-    ).length ?? 0;
-
-    // 주말 실제 근무일 수 계산 (attendance가 명시적으로 '근무'인 경우만)
-    const weekendWorkCount = mealLogs?.filter((log) => {
-      const day = dayjs(log.entry_date).day(); // 0=일, 6=토
-      const isWeekend = day === 0 || day === 6;
-      return isWeekend && log.attendance === "근무";
-    }).length ?? 0;
-
-    // 개별식사 차감액 계산 (개별식사 수 × 일일 지원금)
-    const individualMealDeduction = individualMealCount * dailyAllowance;
-
-    // 연차/재택/휴무 차감액 (연차/재택/휴무 수 × 일일 지원금)
-    const noMealDeduction = noMealFullDayCount * dailyAllowance;
-
-    // 반차 차감액 (반차 수 × 일일 지원금)
-    const halfDayDeduction = halfDayOffCount * dailyAllowance;
-
-    // 총 차감액 (공휴일은 Admin에서 월별 지원금 저장 시 이미 제외됨)
-    const totalDeduction = individualMealDeduction + noMealDeduction + halfDayDeduction;
-
-    // 주말 근무 가산액
-    const weekendWorkAddition = weekendWorkCount * dailyAllowance;
-
-    // 실제 사용가능 금액 = 월별 지원금 - 총 차감액 + 주말 근무 가산액
-    const effectiveAllowance = allowanceAmount - totalDeduction + weekendWorkAddition;
-
-    // 잔액 = 실제 사용가능 금액 - 총 사용액
-    const balance = effectiveAllowance - totalUsed;
+    const stats = data?.[0];
+    if (!stats) {
+      return NextResponse.json(
+        { success: false, error: "사용자 통계를 찾을 수 없습니다." },
+        { status: 404 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
       data: {
-        allowanceAmount: effectiveAllowance, // 실제 사용가능 금액 반환
-        originalAllowance: allowanceAmount, // 원래 월별 지원금
-        totalUsed,
-        balance,
-        mealCount,
-        individualMealCount,
-        individualMealDeduction,
-        noMealFullDayCount, // 연차/재택/휴무 일수
-        noMealDeduction, // 연차/재택/휴무 차감액
-        halfDayOffCount, // 반차 일수
-        halfDayDeduction, // 반차 차감액
-        totalDeduction, // 총 차감액
-        dailyAllowance,
-        weekendWorkCount, // 주말 근무 일수
-        weekendWorkAddition, // 주말 근무 가산액
+        allowanceAmount: stats.total_allowance, // 실제 사용가능 금액 (차감·가산 반영)
+        originalAllowance: stats.original_allowance, // 원래 월별 지원금
+        totalUsed: stats.total_used,
+        balance: stats.balance,
+        individualMealCount: stats.individual_meals,
+        individualMealDeduction: stats.individual_meal_deduction,
+        noMealFullDayCount: stats.annual_leave_days + stats.day_off_days + stats.remote_work_days, // 연차/재택/휴무 일수
+        noMealDeduction: stats.no_meal_deduction,
+        halfDayOffCount: stats.half_day_off_count,
+        halfDayDeduction: stats.half_day_deduction,
+        totalDeduction: stats.total_deduction,
+        dailyAllowance: stats.daily_allowance,
+        weekendWorkCount: stats.weekend_work_days, // 주말·공휴일 근무 일수
+        weekendWorkAddition: stats.weekend_work_days * stats.daily_allowance,
       },
     });
   } catch (error) {

@@ -6,7 +6,6 @@ interface MealStatsData {
   originalAllowance?: number; // 원래 월별 지원금
   totalUsed: number;
   balance: number;
-  mealCount: number;
   individualMealCount?: number; // 개별식사 수
   individualMealDeduction?: number; // 개별식사 차감액
   noMealFullDayCount?: number; // 연차/재택/휴무 일수

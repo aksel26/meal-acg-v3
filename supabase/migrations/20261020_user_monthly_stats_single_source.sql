@@ -5,7 +5,8 @@
 --   1. daily_allowance = 저장된 월 지원금 ÷ 근무일. 없으면 global_settings.daily_allowance.
 --   2. work_days = 저장된 근무일. 없으면 평일 수 − 평일 공휴일 수.
 --   3. 평일 공휴일 이중 차감 제거. holiday_deduction은 호환을 위해 0으로 유지.
---   4. 주말·공휴일 근무 가산 = 토·일 또는 공휴일에 근태가 '근무'/'출근'인 날. 식사 기록 유무는 보지 않는다.
+--   4. 주말·공휴일 근무 가산 = 토·일 또는 공휴일에 근태가 '근무'/'출근'이거나, 근태 없이 식사 금액(아침·점심·저녁)만 있는 날.
+--      점심을 안 먹어도 가산 대상이다. 개별식사 표시만 제외한다.
 --   5. 개별식사·재택·연차/휴무·반차 차감은 base 근무일(평일이면서 공휴일 아님)만 센다.
 --   6. total_used는 근태가 비어 있어도 센다. 개별식사만 뺀다.
 --
@@ -78,6 +79,7 @@ logs AS (
     extract(month FROM ml.entry_date)::integer AS month,
     COALESCE(ml.attendance, '') AS attendance,
     ml.lunch_amount,
+    ml.total_amount,
     extract(dow FROM ml.entry_date) NOT IN (0, 6)
       AND NOT EXISTS (SELECT 1 FROM public.holidays h WHERE h.holiday_date = ml.entry_date) AS is_base_workday
   FROM public.meal_logs ml
@@ -88,7 +90,9 @@ meal_totals AS (
     l.year,
     l.month,
     sum(CASE WHEN l.attendance NOT ILIKE '%개별식사%' THEN l.lunch_amount ELSE 0 END) AS total_used,
-    count(*) FILTER (WHERE NOT l.is_base_workday AND trim(l.attendance) IN ('근무', '출근')) AS weekend_work_days,
+    count(*) FILTER (WHERE NOT l.is_base_workday
+      AND (trim(l.attendance) IN ('근무', '출근')
+           OR (l.attendance NOT ILIKE '%개별식사%' AND COALESCE(l.total_amount, 0) > 0))) AS weekend_work_days,
     count(*) FILTER (WHERE l.is_base_workday AND l.attendance ILIKE '%개별식사%') AS individual_meals,
     count(*) FILTER (WHERE l.is_base_workday AND l.attendance ILIKE '%재택%') AS remote_work_days,
     count(*) FILTER (WHERE l.is_base_workday AND l.attendance ILIKE '%연차%' AND l.attendance NOT ILIKE '%반차%') AS annual_leave_days,

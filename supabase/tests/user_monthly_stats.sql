@@ -31,11 +31,15 @@ BEGIN
       monthly_allowances = '{"2026": {"10": {"workdays": 20, "allowance": 240000}}}'::jsonb
   WHERE id = 1;
 
+  INSERT INTO public.meal_logs (user_id, entry_date, attendance, dinner_amount) VALUES
+    (uid, '2026-10-24', NULL, 13000);                        -- 토, 저녁 금액만 → 가산 1, 사용액(점심)에는 미포함
+
   INSERT INTO public.meal_logs (user_id, entry_date, attendance, lunch_amount) VALUES
     (uid, '2026-10-09', '근무', 10000),                      -- 금·공휴일, 근무 → 가산 1
     (uid, '2026-10-10', '근무', 0),                          -- 토, 근무, 식사 기록 없음 → 가산 1
     (uid, '2026-10-11', '출근', 5000),                       -- 일, 출근 → 가산 1
-    (uid, '2026-10-17', NULL, 7000),                         -- 토, 근태 없음 → 가산 0, 사용액에는 포함
+    (uid, '2026-10-17', NULL, 7000),                         -- 토, 근태 없이 점심 금액만 → 가산 1, 사용액 포함
+    (uid, '2026-10-18', NULL, 0),                            -- 일, 근태도 금액도 없음 → 가산 0
     (uid, '2026-10-05', '연차/휴무', 0),                     -- 월·공휴일에 연차 → 차감 0
     (uid, '2026-10-12', '근무', 12000),                      -- 평일 근무 → 변화 없음
     (uid, '2026-10-13', '근무(개별식사 / 식사안함)', 12000), -- 개별식사 → 차감 1, 사용액 제외
@@ -49,7 +53,7 @@ BEGIN
   ASSERT r.work_days = 20,               'work_days = ' || r.work_days;
   ASSERT r.public_holiday_count = 2,     'public_holiday_count = ' || r.public_holiday_count;
   ASSERT r.original_allowance = 240000,  'original_allowance = ' || r.original_allowance;
-  ASSERT r.weekend_work_days = 3,        'weekend_work_days = ' || r.weekend_work_days;
+  ASSERT r.weekend_work_days = 5,        'weekend_work_days = ' || r.weekend_work_days;
   ASSERT r.individual_meals = 1,         'individual_meals = ' || r.individual_meals;
   ASSERT r.remote_work_days = 1,         'remote_work_days = ' || r.remote_work_days;
   ASSERT r.annual_leave_days = 0,        'annual_leave_days = ' || r.annual_leave_days;
@@ -62,8 +66,8 @@ BEGIN
   ASSERT r.half_day_deduction = 12000,   'half_day_deduction = ' || r.half_day_deduction;
   ASSERT r.total_deduction = 48000,      'total_deduction = ' || r.total_deduction;
   ASSERT r.total_used = 42000,           'total_used = ' || r.total_used;
-  ASSERT r.total_allowance = 228000,     'total_allowance = ' || r.total_allowance;
-  ASSERT r.balance = 186000,             'balance = ' || r.balance;
+  ASSERT r.total_allowance = 252000,     'total_allowance = ' || r.total_allowance;
+  ASSERT r.balance = 210000,             'balance = ' || r.balance;
 
   RAISE NOTICE 'user_monthly_stats regression: OK';
 END $$;

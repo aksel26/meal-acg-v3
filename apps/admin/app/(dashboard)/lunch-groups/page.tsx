@@ -373,6 +373,9 @@ export default function LunchGroupsPage() {
       if (!response.ok) throw new Error("Failed to fetch groups");
       return response.json();
     },
+    // 다른 admin이나 유저 뽑기로 바뀐 구성을 곧 반영한다
+    refetchInterval: 15 * 1000,
+    refetchOnWindowFocus: true,
   });
 
   // 설정 로드
@@ -396,26 +399,79 @@ export default function LunchGroupsPage() {
     );
   }, [existingGroups]);
 
-  // 저장 mutation
-  const saveMutation = useMutation({
-    mutationFn: async (data: {
-      weekStartDate: string;
-      groups: GroupState[];
-    }) => {
+  const invalidateGroups = useCallback(() => {
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.lunchGroups.byWeek(weekStartDate),
+    });
+  }, [queryClient, weekStartDate]);
+
+  // 응답 본문의 error 메시지를 꺼낸다
+  const readError = async (response: Response, fallback: string) => {
+    const { error } = await response.json().catch(() => ({ error: null }));
+    return new Error(error ?? fallback);
+  };
+
+  // 조 테이블 생성 mutation (조만 만든다. 이미 있으면 409)
+  const createTableMutation = useMutation({
+    mutationFn: async (newGroups: GroupState[]) => {
       const response = await fetch("/api/lunch-groups", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          weekStartDate,
+          groups: newGroups.map((g) => ({
+            groupNumber: g.groupNumber,
+            maxSlots: g.maxSlots,
+          })),
+        }),
       });
-      if (!response.ok) throw new Error("Failed to save");
+      if (!response.ok)
+        throw await readError(response, "조 테이블 생성에 실패했습니다.");
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.lunchGroups.byWeek(weekStartDate),
-      });
-    },
+    onSettled: invalidateGroups,
   });
+
+  // 멤버 이동/제거 mutation (한 명씩 서버에서 처리. 주 전체를 덮어쓰지 않는다)
+  const moveMemberMutation = useMutation({
+    mutationFn: async (input: {
+      memberId: string;
+      targetGroupNumber: number | null;
+    }) => {
+      const response = await fetch("/api/lunch-groups/members", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ weekStartDate, ...input }),
+      });
+      if (!response.ok)
+        throw await readError(response, "저장 중 오류가 발생했습니다.");
+      return response.json();
+    },
+    onSettled: invalidateGroups,
+  });
+
+  // 빈 자리 이동 mutation
+  const moveSlotMutation = useMutation({
+    mutationFn: async (input: {
+      fromGroupNumber: number;
+      toGroupNumber: number;
+    }) => {
+      const response = await fetch("/api/lunch-groups/slots", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ weekStartDate, ...input }),
+      });
+      if (!response.ok)
+        throw await readError(response, "저장 중 오류가 발생했습니다.");
+      return response.json();
+    },
+    onSettled: invalidateGroups,
+  });
+
+  const isSaving =
+    createTableMutation.isPending ||
+    moveMemberMutation.isPending ||
+    moveSlotMutation.isPending;
 
   // 배정 설정(조당 최대/최소 인원) 저장 mutation
   const settingsMutation = useMutation({
@@ -443,7 +499,7 @@ export default function LunchGroupsPage() {
     onError: (error: Error) => toast.error(error.message),
   });
 
-  // 리셋 mutation
+  // 리셋 mutation (토스트는 호출하는 쪽에서)
   const resetMutation = useMutation({
     mutationFn: async () => {
       const response = await fetch(
@@ -455,30 +511,9 @@ export default function LunchGroupsPage() {
     },
     onSuccess: () => {
       setGroups([]);
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.lunchGroups.byWeek(weekStartDate),
-      });
-      toast.success("조 테이블이 초기화되었습니다.");
     },
-    onError: () => {
-      toast.error("초기화 중 오류가 발생했습니다.");
-    },
+    onSettled: invalidateGroups,
   });
-
-  // 조 변경 후 자동 저장 + toast
-  const autoSaveGroups = useCallback(
-    (newGroups: GroupState[], successMsg: string) => {
-      setGroups(newGroups);
-      saveMutation.mutate(
-        { weekStartDate, groups: newGroups },
-        {
-          onSuccess: () => toast.success(successMsg),
-          onError: () => toast.error("저장 중 오류가 발생했습니다."),
-        },
-      );
-    },
-    [weekStartDate, saveMutation],
-  );
 
   // 참여 가능 인원 (제외 인원 빼기)
   const availableMembers = useMemo(() => {
@@ -529,11 +564,20 @@ export default function LunchGroupsPage() {
       return;
     }
 
-    const createTable = () =>
-      autoSaveGroups(
-        previewGroups,
-        `${previewGroups.length}개 조 테이블이 생성되었습니다.`,
-      );
+    // 이미 조가 있으면 지운 뒤 새로 만든다 (배정은 모두 해제된다)
+    const createTable = async () => {
+      try {
+        if (isTableCreated) await resetMutation.mutateAsync();
+        await createTableMutation.mutateAsync(previewGroups);
+        toast.success(`${previewGroups.length}개 조 테이블이 생성되었습니다.`);
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "조 테이블 생성에 실패했습니다.",
+        );
+      }
+    };
 
     if (hasUnsavedSettings) {
       settingsMutation.mutate(
@@ -545,7 +589,9 @@ export default function LunchGroupsPage() {
     createTable();
   }, [
     previewGroups,
-    autoSaveGroups,
+    isTableCreated,
+    resetMutation,
+    createTableMutation,
     maxPerGroup,
     minPerGroup,
     hasUnsavedSettings,
@@ -720,9 +766,24 @@ export default function LunchGroupsPage() {
               ? { ...g, maxSlots: g.maxSlots + 1 }
               : g,
         );
-        autoSaveGroups(
-          newGroups,
-          `${sourceNumber}조의 빈 자리를 ${targetNumber}조로 옮겼습니다.`,
+        const slotMessage = `${sourceNumber}조의 빈 자리를 ${targetNumber}조로 옮겼습니다.`;
+
+        // 아직 저장 전이면 이 구성으로 조를 만든다
+        if (!isTableCreated) {
+          createTableMutation.mutate(newGroups, {
+            onSuccess: () => toast.success(slotMessage),
+            onError: (error) => toast.error(error.message),
+          });
+          return;
+        }
+
+        setGroups(newGroups);
+        moveSlotMutation.mutate(
+          { fromGroupNumber: sourceNumber, toGroupNumber: targetNumber },
+          {
+            onSuccess: () => toast.success(slotMessage),
+            onError: (error) => toast.error(error.message),
+          },
         );
         return;
       }
@@ -737,11 +798,20 @@ export default function LunchGroupsPage() {
       // 참여인원 목록으로 드롭 (조에서 제거)
       if (overId === "unassigned") {
         if (!wasAssigned) return;
-        const newGroups = displayGroups.map((g) => ({
-          ...g,
-          memberIds: g.memberIds.filter((id) => id !== memberId),
-        }));
-        autoSaveGroups(newGroups, `${memberName}님이 조에서 제외되었습니다.`);
+        setGroups(
+          displayGroups.map((g) => ({
+            ...g,
+            memberIds: g.memberIds.filter((id) => id !== memberId),
+          })),
+        );
+        moveMemberMutation.mutate(
+          { memberId, targetGroupNumber: null },
+          {
+            onSuccess: () =>
+              toast.success(`${memberName}님이 조에서 제외되었습니다.`),
+            onError: (error) => toast.error(error.message),
+          },
+        );
         return;
       }
 
@@ -763,7 +833,7 @@ export default function LunchGroupsPage() {
           return;
         }
 
-        // 다른 조에서 제거하고 새 조에 추가 (아직 저장 전이면 이 시점에 조가 생성된다)
+        // 다른 조에서 제거하고 새 조에 추가 (서버가 한 명 단위로 처리한다)
         const newGroups = displayGroups.map((g) => {
           if (g.groupNumber === groupNumber) {
             return {
@@ -779,13 +849,40 @@ export default function LunchGroupsPage() {
             memberIds: g.memberIds.filter((id) => id !== memberId),
           };
         });
-        autoSaveGroups(
-          newGroups,
-          `${memberName}님이 ${groupNumber}조에 배정되었습니다.`,
+        const moveOptions = {
+          onSuccess: () =>
+            toast.success(`${memberName}님이 ${groupNumber}조에 배정되었습니다.`),
+          onError: (error: Error) => toast.error(error.message),
+        };
+
+        // 아직 저장 전이면 조를 먼저 만든 뒤 배정한다. 배정이 실패하면 빈 조 테이블만 남는다.
+        if (!isTableCreated) {
+          createTableMutation.mutate(displayGroups, {
+            onSuccess: () =>
+              moveMemberMutation.mutate(
+                { memberId, targetGroupNumber: groupNumber },
+                moveOptions,
+              ),
+            onError: (error) => toast.error(error.message),
+          });
+          return;
+        }
+
+        setGroups(newGroups);
+        moveMemberMutation.mutate(
+          { memberId, targetGroupNumber: groupNumber },
+          moveOptions,
         );
       }
     },
-    [displayGroups, members, autoSaveGroups],
+    [
+      displayGroups,
+      members,
+      isTableCreated,
+      createTableMutation,
+      moveMemberMutation,
+      moveSlotMutation,
+    ],
   );
 
   // 조에서 멤버 제거 (X 버튼)
@@ -793,17 +890,23 @@ export default function LunchGroupsPage() {
     (groupNumber: number, memberId: string) => {
       const memberName =
         members.find((m) => m.id === memberId)?.full_name ?? "";
-      const newGroups = groups.map((g) =>
-        g.groupNumber === groupNumber
-          ? { ...g, memberIds: g.memberIds.filter((id) => id !== memberId) }
-          : g,
+      setGroups(
+        groups.map((g) =>
+          g.groupNumber === groupNumber
+            ? { ...g, memberIds: g.memberIds.filter((id) => id !== memberId) }
+            : g,
+        ),
       );
-      autoSaveGroups(
-        newGroups,
-        `${memberName}님이 ${groupNumber}조에서 제외되었습니다.`,
+      moveMemberMutation.mutate(
+        { memberId, targetGroupNumber: null },
+        {
+          onSuccess: () =>
+            toast.success(`${memberName}님이 ${groupNumber}조에서 제외되었습니다.`),
+          onError: (error) => toast.error(error.message),
+        },
       );
     },
-    [groups, members, autoSaveGroups],
+    [groups, members, moveMemberMutation],
   );
 
   // 드래그 중인 대상 (멤버 또는 조의 빈 자리)
@@ -1087,7 +1190,7 @@ export default function LunchGroupsPage() {
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base">조 테이블</CardTitle>
                   <div className="flex items-center gap-2">
-                    {saveMutation.isPending && (
+                    {isSaving && (
                       <span className="text-xs text-slate-400">저장 중...</span>
                     )}
                     <TooltipProvider>
@@ -1126,7 +1229,18 @@ export default function LunchGroupsPage() {
                             <AlertDialogFooter>
                               <AlertDialogCancel>취소</AlertDialogCancel>
                               <AlertDialogAction
-                                onClick={() => resetMutation.mutate()}
+                                onClick={() =>
+                                  resetMutation.mutate(undefined, {
+                                    onSuccess: () =>
+                                      toast.success(
+                                        "조 테이블이 초기화되었습니다.",
+                                      ),
+                                    onError: () =>
+                                      toast.error(
+                                        "초기화 중 오류가 발생했습니다.",
+                                      ),
+                                  })
+                                }
                                 className="bg-red-500 hover:bg-red-600"
                               >
                                 초기화

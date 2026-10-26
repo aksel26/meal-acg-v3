@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
 import ExcelJS from "exceljs";
-import type { MonthlyAllowancesJson } from "@/lib/supabase/types";
 
 // GET /api/export/excel - Export data to Excel
 export async function GET(request: NextRequest) {
@@ -45,14 +44,6 @@ export async function GET(request: NextRequest) {
     const settings = settingsResult.data;
     const holidays = holidaysResult.data || [];
     const mealLogs = mealLogsResult.data || [];
-
-    // Get saved monthly allowance from global_settings
-    const monthlyAllowances = settings?.monthly_allowances as MonthlyAllowancesJson | null;
-    const savedData = monthlyAllowances?.[String(year)]?.[String(month)];
-    // 저장된 데이터에서 일일 단가 계산 (allowance / workdays)
-    const savedDailyAllowance = savedData && savedData.workdays > 0
-      ? savedData.allowance / savedData.workdays
-      : null;
 
     // Create workbook
     const workbook = new ExcelJS.Workbook();
@@ -123,11 +114,9 @@ export async function GET(request: NextRequest) {
 
       stats.forEach((stat: any, index: number) => {
         const rowNum = index + 2;
-        // 사용가능액 = 일일단가 × (근무일 - 휴일 - 재택 - 개별 + 주말)
-        const dailyAllowance = savedDailyAllowance ?? stat.daily_allowance;
-        const effectiveDays = (stat.work_days || 0) - (stat.holiday_count || 0) - (stat.remote_work_days || 0) - (stat.individual_meals || 0) + (stat.weekend_work_days || 0);
-        const totalAllowance = dailyAllowance * effectiveDays;
-        const balance = totalAllowance - stat.total_used;
+        // 사용가능액·잔액은 user_monthly_stats 뷰가 계산한 값을 그대로 쓴다
+        const totalAllowance = stat.total_allowance;
+        const balance = stat.balance;
 
         const row = summarySheet.addRow({
           index: index + 1,

@@ -473,7 +473,7 @@ export default function MembersTab({
                   휴일
                 </th>
                 <th className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  주말
+                  주말·공휴일
                 </th>
                 <th className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                   개별

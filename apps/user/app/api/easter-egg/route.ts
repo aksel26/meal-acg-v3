@@ -85,8 +85,13 @@ export async function POST(request: NextRequest) {
   try {
     const body = (await request.json().catch(() => ({}))) as {
       delta?: number;
+      userName?: string;
     };
     const delta = Number(body.delta ?? 10);
+    const userName =
+      typeof body.userName === "string" && body.userName.trim()
+        ? body.userName.trim()
+        : null;
 
     if (!Number.isFinite(delta) || delta <= 0 || delta > MAX_DELTA) {
       return NextResponse.json(
@@ -103,11 +108,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 누가 눌렀는지 기록하려고 이름으로 멤버를 찾는다. 못 찾아도 이름만 남긴다.
+    let memberId: string | null = null;
+    if (userName) {
+      const { data: member } = await supabase
+        .from("members")
+        .select("id")
+        .eq("full_name", userName)
+        .maybeSingle();
+      memberId = member?.id ?? null;
+    }
+
     // rpc 메서드의 this 컨텍스트 유지를 위해 직접 호출
     const supabaseUntyped = supabase as unknown as { rpc: UntypedRpc };
     const { data, error } = await supabaseUntyped.rpc(
       "increment_easter_egg",
-      { delta: Math.floor(delta) },
+      {
+        delta: Math.floor(delta),
+        p_member_id: memberId,
+        p_user_name: userName,
+      },
     );
 
     if (error) {

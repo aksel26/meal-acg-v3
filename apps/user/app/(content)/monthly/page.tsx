@@ -208,10 +208,12 @@ async function postEasterEggClick(
   signal?: AbortSignal,
 ): Promise<number | null> {
   try {
+    // 누가 눌렀는지 기록용. 로그인 시 저장된 이름을 같이 보낸다.
+    const userName = localStorage.getItem("name");
     const res = await fetch("/api/easter-egg", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ delta }),
+      body: JSON.stringify({ delta, userName }),
       signal,
     });
     if (!res.ok) return null;

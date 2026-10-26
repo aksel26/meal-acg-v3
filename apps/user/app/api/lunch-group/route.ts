@@ -1,29 +1,15 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+import { getNextWeekStartDate, getWeekStartDate } from "@/lib/lunch-week";
 import { createServiceClient } from "@/lib/supabase/client";
 import { NextResponse } from "next/server";
-import dayjs from "dayjs";
 
 type FixedScheduleRow = {
   day_of_week: number;
   label: string | null;
   member: { full_name: string | null } | null;
 };
-
-// 현재 주의 월요일 날짜 계산
-function getWeekStartDate(date: dayjs.Dayjs = dayjs()): string {
-  const day = date.day();
-  // 일요일(0)이면 -6, 그 외에는 1 - day
-  const diff = day === 0 ? -6 : 1 - day;
-  return date.add(diff, "day").format("YYYY-MM-DD");
-}
-
-// 다음 주 월요일 날짜 계산
-function getNextWeekStartDate(date: dayjs.Dayjs = dayjs()): string {
-  const currentWeekStart = getWeekStartDate(date);
-  return dayjs(currentWeekStart).add(7, "day").format("YYYY-MM-DD");
-}
 
 export async function GET() {
   try {

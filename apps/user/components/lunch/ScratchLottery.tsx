@@ -11,7 +11,14 @@ type Phase = "idle" | "shaking" | "revealed" | "error";
 const SHAKE_MS = 1000;
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const ScratchLottery: React.FC = () => {
+interface ScratchLotteryProps {
+  // 서버에 저장된 내 조 번호. 있으면 스티커 대신 내 조를 보여 준다.
+  assignedGroupNumber?: number | null;
+}
+
+const ScratchLottery: React.FC<ScratchLotteryProps> = ({
+  assignedGroupNumber = null,
+}) => {
   const [phase, setPhase] = useState<Phase>("idle");
   const [result, setResult] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -19,13 +26,17 @@ const ScratchLottery: React.FC = () => {
   const assignMutation = useLunchGroupAssign();
   const { data: lunchGroupData } = useLunchGroup();
 
+  // 뽑기 직후엔 뽑은 결과를, 그 외엔 서버에 저장된 내 조를 보여 준다
+  const isAssignedView = phase === "idle" && assignedGroupNumber !== null;
+  const displayResult = isAssignedView ? assignedGroupNumber : result;
+
   const groupMembers = useMemo(() => {
-    if (result === null || !lunchGroupData?.groups) return [];
+    if (displayResult === null || !lunchGroupData?.groups) return [];
     const group = lunchGroupData.groups.find(
-      (g) => g.groupNumber === String(result),
+      (g) => g.groupNumber === String(displayResult),
     );
     return group?.person?.filter((p) => p && p.trim()) || [];
-  }, [result, lunchGroupData?.groups]);
+  }, [displayResult, lunchGroupData?.groups]);
 
   const handleDraw = useCallback(async () => {
     if (phase !== "idle") return;
@@ -104,7 +115,13 @@ const ScratchLottery: React.FC = () => {
         className="flex flex-col items-center gap-2"
       >
         <div className="relative flex h-40 w-56 items-center justify-center overflow-visible bg-transparent">
-          {(phase === "idle" || phase === "shaking") && (
+          {isAssignedView && (
+            <span className="text-5xl font-black text-[var(--ink-black)] drop-shadow-[0_6px_0_rgba(236,126,0,0.16)]">
+              {displayResult}조
+            </span>
+          )}
+
+          {((phase === "idle" && !isAssignedView) || phase === "shaking") && (
             <button
               type="button"
               onClick={handleDraw}
@@ -167,15 +184,18 @@ const ScratchLottery: React.FC = () => {
                   : "text-[#d03238]"
           }`}
         >
-          {phase === "idle" && "스티커를 클릭해 점심조를 배정하세요."}
+          {phase === "idle" &&
+            (isAssignedView
+              ? "이번 주 내 조입니다."
+              : "스티커를 클릭해 점심조를 배정하세요.")}
           {phase === "shaking" && "과연.."}
           {phase === "revealed" && "배정되었습니다!"}
           {phase === "error" && errorMessage}
         </p>
       </motion.div>
 
-      {/* revealed */}
-      {phase === "revealed" && result !== null && (
+      {/* revealed / 배정된 내 조 */}
+      {(phase === "revealed" || isAssignedView) && displayResult !== null && (
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -186,7 +206,7 @@ const ScratchLottery: React.FC = () => {
           <div className="w-full max-w-[300px]">
             <div className="rounded-xl bg-[rgba(244,241,232,0.58)] p-3">
               <p className="mb-2 text-xs font-semibold text-[var(--granite)]">
-                {result}조 멤버
+                {displayResult}조 멤버
               </p>
               {groupMembers.length > 0 ? (
                 <div className="flex max-h-16 flex-wrap gap-1.5 overflow-y-auto">
@@ -210,12 +230,14 @@ const ScratchLottery: React.FC = () => {
             </div>
           </div>
 
-          <button
-            onClick={handleRetry}
-            className="w-full max-w-[300px] rounded-xl bg-[var(--whisper-cream)] py-2.5 text-sm font-medium text-[var(--granite)] transition-colors hover:bg-[var(--soft-bone)]"
-          >
-            다시 하기
-          </button>
+          {phase === "revealed" && (
+            <button
+              onClick={handleRetry}
+              className="w-full max-w-[300px] rounded-xl bg-[var(--whisper-cream)] py-2.5 text-sm font-medium text-[var(--granite)] transition-colors hover:bg-[var(--soft-bone)]"
+            >
+              다시 하기
+            </button>
+          )}
         </motion.div>
       )}
 

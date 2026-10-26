@@ -52,6 +52,17 @@ const Lunch = () => {
     return lunchGroupData.excludedMembers.includes(userName);
   }, [userName, lunchGroupData?.excludedMembers]);
 
+  // 이미 배정된 내 조 번호 (없으면 null)
+  const myGroupNumber = useMemo(() => {
+    if (!userName || !lunchGroupData?.groups) return null;
+    const name = userName.trim();
+    const group = lunchGroupData.groups.find((g) =>
+      g.person?.some((p) => p && p.trim() === name),
+    );
+    const number = group ? parseInt(group.groupNumber, 10) : NaN;
+    return Number.isFinite(number) ? number : null;
+  }, [userName, lunchGroupData?.groups]);
+
   // 유효한 그룹 수 계산 (memoized)
   const validGroupCount = useMemo(() => {
     if (!lunchGroupData?.groups) return 0;
@@ -231,7 +242,9 @@ const Lunch = () => {
                   점심조 뽑기
                 </h2>
                 <p className="mt-0.5 text-xs text-[var(--granite)]">
-                  스티커를 클릭해 점심조를 배정하세요.
+                  {myGroupNumber !== null
+                    ? "이번 주 조가 이미 배정되어 있습니다."
+                    : "스티커를 클릭해 점심조를 배정하세요."}
                 </p>
               </div>
 
@@ -240,7 +253,7 @@ const Lunch = () => {
                   이번주 점심조 배정 대상이 아닙니다
                 </div>
               ) : (
-                <ScratchLottery />
+                <ScratchLottery assignedGroupNumber={myGroupNumber} />
               )}
             </div>
           </motion.div>

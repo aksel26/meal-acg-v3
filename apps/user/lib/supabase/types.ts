@@ -897,6 +897,13 @@ export type Database = {
       }
     }
     Functions: {
+      assign_lunch_group: {
+        Args: { p_member_id: string; p_week_start_date: string }
+        Returns: {
+          group_id: string
+          group_number: number
+        }[]
+      }
       authenticate_user: {
         Args: { p_login_id: string; p_password: string }
         Returns: {

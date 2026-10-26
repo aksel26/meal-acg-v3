@@ -136,6 +136,57 @@ export type Database = {
         }
         Relationships: []
       }
+      lunch_group_audit_logs: {
+        Row: {
+          action: string
+          changed_at: string
+          changed_by: string | null
+          detail: Json | null
+          from_group_number: number | null
+          id: string
+          member_id: string | null
+          to_group_number: number | null
+          week_start_date: string
+        }
+        Insert: {
+          action: string
+          changed_at?: string
+          changed_by?: string | null
+          detail?: Json | null
+          from_group_number?: number | null
+          id?: string
+          member_id?: string | null
+          to_group_number?: number | null
+          week_start_date: string
+        }
+        Update: {
+          action?: string
+          changed_at?: string
+          changed_by?: string | null
+          detail?: Json | null
+          from_group_number?: number | null
+          id?: string
+          member_id?: string | null
+          to_group_number?: number | null
+          week_start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lunch_group_audit_logs_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lunch_group_audit_logs_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lunch_group_excluded_members: {
         Row: {
           id: string
@@ -1125,6 +1176,13 @@ export type Database = {
       }
     }
     Functions: {
+      assign_lunch_group: {
+        Args: { p_member_id: string; p_week_start_date: string }
+        Returns: {
+          group_id: string
+          group_number: number
+        }[]
+      }
       authenticate_user: {
         Args: { p_login_id: string; p_password: string }
         Returns: {
@@ -1142,6 +1200,15 @@ export type Database = {
           p_per_member_amount?: number
         }
         Returns: number
+      }
+      move_lunch_group_member: {
+        Args: {
+          p_changed_by: string
+          p_member_id: string
+          p_target_group_number: number | null
+          p_week_start_date: string
+        }
+        Returns: undefined
       }
       get_user_monthly_stats: {
         Args: { p_month: number; p_user_id?: string; p_year: number }

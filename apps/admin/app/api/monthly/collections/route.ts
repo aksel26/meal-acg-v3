@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
+import { MONTHLY_DRINK_HIDDEN_STATUSES } from "@/lib/constants";
 
 // GET /api/monthly/collections - 취합 건 목록 조회
 export async function GET(request: NextRequest) {
@@ -30,19 +31,41 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // 퇴사·휴직 멤버는 신청 인원·전체 인원에서 제외
+    const { data: hiddenMembers } = await supabase
+      .from("member_current_status")
+      .select("member_id")
+      .in("current_status", MONTHLY_DRINK_HIDDEN_STATUSES);
+
+    const hiddenIds = (hiddenMembers || [])
+      .map((m) => m.member_id)
+      .filter(Boolean) as string[];
+
     // 각 취합 건별 신청 인원 수 조회
     const collectionsWithStats = await Promise.all(
       (collections || []).map(async (collection) => {
-        const { count } = await supabase
+        let countQuery = supabase
           .from("monthly_drink_applications")
           .select("*", { count: "exact", head: true })
           .eq("collection_id", collection.id)
           .not("drink", "is", null)
           .neq("drink", "");
 
-        const { count: totalMembers } = await supabase
+        let totalQuery = supabase
           .from("members")
           .select("*", { count: "exact", head: true });
+
+        if (hiddenIds.length > 0) {
+          countQuery = countQuery.not(
+            "user_id",
+            "in",
+            `(${hiddenIds.join(",")})`
+          );
+          totalQuery = totalQuery.not("id", "in", `(${hiddenIds.join(",")})`);
+        }
+
+        const { count } = await countQuery;
+        const { count: totalMembers } = await totalQuery;
 
         return {
           ...collection,

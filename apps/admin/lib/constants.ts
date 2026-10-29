@@ -25,6 +25,9 @@ export const SETTLEMENT_EXCLUDED_STATUSES = new Set([
   "퇴사",
 ]);
 
+/** 먼슬리 음료 신청 내역에서 숨기는 상태 */
+export const MONTHLY_DRINK_HIDDEN_STATUSES = ["퇴사", "휴직", "육아휴직"];
+
 /** 직책별 배지 색상 */
 export function roleBadgeStyle(role: string) {
   switch (role) {

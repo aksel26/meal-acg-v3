@@ -49,7 +49,10 @@ import {
 import { queryKeys } from "@/lib/query-keys";
 import { useActiveStatusMembers } from "@/hooks/useActiveStatusMembers";
 import type { Member } from "@/lib/supabase/types";
-import { STATUS_COLORS } from "@/lib/constants";
+import {
+  MONTHLY_DRINK_HIDDEN_STATUSES,
+  STATUS_COLORS,
+} from "@/lib/constants";
 
 interface CollectionWithStats {
   id: string;
@@ -494,6 +497,14 @@ function CollectionDetailView({
     return map;
   }, [activeStatusMembers]);
 
+  // 신청 내역에 나오는 특이사항 멤버 수 (퇴사·휴직은 목록에서 빠짐)
+  const shownStatusCount =
+    activeStatusMembers?.filter(
+      (m) =>
+        m.current_status &&
+        !MONTHLY_DRINK_HIDDEN_STATUSES.includes(m.current_status)
+    ).length || 0;
+
   const updateDrinkMutation = useMutation({
     mutationFn: async (mutData: {
       userId: string;
@@ -666,13 +677,13 @@ function CollectionDetailView({
           </span>
         </div>
 
-        {activeStatusMembers && activeStatusMembers.length > 0 && (
+        {shownStatusCount > 0 && (
           <>
             <div className="h-4 w-px bg-slate-200" />
             <div className="flex items-center gap-2">
               <span className="text-sm text-slate-500">특이사항</span>
               <span className="text-base font-semibold tabular-nums text-amber-600">
-                {activeStatusMembers.length}
+                {shownStatusCount}
                 <span className="text-sm font-normal">명</span>
               </span>
             </div>

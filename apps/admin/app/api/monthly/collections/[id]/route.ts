@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
+import { MONTHLY_DRINK_HIDDEN_STATUSES } from "@/lib/constants";
 
 // GET /api/monthly/collections/[id] - 취합 건 상세 + 신청 내역
 export async function GET(
@@ -27,10 +28,19 @@ export async function GET(
     }
 
     // 전체 멤버 조회
-    const { data: members } = await supabase
+    const { data: allMembers } = await supabase
       .from("members")
       .select("id, full_name")
       .order("full_name");
+
+    // 퇴사·휴직 멤버는 신청 내역에서 제외
+    const { data: hiddenMembers } = await supabase
+      .from("member_current_status")
+      .select("member_id")
+      .in("current_status", MONTHLY_DRINK_HIDDEN_STATUSES);
+
+    const hiddenIds = new Set((hiddenMembers || []).map((m) => m.member_id));
+    const members = allMembers?.filter((m) => !hiddenIds.has(m.id));
 
     // 해당 취합 건의 신청 내역 조회
     const { data: applications } = await supabase

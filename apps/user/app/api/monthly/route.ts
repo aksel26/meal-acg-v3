@@ -55,12 +55,12 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const collectionId = searchParams.get("collectionId");
 
-    // 전체 신청 현황에서는 퇴사자만 제외한다.
+    // 전체 신청 현황에서는 퇴사·휴직·육아휴직 멤버를 제외한다.
     const statusClient = supabase as unknown as MonthlyMemberStatusClient;
     const { data: members } = await statusClient
       .from("member_current_status")
       .select("member_id, full_name, current_status")
-      .or("current_status.is.null,current_status.neq.퇴사")
+      .or("current_status.is.null,current_status.not.in.(퇴사,휴직,육아휴직)")
       .order("full_name");
 
     let drinkOptions: { name: string; available: boolean }[] = [];

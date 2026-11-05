@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, lazy, Suspense } from "react";
-import dayjs from "dayjs";
 import { getFirstStep, useMealDrawerStore } from "@/stores/mealDrawerStore";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -13,7 +12,11 @@ import {
   DialogClose,
 } from "@repo/ui/src/dialog";
 import { formatDate } from "utils";
-import { MealCompanionsDropdown, StepFormContainer } from "./meal-entry";
+import {
+  MealCompanionsDropdown,
+  StepFormContainer,
+  useMealCompanionsDate,
+} from "./meal-entry";
 import { X, ChevronLeft } from "lucide-react";
 
 // Lazy load DeleteConfirmDialog
@@ -59,12 +62,7 @@ export default function MealEntryDrawer({
     }
   };
 
-  // 어드민 고정 스케줄은 월~금만 설정할 수 있다. 요일은 KST 날짜(formatDate) 기준으로 본다
-  const selectedDayOfWeek = selectedDate
-    ? dayjs(formatDate(selectedDate)).day()
-    : null;
-  const isWeekday =
-    selectedDayOfWeek !== null && selectedDayOfWeek >= 1 && selectedDayOfWeek <= 5;
+  const companionsDate = useMealCompanionsDate();
 
   const firstStep = getFirstStep(selectedMealType, formData.lunch.attendance);
   const canGoBack =
@@ -152,10 +150,9 @@ export default function MealEntryDrawer({
 
         {/* Form Content - overflow-visible for autocomplete dropdowns */}
         <div className="px-5 pb-6 pb-safe overflow-visible">
-          {selectedMealType === "lunch" && selectedDate && isWeekday && (
-            // 가게 입력 단계의 자동완성 목록(z-50)은 위로 열려 이 버튼까지 덮는다
-            <div className="relative z-[60] mb-4">
-              <MealCompanionsDropdown date={formatDate(selectedDate)} />
+          {isEditMode && companionsDate && (
+            <div className="mb-4">
+              <MealCompanionsDropdown date={companionsDate} />
             </div>
           )}
           <StepFormContainer

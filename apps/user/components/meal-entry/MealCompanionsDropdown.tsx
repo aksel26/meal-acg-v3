@@ -2,14 +2,42 @@
 
 import { useState } from "react";
 import dayjs from "dayjs";
-import { ChevronDown, Copy } from "lucide-react";
+import { ChevronDown, Copy, Users } from "lucide-react";
+import { motion, useReducedMotion, type Transition } from "motion/react";
+import { formatDate } from "utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/src/popover";
 import { toast } from "@repo/ui/src/sonner";
 import { useMealCompanions } from "@/hooks/use-meal-companions";
+import { useMealDrawerStore } from "@/stores/mealDrawerStore";
 import { useUserStore } from "@/stores/userStore";
 
 // dayjs().day() 순서 (일요일 = 0)
 const WEEK_DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
+
+// 새 기능 안내: 살짝 올라가 흔들린 뒤 원위치한다. 계정별로 기기에서 한 번만 재생한다
+const HINT_SEEN_KEY = "meal-companions-hint-seen";
+const HINT_ANIMATION = {
+  y: [0, -6, -6, -6, -6, -6, 0],
+  rotate: [0, 0, -10, 9, -6, 0, 0],
+};
+const HINT_TRANSITION: Transition = {
+  delay: 0.6,
+  duration: 1.4,
+  ease: "easeInOut",
+  times: [0, 0.22, 0.38, 0.52, 0.66, 0.78, 1],
+};
+
+// 동료 식대 내역을 보여줄 날짜. 어드민 고정 스케줄은 월~금만 설정할 수 있어 중식 평일만 해당한다
+export function useMealCompanionsDate() {
+  const selectedMealType = useMealDrawerStore((s) => s.selectedMealType);
+  const selectedDate = useMealDrawerStore((s) => s.selectedDate);
+
+  if (selectedMealType !== "lunch" || !selectedDate) return null;
+
+  const date = formatDate(selectedDate);
+  const dayOfWeek = dayjs(date).day();
+  return dayOfWeek >= 1 && dayOfWeek <= 5 ? date : null;
+}
 
 function copyStore(store: string) {
   navigator.clipboard
@@ -24,10 +52,26 @@ function Message({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function MealCompanionsDropdown({ date }: { date: string }) {
+export function MealCompanionsDropdown({
+  date,
+  variant = "full",
+}: {
+  date: string;
+  variant?: "full" | "icon";
+}) {
   const memberId = useUserStore((s) => s.userId);
   const [open, setOpen] = useState(false);
   const [activeDate, setActiveDate] = useState(date);
+
+  const hintKey = `${HINT_SEEN_KEY}:${memberId}`;
+  const reduceMotion = useReducedMotion();
+  const [showHint] = useState(
+    () =>
+      variant === "icon" &&
+      !!memberId &&
+      !reduceMotion &&
+      !localStorage.getItem(hintKey),
+  );
 
   const { data, isLoading, isError } = useMealCompanions(memberId, date, open);
   const activeDay = data?.days.find((day) => day.date === activeDate);
@@ -36,20 +80,40 @@ export function MealCompanionsDropdown({ date }: { date: string }) {
     // 팀 인원이 많으면 목록을 스크롤한다. Dialog 안이라 자체 RemoveScroll을 쓰는 modal로 연다
     <Popover open={open} onOpenChange={setOpen} modal>
       <PopoverTrigger asChild>
-        <button
-          type="button"
-          className="flex w-full items-center justify-between rounded-[14px] bg-[var(--whisper-cream)] px-4 py-2.5 text-sm font-medium text-[var(--granite)] transition-colors hover:bg-[rgba(244,241,232,0.7)]"
-        >
-          동료 식대 내역
-          <ChevronDown
-            className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`}
-          />
-        </button>
+        {variant === "icon" ? (
+          <motion.button
+            type="button"
+            aria-label="동료 식대 내역"
+            title="동료 식대 내역"
+            animate={showHint ? HINT_ANIMATION : undefined}
+            transition={HINT_TRANSITION}
+            onAnimationComplete={
+              showHint ? () => localStorage.setItem(hintKey, "1") : undefined
+            }
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--whisper-cream)] text-[var(--granite)] transition-[background-color,scale] hover:bg-[rgba(244,241,232,0.7)] active:scale-[0.96]"
+          >
+            <Users className="h-[18px] w-[18px]" />
+          </motion.button>
+        ) : (
+          <button
+            type="button"
+            className="flex w-full items-center justify-between rounded-[14px] bg-[var(--whisper-cream)] px-4 py-2.5 text-sm font-medium text-[var(--granite)] transition-colors hover:bg-[rgba(244,241,232,0.7)]"
+          >
+            동료 식대 내역
+            <ChevronDown
+              className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`}
+            />
+          </button>
+        )}
       </PopoverTrigger>
       <PopoverContent
-        align="start"
+        align={variant === "icon" ? "end" : "start"}
         sideOffset={6}
-        className="w-[var(--radix-popover-trigger-width)] rounded-[20px] border-0 p-3 shadow-md!"
+        className={`${
+          variant === "icon"
+            ? "w-[min(25.5rem,calc(100vw-4.5rem))]"
+            : "w-[var(--radix-popover-trigger-width)]"
+        } rounded-[20px] border-0 p-3 shadow-md!`}
       >
         {isLoading ? (
           <Message>불러오는 중...</Message>
@@ -144,4 +208,14 @@ export function MealCompanionsDropdown({ date }: { date: string }) {
       </PopoverContent>
     </Popover>
   );
+}
+
+// 새로 입력할 때 단계 제목 행 우측 끝에 놓는 아이콘 버튼
+export function MealCompanionsTitleButton() {
+  const isEditMode = useMealDrawerStore((s) => s.isEditMode);
+  const date = useMealCompanionsDate();
+
+  if (isEditMode || !date) return null;
+
+  return <MealCompanionsDropdown date={date} variant="icon" />;
 }

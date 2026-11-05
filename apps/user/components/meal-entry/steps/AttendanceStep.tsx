@@ -8,6 +8,7 @@ import {
   INDIVIDUAL_MEAL_ATTENDANCE,
 } from "@/stores/mealDrawerStore";
 import { attendanceOptions } from "@/lib/const/const";
+import { MealCompanionsTitleButton } from "../MealCompanionsDropdown";
 
 const attendanceConfig: Record<string, { emoji: string; shortLabel: string }> =
   {
@@ -60,15 +61,18 @@ export function AttendanceStep({
 
   return (
     <div className="space-y-4">
-      <div className="space-y-1">
-        <h3 className="text-lg font-medium text-[var(--ink-black)]">
-          오늘 근태는 어떤가요?
-        </h3>
-        <p className="text-sm text-[var(--slate-gray)]">
-          {selectedMealType === "dinner"
-            ? "석식 기록에 필요한 근태 정보예요"
-            : "중식 기록에 필요한 근태 정보예요"}
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 space-y-1">
+          <h3 className="text-lg font-medium text-[var(--ink-black)]">
+            오늘 근태는 어떤가요?
+          </h3>
+          <p className="text-sm text-[var(--slate-gray)]">
+            {selectedMealType === "dinner"
+              ? "석식 기록에 필요한 근태 정보예요"
+              : "중식 기록에 필요한 근태 정보예요"}
+          </p>
+        </div>
+        <MealCompanionsTitleButton />
       </div>
 
       <div className="grid grid-cols-2 gap-2">

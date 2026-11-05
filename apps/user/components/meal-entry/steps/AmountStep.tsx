@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { useMealDrawerStore } from "@/stores/mealDrawerStore";
 import { useIndividualMealAmount } from "@/hooks/useSettings";
 import { Input } from "@repo/ui/src/input";
+import { MealCompanionsTitleButton } from "../MealCompanionsDropdown";
 
 // 천 단위 콤마 포맷팅
 const formatNumberWithCommas = (value: string): string => {
@@ -80,15 +81,18 @@ export function AmountStep({ onSubmit, isSubmitting }: AmountStepProps) {
       transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
       className="space-y-4"
     >
-      <div className="space-y-1">
-        <h3 className="text-lg font-medium text-[var(--ink-black)]">
-          {isIndividualMeal ? "개별식사로 처리할게요" : "얼마였나요?"}
-        </h3>
-        <p className="text-sm text-[var(--slate-gray)]">
-          {isIndividualMeal
-            ? `총 금액에서 ${individualMealAmount.toLocaleString()}원이 차감됩니다`
-            : "결제 금액을 입력해주세요"}
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 space-y-1">
+          <h3 className="text-lg font-medium text-[var(--ink-black)]">
+            {isIndividualMeal ? "개별식사로 처리할게요" : "얼마였나요?"}
+          </h3>
+          <p className="text-sm text-[var(--slate-gray)]">
+            {isIndividualMeal
+              ? `총 금액에서 ${individualMealAmount.toLocaleString()}원이 차감됩니다`
+              : "결제 금액을 입력해주세요"}
+          </p>
+        </div>
+        <MealCompanionsTitleButton />
       </div>
 
       <AnimatePresence mode="wait">

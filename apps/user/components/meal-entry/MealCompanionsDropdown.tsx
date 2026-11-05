@@ -15,16 +15,17 @@ import { useUserStore } from "@/stores/userStore";
 const WEEK_DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
 // 새 기능 안내: 살짝 올라가 흔들린 뒤 원위치한다. 계정별로 기기에서 한 번만 재생한다
-const HINT_SEEN_KEY = "meal-companions-hint-seen";
+const HINT_SEEN_KEY = "meal-companions-hint-seen-v2";
 const HINT_ANIMATION = {
-  y: [0, -6, -6, -6, -6, -6, 0],
-  rotate: [0, 0, -10, 9, -6, 0, 0],
+  y: [0, -10, -10, -10, -10, -10, -10, 0],
+  scale: [1, 1.15, 1.15, 1.15, 1.15, 1.15, 1.15, 1],
+  rotate: [0, 0, -16, 14, -10, 6, 0, 0],
 };
 const HINT_TRANSITION: Transition = {
   delay: 0.6,
-  duration: 1.4,
+  duration: 1.6,
   ease: "easeInOut",
-  times: [0, 0.22, 0.38, 0.52, 0.66, 0.78, 1],
+  times: [0, 0.18, 0.32, 0.44, 0.56, 0.68, 0.8, 1],
 };
 
 // 동료 식대 내역을 보여줄 날짜. 어드민 고정 스케줄은 월~금만 설정할 수 있어 중식 평일만 해당한다

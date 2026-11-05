@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import dayjs from "dayjs";
-import { ChevronDown, Copy, Users } from "lucide-react";
+import { ChevronDown, Copy, Users, X } from "lucide-react";
 import { motion, useReducedMotion, type Transition } from "motion/react";
 import { formatDate } from "utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/src/popover";
@@ -27,6 +27,9 @@ const HINT_TRANSITION: Transition = {
   ease: "easeInOut",
   times: [0, 0.18, 0.32, 0.44, 0.56, 0.68, 0.8, 1],
 };
+
+// 닫을 때까지 아이콘 옆에 띄우는 안내. 닫으면 계정별로 기기에서 다시 띄우지 않는다
+const TOOLTIP_CLOSED_KEY = "meal-companions-tooltip-closed";
 
 // 동료 식대 내역을 보여줄 날짜. 어드민 고정 스케줄은 월~금만 설정할 수 있어 중식 평일만 해당한다
 export function useMealCompanionsDate() {
@@ -56,9 +59,11 @@ function Message({ children }: { children: React.ReactNode }) {
 export function MealCompanionsDropdown({
   date,
   variant = "full",
+  onOpen,
 }: {
   date: string;
   variant?: "full" | "icon";
+  onOpen?: () => void;
 }) {
   const memberId = useUserStore((s) => s.userId);
   const [open, setOpen] = useState(false);
@@ -79,7 +84,14 @@ export function MealCompanionsDropdown({
 
   return (
     // 팀 인원이 많으면 목록을 스크롤한다. Dialog 안이라 자체 RemoveScroll을 쓰는 modal로 연다
-    <Popover open={open} onOpenChange={setOpen} modal>
+    <Popover
+      open={open}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen);
+        if (nextOpen) onOpen?.();
+      }}
+      modal
+    >
       <PopoverTrigger asChild>
         {variant === "icon" ? (
           <motion.button
@@ -215,8 +227,37 @@ export function MealCompanionsDropdown({
 export function MealCompanionsTitleButton() {
   const isEditMode = useMealDrawerStore((s) => s.isEditMode);
   const date = useMealCompanionsDate();
+  const memberId = useUserStore((s) => s.userId);
+  const tooltipKey = `${TOOLTIP_CLOSED_KEY}:${memberId}`;
+  const [showTooltip, setShowTooltip] = useState(
+    () => !localStorage.getItem(tooltipKey),
+  );
+
+  const closeTooltip = () => {
+    localStorage.setItem(tooltipKey, "1");
+    setShowTooltip(false);
+  };
 
   if (isEditMode || !date) return null;
 
-  return <MealCompanionsDropdown date={date} variant="icon" />;
+  return (
+    <div className="relative shrink-0">
+      <MealCompanionsDropdown date={date} variant="icon" onOpen={closeTooltip} />
+      {showTooltip && (
+        <motion.button
+          type="button"
+          aria-label="점심조 안내 닫기"
+          initial={{ opacity: 0, x: 4 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.3, duration: 0.2 }}
+          onClick={closeTooltip}
+          className="absolute right-full top-0 z-10 mr-2 flex items-center gap-1 whitespace-nowrap rounded-full bg-[var(--ink-black)] px-2.5 py-1 text-xs font-medium text-white after:absolute after:inset-x-0 after:-inset-y-2 after:content-['']"
+        >
+          <span className="absolute -right-1 top-1/2 h-2 w-2 -translate-y-1/2 rotate-45 bg-[var(--ink-black)]" />
+          점심조
+          <X className="h-3 w-3" />
+        </motion.button>
+      )}
+    </div>
+  );
 }

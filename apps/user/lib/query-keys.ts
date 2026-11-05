@@ -45,7 +45,7 @@ export const queryKeys = {
     all: ["lunchGroup"] as const,
     current: ["lunchGroup", "current"] as const,
     fixedSchedules: ["lunchGroup", "fixedSchedules"] as const,
-    matesMeals: (memberId: string, date: string) => ["lunchGroup", "matesMeals", memberId, date] as const,
+    mealCompanions: (memberId: string, date: string) => ["lunchGroup", "mealCompanions", memberId, date] as const,
   },
 
   // 전역 설정 관련 쿼리

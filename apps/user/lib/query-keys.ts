@@ -113,6 +113,7 @@ export const queryKeys = {
     },
     me: ["points", "me"] as const,
     members: ["points", "members"] as const,
+    vendors: (memberId: string) => ["points", "vendors", memberId] as const,
   },
 } as const;
 

@@ -52,9 +52,13 @@ function invalidatePointsQueries(
   queryClient.invalidateQueries({
     queryKey: queryKeys.points.all,
     predicate: ({ queryKey }) =>
-      [type, "dashboard", "allocationRecords", "allRecords"].includes(
-        String(queryKey[1]),
-      ),
+      [
+        type,
+        "dashboard",
+        "allocationRecords",
+        "allRecords",
+        "vendors",
+      ].includes(String(queryKey[1])),
   });
 }
 

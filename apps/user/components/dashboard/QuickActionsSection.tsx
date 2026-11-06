@@ -75,7 +75,7 @@ export default function QuickActionsSection() {
                   {title}
                 </h3>
               </div>
-              <span className="ml-2 hidden shrink-0 text-[10px] font-medium text-[var(--slate-gray)] sm:inline lg:hidden">
+              <span className="ml-2 hidden shrink-0 text-[10px] font-medium text-[var(--slate-gray)]">
                 {description}
               </span>
             </Link>

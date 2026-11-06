@@ -72,7 +72,7 @@ export function AttendanceStep({
               : "중식 기록에 필요한 근태 정보예요"}
           </p>
         </div>
-        <MealCompanionsTitleButton />
+        <MealCompanionsTitleButton hint />
       </div>
 
       <div className="grid grid-cols-2 gap-2">

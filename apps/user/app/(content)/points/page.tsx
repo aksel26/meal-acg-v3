@@ -1017,10 +1017,14 @@ export default function Points() {
             )}
           </div>
 
-          <div className="h-[4.25rem] w-full shrink-0">
+          <div className="h-[4.25rem] w-full shrink-0 max-lg:hidden">
             <QuickActionsSection />
           </div>
         </div>
+      </div>
+
+      <div className="mobile-nav-footer fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[820px] px-4 sm:px-6 lg:hidden">
+        <QuickActionsSection />
       </div>
 
       {/* Edit Drawer */}

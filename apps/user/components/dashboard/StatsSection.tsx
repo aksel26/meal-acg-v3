@@ -428,7 +428,7 @@ function CalculationResult({
             </div>
           </div>
 
-          <div className="mt-8 hidden rounded-[22px] bg-[var(--whisper-cream)] px-4 py-4 text-right sm:block lg:px-3 lg:py-3">
+          <div className="mt-8 rounded-[22px] bg-[var(--whisper-cream)] px-4 py-4 text-right max-sm:hidden lg:px-3 lg:py-3">
             <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">
               Usage
             </p>

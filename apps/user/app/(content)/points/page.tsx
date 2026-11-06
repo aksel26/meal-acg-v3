@@ -26,6 +26,7 @@ import {
   usePointsWelfare,
   usePointsActivity,
   usePointsMembers,
+  usePointsVendors,
   type UsageRecord,
 } from "@/hooks/use-points-data";
 import {
@@ -429,6 +430,7 @@ export default function Points() {
     usePointsActivity(isManager ? currentMemberId : null, usageMonth);
 
   const { data: membersData } = usePointsMembers(currentMemberId);
+  const { data: vendorSuggestions } = usePointsVendors(currentMemberId);
 
   // Mutation hooks
   const addMutation = useAddUsageRecord();
@@ -1039,6 +1041,7 @@ export default function Points() {
         isDeleting={deleteMutation.isPending}
         isSaving={isSaving}
         isManager={isManager}
+        vendorSuggestions={vendorSuggestions}
       />
     </React.Fragment>
   );

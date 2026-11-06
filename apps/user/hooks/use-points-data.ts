@@ -148,6 +148,18 @@ async function fetchPointsMembers(memberId: string): Promise<OrgMember[]> {
   return data;
 }
 
+async function fetchPointsVendors(memberId: string): Promise<string[]> {
+  const params = new URLSearchParams({ member_id: memberId });
+  const response = await fetch(`/api/points/vendors?${params}`);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "사용처 목록을 가져오는데 실패했습니다.");
+  }
+
+  return data;
+}
+
 async function fetchMemberLookup(userName: string): Promise<MemberLookup> {
   const params = new URLSearchParams({ name: userName });
   const response = await fetch(`/api/points/lookup?${params}`);
@@ -262,6 +274,20 @@ export function usePointsMembers(memberId: string | null) {
     enabled: !!memberId,
     staleTime: 10 * 60 * 1000, // 10분
     gcTime: 30 * 60 * 1000, // 30분
+    retry: 2,
+  });
+}
+
+/**
+ * 같은 조직의 과거 사용처 목록 조회 (사용처 자동완성용, 자주 쓴 순)
+ */
+export function usePointsVendors(memberId: string | null) {
+  return useQuery({
+    queryKey: queryKeys.points.vendors(memberId!),
+    queryFn: () => fetchPointsVendors(memberId!),
+    enabled: !!memberId,
+    staleTime: 5 * 60 * 1000, // 5분
+    gcTime: 10 * 60 * 1000, // 10분
     retry: 2,
   });
 }

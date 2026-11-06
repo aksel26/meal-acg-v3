@@ -126,6 +126,7 @@ interface EditPointDialogProps {
   isDeleting?: boolean;
   isSaving?: boolean;
   isManager?: boolean;
+  vendorSuggestions?: string[];
 }
 
 export function EditPointDialog({
@@ -139,6 +140,7 @@ export function EditPointDialog({
   isDeleting = false,
   isSaving = false,
   isManager = false,
+  vendorSuggestions = [],
 }: EditPointDialogProps) {
   // 비매니저는 type 스텝 건너뛰기 (복지포인트 고정)
   const baseStepOrder = isNewPoint ? STEP_ORDER_NEW : STEP_ORDER_EDIT;
@@ -450,11 +452,17 @@ export function EditPointDialog({
                 사용처를 입력해주세요
               </h3>
             </div>
-            <Input
+            <AutoCompleteInput
               ref={vendorInputRef}
+              showOnFocus={false}
+              suggestions={vendorSuggestions}
               value={editingPoint.vendor}
-              onChange={(e) => updatePoint({ vendor: e.target.value })}
-              className="text-sm border-[rgba(14,15,12,0.12)] h-12"
+              onValueChange={(value) => updatePoint({ vendor: value })}
+              onSuggestionSelect={() => completeAndNext("vendor")}
+              allowFreeText={true}
+              maxSuggestions={10}
+              emptyText="일치하는 사용처가 없습니다"
+              className="text-sm border-[rgba(14,15,12,0.12)] h-12 ring-offset-background focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1"
               placeholder="예: 스타벅스 강남점"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && editingPoint.vendor.trim()) {

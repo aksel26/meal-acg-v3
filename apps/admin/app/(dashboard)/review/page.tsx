@@ -159,6 +159,13 @@ function formatDate(dateStr: string) {
   return dateStr.slice(0, 10);
 }
 
+// created_at은 UTC 문자열로 오므로 앞 10자를 자르면 KST 09시 전 입력이 전날로 보인다.
+function formatKstDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString("sv-SE", {
+    timeZone: "Asia/Seoul",
+  });
+}
+
 function formatDateTime(dateStr: string) {
   const d = new Date(dateStr);
   return d.toLocaleString("ko-KR", {
@@ -1422,7 +1429,7 @@ function ReviewPageContent() {
                         {formatDate(record.used_at)}
                       </td>
                       <td className="whitespace-nowrap px-3 py-1 text-center tabular-nums text-slate-400">
-                        {formatDate(record.created_at)}
+                        {formatKstDate(record.created_at)}
                       </td>
                       <td className="whitespace-nowrap px-3 py-1 font-medium text-slate-900">
                         {record.members?.full_name || "-"}

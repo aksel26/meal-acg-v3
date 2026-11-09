@@ -168,12 +168,15 @@ export async function GET(request: NextRequest) {
       rawQuery = rawQuery.lte("used_at", usedAtTo);
     }
     if (createdAtFrom) {
-      rawQuery = rawQuery.gte("created_at", `${createdAtFrom}T00:00:00`);
+      rawQuery = rawQuery.gte(
+        "created_at",
+        `${createdAtFrom}T00:00:00+09:00`,
+      );
     }
     if (createdAtTo) {
       rawQuery = rawQuery.lt(
         "created_at",
-        `${addOneDay(createdAtTo)}T00:00:00`,
+        `${addOneDay(createdAtTo)}T00:00:00+09:00`,
       );
     }
     if (amounts.length > 0) {

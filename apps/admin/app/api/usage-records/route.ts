@@ -131,10 +131,13 @@ export async function GET(request: NextRequest) {
         query = query.lte("used_at", usedAtTo);
       }
       if (createdAtFrom) {
-        query = query.gte("created_at", `${createdAtFrom}T00:00:00`);
+        query = query.gte("created_at", `${createdAtFrom}T00:00:00+09:00`);
       }
       if (createdAtTo) {
-        query = query.lt("created_at", `${addOneDay(createdAtTo)}T00:00:00`);
+        query = query.lt(
+          "created_at",
+          `${addOneDay(createdAtTo)}T00:00:00+09:00`,
+        );
       }
       if (!amountOptionsOnly && amounts.length > 0) {
         query = query.in("amount", amounts);

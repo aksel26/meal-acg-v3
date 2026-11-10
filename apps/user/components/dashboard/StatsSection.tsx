@@ -428,10 +428,7 @@ function CalculationResult({
             </div>
           </div>
 
-          <div className="mt-8 rounded-[22px] bg-[var(--whisper-cream)] px-4 py-4 text-right max-sm:hidden lg:px-3 lg:py-3">
-            <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">
-              Usage
-            </p>
+          <div className="mt-8 rounded-[22px] px-4 py-4 text-right max-sm:hidden lg:px-3 lg:py-3">
             <p className="mt-2 font-display text-[1.65rem] text-[var(--ink-black)] lg:text-[1.25rem]">
               {usagePercent}%
             </p>

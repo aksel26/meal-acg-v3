@@ -83,8 +83,8 @@ export default function PushNotificationPrompt() {
         <motion.div
           initial={{ y: -80 }}
           animate={{ y: 0 }}
-          exit={{ y: -80, transition: { duration: 0.35, ease: "easeIn" } }}
-          transition={{ type: "spring", stiffness: 120, damping: 16 }}
+          exit={{ y: -80, transition: { duration: 0.15, ease: "easeOut" } }}
+          transition={{ type: "spring", duration: 0.45, bounce: 0 }}
           className="fixed left-3 right-3 top-3 z-40 mx-auto max-w-sm"
         >
           <div className="overflow-hidden rounded-[18px] bg-white/95 shadow-[0_8px_24px_rgba(25,28,31,0.12)] backdrop-blur-md">
@@ -94,7 +94,7 @@ export default function PushNotificationPrompt() {
                   <p className="text-sm font-medium leading-5 text-[var(--ink-black)]">
                     알림을 받으려면 홈 화면에 추가해주세요
                   </p>
-                  <p className="mt-1 text-[11px] leading-4 text-[var(--granite)]">
+                  <p className="mt-1 text-xs leading-4 text-[var(--granite)]">
                     Safari의 공유 메뉴에서 &quot;홈 화면에 추가&quot;를 선택하면 푸시 알림을 받을 수 있습니다.
                   </p>
                 </div>
@@ -130,7 +130,7 @@ export default function PushNotificationPrompt() {
                       <p className="text-sm font-medium leading-5 text-[var(--ink-black)]">
                         복지 알림을 받으시겠어요?
                       </p>
-                      <p className="mt-1 text-[11px] leading-4 text-[var(--granite)]">
+                      <p className="mt-1 text-xs leading-4 text-[var(--granite)]">
                         입력 마감 리마인더와 정산 결과를 푸시 알림으로 받을 수 있습니다.
                       </p>
                       <div className="mt-2 flex gap-2">

@@ -26,7 +26,7 @@ export default function GreetingSection({ userName }: GreetingSectionProps) {
       className="rounded-[20px] bg-white px-4 py-3 sm:px-5 lg:flex lg:items-center lg:px-3 lg:py-2"
     >
       <div className="min-w-0">
-        <h1 className="truncate font-display text-lg font-medium leading-tight text-[var(--ink-black)] lg:text-sm">
+        <h1 className="break-keep font-display text-lg font-medium leading-tight text-[var(--ink-black)]">
           {getGreeting()}, {userName}님
         </h1>
       </div>

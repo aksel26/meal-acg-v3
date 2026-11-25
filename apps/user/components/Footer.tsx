@@ -8,7 +8,7 @@ interface FooterProps {
 function SupportMessage({ className = "" }: { className?: string }) {
   return (
     <p className={className}>
-      복지 운영 관련 문의는 P&C 팀,
+      복지 운영 관련 문의는 P&C팀,
       <br />
       기능 오류 및 버그 관련 문의는 HR Tech팀 김현민 선임에게 문의해 주세요.
     </p>
@@ -21,7 +21,7 @@ export function Footer({ className = "", variant = "default" }: FooterProps) {
   if (variant === "compact") {
     return (
       <footer className={`w-full ${className}`}>
-        <div className="flex flex-col gap-3 rounded-[22px] bg-white px-4 py-3 text-[var(--ink-black)] sm:flex-row sm:items-center sm:justify-between">
+        <div className="card-premium flex flex-col gap-3 px-4 py-3 text-[var(--ink-black)] sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <SupportMessage className="text-sm leading-5 text-[var(--granite)]" />
           </div>
@@ -32,7 +32,7 @@ export function Footer({ className = "", variant = "default" }: FooterProps) {
 
   return (
     <footer className={`w-full ${className}`}>
-      <div className="overflow-hidden rounded-[28px] bg-[var(--ink-black)] text-white">
+      <div className="overflow-hidden rounded-[24px] bg-[var(--ink-black)] text-white">
         <div className="space-y-6 px-6 py-7">
           <div className="space-y-3">
             <h2 className="max-w-[16rem] text-[1.9rem] leading-[1.08] tracking-normal text-white">

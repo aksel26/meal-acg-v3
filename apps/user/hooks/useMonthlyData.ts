@@ -73,6 +73,8 @@ async function fetchCollections(): Promise<DrinkCollectionItem[]> {
   const response = await fetch("/api/monthly/collections");
   if (!response.ok) throw new Error("Failed to fetch collections");
   const result = await response.json();
+  // API는 DB 조회에 실패해도 빈 목록과 warning을 200으로 돌려준다. 빈 목록으로 오해하지 않게 오류로 처리한다
+  if (result.warning) throw new Error(result.warning);
   return result.data || [];
 }
 

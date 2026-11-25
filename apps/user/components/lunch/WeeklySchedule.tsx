@@ -49,9 +49,9 @@ function ScheduleItems({
       {members.map((member, index) => (
         <div
           key={`member-${index}`}
-          className="flex items-center gap-2 rounded-[10px] bg-[rgba(244,241,232,0.62)] px-2 py-1.5"
+          className="flex items-center gap-2 rounded-[10px] bg-[rgba(244,244,244,0.62)] px-2 py-1.5"
         >
-          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] font-medium text-[var(--granite)]">
+          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-medium text-[var(--granite)]">
             {member.charAt(0)}
           </div>
           <span className="truncate text-xs text-[var(--ink-black)]">
@@ -94,7 +94,7 @@ const WeeklySchedule = ({
 
   if (isLoading) {
     return (
-      <div className="pt-4 border-t border-[rgba(14,15,12,0.06)] grid grid-cols-2 gap-2">
+      <div className="pt-4 border-t border-[rgba(25,28,31,0.06)] grid grid-cols-2 gap-2">
         {[1, 2].map((i) => (
           <div key={i} className="bg-[var(--soft-bone)] rounded-xl p-2">
             <div className="skeleton w-6 h-3 rounded mb-1.5 mx-auto" />
@@ -106,7 +106,7 @@ const WeeklySchedule = ({
   }
 
   return (
-    <div className="space-y-3 border-t border-[rgba(14,15,12,0.06)] pt-4">
+    <div className="space-y-3 border-t border-[rgba(25,28,31,0.06)] pt-4">
       <div className="grid grid-cols-2 gap-2">
         {FIXED_VISIBLE_DAYS.map((day) => {
           const dayData = schedulesByDay[day.value] ?? {
@@ -116,12 +116,12 @@ const WeeklySchedule = ({
 
           return (
             <div key={day.value} className="min-w-0">
-              <div className="min-h-[7rem] rounded-[16px] bg-[rgba(244,241,232,0.58)] p-2.5">
+              <div className="min-h-[7rem] rounded-[18px] bg-[rgba(244,244,244,0.58)] p-2.5">
                 <div className="mb-2 flex items-center justify-between">
                   <p className="text-xs font-medium text-[var(--ink-black)]">
                     {day.fullLabel}
                   </p>
-                  <span className="text-[10px] text-[var(--slate-gray)]">
+                  <span className="text-xs text-[var(--slate-gray)]">
                     고정
                   </span>
                 </div>
@@ -135,12 +135,12 @@ const WeeklySchedule = ({
         })}
       </div>
 
-      <div className="rounded-[16px] bg-[rgba(244,241,232,0.58)] p-3">
+      <div className="rounded-[18px] bg-[rgba(244,244,244,0.58)] p-3">
         <div className="mb-2 flex items-center justify-between">
           <p className="text-xs font-medium text-[var(--ink-black)]">
             제외 인원
           </p>
-          <span className="text-[10px] text-[var(--slate-gray)]">
+          <span className="text-xs tabular-nums text-[var(--slate-gray)]">
             {excludedMembers.length}명
           </span>
         </div>

@@ -7,10 +7,10 @@ import MotionProvider from "./providers/MotionProvider";
 import { Analytics } from "@vercel/analytics/next";
 import dayjs from "dayjs";
 
-const APP_NAME = "🍙 ACG 복지";
+const APP_NAME = "🍙 ACG 복지관리";
 const APP_DEFAULT_TITLE = "🍙 ACG 복지관리 서비스";
 const APP_TITLE_TEMPLATE = "%s - PWA App";
-const APP_DESCRIPTION = "ACG 직원을 위한 복지포인트, 식대, Monthly 커피, 점심조 관리 서비스입니다.";
+const APP_DESCRIPTION = "ACG 직원을 위한 복지포인트, 식대, Monthly커피, 점심조 관리 서비스입니다.";
 import "dayjs/locale/ko";
 dayjs.locale("ko");
 

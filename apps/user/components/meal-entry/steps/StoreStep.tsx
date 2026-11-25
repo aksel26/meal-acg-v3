@@ -6,6 +6,7 @@ import { useMealDrawerStore } from "@/stores/mealDrawerStore";
 import { useRestaurantNames } from "@/hooks/useRestaurants";
 import { AutoCompleteInput } from "@repo/ui/src/autocomplete-input";
 import { MealCompanionsTitleButton } from "../MealCompanionsDropdown";
+import { stepMotion } from "@/lib/motion";
 
 export function StoreStep() {
   const { formData, selectedMealType, updateFormField, completeStep } = useMealDrawerStore();
@@ -39,20 +40,14 @@ export function StoreStep() {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="space-y-4"
-    >
+    <motion.div {...stepMotion} className="space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
           <h3 className="text-lg font-medium text-[var(--ink-black)]">
             어디서 식사했나요?
           </h3>
           <p className="text-sm text-[var(--slate-gray)]">
-            식당 이름을 입력하거나 선택해주세요
+            식당을 입력하거나 선택해주세요
           </p>
         </div>
         <MealCompanionsTitleButton />
@@ -69,14 +64,14 @@ export function StoreStep() {
           value={currentStore}
           onValueChange={handleValueChange}
           onSuggestionSelect={handleSelect}
-          placeholder="식당명"
+          placeholder="식당"
           allowFreeText={true}
           showOnFocus={false}
           maxSuggestions={10}
           emptyText="저장된 식당이 없습니다"
           disabled={isLoading}
           onKeyDown={handleKeyDown}
-          className="h-14 text-base rounded-[16px] border-0 bg-[var(--whisper-cream)] focus:bg-white focus:ring-0 transition-all placeholder:text-[var(--slate-gray)]"
+          className="h-14 text-base rounded-[16px] border-0 bg-[var(--whisper-cream)] focus:bg-white focus:ring-0 transition-colors placeholder:text-[var(--slate-gray)]"
         />
       </motion.div>
 

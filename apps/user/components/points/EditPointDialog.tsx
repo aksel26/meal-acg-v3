@@ -30,7 +30,8 @@ import { ReceiptScanResult } from "@/lib/types/receipt-types";
 import { useUsers } from "@/hooks/useUsers";
 import { useUserStore } from "@/stores/userStore";
 import { toast } from "@repo/ui/src/sonner";
-import { X, ChevronLeft, Check, Pencil } from "@repo/ui/icons";
+import { X, ChevronLeft, Check, Pencil, Loader2 } from "@repo/ui/icons";
+import { stepMotion } from "@/lib/motion";
 
 // --- Types ---
 
@@ -87,14 +88,14 @@ function CompletedStepChip({
     >
       <div
         onClick={onEdit}
-        className="flex items-center justify-between px-4 py-3 bg-[rgba(244,247,240,0.8)] rounded-xl border border-[rgba(14,15,12,0.06)] cursor-pointer hover:bg-[var(--whisper-cream)]/80 hover:border-[rgba(14,15,12,0.08)] transition-all duration-200"
+        className="flex items-center justify-between px-4 py-3 bg-[var(--whisper-cream)] rounded-[16px] cursor-pointer hover:bg-[var(--soft-bone)] transition-colors duration-200"
       >
         <div className="flex items-center gap-3">
-          <div className="w-5 h-5 rounded-full bg-[rgba(5,77,40,0.12)] flex items-center justify-center">
-            <Check className="w-3 h-3 text-[#054d28]" strokeWidth={3} />
+          <div className="w-5 h-5 rounded-full bg-[rgba(0,168,126,0.12)] flex items-center justify-center">
+            <Check className="w-3 h-3 text-[var(--success-text)]" strokeWidth={3} />
           </div>
           <div className="flex flex-col">
-            <span className="text-[10px] text-[var(--slate-gray)] font-medium uppercase tracking-wider">
+            <span className="text-xs text-[var(--slate-gray)] font-medium">
               {STEP_LABELS[stepId]}
             </span>
             <span className="text-sm font-medium text-[var(--ink-black)] leading-tight">
@@ -104,7 +105,7 @@ function CompletedStepChip({
         </div>
         <button
           type="button"
-          className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-[var(--whisper-cream)] transition-all duration-200"
+          className="p-1.5 rounded-full hover:bg-white"
         >
           <Pencil className="w-3.5 h-3.5 text-[var(--granite)]" />
         </button>
@@ -262,11 +263,8 @@ export function EditPointDialog({
     try {
       await onSave();
     } catch (error) {
-      const msg =
-        error instanceof Error
-          ? error.message
-          : "알 수 없는 오류가 발생했습니다.";
-      toast.error(`저장에 실패했습니다: ${msg}`);
+      console.error(error);
+      toast.error("내역을 저장하지 못했어요. 연결을 확인하고 다시 시도해 주세요.");
     }
   };
 
@@ -364,17 +362,14 @@ export function EditPointDialog({
         return (
           <motion.div
             key="scan"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.25 }}
+            {...stepMotion}
             className="space-y-4"
           >
-            <div className="text-center space-y-1 mb-2">
-              <h3 className="text-sm font-semibold text-[var(--ink-black)]">
+            <div className="space-y-1">
+              <h3 className="text-lg font-medium text-[var(--ink-black)]">
                 영수증을 스캔하시겠어요?
               </h3>
-              <p className="text-xs text-[var(--granite)]">
+              <p className="text-sm text-[var(--slate-gray)]">
                 스캔하면 사용처, 금액, 날짜가 자동 입력됩니다
               </p>
             </div>
@@ -393,14 +388,11 @@ export function EditPointDialog({
         return (
           <motion.div
             key="type"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.25 }}
+            {...stepMotion}
             className="space-y-4"
           >
-            <div className="text-center space-y-1 mb-2">
-              <h3 className="text-sm font-semibold text-[var(--ink-black)]">
+            <div className="space-y-1">
+              <h3 className="text-lg font-medium text-[var(--ink-black)]">
                 유형을 선택해주세요
               </h3>
             </div>
@@ -411,10 +403,10 @@ export function EditPointDialog({
                   updatePoint({ type: "welfare" });
                   setTimeout(() => completeAndNext("type"), 150);
                 }}
-                className={`flex-1 py-4 rounded-xl border-2 transition-all duration-200 text-sm font-semibold ${
+                className={`flex-1 py-4 rounded-[18px] transition-colors duration-200 text-sm font-semibold ${
                   editingPoint.type === "welfare"
-                    ? "bg-[rgba(56,200,255,0.12)] border-[rgba(14,15,12,0.2)] text-[var(--ink-black)] shadow-sm"
-                    : "bg-white border-[rgba(14,15,12,0.08)] text-[var(--granite)] hover:border-[var(--ink-black)] hover:bg-[rgba(56,200,255,0.08)]"
+                    ? "bg-[var(--ink-black)] text-white"
+                    : "bg-[var(--whisper-cream)] text-[var(--granite)] hover:bg-[var(--soft-bone)]"
                 }`}
               >
                 복지포인트
@@ -425,10 +417,10 @@ export function EditPointDialog({
                   updatePoint({ type: "activity" });
                   setTimeout(() => completeAndNext("type"), 150);
                 }}
-                className={`flex-1 py-4 rounded-xl border-2 transition-all duration-200 text-sm font-semibold ${
+                className={`flex-1 py-4 rounded-[18px] transition-colors duration-200 text-sm font-semibold ${
                   editingPoint.type === "activity"
-                    ? "bg-orange-50 border-orange-300 text-orange-800 shadow-sm"
-                    : "bg-white border-[rgba(14,15,12,0.08)] text-[var(--granite)] hover:border-orange-200 hover:bg-orange-50/50"
+                    ? "bg-[var(--ink-black)] text-white"
+                    : "bg-[var(--whisper-cream)] text-[var(--granite)] hover:bg-[var(--soft-bone)]"
                 }`}
               >
                 활동비
@@ -441,14 +433,11 @@ export function EditPointDialog({
         return (
           <motion.div
             key="vendor"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.25 }}
+            {...stepMotion}
             className="space-y-4"
           >
-            <div className="text-center space-y-1 mb-2">
-              <h3 className="text-sm font-semibold text-[var(--ink-black)]">
+            <div className="space-y-1">
+              <h3 className="text-lg font-medium text-[var(--ink-black)]">
                 사용처를 입력해주세요
               </h3>
             </div>
@@ -462,7 +451,7 @@ export function EditPointDialog({
               allowFreeText={true}
               maxSuggestions={10}
               emptyText="일치하는 사용처가 없습니다"
-              className="text-sm border-[rgba(14,15,12,0.12)] h-12 ring-offset-background focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1"
+              className="h-14 text-base rounded-[16px] border-0 bg-[var(--whisper-cream)] focus:bg-white transition-colors placeholder:text-[var(--slate-gray)] ring-offset-background focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1"
               placeholder="예: 스타벅스 강남점"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && editingPoint.vendor.trim()) {
@@ -475,7 +464,7 @@ export function EditPointDialog({
               type="button"
               disabled={!editingPoint.vendor.trim()}
               onClick={() => completeAndNext("vendor")}
-              className="w-full py-3.5 rounded-xl bg-[var(--ink-black)] text-white text-sm font-medium hover:bg-[var(--ink-black)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              className="w-full py-3.5 rounded-full bg-[var(--ink-black)] text-white text-sm font-medium hover:opacity-85 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
               다음
             </button>
@@ -488,19 +477,16 @@ export function EditPointDialog({
         return (
           <motion.div
             key="proxy"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.25 }}
+            {...stepMotion}
             className="space-y-4"
           >
             {/* Section A: 대표 결제자 (카드 주인) */}
             <div>
-              <div className="text-center space-y-1 mb-3">
-                <h3 className="text-sm font-semibold text-[var(--ink-black)]">
-                  대표 결제자 (카드 주인)
+              <div className="space-y-1 mb-3">
+                <h3 className="text-lg font-medium text-[var(--ink-black)]">
+                  카드 주인
                 </h3>
-                <p className="text-xs text-[var(--granite)]">
+                <p className="text-sm text-[var(--slate-gray)]">
                   본인 외 다른 카드로 결제한 경우 변경해주세요
                 </p>
               </div>
@@ -524,7 +510,7 @@ export function EditPointDialog({
                     )}
                 </span>
                 {!editingPoint.proxy_payer && (
-                  <span className="text-[10px] text-[var(--slate-gray)]">
+                  <span className="text-xs text-[var(--slate-gray)]">
                     (본인)
                   </span>
                 )}
@@ -552,17 +538,17 @@ export function EditPointDialog({
                 allowFreeText={true}
                 maxSuggestions={users.length}
                 emptyText="조직원을 찾을 수 없습니다"
-                className="h-12 text-sm rounded-xl border-2 border-[rgba(14,15,12,0.06)] bg-white focus:border-[rgba(14,15,12,0.12)] focus:ring-0 transition-all placeholder:text-[var(--slate-gray)]"
+                className="h-14 text-base rounded-[16px] border-0 bg-[var(--whisper-cream)] focus:bg-white focus:ring-0 transition-colors placeholder:text-[var(--slate-gray)]"
               />
             </div>
 
             {/* Section B: 동반 결제자 — 본인 결제일 때만 표시 */}
             {!editingPoint.proxy_payer && (
               <>
-                <div className="border-t border-[rgba(14,15,12,0.06)]" />
+                <div className="border-t border-[rgba(25,28,31,0.06)]" />
                 <div>
-                  <div className="text-center space-y-1 mb-3">
-                    <h3 className="text-sm font-semibold text-[var(--ink-black)]">
+                  <div className="space-y-1 mb-3">
+                    <h3 className="text-sm font-medium text-[var(--ink-black)]">
                       동반 결제자
                     </h3>
                     <p className="text-xs text-[var(--slate-gray)]">
@@ -615,7 +601,7 @@ export function EditPointDialog({
                     allowFreeText={true}
                     maxSuggestions={users.length}
                     emptyText="조직원을 찾을 수 없습니다"
-                    className="h-12 text-sm rounded-xl border-2 border-[rgba(14,15,12,0.06)] bg-white focus:border-[rgba(14,15,12,0.12)] focus:ring-0 transition-all placeholder:text-[var(--slate-gray)]"
+                    className="h-14 text-base rounded-[16px] border-0 bg-[var(--whisper-cream)] focus:bg-white focus:ring-0 transition-colors placeholder:text-[var(--slate-gray)]"
                   />
                 </div>
               </>
@@ -630,7 +616,7 @@ export function EditPointDialog({
                   setCompanionSearchValue("");
                   completeAndNext("proxy");
                 }}
-                className="flex-1 py-3.5 rounded-xl border border-[rgba(14,15,12,0.08)] text-sm font-medium text-[var(--granite)] hover:bg-[var(--soft-bone)] transition-colors"
+                className="flex-1 py-3.5 rounded-full border border-[rgba(25,28,31,0.08)] text-sm font-medium text-[var(--granite)] hover:bg-[var(--soft-bone)] transition-colors"
               >
                 건너뛰기
               </button>
@@ -641,7 +627,7 @@ export function EditPointDialog({
                   setCompanionSearchValue("");
                   completeAndNext("proxy");
                 }}
-                className="flex-1 py-3.5 rounded-xl bg-[var(--ink-black)] text-white text-sm font-medium hover:bg-[var(--ink-black)] transition-colors"
+                className="flex-1 py-3.5 rounded-full bg-[var(--ink-black)] text-white text-sm font-medium hover:opacity-85 transition-colors"
               >
                 다음
               </button>
@@ -654,14 +640,11 @@ export function EditPointDialog({
         return (
           <motion.div
             key="amount"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.25 }}
+            {...stepMotion}
             className="space-y-4"
           >
-            <div className="text-center space-y-1 mb-2">
-              <h3 className="text-sm font-semibold text-[var(--ink-black)]">
+            <div className="space-y-1">
+              <h3 className="text-lg font-medium text-[var(--ink-black)]">
                 금액과 날짜를 입력해주세요
               </h3>
             </div>
@@ -674,7 +657,7 @@ export function EditPointDialog({
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className="w-full justify-between font-normal text-xs border-[rgba(14,15,12,0.12)] h-12 px-3 py-2"
+                      className="w-full justify-between font-normal text-xs border-[rgba(25,28,31,0.12)] h-12 px-3 py-2"
                     >
                       {selectedDate
                         ? `${selectedDate.getFullYear()}.${String(selectedDate.getMonth() + 1).padStart(2, "0")}.${String(selectedDate.getDate()).padStart(2, "0")}`
@@ -697,16 +680,16 @@ export function EditPointDialog({
                           "bg-[rgba(56,200,255,0.12)]0! text-white! hover:bg-[var(--ink-black)] focus:bg-[var(--ink-black)]",
                         day_today:
                           "bg-orange-100 text-orange-900 font-semibold",
-                        today: "border border-[var(--granite)] rounded-lg",
+                        today: "border border-[var(--granite)] rounded-[10px]",
                       }}
                       components={{
                         YearsDropdown: ({ value }) => (
-                          <div className="p-2 text-sm sm:text-md">
+                          <div className="p-2 text-sm sm:text-base">
                             {value ?? new Date().getFullYear()}
                           </div>
                         ),
                         MonthsDropdown: ({ value }) => (
-                          <div className="p-2 text-sm sm:text-md">
+                          <div className="p-2 text-sm sm:text-base">
                             {Number(value ?? new Date().getMonth()) + 1}월
                           </div>
                         ),
@@ -729,7 +712,7 @@ export function EditPointDialog({
                     type="number"
                     value={editingPoint.amount || ""}
                     onChange={handleAmountChange}
-                    className="pr-8 text-sm border-[rgba(14,15,12,0.12)] h-12 py-2"
+                    className="pr-8 text-sm border-[rgba(25,28,31,0.12)] h-12 py-2"
                     placeholder="금액 입력"
                     min="0"
                     onKeyDown={(e) => {
@@ -761,7 +744,7 @@ export function EditPointDialog({
                   onChange={(e) =>
                     updatePoint({ delay_reason: e.target.value })
                   }
-                  className="flex w-full rounded-xl border border-[rgba(255,209,26,0.4)] bg-[rgba(255,209,26,0.08)] px-3 py-2.5 text-sm placeholder:text-[var(--slate-gray)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#ffd11a] min-h-[72px] resize-none"
+                  className="flex w-full rounded-[16px] border border-[rgba(255,209,26,0.4)] bg-[rgba(255,209,26,0.08)] px-3 py-2.5 text-sm placeholder:text-[var(--slate-gray)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#ffd11a] min-h-[72px] resize-none"
                   placeholder="지연 사유를 입력해주세요"
                 />
               </div>
@@ -775,7 +758,7 @@ export function EditPointDialog({
                 isSaving
               }
               onClick={handleSave}
-              className={`w-full py-3.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
+              className={`w-full py-3.5 rounded-full text-sm font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
                 isNewPoint
                   ? "bg-gradient-to-r from-[var(--ink-black)] to-[var(--granite)] hover:from-[var(--ink-black)] hover:to-[#0e0f0c] text-white"
                   : "bg-[var(--ink-black)] hover:bg-[var(--granite)] text-white"
@@ -783,13 +766,11 @@ export function EditPointDialog({
             >
               {isSaving ? (
                 <div className="flex items-center justify-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   저장 중...
                 </div>
-              ) : isNewPoint ? (
-                "추가하기"
               ) : (
-                "수정하기"
+                "저장"
               )}
             </button>
           </motion.div>
@@ -803,7 +784,7 @@ export function EditPointDialog({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-md w-[calc(100%-2rem)] bg-white rounded-2xl border-0 shadow-2xl p-0 gap-0 overflow-visible"
+        className="max-w-md w-[calc(100%-2rem)] bg-white rounded-[24px] border-0 p-0 gap-0 overflow-visible"
         showCloseButton={false}
       >
         {/* Header */}
@@ -819,7 +800,7 @@ export function EditPointDialog({
                     exit={{ opacity: 0, x: -10 }}
                     type="button"
                     onClick={prevStep}
-                    className="p-2 -ml-2 rounded-lg hover:bg-[var(--whisper-cream)] transition-colors"
+                    className="p-2 -ml-2 rounded-full hover:bg-[var(--whisper-cream)] transition-colors"
                   >
                     <ChevronLeft className="w-5 h-5 text-[var(--granite)]" />
                   </motion.button>
@@ -829,7 +810,7 @@ export function EditPointDialog({
 
             {/* Center: Title */}
             <div className="flex-1 text-center">
-              <DialogTitle className="text-base font-semibold text-[var(--ink-black)]">
+              <DialogTitle className="text-base text-[var(--ink-black)]">
                 {isNewPoint ? "포인트 내역 추가" : "포인트 내역 수정"}
               </DialogTitle>
             </div>
@@ -841,11 +822,11 @@ export function EditPointDialog({
                   <AlertDialogTrigger asChild>
                     <button
                       type="button"
-                      className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#d03238] bg-[rgba(208,50,56,0.08)] hover:bg-[rgba(208,50,56,0.12)] transition-colors"
+                      className="px-2.5 py-1.5 rounded-full text-xs font-medium text-[var(--danger-text)] bg-[rgba(208,50,56,0.08)] hover:bg-[rgba(208,50,56,0.12)] transition-colors"
                       disabled={isDeleting}
                     >
                       {isDeleting ? (
-                        <div className="animate-spin rounded-full h-3 w-3 border-2 border-[#d03238] border-t-transparent" />
+                        <Loader2 className="h-3 w-3 animate-spin" />
                       ) : (
                         "삭제"
                       )}
@@ -854,19 +835,18 @@ export function EditPointDialog({
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>
-                        내역을 삭제하시겠습니까?
+                        이 내역을 삭제할까요?
                       </AlertDialogTitle>
                       <AlertDialogDescription>
-                        이 작업은 되돌릴 수 없습니다. <br />
-                        선택한 내역이 영구적으로 삭제됩니다.
+                        삭제하면 되돌릴 수 없어요.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <div className="mx-auto w-full rounded-[18px] bg-[rgba(244,241,232,0.58)] p-4 text-sm">
+                    <div className="mx-auto w-full rounded-[18px] bg-[rgba(244,244,244,0.58)] p-4 text-sm">
                       <div className="mb-3 flex items-center justify-between">
                         <strong className="font-medium text-[var(--ink-black)]">
                           삭제할 내역
                         </strong>
-                        <span className="rounded-full bg-[rgba(208,50,56,0.08)] px-2.5 py-1 text-[11px] font-medium text-[#d03238]">
+                        <span className="rounded-full bg-[rgba(208,50,56,0.08)] px-2.5 py-1 text-xs font-medium text-[var(--danger-text)]">
                           삭제 예정
                         </span>
                       </div>
@@ -897,9 +877,9 @@ export function EditPointDialog({
                       <AlertDialogCancel>취소</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={handleDelete}
-                        className="bg-[rgba(208,50,56,0.08)] hover:bg-[#a8181e] border border-[rgba(208,50,56,0.3)] text-[#d03238]"
+                        className="bg-[rgba(208,50,56,0.08)] hover:bg-[#a8181e] hover:text-white border border-[rgba(208,50,56,0.3)] text-[var(--danger-text)]"
                       >
-                        내역 삭제하기
+                        내역 삭제
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
@@ -908,7 +888,7 @@ export function EditPointDialog({
                 <DialogClose asChild>
                   <button
                     type="button"
-                    className="p-2 -mr-2 rounded-lg hover:bg-[var(--whisper-cream)] transition-colors"
+                    className="p-2 -mr-2 rounded-full hover:bg-[var(--whisper-cream)] transition-colors"
                   >
                     <X className="w-5 h-5 text-[var(--slate-gray)]" />
                   </button>
@@ -946,24 +926,22 @@ export function EditPointDialog({
             {isSummaryView ? (
               <motion.div
                 key="summary-save"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
+                {...stepMotion}
                 className="pt-2"
               >
                 <button
                   type="button"
                   onClick={handleSave}
                   disabled={isSaving}
-                  className="w-full py-4 rounded-xl bg-[var(--ink-black)] hover:bg-[var(--granite)] text-white text-sm font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="w-full py-4 rounded-full bg-[var(--ink-black)] hover:bg-[var(--granite)] text-white text-sm font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   {isSaving ? (
                     <div className="flex items-center justify-center gap-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                      <Loader2 className="h-4 w-4 animate-spin" />
                       저장 중...
                     </div>
                   ) : (
-                    "수정 완료"
+                    "저장"
                   )}
                 </button>
               </motion.div>

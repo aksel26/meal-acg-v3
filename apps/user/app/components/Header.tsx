@@ -8,7 +8,7 @@ import { useHeaderVisibility } from "@/hooks/useHeaderVisibility";
 const sectionLabels = [
   {
     matcher: (pathname: string) => pathname.startsWith("/points-dashboard"),
-    label: "Points Dashboard",
+    label: "전체 포인트 현황",
   },
   {
     matcher: (pathname: string) => pathname.startsWith("/points"),
@@ -16,7 +16,7 @@ const sectionLabels = [
   },
   {
     matcher: (pathname: string) => pathname.startsWith("/monthly"),
-    label: "음료취합",
+    label: "Monthly커피",
   },
   {
     matcher: (pathname: string) => pathname.startsWith("/lunch"),
@@ -48,7 +48,7 @@ const Header = () => {
       }}
       className="sticky top-0 z-40 pt-2"
     >
-      <div className="glass-card-elevated flex items-center justify-between gap-4 rounded-[24px] px-5 py-4">
+      <div className="glass-card-elevated flex items-center justify-between gap-4 px-5 py-4">
         <div className="min-w-0">
           <p className="truncate font-display text-[1.375rem] leading-none tracking-normal text-[var(--ink-black)]">
             {currentLabel}

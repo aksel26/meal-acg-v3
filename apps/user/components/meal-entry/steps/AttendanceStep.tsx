@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "motion/react";
+import { isToday } from "utils";
 import {
   useMealDrawerStore,
   NO_MEAL_SUPPORT_ATTENDANCE,
@@ -9,6 +11,8 @@ import {
 } from "@/stores/mealDrawerStore";
 import { attendanceOptions } from "@/lib/const/const";
 import { MealCompanionsTitleButton } from "../MealCompanionsDropdown";
+import { stepMotion } from "@/lib/motion";
+import { Loader2 } from "@repo/ui/icons";
 
 const attendanceConfig: Record<string, { emoji: string; shortLabel: string }> =
   {
@@ -29,7 +33,7 @@ export function AttendanceStep({
   onSubmit,
   isSubmitting,
 }: AttendanceStepProps) {
-  const { formData, selectedMealType, updateFormField, completeStep } = useMealDrawerStore();
+  const { formData, selectedMealType, selectedDate, updateFormField, completeStep } = useMealDrawerStore();
   const currentAttendance = formData.lunch.attendance;
   const [selectedValue, setSelectedValue] = useState<string>(currentAttendance);
 
@@ -60,11 +64,11 @@ export function AttendanceStep({
   };
 
   return (
-    <div className="space-y-4">
+    <motion.div {...stepMotion} className="space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
           <h3 className="text-lg font-medium text-[var(--ink-black)]">
-            오늘 근태는 어떤가요?
+            {isToday(selectedDate) ? "오늘" : "이 날"} 근태는 어떤가요?
           </h3>
           <p className="text-sm text-[var(--slate-gray)]">
             {selectedMealType === "dinner"
@@ -85,7 +89,7 @@ export function AttendanceStep({
               key={option.value}
               type="button"
               onClick={() => handleSelect(option.value)}
-              className={`flex items-center gap-3 py-3.5 px-4 rounded-[16px] transition-all duration-200 text-left ${
+              className={`flex items-center gap-3 py-3.5 px-4 rounded-[16px] transition-colors duration-200 text-left ${
                 isSelected
                   ? "bg-[var(--ink-black)] text-white"
                   : "bg-[var(--whisper-cream)] text-[var(--granite)] hover:bg-[var(--soft-bone)]"
@@ -102,19 +106,19 @@ export function AttendanceStep({
       {showSaveButton && (
         <div className="space-y-3 pt-2">
           {isNoMealSupport && (
-            <div className="bg-[rgba(236,126,0,0.1)] rounded-[16px] p-4">
-              <p className="text-sm text-[var(--warning)] font-medium">
+            <div className="bg-[rgba(236,126,0,0.1)] rounded-[18px] p-4">
+              <p className="text-sm text-[var(--warning-text)] font-medium">
                 {attendanceConfig[selectedValue]?.shortLabel} 시에는 식대가
                 지원되지 않습니다.
               </p>
-              <p className="text-xs text-[var(--warning)]/80 mt-1">
+              <p className="text-xs text-[var(--warning-text)]/80 mt-1">
                 근태 정보만 저장됩니다.
               </p>
             </div>
           )}
 
           {isIndividualMeal && (
-            <div className="bg-[var(--whisper-cream)] rounded-[16px] p-4">
+            <div className="bg-[var(--whisper-cream)] rounded-[18px] p-4">
               <p className="text-sm text-[var(--ink-black)] font-medium">
                 개별식사로 기록됩니다.
               </p>
@@ -132,15 +136,15 @@ export function AttendanceStep({
           >
             {isSubmitting ? (
               <div className="flex items-center justify-center gap-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                <Loader2 className="h-4 w-4 animate-spin" />
                 저장 중...
               </div>
             ) : (
-              "저장하기"
+              "저장"
             )}
           </button>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

@@ -16,17 +16,16 @@ export default function NotFound() {
           alt="길을 잃은 주먹밥"
           width={180}
           height={180}
-          className="mb-6 drop-shadow-lg"
-          style={{ animation: "wiggle 0.8s steps(2, jump-both) infinite" }}
+          className="mb-6 drop-shadow-lg motion-safe:animate-[wiggle_0.8s_steps(2,jump-both)_infinite]"
           priority
         />
 
-        <p className="text-6xl font-extrabold text-gray-200 mb-2">404</p>
+        <p className="text-6xl font-extrabold text-[var(--slate-gray)] mb-2">404</p>
 
-        <h1 className="text-lg font-bold text-gray-800 mb-2">
+        <h1 className="text-lg text-[var(--ink-black)] mb-2">
           앗, 여긴 어디지...?
         </h1>
-        <p className="text-sm text-gray-400 leading-relaxed mb-8">
+        <p className="text-sm text-[var(--slate-gray)] leading-relaxed mb-8">
           찾으시는 페이지가 밥 먹으러 간 것 같아요.
           <br />
           아래 버튼을 눌러 홈으로 돌아가 주세요!
@@ -34,7 +33,7 @@ export default function NotFound() {
 
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white bg-gray-800 hover:bg-gray-700 active:scale-[0.96] transition-all shadow-md"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold text-white bg-[var(--ink-black)] hover:bg-[var(--granite)] active:scale-[0.96] transition-[scale,background-color] shadow-md"
         >
           홈으로 돌아가기
         </Link>

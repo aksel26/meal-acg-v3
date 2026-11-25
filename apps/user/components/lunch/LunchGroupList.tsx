@@ -2,6 +2,7 @@
 import React, { useMemo, useCallback } from "react";
 import { LunchGroup } from "@/hooks/useLunchGroup";
 import { motion } from "motion/react";
+import StateBlock from "@/components/StateBlock";
 
 interface LunchGroupListProps {
   groups: LunchGroup[];
@@ -128,14 +129,11 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
   // 빈 데이터 처리
   if (processedTeams.length === 0) {
     return (
-      <div className="card-premium flex h-full min-h-[240px] flex-col items-center justify-center rounded-[24px] p-8 text-center">
-        <p className="mb-1 text-sm text-[var(--granite)]">
-          등록된 점심조가 없습니다.
-        </p>
-        <p className="text-xs text-[var(--slate-gray)]">
-          관리자에게 문의해주세요.
-        </p>
-      </div>
+      <StateBlock
+        title="등록된 점심조가 없어요"
+        description="점심조가 편성되면 여기에 표시돼요. 궁금한 점은 P&C팀에 문의해 주세요."
+        className="card-premium h-full min-h-[240px]"
+      />
     );
   }
 
@@ -155,8 +153,8 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
               delay: index * 0.05,
               ease: [0.16, 1, 0.3, 1],
             }}
-            className={`card-premium overflow-hidden rounded-[24px] transition-all duration-200 ${
-              isMyTeamHighlight ? "ring-1 ring-[rgba(14,15,12,0.24)]" : ""
+            className={`card-premium overflow-hidden ${
+              isMyTeamHighlight ? "ring-1 ring-[rgba(25,28,31,0.24)]" : ""
             } ${onTeamClick ? "cursor-pointer" : ""}`}
             onClick={() =>
               onTeamClick?.(
@@ -178,12 +176,12 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
                   >
                     {team.name}
                   </span>
-                  <span className="text-xs text-[var(--slate-gray)]">
+                  <span className="text-xs tabular-nums text-[var(--slate-gray)]">
                     {validMemberCount}명
                   </span>
                 </div>
                 {isMyTeamHighlight && (
-                  <span className="rounded-full bg-[rgba(236,126,0,0.12)] px-2.5 py-1 text-[10px] font-medium text-[#9a4f00]">
+                  <span className="rounded-full bg-[rgba(236,126,0,0.12)] px-2.5 py-1 text-xs font-medium text-[#9a4f00]">
                     내 조
                   </span>
                 )}
@@ -205,10 +203,10 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
                     return (
                       <div
                         key={`empty-${memberIndex}`}
-                        className="flex min-w-0 items-center gap-2 rounded-[14px] bg-[rgba(244,241,232,0.45)] p-2"
+                        className="flex min-w-0 items-center gap-2 rounded-[18px] bg-[rgba(244,244,244,0.45)] p-2"
                       >
                         <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white">
-                          <span className="text-[10px] text-[var(--slate-gray)]">
+                          <span className="text-xs text-[var(--slate-gray)]">
                             ?
                           </span>
                         </div>
@@ -223,10 +221,10 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
                   return (
                     <div
                       key={`${member}-${memberIndex}`}
-                      className={`flex min-w-0 items-center gap-2 rounded-[14px] p-2 ${
+                      className={`flex min-w-0 items-center gap-2 rounded-[18px] p-2 ${
                         isMe
                           ? "bg-[var(--whisper-cream)]"
-                          : "bg-[rgba(244,241,232,0.58)]"
+                          : "bg-[rgba(244,244,244,0.58)]"
                       }`}
                     >
                       <div
@@ -247,7 +245,7 @@ const LunchGroupList: React.FC<LunchGroupListProps> = ({
                       >
                         {member}
                         {isMe && (
-                          <span className="ml-1 text-[10px] text-[var(--granite)]">
+                          <span className="ml-1 text-xs text-[var(--granite)]">
                             (나)
                           </span>
                         )}

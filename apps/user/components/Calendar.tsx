@@ -13,9 +13,9 @@ dayjs.locale("ko");
 const EMPTY_MEAL_DATA: MealData[] = [];
 
 const mealIndicatorStyles = {
-  breakfast: "bg-[var(--warning)]",
-  lunch: "bg-[var(--signal-orange)]",
-  dinner: "bg-[var(--teal)]",
+  breakfast: "bg-[#7c5cff]",
+  lunch: "bg-[var(--ink-black)]",
+  dinner: "bg-[#3b82f6]",
   individualLunch: "border border-[var(--signal-orange)] bg-transparent",
 } as const;
 
@@ -214,11 +214,8 @@ export default function CalendarComponent({
   );
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.2 }}
-      className={`overflow-hidden rounded-[20px] bg-white p-4 touch-pan-y sm:rounded-[22px] sm:p-5 lg:flex lg:min-h-0 lg:flex-col lg:p-4 ${className}`}
+    <div
+      className={`card-premium overflow-hidden p-4 touch-pan-y sm:p-5 lg:flex lg:min-h-0 lg:flex-col lg:p-4 ${className}`}
     >
       <div className="mb-4 flex items-center justify-between gap-3 px-0.5 sm:px-1 lg:mb-3">
         <div className="flex min-w-0 items-baseline gap-2">
@@ -262,9 +259,9 @@ export default function CalendarComponent({
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={calendarKey}
-            initial={{ opacity: 0, x: direction * 30 }}
+            initial={{ opacity: 0, x: direction * 16 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: direction * -30 }}
+            exit={{ opacity: 0, x: direction * -16 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
             className="min-h-[25.5rem] sm:min-h-[26rem] lg:flex lg:h-full lg:min-h-0 lg:flex-1 lg:flex-col"
           >
@@ -286,7 +283,7 @@ export default function CalendarComponent({
                 week: "my-1.5 grid w-full min-w-0 grid-cols-7 gap-x-0 gap-y-3 lg:my-0 lg:flex-1 lg:min-h-0 lg:gap-0.5",
                 day: "relative min-w-0 px-0 py-1 text-center min-h-[clamp(3rem,12.5vw,3.5rem)] sm:min-h-[52px] lg:min-h-0 lg:py-0 select-none",
                 weekdays: "mb-0 mt-1 grid grid-cols-7 lg:mt-1.5",
-                weekday: "flex h-[14px] min-w-0 items-center justify-center text-center text-xs font-normal uppercase tracking-[0.12em] text-[var(--slate-gray)] sm:text-sm lg:h-[14px] lg:text-sm",
+                weekday: "flex h-[14px] min-w-0 items-center justify-center text-center text-xs font-normal text-[var(--slate-gray)] sm:text-sm lg:h-[14px] lg:text-sm",
               }}
               components={calendarComponents}
             />
@@ -294,6 +291,6 @@ export default function CalendarComponent({
         </AnimatePresence>
       </motion.div>
 
-    </motion.div>
+    </div>
   );
 }

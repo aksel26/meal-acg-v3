@@ -2,6 +2,7 @@
 
 import { useLunchGroupAssign } from "@/hooks/useLunchGroupAssign";
 import { useLunchGroup } from "@/hooks/useLunchGroup";
+import { EASE_OUT_EXPO } from "@/lib/motion";
 import { motion } from "motion/react";
 import Image from "next/image";
 import React, { useCallback, useMemo, useState } from "react";
@@ -102,16 +103,21 @@ const ScratchLottery: React.FC<ScratchLotteryProps> = ({
           0% { transform: translate(-50%,-50%) scale(0.2); opacity: 0.75; }
           100% { transform: translate(-50%,-50%) scale(2.8); opacity: 0; }
         }
-        .lunch-tremor { animation: lunch-tremor 0.18s linear infinite; }
-        .lunch-poof { animation: lunch-poof 0.45s ease-out forwards; }
-        .lunch-burst { animation: lunch-burst 0.7s cubic-bezier(.2,1.2,.4,1) forwards; }
-        .lunch-ring { animation: lunch-ring 0.7s ease-out forwards; }
+        @media (prefers-reduced-motion: no-preference) {
+          .lunch-tremor { animation: lunch-tremor 0.18s linear infinite; }
+          .lunch-poof { animation: lunch-poof 0.45s ease-out forwards; }
+          .lunch-burst { animation: lunch-burst 0.7s cubic-bezier(.2,1.2,.4,1) forwards; }
+          .lunch-ring { animation: lunch-ring 0.7s ease-out forwards; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .lunch-poof, .lunch-ring { display: none; }
+        }
       `}</style>
 
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
+        transition={{ duration: 0.35, ease: EASE_OUT_EXPO }}
         className="flex flex-col items-center gap-2"
       >
         <div className="relative flex h-40 w-56 items-center justify-center overflow-visible bg-transparent">
@@ -181,7 +187,7 @@ const ScratchLottery: React.FC<ScratchLotteryProps> = ({
                 ? "animate-pulse text-[var(--signal-orange)]"
                 : phase === "revealed"
                   ? "text-[var(--ink-black)]"
-                  : "text-[#d03238]"
+                  : "text-[var(--danger-text)]"
           }`}
         >
           {phase === "idle" &&
@@ -199,12 +205,12 @@ const ScratchLottery: React.FC<ScratchLotteryProps> = ({
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35 }}
+          transition={{ duration: 0.4, ease: EASE_OUT_EXPO, delay: 0.35 }}
           className="flex w-full flex-col items-center gap-3"
         >
           {/* 조원 목록 */}
           <div className="w-full max-w-[300px]">
-            <div className="rounded-xl bg-[rgba(244,241,232,0.58)] p-3">
+            <div className="rounded-[18px] bg-[rgba(244,244,244,0.58)] p-3">
               <p className="mb-2 text-xs font-semibold text-[var(--granite)]">
                 {displayResult}조 멤버
               </p>
@@ -215,7 +221,7 @@ const ScratchLottery: React.FC<ScratchLotteryProps> = ({
                       key={i}
                       className="inline-flex items-center gap-1 rounded-md bg-white px-2 py-1 text-xs font-medium text-[var(--granite)]"
                     >
-                      <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[rgba(236,126,0,0.12)] text-[10px] font-bold text-[#9a4f00]">
+                      <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[rgba(236,126,0,0.12)] text-xs font-bold text-[#9a4f00]">
                         {member.charAt(0)}
                       </span>
                       {member}
@@ -233,7 +239,7 @@ const ScratchLottery: React.FC<ScratchLotteryProps> = ({
           {phase === "revealed" && (
             <button
               onClick={handleRetry}
-              className="w-full max-w-[300px] rounded-xl bg-[var(--whisper-cream)] py-2.5 text-sm font-medium text-[var(--granite)] transition-colors hover:bg-[var(--soft-bone)]"
+              className="w-full max-w-[300px] rounded-full bg-[var(--whisper-cream)] py-2.5 text-sm font-medium text-[var(--granite)] transition-colors hover:bg-[var(--soft-bone)]"
             >
               다시 하기
             </button>

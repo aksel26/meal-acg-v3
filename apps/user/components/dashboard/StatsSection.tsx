@@ -12,12 +12,13 @@ import {
 import { Input } from "@repo/ui/src/input";
 import { NumberTicker } from "@repo/ui/src/number-ticker";
 import { toast } from "@repo/ui/src/sonner";
-import { Copy } from "@repo/ui/icons";
+import { Copy, Loader2 } from "@repo/ui/icons";
 import dayjs from "dayjs";
 import Image from "next/image";
 import { motion } from "motion/react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { useEffect, useRef, useState } from "react";
+import StateBlock from "@/components/StateBlock";
 import { useCalculationData } from "@/hooks/use-calculation-data";
 import { useMemberIdLookup, usePointsWelfare } from "@/hooks/use-points-data";
 import { useAddUsageRecord } from "@/hooks/use-points-mutations";
@@ -25,6 +26,7 @@ import {
   RecentMealActivity,
   useRecentMealActivity,
 } from "@/hooks/use-recent-meal-activity";
+import { EASE_OUT_EXPO } from "@/lib/motion";
 import { useUserStore } from "@/stores/userStore";
 import { CalculationData } from "./types";
 
@@ -143,8 +145,8 @@ function RecentMealTicker({ excludeUserId }: { excludeUserId: string }) {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="mb-2 flex items-center justify-between">
-        <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">
-          최근 식대 입력
+        <p className="text-xs text-[var(--slate-gray)]">
+          최근 식대 기록
         </p>
       </div>
 
@@ -186,18 +188,23 @@ function RecentMealTicker({ excludeUserId }: { excludeUserId: string }) {
                 className="flex h-6 items-center justify-between gap-3 text-sm lg:text-xs"
               >
                 <div className="flex min-w-0 items-center gap-2">
-                  <span className="max-w-[4.5rem] truncate text-[var(--ink-black)]">
+                  <span className="shrink-0 text-[var(--ink-black)]">
                     {activity.userName}
                   </span>
-                  <span className="min-w-0 truncate text-[var(--granite)]">
+                  <span
+                    className="min-w-0 truncate text-[var(--granite)]"
+                    title={getActivityMeals(activity)
+                      .map((meal) => [meal.type, meal.store].filter(Boolean).join(" "))
+                      .join(" / ")}
+                  >
                     {getActivityMeals(activity).map((meal, mealIndex) => (
                       <span key={`${activity.id}-${meal.type}-${mealIndex}`}>
                         {mealIndex > 0 && (
-                          <span className="px-1 text-[rgba(92,96,100,0.42)]">
+                          <span className="px-1 text-[var(--slate-gray)]">
                             /
                           </span>
                         )}
-                        <span className="text-[rgba(92,96,100,0.42)]">
+                        <span className="text-[var(--slate-gray)]">
                           {meal.type}
                         </span>
                         {meal.store && (
@@ -210,16 +217,17 @@ function RecentMealTicker({ excludeUserId }: { excludeUserId: string }) {
                     ))}
                   </span>
                 </div>
-                <span className="shrink-0 text-xs text-[var(--slate-gray)] lg:text-[11px]">
+                <span className="shrink-0 text-xs text-[var(--slate-gray)]">
                   {formatActivityDate(activity.date)}
                 </span>
               </div>
             ))}
           </motion.div>
         ) : (
-          <div className="flex h-full items-center text-xs text-[var(--slate-gray)]">
-            다른 사람의 최근 입력 내역이 없습니다.
-          </div>
+          <StateBlock
+            title="아직 다른 사람의 식대 기록이 없어요"
+            className="h-full"
+          />
         )}
       </div>
     </div>
@@ -263,13 +271,13 @@ function CalculationResult({
 
   const handleConfirmPayment = async () => {
     if (!currentMemberId) {
-      toast.error("사용자 정보를 불러올 수 없습니다.");
+      toast.error("사용자 정보를 불러오지 못했어요. 새로고침한 뒤 다시 시도해 주세요.");
       return;
     }
 
     const allocId = welfareData?.summary?.allocation_id;
     if (!allocId) {
-      toast.error("복지포인트 할당 정보가 없습니다.");
+      toast.error("복지포인트 할당 정보가 없어 정산하지 못했어요. P&C팀에 문의해 주세요.");
       return;
     }
 
@@ -285,8 +293,8 @@ function CalculationResult({
       toast.success("복지포인트 정산이 완료되었습니다.");
       setDialogOpen(false);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "알 수 없는 오류";
-      toast.error(`정산 실패: ${msg}`);
+      console.error("복지포인트 정산 실패:", err);
+      toast.error("정산하지 못했어요. 잠시 후 다시 시도해 주세요.");
     }
   };
 
@@ -316,8 +324,8 @@ function CalculationResult({
           <div className="skeleton h-12 w-48 rounded-full" />
           <div className="skeleton h-3 w-full rounded-full" />
           <div className="grid grid-cols-2 gap-3">
-            <div className="skeleton h-24 rounded-[20px]" />
-            <div className="skeleton h-24 rounded-[20px]" />
+            <div className="skeleton h-24 rounded-[18px]" />
+            <div className="skeleton h-24 rounded-[18px]" />
           </div>
         </div>
       </div>
@@ -326,16 +334,12 @@ function CalculationResult({
 
   if (error) {
     return (
-      <div className="card-premium overflow-hidden p-6 text-center">
-        <p className="text-sm text-[var(--granite)]">{error.message}</p>
-        <Button
-          onClick={() => refetch()}
-          variant="outline"
-          size="sm"
-          className="btn-secondary mt-4 px-4 py-2 text-xs"
-        >
-          다시 시도
-        </Button>
+      <div className="card-premium overflow-hidden">
+        <StateBlock
+          title={`${month}월 식대 잔액을 불러오지 못했어요`}
+          description="연결을 확인하고 다시 시도해 주세요."
+          action={{ label: "다시 시도", onClick: () => refetch() }}
+        />
       </div>
     );
   }
@@ -344,7 +348,7 @@ function CalculationResult({
     return (
       <div className="flex items-center justify-center py-8">
         <div className="flex items-center gap-2 text-[var(--slate-gray)]">
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--whisper-cream)] border-t-[var(--ink-black)]" />
+          <Loader2 className="h-4 w-4 animate-spin text-[var(--slate-gray)]" />
           <span className="text-sm">불러오는 중...</span>
         </div>
       </div>
@@ -357,13 +361,13 @@ function CalculationResult({
       ? Math.min(100, Math.round((data.totalUsed / data.allowanceAmount) * 100))
       : 0;
   const isLowBalance =
-    data.balance >= 0 && data.balance < data.allowanceAmount * 0.2;
+    data.balance >= 0 && data.balance <= data.allowanceAmount * 0.2;
   const statusLabel = isOverBudget ? "초과" : isLowBalance ? "주의" : "양호";
   const statusTone = isOverBudget
-    ? "bg-[rgba(226,59,74,0.12)] text-[var(--danger)]"
+    ? "badge-danger"
     : isLowBalance
-      ? "bg-[rgba(236,126,0,0.12)] text-[var(--warning)]"
-      : "bg-[var(--whisper-cream)] text-[var(--ink-black)]";
+      ? "badge-warning"
+      : "badge-success";
   const progressTone = isOverBudget
     ? "bg-[var(--danger)]"
     : isLowBalance
@@ -387,12 +391,12 @@ function CalculationResult({
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-4">
             <div className="space-y-2">
-              <p className="text-xs text-[var(--granite)] lg:text-[11px]">
+              <p className="text-xs text-[var(--granite)]">
                 {month}월 식대 잔액
               </p>
               <div className="flex items-end gap-1">
                 {isOverBudget && (
-                  <span className="text-2xl font-medium text-[var(--danger)] lg:text-xl">
+                  <span className="text-2xl font-medium text-[var(--danger-text)] lg:text-xl">
                     -
                   </span>
                 )}
@@ -400,17 +404,19 @@ function CalculationResult({
                   value={Math.abs(data.balance)}
                   className={`font-display text-[2.35rem] font-medium lg:text-[1.75rem] ${
                     isOverBudget
-                      ? "text-[var(--danger)]"
+                      ? "text-[var(--danger-text)]"
                       : isLowBalance
-                        ? "text-[var(--warning)]"
+                        ? "text-[var(--warning-text)]"
                         : "text-[var(--ink-black)]"
                   }`}
                 />
                 <span
-                  className={`pb-1 text-xs font-medium lg:text-[11px] ${
+                  className={`pb-1 text-xs font-medium ${
                     isOverBudget
-                      ? "text-[var(--danger)]"
-                      : "text-[var(--slate-gray)]"
+                      ? "text-[var(--danger-text)]"
+                      : isLowBalance
+                        ? "text-[var(--warning-text)]"
+                        : "text-[var(--slate-gray)]"
                   }`}
                 >
                   원
@@ -419,17 +425,17 @@ function CalculationResult({
             </div>
 
             <div
-              className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-medium ${statusTone}`}
+              className={`badge ${statusTone}`}
             >
               {statusLabel}
             </div>
           </div>
 
-          <div className="mt-8 rounded-[22px] px-4 py-4 text-right max-sm:hidden lg:px-3 lg:py-3">
-            <p className="mt-2 font-display text-[1.65rem] text-[var(--ink-black)] lg:text-[1.25rem]">
+          <div className="mt-8 rounded-[18px] px-4 py-4 text-right max-sm:hidden lg:px-3 lg:py-3">
+            <p className="mt-2 font-display text-[1.65rem] tabular-nums text-[var(--ink-black)] lg:text-xl">
               {usagePercent}%
             </p>
-            <p className="mt-1 text-[11px] text-[var(--granite)]">
+            <p className="mt-1 text-xs text-[var(--granite)]">
               이번 달 사용률
             </p>
           </div>
@@ -442,12 +448,12 @@ function CalculationResult({
               animate={{ width: `${Math.min(usagePercent, 100)}%`, opacity: 1 }}
               transition={{
                 width: { duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.2 },
-                opacity: { duration: 0.3 },
+                opacity: { duration: 0.3, ease: EASE_OUT_EXPO },
               }}
               className={`h-full rounded-full ${progressTone}`}
             />
           </div>
-          <div className="flex justify-between text-[11px] text-[var(--granite)]">
+          <div className="flex justify-between text-xs tabular-nums text-[var(--granite)]">
             <span>{usagePercent}% 사용</span>
             <span>{formatCurrency(data.allowanceAmount)}원 중</span>
           </div>
@@ -455,22 +461,22 @@ function CalculationResult({
       </div>
 
       <div className="grid grid-cols-2 gap-2.5 border-t border-[rgba(25,28,31,0.08)] px-5 py-4 lg:px-4 lg:py-3">
-        <div className="px-1 py-2">
-          <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">
+        <div className="py-2">
+          <p className="text-xs text-[var(--slate-gray)]">
             지급 총액
           </p>
-          <p className="mt-2 whitespace-nowrap font-display text-[1.35rem] text-[var(--ink-black)] sm:text-[1.6rem] lg:text-[1.35rem]">
+          <p className="mt-2 whitespace-nowrap font-display text-[1.35rem] tabular-nums text-[var(--ink-black)] sm:text-[1.6rem] lg:text-[1.35rem]">
             {formatCurrency(data.allowanceAmount)}
             <span className="ml-1 text-sm text-[var(--slate-gray)] lg:text-xs">
               원
             </span>
           </p>
         </div>
-        <div className="px-1 py-2">
-          <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--slate-gray)]">
+        <div className="py-2">
+          <p className="text-xs text-[var(--slate-gray)]">
             사용금액
           </p>
-          <p className="mt-2 whitespace-nowrap font-display text-[1.35rem] text-[var(--ink-black)] sm:text-[1.6rem] lg:text-[1.35rem]">
+          <p className="mt-2 whitespace-nowrap font-display text-[1.35rem] tabular-nums text-[var(--ink-black)] sm:text-[1.6rem] lg:text-[1.35rem]">
             {formatCurrency(data.totalUsed)}
             <span className="ml-1 text-sm text-[var(--slate-gray)] lg:text-xs">
               원
@@ -480,11 +486,11 @@ function CalculationResult({
       </div>
 
       {isOverBudget && (
-        <div className="border-t border-[rgba(25,28,31,0.08)] px-6 py-5 lg:px-5 lg:py-3">
+        <div className="border-t border-[rgba(25,28,31,0.08)] px-5 py-5 lg:px-4 lg:py-3">
           <button
             type="button"
             onClick={handleOpenDialog}
-            className="btn-primary w-full py-2.5 text-xs"
+            className="btn-primary w-full"
           >
             복지포인트로 초과분 정산하기
           </button>
@@ -492,14 +498,14 @@ function CalculationResult({
       )}
 
       {((data.totalDeduction ?? 0) > 0 || (data.weekendWorkCount ?? 0) > 0) && (
-        <div className="border-t border-[rgba(25,28,31,0.08)] px-6 py-5 lg:px-5 lg:py-3">
+        <div className="border-t border-[rgba(25,28,31,0.08)] px-5 py-5 lg:px-4 lg:py-3">
           <div className="space-y-3">
             {(data.weekendWorkCount ?? 0) > 0 && (
               <div className="flex items-center justify-between text-sm lg:text-sm">
                 <span className="text-[var(--granite)]">
                   주말·공휴일근무 {data.weekendWorkCount}일
                 </span>
-                <span className="font-medium text-[var(--ink-black)]">
+                <span className="font-medium tabular-nums text-[var(--ink-black)]">
                   +{formatCurrency(data.weekendWorkAddition || 0)}원
                 </span>
               </div>
@@ -510,7 +516,7 @@ function CalculationResult({
                   <AdjustmentMarker type="individual" />
                   <span>개별식사 {data.individualMealCount}회</span>
                 </span>
-                <span className="font-medium text-[var(--granite)]">
+                <span className="font-medium tabular-nums text-[var(--granite)]">
                   -{formatCurrency(data.individualMealDeduction || 0)}원
                 </span>
               </div>
@@ -521,7 +527,7 @@ function CalculationResult({
                   <AdjustmentMarker type="holiday" />
                   <span>연차/재택/휴무 {data.noMealFullDayCount}일</span>
                 </span>
-                <span className="font-medium text-[var(--granite)]">
+                <span className="font-medium tabular-nums text-[var(--granite)]">
                   -{formatCurrency(data.noMealDeduction || 0)}원
                 </span>
               </div>
@@ -532,7 +538,7 @@ function CalculationResult({
                   <AdjustmentMarker type="halfDay" />
                   <span>반차 {data.halfDayOffCount}일</span>
                 </span>
-                <span className="font-medium text-[var(--granite)]">
+                <span className="font-medium tabular-nums text-[var(--granite)]">
                   -{formatCurrency(data.halfDayDeduction || 0)}원
                 </span>
               </div>
@@ -541,14 +547,14 @@ function CalculationResult({
         </div>
       )}
 
-      <div className="h-[200px] border-t border-[rgba(25,28,31,0.08)] px-6 pb-7 pt-4 lg:min-h-0 lg:flex-1 lg:px-5 lg:pb-6 lg:pt-3">
+      <div className="h-[200px] border-t border-[rgba(25,28,31,0.08)] px-5 pb-7 pt-4 lg:min-h-0 lg:flex-1 lg:px-4 lg:pb-6 lg:pt-3">
         <RecentMealTicker excludeUserId={userId} />
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="rounded-[24px] border border-[rgba(25,28,31,0.1)] bg-white p-6">
+        <DialogContent className="rounded-[24px] border-0 bg-white p-6">
           <DialogHeader>
-            <DialogTitle>복지포인트로 정산하시겠습니까?</DialogTitle>
+            <DialogTitle>복지포인트로 정산할까요?</DialogTitle>
             <DialogDescription>{month}월 점심식대 초과분</DialogDescription>
           </DialogHeader>
 
@@ -569,11 +575,11 @@ function CalculationResult({
             const depositAmount = totalOverage - paymentAmount;
             if (depositAmount <= 0) return null;
             return (
-              <div className="space-y-2 rounded-[20px] border border-[rgba(236,126,0,0.16)] bg-[rgba(236,126,0,0.08)] p-4">
-                <p className="text-xs font-semibold text-[var(--warning)]">
+              <div className="space-y-2 rounded-[18px] border border-[rgba(236,126,0,0.16)] bg-[rgba(236,126,0,0.08)] p-4">
+                <p className="text-xs font-semibold text-[var(--warning-text)]">
                   잔금 입금 안내
                 </p>
-                <p className="text-[11px] text-[var(--warning)]">
+                <p className="text-xs text-[var(--warning-text)]">
                   남은{" "}
                   <span className="font-bold">
                     {depositAmount.toLocaleString()}원
@@ -583,7 +589,7 @@ function CalculationResult({
                 <button
                   type="button"
                   onClick={copyAccount}
-                  className="flex items-center gap-1.5 rounded-full bg-white px-3 py-2 text-[11px] font-medium text-[var(--warning)]"
+                  className="flex items-center gap-1.5 rounded-full bg-white px-3 py-2 text-xs font-medium text-[var(--warning-text)]"
                 >
                   <span>{DEPOSIT_ACCOUNT}</span>
                   <Copy className="h-3 w-3 shrink-0" />
@@ -609,7 +615,7 @@ function CalculationResult({
               disabled={addMutation.isPending}
               className="btn-primary"
             >
-              확인
+              포인트로 정산
             </Button>
           </DialogFooter>
         </DialogContent>

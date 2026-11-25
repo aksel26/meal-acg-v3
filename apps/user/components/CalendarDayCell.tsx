@@ -92,7 +92,7 @@ export const CalendarDayCell = React.memo(function CalendarDayCell({
       {...dayButtonProps}
       onClick={handleDayClick}
       className={`
-        relative h-auto min-h-[clamp(3rem,12.5vw,3.5rem)] min-w-0 rounded-[12px] p-0 transition-all duration-200 sm:min-h-[52px] sm:p-0.5 lg:aspect-auto lg:h-full lg:min-h-0 lg:rounded-[10px] lg:p-0
+        relative h-auto min-h-[clamp(3rem,12.5vw,3.5rem)] min-w-0 rounded-[12px] p-0 transition-colors duration-150 sm:min-h-[52px] sm:p-0.5 lg:aspect-auto lg:h-full lg:min-h-0 lg:rounded-[10px] lg:p-0
         ${isSelected ? "bg-[rgba(20,20,19,0.04)]" : "hover:bg-white/60 active:bg-white/80"}
         touch-manipulation
       `}
@@ -111,11 +111,11 @@ export const CalendarDayCell = React.memo(function CalendarDayCell({
         <div className="flex h-[18px] min-w-0 items-center justify-center sm:h-5 lg:h-[18px]">
           <span
             className={`
-              text-[0.94rem] sm:text-lg lg:text-base font-normal transition-all duration-200 leading-none
+              text-[15px] sm:text-lg lg:text-base font-normal transition-colors duration-150 leading-none
               ${isToday ? "text-[var(--signal-orange)]" : ""}
               ${isSelected && !isToday ? "text-[var(--ink-black)]" : ""}
-              ${isSunday ? "text-[var(--danger)]" : ""}
-              ${!isSunday && !isToday && !isSelected && isHoliday ? "text-[var(--danger)]" : ""}
+              ${isSunday ? "text-[var(--danger-text)]" : ""}
+              ${!isSunday && !isToday && !isSelected && isHoliday ? "text-[var(--danger-text)]" : ""}
               ${!isToday && !isSelected && isSaturday && !isHoliday ? "text-[var(--link-blue)]" : ""}
               ${!isToday && !isSelected && !isSunday && !isSaturday && !isHoliday ? "text-[var(--granite)]" : ""}
             `}
@@ -125,7 +125,7 @@ export const CalendarDayCell = React.memo(function CalendarDayCell({
         </div>
         <div className="flex h-1.5 w-full items-center justify-center sm:h-2 lg:h-1.5">
           {holiday && (
-            <span className="max-w-full truncate px-0.5 text-[8px] font-normal leading-none text-[var(--danger)] sm:text-[10px] lg:max-w-[3.5rem] lg:text-[9px]">
+            <span className="max-w-full truncate px-0.5 text-[10px] font-normal leading-none text-[var(--danger-text)] lg:max-w-[3.5rem]">
               {holiday.length > 5 ? `${holiday.slice(0, 5)}..` : holiday}
             </span>
           )}

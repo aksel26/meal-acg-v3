@@ -2,6 +2,7 @@ import * as React from "react";
 import dayjs from "dayjs";
 import "dayjs/locale/ko";
 import { motion } from "motion/react";
+import { EASE_OUT_EXPO } from "@/lib/motion";
 
 dayjs.locale("ko");
 
@@ -41,13 +42,13 @@ type MealType = "breakfast" | "lunch" | "dinner";
 
 const mealStyles: Record<MealType, { dot: string }> = {
   breakfast: {
-    dot: "bg-[var(--slate-gray)]",
+    dot: "bg-[#7c5cff]",
   },
   lunch: {
     dot: "bg-[var(--ink-black)]",
   },
   dinner: {
-    dot: "bg-[var(--granite)]",
+    dot: "bg-[#3b82f6]",
   },
 };
 
@@ -97,6 +98,7 @@ export function MealCards({
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
+        transition={{ duration: 0.3, ease: EASE_OUT_EXPO }}
         className={cardClassName("card-premium mt-3 p-4 text-center")}
       >
         <p className="text-xs text-[var(--granite)]">날짜를 선택해주세요</p>
@@ -139,7 +141,7 @@ export function MealCards({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.3, ease: EASE_OUT_EXPO }}
       className={cardClassName("card-premium mt-3 p-4")}
     >
       <div className="mb-3 flex items-center justify-between gap-4 px-1">
@@ -191,9 +193,9 @@ export function MealCards({
               disabled={isDisabled}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.2, delay: index * 0.05 }}
+              transition={{ duration: 0.2, delay: index * 0.05, ease: EASE_OUT_EXPO }}
               onClick={handleClick}
-              className={`flex min-h-[5.25rem] min-w-0 flex-col justify-between rounded-[15px] p-3 text-left transition-colors lg:min-h-0 ${
+              className={`flex min-h-[5.25rem] min-w-0 flex-col justify-between rounded-[18px] p-3 text-left transition-colors lg:min-h-0 ${
                 isDisabled
                   ? "cursor-not-allowed bg-[var(--whisper-cream)] opacity-50"
                   : isFilled || isLunchLeaveInfo
@@ -210,12 +212,12 @@ export function MealCards({
 
               <div className="min-w-0">
                 {isLunchLeaveInfo ? (
-                  <p className="truncate text-xs font-medium text-[var(--warning)]">
+                  <p className="truncate text-xs font-medium text-[var(--warning-text)]">
                     {attendance}
                   </p>
                 ) : hasEntry ? (
                   <p className="truncate text-xs font-medium text-[var(--granite)]">
-                    {meal.data?.store || "매장 미입력"}
+                    {meal.data?.store || "식당 미입력"}
                   </p>
                 ) : (
                   <p className="truncate text-xs text-[var(--slate-gray)]">
@@ -229,12 +231,12 @@ export function MealCards({
               </div>
 
               <div className="flex min-w-0 items-center justify-between gap-2">
-                <span className="min-w-0 truncate text-xs font-semibold text-[var(--ink-black)]">
+                <span className="min-w-0 truncate text-xs font-semibold tabular-nums text-[var(--ink-black)]">
                   {meal.data?.amount && meal.data.amount > 0
                     ? `${meal.data.amount.toLocaleString()}원`
                     : "-"}
                 </span>
-                <span className="shrink-0 text-[10px] font-medium text-[var(--slate-gray)]">
+                <span className="shrink-0 text-xs font-medium text-[var(--slate-gray)]">
                   {isDisabled ? "제외" : isLunchLeaveInfo ? "근태 수정" : canEdit ? "수정" : "추가"}
                 </span>
               </div>

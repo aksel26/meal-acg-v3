@@ -18,6 +18,7 @@ import utc from "dayjs/plugin/utc";
 import React, { lazy, Suspense, useEffect, useState } from "react";
 import { UpdateNotificationDialog } from "@/components/UpdateNotificationDialog";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "@repo/ui/icons";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -56,11 +57,18 @@ export default function DashboardPage() {
   const hasHydrated = useUserStore((s) => s.hasHydrated);
 
   // TanStack Query hooks 사용
-  const { data: mealData = [] } = useMealData(
+  const {
+    data: mealDataResult,
+    isError: isMealDataQueryError,
+    refetch: refetchMealData,
+  } = useMealData(
     userName || "",
     currentMonth,
     currentYear,
   );
+  const mealData = mealDataResult ?? [];
+  // 이미 받아 둔 기록이 있으면 재조회 실패만으로 화면을 가리지 않는다
+  const isMealDataError = isMealDataQueryError && !mealDataResult;
   const mealSubmitMutation = useMealSubmit();
   const mealDeleteMutation = useMealDelete();
 
@@ -189,7 +197,7 @@ export default function DashboardPage() {
   if (!mounted || !hasHydrated || !displayUserName) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <Loader2 className="h-12 w-12 animate-spin text-[var(--slate-gray)]" />
       </div>
     );
   }
@@ -197,7 +205,7 @@ export default function DashboardPage() {
   return (
     <React.Fragment>
       {isDesktop ? (
-        <div className="grid h-[calc(100dvh-3rem)] grid-cols-10 grid-rows-12 gap-3 overflow-hidden text-[0.92rem]">
+        <div className="grid h-[calc(100dvh-3rem)] grid-cols-10 grid-rows-12 gap-3 overflow-hidden text-[15px]">
           <div className="col-span-9 row-span-1 min-h-0 [&>*]:h-full">
             <GreetingSection userName={displayUserName} />
           </div>
@@ -212,6 +220,8 @@ export default function DashboardPage() {
               setSelectedDate={setSelectedDate}
               handleMonthChange={handleMonthChange}
               mealData={mealData}
+              isMealDataError={isMealDataError}
+              onRetryMealData={() => refetchMealData()}
             />
           </div>
 
@@ -231,7 +241,7 @@ export default function DashboardPage() {
           </div>
         </div>
       ) : (
-        <div className="flex flex-col gap-3 text-[0.92rem]">
+        <div className="flex flex-col gap-3 text-[15px]">
           <div className="flex min-w-0 items-stretch gap-2">
             <div className="min-w-0 flex-1">
               <GreetingSection userName={displayUserName} />
@@ -253,11 +263,10 @@ export default function DashboardPage() {
             setSelectedDate={setSelectedDate}
             handleMonthChange={handleMonthChange}
             mealData={mealData}
+            isMealDataError={isMealDataError}
+            onRetryMealData={() => refetchMealData()}
           />
 
-          <div className="mobile-nav-footer fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[820px] px-4 sm:px-6">
-            <QuickActionsSection />
-          </div>
         </div>
       )}
 

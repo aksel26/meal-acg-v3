@@ -1,7 +1,7 @@
 {
-  "name": "🍙 ACG 식대관리 서비스",
-  "short_name": "acg",
-  "description": "ACG 직원을 위한 식대관리 서비스입니다.",
+  "name": "🍙 ACG 복지관리 서비스",
+  "short_name": "ACG 복지관리",
+  "description": "ACG 직원을 위한 복지포인트, 식대, Monthly커피, 점심조 관리 서비스입니다.",
   "icons": [
     {
       "src": "/icons/android/android-launchericon-512-512.png",

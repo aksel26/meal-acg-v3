@@ -11,6 +11,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@repo/ui/src/alert-dialog";
+import { Loader2 } from "@repo/ui/icons";
 
 interface DeleteConfirmDialogProps {
   selectedDate?: Date;
@@ -33,8 +34,8 @@ export function DeleteConfirmDialog({ selectedDate, mealType, isDeleting, onConf
     <AlertDialog>
       <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
       <AlertDialogContent className="sm:max-w-md max-w-xs! rounded-[24px] border-0 bg-white">
-        <AlertDialogHeader className="text-center sm:text-left">
-          <AlertDialogTitle className="text-sm sm:text-lg font-medium flex items-center gap-2 text-[var(--ink-black)]">{deleteTarget} 삭제</AlertDialogTitle>
+        <AlertDialogHeader className="text-center sm:text-center">
+          <AlertDialogTitle className="text-lg font-medium text-[var(--ink-black)]">{deleteTarget}을 삭제할까요?</AlertDialogTitle>
           <AlertDialogDescription className="text-left space-y-3 pt-2">
             <span className="text-xs sm:text-sm text-[var(--granite)]">
               <span className="font-medium text-[var(--ink-black)]">
@@ -44,8 +45,8 @@ export function DeleteConfirmDialog({ selectedDate, mealType, isDeleting, onConf
                   day: "numeric",
                   weekday: "short",
                 })}
-              </span>
-              의 {deleteTarget}을 삭제하시겠습니까?
+              </span>{" "}
+              기록이에요. 삭제하면 되돌릴 수 없어요.
             </span>
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -60,11 +61,11 @@ export function DeleteConfirmDialog({ selectedDate, mealType, isDeleting, onConf
           >
             {isDeleting ? (
               <div className="flex items-center gap-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                <Loader2 className="h-4 w-4 animate-spin" />
                 삭제 중...
               </div>
             ) : (
-              "삭제하기"
+              "기록 삭제"
             )}
           </AlertDialogAction>
         </AlertDialogFooter>

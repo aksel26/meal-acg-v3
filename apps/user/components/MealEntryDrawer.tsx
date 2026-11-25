@@ -18,6 +18,7 @@ import {
   useMealCompanionsDate,
 } from "./meal-entry";
 import { X, ChevronLeft } from "lucide-react";
+import { Loader2 } from "@repo/ui/icons";
 
 // Lazy load DeleteConfirmDialog
 const DeleteConfirmDialog = lazy(() =>
@@ -98,7 +99,7 @@ export default function MealEntryDrawer({
 
             {/* Center: Title and date */}
             <div className="flex-1 text-center">
-              <DialogTitle className="text-base font-medium text-[var(--ink-black)]">
+              <DialogTitle className="text-lg font-medium text-[var(--ink-black)]">
                 {isEditMode ? "식대 기록 수정" : "식대 기록"}
               </DialogTitle>
               <p className="text-xs text-[var(--slate-gray)] mt-0.5">
@@ -123,11 +124,14 @@ export default function MealEntryDrawer({
                   >
                     <button
                       type="button"
-                      className="px-2.5 py-1.5 rounded-full text-xs font-medium text-[var(--danger)] bg-[rgba(226,59,74,0.1)] hover:bg-[rgba(226,59,74,0.16)] transition-colors"
+                      className="px-2.5 py-1.5 rounded-full text-xs font-medium text-[var(--danger-text)] bg-[rgba(226,59,74,0.1)] hover:bg-[rgba(226,59,74,0.16)] transition-colors"
                       disabled={isSubmitting || isDeleting}
                     >
                       {isDeleting ? (
-                        <div className="animate-spin rounded-full h-3 w-3 border-2 border-[var(--danger)] border-t-transparent" />
+                        <span className="flex items-center gap-1">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          삭제
+                        </span>
                       ) : (
                         "삭제"
                       )}
@@ -149,7 +153,7 @@ export default function MealEntryDrawer({
         </DialogHeader>
 
         {/* Form Content - overflow-visible for autocomplete dropdowns */}
-        <div className="px-5 pb-6 pb-safe overflow-visible">
+        <div className="px-5 pb-6 overflow-visible">
           {isEditMode && companionsDate && (
             <div className="mb-4">
               <MealCompanionsDropdown date={companionsDate} />

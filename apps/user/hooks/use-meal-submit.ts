@@ -46,7 +46,7 @@ async function submitMealData(data: MealSubmitData): Promise<MealSubmitResponse>
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.details || errorData.error || "식사 기록 저장에 실패했습니다.");
+    throw new Error(errorData.details || errorData.error || "식대 기록 저장에 실패했습니다.");
   }
 
   return response.json();
@@ -59,7 +59,7 @@ export function useMealSubmit() {
     mutationFn: submitMealData,
     onMutate: () => {
       // 로딩 토스트 표시
-      const loadingToast = toast.loading(`식사 기록을 저장하는 중...`);
+      const loadingToast = toast.loading(`식대 기록을 저장하는 중...`);
       
       // 토스트 ID를 반환해서 나중에 제거할 수 있도록 함
       return { loadingToast };
@@ -71,7 +71,7 @@ export function useMealSubmit() {
       }
 
       // 성공 토스트 표시
-      toast.success(`식사 기록이 저장되었습니다.`);
+      toast.success(`식대 기록이 저장되었습니다.`);
 
       // 관련 쿼리 무효화
       const date = new Date(variables.date);
@@ -107,8 +107,7 @@ export function useMealSubmit() {
       }
 
       // 에러 토스트 표시
-      const errorMessage = error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다.";
-      toast.error(`식사 기록 저장에 실패했습니다: ${errorMessage}`);
+      toast.error("식대 기록을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.");
 
       console.error("Form submit error:", error);
     },

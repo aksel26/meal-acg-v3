@@ -21,6 +21,8 @@ import {
   AmountStep,
 } from "./steps";
 import { useRestaurantNames, useCreateRestaurant, parseRestaurantName } from "@/hooks/useRestaurants";
+import { stepMotion } from "@/lib/motion";
+import { Loader2 } from "@repo/ui/icons";
 
 const mealTypeLabels = {
   breakfast: "조식",
@@ -256,6 +258,7 @@ export function StepFormContainer({
                 stepId={stepId}
                 value={getStepValue(stepId)}
                 onEdit={isInformational ? () => {} : () => goToStep(stepId)}
+                editable={!isInformational}
                 index={index}
               />
             );
@@ -269,9 +272,7 @@ export function StepFormContainer({
           {isShowingSummary ? (
             <motion.div
               key="summary"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+              {...stepMotion}
               className="pt-2"
             >
               <motion.button
@@ -282,11 +283,11 @@ export function StepFormContainer({
               >
                 {isSubmitting ? (
                   <div className="flex items-center justify-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                     저장 중...
                   </div>
                 ) : (
-                  "수정 완료"
+                  "저장"
                 )}
               </motion.button>
             </motion.div>

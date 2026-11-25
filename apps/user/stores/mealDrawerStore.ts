@@ -23,7 +23,7 @@ export const STEP_LABELS: Record<StepId, string> = {
   mealType: "식사 타입",
   attendance: "근태",
   payer: "결제자",
-  store: "식당명",
+  store: "식당",
   amount: "금액",
 };
 

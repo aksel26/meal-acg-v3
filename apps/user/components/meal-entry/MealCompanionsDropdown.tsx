@@ -102,7 +102,7 @@ export function MealCompanionsDropdown({
               size="icon"
               aria-label="동료 식대 내역"
               title="동료 식대 내역"
-              className="size-10 rounded-full bg-[var(--whisper-cream)] text-[var(--granite)] hover:bg-[rgba(244,241,232,0.7)] active:scale-[0.96]"
+              className="size-10 rounded-full bg-[var(--whisper-cream)] text-[var(--granite)] hover:bg-[rgba(244,244,244,0.7)] active:scale-[0.96]"
             >
               <Users className="size-[18px]" />
             </Button>
@@ -113,7 +113,7 @@ export function MealCompanionsDropdown({
           <Button
             type="button"
             variant="secondary"
-            className="h-auto w-full justify-between rounded-[14px] bg-[var(--whisper-cream)] px-4 py-2.5 text-[var(--granite)] hover:bg-[rgba(244,241,232,0.7)] has-[>svg]:px-4"
+            className="h-auto w-full justify-between rounded-[14px] bg-[var(--whisper-cream)] px-4 py-2.5 text-[var(--granite)] hover:bg-[rgba(244,244,244,0.7)] has-[>svg]:px-4"
           >
             동료 식대 내역
             <ChevronDown
@@ -129,12 +129,12 @@ export function MealCompanionsDropdown({
           variant === "icon"
             ? "w-[min(25.5rem,calc(100vw-4.5rem))]"
             : "w-[var(--radix-popover-trigger-width)]"
-        } rounded-[20px] border-0 p-3 shadow-md!`}
+        } rounded-[20px] border-0 p-3`}
       >
         {isLoading ? (
           <Message>불러오는 중...</Message>
         ) : isError ? (
-          <Message>내역을 불러오지 못했습니다.</Message>
+          <Message>동료 식대 내역을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.</Message>
         ) : (
           <>
             <div className="mb-2 flex gap-1">
@@ -146,7 +146,7 @@ export function MealCompanionsDropdown({
                     type="button"
                     variant="secondary"
                     onClick={() => setActiveDate(day.date)}
-                    className={`h-auto min-w-0 flex-1 flex-col gap-0 rounded-[10px] px-0 py-1 text-[11px] font-normal leading-tight ${
+                    className={`h-auto min-w-0 flex-1 flex-col gap-0 rounded-[10px] px-0 py-1 text-xs font-normal leading-tight ${
                       day.date === activeDate
                         ? "bg-[var(--ink-black)] text-white hover:bg-[var(--ink-black)]"
                         : "bg-[var(--whisper-cream)] text-[var(--granite)] hover:bg-[var(--whisper-cream)]"
@@ -166,7 +166,7 @@ export function MealCompanionsDropdown({
                 <p className="mb-2 text-xs text-[var(--slate-gray)]">
                   {activeDay.label}
                   {activeDay.subtitle && ` · ${activeDay.subtitle}`}
-                  {activeDay.people.length > 0 && " · 가게명을 누르면 복사됩니다"}
+                  {activeDay.people.length > 0 && " · 식당을 누르면 복사됩니다"}
                 </p>
 
                 {activeDay.people.length === 0 ? (
@@ -176,14 +176,14 @@ export function MealCompanionsDropdown({
                     {activeDay.people.map(({ name, meal }) => (
                       <li
                         key={name}
-                        className="rounded-[14px] bg-[rgba(244,241,232,0.58)] px-3 py-2"
+                        className="rounded-[18px] bg-[rgba(244,244,244,0.58)] px-3 py-2"
                       >
                         <div className="flex items-center justify-between gap-2">
                           <span className="truncate text-xs text-[var(--granite)]">
                             {name}
                           </span>
                           {meal?.payer && (
-                            <span className="shrink-0 text-[11px] text-[var(--slate-gray)]">
+                            <span className="shrink-0 text-xs text-[var(--slate-gray)]">
                               결제 {meal.payer}
                             </span>
                           )}
@@ -205,7 +205,7 @@ export function MealCompanionsDropdown({
                             </Button>
                           ) : (
                             <span className="text-xs text-[var(--slate-gray)]">
-                              {meal ? "가게 미입력" : "입력 내역 없음"}
+                              {meal ? "식당 미입력" : "입력 내역 없음"}
                             </span>
                           )}
                           {meal && meal.amount > 0 && (
@@ -263,12 +263,13 @@ export function MealCompanionsTitleButton({ hint = false }: { hint?: boolean }) 
         {tooltipContainer && (
           <TooltipContent
             container={tooltipContainer}
-            side="left"
+            side="bottom"
+            align="end"
             sideOffset={8}
             aria-label="점심조"
             className="flex items-center gap-1 whitespace-nowrap py-1 pl-2.5 pr-1"
           >
-            점심조
+            동료 식대
             <Button
               type="button"
               variant="ghost"

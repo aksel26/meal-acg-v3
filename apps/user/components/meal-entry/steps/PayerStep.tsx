@@ -6,6 +6,7 @@ import { useMealDrawerStore } from "@/stores/mealDrawerStore";
 import { useUsers } from "@/hooks/useUsers";
 import { AutoCompleteInput } from "@repo/ui/src/autocomplete-input";
 import { MealCompanionsTitleButton } from "../MealCompanionsDropdown";
+import { stepMotion } from "@/lib/motion";
 
 export function PayerStep() {
   const { formData, selectedMealType, updateFormField, completeStep } = useMealDrawerStore();
@@ -45,13 +46,7 @@ export function PayerStep() {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="space-y-4"
-    >
+    <motion.div {...stepMotion} className="space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
           <h3 className="text-lg font-medium text-[var(--ink-black)]">
@@ -68,7 +63,7 @@ export function PayerStep() {
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-xs text-[var(--warning)] bg-[rgba(236,126,0,0.1)] px-3 py-2 rounded-[14px]"
+          className="text-xs text-[var(--warning-text)] bg-[rgba(236,126,0,0.1)] px-3 py-2 rounded-[14px]"
         >
           {error}
         </motion.p>
@@ -92,7 +87,7 @@ export function PayerStep() {
           emptyText="결제자를 찾을 수 없습니다"
           disabled={isLoading}
           onKeyDown={handleKeyDown}
-          className="h-14 text-base rounded-[16px] border-0 bg-[var(--whisper-cream)] focus:bg-white focus:ring-0 transition-all placeholder:text-[var(--slate-gray)]"
+          className="h-14 text-base rounded-[16px] border-0 bg-[var(--whisper-cream)] focus:bg-white focus:ring-0 transition-colors placeholder:text-[var(--slate-gray)]"
         />
       </motion.div>
 

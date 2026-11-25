@@ -95,7 +95,7 @@ export default function PWAInstallPrompt() {
               <h3 className="text-sm font-medium leading-5 text-[var(--ink-black)]">
                 ACG 복지관리 앱으로 빠르게 실행하세요
               </h3>
-              <p className="mt-1 text-[11px] leading-4 text-[var(--granite)]">
+              <p className="mt-1 text-xs leading-4 text-[var(--granite)]">
                 {isIOS || !deferredPrompt
                   ? "Safari 공유 메뉴에서 '홈 화면에 추가'를 선택하면 앱처럼 실행할 수 있습니다."
                   : "홈 화면에 추가하면 더 빠르게 열리고, 앱처럼 바로 접근할 수 있습니다."}

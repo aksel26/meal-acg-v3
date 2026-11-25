@@ -57,23 +57,23 @@ export function UpdateNotificationDialog() {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose} modal={true}>
-      <DialogContent className="max-w-sm mx-auto max-h-[85vh] flex flex-col">
+      <DialogContent className="max-w-sm mx-auto max-h-[85vh] flex flex-col rounded-[24px] border-0 bg-white">
         <DialogHeader className="text-center shrink-0">
-          <DialogTitle className="text-lg sm:text-xl text-center font-medium text-gray-900">
+          <DialogTitle className="text-lg sm:text-xl text-center font-medium text-[var(--ink-black)]">
             복지포인트 입력 안내
           </DialogTitle>
         </DialogHeader>
 
         <div className="py-3 space-y-3 overflow-y-auto flex-1 min-h-0">
           {guideItems.map((item, index) => (
-            <div key={index} className="p-3 bg-gray-50 rounded-lg">
+            <div key={index} className="p-3 bg-[var(--whisper-cream)] rounded-lg">
               <div className="flex items-center space-x-2 mb-2">
                 <span className="text-lg shrink-0">{item.icon}</span>
-                <h4 className="text-base font-medium text-gray-900">{item.title}</h4>
+                <h4 className="text-base font-medium text-[var(--ink-black)]">{item.title}</h4>
               </div>
               <ol className="space-y-1.5 pl-6">
                 {item.steps.map((step, stepIndex) => (
-                  <li key={stepIndex} className="text-sm text-gray-600 leading-relaxed list-decimal">
+                  <li key={stepIndex} className="text-sm text-[var(--granite)] leading-relaxed list-decimal">
                     {step}
                   </li>
                 ))}
@@ -82,17 +82,17 @@ export function UpdateNotificationDialog() {
           ))}
         </div>
 
-        <div className="px-3 py-3 bg-blue-50 rounded-lg shrink-0 space-y-1">
-          <p className="text-sm text-blue-800 leading-relaxed">
+        <div className="px-3 py-3 bg-[var(--whisper-cream)] rounded-lg shrink-0 space-y-1">
+          <p className="text-sm text-[var(--ink-black)] leading-relaxed">
             · 동반 결제자도 <span className="font-semibold">각자 별도로</span> 내역을 입력해야 합니다.
           </p>
-          <p className="text-sm text-blue-800 leading-relaxed">
+          <p className="text-sm text-[var(--ink-black)] leading-relaxed">
             · 동반 결제자에게는 <span className="font-semibold">입력 안내 푸시 알림</span>이 자동 전송됩니다.
           </p>
         </div>
 
         <div className="px-1 pb-2 shrink-0">
-          <p className="text-sm text-gray-500 text-center">
+          <p className="text-sm text-[var(--slate-gray)] text-center">
             입력이 어려우시거나 궁금한 점이 있으시면
             <br />
             <span className="font-semibold">P&C팀</span> 또는 <span className="font-semibold">HR Tech팀 김현민 선임</span>에게 문의해 주세요.
@@ -104,7 +104,7 @@ export function UpdateNotificationDialog() {
             checked={dontShowAgain}
             onCheckedChange={(checked) => setDontShowAgain(checked as boolean)}
           />
-          <label htmlFor="dontShowAgain" className="text-sm text-gray-600 cursor-pointer select-none">
+          <label htmlFor="dontShowAgain" className="text-sm text-[var(--granite)] cursor-pointer select-none">
             다시 보지 않기
           </label>
         </div>

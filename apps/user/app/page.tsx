@@ -5,6 +5,7 @@ import { Button } from "@repo/ui/src/button";
 import { Checkbox } from "@repo/ui/src/checkbox";
 import { Input } from "@repo/ui/src/input";
 import { Label } from "@repo/ui/src/label";
+import { Loader2 } from "@repo/ui/icons";
 import { motion } from "motion/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -128,7 +129,7 @@ export default function HomePage() {
               priority
               className="h-7 w-auto"
             />
-            <p className="text-xs font-medium uppercase tracking-[0.14em] text-[var(--slate-gray)]">
+            <p className="text-xs font-medium text-[var(--slate-gray)]">
               ACG 복지관리
             </p>
           </header>
@@ -151,7 +152,7 @@ export default function HomePage() {
                     <br />더 똑똑하게
                   </h1>
                   <p className="text-sm leading-6 text-[var(--granite)]">
-                    복지포인트, 식대, Monthly 커피, 점심조까지 한 곳에서
+                    복지포인트, 식대, Monthly커피, 점심조까지 한 곳에서
                     확인하고 관리하세요.
                   </p>
                 </div>
@@ -171,7 +172,7 @@ export default function HomePage() {
                       type="text"
                       value={formData.id}
                       onChange={handleInputChange}
-                      placeholder="사용자명을 입력하세요"
+                      placeholder="아이디를 입력하세요"
                       required
                     />
                   </div>
@@ -202,7 +203,7 @@ export default function HomePage() {
                       onCheckedChange={(checked) =>
                         setRememberCredentials(checked === true)
                       }
-                      className="border-[rgba(14,15,12,0.18)] data-[state=checked]:border-[var(--ink-black)] data-[state=checked]:bg-[var(--ink-black)]"
+                      className="border-[rgba(25,28,31,0.18)] data-[state=checked]:border-[var(--ink-black)] data-[state=checked]:bg-[var(--ink-black)]"
                     />
                     <label
                       htmlFor="rememberCredentials"
@@ -213,40 +214,24 @@ export default function HomePage() {
                   </div>
 
                   {error && (
-                    <Alert className="rounded-[16px] border-0 bg-[rgba(226,59,74,0.06)] text-[var(--danger)]">
+                    <Alert className="rounded-[16px] border-0 bg-[rgba(226,59,74,0.06)] text-[var(--danger-text)]">
                       <AlertDescription className="space-y-1 text-sm">
                         <p>{error}</p>
-                        <p>계정을 추가하려면 P&amp;C팀에 문의해주세요.</p>
+                        {error === "계정이 없습니다." && (
+                          <p>계정을 추가하려면 P&amp;C팀에 문의해주세요.</p>
+                        )}
                       </AlertDescription>
                     </Alert>
                   )}
 
                   <Button
                     type="submit"
-                    className="btn-primary h-[3.25rem] w-full text-base"
+                    className="btn-primary h-[3.25rem] w-full"
                     disabled={loading}
                   >
                     {loading ? (
                       <span className="flex items-center justify-center gap-2">
-                        <svg
-                          className="h-4 w-4 animate-spin"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                            fill="none"
-                          />
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          />
-                        </svg>
+                        <Loader2 className="h-4 w-4 animate-spin" />
                         로그인 중...
                       </span>
                     ) : (
@@ -278,10 +263,10 @@ export default function HomePage() {
               </div>
 
               <p className="mt-8 max-w-sm font-display text-3xl font-medium leading-tight text-[var(--ink-black)]">
-                포인트부터 커피 취합까지 빠르게.
+                포인트부터 Monthly커피까지 빠르게.
               </p>
               <p className="mt-3 max-w-sm text-sm leading-6 text-[var(--granite)]">
-                ACG 복지 앱에서 식대 기록, 복지포인트, Monthly 커피, 점심조
+                ACG 복지관리에서 식대 기록, 복지포인트, Monthly커피, 점심조
                 흐름까지 자연스럽게 이어집니다.
               </p>
             </motion.section>

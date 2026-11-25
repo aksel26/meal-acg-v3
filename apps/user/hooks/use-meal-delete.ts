@@ -43,7 +43,7 @@ async function deleteMealData(data: MealDeleteData): Promise<MealDeleteResponse>
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.details || errorData.error || "식사 기록 삭제에 실패했습니다.");
+    throw new Error(errorData.details || errorData.error || "식대 기록 삭제에 실패했습니다.");
   }
 
   return response.json();
@@ -56,7 +56,7 @@ export function useMealDelete() {
     mutationFn: deleteMealData,
     onMutate: () => {
       // 로딩 토스트 표시
-      const loadingToast = toast.loading("식사 기록을 삭제하는 중...");
+      const loadingToast = toast.loading("식대 기록을 삭제하는 중...");
       
       // 토스트 ID를 반환해서 나중에 제거할 수 있도록 함
       return { loadingToast };
@@ -76,7 +76,7 @@ export function useMealDelete() {
       toast.success(
         variables.mealType
           ? `${mealTypeLabels[variables.mealType]} 기록이 삭제되었습니다.`
-          : "식사 기록이 삭제되었습니다.",
+          : "식대 기록이 삭제되었습니다.",
       );
 
       // 관련 쿼리 무효화
@@ -113,8 +113,7 @@ export function useMealDelete() {
       }
 
       // 에러 토스트 표시
-      const errorMessage = error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다.";
-      toast.error(`식사 기록 삭제에 실패했습니다: ${errorMessage}`);
+      toast.error("식대 기록을 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.");
 
       console.error("Meal delete error:", error);
     },

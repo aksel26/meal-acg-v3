@@ -56,10 +56,7 @@ export default function NoticeSection({ variant = "card" }: NoticeSectionProps) 
           </div>
 
           <div className="min-w-0">
-            <p className="text-xs font-medium uppercase tracking-[0.14em] text-[var(--slate-gray)]">
-              Notice
-            </p>
-            <h2 className="mt-2 text-base font-medium text-[var(--ink-black)]">
+            <h2 className="text-base font-medium text-[var(--ink-black)]">
               식대앱 업데이트 안내
             </h2>
             <p className="mt-1 text-sm leading-6 text-[var(--granite)]">

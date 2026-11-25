@@ -96,7 +96,7 @@ export default function BalanceSection({ currentMonth, calculationData }: Balanc
             </div>
 
             {/* Copy Button */}
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.96 }}>
               <Button
                 variant="ghost"
                 onClick={copyAccount}

@@ -74,7 +74,7 @@ export function BottomNavigation() {
             return (
               <motion.button
                 key={item.id}
-                whileTap={{ scale: 0.97 }}
+                whileTap={{ scale: 0.96 }}
                 onClick={() => handleNavigation(item.id)}
                 className={`nav-item min-h-[64px] ${
                   isActive

@@ -471,7 +471,7 @@ const GachaMachine = () => {
               <button
                 onClick={handlePull}
                 disabled={assignMutation.isPending}
-                className="w-full py-3.5 rounded-2xl text-base font-bold text-white bg-gradient-to-r from-[var(--ink-black)] via-[var(--granite)] to-[#2b2d2b] hover:from-[#2b2d2b] hover:via-[#454745] hover:to-[var(--ink-black)] active:scale-[0.98] transition-all shadow-lg disabled:from-[var(--slate-gray)] disabled:to-[var(--slate-gray)] disabled:cursor-not-allowed"
+                className="w-full py-3.5 rounded-2xl text-base font-bold text-white bg-gradient-to-r from-[var(--ink-black)] via-[var(--granite)] to-[#2b2d2b] hover:from-[#2b2d2b] hover:via-[#454745] hover:to-[var(--ink-black)] active:scale-[0.96] transition-all shadow-lg disabled:from-[var(--slate-gray)] disabled:to-[var(--slate-gray)] disabled:cursor-not-allowed"
               >
                 {assignMutation.isPending ? "처리 중..." : "뽑기!"}
               </button>

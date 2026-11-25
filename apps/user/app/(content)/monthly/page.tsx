@@ -449,7 +449,7 @@ function CollectionListView({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.04 }}
                 onClick={() => onSelect(col)}
-                className={`group w-full rounded-[18px] px-4 py-3 text-left transition-colors hover:bg-[var(--ink-black)] hover:text-white active:scale-[0.98] ${
+                className={`group w-full rounded-[18px] px-4 py-3 text-left transition-colors hover:bg-[var(--ink-black)] hover:text-white active:scale-[0.96] ${
                   selectedCollectionId === col.id
                     ? "bg-[var(--ink-black)] text-white"
                     : "bg-[rgba(244,241,232,0.58)]"
@@ -665,7 +665,7 @@ function DrinkSelectionView({
           <button
             type="button"
             onClick={() => setIsAllHistoryDialogOpen(true)}
-            className="shrink-0 rounded-[16px] bg-[rgba(244,241,232,0.72)] px-3 py-2 text-right transition-colors hover:bg-[var(--whisper-cream)] active:scale-[0.98]"
+            className="shrink-0 rounded-[16px] bg-[rgba(244,241,232,0.72)] px-3 py-2 text-right transition-colors hover:bg-[var(--whisper-cream)] active:scale-[0.96]"
           >
             <span className="block text-[10px] font-medium text-[var(--slate-gray)]">
               신청현황
@@ -734,7 +734,7 @@ function DrinkSelectionView({
         <div className="flex gap-2.5">
           <button
             onClick={() => setIsAllHistoryDialogOpen(true)}
-            className="flex-1 rounded-[18px] bg-[rgba(244,241,232,0.58)] p-3 text-left transition-colors active:scale-[0.98]"
+            className="flex-1 rounded-[18px] bg-[rgba(244,241,232,0.58)] p-3 text-left transition-colors active:scale-[0.96]"
           >
             <div className="flex items-center justify-between">
               <p className="text-[11px] text-[var(--slate-gray)] font-medium">

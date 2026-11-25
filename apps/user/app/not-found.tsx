@@ -34,7 +34,7 @@ export default function NotFound() {
 
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white bg-gray-800 hover:bg-gray-700 active:scale-[0.97] transition-all shadow-md"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white bg-gray-800 hover:bg-gray-700 active:scale-[0.96] transition-all shadow-md"
         >
           홈으로 돌아가기
         </Link>

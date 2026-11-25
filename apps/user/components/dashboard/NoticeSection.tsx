@@ -72,7 +72,7 @@ export default function NoticeSection({ variant = "card" }: NoticeSectionProps) 
           type="button"
           onClick={checkNotice}
           className="flex w-full items-center justify-between rounded-full bg-[var(--ink-black)] px-4 py-3 text-left text-sm font-medium text-white transition-opacity hover:opacity-85"
-          whileTap={{ scale: 0.99 }}
+          whileTap={{ scale: 0.96 }}
         >
           공지 보기
           <ChevronRightIcon size={18} />

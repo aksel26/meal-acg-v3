@@ -376,7 +376,7 @@ function CalculationResult({
         <button
           type="button"
           onClick={copyAccount}
-          className="absolute right-4 top-3 flex h-8 items-center gap-1.5 rounded-full bg-[var(--whisper-cream)] px-3 text-xs font-medium text-[var(--ink-black)] transition-colors hover:bg-[var(--soft-bone)] active:scale-95"
+          className="absolute right-4 top-3 flex h-8 items-center gap-1.5 rounded-full bg-[var(--whisper-cream)] px-3 text-xs font-medium text-[var(--ink-black)] transition-colors hover:bg-[var(--soft-bone)] active:scale-[0.96]"
           aria-label={`입금계좌 복사: ${DEPOSIT_ACCOUNT}`}
           title={DEPOSIT_ACCOUNT}
         >

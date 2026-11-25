@@ -3,6 +3,7 @@ import "./globals.css";
 import "@repo/ui/styles.css";
 import type { Metadata, Viewport } from "next";
 import QueryProvider from "./providers/QueryProvider"; // 위에서 생성한 Provider 임포트
+import MotionProvider from "./providers/MotionProvider";
 import { Analytics } from "@vercel/analytics/next";
 import dayjs from "dayjs";
 
@@ -80,7 +81,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="font-editorial">
         <QueryProvider>
-          {children}
+          <MotionProvider>{children}</MotionProvider>
           <Analytics />
         </QueryProvider>
         <Sonner />

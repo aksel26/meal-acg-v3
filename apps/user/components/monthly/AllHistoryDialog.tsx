@@ -1,10 +1,8 @@
 "use client";
-import { Button } from "@repo/ui/src/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@repo/ui/src/dialog";
@@ -12,6 +10,8 @@ import { useMonthlyData } from "@/hooks/useMonthlyData";
 import { useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { AlertCircle, ClipboardList } from "@repo/ui/icons";
+import StateBlock from "@/components/StateBlock";
+import { EASE_OUT_EXPO } from "@/lib/motion";
 
 interface AllHistoryDialogProps {
   isOpen: boolean;
@@ -24,9 +24,12 @@ export const AllHistoryDialog = ({
   onClose,
   collectionId,
 }: AllHistoryDialogProps) => {
-  const { data, isLoading, isError } = useMonthlyData(collectionId);
+  const { data, isLoading, isError, refetch } = useMonthlyData(collectionId);
 
-  const applications = data?.applications || [];
+  const applications = useMemo(
+    () => data?.applications || [],
+    [data?.applications],
+  );
 
   // 음료별 그룹핑
   const groupedByDrink = useMemo(() => {
@@ -56,13 +59,13 @@ export const AllHistoryDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="mx-auto max-h-[85vh] w-[calc(100%-2rem)] max-w-md overflow-hidden rounded-[24px] border-0 bg-white p-0 shadow-2xl">
+      <DialogContent className="mx-auto max-h-[85vh] w-[calc(100%-2rem)] max-w-md overflow-hidden rounded-[24px] border-0 bg-white p-0">
         <div className="px-5 pb-4 pt-5">
           <DialogHeader>
-            <DialogTitle className="text-left text-lg font-bold text-[var(--ink-black)]">
+            <DialogTitle className="text-center text-lg text-[var(--ink-black)]">
               전체 신청 현황
             </DialogTitle>
-            <DialogDescription className="mt-2 text-left text-sm text-[var(--slate-gray)]">
+            <DialogDescription className="mt-2 text-center text-sm tabular-nums text-[var(--slate-gray)]">
               {isLoading ? (
                 <span className="skeleton inline-block h-4 w-28" />
               ) : (
@@ -81,7 +84,7 @@ export const AllHistoryDialog = ({
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${completionRate}%` }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
+                transition={{ duration: 1, ease: EASE_OUT_EXPO, delay: 0.2 }}
                 className="h-full rounded-full bg-[var(--ink-black)]"
               />
             </div>
@@ -99,7 +102,7 @@ export const AllHistoryDialog = ({
                 className="space-y-3"
               >
                 {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="skeleton h-16 rounded-2xl" />
+                  <div key={i} className="skeleton h-16 rounded-[18px]" />
                 ))}
               </motion.div>
             ) : isError ? (
@@ -107,21 +110,25 @@ export const AllHistoryDialog = ({
                 key="error"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="flex flex-col items-center justify-center rounded-[20px] bg-[rgba(244,241,232,0.58)] px-4 py-12 text-center"
+                className="rounded-[18px] bg-[rgba(244,244,244,0.58)]"
               >
-                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[var(--danger)]">
-                  <AlertCircle className="h-5 w-5" aria-hidden="true" />
-                </div>
-                <p className="text-sm font-medium text-[var(--granite)]">
-                  신청 현황을 불러오지 못했습니다
-                </p>
+                <StateBlock
+                  icon={
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[var(--danger-text)]">
+                      <AlertCircle className="h-5 w-5" aria-hidden="true" />
+                    </div>
+                  }
+                  title="신청 현황을 불러오지 못했어요"
+                  description="연결을 확인하고 다시 시도해 주세요."
+                  action={{ label: "다시 시도", onClick: () => void refetch() }}
+                />
               </motion.div>
             ) : applications.length === 0 ? (
               <motion.div
                 key="empty"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="flex flex-col items-center justify-center rounded-[20px] bg-[rgba(244,241,232,0.58)] px-4 py-12 text-center"
+                className="flex flex-col items-center justify-center rounded-[18px] bg-[rgba(244,244,244,0.58)] px-4 py-12 text-center"
               >
                 <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[var(--slate-gray)]">
                   <ClipboardList className="h-5 w-5" aria-hidden="true" />
@@ -144,13 +151,13 @@ export const AllHistoryDialog = ({
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: groupIndex * 0.05 }}
-                      className="rounded-[20px] bg-[rgba(244,241,232,0.42)] p-3"
+                      className="rounded-[18px] bg-[rgba(244,244,244,0.42)] p-3"
                     >
                       <div className="mb-3 flex items-center justify-between gap-3">
                         <span className="min-w-0 truncate text-sm font-semibold text-[var(--ink-black)]">
                           {drink}
                         </span>
-                        <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-xs font-medium text-[var(--slate-gray)]">
+                        <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-xs font-medium tabular-nums text-[var(--slate-gray)]">
                           {users.length}명
                         </span>
                       </div>
@@ -184,16 +191,6 @@ export const AllHistoryDialog = ({
             )}
           </AnimatePresence>
         </div>
-
-        <DialogFooter className="p-4">
-          <Button
-            variant="ghost"
-            onClick={onClose}
-            className="h-12 w-full rounded-xl font-medium text-[var(--granite)] hover:bg-[var(--soft-bone)] hover:text-[var(--ink-black)]"
-          >
-            닫기
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

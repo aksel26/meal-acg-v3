@@ -27,6 +27,7 @@ import {
 } from "motion/react";
 import { Check, ChevronLeft, ChevronRight } from "@repo/ui/icons";
 import Image from "next/image";
+import ClickSpark, { type ClickSparkHandle } from "@/components/ClickSpark/ClickSpark";
 
 // 3일 이내 생성된 취합 건은 NEW 표시
 function isNewCollection(createdAt: string) {
@@ -235,6 +236,7 @@ function EmptyCollectionsState() {
   const throwIdRef = useRef(0);
   const pendingDeltaRef = useRef(0);
   const hasLoadedTotalRef = useRef(false);
+  const heartSparkRef = useRef<ClickSparkHandle>(null);
 
   useEffect(() => {
     const hintTimerId = window.setTimeout(() => {
@@ -290,6 +292,8 @@ function EmptyCollectionsState() {
     setIsTotalLoading(false);
     setTotal((prev) => prev + EASTER_EGG_INCREMENT);
     pendingDeltaRef.current += EASTER_EGG_INCREMENT;
+    // 이미지를 누르면 누적 금액 옆 하트에서 스파크가 터진다
+    heartSparkRef.current?.spark();
     controls.start({
       rotate: [0, -4, 4, -3, 3, -2, 2, 0],
       x: [0, -2, 2, -1, 1, 0],
@@ -371,15 +375,26 @@ function EmptyCollectionsState() {
           </div>
         </div>
         <div className="pointer-events-none absolute left-1/2 top-[-28px] flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 whitespace-nowrap">
-          <Image
-            src="/images/heart_1.png"
-            alt=""
-            width={40}
-            height={40}
-            className="h-10 w-10 shrink-0 select-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.35)]"
-            priority={false}
-            draggable={false}
-          />
+          <ClickSpark
+            ref={heartSparkRef}
+            sparkColor="#a30203"
+            shape="streak"
+            sparkCount={12}
+            sparkSize={16}
+            sparkRadius={44}
+            duration={650}
+            style={{ width: 40, height: 40, flexShrink: 0 }}
+          >
+            <Image
+              src="/images/heart_1.png"
+              alt=""
+              width={40}
+              height={40}
+              className="h-10 w-10 shrink-0 select-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.35)]"
+              priority={false}
+              draggable={false}
+            />
+          </ClickSpark>
           <AnimatePresence mode="wait" initial={false}>
             {isTotalLoading ? (
               <motion.span

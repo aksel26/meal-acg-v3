@@ -11,6 +11,10 @@ const PushNotificationPrompt = dynamic(
   { ssr: false },
 );
 
+const PixelSnow = dynamic(() => import("@/components/PixelSnow/PixelSnow"), {
+  ssr: false,
+});
+
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
   const isDashboard = pathname.startsWith("/dashboard");
@@ -35,6 +39,30 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         }`}
       >
         <div className="fixed inset-0 gradient-mesh -z-20" />
+
+        {/* 전 화면 눈 효과: 카드(z-10) 앞, 헤더(z-40)·하단 메뉴·Dialog(z-50) 뒤. 클릭은 통과한다 */}
+        <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-30">
+          <PixelSnow
+            color="#c3ecff"
+            variant="snowflake"
+            density={0.5}
+            speed={1}
+            wind={0.25}
+            flakeSize={0.25}
+            pixelSize={2}
+            glow={0.8}
+            mouseInteraction
+            sway={0.5}
+            twinkle={0.6}
+            accumulate
+            depth={0.6}
+            brightness={1}
+            fade={0.35}
+            opacity={1}
+            intro
+            lightMode
+          />
+        </div>
 
         {!isDashboard && <Header />}
 

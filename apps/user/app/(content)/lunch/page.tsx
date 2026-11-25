@@ -4,6 +4,7 @@ import LunchGroupList from "@/components/lunch/LunchGroupList";
 import { useLunchGroup } from "@/hooks/useLunchGroup";
 import { useUsers } from "@/hooks/useUsers";
 import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/src/popover";
+import { Hourglass } from "lucide-react";
 import { motion } from "motion/react";
 import dynamic from "next/dynamic";
 import React, { useEffect, useMemo, useState } from "react";
@@ -113,11 +114,15 @@ const Lunch = () => {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="card-premium overflow-hidden rounded-[24px]"
+            className="card-premium relative shrink-0 overflow-hidden rounded-[24px]"
           >
             {/* 상단 헤더 */}
             <div className="px-5 py-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
+              <div
+                className={`flex flex-wrap items-center justify-between gap-2 ${
+                  !isLoading && !error && unassignedMembers.length > 0 ? "pr-16" : ""
+                }`}
+              >
                 <div className="min-w-0">
                   {isLoading ? (
                     <p className="text-lg font-medium text-[var(--slate-gray)]">
@@ -143,12 +148,18 @@ const Lunch = () => {
                   </div>
                 )}
 
-                {/* 미추첨 인원 Popover */}
+                {/* 미추첨 인원 Popover: 카드 우측 상단 아이콘 버튼 */}
                 {!isLoading && !error && unassignedMembers.length > 0 && (
                   <Popover>
                     <PopoverTrigger asChild>
-                      <button className="shrink-0 rounded-full bg-[rgba(236,126,0,0.12)] px-3 py-1.5 text-xs font-medium text-[#9a4f00] transition-colors hover:bg-[rgba(236,126,0,0.18)]">
-                        미추첨 {unassignedMembers.length}명
+                      <button
+                        type="button"
+                        aria-label={`미추첨 ${unassignedMembers.length}명`}
+                        title="미추첨 인원"
+                        className="absolute right-4 top-2.5 inline-flex h-8 items-center gap-1 rounded-full bg-[rgba(236,126,0,0.12)] px-3 text-xs font-medium tabular-nums text-[#9a4f00] transition-colors hover:bg-[rgba(236,126,0,0.18)]"
+                      >
+                        <Hourglass size={14} aria-hidden="true" />
+                        {unassignedMembers.length}
                       </button>
                     </PopoverTrigger>
                     <PopoverContent

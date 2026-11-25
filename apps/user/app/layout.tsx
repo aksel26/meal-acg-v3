@@ -3,6 +3,7 @@ import "./globals.css";
 import "@repo/ui/styles.css";
 import type { Metadata, Viewport } from "next";
 import QueryProvider from "./providers/QueryProvider"; // 위에서 생성한 Provider 임포트
+import MotionProvider from "./providers/MotionProvider";
 import { Analytics } from "@vercel/analytics/next";
 import dayjs from "dayjs";
 
@@ -75,12 +76,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://cdn.jsdelivr.net" />
         <link
           rel="stylesheet"
-          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css"
+          href="https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/variable/woff2/SUIT-Variable.css"
         />
       </head>
       <body className="font-editorial">
         <QueryProvider>
-          {children}
+          <MotionProvider>{children}</MotionProvider>
           <Analytics />
         </QueryProvider>
         <Sonner />

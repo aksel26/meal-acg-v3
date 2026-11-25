@@ -128,7 +128,7 @@ const ScratchLottery: React.FC<ScratchLotteryProps> = ({
               disabled={phase !== "idle" || assignMutation.isPending}
               className={`relative flex h-28 w-28 items-center justify-center rounded-full bg-transparent transition-transform ${
                 phase === "idle"
-                  ? "cursor-pointer hover:scale-105 active:scale-95"
+                  ? "cursor-pointer hover:scale-105 active:scale-[0.96]"
                   : "cursor-default"
               } ${phase === "shaking" ? "lunch-tremor" : ""}`}
               aria-label="점심조 뽑기"

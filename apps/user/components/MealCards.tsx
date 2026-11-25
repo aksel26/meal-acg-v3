@@ -99,8 +99,7 @@ export function MealCards({
         animate={{ opacity: 1 }}
         className={cardClassName("card-premium mt-3 p-4 text-center")}
       >
-        <p className="eyebrow-label justify-center">Meal Entry</p>
-        <p className="mt-2 text-xs text-[var(--granite)]">날짜를 선택해주세요</p>
+        <p className="text-xs text-[var(--granite)]">날짜를 선택해주세요</p>
       </motion.div>
     );
   }
@@ -145,8 +144,7 @@ export function MealCards({
     >
       <div className="mb-3 flex items-center justify-between gap-4 px-1">
         <div>
-          <p className="eyebrow-label">Meal Entry</p>
-          <span className="mt-1.5 block text-base font-medium tracking-normal text-[var(--ink-black)]">
+          <span className="block text-base font-medium tracking-normal text-[var(--ink-black)]">
             {formatDate(selectedDate)}
           </span>
         </div>

@@ -376,7 +376,7 @@ function CalculationResult({
         <button
           type="button"
           onClick={copyAccount}
-          className="absolute right-4 top-3 flex h-8 items-center gap-1.5 rounded-full bg-[var(--whisper-cream)] px-3 text-xs font-medium text-[var(--ink-black)] transition-colors hover:bg-[var(--soft-bone)] active:scale-95"
+          className="absolute right-4 top-3 flex h-8 items-center gap-1.5 rounded-full bg-[var(--whisper-cream)] px-3 text-xs font-medium text-[var(--ink-black)] transition-colors hover:bg-[var(--soft-bone)] active:scale-[0.96]"
           aria-label={`입금계좌 복사: ${DEPOSIT_ACCOUNT}`}
           title={DEPOSIT_ACCOUNT}
         >
@@ -387,9 +387,6 @@ function CalculationResult({
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-4">
             <div className="space-y-2">
-              <p className="eyebrow-label text-[var(--slate-gray)]">
-                Meal Allowance
-              </p>
               <p className="text-xs text-[var(--granite)] lg:text-[11px]">
                 {month}월 식대 잔액
               </p>
@@ -496,8 +493,7 @@ function CalculationResult({
 
       {((data.totalDeduction ?? 0) > 0 || (data.weekendWorkCount ?? 0) > 0) && (
         <div className="border-t border-[rgba(25,28,31,0.08)] px-6 py-5 lg:px-5 lg:py-3">
-          <p className="eyebrow-label text-[11px]">Adjustments</p>
-          <div className="mt-4 space-y-3">
+          <div className="space-y-3">
             {(data.weekendWorkCount ?? 0) > 0 && (
               <div className="flex items-center justify-between text-sm lg:text-sm">
                 <span className="text-[var(--granite)]">

@@ -222,9 +222,6 @@ export default function CalendarComponent({
     >
       <div className="mb-4 flex items-center justify-between gap-3 px-0.5 sm:px-1 lg:mb-3">
         <div className="flex min-w-0 items-baseline gap-2">
-          <p className="text-xs font-medium uppercase tracking-[0.14em] text-[var(--slate-gray)]">
-            Calendar
-          </p>
           <span className="font-display text-[1.75rem] font-medium text-[var(--ink-black)] lg:text-[1.6rem]">
             {currentMonth}월
           </span>

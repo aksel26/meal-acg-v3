@@ -23,10 +23,7 @@ export function Footer({ className = "", variant = "default" }: FooterProps) {
       <footer className={`w-full ${className}`}>
         <div className="flex flex-col gap-3 rounded-[22px] bg-white px-4 py-3 text-[var(--ink-black)] sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
-            <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--slate-gray)]">
-              Support
-            </p>
-            <SupportMessage className="mt-1 text-sm leading-5 text-[var(--granite)]" />
+            <SupportMessage className="text-sm leading-5 text-[var(--granite)]" />
           </div>
         </div>
       </footer>
@@ -38,7 +35,6 @@ export function Footer({ className = "", variant = "default" }: FooterProps) {
       <div className="overflow-hidden rounded-[28px] bg-[var(--ink-black)] text-white">
         <div className="space-y-6 px-6 py-7">
           <div className="space-y-3">
-            <p className="eyebrow-label text-white/70 before:bg-[var(--signal-orange)]">Support</p>
             <h2 className="max-w-[16rem] text-[1.9rem] leading-[1.08] tracking-normal text-white">
               운영과 버그 문의를
               <br />

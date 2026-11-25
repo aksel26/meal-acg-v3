@@ -92,8 +92,7 @@ export default function PWAInstallPrompt() {
         <div className="overflow-hidden rounded-[18px] bg-white/95 shadow-[0_8px_24px_rgba(25,28,31,0.12)] backdrop-blur-md">
           <div className="flex items-start justify-between gap-3 px-4 py-3">
             <div className="min-w-0">
-              <p className="eyebrow-label text-[9px]">Install app</p>
-              <h3 className="mt-1 text-sm font-medium leading-5 text-[var(--ink-black)]">
+              <h3 className="text-sm font-medium leading-5 text-[var(--ink-black)]">
                 ACG 복지관리 앱으로 빠르게 실행하세요
               </h3>
               <p className="mt-1 text-[11px] leading-4 text-[var(--granite)]">

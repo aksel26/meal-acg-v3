@@ -305,7 +305,8 @@ export async function getMealsByMonth(
 
     if (memberError) {
       console.log(`Member lookup failed for "${userName}":`, memberError.message);
-      return { success: true, data: [] };
+      // 조회 실패를 빈 기록으로 돌려주면 화면이 "기록 없음"을 보여 중복 입력을 부른다
+      return { success: false, error: memberError.message };
     }
 
     const member = members?.[0];

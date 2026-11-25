@@ -75,7 +75,7 @@ export default function PointsDashboard() {
     <React.Fragment>
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-xl font-semibold text-[var(--ink-black)]">전체 포인트 현황</h1>
+        <h1 className="text-xl text-[var(--ink-black)]">전체 포인트 현황</h1>
         <p className="text-sm text-[var(--granite)] mt-1">조직 전체 예산 사용 현황을 확인하세요</p>
       </div>
 
@@ -89,7 +89,7 @@ export default function PointsDashboard() {
           </TabsList>
         </Tabs>
         <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-          <SelectTrigger className="w-auto min-w-[80px] h-10 border-0 bg-white shadow-sm">
+          <SelectTrigger className="w-auto min-w-[80px] h-10 border-0 bg-white">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -105,19 +105,19 @@ export default function PointsDashboard() {
         <Card className="border-0 shadow-none bg-white">
           <CardContent className="p-4">
             <p className="text-xs text-[var(--granite)] mb-1">총 예산</p>
-            <p className="text-lg font-bold text-[var(--ink-black)]">{stats.totalBudget.toLocaleString()}원</p>
+            <p className="text-lg font-bold tabular-nums text-[var(--ink-black)]">{stats.totalBudget.toLocaleString()}원</p>
           </CardContent>
         </Card>
         <Card className="border-0 shadow-none bg-white">
           <CardContent className="p-4">
             <p className="text-xs text-[var(--granite)] mb-1">총 사용</p>
-            <p className="text-lg font-bold text-[var(--ink-black)]">{stats.totalUsed.toLocaleString()}원</p>
+            <p className="text-lg font-bold tabular-nums text-[var(--ink-black)]">{stats.totalUsed.toLocaleString()}원</p>
           </CardContent>
         </Card>
         <Card className="border-0 shadow-none bg-white">
           <CardContent className="p-4">
             <p className="text-xs text-[var(--granite)] mb-1">총 잔액</p>
-            <p className={`text-lg font-bold ${stats.totalRemaining < 0 ? "text-[#d03238]" : "text-[var(--ink-black)]"}`}>
+            <p className={`text-lg font-bold tabular-nums ${stats.totalRemaining < 0 ? "text-[var(--danger-text)]" : "text-[var(--ink-black)]"}`}>
               {stats.totalRemaining.toLocaleString()}원
             </p>
           </CardContent>
@@ -125,10 +125,10 @@ export default function PointsDashboard() {
         <Card className="border-0 shadow-none bg-white">
           <CardContent className="p-4">
             <p className="text-xs text-[var(--granite)] mb-1">사용률</p>
-            <p className="text-lg font-bold text-[var(--ink-black)]">{usageRate}%</p>
+            <p className="text-lg font-bold tabular-nums text-[var(--ink-black)]">{usageRate}%</p>
             <div className="mt-2 h-1.5 bg-[var(--whisper-cream)] rounded-full overflow-hidden">
               <div
-                className="h-full bg-[var(--ink-black)] rounded-full transition-all duration-300"
+                className="h-full bg-[var(--ink-black)] rounded-full transition-[width] duration-300"
                 style={{ width: `${Math.min(usageRate, 100)}%` }}
               />
             </div>
@@ -138,15 +138,15 @@ export default function PointsDashboard() {
 
       {/* Team Breakdown */}
       <div className="space-y-4">
-        <h2 className="text-md font-semibold text-[var(--ink-black)]">팀별 현황</h2>
+        <h2 className="text-base text-[var(--ink-black)]">팀별 현황</h2>
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
               <Card key={i} className="border-0 shadow-none bg-white">
                 <CardContent className="p-4">
-                  <div className="animate-pulse space-y-3">
-                    <div className="bg-[var(--soft-bone)] rounded h-4 w-24"></div>
-                    <div className="bg-[var(--soft-bone)] rounded h-12 w-full"></div>
+                  <div className="space-y-3">
+                    <div className="skeleton rounded-[6px] h-4 w-24"></div>
+                    <div className="skeleton rounded-[12px] h-12 w-full"></div>
                   </div>
                 </CardContent>
               </Card>
@@ -163,7 +163,7 @@ export default function PointsDashboard() {
             <Card key={teamName} className="border-0 shadow-none bg-white">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-[var(--ink-black)]">{teamName}</h3>
+                  <h3 className="text-sm text-[var(--ink-black)]">{teamName}</h3>
                   <Badge variant="outline" className="text-xs">{members.length}건</Badge>
                 </div>
                 <div className="space-y-2">
@@ -172,18 +172,18 @@ export default function PointsDashboard() {
                       ? Math.round((member.used_amount / member.total_amount) * 100)
                       : 0;
                     return (
-                      <div key={`${member.member_id}-${member.type}`} className="flex items-center justify-between py-2 border-b border-[rgba(14,15,12,0.06)] last:border-0">
+                      <div key={`${member.member_id}-${member.type}`} className="flex items-center justify-between py-2 border-b border-[rgba(25,28,31,0.06)] last:border-0">
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-[var(--ink-black)]">{member.member_name}</span>
-                          <Badge variant={member.type === "활동비" ? "secondary" : "outline"} className="text-[10px] px-1.5">
+                          <Badge variant={member.type === "활동비" ? "secondary" : "outline"} className="text-xs px-1.5">
                             {member.type}
                           </Badge>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-medium">
+                          <p className="text-sm font-medium tabular-nums">
                             {member.used_amount.toLocaleString()} / {member.total_amount.toLocaleString()}원
                           </p>
-                          <p className={`text-xs ${rate > 80 ? "text-[#d03238]" : "text-[var(--slate-gray)]"}`}>
+                          <p className={`text-xs tabular-nums ${rate > 100 ? "text-[var(--danger-text)]" : rate >= 80 ? "text-[var(--warning-text)]" : "text-[var(--slate-gray)]"}`}>
                             {rate}% 사용
                           </p>
                         </div>

@@ -25,6 +25,7 @@ import {
 } from "@/hooks/use-points-data";
 import { motion, AnimatePresence } from "motion/react";
 import Image from "next/image";
+import StateBlock from "@/components/StateBlock";
 
 const Skeleton = ({ className }: { className?: string }) => (
   <div className={`skeleton ${className ?? ""}`} />
@@ -134,6 +135,7 @@ export function ActivityViewDialog({
     data: summaries,
     isLoading,
     error,
+    refetch,
   } = usePointsDashboard(memberId, selectedMonth, "활동비", !!open);
 
   // 펼쳐진 직원의 사용내역 조회
@@ -186,7 +188,7 @@ export function ActivityViewDialog({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-lg flex flex-col">
         <SheetHeader className="space-y-3 pb-4 border-b border-gray-100">
-          <SheetTitle className="text-lg font-bold">활동비 현황</SheetTitle>
+          <SheetTitle className="text-lg">활동비 현황</SheetTitle>
 
           {/* 기간 & 요약 */}
           <div className="flex items-center justify-between">
@@ -194,18 +196,12 @@ export function ActivityViewDialog({
               {selectedYear}년 {selectedHalfYear}
             </span>
             {!isLoading && filteredSummaries.length > 0 && (
-              <span className="text-xs text-gray-400">
+              <span className="text-xs tabular-nums text-[var(--slate-gray)]">
                 총 {totalUsed.toLocaleString()} / {totalBudget.toLocaleString()}
                 원 사용
               </span>
             )}
           </div>
-
-          {error && (
-            <div className="text-sm text-red-500 bg-red-50 rounded-lg px-3 py-2">
-              데이터를 불러오는 중 오류가 발생했습니다.
-            </div>
-          )}
         </SheetHeader>
 
         <ScrollArea className="flex-1 -mx-4 px-4">
@@ -215,7 +211,7 @@ export function ActivityViewDialog({
                 {[1, 2, 3].map((i) => (
                   <div
                     key={i}
-                    className="rounded-xl bg-white border border-gray-100 p-4 space-y-3"
+                    className="rounded-[18px] bg-white border border-gray-100 p-4 space-y-3"
                   >
                     <div className="flex items-center justify-between">
                       <Skeleton className="h-5 w-20" />
@@ -229,8 +225,14 @@ export function ActivityViewDialog({
                   </div>
                 ))}
               </div>
+            ) : error ? (
+              <StateBlock
+                title="활동비 현황을 불러오지 못했어요"
+                description="연결을 확인하고 다시 시도해 주세요."
+                action={{ label: "다시 시도", onClick: () => refetch() }}
+              />
             ) : filteredSummaries.length === 0 ? (
-              <div className="text-center py-12 text-gray-400">
+              <div className="text-center py-12 text-[var(--slate-gray)]">
                 <Receipt className="w-8 h-8 mx-auto mb-3 opacity-40" />
                 <p className="text-sm">활동비 데이터가 없습니다.</p>
               </div>
@@ -319,7 +321,7 @@ function RaceTrack({
   onHoverChange,
 }: RaceTrackProps) {
   return (
-    <div className="rounded-xl overflow-hidden">
+    <div className="rounded-[18px] overflow-hidden">
       {/* 비행기 트랙 영역 */}
       <div className="relative h-48">
         {/* 배경 이미지 (지구본 + 하늘) */}
@@ -411,7 +413,7 @@ function RaceTrack({
       </div>
 
       {/* 축 라벨 */}
-      <div className="flex justify-between px-4 py-1.5 bg-white/80 text-[10px] text-gray-400 font-medium">
+      <div className="flex justify-between px-4 py-1.5 bg-white/80 text-xs tabular-nums text-[var(--slate-gray)] font-medium">
         <span>0%</span>
         <span>25%</span>
         <span>50%</span>
@@ -456,7 +458,7 @@ function LegendRow({
 
   return (
     <div
-      className={`rounded-xl bg-white border overflow-hidden transition-all ${isHovered ? "shadow-sm" : "border-gray-100"}`}
+      className={`rounded-[18px] bg-white border overflow-hidden transition-colors ${isHovered ? "" : "border-gray-100"}`}
       style={isHovered ? { borderColor: color } : undefined}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
@@ -477,11 +479,11 @@ function LegendRow({
             {summary.member_name}
           </span>
           <span
-            className={`text-xs font-bold ${
+            className={`text-xs font-bold tabular-nums ${
               isOver
-                ? "text-red-600"
+                ? "text-[var(--danger-text)]"
                 : summary.percent >= 80
-                  ? "text-amber-600"
+                  ? "text-[var(--warning-text)]"
                   : "text-gray-500"
             }`}
           >
@@ -490,13 +492,13 @@ function LegendRow({
         </div>
 
         {/* 금액 */}
-        <span className="text-xs text-gray-400 shrink-0">
+        <span className="text-xs tabular-nums text-[var(--slate-gray)] shrink-0">
           {summary.used_amount.toLocaleString()} /{" "}
           {summary.total_amount.toLocaleString()}원
         </span>
 
         <ChevronDown
-          className={`w-4 h-4 text-gray-400 transition-transform duration-200 shrink-0 ${
+          className={`w-4 h-4 text-[var(--slate-gray)] transition-transform duration-200 shrink-0 ${
             isExpanded ? "rotate-180" : ""
           }`}
         />
@@ -544,18 +546,18 @@ function LegendRow({
                     return (
                       <div
                         key={record.id}
-                        className="flex justify-between items-center p-2.5 rounded-lg bg-gray-50 text-xs"
+                        className="flex justify-between items-center p-2.5 rounded-[12px] bg-gray-50 text-xs"
                       >
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-gray-800 truncate">
                             {record.description}
                           </p>
-                          <p className="text-[11px] text-gray-400 mt-0.5">
+                          <p className="text-xs text-[var(--slate-gray)] mt-0.5">
                             {recordDate.month() + 1}/{recordDate.date()}(
                             {dayOfWeek})
                           </p>
                         </div>
-                        <span className="font-semibold text-gray-700 shrink-0 ml-3">
+                        <span className="font-semibold tabular-nums text-gray-700 shrink-0 ml-3">
                           {record.amount.toLocaleString()}원
                         </span>
                       </div>
@@ -563,7 +565,7 @@ function LegendRow({
                   })}
                 </div>
               ) : (
-                <div className="text-center py-6 text-gray-400">
+                <div className="text-center py-6 text-[var(--slate-gray)]">
                   <p className="text-xs">이 달에 사용 내역이 없습니다.</p>
                 </div>
               )}

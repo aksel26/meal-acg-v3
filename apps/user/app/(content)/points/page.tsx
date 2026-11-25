@@ -17,6 +17,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import NoDataIcon from "@/public/none.png";
 import Image from "next/image";
+import StateBlock from "@/components/StateBlock";
 import QuickActionsSection from "@/components/dashboard/QuickActionsSection";
 import { EditPointDialog } from "@/components/points/EditPointDialog";
 import { ActivityViewDialog } from "../../../components/points/ActivityViewDialog";
@@ -71,7 +72,7 @@ function BudgetRow({
   showProgressBar?: boolean;
 }) {
   const isOver = remaining < 0;
-  const isLow = remaining >= 0 && total > 0 && remaining < total * 0.2;
+  const isLow = remaining >= 0 && total > 0 && remaining <= total * 0.2;
   const percent =
     total === 0 ? 0 : Math.min(100, Math.round((used / total) * 100));
 
@@ -79,29 +80,29 @@ function BudgetRow({
     <div>
       <div className="flex items-end justify-between mb-1.5">
         <div>
-          <p className="text-[11px] text-[var(--slate-gray)] mb-0.5">
+          <p className="text-xs text-[var(--slate-gray)] mb-0.5">
             {label} 잔액
           </p>
           <div className="flex items-baseline gap-1">
             {isOver && (
-              <span className="text-xl font-bold text-[#d03238]">-</span>
+              <span className="text-xl font-bold text-[var(--danger-text)]">-</span>
             )}
             <NumberTicker
               value={Math.abs(remaining)}
               className={`text-xl font-bold tracking-tight ${
                 isOver
-                  ? "text-[#d03238]"
+                  ? "text-[var(--danger-text)]"
                   : isLow
-                    ? "text-[#8a6d00]"
+                    ? "text-[var(--warning-text)]"
                     : "text-[var(--ink-black)]"
               }`}
             />
             <span
               className={`text-xs font-medium ${
                 isOver
-                  ? "text-[rgba(208,50,56,0.8)]"
+                  ? "text-[var(--danger-text)]"
                   : isLow
-                    ? "text-[#b08900]"
+                    ? "text-[var(--warning-text)]"
                     : "text-[var(--slate-gray)]"
               }`}
             >
@@ -109,17 +110,17 @@ function BudgetRow({
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-[11px] text-[var(--slate-gray)]">
-          <span>
+        <div className="flex items-center gap-2 text-xs text-[var(--slate-gray)]">
+          <span className="tabular-nums">
             {used.toLocaleString()} / {total.toLocaleString()}원
           </span>
           <div
-            className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+            className={`badge ${
               isOver
-                ? "bg-[rgba(208,50,56,0.08)] text-[#d03238]"
+                ? "badge-danger"
                 : isLow
-                  ? "bg-[rgba(255,209,26,0.15)] text-[#8a6d00]"
-                  : "bg-[rgba(5,77,40,0.08)] text-[#054d28]"
+                  ? "badge-warning"
+                  : "badge-success"
             }`}
           >
             {isOver ? "초과" : isLow ? "주의" : "양호"}
@@ -137,9 +138,9 @@ function BudgetRow({
             }}
             className={`h-full rounded-full ${
               isOver
-                ? "bg-gradient-to-r from-[rgba(208,50,56,0.7)] to-[#d03238]"
+                ? "bg-[var(--danger)]"
                 : isLow
-                  ? "bg-gradient-to-r from-[rgba(255,209,26,0.8)] to-[#ffd11a]"
+                  ? "bg-[var(--warning)]"
                   : "bg-[var(--ink-black)]"
             }`}
           />
@@ -163,6 +164,7 @@ function AllUsageRecordsInline({
   hasMore,
   isFetching,
   onPageChange,
+  onRetry,
 }: {
   records: AllRecordItem[];
   totalCount: number;
@@ -177,6 +179,7 @@ function AllUsageRecordsInline({
   hasMore: boolean;
   isFetching: boolean;
   onPageChange: (page: number) => void;
+  onRetry: () => void;
 }) {
   const tickerItems = records.length > 0 ? [...records, ...records] : [];
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -237,24 +240,33 @@ function AllUsageRecordsInline({
 
   return (
     <div className="mt-3 flex min-h-0 flex-col rounded-[24px] bg-white px-4 py-4 lg:flex-1">
-      <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
+      {/* 좁은 화면에서는 오른쪽 칩 묶음이 다음 줄로 내려가 제목이 잘리지 않게 한다 */}
+      <div className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate text-base font-medium text-[var(--ink-black)]">
+          <p className="break-keep text-base font-medium text-[var(--ink-black)]">
             전체인원 사용내역
           </p>
-          <p className="mt-0.5 text-xs text-[var(--slate-gray)] lg:text-[11px]">
+          <p className="mt-0.5 text-xs text-[var(--slate-gray)]">
             해당 월 조직 전체 내역
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <span className="rounded-full bg-[var(--whisper-cream)] px-2.5 py-1 text-[11px] text-[var(--granite)]">
-            {summaryError
-              ? "합계 조회 실패"
-              : totalAmount === undefined
+          {summaryError ? (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="rounded-full bg-[var(--whisper-cream)] px-2.5 py-1 text-xs text-[var(--granite)]"
+            >
+              합계 다시 시도
+            </button>
+          ) : (
+            <span className="rounded-full bg-[var(--whisper-cream)] px-2.5 py-1 text-xs tabular-nums text-[var(--granite)]">
+              {totalAmount === undefined
                 ? "합계 집계 중"
                 : `${totalAmount.toLocaleString()}원`}
-          </span>
-          <span className="rounded-full bg-[var(--whisper-cream)] px-2.5 py-1 text-[11px] text-[var(--granite)]">
+            </span>
+          )}
+          <span className="rounded-full bg-[var(--whisper-cream)] px-2.5 py-1 text-xs tabular-nums text-[var(--granite)]">
             총 {totalCount}건
           </span>
           <Select value={selectedMonth} onValueChange={onMonthChange}>
@@ -272,81 +284,86 @@ function AllUsageRecordsInline({
         </div>
       </div>
 
-      <div
-        ref={scrollRef}
-        className="relative max-h-[150px] flex-1 cursor-grab overflow-y-auto px-1 py-2 [mask-image:linear-gradient(to_bottom,transparent_0,black_1.1rem,black_calc(100%-2rem),transparent_100%)] active:cursor-grabbing lg:max-h-none lg:min-h-0"
-        onWheel={handleWheel}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={stopDragging}
-        onPointerCancel={stopDragging}
-      >
-        {isLoading ? (
-          <div className="flex h-full items-center justify-center gap-2 text-sm text-[var(--slate-gray)]">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            불러오는 중
-          </div>
-        ) : error ? (
-          <div className="flex h-full items-center justify-center text-sm text-[#d03238]">
-            전체 사용내역을 불러올 수 없습니다.
-          </div>
-        ) : records.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-sm text-[var(--slate-gray)]">
-            조회 결과가 없습니다
-          </div>
-        ) : (
-          <motion.div
-            className="space-y-1.5"
-            animate={
-              records.length > 1 && !isInteracting
-                ? { y: ["0%", "-50%"] }
-                : { y: 0 }
-            }
-            transition={
-              records.length > 1 && !isInteracting
-                ? {
-                    duration: Math.max(8, records.length * 1.1),
-                    repeat: Infinity,
-                    ease: "linear",
-                  }
-                : undefined
-            }
-          >
-            {tickerItems.map((record, index) => (
-              <div
-                key={`${record.id}-${index}`}
-                className="flex h-9 items-center justify-between gap-3 rounded-[12px] bg-[rgba(244,241,232,0.42)] px-3 text-xs"
-              >
-                <div className="flex min-w-0 items-center gap-2">
-                  <span className="max-w-[4.75rem] truncate text-[var(--ink-black)]">
-                    {record.member_name}
-                  </span>
-                  <span className="min-w-0 truncate text-[var(--granite)]">
-                    {record.description}
-                  </span>
+      {error ? (
+        <StateBlock
+          className="flex-1"
+          title="전체 사용내역을 불러오지 못했어요"
+          description="연결을 확인하고 다시 시도해 주세요."
+          action={{ label: "다시 시도", onClick: onRetry }}
+        />
+      ) : (
+        <div
+          ref={scrollRef}
+          className="relative max-h-[150px] flex-1 cursor-grab overflow-y-auto px-1 py-2 [mask-image:linear-gradient(to_bottom,transparent_0,black_1.1rem,black_calc(100%-2rem),transparent_100%)] active:cursor-grabbing lg:max-h-none lg:min-h-0"
+          onWheel={handleWheel}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={stopDragging}
+          onPointerCancel={stopDragging}
+        >
+          {isLoading ? (
+            <div className="flex h-full items-center justify-center gap-2 text-sm text-[var(--slate-gray)]">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              불러오는 중
+            </div>
+          ) : records.length === 0 ? (
+            <div className="flex h-full items-center justify-center text-sm text-[var(--slate-gray)]">
+              조회 결과가 없습니다
+            </div>
+          ) : (
+            <motion.div
+              className="space-y-1.5"
+              animate={
+                records.length > 1 && !isInteracting
+                  ? { y: ["0%", "-50%"] }
+                  : { y: 0 }
+              }
+              transition={
+                records.length > 1 && !isInteracting
+                  ? {
+                      duration: Math.max(8, records.length * 1.1),
+                      repeat: Infinity,
+                      ease: "linear",
+                    }
+                  : undefined
+              }
+            >
+              {tickerItems.map((record, index) => (
+                <div
+                  key={`${record.id}-${index}`}
+                  className="flex h-9 items-center justify-between gap-3 rounded-[12px] bg-[rgba(244,244,244,0.42)] px-3 text-xs"
+                >
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="max-w-[4.75rem] truncate text-[var(--ink-black)]">
+                      {record.member_name}
+                    </span>
+                    <span className="min-w-0 truncate text-[var(--granite)]">
+                      {record.description}
+                    </span>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2.5">
+                    <span className="w-[4rem] text-right text-xs font-semibold tabular-nums text-[var(--ink-black)]">
+                      {record.amount.toLocaleString()}원
+                    </span>
+                    <span
+                      className={`rounded px-1.5 py-0.5 text-xs font-medium ${
+                        record.type === "활동비"
+                          ? "bg-[rgba(255,209,26,0.15)] text-[var(--warning-text)]"
+                          : "bg-[rgba(56,200,255,0.12)] text-[#0f4c75]"
+                      }`}
+                    >
+                      {record.type === "활동비" ? "활동" : "복지"}
+                    </span>
+                    <span className="text-xs tabular-nums text-[var(--slate-gray)]">
+                      {dayjs(record.used_at).format("M.DD")}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex shrink-0 items-center gap-2.5">
-                  <span className="w-[4rem] text-right text-[11px] font-semibold tabular-nums text-[var(--ink-black)]">
-                    {record.amount.toLocaleString()}원
-                  </span>
-                  <span
-                    className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
-                      record.type === "활동비"
-                        ? "bg-[rgba(255,209,26,0.15)] text-[#b08900]"
-                        : "bg-[rgba(56,200,255,0.12)] text-[#0f4c75]"
-                    }`}
-                  >
-                    {record.type === "활동비" ? "활동" : "복지"}
-                  </span>
-                  <span className="text-[11px] tabular-nums text-[var(--slate-gray)]">
-                    {dayjs(record.used_at).format("M.DD")}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </motion.div>
-        )}
-      </div>
+              ))}
+            </motion.div>
+          )}
+        </div>
+      )}
       {(totalCount > 50 || page > 1) && (
         <div
           className="mt-3 flex shrink-0 items-center justify-end gap-2"
@@ -424,6 +441,7 @@ export default function Points() {
     data: welfareData,
     isLoading: isWelfareLoading,
     error: welfareError,
+    refetch: refetchWelfare,
   } = usePointsWelfare(currentMemberId, usageMonth);
 
   const { data: activityData, isLoading: isActivityLoading } =
@@ -502,6 +520,7 @@ export default function Points() {
     isLoading: isAllUsageRecordsLoading,
     isFetching: isAllUsageRecordsFetching,
     error: allUsageRecordsError,
+    refetch: refetchAllUsageRecords,
   } = useAllUsageRecords(
     currentMemberId
       ? {
@@ -513,10 +532,13 @@ export default function Points() {
       : null,
     !!currentMemberId,
   );
-  const { data: allUsageSummary, isError: isAllUsageSummaryError } =
-    useAllUsageRecordsSummary(
-      currentMemberId ? { memberId: currentMemberId, period: allRecordsMonth } : null,
-    );
+  const {
+    data: allUsageSummary,
+    isError: isAllUsageSummaryError,
+    refetch: refetchAllUsageSummary,
+  } = useAllUsageRecordsSummary(
+    currentMemberId ? { memberId: currentMemberId, period: allRecordsMonth } : null,
+  );
 
   useEffect(() => {
     if (allUsageRecordsData) {
@@ -545,7 +567,15 @@ export default function Points() {
   });
 
   const handleEditPoint = (record: UsageRecord) => {
-    if ((record.review_status ?? 0) >= 1) return;
+    const reviewStatus = record.review_status ?? 0;
+    if (reviewStatus >= 1) {
+      toast(
+        reviewStatus >= 2
+          ? "최종 확인을 마쳐 수정할 수 없어요. 수정은 P&C팀에 요청해 주세요."
+          : "P&C 확인을 마쳐 수정할 수 없어요. 수정은 P&C팀에 요청해 주세요.",
+      );
+      return;
+    }
     setEditingPoint(toEditablePoint(record));
     setIsNewPoint(false);
     setIsEditDialogOpen(true);
@@ -576,7 +606,7 @@ export default function Points() {
           : activityData?.summary?.allocation_id;
 
       if (!allocId) {
-        toast.error("할당 정보가 없습니다. 관리자에게 예산 할당을 요청하세요.");
+        toast.error("할당 정보가 없습니다. P&C팀에 예산 할당을 요청하세요.");
         return;
       }
 
@@ -646,11 +676,8 @@ export default function Points() {
       setEditingPoint(null);
       setIsEditDialogOpen(false);
     } catch (error) {
-      const msg =
-        error instanceof Error
-          ? error.message
-          : "알 수 없는 오류가 발생했습니다.";
-      toast.error(`삭제에 실패했습니다: ${msg}`);
+      console.error(error);
+      toast.error("내역을 삭제하지 못했어요. 연결을 확인하고 다시 시도해 주세요.");
     }
   };
 
@@ -682,12 +709,12 @@ export default function Points() {
               <div className="px-4 pt-4 pb-3 space-y-3">
                 <div className="flex justify-between items-start">
                   <div className="space-y-1.5">
-                    <div className="animate-pulse bg-[var(--soft-bone)] rounded h-3 w-20" />
-                    <div className="animate-pulse bg-[var(--soft-bone)] rounded h-6 w-32" />
+                    <div className="skeleton rounded-[6px] h-3 w-20" />
+                    <div className="skeleton rounded-[6px] h-6 w-32" />
                   </div>
-                  <div className="animate-pulse bg-[var(--soft-bone)] rounded h-3 w-28" />
+                  <div className="skeleton rounded-[6px] h-3 w-28" />
                 </div>
-                <div className="animate-pulse bg-[var(--whisper-cream)] rounded-full h-2 w-full" />
+                <div className="skeleton rounded-full h-2 w-full" />
               </div>
             </div>
           ) : (
@@ -704,7 +731,7 @@ export default function Points() {
                   {/* Header */}
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <h1 className="text-base font-semibold text-[var(--ink-black)]">
+                      <h1 className="text-base text-[var(--ink-black)]">
                         복지포인트{isManager ? " · 활동비" : ""}
                       </h1>
                       <span onClick={(e) => e.stopPropagation()}>
@@ -717,14 +744,16 @@ export default function Points() {
                     </span>
                   </div>
 
-                  {welfareError && (
-                    <p className="text-xs text-[#d03238] mb-2">
-                      데이터 로딩 중 오류가 발생했습니다.
-                    </p>
-                  )}
-
                   {/* 매니저: 활동비 + 복지포인트 동시 표시 */}
-                  {isManager ? (
+                  {welfareError ? (
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <StateBlock
+                        title="포인트 잔액을 불러오지 못했어요"
+                        description="연결을 확인하고 다시 시도해 주세요."
+                        action={{ label: "다시 시도", onClick: () => refetchWelfare() }}
+                      />
+                    </div>
+                  ) : isManager ? (
                     <div className="space-y-3">
                       <BudgetRow
                         label="활동비"
@@ -777,17 +806,21 @@ export default function Points() {
             hasMore={allUsageRecordsData?.has_more ?? false}
             isFetching={isAllUsageRecordsFetching}
             onPageChange={setAllRecordsPage}
+            onRetry={() => {
+              refetchAllUsageRecords();
+              refetchAllUsageSummary();
+            }}
           />
         </div>
 
         {/* Points List */}
         <div className="flex min-w-0 flex-col gap-3 lg:h-full lg:min-h-0 lg:overflow-hidden">
-          <div className="flex shrink-0 justify-between items-center">
+          <div className="flex shrink-0 flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <h2 className="text-md font-semibold text-[var(--ink-black)]">
+              <h2 className="text-base text-[var(--ink-black)]">
                 사용 내역
               </h2>
-              <span className="rounded-full bg-[var(--whisper-cream)] px-2.5 py-1 text-[11px] font-medium text-[var(--granite)]">
+              <span className="rounded-full bg-[var(--whisper-cream)] px-2.5 py-1 text-xs font-medium text-[var(--granite)]">
                 {usageMonthLabel}
               </span>
             </div>
@@ -798,7 +831,7 @@ export default function Points() {
                   value: "newest" | "oldest" | "amount-high" | "amount-low",
                 ) => setSortOrder(value)}
               >
-                <SelectTrigger className="w-auto min-w-[100px] h-11 border-0 bg-white shadow-sm">
+                <SelectTrigger className="w-auto min-w-[100px] h-11 border-0 bg-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -809,7 +842,7 @@ export default function Points() {
                 </SelectContent>
               </Select>
               <Select value={usageMonth} onValueChange={setUsageMonth}>
-                <SelectTrigger className="w-auto min-w-[80px] h-11 border-0 bg-white shadow-sm">
+                <SelectTrigger className="w-auto min-w-[80px] h-11 border-0 bg-white">
                   <SelectValue placeholder="월을 선택하세요" />
                 </SelectTrigger>
                 <SelectContent>
@@ -823,7 +856,7 @@ export default function Points() {
               {isManager && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button className="relative h-8.5 w-8.5 flex items-center justify-center rounded-md bg-white shadow-xs border border-input">
+                    <button className="relative h-8.5 w-8.5 flex items-center justify-center rounded-[8px] bg-white border border-input">
                       <ListFilter className="w-4 h-4 text-[var(--granite)]" />
                       {typeFilter !== "all" && (
                         <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[var(--signal-orange)]" />
@@ -841,7 +874,7 @@ export default function Points() {
                       <button
                         key={option.value}
                         onClick={() => setTypeFilter(option.value)}
-                        className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors ${
+                        className={`w-full text-left px-3 py-2 text-sm rounded-[8px] transition-colors ${
                           typeFilter === option.value
                             ? "bg-[var(--whisper-cream)] font-medium text-[var(--ink-black)]"
                             : "text-[var(--granite)] hover:bg-[var(--soft-bone)]"
@@ -859,31 +892,38 @@ export default function Points() {
           <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
             {/* Add New Point */}
             <button
-              className="w-full py-3 bg-white rounded-xl text-sm font-medium text-[var(--ink-black)] flex items-center justify-center gap-2 border border-dashed border-[rgba(14,15,12,0.2)] hover:border-[var(--ink-black)] hover:bg-[rgba(22,51,0,0.05)] active:bg-[rgba(22,51,0,0.08)] transition-colors"
+              className="w-full py-3 bg-white rounded-[24px] text-sm font-medium text-[var(--ink-black)] flex items-center justify-center gap-2 border border-dashed border-[rgba(25,28,31,0.2)] hover:border-[var(--ink-black)] hover:bg-[rgba(22,51,0,0.05)] active:bg-[rgba(22,51,0,0.08)] transition-colors"
               onClick={handleAddNewPoint}
             >
               <Plus className="w-4 h-4" />새 내역 추가
             </button>
 
             {isLoading ? (
-              <div className="min-h-0 flex-1 rounded-xl bg-white divide-y divide-[rgba(14,15,12,0.05)]">
+              <div className="card-premium min-h-0 flex-1 divide-y divide-[rgba(25,28,31,0.05)]">
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="px-4 py-4">
-                    <div className="animate-pulse">
+                    <div>
                       <div className="flex justify-between mb-2">
-                        <div className="bg-[var(--whisper-cream)] rounded h-[15px] w-32" />
-                        <div className="bg-[var(--whisper-cream)] rounded h-[15px] w-16" />
+                        <div className="skeleton rounded-[6px] h-[15px] w-32" />
+                        <div className="skeleton rounded-[6px] h-[15px] w-16" />
                       </div>
                       <div className="flex justify-between">
-                        <div className="bg-[var(--soft-bone)] rounded h-3 w-24" />
-                        <div className="bg-[var(--soft-bone)] rounded h-3 w-10" />
+                        <div className="skeleton rounded-[6px] h-3 w-24" />
+                        <div className="skeleton rounded-[6px] h-3 w-10" />
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
+            ) : sortedRecords.length === 0 && welfareError ? (
+              <StateBlock
+                className="card-premium min-h-0 flex-1"
+                title="사용 내역을 불러오지 못했어요"
+                description="연결을 확인하고 다시 시도해 주세요."
+                action={{ label: "다시 시도", onClick: () => refetchWelfare() }}
+              />
             ) : sortedRecords.length === 0 ? (
-              <div className="flex min-h-0 flex-1 flex-col items-center justify-center rounded-xl bg-white py-12 text-center">
+              <div className="card-premium flex min-h-0 flex-1 flex-col items-center justify-center py-12 text-center">
                 <div className="empty-icon-waddle mx-auto mb-3 h-[54px] w-[54px] opacity-80">
                   <Image
                     src={NoDataIcon}
@@ -893,13 +933,11 @@ export default function Points() {
                   />
                 </div>
                 <p className="text-sm text-[var(--slate-gray)]">
-                  {welfareError
-                    ? "내역을 불러올 수 없습니다."
-                    : "이 달 사용 내역이 없습니다."}
+                  이 달 사용 내역이 없습니다.
                 </p>
               </div>
             ) : (
-              <div className="min-h-0 flex-1 overflow-y-auto rounded-xl bg-white divide-y divide-[rgba(14,15,12,0.08)]">
+              <div className="card-premium min-h-0 flex-1 overflow-y-auto divide-y divide-[rgba(25,28,31,0.08)]">
                 {sortedRecords.map((record) => {
                   const d = dayjs(record.used_at);
                   const dow = ["일", "월", "화", "수", "목", "금", "토"][
@@ -912,17 +950,17 @@ export default function Points() {
                   const statusBadge =
                     reviewStatus >= 2
                       ? {
-                          label: "최종",
-                          className: "bg-[rgba(5,77,40,0.12)] text-[#054d28]",
+                          label: "최종 확인",
+                          className: "bg-[rgba(0,168,126,0.1)] text-[var(--success-text)]",
                         }
                       : reviewStatus >= 1
                         ? {
-                            label: "P&C",
+                            label: "P&C 확인",
                             className:
                               "bg-[rgba(236,126,0,0.14)] text-[#9a4f00]",
                           }
                         : {
-                            label: "미확인",
+                            label: "확인 전",
                             className:
                               "bg-[rgba(105,96,82,0.1)] text-[var(--granite)]",
                           };
@@ -953,9 +991,9 @@ export default function Points() {
                             ({dow})
                           </span>
                           <span
-                            className={`px-1.5 py-px rounded text-[10px] font-medium ${
+                            className={`px-1.5 py-px rounded text-xs font-medium ${
                               isActivity
-                                ? "bg-[rgba(255,209,26,0.15)] text-[#b08900]"
+                                ? "bg-[rgba(255,209,26,0.15)] text-[var(--warning-text)]"
                                 : "bg-[rgba(56,200,255,0.12)] text-[#0f4c75]"
                             }`}
                           >
@@ -964,7 +1002,7 @@ export default function Points() {
                         </div>
                         <div className="flex items-center">
                           <span
-                            className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${statusBadge.className}`}
+                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusBadge.className}`}
                           >
                             {statusBadge.label}
                           </span>
@@ -972,7 +1010,7 @@ export default function Points() {
                       </div>
                       {record.companions?.length > 0 && (
                         <p className="text-xs text-[var(--slate-gray)] mt-1">
-                          카드:{" "}
+                          카드 주인:{" "}
                           {record.companions
                             .map(
                               (id: string) =>
@@ -984,7 +1022,7 @@ export default function Points() {
                       )}
                       {record.co_payers?.length > 0 && (
                         <p className="text-xs text-[var(--slate-gray)] mt-0.5">
-                          동반:{" "}
+                          동반 결제자:{" "}
                           {record.co_payers
                             .map(
                               (id: string) =>
@@ -992,6 +1030,11 @@ export default function Points() {
                                   ?.full_name || id,
                             )
                             .join(", ")}
+                        </p>
+                      )}
+                      {isLocked && (
+                        <p className="text-xs text-[var(--slate-gray)] mt-1">
+                          수정하려면 P&C팀에 요청
                         </p>
                       )}
                     </div>
@@ -1007,8 +1050,8 @@ export default function Points() {
                         className="bg-[var(--ink-black)] text-[var(--canvas-cream)] max-w-60"
                       >
                         {reviewStatus === 2
-                          ? "최종확인 완료 항목입니다. 수정하려면 P&C에 문의 바랍니다."
-                          : "P&C 확인완료 항목입니다. 수정하려면 P&C에 문의 바랍니다."}
+                          ? "최종 확인을 마쳐 수정할 수 없어요. 수정은 P&C팀에 요청해 주세요."
+                          : "P&C 확인을 마쳐 수정할 수 없어요. 수정은 P&C팀에 요청해 주세요."}
                       </TooltipContent>
                     </Tooltip>
                   ) : (
@@ -1025,9 +1068,6 @@ export default function Points() {
         </div>
       </div>
 
-      <div className="mobile-nav-footer fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[820px] px-4 sm:px-6 lg:hidden">
-        <QuickActionsSection />
-      </div>
 
       {/* Edit Drawer */}
       <EditPointDialog
